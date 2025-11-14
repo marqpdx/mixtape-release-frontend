@@ -1,0 +1,149 @@
+// src/components/groups/GroupsTable.tsx
+
+"use client";
+
+import {
+  Box,
+  Heading,
+  Spinner,
+  Text,
+  Table,
+  HStack,
+} from "@chakra-ui/react";
+import { createColumnHelper, flexRender } from "@tanstack/react-table";
+import { useTable } from "@refinedev/react-table";
+import { Icons } from "@components/icons/IconMap";
+import { useRouter } from "next/navigation";
+
+import { Group } from "./interfaces";
+
+interface GroupQueryResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Group[];
+}
+
+const columnHelper = createColumnHelper<Group>();
+
+const columns = [
+  columnHelper.accessor("title", {
+    header: "Name",
+    cell: ({ row, getValue }) => {
+      const Icon = Icons.group[row.original.group_type];
+      return (
+        <Box display="flex" alignItems="center" gap={2}>
+          {Icon && <Icon size={18} />}
+          {getValue()}
+        </Box>
+      );
+    },
+  }),
+  columnHelper.accessor("group_type", {
+    header: "Type",
+    cell: info => info.getValue(),
+  }),
+  columnHelper.accessor("description", {
+    header: "Description",
+    cell: info => info.getValue(),
+  }),
+  columnHelper.accessor("created_at", {
+    header: "Created",
+    cell: info => info.getValue().slice(0, 10),
+  }),
+];
+
+export default function GroupsTable() {
+  const {
+    getHeaderGroups,
+    refineCore: { tableQuery },
+  } = useTable({
+    columns,
+    refineCoreProps: {
+      resource: "groups",
+    },
+    initialState: {
+      sorting: [{ id: "created_at", desc: true }],
+    },
+  });
+
+  const { isLoading, data: queryData } = tableQuery;
+  const router = useRouter();
+
+  const groups: Group[] =
+    ((queryData?.data as unknown) as GroupQueryResponse)?.results ?? [];
+
+  console.log("gt: groups", groups);
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="200px">
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
+
+  if (!groups.length) {
+    return <Text>No groups found.</Text>;
+  }
+
+
+
+  const handleClick = (where: string, slug: string) => {
+    if (where == 'admin') router.push(`/groups/${slug}/admin`);
+    if (where == 'show') router.push(`/groups/${slug}/show`);
+  };
+
+  return (
+    <Box>
+      <Heading size="md" mb={4}>All Groups</Heading>
+      <Table.Root variant="outline" size="md">
+        <Table.Header>
+          {getHeaderGroups().map((headerGroup) => (
+            <Table.Row key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <Table.ColumnHeader
+                  key={header.id}
+                  onClick={header.column.getToggleSortingHandler?.()}
+                  cursor={header.column.getCanSort() ? "pointer" : "default"}
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {header.column.getIsSorted() === "asc" && " 🔼"}
+                  {header.column.getIsSorted() === "desc" && " 🔽"}
+                </Table.ColumnHeader>
+              ))}
+                <Table.ColumnHeader>Admin</Table.ColumnHeader>
+            </Table.Row>
+          ))}
+        </Table.Header>
+
+        <Table.Body>
+          {groups.map((group: Group) => {
+            const GroupIcon = Icons.group[group.group_type]; // ✅ safely extract icon before JSX
+            return (
+              <Table.Row key={group.id}>
+                <Table.Cell display="flex" alignItems="center" gap={2}>
+                  {GroupIcon && <GroupIcon size={18} />} {/* ✅ valid JSX */}
+                  {group.title}
+                </Table.Cell>
+                <Table.Cell textTransform="capitalize">{group.group_type}</Table.Cell>
+                <Table.Cell>{group.description}</Table.Cell>
+                <Table.Cell>{group.created_at?.slice(0, 10) || "-"}</Table.Cell>
+                <Table.Cell>
+                  <HStack>
+                    <Box mr={2} cursor={'pointer'} onClick={() => handleClick('admin', group.slug)}>
+                      Admin
+                    </Box>
+                    <Box cursor={'pointer'} onClick={() => handleClick('show', group.slug)}>
+                      Show
+                    </Box>
+                  </HStack>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
+        </Table.Body>
+      </Table.Root>
+    </Box>
+  );
+}

@@ -1,0 +1,76 @@
+"use client";
+
+import {
+  VStack,
+  HStack,
+  Box,
+  Text,
+  AvatarGroup,
+  Avatar,
+} from "@chakra-ui/react";
+
+// import { Member } from "../interfaces";
+
+
+export interface GroupMembersPreviewProps {
+  members: Member[];
+  onMemberClick: (memberId: number) => void;
+  onViewAll: () => void;
+}
+
+export default function GroupMembersPreview({
+  members,
+  onMemberClick,
+  onViewAll,
+}: GroupMembersPreviewProps) {
+  const visibleMembers = members.slice(0, 5);
+
+  return (
+    <VStack align="start" gap={4}>
+      {visibleMembers.map((member) => {
+        console.log(member);
+
+        const name =
+          member.user?.profile?.name ||
+          member.user?.username ||
+          "(unknown)";
+
+        const avatarUrl = member.user?.profile?.avatar || "";
+
+        return (
+          <HStack
+            key={member.id}
+            gap={3}
+            onClick={() => onMemberClick(member.id)}
+            cursor="pointer"
+            w="full"
+            _hover={{ bg: "gray.50" }}
+            p={2}
+            borderRadius="md"
+          >
+            <AvatarGroup size="sm">
+              <Avatar.Root>
+                {avatarUrl ? (
+                  <Avatar.Image src={avatarUrl} alt={name} />
+                ) : (
+                  <Avatar.Fallback>
+                    {name.charAt(0).toUpperCase()}
+                  </Avatar.Fallback>
+                )}
+              </Avatar.Root>
+            </AvatarGroup>
+
+            <Box>
+              <Text fontWeight="medium">{name}</Text>
+              <Text fontSize="sm" color="gray.500">
+                {member.role}
+              </Text>
+            </Box>
+          </HStack>
+        );
+      })}
+
+
+    </VStack>
+  );
+}

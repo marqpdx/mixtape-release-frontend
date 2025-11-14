@@ -1,0 +1,115 @@
+// src/lib/auth/AuthContext.tsx
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { UserIdentity, LoginCredentials, RegisterData } from '@/types/auth';
+import * as authApi from './api';
+import { useRouter } from 'next/navigation';
+
+interface AuthContextType {
+  user: UserIdentity | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<UserIdentity | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  // Initialize CSRF and check authentication status on mount
+  useEffect(() => {
+    // Initialize CSRF protection
+    authApi.initializeCsrf();
+
+    // Check auth status
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      setIsLoading(true);
+      const userData = await authApi.checkAuth();
+      setUser(userData);
+    } catch (error) {
+      // Silent fail - user just not authenticated
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    try {
+      const userData = await authApi.login(credentials);
+      setUser(userData);
+      // Note: Redirect is handled by the calling component
+    } catch (error) {
+      throw error;
+    }
+  }, []);
+
+  const register = useCallback(async (data: RegisterData) => {
+    try {
+      await authApi.register(data);
+      // After successful registration, redirect to login
+      router.push('/login?registered=true');
+    } catch (error) {
+      throw error;
+    }
+  }, [router]);
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+      setUser(null);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still clear user state even if API call fails
+      setUser(null);
+      router.push('/login');
+    }
+  }, [router]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const userData = await authApi.fetchUserIdentity();
+      setUser(userData);
+    } catch (error) {
+      setUser(null);
+    }
+  }, []);
+
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    register,
+    logout,
+    refreshUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/**
+ * Hook to access auth context
+ * Must be used within AuthProvider
+ */
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+
+  return context;
+}

@@ -1,0 +1,70 @@
+// Simple test form to isolate the focus issue
+import { useState, useEffect, memo } from "react";
+import { Box, Stack, Text } from "@chakra-ui/react";
+import { Input } from "@theme/recipes/input.recipe";
+
+interface SimpleTestFormProps {
+  onSuccess?: (slug: string) => void;
+  onSuccessAndEdit?: (slug: string) => void;
+}
+
+const GroupCreateForm = memo(function SimpleTestForm({
+  onSuccess,
+  onSuccessAndEdit
+}: SimpleTestFormProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  console.log('🔍 SimpleTestForm render');
+
+  useEffect(() => {
+    console.log('🔍 SimpleTestForm mounted');
+    const timer = setTimeout(() => {
+      const input = document.querySelector('[data-testid="simple-title"]') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        console.log('🔍 SimpleTestForm focused input');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Box maxW="800px" mx="auto" p={6}>
+      <Stack gap={4}>
+        <Text fontSize="xl" fontWeight="bold">Simple Test Form</Text>
+
+        <Box>
+          <Text fontSize="sm" fontWeight="medium" mb={2}>Title</Text>
+          <Input
+            data-testid="simple-title"
+            value={title}
+            onChange={(e) => {
+              console.log('🔍 Simple input changing:', e.target.value);
+              setTitle(e.target.value);
+            }}
+            onFocus={() => console.log('🔍 Simple input focused')}
+            onBlur={() => console.log('🔍 Simple input blurred')}
+            placeholder="Type here to test focus retention"
+          />
+        </Box>
+
+        <Box>
+          <Text fontSize="sm" fontWeight="medium" mb={2}>Description</Text>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description"
+          />
+        </Box>
+
+        <Text fontSize="sm" color="gray.600">
+          Title: {title} | Description: {description}
+        </Text>
+      </Stack>
+    </Box>
+  );
+});
+
+export default GroupCreateForm;

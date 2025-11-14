@@ -1,0 +1,153 @@
+# Claude Code Context - Mixtape Release Frontend
+
+## Project Status: Phase 1A Complete ✓ (Backend Cleaned)
+
+### Last Session: 2025-11-10 (Afternoon)
+
+**Frontend State**:
+- ✓ Fresh Next.js 15 project created with App Router
+- ✓ Minimal dependencies installed (Next.js, React 19, Chakra UI v3, TypeScript)
+- ✓ Development server configured for port 3010
+- ✓ Basic landing page working
+- ✓ 4 documentation files + backend analysis created in `/docs`
+
+**Backend State** (Just Completed):
+- ✓ Simplified UserProfile model (minimal fields, no complex deps)
+- ✓ Created Member API (User + Profile combined view)
+- ✓ Reduced INSTALLED_APPS from 30+ to 11
+- ✓ Added port 3010 to CORS (frontend connects to backend on port 8010)
+- ✓ Deleted empty members app
+- ✓ Minimal URL routing (auth + members only)
+
+**What Works**:
+- Frontend: `yarn dev` starts server on http://localhost:3010
+- Backend: Code changes complete, ready for testing
+
+---
+
+## Next Steps (Phase 1B - Backend Testing)
+
+**Priority Order**:
+1. Add axios and create axiosInstance with JWT token handling
+2. Add TanStack Query (@tanstack/react-query) for data fetching
+3. Choose and implement state management (Zustand vs React Context)
+4. Create login page
+5. Create auth hook (useAuth)
+6. Wire up to Django backend (URL/endpoints TBD by user)
+7. Add protected route wrapper
+
+**Pending Decisions**:
+- State management: Zustand or React Context?
+- Schema validation: Add Zod or not?
+- Django backend URL and auth endpoints (user will provide)
+
+---
+
+## Important Patterns & Conventions
+
+### Code Organization (3-Layer Architecture)
+1. **API Layer**: `src/lib/api/*.ts` - Axios HTTP clients
+2. **Hook Layer**: `src/hooks/*.ts` - React hooks wrapping API calls
+3. **Component Layer**: `src/app/*` and `src/components/*` - UI using hooks
+
+### File Structure
+```
+src/
+├── app/              # Next.js App Router pages
+├── components/       # React components
+├── hooks/           # Custom React hooks
+├── lib/             # Utility functions and API clients
+│   └── api/         # API client functions
+└── types/           # TypeScript type definitions
+```
+
+### Documentation Requirements
+**Always update these 4 docs when making significant changes**:
+- `docs/01-business-and-use-cases.md` - User stories, workflows
+- `docs/02-architecture.md` - System design, tech stack
+- `docs/03-data-models.md` - API contracts, JSON schemas
+- `docs/04-design-decisions.md` - Technical decisions (ADR-style)
+
+### Key Decisions Made (see docs/04-design-decisions.md)
+- Next.js 15 App Router (not Pages Router)
+- Chakra UI v3
+- TypeScript strict mode
+- Yarn package manager
+- Port 3010 for dev server
+- 3-layer API → Hook → Component architecture
+
+---
+
+## Tech Stack
+
+**Frontend**:
+- Next.js 15.5.6
+- React 19
+- Chakra UI v3.2.2
+- TypeScript 5.9.2
+- Framer Motion (Chakra dependency)
+
+**Future Additions** (Phase 2):
+- axios
+- @tanstack/react-query
+- zustand (or just React Context)
+- zod (under consideration)
+
+**Backend** (separate repo):
+- Django with JWT authentication
+- Located at: `REDACTED-LOCAL-PATH/mixtape-release-core`
+
+---
+
+## User Preferences & Constraints
+
+- Use **yarn**, not npm
+- Port 3010 (3000 already in use)
+- No Refine.dev (previously used, now removed)
+- Minimal dependencies - add incrementally
+- Want rock-solid authentication before adding features
+- Building production-ready code (high coherence, testability)
+- Co-creating rough draft in claude.ai, production code here
+- Keep documentation in sync as we evolve
+
+---
+
+## Commands
+
+```bash
+# Frontend Development
+cd REDACTED-LOCAL-PATH/mixtape-release-frontend
+yarn dev          # Start dev server on port 3010
+
+# Backend Development
+cd REDACTED-LOCAL-PATH/mixtape-release-core
+python manage.py runserver 8010  # Start backend on port 8010
+
+# Production
+yarn build        # Production build
+yarn lint         # Run ESLint
+
+# File locations
+# Frontend: REDACTED-LOCAL-PATH/mixtape-release-frontend
+# Backend:  REDACTED-LOCAL-PATH/mixtape-release-core
+```
+
+---
+
+## Session Continuity Notes
+
+**For Next Session**:
+1. User will provide Django backend URL and auth endpoints
+2. User may have axiosInstance code to share
+3. Need to decide on state management approach
+4. Consider whether to add Zod for schema validation
+
+**When Resuming**:
+- Run `yarn dev` to start the dev server
+- Check if user has backend info ready
+- Continue with Phase 2 (Authentication) tasks
+
+---
+
+*This file helps Claude Code resume context. Update after significant progress.*
+*Last updated: 2025-11-10 - Phase 1 Complete*

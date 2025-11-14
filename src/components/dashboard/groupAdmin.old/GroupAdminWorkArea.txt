@@ -1,0 +1,52 @@
+import { UserIdentity } from "@components/auth/interfaces";
+import { WorkAreaProps } from "../shared/types";
+import WorkAreaWrapper from "../shared/WorkAreaWrapper";
+import { VStack, Text } from "@chakra-ui/react";
+
+// src/components/dashboard/groupAdmin/GroupAdminWorkArea.tsx
+interface GroupAdminWorkAreaProps extends WorkAreaProps {
+  groupId: string;
+  group: any; // Group object
+  identity: UserIdentity;
+}
+
+export default function GroupAdminWorkArea({
+  section,
+  setActiveSection,
+  groupId,
+  group,
+  identity,
+}: GroupAdminWorkAreaProps) {
+
+  if (section === "group-overview") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <Text fontSize="xl" fontWeight="bold">📊 {group?.name} - Overview</Text>
+          <Text>Group analytics and overview coming soon...</Text>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "member-management") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <Text fontSize="xl" fontWeight="bold">👥 Member Management</Text>
+          <Text>Group member management coming soon...</Text>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Default fallback
+  return (
+    <WorkAreaWrapper>
+      <VStack align="stretch" gap={4}>
+        <Text fontSize="xl" fontWeight="bold">Section: {section}</Text>
+        <Text>This group admin section is under development.</Text>
+      </VStack>
+    </WorkAreaWrapper>
+  );
+}

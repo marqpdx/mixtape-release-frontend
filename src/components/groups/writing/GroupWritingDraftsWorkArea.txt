@@ -1,0 +1,252 @@
+// src/components/groups/writing/GroupWritingDraftsWorkArea.tsx
+
+"use client";
+
+import { Box, Text, HStack, Badge, Avatar } from "@chakra-ui/react";
+import { IconEdit, IconClock, IconFileText } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { useColorModeValue } from "@components/ui/color-mode";
+import { formatDistanceToNow } from "date-fns";
+import UniversalDataTable from "@components/common/UniversalDataTable";
+
+interface WritingWorkingCopy {
+  id: string | number;
+  piece: {
+    id: string | number;
+    slug: string;
+    title: string;
+    writing_kind: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  };
+  user: {
+    id: string | number;
+    username: string;
+    profile_image?: string;
+  };
+  title: string;
+  excerpt: string;
+  body_json: Record<string, any>;
+  last_saved_at: string;
+  auto_save_count: number;
+  client_session_id: string;
+}
+
+interface GroupWritingDraftsWorkAreaProps {
+  groupSlug: string;
+  drafts: WritingWorkingCopy[];
+  isLoading?: boolean;
+  error?: string | null;
+  onCreateNew?: () => void;
+}
+
+export default function GroupWritingDraftsWorkArea({
+  groupSlug,
+  drafts,
+  isLoading = false,
+  error = null,
+  onCreateNew,
+}: GroupWritingDraftsWorkAreaProps) {
+  const router = useRouter();
+  const textSecondary = useColorModeValue("gray.600", "gray.300");
+  const badgeBg = useColorModeValue("green.50", "green.900");
+  const badgeColor = useColorModeValue("green.700", "green.300");
+
+  // Handle clicking edit on a draft
+  const handleEditDraft = (draft: WritingWorkingCopy) => {
+    router.push(`/groups/${groupSlug}/writing/${draft.piece.slug}/edit`);
+  };
+
+  // Custom renderers for the table
+  const renderTitle = (draft: WritingWorkingCopy) => {
+    const displayTitle = draft.title || draft.piece.title || "Untitled Draft";
+
+    return (
+      <HStack gap={2} align="center">
+        <Text
+          fontWeight="semibold"
+          fontSize="md"
+          color="gray.900"
+          _dark={{ color: "white" }}
+          _hover={{ color: "green.600" }}
+          transition="color 0.2s"
+          lineClamp={1}
+        >
+          {displayTitle}
+        </Text>
+        <Badge
+          size="sm"
+          bg={badgeBg}
+          color={badgeColor}
+          px={2}
+          py={1}
+          rounded="full"
+        >
+          {draft.piece.writing_kind}
+        </Badge>
+      </HStack>
+    );
+  };
+
+  const renderDescription = (draft: WritingWorkingCopy) => {
+    const excerpt = draft.excerpt;
+
+    if (!excerpt) {
+      // Try to extract some text from body_json if available
+      if (draft.body_json?.content) {
+        const textContent = extractTextFromProseMirror(draft.body_json);
+        if (textContent) {
+          return (
+            <Text
+              fontSize="sm"
+              color={textSecondary}
+              lineClamp={2}
+              wordBreak="break-word"
+            >
+              {textContent}
+            </Text>
+          );
+        }
+      }
+      return (
+        <Text fontSize="sm" color={textSecondary} fontStyle="italic">
+          No content yet...
+        </Text>
+      );
+    }
+
+    return (
+      <Text
+        fontSize="sm"
+        color={textSecondary}
+        lineClamp={2}
+        wordBreak="break-word"
+      >
+        {excerpt}
+      </Text>
+    );
+  };
+
+  const renderMetadata = (draft: WritingWorkingCopy) => {
+    const lastSaved = new Date(draft.last_saved_at);
+    const autoSaveText = draft.auto_save_count > 0
+      ? `Autosaved ${draft.auto_save_count} times`
+      : "Not yet saved";
+
+    return (
+      <HStack gap={4} fontSize="xs" color="gray.400" mt={1}>
+        <HStack gap={1}>
+          <IconClock size={12} />
+          <Text>
+            Last saved {formatDistanceToNow(lastSaved, { addSuffix: true })}
+          </Text>
+        </HStack>
+        <Text>•</Text>
+        <Text>{autoSaveText}</Text>
+        {draft.piece.status !== 'draft' && (
+          <>
+            <Text>•</Text>
+            <Badge size="xs" colorScheme="blue">
+              {draft.piece.status}
+            </Badge>
+          </>
+        )}
+      </HStack>
+    );
+  };
+
+  const renderAvatar = (draft: WritingWorkingCopy) => {
+    return (
+      <Box position="relative">
+        <Avatar.Root size="lg">
+          <Avatar.Image
+            src={draft.user.profile_image || undefined}
+            alt={`${draft.user.username} avatar`}
+          />
+          <Avatar.Fallback bg="green.100" color="green.700">
+            {draft.user.username.charAt(0).toUpperCase()}
+          </Avatar.Fallback>
+        </Avatar.Root>
+        <Box
+          position="absolute"
+          bottom={-1}
+          right={-1}
+          bg="white"
+          rounded="full"
+          p={1}
+          border="2px solid"
+          borderColor="gray.200"
+          _dark={{
+            bg: "gray.800",
+            borderColor: "gray.600"
+          }}
+        >
+          <IconFileText size={12} color="green" />
+        </Box>
+      </Box>
+    );
+  };
+
+  // Table actions
+  const actions = [
+    {
+      label: "Edit Draft",
+      icon: <IconEdit size={16} />,
+      onClick: handleEditDraft,
+      variant: "ghost" as const,
+      colorScheme: "green",
+    },
+  ];
+
+  return (
+    <Box>
+      <UniversalDataTable
+        data={drafts}
+        title="Writing Drafts"
+        isLoading={isLoading}
+        error={error}
+        showAvatar={true}
+        avatarFallbackIcon={<IconFileText size={16} />}
+        emptyStateMessage="No drafts found"
+        emptyStateSubtitle="Start writing to create your first draft"
+        actions={actions}
+        onRowClick={handleEditDraft}
+        showCreateButton={true}
+        onCreateClick={onCreateNew}
+        createButtonLabel="Start Writing"
+        canEdit={() => true}
+        canView={() => true}
+        renderTitle={renderTitle}
+        renderDescription={renderDescription}
+        renderMetadata={renderMetadata}
+        renderAvatar={renderAvatar}
+        defaultSort={{ field: "item_info", order: "desc" }}
+      />
+    </Box>
+  );
+}
+
+// Helper function to extract text from ProseMirror JSON
+function extractTextFromProseMirror(bodyJson: Record<string, any>): string {
+  if (!bodyJson?.content) return "";
+
+  const extractText = (node: any): string => {
+    if (node.type === "text") {
+      return node.text || "";
+    }
+
+    if (node.content && Array.isArray(node.content)) {
+      return node.content.map(extractText).join(" ");
+    }
+
+    return "";
+  };
+
+  const fullText = bodyJson.content.map(extractText).join(" ").trim();
+
+  // Return first 150 characters with ellipsis if longer
+  return fullText.length > 150
+    ? fullText.substring(0, 150) + "..."
+    : fullText;
+}

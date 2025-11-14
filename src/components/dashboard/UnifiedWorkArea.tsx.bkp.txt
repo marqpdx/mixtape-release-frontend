@@ -1,0 +1,474 @@
+// // src/components/dashboard/UnifiedWorkArea.tsx
+
+// src/components/dashboard/UnifiedWorkArea.tsx
+
+"use client";
+
+import React from "react";
+import { Box, Text, Heading, VStack, HStack, Card, Badge, SimpleGrid } from "@chakra-ui/react";
+import { useRouter } from "next/navigation";
+import { WorkAreaProps } from "@components/shared/AdminLayout";
+import { UserIdentity } from "@components/auth/interfaces";
+import { Socket } from "socket.io-client";
+import { Button } from "@theme/recipes/button.recipe";
+import { HeadingAdmin } from "@theme/recipes/heading-admin.recipe";
+
+// Import existing working components
+import PersonalOverview from "@components/dashboard/sections/PersonalOverview";
+import AdminCardWrapper from "@components/admin/AdminCardWrapper";
+import ToDoList from "@components/admin/ToDoList";
+// import GroupsTable from "@components/groups/GroupsTable";
+
+// Import Threadworks components
+import ForumAdmin from "@components/threadworks/ForumAdmin";
+import ForumDetailPage from "@components/threadworks/ForumDetailPage";
+import GroupForumCreateWorkArea from "@components/groups/GroupForumCreateWorkArea";
+import WriteWorkArea from "@components/write/WriteWorkArea";
+import GroupsTableNew from "@components/groups/GroupsTable";
+
+// Wrapper to standardize layout/padding/etc.
+function WorkAreaWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <Box px={4} py={2}>
+      {children}
+    </Box>
+  );
+}
+
+interface ToDoItem {
+  id: number;
+  title: string;
+  is_completed: boolean;
+  completed_date: string | null;
+}
+
+export interface UnifiedWorkAreaProps extends WorkAreaProps {
+  // User data
+  identity: UserIdentity;
+  roles: string[];
+  isAdmin: boolean;
+  isSteward: boolean;
+  isMember: boolean;
+
+  // Groups data
+  groups: any[];
+  groupsLoading: boolean;
+
+  // Members data
+  allMembers: UserIdentity[];
+
+  // Admin data (only for admin/steward)
+  todos?: ToDoItem[];
+  onCompleteTodo?: (id: number) => void;
+
+  // Chat/collaboration
+  socket?: Socket | null;
+
+  // Forum state
+  selectedForumSlug?: string | null;
+  setSelectedForumSlug?: (slug: string | null) => void;
+}
+
+export default function UnifiedWorkArea({
+  section,
+  setActiveSection,
+  identity,
+  roles,
+  isAdmin,
+  isSteward,
+  isMember,
+  groups,
+  groupsLoading,
+  allMembers,
+  todos = [],
+  onCompleteTodo = () => {},
+  socket,
+  selectedForumSlug,
+  setSelectedForumSlug,
+}: UnifiedWorkAreaProps) {
+  const router = useRouter();
+
+  // Helper function to create stub sections
+  const createStubSection = (title: string, description: string, icon?: string) => (
+    <WorkAreaWrapper>
+      <VStack align="stretch" gap={4}>
+        <HeadingAdmin as="h2" level="h2">{icon} {title}</HeadingAdmin>
+        <Card.Root>
+          <Card.Body>
+            <Text>{description}</Text>
+            <Text color="gray.500" fontSize="sm" mt={2}>
+              Section: <Badge variant="outline">{section}</Badge>
+            </Text>
+          </Card.Body>
+        </Card.Root>
+      </VStack>
+    </WorkAreaWrapper>
+  );
+
+  // WORKING SECTIONS (migrated from AdminWorkArea)
+
+  // Personal overview (main landing page)
+  if (section === "overview") {
+    return (
+      <PersonalOverview
+        identity={identity}
+        groups={groups}
+        todos={todos}
+        isAdmin={isAdmin}
+        isSteward={isSteward}
+      />
+    );
+  }
+
+  // Admin overview (working from AdminWorkArea)
+  if ((isAdmin || isSteward) && section === "admin-overview") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={6}>
+          <HeadingAdmin as="h2" level="h2">🎧 Mixtape Admin Overview</HeadingAdmin>
+
+          {/* Quick Actions Card */}
+          <Card.Root bg={'inherit'} border={'1px solid'} borderColor={'gray.500'} borderRadius={5}>
+            <Card.Header>
+              <HeadingAdmin level="h3">🚀 Quick Actions</HeadingAdmin>
+            </Card.Header>
+            <Card.Body>
+              <HStack gap={4} wrap="wrap">
+                <Button onClick={() => router.push("/groups/create")}>
+                  ➕ Create New Group
+                </Button>
+                <Button onClick={() => router.push("/groups")}>
+                  👥 Manage Groups
+                </Button>
+                <Button onClick={() => router.push("/chat")}>
+                  💬 Open Messaging
+                </Button>
+                <Button onClick={() => router.push("/loom-and-codex")}>
+                  🦉 Loom & Codex
+                </Button>
+              </HStack>
+            </Card.Body>
+          </Card.Root>
+
+          {/* Dashboard Cards */}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
+            <AdminCardWrapper
+              as={'h3'}
+              level="h3"
+              title="To-Do List"
+              modalTitle="Manage To-Dos"
+              modalContent={
+                <ToDoList todos={todos} onComplete={onCompleteTodo} />
+              }
+              fullPageHref="/admin/todos"
+              onClick={() => setActiveSection("todos")}
+            >
+              <Text>{todos.filter((t) => !t.is_completed).length} pending</Text>
+            </AdminCardWrapper>
+
+            <AdminCardWrapper
+              as={'h3'}
+              level="h3"
+              title="Groups"
+              modalTitle="Manage Groups"
+              modalContent={<GroupsTableNew />}
+              fullPageHref="/admin/groups"
+              onClick={() => setActiveSection("group-management")}
+            >
+              <Text>Manage all your groups.</Text>
+            </AdminCardWrapper>
+
+            <AdminCardWrapper
+              as={'h3'}
+              level="h3"
+              title="Members"
+              modalTitle="Manage Memberships"
+              modalContent={<GroupsTableNew />}
+              fullPageHref="/admin/members"
+              onClick={() => setActiveSection("user-management")}
+            >
+              <Text>Manage memberships.</Text>
+            </AdminCardWrapper>
+          </SimpleGrid>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Todo management (working from AdminWorkArea)
+  if ((isAdmin || isSteward) && section === "todos") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HeadingAdmin as="h2" level="h2">📝 To-Do Management</HeadingAdmin>
+          <ToDoList todos={todos} onComplete={onCompleteTodo} />
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Groups management (working from AdminWorkArea)
+  if ((isAdmin || isSteward) && section === "group-management") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HeadingAdmin as="h2" level="h2">👥 Groups Management</HeadingAdmin>
+          <GroupsTableNew />
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // User management (working from AdminWorkArea)
+  if ((isAdmin || isSteward) && section === "user-management") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HeadingAdmin as="h2" level="h2">🧑‍💼 Members Management</HeadingAdmin>
+          <Text>Members management interface will go here.</Text>
+          {/* Add members management component here */}
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Quick Actions (working from AdminWorkArea)
+  if ((isAdmin || isSteward) && section === "quick-actions") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={6}>
+          <HeadingAdmin as="h2" level="h2">🚀 Quick Actions</HeadingAdmin>
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+            <Button
+              size="lg"
+              p={6}
+              onClick={() => router.push("/groups/create")}
+            >
+              ➕ Create New Group
+            </Button>
+            <Button
+              size="lg"
+              p={6}
+              onClick={() => router.push("/groups")}
+            >
+              👥 Manage Groups
+            </Button>
+            <Button
+              size="lg"
+              p={6}
+              onClick={() => router.push("/chat")}
+            >
+              💬 Open Messaging
+            </Button>
+            <Button
+              size="lg"
+              p={6}
+              onClick={() => router.push("/loom-and-codex")}
+            >
+              🦉 Loom & Codex
+            </Button>
+          </SimpleGrid>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // STUB SECTIONS (for future development)
+
+  // Personal sections
+  if (section === "profile") {
+    return createStubSection(
+      "Profile Settings",
+      "Manage your personal profile, avatar, and public information."
+    );
+  }
+
+  if (section === "preferences") {
+    return createStubSection(
+      "Preferences",
+      "Customize your dashboard, notifications, and app settings."
+    );
+  }
+
+  if (section === "activity") {
+    return createStubSection(
+      "Activity Feed",
+      "View your recent activity, contributions, and engagement history."
+    );
+  }
+
+  // Groups sections
+  if (section === "my-groups") {
+    return createStubSection(
+      "My Groups",
+      `You're currently a member of ${groups.length} groups.`
+    );
+  }
+
+  if (section === "discover-groups") {
+    return createStubSection(
+      "Discover Groups",
+      "Find and join new community groups that match your interests."
+    );
+  }
+
+  if (section === "group-invites") {
+    return createStubSection(
+      "Group Invitations",
+      "Review pending group invitations and membership requests."
+    );
+  }
+
+  if (section === "create-group") {
+    return createStubSection(
+      "Create Group",
+      "Start a new community group and invite others to join."
+    );
+  }
+
+  // Learning/EarthLab sections
+  if (section === "my-courses") {
+    return createStubSection(
+      "My Courses",
+      "Track your enrolled courses and learning progress.",
+      "🎓"
+    );
+  }
+
+  if (section === "browse-courses") {
+    return createStubSection(
+      "Browse Courses",
+      "Explore available courses and learning materials.",
+      "📚"
+    );
+  }
+
+  if (section === "achievements") {
+    return createStubSection(
+      "Achievements",
+      "View your earned badges, certificates, and milestones.",
+      "🏆"
+    );
+  }
+
+  if (section === "learning-path") {
+    return createStubSection(
+      "Learning Path",
+      "Follow curated learning journeys and skill progressions.",
+      "🛤️"
+    );
+  }
+
+  // Threadworks sections
+  if (section === "forums") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HeadingAdmin as="h2" level="h2">🧵 All Forums</HeadingAdmin>
+          <ForumAdmin
+            groupId={null} // Get all forums across groups
+            onForumSelect={(slug) => {
+              setSelectedForumSlug?.(slug);
+              setActiveSection('forum-detail');
+            }}
+          />
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "my-forums") {
+    return createStubSection(
+      "My Forums",
+      "Forums where you're a member or moderator.",
+      "🧵"
+    );
+  }
+
+  if (section === "forum-create") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HeadingAdmin as="h2" level="h2">🧵 Create Forum</HeadingAdmin>
+          <GroupForumCreateWorkArea
+            group={null} // TODO: Update for cross-group forum creation
+            onSuccess={() => {
+              setActiveSection('forums');
+            }}
+          />
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "forum-detail") {
+    return (
+      <WorkAreaWrapper>
+        <ForumDetailPage
+          forumSlug={selectedForumSlug!}
+          onBack={() => {
+            setSelectedForumSlug?.(null);
+            setActiveSection('forums');
+          }}
+          onTopicSelect={(topic) => {
+            console.log('Selected topic:', topic);
+          }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+
+  // Writing/Almanac sections
+  if (section === "new-post") {
+    return <WriteWorkArea />;
+    // return createStubSection(
+    //   "New Post",
+    //   "Create a new post for your group or personal blog.",
+    //   "📝"
+    // );
+  }
+
+  // Other admin sections
+  if ((isAdmin || isSteward) && section === "content-management") {
+    return createStubSection(
+      "Content Management",
+      "Manage courses, posts, and community content.",
+      "📝"
+    );
+  }
+
+  if ((isAdmin || isSteward) && section === "system-health") {
+    return createStubSection(
+      "System Health",
+      "Monitor application performance and system status.",
+      "🏥"
+    );
+  }
+
+  // Admin-only sections
+  if (isAdmin && section === "site-settings") {
+    return createStubSection(
+      "Site Settings",
+      "Configure global site settings and policies.",
+      "🔧"
+    );
+  }
+
+  if (isAdmin && section === "permissions") {
+    return createStubSection(
+      "Permissions",
+      "Manage roles, permissions, and access controls.",
+      "🔐"
+    );
+  }
+
+  // Fallback for unknown sections
+  return createStubSection(
+    `Section: ${section}`,
+    "This section is under development."
+  );
+}
+
+// Remove the placeholder components since we're using stubs now
+

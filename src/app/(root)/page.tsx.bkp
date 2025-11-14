@@ -1,0 +1,281 @@
+// // app/(root)/page.tsx
+
+// "use client";
+
+// import {
+//   Box,
+//   Container,
+//   // Heading,
+//   Text,
+//   Button,
+//   Stack,
+//   HStack,
+//   Icon,
+// } from "@chakra-ui/react";
+// import { Divider } from "@components/common/Divider";
+// import { HeadingFront } from "@theme/recipes/heading-front.recipe";
+// import {
+//   FaCode,
+//   FaProjectDiagram,
+//   FaRocket,
+//   FaCogs,
+//   FaDatabase,
+// } from "react-icons/fa";
+// // import { useRouter } from "next/router";
+
+// export default function HomePage() {
+//   // const router = useRouter();
+//   return (
+//     <Box as="main" x-bg="gray.50" minH="100vh" py={{ base: 8, md: 16 }}>
+//       <Container maxW="container.lg">
+//         {/* Hero Section */}
+//         <Stack gap={6} align="center" textAlign="center">
+//           <HeadingFront
+//             level="h1"
+//             color="brand.700"
+//           >
+//             Mindful Brilliance
+//           </HeadingFront>
+//           <Text fontSize={{ base: "md", md: "lg" }} maxW="2xl">
+//             Building modern digital ecosystems for communities, collaboration, and creative knowledge.
+//           </Text>
+//           {/* <Button
+//             size="lg"
+//             colorScheme="brand"
+//             as="a"
+//             // href="#contact"
+//             onClick={() => router.replace("/contact")}
+//           >
+//             Connect with Us
+//           </Button> */}
+//         </Stack>
+
+//         <Divider my={12} />
+
+//         {/* Mindful Brilliance Section */}
+//         <Stack gap={8}>
+//           <HStack gap={3}>
+//             <Icon as={FaCogs} boxSize={6} color="brand.600" />
+//             <HeadingFront level="h2" color="brand.600">
+//               About Mindful Brilliance
+//             </HeadingFront>
+//           </HStack>
+
+//           {/* Full-width intro text */}
+//           <Text fontSize="md">
+//             Mindful Brilliance is the creative and technical team behind Mixtape—and behind countless successful
+//             projects for clients and partners across industries. We bring decades of experience in:
+//           </Text>
+
+//           {/* Two-column grid */}
+//           <Box
+//             display={{ base: "block", md: "grid" }}
+//             gridTemplateColumns={{ md: "1fr 1fr" }}
+//             gap={8}
+//           >
+//             {/* Left box - skills list */}
+//             <Box>
+//               <Box as="ul" pl={5}>
+//                 <Box as="li" mb={2}>
+//                   Full-stack web development with Django, Python, React, Next.js, Node.js, and modern front-end frameworks.
+//                 </Box>
+//                 <Box as="li" mb={2}>
+//                   Real-time applications using WebSockets, Socket.io, and event-driven architectures.
+//                 </Box>
+//                 <Box as="li" mb={2}>
+//                   AI integrations with tools like LlamaCPP, LangChain, and GPT-based technologies.
+//                 </Box>
+//                 <Box as="li" mb={2}>
+//                   Robust DevOps and architecture, including Docker, CI/CD pipelines, and scalable cloud deployments.
+//                 </Box>
+//                 <Box as="li" mb={2}>
+//                   Business analysis and information architecture for translating complex requirements into elegant solutions.
+//                 </Box>
+//               </Box>
+//             </Box>
+
+//             {/* Right box - Data & Systems Migration */}
+//             <Box>
+//               <HeadingFront level="h3" color="brand.600" mb={4}>
+//                 Data & Systems Migration
+//               </HeadingFront>
+//               <Text fontSize="md" mb={2}>
+//                 Data and systems migration is one of Mindful Brilliance’s core strengths. We specialize in helping
+//                 organizations modernize their technology ecosystems while preserving critical data and business processes.
+//               </Text>
+//               <Text fontSize="md">
+//                 From migrating legacy CMS platforms, ERP systems, and custom databases to orchestrating cloud transitions,
+//                 our team ensures a smooth path forward. We focus on accuracy, data integrity, and minimal downtime—transforming
+//                 complex migrations into successful, seamless upgrades.
+//               </Text>
+//             </Box>
+//           </Box>
+
+//           {/* Closing full-width paragraph */}
+//           <Text fontSize="md">
+//             From healthcare and government to publishing, finance, and creative industries, we thrive on building humane,
+//             innovative solutions with clients who care about quality—and people.
+//           </Text>
+//         </Stack>
+
+//         <Divider my={12} />
+
+//         {/* Mixtape Section */}
+//         <Stack gap={4}>
+//           <HStack gap={3}>
+//             <Icon as={FaProjectDiagram} boxSize={6} color="brand.600" />
+//             <HeadingFront level="h2" color="brand.600">
+//               About Mixtape
+//             </HeadingFront>
+//           </HStack>
+//           <Text fontSize="md">
+//             Mixtape is a modern digital ecosystem designed to empower communities, foster real-time collaboration,
+//             and curate knowledge in creative ways. Built with cutting-edge technologies, Mixtape integrates real-time
+//             messaging, visual relationship mapping, curated content collections, and robust user management—all with
+//             an emphasis on performance, scalability, and exceptional user experience.
+//           </Text>
+//           <Text fontSize="md">
+//             Developed by Mindful Brilliance, Mixtape isn’t just software—it’s a flexible platform adaptable to diverse
+//             industries and creative visions. From non-profits to publishers to data-driven organizations, Mixtape provides
+//             the building blocks for meaningful digital spaces.
+//           </Text>
+//         </Stack>
+
+//         <Divider my={12} />
+
+//         {/* Crossroads Section */}
+//         <Stack gap={4}>
+//           <HStack gap={3}>
+//             <Icon as={FaRocket} boxSize={6} color="brand.600" />
+//             <HeadingFront level="h2" color="brand.600">
+//               About Crossroads
+//             </HeadingFront>
+//           </HStack>
+//           <Text fontSize="md">
+//             Crossroads is a distinct community software project built by Mindful Brilliance. It provides robust tools
+//             for managing member interactions, communication flows, and dynamic content spaces—all in an intuitive,
+//             modern interface. Crossroads empowers organizations and groups to build thriving communities tailored
+//             to their unique missions and audiences.
+//           </Text>
+//           <Text fontSize="md">
+//             Leveraging technologies like Next.js, Chakra UI, and powerful backend frameworks, Crossroads is designed
+//             for scalability, flexibility, and seamless integration into diverse digital ecosystems.
+//           </Text>
+//         </Stack>
+
+//         <Divider my={12} />
+
+//         {/* Contact Section */}
+//         <Stack gap={4} id="contact" textAlign="center">
+//           <HeadingFront level="h2" color="brand.600">
+//             Ready to Collaborate?
+//           </HeadingFront>
+//           <Text fontSize="md">
+//             Whether you’re interested in Mixtape, Crossroads, or looking for a trusted development partner, we’d love to hear from you.
+//           </Text>
+//           {/* <Button size="lg" colorScheme="brand" as="a" href="mailto:info@mindfulbrilliance.com">
+//             Contact Us
+//           </Button> */}
+//         </Stack>
+//       </Container>
+//     </Box>
+//   );
+// }
+
+
+
+// // "use client";
+
+// // import { useColorModeValue } from "@components/ui/color-mode";
+// // import {
+// //   Box,
+// //   Heading,
+// //   Text,
+// //   VStack,
+// // } from "@chakra-ui/react";
+
+// // export default function HomePage() {
+
+// //   return (
+// //     <Box className="root-page">
+// //       <VStack className="home-content" align="start" padding={8}>
+// //         <Box>
+// //           <Heading size="2xl" color="brand.main1">🎧 Mixtape</Heading>
+// //           <Heading size="md" mt={2}>
+// //             A curated, evolving Retrieval-Augmented Generation system that improves over time through human-AI feedback loops.
+// //           </Heading>
+// //           <Text mt={4}>
+// //             <strong>Mixtape</strong> is your secure, intelligent, and social knowledge companion. Built around curation, connection, and collaboration.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">🌟 Why Mixtape?</Heading>
+// //           <Box as="ul" listStyleType="circle">
+// //             <Box as="li" >Curated by your team — not scraped from the web</Box>
+// //             <Box as="li">Private, secure, and explainable</Box>
+// //             <Box as="li">Evolves over time with your input</Box>
+// //             <Box as="li">Transparent sources, grounded answers</Box>
+// //           </Box>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">🧑‍💼 Mixtape Hub</Heading>
+// //           <Text mt={2}>
+// //             Your member profile and home base — view your Circles, Gatherings, messages, and offerings. Customize your presence and connect meaningfully.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">📚 Mixtape RAG</Heading>
+// //           <Text mt={2}>
+// //             Your private AI research assistant. Built on curated documents like <em>cdoc</em> and <em>Gutenberg25</em>. FastAPI + LLM powered, with metadata-rich chunking and retrieval.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">💬 Mixtape Chat</Heading>
+// //           <Text mt={2}>
+// //             Chat is the glue — supporting 1-on-1, group threads, and persistent knowledge exchanges across the Mixtape ecosystem.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">🌐 Mixtape Crossroads</Heading>
+// //           <Box as="ul" listStyleType="circle">
+// //             <Box as="li">
+// //               <strong>Circles</strong>: Persistent groups of members, aligned by purpose
+// //             </Box>
+// //             <Box as="li">
+// //               <strong>Gatherings</strong>: Time-bound sessions or collaborations
+// //             </Box>
+// //             <Box as="li">
+// //               <strong>Offerings</strong>: Courses, assets, and curated materials shared with others
+// //             </Box>
+// //           </Box>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">🧠 Constellation</Heading>
+// //           <Text mt={2}>
+// //             A graph of trusted, reciprocal connections between members, circles, and gatherings. Think of it as Mixtape’s memory of collaboration and learning.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">🖥️ Mixtape Web</Heading>
+// //           <Text mt={2}>
+// //             This site is the front door — with signups, tiers, and access to the evolving platform.
+// //           </Text>
+// //         </Box>
+
+// //         <Box>
+// //           <Heading size="lg" color="brand.main3">📬 Stay in the Loop</Heading>
+// //           <Text mt={2}>
+// //             Join our newsletter to get early access, updates, and curated content from across the Mixtape universe.
+// //           </Text>
+// //         </Box>
+// //       </VStack>
+// //     </Box>
+// //   );
+// // }

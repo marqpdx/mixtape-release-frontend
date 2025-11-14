@@ -1,0 +1,12 @@
+// /app/(auth)/register/page.tsx
+
+"use client";
+
+import AuthPage from "@components/auth/AuthPage";
+
+export default function ForgotPassword() {
+  return <Auth
+  Page type="forgotPassword" />;
+}
+
+ForgotPassword.layout = "auth";

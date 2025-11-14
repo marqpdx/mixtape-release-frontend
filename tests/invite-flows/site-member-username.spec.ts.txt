@@ -1,0 +1,84 @@
+// tests/invite-flows/site-member-username.spec.ts
+
+// test failing, but works in real life.
+
+import { test, expect } from '@playwright/test';
+import { EmailHelper } from '../helpers/email-helper';
+import { NavigationHelper } from '../helpers/navigation-helper';
+
+test.describe('Site member @username invite flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await EmailHelper.clearEmails(page);
+  });
+
+  test('should invite existing site member via @username', async ({ page }) => {
+    const existingUsername = 'existinguser';
+
+    // Login as admin
+    await page.goto('/login');
+    await page.fill('input[name="identifier"]', 'admin@mixtape.com');
+    await page.fill('input[name="password"]', 'testpassword123');
+    await page.click('[data-testid="login-button"]');
+    await page.waitForURL('**/admin');
+
+    // Navigate to invitations
+    await NavigationHelper.navigateToInvitations(page, 'test-group');
+
+    // Type the username to trigger autocomplete
+    await page.fill('[data-testid="invite-input"]', `@${existingUsername}`);
+
+    // Wait for suggestions to appear and click the first one
+    await page.waitForSelector('[data-testid="user-suggestion-item"]', { timeout: 5000 });
+    await page.click('[data-testid="user-suggestion-item"]');
+
+    // Send invite
+    await page.click('[data-testid="send-invite-button"]');
+
+    // Wait for processing
+    await page.waitForTimeout(2000);
+
+    // Verify email sent via API
+    const emailData = await EmailHelper.getLastEmail(page);
+    expect(emailData.to).toContain('existinguser@mixtape.com');
+
+    // Logout
+    await page.click('[data-testid="user-menu"]');
+    await page.click('[data-testid="logout-button"]');
+    await page.waitForURL('**/login');
+
+    // Login as invited user
+    await page.fill('input[name="identifier"]', 'existinguser@mixtape.com');
+    await page.fill('input[name="password"]', 'userpassword123');
+    await page.click('[data-testid="login-button"]');
+    await page.waitForURL('**/dashboard');
+
+    // Verify group appears in My Groups
+    await NavigationHelper.navigateToMyGroups(page);
+    await expect(page.locator('[data-testid="group-card"]')).toContainText('Test Group');
+  });
+
+  test('should send email for site members', async ({ page }) => {
+    const existingUsername = 'existinguser';
+
+    await page.goto('/login');
+    await page.fill('input[name="identifier"]', 'admin@mixtape.com');
+    await page.fill('input[name="password"]', 'testpassword123');
+    await page.click('[data-testid="login-button"]');
+    await page.waitForURL('**/admin');
+
+    await NavigationHelper.navigateToInvitations(page, 'test-group');
+
+    // Type and select from autocomplete
+    await page.fill('[data-testid="invite-input"]', `@${existingUsername}`);
+
+    await page.waitForSelector('[data-testid="user-suggestion-item"]');
+    await page.click('[data-testid="user-suggestion-item"]');
+
+    await page.click('[data-testid="send-invite-button"]');
+    await page.waitForTimeout(2000);
+
+    // Verify email was sent
+    const emailData = await EmailHelper.getLastEmail(page);
+    expect(emailData.to).toContain('existinguser@mixtape.com');
+  });
+});

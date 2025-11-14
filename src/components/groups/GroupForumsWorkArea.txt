@@ -1,0 +1,34 @@
+// src/components/groups/GroupForumsWorkArea.tsx
+
+"use client"
+
+import { useEffect, useState } from "react"
+import { axiosInstance } from "@providers/auth-provider/axiosInstance"
+import ForumListGrid from "@components/threadworks/ForumListGrid"
+import { Forum } from "@components/threadworks/interfaces"
+
+interface GroupForumsWorkAreaProps {
+  groupId: string
+}
+
+export default function GroupForumsWorkArea({ groupId }: GroupForumsWorkAreaProps) {
+  const [forums, setForums] = useState<Forum[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchGroupForums()
+  }, [])
+
+  const fetchGroupForums = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/threadworks?group_id=${groupId}`)
+      setForums(response.data.results)
+    } catch (err) {
+      console.error("Failed to load group forums", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return <ForumListGrid forums={forums} />
+}

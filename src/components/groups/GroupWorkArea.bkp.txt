@@ -1,0 +1,251 @@
+// src/components/groups/GroupWorkArea.tsx
+
+// TODO convert this to use the new generic admin area stuff
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Box, Text } from "@chakra-ui/react";
+import GroupShowPage from "@app/(protected)/groups/[slug]/show/page";
+
+import { GroupPostForm } from "./GroupPostForm";
+import GroupEditForm from "./GroupEditForm";
+import GroupActivityDashboard from "./GroupActivityDashboard";
+import MembersAndRoles from "./MembersAndRoles";
+import GroupInvitations from "./GroupInvitations";
+import GroupAssetsWorkArea from "./assets/GroupAssetsWorkArea";
+import GroupPostList from "./GroupPostList";
+import LanternMailWorkArea from "../lantern/LanternMailWorkArea";
+import CreateListWorkArea from "@components/lantern/CreateListWorkArea";
+import GroupForumCreateWorkArea from "./GroupForumCreateWorkArea";
+import GroupForumsWorkArea from "./GroupForumsWorkArea";
+import ForumAdmin from "@components/threadworks/ForumAdmin";
+import ForumDetailPage from "@components/threadworks/ForumDetailPage";
+import { GroupEventsWorkArea } from "./GroupEventsWorkArea";
+import { GroupEventCreateWorkArea } from "./GroupEventCreateWorkArea";
+
+// Wrapper to standardize layout/padding/etc.
+function WorkAreaWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <Box px={4} py={2}>
+      {children}
+    </Box>
+  );
+}
+
+export interface GroupWorkAreaProps {
+  section: string;
+  group: any;
+  setActiveSection: (sectionKey: string) => void;
+  highlightedMemberId: number | null;
+  setHighlightedMemberId: (id: number | null) => void;
+}
+
+export default function GroupWorkArea({
+  section,
+  group,
+  setActiveSection,
+  highlightedMemberId,
+  setHighlightedMemberId,
+}: GroupWorkAreaProps) {
+  // const [selectedForumSlug, setSelectedForumSlug] = useState<string | null>(null)
+  const [selectedForumSlug, setSelectedForumSlug] = useState<string | null>(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`lastForumVisited_${group.id}`) || null;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (selectedForumSlug) {
+      localStorage.setItem(`lastForumVisited_${group.id}`, selectedForumSlug);
+    } else {
+      localStorage.removeItem(`lastForumVisited_${group.id}`);
+    }
+  }, [selectedForumSlug, group.id]);
+
+  const SECTION_COMPONENTS: Record<string, React.ReactElement> = {
+    membersAndRoles: (
+      <WorkAreaWrapper>
+        <MembersAndRoles
+          members={group.members}
+          highlightedMemberId={highlightedMemberId}
+          setHighlightedMemberId={setHighlightedMemberId}
+          groupSlug={group.slug}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    editGroupDetails: (
+      <WorkAreaWrapper>
+        <GroupEditForm
+          group={group}
+          onSuccess={() => {
+            // optionally refresh data
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    preview: (
+      <WorkAreaWrapper>
+        <GroupShowPage />
+      </WorkAreaWrapper>
+    ),
+
+    groupPostList: (
+      <WorkAreaWrapper>
+        <GroupPostList groupSlug={group.slug} />
+      </WorkAreaWrapper>
+    ),
+
+
+    // Threadworks sections
+
+    forumCreate: (
+      <WorkAreaWrapper>
+        <GroupForumCreateWorkArea
+          group={group}
+          onSuccess={() => {
+            setActiveSection('forums') // Back to forums after creating
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+    forums: (
+      <WorkAreaWrapper>
+        <ForumAdmin
+          groupId={group.id}
+          onForumSelect={(slug) => {
+            setSelectedForumSlug(slug)
+            setActiveSection('forum_detail') // Switch to detail section
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    forumDetail: (
+      <WorkAreaWrapper>
+        <ForumDetailPage
+          forumSlug={selectedForumSlug!}
+          onBack={() => {
+            setSelectedForumSlug(null)
+            setActiveSection('forums') // Back to forum list
+          }}
+          onTopicSelect={(topic) => {
+            // Handle topic selection - maybe another section?
+            console.log('Selected topic:', topic)
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+
+
+    // Almanac sections
+
+    events: (
+      <WorkAreaWrapper>
+        <GroupEventsWorkArea groupId={group.id} />
+      </WorkAreaWrapper>
+    ),
+
+    eventCreate: (
+      <WorkAreaWrapper>
+        <GroupEventCreateWorkArea
+          groupId={group.id}
+          onSuccess={() => {
+            setActiveSection('events') // Back to events list after creating
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+
+
+
+
+
+
+
+
+    // Miscellaneous sections
+
+    posts: (
+      <WorkAreaWrapper>
+        <GroupPostForm
+          slug={group.slug}
+          onPostCreated={() => {
+            // optionally refresh list
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    groupAssets: (
+      <WorkAreaWrapper>
+        <GroupAssetsWorkArea
+          group={group}
+          setActiveSection={setActiveSection}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    groupInvitations: (
+      <WorkAreaWrapper>
+        <GroupInvitations slug={group.slug} />
+      </WorkAreaWrapper>
+    ),
+
+    edit: (
+      <WorkAreaWrapper>
+        <Text fontWeight="bold">Edit Group Details (placeholder)</Text>
+      </WorkAreaWrapper>
+    ),
+
+    analytics: (
+      <WorkAreaWrapper>
+        <Text fontWeight="bold">Analytics (placeholder)</Text>
+      </WorkAreaWrapper>
+    ),
+
+    recentActivity: (
+      <WorkAreaWrapper>
+        <GroupActivityDashboard
+          group={group}
+          setActiveSection={setActiveSection}
+          setHighlightedMemberId={setHighlightedMemberId}
+          onViewAll={(sectionKey) => {
+            setActiveSection(sectionKey);
+          }}
+        />
+      </WorkAreaWrapper>
+    ),
+
+    // 🏮 Lantern Mail entry point
+    lanternMail: (
+      <WorkAreaWrapper>
+        <LanternMailWorkArea group={group} />
+      </WorkAreaWrapper>
+    ),
+    createLanternList: (
+      <WorkAreaWrapper>
+        <CreateListWorkArea group={group} />
+      </WorkAreaWrapper>
+    ),
+
+
+
+
+
+  };
+
+
+  return SECTION_COMPONENTS[section] || (
+    <WorkAreaWrapper>
+      <Text>Select a section to begin.</Text>
+    </WorkAreaWrapper>
+  );
+}
+

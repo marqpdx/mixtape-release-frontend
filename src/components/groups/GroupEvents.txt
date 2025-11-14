@@ -1,0 +1,65 @@
+// src/components/groups/GroupEvents.tsx
+
+import React from 'react';
+import { VStack, Text, Button, SimpleGrid } from '@chakra-ui/react';
+import { Card } from '@chakra-ui/react';
+import { Icon } from '@chakra-ui/react';
+import { IconPlus, IconCalendar } from '@tabler/icons-react';
+
+interface GroupEventsProps {
+  group: any;
+  onCreateEvent: () => void;
+}
+
+export default function GroupEvents({ group, onCreateEvent }: GroupEventsProps) {
+  return (
+    <VStack align="stretch" gap={6}>
+      <VStack align="start" gap={2}>
+        <Text fontSize="xl" fontWeight="bold">
+          Group Events
+        </Text>
+        <Button
+          colorScheme="green"
+          onClick={onCreateEvent}
+        >
+          <Icon as={IconPlus} />
+          Create Event
+        </Button>
+      </VStack>
+
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+        <Card.Root>
+          <Card.Header>
+            <Text fontWeight="semibold">Upcoming Events</Text>
+          </Card.Header>
+          <Card.Body>
+            <VStack align="center" py={8}>
+              <Icon as={IconCalendar} boxSize={12} color="gray.400" />
+              <Text color="gray.500" textAlign="center">
+                No upcoming events
+              </Text>
+            </VStack>
+          </Card.Body>
+        </Card.Root>
+
+        <Card.Root>
+          <Card.Header>
+            <Text fontWeight="semibold">Past Events</Text>
+          </Card.Header>
+          <Card.Body>
+            <VStack align="center" py={8}>
+              <Icon as={IconCalendar} boxSize={12} color="gray.400" />
+              <Text color="gray.500" textAlign="center">
+                No past events
+              </Text>
+            </VStack>
+          </Card.Body>
+        </Card.Root>
+      </SimpleGrid>
+
+      <Text color="gray.600">
+        Event management system coming soon with calendar integration and RSVP tracking.
+      </Text>
+    </VStack>
+  );
+}
