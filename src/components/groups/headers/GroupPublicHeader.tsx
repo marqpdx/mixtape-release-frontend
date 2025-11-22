@@ -12,7 +12,7 @@ import {
   AvatarGroup,
   Avatar,
 } from "@chakra-ui/react";
-import { GroupHeaderWrapper } from "../GroupHeaderWrapper";
+import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 interface GroupPublicHeaderProps {
   group: any;
@@ -32,6 +32,13 @@ export function GroupPublicHeader({
   onJoinGroup,
 }: GroupPublicHeaderProps) {
   const canJoin = group.visibility === 'public' && group.join_policy !== 'closed';
+
+  const groupAvatarRaw = group.avatar ?? null;
+
+  const groupAvatar =
+    groupAvatarRaw && groupAvatarRaw.trim() !== ""
+      ? groupAvatarRaw.trim()
+      : undefined;
 
   return (
     <GroupHeaderWrapper
@@ -62,7 +69,7 @@ export function GroupPublicHeader({
           <HStack align="end" gap={4}>
             <AvatarGroup>
               <Avatar.Root size="xl" border="3px solid white">
-                <Avatar.Image src={group.avatar} />
+                <Avatar.Image src={groupAvatar} />
                 <Avatar.Fallback>{group.title?.charAt(0) || 'G'}</Avatar.Fallback>
               </Avatar.Root>
             </AvatarGroup>

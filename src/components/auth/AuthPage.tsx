@@ -2,7 +2,7 @@
 
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
@@ -15,11 +15,23 @@ type AuthPageProps = {
 export const AuthPage: React.FC<AuthPageProps> = ({ type }) => {
   switch (type) {
     case "register":
-      return <RegisterPage />;
+      return (
+        <Suspense fallback={null}>
+          <RegisterPage />;
+        </Suspense>
+      )
     case "resetPassword":
-      return <ForgotPasswordPage />;
+      return (
+        <Suspense fallback={null}>
+            <ForgotPasswordPage />;
+        </Suspense>
+      )
     default:
-      return <LoginPage />;
+      return (
+        <Suspense fallback={null}>
+          <LoginPage />
+        </Suspense>
+      );
   }
 };
 

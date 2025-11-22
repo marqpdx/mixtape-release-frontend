@@ -5,26 +5,18 @@ import { VStack, Text, Button, useDisclosure } from "@chakra-ui/react";
 
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
-import { UserIdentity } from "@components/auth/interfaces";
+// import { UserIdentity } from "@components/auth/interfaces";
 
 // Import group-specific components
 import GroupOverview from "@components/groups/GroupOverview";
-import CourseForm from "@components/earthlab/CourseForm";
-import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
+// import CourseForm from "@components/earthlab/CourseForm";
+// import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
 import { useRouter } from "next/navigation";
-import GroupDetailWrapper from "@components/groups/GroupDetailWrapper";
-import GroupWritingWrapper from "@components/groups/writing/GroupWritingWrapper";
-import GroupWriteWrapper from "@components/groups/writing/GroupWriteWrapper";
-import { useGroupMembers } from "@hooks/useGroups";
-import { useSiteMembers } from "@hooks/useMembers";
-import { GroupMemberList } from "@components/groups/GroupMemberList";
-import GroupActivityDashboard from "@components/groups/GroupActivityDashboard";
-import ThreadworksWorkArea from "@components/threadworks/ThreadworksWorkArea";
-import CourseCatalogPage from "@app/(authenticated)/demos/earthlab/page";
-import { GroupEventsWorkArea } from "@components/groups/GroupEventsWorkArea";
-import { GroupEventCreateWorkArea } from "@components/groups/GroupEventCreateWorkArea";
-import { EarthLabWorkArea } from "@components/earthlab/EarthLabWorkArea";
-import { CourseDetailsWorkArea } from "@components/earthlab/CourseDetailsWorkArea";
+import { useMembers } from "@hooks/useMembers";
+import { UserIdentity } from "@/types/auth";
+import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
+import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
+import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: any;
@@ -51,11 +43,9 @@ export default function GroupWorkArea({
   const [composerPieceId, setComposerPieceId] = useState<string | null>(null);
   const openComposer = (id: string) => { setComposerPieceId(id); composerDisclosure.onOpen(); };
 
-  const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useGroupMembers(group.slug);
-  const { members: allSiteMembers, isLoading: siteMembersLoading } = useSiteMembers();
+  const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
 
   const stableMembers = useMemo(() => groupMembers || [], [groupMembers]);
-  const stableSiteMembers = useMemo(() => allSiteMembers || [], [allSiteMembers]);
 
   const router = useRouter();
 
@@ -73,32 +63,32 @@ export default function GroupWorkArea({
     );
   }
 
-  if (section === "activity") {
-    return (
-      <WorkAreaWrapper>
-        <GroupActivityDashboard
-          group={group}
-          setActiveSection={setActiveSection}
-          // setHighlightedMemberId={setHighlightedMemberId}
-          onViewAll={(sectionKey) => {
-            setActiveSection(sectionKey);
-          }}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "activity") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupActivityDashboard
+  //         group={group}
+  //         setActiveSection={setActiveSection}
+  //         // setHighlightedMemberId={setHighlightedMemberId}
+  //         onViewAll={(sectionKey) => {
+  //           setActiveSection(sectionKey);
+  //         }}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  // Communications
-  if (section === "threadworks") {
-    return (
-      <ThreadworksWorkArea
-        section={section}
-        sectionParams={sectionParams}
-        setActiveSection={setActiveSection}
-        groupSlug={group.slug}
-      />
-    );
-  }
+  // // Communications
+  // if (section === "threadworks") {
+  //   return (
+  //     <ThreadworksWorkArea
+  //       section={section}
+  //       sectionParams={sectionParams}
+  //       setActiveSection={setActiveSection}
+  //       groupSlug={group.slug}
+  //     />
+  //   );
+  // }
 
   // Members sections
   if (section === "members-roles") {
@@ -124,117 +114,123 @@ export default function GroupWorkArea({
   }
 
   if (section === "invitations") {
+    // Note: allSiteMembers currently not fetched - GroupInviteForm will fall back to groupMembers
+    // TODO: To enable site-wide member search, add:
+    // const { data: allProfiles, isLoading: profilesLoading } = useQuery({
+    //   queryKey: ['profiles', 'all'],
+    //   queryFn: () => fetch('/api/profiles').then(r => r.json())
+    // });
     return (
       <WorkAreaWrapper>
         <GroupInviteWorkArea
           groupSlug={group.slug}
           onMembersRefetch={refetch}
           groupMembers={stableMembers}
-          allSiteMembers={stableSiteMembers}
-          siteMembersLoading={siteMembersLoading}
+          allSiteMembers={[]}
+          siteMembersLoading={false}
         />
       </WorkAreaWrapper>
     );
   }
 
-  // Writing sections
-  if (section === "writing") {
-    return (
-      <WorkAreaWrapper>
-        <GroupWritingWrapper
-          groupSlug={group.slug}
-          groupId={group.id}
-          groupName={group.name}
-          setActiveSection={setActiveSection}
-          onPublished={(piece) => {
-            // Handle the published piece
-          }}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // // Writing sections
+  // if (section === "writing") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupWritingWrapper
+  //         groupSlug={group.slug}
+  //         groupId={group.id}
+  //         groupName={group.name}
+  //         setActiveSection={setActiveSection}
+  //         onPublished={(piece) => {
+  //           // Handle the published piece
+  //         }}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  if (section === "create-writing") {
-    return (
-      <WorkAreaWrapper>
-        <GroupWriteWrapper
-          groupSlug={group.slug}
-          groupId={group.id}
-          groupName={group.name}
-          writingKind="post"
-          // No pieceSlug = create new piece
-          onPublished={(piece) => router.push(`/groups/${group.slug}/posts/${piece.slug}`)}
-        />
-      </WorkAreaWrapper>
-    );
-  }
-
-
-  if (section === "do-writing") {
-    const pieceSlug = sectionParams?.piece;
-    return (
-      <WorkAreaWrapper>
-        <GroupWriteWrapper
-          groupSlug={group.slug}
-          groupId={group.id}
-          groupName={group.name}
-          pieceSlug={pieceSlug} // Pass the existing piece to edit
-          onPublished={(piece) => router.push(`/groups/${group.slug}/writing/${piece.slug}`)}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "create-writing") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupWriteWrapper
+  //         groupSlug={group.slug}
+  //         groupId={group.id}
+  //         groupName={group.name}
+  //         writingKind="post"
+  //         // No pieceSlug = create new piece
+  //         onPublished={(piece) => router.push(`/groups/${group.slug}/posts/${piece.slug}`)}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
 
-  // Events
-  if (section === "events-landing") {
-    return (
-      <WorkAreaWrapper>
-        <Text>dkdkd</Text>
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "do-writing") {
+  //   const pieceSlug = sectionParams?.piece;
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupWriteWrapper
+  //         groupSlug={group.slug}
+  //         groupId={group.id}
+  //         groupName={group.name}
+  //         pieceSlug={pieceSlug} // Pass the existing piece to edit
+  //         onPublished={(piece) => router.push(`/groups/${group.slug}/writing/${piece.slug}`)}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  // Events 2
-  if (section === "events-2") {
-    return (
-      <WorkAreaWrapper>
-        <GroupEventsWorkArea groupSlug={group.slug} />
-      </WorkAreaWrapper>
-    );
-  }
 
-  if (section === "create-event") {
-    return (
-      <WorkAreaWrapper>
-        <GroupEventCreateWorkArea groupSlug={group.slug} />
-      </WorkAreaWrapper>
-    );
-  }
+  // // Events
+  // if (section === "events-landing") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <Text>dkdkd</Text>
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  // EarthLab sections
-  // Update the CourseList import and usage in GroupWorkArea.tsx
-  if (section === "earthlab") {
-    return (
-      <WorkAreaWrapper>
-        <EarthLabWorkArea
-          groupSlug={group.slug}
-          setActiveSection={setActiveSection}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // // Events 2
+  // if (section === "events-2") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupEventsWorkArea groupSlug={group.slug} />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  if (section === "course-detail") {
-    const courseIdToEdit = sectionParams?.courseId;
-    return (
-      <CourseDetailsWorkArea
-        groupSlug={group.slug}
-        courseIdToEdit={courseIdToEdit}
-        onBack={() => setActiveSection("earthlab")}
-      />
-    );
-  }
+  // if (section === "create-event") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupEventCreateWorkArea groupSlug={group.slug} />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
+
+  // // EarthLab sections
+  // // Update the CourseList import and usage in GroupWorkArea.tsx
+  // if (section === "earthlab") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <EarthLabWorkArea
+  //         groupSlug={group.slug}
+  //         setActiveSection={setActiveSection}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
+
+  // if (section === "course-detail") {
+  //   const courseIdToEdit = sectionParams?.courseId;
+  //   return (
+  //     <CourseDetailsWorkArea
+  //       groupSlug={group.slug}
+  //       courseIdToEdit={courseIdToEdit}
+  //       onBack={() => setActiveSection("earthlab")}
+  //     />
+  //   );
+  // }
 
   // Settings sections
 
@@ -252,16 +248,16 @@ export default function GroupWorkArea({
   }
 
 
-  if (section === "group-details") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">Group Details</Text>
-          <Text>Group settings coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "group-details") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <VStack align="stretch" gap={4}>
+  //         <Text fontSize="xl" fontWeight="bold">Group Details</Text>
+  //         <Text>Group settings coming soon...</Text>
+  //       </VStack>
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
   // Default fallback
   return (

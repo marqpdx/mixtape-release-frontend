@@ -4,7 +4,7 @@
 
 // src/components/dashboard/WorkAreaFactory.tsx
 
-import AdminWorkArea from './admin/AdminWorkArea';
+// import AdminWorkArea from './admin/AdminWorkArea';
 import GroupWorkArea from './group/GroupWorkArea';
 // import GroupAdminWorkArea from './group/GroupAdminWorkArea';
 import MemberWorkArea from './member/MemberWorkArea';
@@ -15,8 +15,8 @@ export function getWorkAreaComponent(type: DashboardType) {
   switch (type) {
     case 'member':
       return MemberWorkArea;
-    case 'admin':
-      return AdminWorkArea;
+    // case 'admin':
+    //   return AdminWorkArea;
     case 'groupAdmin':
       return GroupWorkArea;
     case 'sysadmin':

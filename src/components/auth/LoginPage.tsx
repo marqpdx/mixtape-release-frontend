@@ -1,4 +1,5 @@
 // src/components/auth/LoginPage.tsx
+
 "use client";
 
 import {
@@ -13,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@/components/ui/toaster";
@@ -23,6 +24,7 @@ import { LoginFormProps } from "./interfaces";
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState<LoginFormProps>({
@@ -53,10 +55,16 @@ const LoginPage: React.FC = () => {
         description: "Welcome back!",
       });
 
-      // Small delay to ensure cookie is processed, then redirect
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 100);
+      // Get redirect URL from query params, default to /dashboard
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+
+      console.log("LoginPage redirecting to:", redirectTo);
+
+      // Use router.push to avoid losing in-memory access token
+      router.push(redirectTo);
+
+      console.log("LoginPage login successful");
+
     } catch (error: any) {
       toaster.error({
         title: "Login failed",

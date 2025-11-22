@@ -2,10 +2,11 @@
 // SYSADMIN WORK AREA - Technical monitoring
 // =====================================================
 
-import { UserIdentity } from "@components/auth/interfaces";
+// import { UserIdentity } from "@components/auth/interfaces";
 import { WorkAreaProps } from "../shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 import { VStack, Text } from "@chakra-ui/react";
+import { UserIdentity } from "@/types/auth";
 
 
 // src/components/dashboard/sysadmin/SysadminWorkArea.tsx

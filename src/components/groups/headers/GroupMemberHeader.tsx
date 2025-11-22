@@ -18,7 +18,7 @@ import {
   IconNetwork,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { GroupHeaderWrapper } from "../GroupHeaderWrapper";
+import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
@@ -44,6 +44,10 @@ export function GroupMemberHeader({
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   const GroupTypeIcon = GROUP_TYPE_ICONS[group.group_type as keyof typeof GROUP_TYPE_ICONS] || IconBuildingCommunity;
+  const emblemSrc =
+    group.emblem?.size_96_url?.trim() ||
+    group.emblem?.url?.trim() ||
+    null;
 
   return (
     <GroupHeaderWrapper
@@ -58,7 +62,7 @@ export function GroupMemberHeader({
 
             {/* Right side: Group emblem */}
             <Flex alignItems="center" gap={3}>
-              <Image alt={`${group.title} emblem`} src={group.emblem?.size_96_url ?? group.emblem?.url ?? ""} />
+              <Image alt={`${group.title} emblem`} src={emblemSrc} />
             </Flex>
 
             <Box flex="1">

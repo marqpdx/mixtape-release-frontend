@@ -1,5 +1,6 @@
-// /src/app/(authenticated)/layout.tsx
-// Consolidated layout for all protected content
+// src/app/(authenticated)/layout.tsx
+
+// Consolidated layout for all authenticated content
 
 "use client";
 
@@ -13,7 +14,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 // import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
 // import AdminSeedButtonWithModal from "@components/writing/AdminSeedButtonWithModal";
 // import Footer from "@components/layout/Footer";
-// import UnifiedNavbar from "@components/layout/UnifiedNavbar";
+import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 // import PageContainer from "@components/layout/PageContainer";
 // TODO: Re-enable when chat features are implemented
 // import { ChatUnreadProvider } from "contexts/ChatUnreadContext";
@@ -75,9 +76,17 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
   // ✅ Main auth effect - now properly awaits validation
   useEffect(() => {
+    console.log('[AuthenticatedLayout] Auth check:', {
+      identityLoading,
+      isAuthenticated,
+      hasUser: !!user,
+      userEmail: user?.email
+    });
+
     if (identityLoading) return;
 
     if (!isAuthenticated || !user) {
+      console.log('[AuthenticatedLayout] Not authenticated, redirecting to login');
       router.replace("/login");
       return;
     }
@@ -136,21 +145,17 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       {/* <ChatRealtimeWire /> */}
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
-        {/* <UnifiedNavbar compact={isAdminPath} /> */}
+        <UnifiedNavbar compact={isAdminPath} />
 
         <Box
+          as="main"
+          id="main-content"
+          role="main"
           className="main-authenticated-layout"
-          textStyle="body"
-          my={0}
-          p={0}
-          maxW="100%"
-          bg={bgColor}
-          color={textColor}
-          minH="100vh"
         >
           {/* <PageContainer> */}
             {children}
-            {/* </PageContainer> */}
+          {/* </PageContainer> */}
         </Box>
       </Box>
 

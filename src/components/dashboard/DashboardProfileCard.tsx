@@ -2,18 +2,20 @@
 
 "use client";
 
+import { UserIdentity } from "@/types/auth";
 import {
   Box,
   Flex,
   Text,
   Heading,
   Badge,
+  Button,
   Image,
 } from "@chakra-ui/react";
 import { AvatarGroup, Avatar } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { UserIdentity } from "@components/auth/interfaces";
-import { Button } from "@theme/recipes/button.recipe";
+// import { UserIdentity } from "@components/auth/interfaces";
+// import { Button } from "@theme/recipes/button.recipe";
 
 interface DashboardProfileCardProps {
   identity: UserIdentity;
@@ -41,7 +43,7 @@ export const DashboardProfileCard = ({
       p={4}
       mb={6}
     >
-      {identity.profile?.background_image && (
+      {/* {identity.profile?.background_image && (
         <Image
           src={identity.profile.background_image}
           alt="Profile banner"
@@ -51,7 +53,7 @@ export const DashboardProfileCard = ({
           borderRadius="md"
           mb={4}
         />
-      )}
+      )} */}
 
       <Flex
         direction={{ base: "column", md: "row" }}
@@ -63,10 +65,10 @@ export const DashboardProfileCard = ({
         <Flex direction="column" align="center" w={{ base: "100%", md: "33%" }}>
           <AvatarGroup size="xl">
             <Avatar.Root>
-              <Avatar.Image
+              {/* <Avatar.Image
                 src={identity.profile?.profile_image || undefined}
                 alt={identity.first_name || identity.username}
-              />
+              /> */}
               <Avatar.Fallback>
                 {identity.first_name?.charAt(0).toUpperCase() ||
                   identity.username?.charAt(0).toUpperCase()}
@@ -74,11 +76,11 @@ export const DashboardProfileCard = ({
             </Avatar.Root>
           </AvatarGroup>
 
-          {identity.profile?.self_description && (
+          {/* {identity.profile?.self_description && (
             <Heading as="h3" size="sm" mt={3} textAlign="center">
               {identity.profile.self_description}
             </Heading>
-          )}
+          )} */}
 
           <Badge colorScheme={isBuilder ? "green" : "gray"} mt={2}>
             {roleLabel}
@@ -92,7 +94,8 @@ export const DashboardProfileCard = ({
             engage, connect, and contribute to the Mixtape ecosystem.
           </Text>
 
-          {identity.profile?.bio_json && (
+          {/* {identity.profile?.bio_json && ( */}
+          {false && (
             <Box
               maxH="100px"
               overflowY="auto"
@@ -102,9 +105,9 @@ export const DashboardProfileCard = ({
               borderRadius="md"
               bg="gray.50"
             >
-              <Text fontSize="sm" whiteSpace="pre-wrap">
+              {/* <Text fontSize="sm" whiteSpace="pre-wrap">
                 {identity.profile.bio_json}
-              </Text>
+              </Text> */}
             </Box>
           )}
         </Box>

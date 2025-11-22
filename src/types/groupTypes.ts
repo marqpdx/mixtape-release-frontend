@@ -1,7 +1,16 @@
 // src/content/groupTypes.ts
 
-import { EmblemInline } from "./emblemTypes";
-import { IsoDateString, UserIdentity } from "./userTypes";
+import { UserIdentity } from "./auth";
+
+// import { EmblemInline } from "./emblemTypes";
+// import { IsoDateString, UserIdentity } from "./userTypes";
+
+import {
+  IconCircleCheck,
+  IconCircleX,
+  IconClock,
+  IconHourglass,
+} from "@tabler/icons-react";
 
 
 // ---------- Shared unions & enums ----------
@@ -11,6 +20,8 @@ export type GroupVisibility = 'public' | 'invite_only' | 'private' | 'hidden';
 export type GroupRole = 'admin' | 'steward' | 'member';
 export type GroupStatus = 'draft' | 'published' | 'archived';
 export type MemberType = 'customuser' | 'group' | 'organization';
+
+export type IsoDateString = string; // optionally brand this later
 
 
 
@@ -40,7 +51,7 @@ export interface Group {
   member_count?: number;
   submitted_by_username?: string;
 
-  emblem?: EmblemInline | null;  // ✅ This is correct
+  // emblem?: EmblemInline | null;  // ✅ This is correct
 }
 
 /** GROUP MEMBERSHIP - Flattened polymorphic membership */
@@ -283,8 +294,16 @@ export const groupMemberToUserIdentity = (member: GroupMembership): UserIdentity
     is_staff: false, // Not available in membership data
     is_superuser: false, // Not available in membership data
     date_joined: member.date_joined,
-    last_login: null, // Not available in membership data
-    roles: [], // Not available in membership data
+    roles: [], // Group roles are separate from system roles
+    profile: member.profile_image || member.display_name ? {
+      id: member.member_id,
+      slug: member.username || member.member_id,
+      display_name: member.display_name,
+      quick_intro: '',
+      avatar_url: member.profile_image || '',
+      created_at: member.date_joined,
+      updated_at: member.date_joined,
+    } : null,
   };
 };
 
@@ -318,3 +337,62 @@ export interface GroupMemberFilters {
   search?: string;
   member_type?: MemberType;
 }
+
+
+// ---------- Invitation types ----------
+
+// Group Invitation interface
+export interface GroupInvitation {
+  id: number;
+  invited_email: string;
+  invited_by?: {
+    id: number;
+    username: string;
+    email: string;
+  } | null;
+  group: number;
+  message: string;
+  invitation_status: "pending" | "joined" | "declined" | "expired";
+  created_at: string;
+  expires_at?: string | null;
+  updated_at: string;
+}
+
+// Invitation status icon mapping
+const STROKEWIDTH = 3;
+
+export const invitationStatusIconMap: Record<
+  GroupInvitation["invitation_status"],
+  {
+    icon: React.ElementType;
+    color: string;
+    label: string;
+    strokeWidth?: number;
+  }
+> = {
+  pending: {
+    icon: IconClock,
+    color: "orange.400",
+    label: "Pending",
+    strokeWidth: STROKEWIDTH,
+  },
+  joined: {
+    icon: IconCircleCheck,
+    color: "green.400",
+    label: "Joined",
+    strokeWidth: STROKEWIDTH,
+  },
+  declined: {
+    icon: IconCircleX,
+    color: "red.400",
+    label: "Declined",
+    strokeWidth: STROKEWIDTH,
+  },
+  expired: {
+    icon: IconHourglass,
+    color: "gray.400",
+    label: "Expired",
+    strokeWidth: STROKEWIDTH,
+  },
+};
+

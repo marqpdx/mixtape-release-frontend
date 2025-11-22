@@ -1,0 +1,60 @@
+// src/theme/emotion-style-registry.tsx
+
+"use client";
+
+import * as React from "react";
+import { useServerInsertedHTML } from "next/navigation";
+import createEmotionServer from "@emotion/server/create-instance";
+import { CacheProvider } from "@emotion/react";
+
+import createEmotionCache from "./emotion-cache";
+
+export function EmotionRegistry({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [{ cache, flush }] = React.useState(() => {
+    const cache = createEmotionCache();
+    const prevInsert = cache.insert;
+    let inserted: { name: string; styles: string }[] = [];
+
+    cache.insert = (...args) => {
+      const [selector, serialized] = args;
+      if (cache.inserted[serialized.name] === undefined) {
+        inserted.push({
+          name: serialized.name,
+          styles: serialized.styles,
+        });
+      }
+      return prevInsert(...args);
+    };
+
+    const flush = () => {
+      const prevInserted = inserted;
+      inserted = [];
+      return prevInserted;
+    };
+
+    return { cache, flush };
+  });
+
+  useServerInsertedHTML(() => {
+    const inserted = flush();
+    if (inserted.length === 0) {
+      return null;
+    }
+
+    return (
+      <style
+        key={cache.key}
+        data-emotion={`${cache.key} ${inserted.map(item => item.name).join(' ')}`}
+        dangerouslySetInnerHTML={{
+          __html: inserted.map(item => item.styles).join(''),
+        }}
+      />
+    );
+  });
+
+  return <CacheProvider value={cache}>{children}</CacheProvider>;
+}

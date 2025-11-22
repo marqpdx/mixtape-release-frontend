@@ -16,7 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { OverviewTab } from "./OverviewTab";
 import { ConnectionsTab } from "./ConnectionsTab";
-import { EventsTab } from "./EventsTab";
+// import { EventsTab } from "./EventsTab";
 import { CoursesTab } from "./CoursesTab";
 import { MembersTab } from "./MembersTab";
 import { FilesTab } from "./FilesTab";
@@ -109,7 +109,8 @@ export function GroupTabs({
             <ConnectionsTab group={group} />
           </Tabs.Content>
           <Tabs.Content value="events">
-            <EventsTab group={group} />
+            {/* <EventsTab group={group} /> */}
+            <Box p={4}>Events tab coming soon!</Box>
           </Tabs.Content>
           <Tabs.Content value="courses">
             <CoursesTab group={group} />

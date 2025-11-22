@@ -37,7 +37,8 @@ Course (publishable template, top-level)
       └─ Module (publishable container, reusable)
           └─ ModuleLesson (M-to-M with Lesson)
               └─ Lesson (publishable, owned by Group/Member)
-                  ├─ LessonBlock (structural units)
+                  ├─ LessonBlockPlacement (M-to-M with LessonBlock)
+                  │   └─ LessonBlock (reusable pedagogical units)
                   ├─ LessonSubmission (learner work)
                   └─ InstructorNote (private/shared feedback)
 ```
@@ -57,13 +58,23 @@ Course (publishable template, top-level)
 
 **Implementation:**
 ```python
-class Lesson(BaseContent):
-    content = TextField(blank=True)           # Tiptap JSON (optional)
-    blocks = ManyToMany('LessonBlock')        # Structured (optional)
-    status = CharField(choices=[...])         # draft/published/archived
+class Lesson(BaseContent, EarthlabBase):
+    tiptap_json = JSONField(null=True, blank=True)           # Rich content (optional)
+    resources = JSONField(default=list, blank=True)          # Lightweight resources
+    # Blocks added via LessonBlockPlacement (see block architecture below)
+    status = CharField(choices=[...])                        # draft/published/archived
 ```
 
-**Publishing rule:** To publish, lesson needs content OR ≥1 published block.
+**Block Relationship (Reusable via Placement):**
+```python
+class LessonBlockPlacement(models.Model):
+    lesson = FK(Lesson, related_name='block_placements')
+    block = FK(LessonBlock, related_name='placements')
+    order = IntegerField()
+    is_deleted = BooleanField(default=False)
+```
+
+**Publishing rule:** To publish, lesson needs tiptap_json OR ≥1 published block.
 
 ---
 
@@ -277,7 +288,8 @@ class PrerequisiteRule(BaseModel):
 | **Course** | ✅ | 🚫 | Group | Template (top-level) |
 | **Module** | ✅ | ✅ | Group | Reusable container |
 | **Lesson** | ✅ | ✅ | Group/Member | Building block |
-| **LessonBlock** | ✅ | 🚫 | Group/Member | Structural unit |
+| **LessonBlock** | ✅ | ✅ | Group/Member | Structural unit (via placement) |
+| **LessonBlockPlacement** | ❌ | 🚫 | — | Structural join (lesson+block) |
 | **CourseRun** | ❌ | 🚫 | — | Time-bounded instance |
 | **Enrollment** | ❌ | 🚫 | — | User's seat |
 | **Cohort** | ❌ | 🚫 | — | Learner grouping |
@@ -306,6 +318,34 @@ All models inherit from Mixtape base classes:
 - author, author_name, body
 - tags, categories, attachments (via GenericRelation)
 - published_at timestamp
+
+**EarthlabBase** (EarthLab query helper mixin)
+- `.objects` and `.earthlab` managers with `.for_sponsor()` and `.active()` methods
+- Not a content class - just adds sponsor-scoped query helpers
+- Use with BaseContent: `class MyModel(BaseContent, EarthlabBase)`
+
+### Three-Layer Block Architecture
+
+**BaseBlock(BaseContent)** - Abstract, app-agnostic block parent
+- Inherits sponsor, author, tags, body, tiptap_json from BaseContent
+- Adds: `block_type`, `external_provider`, `external_id`, `external_config`
+- Single-table inheritance (abstract=True, no JOINs)
+- Works across ALL Mixtape apps (EarthLab, Hub writing, Almanac events, etc.)
+
+**LessonBlock(BaseBlock, EarthlabBase)** - EarthLab-specific block with pedagogy
+- Inherits block identity from BaseBlock
+- Adds EarthLab query helpers from EarthlabBase
+- Adds pedagogical metadata: `teaching_instructions`, `constraints`, `learner_group_mode`
+- Adds assessment: `is_assessable`, `max_score`, `grading_mode`
+- Adds accessibility: `accessibility_notes`, `transcript_url`, `alt_text`, `required_reading_level`
+- Adds versioning: `version`, `forked_from`
+- Concrete model (creates `earthlab_lessonblock` table)
+
+**LessonBlockPlacement** - Pure structural layer (lesson + block + order)
+- Enables block reuse across multiple lessons
+- Fields: `lesson`, `block`, `order`, `is_deleted`, `deleted_at`
+- Soft-delete pattern for non-destructive removal
+- Future: placement-specific overrides (`visibility_overrides`, `conditional_logic`)
 
 ---
 

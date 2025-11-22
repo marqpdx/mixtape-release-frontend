@@ -1,6 +1,6 @@
 // src/components/groups/tabs/LandingTab.tsx
 
-import { GroupNoticeboard } from "../GroupNoticeboard";
+// import { GroupNoticeboard } from "../GroupNoticeboard";
 import {
   GridItem,
   Grid,
@@ -59,7 +59,7 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: any; isMem
             </Card.Body>
           </Card.Root>
 
-          <GroupNoticeboard groupSlug={group.slug} />
+          {/* <GroupNoticeboard groupSlug={group.slug} /> */}
 
           <Card.Root>
             <Card.Header>

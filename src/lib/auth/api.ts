@@ -1,6 +1,6 @@
 // src/lib/auth/api.ts
 
-import { AuthResponse, LoginCredentials, RegisterData, UserIdentity } from '@/types/auth';
+import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@/types/auth';
 import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStorage';
 import { checkRateLimit, recordSuccess } from './rateLimiter';
 
@@ -12,6 +12,7 @@ const LOGOUT_URL = `${API_BASE}/api/auth/logout`;
 const ME_URL = `${API_BASE}/api/auth/me`;
 const REGISTER_URL = `${API_BASE}/api/auth/register`;
 const CSRF_URL = `${API_BASE}/api/csrf/`;
+const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
 
 /**
  * CSRF Token Management
@@ -276,4 +277,34 @@ export async function checkAuth(): Promise<UserIdentity | null> {
     console.error('Auth check failed:', error);
     return null;
   }
+}
+
+/**
+ * Refresh user permissions
+ * Fetches fresh permissions from backend and clears identity cache
+ */
+export async function refreshPermissions(): Promise<PermissionsData> {
+  const accessToken = getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
+  const response = await fetch(PERMISSIONS_REFRESH_URL, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAccessToken();
+    }
+    throw new Error(`Failed to refresh permissions: ${response.status}`);
+  }
+
+  const permissions: PermissionsData = await response.json();
+
+  return permissions;
 }

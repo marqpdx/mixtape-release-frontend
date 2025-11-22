@@ -14,26 +14,26 @@ import {
   Flex,
   SimpleGrid,
   Portal,
+  Input,
   useDisclosure,
   Heading,
 } from "@chakra-ui/react";
-import { createStandaloneToast } from "@chakra-ui/toast";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect, useState, useCallback } from "react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
-import { ImageUploadField } from "@components/forms/common/ImageUploadField";
-import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
-import { Input } from "@theme/recipes/input.recipe";
+// import { ImageUploadField } from "@components/forms/common/ImageUploadField";
+// import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
+// import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
-import { Group, GroupFormData, GroupStatus, GroupType } from "content/groupTypes";
-import { EmblemPicker } from "@components/emblems/EmblemPicker";
-import { useEntityImageUpload } from "@hooks/useEntityImageUpload";
-import { useEmblemAttachment } from "@hooks/useEmblemAttachment";
-import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
-import { EmblemInline } from "@content/emblemTypes";
-
-const { toast } = createStandaloneToast();
+import { Group, GroupFormData, GroupStatus, GroupType } from "@/types/groupTypes";
+// import { EmblemPicker } from "@components/emblems/EmblemPicker";
+// import { useEntityImageUpload } from "@hooks/useEntityImageUpload";
+// import { useEmblemAttachment } from "@hooks/useEmblemAttachment";
+// import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
+// import { EmblemInline } from "@content/emblemTypes";
+import { toaster } from "@/components/ui/toaster";
+import { MixtapeAlert } from "../ui/alerts";
+import GroupVisibilitySelect from "./utils/GroupVisibilitySelect";
 
 // Helper function to safely render error messages
 const getErrorMessage = (error: any): string => {
@@ -85,24 +85,24 @@ export default function GroupEditForm({
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
 
   const emblemDisclosure = useDisclosure();
-  const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
-    group?.emblem ?? null
-  );
+  // const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
+  //   group?.emblem ?? null
+  // );
 
-  const { attachEmblem, resetEmblem, attaching } = useEmblemAttachment(
-    { groupSlug: group?.slug }
-  );
+  // const { attachEmblem, resetEmblem, attaching } = useEmblemAttachment(
+  //   { groupSlug: group?.slug }
+  // );
 
 
-  async function handleSelectEmblem(emblemId: string) {
-    const emblem = await attachEmblem(emblemId);
-    if (emblem) setEmblemPreview(emblem);  // EmblemDisplay can use size_96_url, etc.
-  }
+  // async function handleSelectEmblem(emblemId: string) {
+  //   const emblem = await attachEmblem(emblemId);
+  //   if (emblem) setEmblemPreview(emblem);  // EmblemDisplay can use size_96_url, etc.
+  // }
 
-  async function handleResetEmblem() {
-    const ok = await resetEmblem();
-    if (ok) setEmblemPreview(null);
-  }
+  // async function handleResetEmblem() {
+  //   const ok = await resetEmblem();
+  //   if (ok) setEmblemPreview(null);
+  // }
 
   const {
     register,
@@ -112,11 +112,11 @@ export default function GroupEditForm({
     formState: { errors, isSubmitting },
   } = useForm<GroupFormData>();
 
-  const { handleImageChange, pending } = useEntityImageUpload<GroupFormData>(
-    "group",
-    group?.id ?? "",
-    setValue,
-  );
+  // const { handleImageChange, pending } = useEntityImageUpload<GroupFormData>(
+  //   "group",
+  //   group?.id ?? "",
+  //   setValue,
+  // );
 
   // Initialize form with group data
   useEffect(() => {
@@ -176,12 +176,11 @@ export default function GroupEditForm({
   const onSubmit: SubmitHandler<GroupFormData> = async (values: GroupFormData) => {
     // In draft mode, don't submit manually (auto-save handles it)
     if (isDraftMode) {
-      toast({
+      toaster.create({
         title: "Draft Mode Active",
         description: "Changes are automatically saved. Exit draft mode to make manual changes.",
-        status: "info",
+        type: "info",
         duration: 3000,
-        isClosable: true,
       });
       return;
     }
@@ -193,30 +192,28 @@ export default function GroupEditForm({
         await axiosInstance.post(`/api/groups/`, values);
       }
 
-      toast({
+      toaster.create({
         title: group?.slug ? "Group Updated" : "Group Created",
         description: group?.slug
           ? "Changes saved successfully."
           : "Group created successfully.",
-        status: "success",
+        type: "success",
         duration: 5000,
-        isClosable: true,
       });
 
       onSuccess?.();
     } catch (err) {
-      toast({
+      toaster.create({
         title: group?.slug ? "Update Failed" : "Creation Failed",
         description: `Could not ${group?.slug ? 'save' : 'create'} the group. Please try again.`,
-        status: "error",
+        type: "error",
         duration: 5000,
-        isClosable: true,
       });
     }
   };
 
   if (error) {
-    return <ErrorAlert title="Error Loading Group" description={error} />;
+    return <MixtapeAlert status="error" title="Error Loading Group" description={error} />;
   }
 
   return (
@@ -332,14 +329,15 @@ export default function GroupEditForm({
                 {/* Left: Current emblem display (fixed width) */}
                 <Box flex="0 0 auto" minW="fit-content">
                   <Heading size="sm" mb={3}>Group Emblem</Heading>
-                  <Box mb={3} p={4} bg="gray.50" rounded="md" border="1px solid" borderColor="gray.200" minH="120px" display="flex" alignItems="center" justifyContent="center">
+                  {/* <Box mb={3} p={4} bg="gray.50" rounded="md" border="1px solid" borderColor="gray.200" minH="120px" display="flex" alignItems="center" justifyContent="center">
                     {emblemPreview ? (
-                      <EmblemDisplay emblem={emblemPreview} size={96} />
+                      // <EmblemDisplay emblem={emblemPreview} size={96} />
+                      <></>
                     ) : (
                       <Text color="gray.500" fontSize="sm">No emblem selected</Text>
                     )}
-                  </Box>
-                  <Button
+                  </Box> */}
+                  {/* <Button
                     width="100%"
                     onClick={emblemDisclosure.onOpen}
                     loading={attaching}
@@ -347,17 +345,17 @@ export default function GroupEditForm({
                     size="sm"
                   >
                     Choose Emblem
-                  </Button>
+                  </Button> */}
                 </Box>
 
                 {/* Right: Emblem picker (fills remaining space with internal scroll) */}
                 <Box flex="1" minW="0">
-                  <EmblemPicker
+                  {/* <EmblemPicker
                     isOpen={emblemDisclosure.open}
                     onClose={emblemDisclosure.onClose}
                     onSelect={handleSelectEmblem}
                     onReset={handleResetEmblem}
-                  />
+                  /> */}
                 </Box>
               </Flex>
             </VStack>
@@ -412,26 +410,26 @@ export default function GroupEditForm({
             <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
               <Field.Root>
                 <Field.Label>Profile Image</Field.Label>
-                <ImageUploadField
+                {/* <ImageUploadField
                   imageType="profile"
                   pending={pending.profile}
                   watch={watch}
                   register={register}
                   errors={errors}
                   doHandleImageChange={(e) => handleImageChange(e, "profile")}
-                />
+                /> */}
               </Field.Root>
 
               <Field.Root>
                 <Field.Label>Background Image</Field.Label>
-                <ImageUploadField
+                {/* <ImageUploadField
                   imageType="background"
                   pending={pending.background}
                   watch={watch}
                   register={register}
                   errors={errors}
                   doHandleImageChange={(e) => handleImageChange(e, "background")}
-                />
+                /> */}
               </Field.Root>
             </SimpleGrid>
           </Fieldset.Content>

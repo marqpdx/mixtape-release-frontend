@@ -2,8 +2,8 @@
 
 "use client";
 
+import { AcceptInviteForm } from "@/components/groups/invitations/AcceptInviteForm";
 import { useParams } from "next/navigation";
-import { AcceptInviteForm } from "@components/invitations/AcceptInviteForm";
 
 export default function NewUserAcceptInvitePage() {
   const params = useParams();

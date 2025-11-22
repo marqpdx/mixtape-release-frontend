@@ -40,6 +40,20 @@ export interface UserProfile {
 }
 
 /**
+ * Permissions data structure from backend
+ */
+export interface PermissionsData {
+  granted: string[];  // All granted permissions (de-duplicated)
+  effective: string[]; // All effective permissions (includes inheritance in Phase 2+)
+  groups: {
+    [groupSlug: string]: {
+      roles: string[];
+      permissions: string[];
+    };
+  };
+}
+
+/**
  * Complete user identity with auth information
  */
 export interface UserIdentity {
@@ -59,6 +73,7 @@ export interface UserIdentity {
     name: string;
     slug: string;
   }>;
+  permissions?: PermissionsData;
 }
 
 /**

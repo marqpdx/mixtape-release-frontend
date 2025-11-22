@@ -1,4 +1,4 @@
-// src/app/(protected)/groups/[slug]/page.tsx
+// src/app/(authenticate)/groups/[slug]/page.tsx
 
 "use client";
 
@@ -6,15 +6,14 @@ import { Box } from "@chakra-ui/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useGroup } from "@hooks/useGroups";
-import { GroupLanding } from "@components/groups/GroupLanding";
 import { GroupAdminHeader } from "@components/groups/headers/GroupAdminHeader";
 import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
 import { getGroupMenuItems } from "@components/dashboard/group/groupConfig";
-import { useGetIdentity } from "@refinedev/core";
-import { UserIdentity } from "@components/auth/interfaces";
 import DashboardLayout from "@components/common/DashboardLayout";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { hasRole, canUserModerateGroup, isGroupMember, getPrimaryRole } from "@/types/groupTypes";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { UserIdentity } from "@/types/auth";
+import { GroupLanding } from "@/components/groups/layout/GroupLanding";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -24,7 +23,7 @@ export default function GroupPage() {
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view") as ViewRole | null;
 
-  const { data: identity } = useGetIdentity<UserIdentity>();
+  const { user: identity } = useAuth();
   const { group, isLoading, refetch } = useGroup(slugStr);
 
   console.log("aaa GroupPage load:", { slugStr, group });
@@ -100,7 +99,10 @@ export default function GroupPage() {
 
   const handleJoinGroup = async () => {
     try {
-      await axiosInstance.post(`/api/groups/${slugStr}/join`);
+      // TODO: Add joinGroup function to groupApi when backend endpoint is implemented
+      // Backend endpoint /api/groups/{slug}/join doesn't exist yet in Phase 2
+      // For now, this is a placeholder that should request membership
+      console.warn("Join group functionality not implemented yet - backend endpoint needed");
       await refetch();
       setTestRole("member");
     } catch (err) {

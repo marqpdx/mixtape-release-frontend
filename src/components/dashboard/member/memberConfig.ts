@@ -27,10 +27,10 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "👤",
     subItems: [
       { key: "overview", label: "Overview", hidden: false },
-      { key: "messages", label: "Messages", hidden: false },
+      { key: "messages", label: "Messages", hidden: true },
       { key: "profile", label: "Profile", hidden: true },
       { key: "preferences", label: "Preferences", hidden: true },
-      { key: "activity", label: "Activity Feed", hidden: false },
+      { key: "activity", label: "Activity Feed", hidden: true },
     ]
   },
   {
@@ -38,8 +38,8 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     label: "Writing",
     icon: "📝",
     subItems: [
-      { key: "new-post", label: "New Post"},
-      { key: "my-drafts", label: "My Drafts"},
+      { key: "new-post", label: "New Post", hidden: true },
+      { key: "my-drafts", label: "My Drafts", hidden: true },
       { key: "published-posts", label: "Published Posts", hidden: true },
       { key: "writing-tools", label: "Writing Tools", hidden: true },
       { key: "templates", label: "Templates", hidden: true },
@@ -62,7 +62,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     label: "EarthLab",
     icon: "🌱",
     subItems: [
-      { key: "my-courses", label: "My Courses"},
+      { key: "my-courses", label: "My Courses", hidden: true },
       { key: "browse-courses", label: "Browse Courses", hidden: true },
       { key: "achievements", label: "Achievements", hidden: true },
       { key: "learning-path", label: "Learning Path", hidden: true },
@@ -74,7 +74,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "🧵",
     subItems: [
       { key: "forums", label: "All Forums", hidden: true },
-      { key: "my-forums", label: "My Forums" },
+      { key: "my-forums", label: "My Forums", hidden: true },
       { key: "subscriptions", label: "Subscriptions", hidden: true },
       { key: "forum-detail", label: "Forum Detail", hidden: true }, // Hidden from menu
     ]

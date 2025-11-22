@@ -13,12 +13,12 @@ import {
 } from "@chakra-ui/react";
 import { Controller, useForm } from "react-hook-form";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { createStandaloneToast } from "@chakra-ui/toast";
+import { toaster } from "@/components/ui/toaster";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { IconUsers, IconX } from "@tabler/icons-react";
-import { GroupMembership } from "content/groupTypes";
-import { UserProfile } from "content/userTypes";
 import { Checkbox } from "@chakra-ui/react";
+import { UserProfile } from "@/types/auth";
+import { GroupMembership } from "@/types/groupTypes";
 
 interface InviteFormProps {
   groupSlug: string;
@@ -114,11 +114,15 @@ const MemberSelector = ({ members, onAdd, onClose }: MemberSelectorProps) => {
 
   const filteredMembers = members.filter(m => {
     const query = searchQuery.toLowerCase();
+    const username = m.username?.toLowerCase() || '';
+    const firstName = m.first_name?.toLowerCase() || '';
+    const lastName = m.last_name?.toLowerCase() || '';
+    const email = m.email?.toLowerCase() || '';
     return (
-      m.username?.toLowerCase().includes(query) ||
-      m.first_name?.toLowerCase().includes(query) ||
-      m.last_name?.toLowerCase().includes(query) ||
-      m.email?.toLowerCase().includes(query)
+      username.includes(query) ||
+      firstName.includes(query) ||
+      lastName.includes(query) ||
+      email.includes(query)
     );
   });
 
@@ -272,7 +276,6 @@ export const GroupInviteForm = ({
     }
   });
 
-  const { toast } = createStandaloneToast();
   const [showMemberSelector, setShowMemberSelector] = useState(false);
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -313,9 +316,10 @@ export const GroupInviteForm = ({
 
       const filtered = availableMembers
         .filter((member) => {
-          const username = member.username?.toLowerCase() || '';
-          const firstName = member.first_name?.toLowerCase() || '';
-          const lastName = member.last_name?.toLowerCase() || '';
+          // Safely access properties that may not exist on all member types
+          const username = ('username' in member ? member.username : undefined)?.toLowerCase() || '';
+          const firstName = ('first_name' in member ? member.first_name : undefined)?.toLowerCase() || '';
+          const lastName = ('last_name' in member ? member.last_name : undefined)?.toLowerCase() || '';
           const fullName = `${firstName} ${lastName}`.trim();
 
           return username.includes(cleanSearchTerm) || fullName.includes(cleanSearchTerm);
@@ -325,12 +329,18 @@ export const GroupInviteForm = ({
           // GroupMembership has member_id, UserProfile has id
           const memberId = 'member_id' in member ? member.member_id : member.id;
 
+          // Safely access properties that may not exist on UserProfile
+          const username = 'username' in member ? member.username : undefined;
+          const firstName = 'first_name' in member ? member.first_name : undefined;
+          const lastName = 'last_name' in member ? member.last_name : undefined;
+          const email = 'email' in member ? member.email : undefined;
+
           return {
             id: parseInt(String(memberId)) || 0,
-            username: member.username || 'unknown',
-            first_name: member.first_name,
-            last_name: member.last_name,
-            email: member.email || ''
+            username: username || 'unknown',
+            first_name: firstName,
+            last_name: lastName,
+            email: email || ''
           };
         })
 
@@ -409,19 +419,15 @@ export const GroupInviteForm = ({
     }
   }, [showSuggestions, userSuggestions, selectedIndex, handleUserSelect]); // ← Add handleUserSelect here
 
-
-
-
   const onSubmit = async (data: any) => {
     const inviteeValue = data.invitee.trim();
 
     if (!inviteeValue) {
-      toast({
+      toaster.create({
         title: "Validation Error",
         description: "Please enter at least one email address or username.",
-        status: "error",
+        type: "error",
         duration: 5000,
-        isClosable: true,
       });
       return;
     }
@@ -460,23 +466,21 @@ export const GroupInviteForm = ({
       }
 
       if (invalidEntries.length > 0) {
-        toast({
+        toaster.create({
           title: "Invalid Entries",
           description: `Could not process: ${invalidEntries.join(', ')}. Use email@example.com or @username format.`,
-          status: "error",
+          type: "error",
           duration: 7000,
-          isClosable: true,
         });
         return;
       }
 
       if (submitData.invited_emails.length === 0 && submitData.invited_usernames.length === 0) {
-        toast({
+        toaster.create({
           title: "Validation Error",
           description: "Please enter at least one valid email address or username.",
-          status: "error",
+          type: "error",
           duration: 5000,
-          isClosable: true,
         });
         return;
       }
@@ -503,20 +507,18 @@ export const GroupInviteForm = ({
         const created = err.response.data.invitations_created || 0;
         const errors = err.response.data.errors?.length || 0;
 
-        toast({
+        toaster.create({
           title: "Partial Success",
           description: `Sent ${created} invitation${created !== 1 ? 's' : ''}, ${errors} failed.`,
-          status: "warning",
+          type: "warning",
           duration: 7000,
-          isClosable: true,
         });
       } else {
-        toast({
+        toaster.create({
           title: "Invite Failed",
           description: err?.response?.data?.detail || "Could not send invites.",
-          status: "error",
+          type: "error",
           duration: 5000,
-          isClosable: true,
         });
       }
     }

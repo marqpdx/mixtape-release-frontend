@@ -1,4 +1,5 @@
 // src/lib/auth/AuthContext.tsx
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -14,6 +15,9 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshPermissions: () => Promise<void>;
+  can: (permission: string) => boolean;
+  canInGroup: (permission: string, groupSlug: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,10 +51,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
+      console.log('[AuthContext] Login started');
       const userData = await authApi.login(credentials);
+      console.log('[AuthContext] Login successful, setting user:', userData.email);
       setUser(userData);
+      console.log('[AuthContext] User state updated');
       // Note: Redirect is handled by the calling component
     } catch (error) {
+      console.error('[AuthContext] Login failed:', error);
       throw error;
     }
   }, []);
@@ -87,6 +95,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const refreshPermissions = useCallback(async () => {
+    try {
+      const permissions = await authApi.refreshPermissions();
+      // Update user with new permissions
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          permissions
+        };
+      });
+    } catch (error) {
+      console.error('Failed to refresh permissions:', error);
+    }
+  }, []);
+
+  /**
+   * Check if user has a permission globally (across all groups)
+   */
+  const can = useCallback((permission: string): boolean => {
+    if (!user?.permissions) return false;
+    return user.permissions.effective.includes(permission);
+  }, [user]);
+
+  /**
+   * Check if user has a permission within a specific group
+   */
+  const canInGroup = useCallback((permission: string, groupSlug: string): boolean => {
+    if (!user?.permissions) return false;
+    const groupPerms = user.permissions.groups[groupSlug];
+    if (!groupPerms) return false;
+    return groupPerms.permissions.includes(permission);
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -95,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     refreshUser,
+    refreshPermissions,
+    can,
+    canInGroup,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

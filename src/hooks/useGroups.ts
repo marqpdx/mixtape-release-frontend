@@ -2,27 +2,21 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
-import { Group, GroupMembership, UseGroupMembersResult } from 'content/groupTypes';
+import {
+  fetchGroups as apiFetchGroups,
+  fetchUserGroups as apiFetchUserGroups,
+  fetchGroup as apiFetchGroup,
+  fetchGroupMembers as apiFetchGroupMembers,
+  updateGroup as apiUpdateGroup,
+  publishGroup as apiPublishGroup,
+  FetchGroupsOptions as ApiFetchGroupsOptions,
+  FetchGroupMembersOptions as ApiFetchGroupMembersOptions,
+} from '@/lib/group/groupApi';
+import { Group, GroupMembership, UseGroupMembersResult } from '@/types/groupTypes';
 
-// Query options interfaces
-export interface FetchGroupsOptions {
-  group_type?: string;
-  is_active?: boolean;
-  search?: string;
-  ordering?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface FetchGroupMembersOptions {
-  role?: string;
-  is_active?: boolean;
-  is_pending?: boolean;
-  ordering?: string;
-  limit?: number;
-  offset?: number;
-}
+// Re-export API types for convenience
+export type FetchGroupsOptions = ApiFetchGroupsOptions;
+export type FetchGroupMembersOptions = ApiFetchGroupMembersOptions;
 
 // Query key factories for consistent caching
 export const groupsQueryKeys = {
@@ -62,73 +56,53 @@ export interface UseGroupMutationsResult {
 
 /**
  * Fetch all groups (admin/steward view)
+ * Delegates to API layer
  */
 const fetchGroups = async (options: FetchGroupsOptions = {}): Promise<Group[]> => {
-  const params = new URLSearchParams();
-  Object.entries(options).forEach(([key, value]) => {
-    if (value !== undefined) {
-      params.append(key, value.toString());
-    }
-  });
-
-  const queryString = params.toString();
-  const url = `/api/groups${queryString ? `?${queryString}` : ''}`;
-
-  const response = await axiosInstance.get(url);
-  return response.data.results || response.data;
+  return apiFetchGroups(options);
 };
 
 /**
  * Fetch user's groups (groups where current user is a member)
+ * Delegates to API layer
  */
 const fetchUserGroups = async (): Promise<Group[]> => {
-  const response = await axiosInstance.get('/api/groups/my');
-  return response.data.results || response.data;
+  return apiFetchUserGroups();
 };
 
 /**
  * Fetch a single group by slug
+ * Delegates to API layer
  */
 const fetchGroup = async (slug: string): Promise<Group> => {
-  const response = await axiosInstance.get(`/api/groups/${slug}`);
-  return response.data;
+  return apiFetchGroup(slug);
 };
 
 /**
  * Update a group
+ * Delegates to API layer
  */
 const updateGroup = async (slug: string, updates: Partial<Group>): Promise<Group> => {
-  const response = await axiosInstance.patch(`/api/groups/${slug}`, updates);
-  return response.data;
+  return apiUpdateGroup(slug, updates);
 };
 
 /**
  * Publish a group (remove from draft mode)
+ * Delegates to API layer
  */
 const publishGroup = async (slug: string): Promise<Group> => {
-  const response = await axiosInstance.post(`/api/groups/${slug}/publish`);
-  return response.data;
+  return apiPublishGroup(slug);
 };
 
 /**
  * Fetch members of a specific group
+ * Delegates to API layer
  */
 const fetchGroupMembers = async (
   groupSlug: string,
   options: FetchGroupMembersOptions = {}
 ): Promise<GroupMembership[]> => {
-  const params = new URLSearchParams();
-  Object.entries(options).forEach(([key, value]) => {
-    if (value !== undefined) {
-      params.append(key, value.toString());
-    }
-  });
-
-  const queryString = params.toString();
-  const url = `/api/groups/${groupSlug}/members${queryString ? `?${queryString}` : ''}`;
-
-  const response = await axiosInstance.get(url);
-  return response.data.results || response.data;
+  return apiFetchGroupMembers(groupSlug, options);
 };
 
 /**
@@ -271,8 +245,8 @@ export const useGroupMutations = (slug: string): UseGroupMutationsResult => {
   return {
     updateGroup: updateMutation.mutateAsync,
     publishGroup: publishMutation.mutateAsync,
-    isUpdating: updateMutation.status === 'loading',
-    isPublishing: publishMutation.status === 'loading',
+    isUpdating: updateMutation.status === 'pending',
+    isPublishing: publishMutation.status === 'pending',
     updateError: updateMutation.error as Error | null,
   };
 };

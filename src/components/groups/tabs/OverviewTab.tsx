@@ -28,7 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Divider } from "@components/common/Divider";
-import { GroupNoticeboard } from "../GroupNoticeboard";
+// import { GroupNoticeboard } from "../GroupNoticeboard";
 
 // Mock data - replace with real data
 const activityFeed = [
@@ -116,7 +116,7 @@ export function OverviewTab({ group }: { group: any }) {
   return (
     <Stack gap={6}>
       {/* Noticeboard - Announcement Queue */}
-      <GroupNoticeboard groupSlug={group.slug} />
+      {/* <GroupNoticeboard groupSlug={group.slug} /> */}
 
       {/* Main Content Grid */}
       <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={6}>

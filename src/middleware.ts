@@ -15,8 +15,18 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for refresh token cookie
-  const refreshToken = request.cookies.get('refresh_token');
+  // Debug: Log all cookies
+  const allCookies = request.cookies.getAll();
+  console.log('[Middleware] Path:', pathname);
+  console.log('[Middleware] All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value })));
+
+  // Check for refresh token cookie (try both possible names)
+  const refreshToken = request.cookies.get('refresh_token') ||
+                       request.cookies.get('refresh') ||
+                       request.cookies.get('refreshtoken');
+
+  console.log('[Middleware] Refresh token found:', !!refreshToken);
+
   const isAuthenticated = !!refreshToken;
 
   // Define route categories

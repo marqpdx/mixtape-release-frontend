@@ -20,12 +20,12 @@ import {
  * @example
  * ```tsx
  * function PostActions() {
- *   const { can, isAdmin } = usePermissions();
+ *   const { can, canInGroup, isAdmin } = usePermissions();
  *
  *   return (
  *     <div>
- *       {can('posts:write') && <button>Edit</button>}
- *       {can('posts:delete') && <button>Delete</button>}
+ *       {can('create_course') && <button>Create Course</button>}
+ *       {canInGroup('edit_course', 'my-group') && <button>Edit</button>}
  *       {isAdmin && <button>Admin Panel</button>}
  *     </div>
  *   );
@@ -33,32 +33,44 @@ import {
  * ```
  */
 export function usePermissions() {
-  const { user } = useAuth();
+  const { user, can: authCan, canInGroup: authCanInGroup } = useAuth();
 
   const permissions = useMemo(() => {
     /**
-     * Check if user has a specific permission
+     * Check if user has a specific permission globally
+     * Uses the new permission system from Phase 1
      */
-    const can = (permission: Permission): boolean => {
-      return hasPermission(user, permission);
+    const can = (permission: string): boolean => {
+      return authCan(permission);
     };
 
     /**
-     * Check if user has ANY of the specified permissions
+     * Check if user has a permission within a specific group
+     * Uses the new permission system from Phase 1
+     */
+    const canInGroup = (permission: string, groupSlug: string): boolean => {
+      return authCanInGroup(permission, groupSlug);
+    };
+
+    /**
+     * Check if user has ANY of the specified permissions (legacy)
+     * @deprecated Use can() with individual checks instead
      */
     const canAny = (permissions: Permission[]): boolean => {
       return hasAnyPermission(user, permissions);
     };
 
     /**
-     * Check if user has ALL of the specified permissions
+     * Check if user has ALL of the specified permissions (legacy)
+     * @deprecated Use can() with individual checks instead
      */
     const canAll = (permissions: Permission[]): boolean => {
       return hasAllPermissions(user, permissions);
     };
 
     /**
-     * Get all permissions for current user
+     * Get all permissions for current user (legacy)
+     * @deprecated Use user.permissions.effective instead
      */
     const getAllPermissions = (): Permission[] => {
       return getUserPermissions(user);
@@ -66,6 +78,7 @@ export function usePermissions() {
 
     return {
       can,
+      canInGroup,
       canAny,
       canAll,
       getAllPermissions,
@@ -73,7 +86,7 @@ export function usePermissions() {
       isSteward: isSteward(user),
       isMember: isMember(user),
     };
-  }, [user]);
+  }, [user, authCan, authCanInGroup]);
 
   return permissions;
 }

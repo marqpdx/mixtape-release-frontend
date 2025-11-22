@@ -1,4 +1,5 @@
 // playwright.config.ts
+
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -24,7 +25,7 @@ export default defineConfig({
   reporter: [
     ['html', { open: 'never' }], // HTML report for local debugging
     ['list'], // Console output
-    ...(process.env.CI ? [['github']] : []), // GitHub Actions annotations
+    ...(process.env.CI ? [['github', {}] as const] : []), // GitHub Actions annotations
   ],
 
   // Shared settings for all tests

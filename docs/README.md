@@ -1,47 +1,97 @@
-# Mixtape Release - Documentation
+# Mixtape Release Frontend
 
-## Documentation Overview
+Modern React/Next.js frontend for the Mixtape Release platform.
 
-This directory contains living documentation for the Mixtape Release project. These documents evolve alongside the codebase.
+## Tech Stack
 
-### Core Documentation
+- **Framework**: Next.js 15 (App Router)
+- **UI Library**: Chakra UI v3
+- **Language**: TypeScript (strict mode)
+- **Package Manager**: Yarn
+- **Port**: 3010 (development)
 
-1. **[Business & Use Cases](./01-business-and-use-cases.md)**
-   - User stories and workflows
-   - Business rules and requirements
-   - Key success metrics
+## Getting Started
 
-2. **[Architecture](./02-architecture.md)**
-   - System design and technology stack
-   - Module breakdown and organization
-   - Integration patterns
+### Prerequisites
+- Node.js >= 18.0.0
+- Yarn
 
-3. **[Data Models](./03-data-models.md)**
-   - API contracts and endpoints
-   - JSON schema definitions
-   - Expected request/response formats
-   - TypeScript type definitions
+### Installation
 
-4. **[Design Decisions](./04-design-decisions.md)**
-   - Technical decisions and rationale (ADR-style)
-   - Alternatives considered
-   - Consequences and trade-offs
-   - Pending decisions
+```bash
+# Install dependencies
+yarn install
 
-## Documentation Philosophy
+# Run development server
+yarn dev
+```
 
-- **Living Documents**: Updated as code evolves, not written once and forgotten
-- **Single Source of Truth**: Documentation reflects actual implementation
-- **Context Over Detail**: Focus on "why" as much as "what"
-- **Collaborative**: Built incrementally by the team as features develop
+The application will be available at `http://localhost:3010`
 
-## Updating Documentation
+## Project Structure
 
-When making significant changes:
-1. Update relevant doc(s) in the same PR as code changes
-2. Add design decisions for architectural choices
-3. Update data models when API contracts change
-4. Reflect on whether business use cases have shifted
+```
+mixtape-release-frontend/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # Utility functions and API clients
+│   └── types/           # TypeScript type definitions
+├── docs/                # Documentation
+│   ├── 01-business-and-use-cases.md
+│   ├── 02-architecture.md
+│   ├── 03-data-models.md
+│   └── 04-design-decisions.md
+└── public/              # Static assets
+```
+
+## Code Organization Pattern
+
+We follow a three-layer architecture:
+
+1. **API Layer** (`src/lib/api/`): Axios-based HTTP clients
+2. **Hook Layer** (`src/hooks/`): React hooks wrapping API calls
+3. **Component Layer**: UI components consuming hooks
+
+Example:
+```typescript
+// API Layer
+export const getUser = (id: number) => axios.get(`/users/${id}`);
+
+// Hook Layer
+export const useUser = (id: number) => useQuery(['user', id], () => getUser(id));
+
+// Component Layer
+const UserProfile = () => {
+  const { data: user } = useUser(1);
+  return <div>{user.name}</div>;
+};
+```
+
+## Scripts
+
+- `yarn dev` - Start development server on port 3010
+- `yarn build` - Build for production
+- `yarn start` - Start production server
+- `yarn lint` - Run ESLint
+
+## Documentation
+
+See the [docs](./docs/) directory for comprehensive documentation including:
+- Business requirements and use cases
+- Architecture and design decisions
+- Data models and API contracts
+
+## Current Status
+
+**Phase**: Pre-authentication setup ✓
+
+The basic Next.js + Chakra UI setup is complete. Next steps:
+1. Add authentication (JWT with Django backend)
+2. Integrate TanStack Query for data fetching
+3. Add state management (Zustand or React Context)
+4. Build core features
 
 ---
 

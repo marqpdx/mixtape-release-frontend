@@ -13,11 +13,12 @@ import {
   Collapsible,
   useDisclosure,
   useBreakpointValue,
+  Button,
   Stack,
   HStack,
 } from "@chakra-ui/react";
 import { useState, useEffect, ReactNode } from "react";
-import { Button } from "@theme/recipes/button.recipe";
+// import { Button } from "@theme/recipes/button.recipe";
 import { ChevronIcon } from "@components/icons/IconMap";
 import { openParentForSection } from "@components/groups/navigationUtils";
 

@@ -3,7 +3,7 @@
 "use client";
 
 import { Box } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
+import { BaseContentBox } from "@/components/layout/BaseContentBox";
 
 /**
  * Auth Layout
@@ -16,23 +16,11 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const bgColor = useColorModeValue("background.light", "background.dark");
-  const textColor = useColorModeValue("text.light", "text.dark");
-
   return (
-    <Box
-      textStyle={'body'}
-      minH={'100vh'}
-      my={0}
-      p={0}
-      maxW="100%"
-      mx={'auto'}
-      bg={bgColor}
-      color={textColor}
-    >
-      <Box pt={10} maxW={'5xl'} mx={'auto'}>
+    <BaseContentBox pt={10}>
+      <Box maxW="5xl" mx="auto">
         {children}
       </Box>
-    </Box>
+    </BaseContentBox>
   );
 }

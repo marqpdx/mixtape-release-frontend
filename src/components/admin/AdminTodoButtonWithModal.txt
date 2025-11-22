@@ -1,0 +1,118 @@
+"use client";
+
+import {
+  Button,
+  Dialog,
+  Input,
+  Portal,
+  Textarea,
+  VStack,
+  CloseButton,
+  DialogHeader,
+  DialogFooter,
+  DialogBody,
+  DialogTitle,
+} from "@chakra-ui/react";
+import { createStandaloneToast } from "@chakra-ui/toast";
+import { useForm } from "@refinedev/react-hook-form";
+import { useState } from "react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+
+const { toast } = createStandaloneToast();
+
+export default function AdminTodoButtonWithModal({ isAdmin }: { isAdmin: boolean | undefined }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm();
+
+  const handleClose = () => {
+    reset();
+    setIsOpen(false);
+  };
+
+  const onSubmit = async (values: any) => {
+    try {
+      const res = await axiosInstance.post("/api/content/todo?djdjjd=dd", values);
+      toast({
+        title: "To-Do Created",
+        description: `“${values.title}” was saved successfully.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+      handleClose();
+    } catch (err) {
+      console.error("Error creating to-do:", err);
+      toast({
+        title: "Error",
+        description: "Could not create to-do. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  if (!isAdmin) return null;
+
+  return (
+    <>
+      <Button
+        position="fixed"
+        bottom="6"
+        right="6"
+        colorPalette="purple"
+        variant="subtle"
+        size="sm"
+        zIndex="tooltip"
+        onClick={() => setIsOpen(true)}
+      >
+        + New Todo
+      </Button>
+
+      <Dialog.Root
+          open={isOpen}
+          onOpenChange={({ open }) => setIsOpen(open)}
+        >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content maxW="lg" rounded="2xl" p="6">
+              <DialogHeader mb="4">
+                <DialogTitle fontSize="lg">Add New To-Do</DialogTitle>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" position="absolute" top="4" right="4" />
+                </Dialog.CloseTrigger>
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <DialogBody>
+                  <VStack gap="4" align="stretch">
+                    <Input {...register("title", { required: true })} placeholder="Title" autoFocus />
+                    {/* <Input {...register("summary")} placeholder="Summary" /> */}
+                    <Textarea {...register("body")} placeholder="Details or Description" />
+                    {/* <Input {...register("tags")} placeholder="Tags (comma-separated)" /> */}
+                  </VStack>
+                </DialogBody>
+
+                <DialogFooter mt="6">
+                  <Button variant="ghost" onClick={handleClose} mr={3}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" loading={isSubmitting}>
+                    Save
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+    </>
+  );
+}
+

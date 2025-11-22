@@ -2,6 +2,7 @@
 
 "use client";
 
+import { UserIdentity } from "@/types/auth";
 import {
   Box,
   Text,
@@ -13,14 +14,15 @@ import {
   SimpleGrid,
   AvatarGroup,
   Avatar,
+  Button,
   Progress,
   Flex,
   GridItem,
 } from "@chakra-ui/react";
-import { UserIdentity } from "@components/auth/interfaces";
+// import { UserIdentity } from "@components/auth/interfaces";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconBell, IconEdit, IconMail, IconNote, IconUsers } from "@tabler/icons-react";
-import { Button } from "@theme/recipes/button.recipe";
+// import { Button } from "@theme/recipes/button.recipe";
 import Link from "next/link";
 
 interface ToDoItem {
@@ -103,9 +105,9 @@ export default function PersonalOverview({
           <Card.Body display="flex" flexDirection="column" position="relative">
             <HStack gap={4} align="start" flex="1">
               <Avatar.Root size="lg">
-                {identity.profile?.profile_image && (
+                {/* {identity.profile?.profile_image && (
                   <Avatar.Image src={identity.profile.profile_image} alt={identity.username} />
-                )}
+                )} */}
                 <Avatar.Fallback>
                   {(identity.first_name?.[0] || identity.username[0]).toUpperCase()}
                 </Avatar.Fallback>

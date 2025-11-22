@@ -17,11 +17,10 @@ import NextLink from "next/link";
 import { useForm } from "react-hook-form";
 import { IconArrowRight } from "@tabler/icons-react";
 
-// Minimal data shape for onboarding step
 type StartForm = {
   firstInitial: string;
   lastName: string;
-  locale: string; // city, region, or postal code
+  locale: string;
 };
 
 export default function WelcomeStartPage() {
@@ -37,10 +36,7 @@ export default function WelcomeStartPage() {
   });
 
   const onSubmit = async (data: StartForm) => {
-    // TODO: POST to your API, e.g. /api/auth/onboarding/start
-    // await axios.post("/api/onboarding/start", data)
-
-    // Optional: stash locally for continuity if API not wired yet
+    // Save minimal profile to localStorage
     if (typeof window !== "undefined") {
       try {
         const minimal = {
@@ -49,32 +45,31 @@ export default function WelcomeStartPage() {
           locale: data.locale.trim(),
         };
         window.localStorage.setItem("onboarding_minimal_profile", JSON.stringify(minimal));
-      } catch (_) {}
+      } catch (_) {
+        // Ignore storage errors
+      }
     }
 
-    router.push("/welcome/agreements"); // Page 3
+    router.push("/welcome/agreements");
   };
 
-  // Live uppercase for first initial (UI only)
   const firstInitial = watch("firstInitial");
 
   return (
     <Box minH="100vh" bg="theme.bg" py={{ base: 10, md: 16 }} px={{ base: 6, md: 8 }}>
       <Container maxW="lg" px={0}>
-        {/* Step header */}
         <VStack align="start" gap={2} mb={6}>
           <Text fontSize="sm" color="theme.textSecondary" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase">
             Step 1 of 3
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
-            Welcome — let’s get you set up
+            Welcome — let's get you set up
           </Heading>
           <Text color="theme.textSecondary">
             Just a few basics. You can edit everything later.
           </Text>
         </VStack>
 
-        {/* Card */}
         <Box bg="theme.surface" border="1px solid" borderColor="theme.border" borderRadius="2xl" p={{ base: 6, md: 8 }} shadow="md">
           <VStack as="form" onSubmit={handleSubmit(onSubmit)} align="stretch" gap={5}>
             {/* First Initial */}
@@ -88,9 +83,7 @@ export default function WelcomeStartPage() {
                 value={(firstInitial || "").toUpperCase()}
                 onChange={(e) => {
                   const val = e.target.value.toUpperCase().slice(0, 1);
-                  // Manually sync with RHF
                   const fakeEvent = { target: { name: "firstInitial", value: val } } as unknown as React.ChangeEvent<HTMLInputElement>;
-                  // @ts-ignore - RHF accepts a synthetic-like event
                   register("firstInitial").onChange(fakeEvent);
                 }}
                 bg="theme.surface"
@@ -145,7 +138,7 @@ export default function WelcomeStartPage() {
             {/* Actions */}
             <HStack justify="space-between" pt={2}>
               <Link as={NextLink} href="/about/how-it-works" color="theme.textSecondary" _hover={{ color: "theme.accent" }}>
-                Learn more about Crossroads
+                Learn more
               </Link>
               <Button
                 type="submit"
@@ -166,7 +159,6 @@ export default function WelcomeStartPage() {
           </VStack>
         </Box>
 
-        {/* Step hint */}
         <HStack mt={6} gap={2} color="theme.textSecondary">
           <Text fontSize="sm">Next: Community Agreements</Text>
         </HStack>

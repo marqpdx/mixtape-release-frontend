@@ -16,10 +16,12 @@ import {
   Stack,
   HStack,
   IconButton,
+  Button,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { Button } from "@theme/recipes/button.recipe";
-import { ChevronIcon } from "@components/icons/IconMap";
+// import { IconChevronRight } from "@tabler/icons-react";
+// import { Button } from "@theme/recipes/button.recipe";
+// import { ChevronIcon } from "@components/icons/IconMap";
 
 // Import shared types
 import {
@@ -252,7 +254,7 @@ export default function DashboardLayout({
                               <Text fontSize="md">{menuItem.icon}</Text>
                             )}
                             <Text>{menuItem.label}</Text>
-                            <ChevronIcon />
+                            <IconChevronRight />
                           </>
                         )}
                         {sidebarCollapsed && menuItem.icon && (

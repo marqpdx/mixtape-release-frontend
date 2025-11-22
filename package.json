@@ -6,9 +6,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "next dev -p 3010 -H 127.0.0.1",
+    "dev": "next dev -p 3010 -H localhost",
     "build": "next build",
-    "start": "next start -p 3010 -H 127.0.0.1",
+    "start": "next start -p 3010 -H localhost",
     "lint": "next lint",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
@@ -22,7 +22,11 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@tabler/icons-react": "^3.35.0",
+    "@tanstack/react-query": "^5.90.8",
+    "@tanstack/react-table": "^8.21.3",
     "axios": "^1.13.2",
+    "bad-words": "^4.0.0",
+    "bad-words-next": "^3.1.1",
     "framer-motion": "^12.19.1",
     "next": "^15.3.4",
     "next-themes": "^0.4.6",

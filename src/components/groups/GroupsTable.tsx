@@ -7,7 +7,7 @@ import { Text, HStack, Box, Avatar } from "@chakra-ui/react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { AvatarGroup } from "@chakra-ui/react";
-import { Group } from "content/groupTypes";
+import { Group } from "@/types/groupTypes";
 
 interface GroupsTableProps {
   groups: Group[];
@@ -100,12 +100,19 @@ export default function GroupsTable({
         const groupIcons = Icons.group as Record<string, any>;
         const GroupIcon = groupIcons[group.group_type];
 
+        const groupProfileImageRaw = group.profile_image ?? null;
+
+        const groupProfileImage =
+          groupProfileImageRaw && groupProfileImageRaw.trim() !== ""
+            ? groupProfileImageRaw.trim()
+            : undefined;
+
         return (
           <Box flexShrink={0}>
             <AvatarGroup>
               <Avatar.Root size="lg">
                 <Avatar.Image
-                  src={group.profile_image || undefined}
+                  src={groupProfileImage}
                   alt={`${group.title} profile`}
                 />
                 <Avatar.Fallback bg="green.100" color="green.700">

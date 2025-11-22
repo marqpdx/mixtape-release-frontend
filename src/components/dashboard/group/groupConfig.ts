@@ -10,7 +10,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📊",
     subItems: [
       { key: "admin-dashboard", label: "Admin Dashboard" },
-      { key: "activity", label: "Recent Activity" },
+      { key: "activity", label: "Recent Activity", hidden: true },
       { key: "analytics", label: "Analytics", hidden: true },
     ]
   },
@@ -29,8 +29,8 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Events",
     icon: "👥",
     subItems: [
-      { key: "events-landing", label: "E1" },
-      { key: "events-2", label: "E2" },
+      { key: "events-landing", label: "E1", hidden: true },
+      { key: "events-2", label: "E2", hidden: true },
       { key: "create-event", label: "Create Event", hidden: true },
     ]
   },
@@ -39,7 +39,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Communication",
     icon: "💬",
     subItems: [
-      { key: "threadworks", label: "Threadworks" },
+      { key: "threadworks", label: "Threadworks", hidden: true },
       { key: "do-writing", label: "Write", hidden: true },
       { key: "drafts", label: "Draft Writing", hidden: true },
       { key: "comments", label: "Comments", hidden: true },
@@ -53,8 +53,8 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "EarthLab",
     icon: "🌎",
     subItems: [
-      { key: "earthlab", label: "Learning" },
-      { key: "course-detail", label: "Create/Edit" },
+      { key: "earthlab", label: "Learning", hidden: true },
+      { key: "course-detail", label: "Create/Edit", hidden: true },
       // { key: "create-event", label: "Create Event", hidden: true },
     ]
   },
@@ -63,9 +63,9 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Content",
     icon: "📝",
     subItems: [
-      { key: "writing", label: "Posts & Announcements" },
-      { key: "do-writing", label: "Write" },
-      { key: "drafts", label: "Draft Writing" },
+      { key: "writing", label: "Posts & Announcements", hidden: true },
+      { key: "do-writing", label: "Write", hidden: true },
+      { key: "drafts", label: "Draft Writing", hidden: true },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },

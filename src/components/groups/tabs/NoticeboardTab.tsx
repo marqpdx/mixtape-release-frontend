@@ -3,7 +3,7 @@
 'use client'
 
 import { VStack, Heading, Text, Box } from '@chakra-ui/react'
-import { Noticeboard } from '@components/noticeboard/Noticeboard'
+// import { Noticeboard } from '@components/noticeboard/Noticeboard'
 
 interface NoticeboardTabProps {
   group: any
@@ -21,7 +21,7 @@ export function NoticeboardTab({ group }: NoticeboardTabProps) {
         </Text>
       </Box>
 
-      <Noticeboard groupSlug={group.slug} />
+      {/* <Noticeboard groupSlug={group.slug} /> */}
     </VStack>
   )
 }

@@ -4,13 +4,13 @@
 
 import { Box, Container, Flex, Heading, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { GroupHeaderWrapper } from "../GroupHeaderWrapper";
 import {
   IconBuildingCommunity,
   IconCircleDot,
   IconUserCircle,
   IconNetwork,
 } from "@tabler/icons-react";
+import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
