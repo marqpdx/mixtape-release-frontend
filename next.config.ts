@@ -20,7 +20,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'", // unsafe-inline needed for Chakra UI
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' http://localhost:8010 http://127.0.0.1:8010", // Backend API
+      "connect-src 'self' http://localhost:8010 http://127.0.0.1:8010 https://api.crossroads.place", // Backend API (dev + prod)
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -51,12 +51,12 @@ const securityHeaders = [
     key: 'X-XSS-Protection',
     value: '1; mode=block',
   },
-  // Force HTTPS in production (commented out for local dev)
-  // Uncomment in production:
-  // {
-  //   key: 'Strict-Transport-Security',
-  //   value: 'max-age=63072000; includeSubDomains; preload',
-  // },
+  // Force HTTPS in production
+  // Note: Vercel already sets HSTS, but explicit is better
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
 ];
 
 const nextConfig: NextConfig = {
