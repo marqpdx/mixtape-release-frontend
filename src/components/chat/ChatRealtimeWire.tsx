@@ -20,69 +20,150 @@ export function ChatRealtimeWire() {
   const { refetchConversations } = useConversationStore();
 
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) {
-      console.warn('[ChatRealtimeWire] No socket available, skipping setup');
-      return;
+    console.log('[ChatRealtimeWire] Component mounted, checking for socket...');
+
+    let pollInterval: NodeJS.Timeout | null = null;
+    let cleanupFn: (() => void) | null = null;
+
+    // Try to get socket and set up listeners
+    const trySetup = () => {
+      const socket = getSocket();
+
+      if (!socket) {
+        console.log('[ChatRealtimeWire] No socket available yet, will poll...');
+        return false;
+      }
+
+      console.log('[ChatRealtimeWire] Socket found:', { connected: socket.connected, id: socket.id });
+
+      // Clear polling once we have a socket
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+
+      // Function to set up all listeners
+      const setupListeners = () => {
+        console.log('[ChatRealtimeWire] 📡 Setting up global chat event listeners');
+
+      // Handle new conversation created
+      const handleConversationCreated = (payload: any) => {
+        console.log('[ChatRealtimeWire] 🆕 New conversation created:', payload);
+        refetchConversations();
+      };
+
+      // Bootstrap unreads on connection
+      const handleUnreadBootstrap = (unreads: Record<string, number>) => {
+        console.log('[ChatRealtimeWire] 📬 Unread bootstrap received:', unreads);
+        setAllUnreads(unreads);
+      };
+
+      // Handle unread count updates
+      const handleUnreadCount = ({ conversationSlug, count, countDelta }: any) => {
+        console.log('[ChatRealtimeWire] 📊 Unread count update:', { conversationSlug, count, countDelta });
+        if (count !== undefined) {
+          if (count === 0) {
+            resetUnread(conversationSlug);
+          } else {
+            setAllUnreads((prev) => ({ ...prev, [conversationSlug]: count }));
+          }
+        } else if (countDelta !== undefined) {
+          incrementUnread(conversationSlug, countDelta);
+        }
+      };
+
+      // Handle new message notifications
+      const handleNewMessage = (payload: any) => {
+        console.log('[ChatRealtimeWire] 🔔 ========== NEW MESSAGE EVENT ==========');
+        console.log('[ChatRealtimeWire] 🔔 Full payload:', JSON.stringify(payload, null, 2));
+
+        const { conversations } = useConversationStore.getState();
+        const conversationSlug = payload.conversationSlug || payload.conversationId;
+
+        console.log('[ChatRealtimeWire] 🔍 Extracted conversationSlug:', conversationSlug);
+        console.log('[ChatRealtimeWire] 🔍 Current conversations:', conversations.map(c => c.slug));
+
+        if (conversationSlug) {
+          const convExists = conversations.some(c => c.slug === conversationSlug);
+          console.log('[ChatRealtimeWire] 🔍 Does conversation exist locally?', convExists);
+
+          if (!convExists) {
+            console.log('[ChatRealtimeWire] 🔄 ✨ TRIGGERING REFETCH - Message for unknown conversation');
+            refetchConversations();
+          } else {
+            console.log('[ChatRealtimeWire] ⏭️  Conversation already exists, skipping refetch');
+          }
+        } else {
+          console.log('[ChatRealtimeWire] ⚠️  No conversationSlug found in payload!');
+        }
+
+        console.log('[ChatRealtimeWire] 🔔 ========================================');
+      };
+
+      // Register listeners
+      socket.on("conversation_created", handleConversationCreated);
+      socket.on("conversation:unread_bootstrap", handleUnreadBootstrap);
+      socket.on("conversation:unread_count", handleUnreadCount);
+      socket.on("message:new", handleNewMessage);
+
+      console.log('[ChatRealtimeWire] ✅ Global chat listeners registered');
+      console.log('[ChatRealtimeWire] 📡 Listening for: conversation_created, conversation:unread_bootstrap, conversation:unread_count, message:new');
+
+        // Return cleanup function
+        return () => {
+          console.log('[ChatRealtimeWire] 🧹 Cleaning up global chat listeners');
+          socket.off("conversation_created", handleConversationCreated);
+          socket.off("conversation:unread_bootstrap", handleUnreadBootstrap);
+          socket.off("conversation:unread_count", handleUnreadCount);
+          socket.off("message:new", handleNewMessage);
+        };
+      };
+
+      // Set up listeners immediately if already connected
+      if (socket.connected) {
+        console.log('[ChatRealtimeWire] Socket already connected, setting up listeners now');
+        cleanupFn = setupListeners();
+        return true;
+      }
+
+      // Otherwise, wait for connect event
+      console.log('[ChatRealtimeWire] Socket not connected yet, waiting for connect event');
+      const handleConnect = () => {
+        console.log('[ChatRealtimeWire] 🔌 Socket connected! Setting up listeners...');
+        cleanupFn = setupListeners();
+      };
+
+      socket.once('connect', handleConnect);
+
+      // Store cleanup that removes the connect listener
+      cleanupFn = () => {
+        socket.off('connect', handleConnect);
+      };
+
+      return true;
+    };
+
+    // Try initial setup
+    if (!trySetup()) {
+      // Socket not available yet, poll every 500ms
+      console.log('[ChatRealtimeWire] Starting socket availability polling...');
+      pollInterval = setInterval(() => {
+        console.log('[ChatRealtimeWire] Polling for socket...');
+        trySetup();
+      }, 500);
     }
 
-    console.log('[ChatRealtimeWire] Setting up global chat event listeners');
-
-    // Handle new conversation created
-    const handleConversationCreated = (payload: any) => {
-      console.log('[ChatRealtimeWire] 🆕 New conversation created:', payload);
-      // Refetch conversations to include the new one
-      refetchConversations();
-    };
-
-    // Bootstrap unreads on connection
-    const handleUnreadBootstrap = (unreads: Record<string, number>) => {
-      console.log('[ChatRealtimeWire] 📬 Unread bootstrap received:', unreads);
-      setAllUnreads(unreads);
-    };
-
-    // Handle unread count updates
-    const handleUnreadCount = ({ conversationSlug, count, countDelta }: any) => {
-      console.log('[ChatRealtimeWire] 📊 Unread count update:', { conversationSlug, count, countDelta });
-
-      if (count !== undefined) {
-        // Absolute count (e.g., after marking as read)
-        if (count === 0) {
-          resetUnread(conversationSlug);
-        } else {
-          // Set absolute count - calculate delta from current
-          setAllUnreads((prev) => ({ ...prev, [conversationSlug]: count }));
-        }
-      } else if (countDelta !== undefined) {
-        // Relative delta (e.g., new message arrived)
-        incrementUnread(conversationSlug, countDelta);
-      }
-    };
-
-    // Handle new message notifications (for toasts in the future)
-    const handleNewMessage = (payload: any) => {
-      console.log('[ChatRealtimeWire] 🔔 New message notification:', payload);
-      // TODO: Show toast notification
-      // For now, just log it
-    };
-
-    // Register listeners
-    socket.on("conversation_created", handleConversationCreated);
-    socket.on("conversation:unread_bootstrap", handleUnreadBootstrap);
-    socket.on("conversation:unread_count", handleUnreadCount);
-    socket.on("message:new", handleNewMessage);
-
-    console.log('[ChatRealtimeWire] ✅ Global chat listeners registered');
-
-    // Cleanup
+    // Cleanup function
     return () => {
-      console.log('[ChatRealtimeWire] Cleaning up global chat listeners');
-      socket.off("conversation_created", handleConversationCreated);
-      socket.off("conversation:unread_bootstrap", handleUnreadBootstrap);
-      socket.off("conversation:unread_count", handleUnreadCount);
-      socket.off("message:new", handleNewMessage);
+      console.log('[ChatRealtimeWire] Component unmounting, cleaning up...');
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+      if (cleanupFn) {
+        cleanupFn();
+      }
     };
   }, [setAllUnreads, incrementUnread, resetUnread, refetchConversations]);
 
-  return null; // This component doesn't render anything
+  return null;
 }
