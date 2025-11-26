@@ -28,9 +28,19 @@ export const setupConversationSocket = (
     });
 
     const {
+      conversations,
       selectedConversationSlug,
       incrementUnread,
+      refetchConversations,
     } = useConversationStore.getState();
+
+    // 🆕 If message is for a conversation we don't have yet, refetch to get it
+    // This handles the case where recipient receives first message in a new conversation
+    const convExists = conversations.some(c => c.slug === conversationSlug);
+    if (!convExists) {
+      console.log('🔄 Message received for unknown conversation, refetching conversations');
+      refetchConversations();
+    }
 
     if (conversationSlug === slug) {
       console.log('✅ Message is for current conversation, adding to messages');
