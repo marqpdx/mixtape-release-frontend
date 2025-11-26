@@ -15,7 +15,6 @@ import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 // import WriteWorkArea from "@components/write/WriteWorkArea";
 // import DraftsAdmin from "@components/writing/DraftsAdmin";
 // import ForumAdmin from "@components/threadworks/ForumAdmin";
-// import MessageCenter from "@components/dashboard/sections/MessageCenter";
 // import { Socket } from "socket.io-client";
 // import GroupCreateForm from "@components/groups/GroupCreateForm";
 // import GroupsTableNew from "@components/groups/GroupsTable";
@@ -28,6 +27,7 @@ import router from "next/router";
 import GroupsTable from "@components/groups/GroupsTable";
 import { Group } from "@/types/groupTypes";
 import { UserIdentity } from "@/types/auth";
+import MessageCenter from "../sections/MessageCenter";
 // import NotificationsList from "@components/activity/NotificationsList";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
@@ -162,15 +162,14 @@ export default function MemberWorkArea({
   //   );
   // }
 
-  // Messages section
-  // if (section === "messages") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       {/* <MessageCenter /> */}
-  //       <></>
-  //     </WorkAreaWrapper>
-  //   );
-  // }
+    // Messages section
+    if (section === "messages") {
+      return (
+        <WorkAreaWrapper>
+          <MessageCenter />
+        </WorkAreaWrapper>
+      );
+    }
 
   // **Writing sections**
   // if (section === "new-post") {

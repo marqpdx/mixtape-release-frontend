@@ -9,6 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/AuthContext";
 // import { UserIdentity } from "@/types/auth";
 import { useUserGroups } from "@/hooks/useGroups";
+import { useUsers } from "@/hooks/useUsers";
 // import { getRoleBooleans } from "lib/auth/roles";
 // import { useSocketSetup } from "lib/hooks/useSocketSetup";
 
@@ -96,16 +97,7 @@ export default function MemberDashboard() {
   const { groups: userGroups, isLoading: groupsLoading } = useUserGroups();
 
   // Fetch all members for collaboration features
-  const { data: membersData = [] } = useQuery({
-    queryKey: ["all-members"],
-    queryFn: async () => {
-      // TODO: Create userApi.ts with fetchAllUsers() function
-      // For now, return empty array until users API is migrated
-      console.warn("Members API not migrated yet - needs userApi.ts");
-      return [];
-    },
-    enabled: false, // Disabled until API is migrated
-  });
+  const { users: membersData = [], isLoading: membersLoading } = useUsers();
 
   // Fetch todos for admin features (if user has admin access)
   const { data: todos = [], refetch: refetchTodos } = useQuery<ToDoItem[]>({

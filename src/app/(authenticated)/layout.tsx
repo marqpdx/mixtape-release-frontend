@@ -16,16 +16,16 @@ import { useColorModeValue } from "@components/ui/color-mode";
 // import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 // import PageContainer from "@components/layout/PageContainer";
-// TODO: Re-enable when chat features are implemented
-// import { ChatUnreadProvider } from "contexts/ChatUnreadContext";
-// import { useHydrateUnreads } from "lib/useHydrateUnreads";
-// import { useRegisterMessageToasts } from "lib/chat-notifications";
+import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
+import { initializeSocket } from "@/lib/socket";
+import { ChatRealtimeWire } from "@/components/chat/ChatRealtimeWire";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading: identityLoading, isAuthenticated } = useAuth();
   const { isAdmin, isSteward, isMember } = usePermissions();
+  const [socketInitialized, setSocketInitialized] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_ROOT_API_URL || '';
   const permUrl = `${apiUrl}/admin/dashboard`;
@@ -108,6 +108,62 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     }
   }, [adminAccessDenied]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ✅ Initialize Socket.IO connection when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      console.log('[Layout] Skipping socket init - not authenticated');
+      return;
+    }
+
+    if (socketInitialized) {
+      console.log('[Layout] Socket already initialized');
+      return;
+    }
+
+    console.log('[Layout] 🔌 Initializing Socket.IO connection for user:', user.username);
+
+    let mounted = true;
+
+    const initSocket = async () => {
+      try {
+        const socket = await initializeSocket();
+
+        if (!mounted) {
+          console.log('[Layout] Component unmounted during init, aborting');
+          return;
+        }
+
+        if (socket?.connected) {
+          console.log('[Layout] ✅ Socket.IO initialized and connected:', socket.id);
+          setSocketInitialized(true);
+        } else {
+          console.warn('[Layout] ⚠️ Socket initialized but not connected, retrying in 2s...');
+          setTimeout(() => {
+            if (mounted) {
+              setSocketInitialized(false); // Trigger retry
+            }
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('[Layout] ❌ Socket.IO initialization failed:', error);
+        if (mounted) {
+          // Retry after delay
+          setTimeout(() => {
+            if (mounted) {
+              setSocketInitialized(false); // Trigger retry
+            }
+          }, 3000);
+        }
+      }
+    };
+
+    initSocket();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthenticated, user, socketInitialized]);
+
   // ✅ Loading state - show until identity loads AND admin validation completes
   const isStillLoading = identityLoading || (!isMember && !adminValidated);
 
@@ -139,10 +195,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   const isAdminPath = pathname.startsWith("/admin");
 
   return (
-    <>
-      {/* TODO: Re-enable when chat features are implemented */}
-      {/* <ChatUnreadProvider> */}
-      {/* <ChatRealtimeWire /> */}
+    <ChatUnreadProvider>
+      <ChatRealtimeWire />
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
         <UnifiedNavbar compact={isAdminPath} />
@@ -167,14 +221,6 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
           <AdminSeedButtonWithModal /> */}
         </>
       )}
-      {/* </ChatUnreadProvider> */}
-    </>
+    </ChatUnreadProvider>
   );
 }
-
-// TODO: Re-enable when chat features are implemented
-// function ChatRealtimeWire() {
-//   useHydrateUnreads();
-//   useRegisterMessageToasts();
-//   return null;
-// }

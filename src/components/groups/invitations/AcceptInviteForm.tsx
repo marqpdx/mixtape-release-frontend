@@ -27,7 +27,7 @@ const containsProfanity = (username: string) => filter.isProfane(username);
 
 const checkUsernameAvailable = async (username: string) => {
   try {
-    const res = await axiosInstance.get(`/api/authz/check-username/${username}`);
+    const res = await axiosInstance.get(`/api/auth/check-username/${username}`);
     return res.data.available;
   } catch (err) {
     return false;
@@ -44,7 +44,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
   const router = useRouter();
 
   const NEXT_PUBLIC_ROOT_API_URL = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
-  const acceptInviteUrl = `${NEXT_PUBLIC_ROOT_API_URL}/api/accept-invite`;
+  const acceptInviteUrl = `${NEXT_PUBLIC_ROOT_API_URL}/api/auth/accept-invite`;
 
   const {
     register,

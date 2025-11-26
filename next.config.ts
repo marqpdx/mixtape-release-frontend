@@ -20,7 +20,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'", // unsafe-inline needed for Chakra UI
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' http://localhost:8010 http://127.0.0.1:8010 https://api.crossroads.place", // Backend API (dev + prod)
+      "connect-src 'self' http://localhost:8010 http://127.0.0.1:8010 https://api.crossroads.place http://localhost:5001 http://127.0.0.1:5001 ws://localhost:5001 ws://127.0.0.1:5001", // Backend API + Socket.IO server
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
