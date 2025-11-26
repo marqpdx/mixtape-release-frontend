@@ -84,11 +84,12 @@ export const initializeSocket = async (): Promise<Socket | null> => {
   });
 
   socket.on("connect", () => {
-    console.log("Socket: 🧠 connected:", socket?.id);
+    if (!socket) return;
+    console.log("Socket: 🧠 connected:", socket.id);
     console.log('[socket.ts] Socket module variable after connect:', {
       hasSocket: !!socket,
-      socketId: socket?.id,
-      isConnected: socket?.connected
+      socketId: socket.id,
+      isConnected: socket.connected
     });
     connecting = false;
 
