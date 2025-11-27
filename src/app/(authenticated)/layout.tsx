@@ -28,7 +28,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   const [socketInitialized, setSocketInitialized] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_ROOT_API_URL || '';
-  const permUrl = `${apiUrl}/admin/dashboard`;
+  const permUrl = `${apiUrl}/admin`;
   const bgColor = useColorModeValue("background.light", "background.dark");
   const textColor = useColorModeValue("text.light", "text.dark");
 
