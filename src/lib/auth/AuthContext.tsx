@@ -32,6 +32,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initialize CSRF protection
     authApi.initializeCsrf();
 
+    // Skip auth check if this is a logout redirect (cookies being deleted)
+    // Check both current URL and window.location for the logout flag
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('logout') === 'true') {
+        console.log('[AuthContext] Skipping auth check - logout in progress');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     // Check auth status
     checkAuthStatus();
   }, []);
@@ -77,12 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
       setUser(null);
-      router.push('/login');
+      // Add logout flag to bypass middleware redirect
+      // This solves the timing issue where cookies aren't deleted yet when middleware runs
+      router.push('/login?logout=true');
     } catch (error) {
       console.error('Logout failed:', error);
       // Still clear user state even if API call fails
       setUser(null);
-      router.push('/login');
+      router.push('/login?logout=true');
     }
   }, [router]);
 

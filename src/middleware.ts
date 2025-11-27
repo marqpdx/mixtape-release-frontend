@@ -29,6 +29,9 @@ export function middleware(request: NextRequest) {
 
   const isAuthenticated = !!refreshToken;
 
+  // Check if this is a logout redirect (bypass cookie check due to timing)
+  const isLogoutRedirect = request.nextUrl.searchParams.get('logout') === 'true';
+
   // Define route categories
   const isAuthPage = pathname.startsWith('/login') ||
                      pathname.startsWith('/signup') ||
@@ -51,7 +54,8 @@ export function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users trying to access auth pages
-  if (isAuthPage && isAuthenticated) {
+  // UNLESS this is a logout redirect (cookies being deleted, timing issue)
+  if (isAuthPage && isAuthenticated && !isLogoutRedirect) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
