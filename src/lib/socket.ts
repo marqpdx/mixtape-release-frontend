@@ -15,6 +15,8 @@ type DisconnectReason =
   | "transport error"
   | "parse error";
 
+const isProd = process.env.DJANGO_ENV === "prod";
+
 export const initializeSocket = async (): Promise<Socket | null> => {
   console.log('[socket.ts] initializeSocket called, current state:', {
     hasSocket: !!socket,
@@ -51,13 +53,26 @@ export const initializeSocket = async (): Promise<Socket | null> => {
     return null;
   }
 
-  const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? "ws://127.0.0.1:5001";
-  console.log('[socket.ts] Creating socket.io connection to:', SOCKET_URL);
+  // const LIVEWIRE_URL = process.env.NEXT_PUBLIC_LIVEWIRE_URL ?? "ws://127.0.0.1:5001";
 
-  socket = io(SOCKET_URL, {
+  // Use https:// for the prod URL so clients negotiate wss:// automatically.
+  // Avoid ws:// under an HTTPS site—browsers will block it as mixed content.
+  // In prod, skip the polling phase entirely by choosing 'transports'.
+  const LIVEWIRE_URL =
+    process.env.NEXT_PUBLIC_LIVEWIRE_URL ??
+    (isProd ? "https://chat.crossroads.place" : "http://127.0.0.1:5001");
+
+  console.log('[socket.ts] Creating socket.io connection to:', LIVEWIRE_URL);
+
+  socket = io(LIVEWIRE_URL, {
     auth: { token },
-    withCredentials: false,
     path: "/socket.io",
+    ...(isProd ? { transports: ["websocket"] } : {}),
+    withCredentials: false,
+    // Optional: tune reconnect behavior if helpful
+    reconnectionAttempts: 10,
+    reconnectionDelay: 500,
+
     // don't force transports in prod unless necessary
   });
 
