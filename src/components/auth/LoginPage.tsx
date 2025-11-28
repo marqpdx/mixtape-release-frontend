@@ -16,7 +16,7 @@ import {
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@/components/ui/toaster";
 
 import { LoginFormProps } from "./interfaces";
@@ -56,7 +56,9 @@ const LoginPage: React.FC = () => {
       });
 
       // Get redirect URL from query params, default to /dashboard
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      // const redirectTo = searchParams.get('redirect') || '/dashboard';
+
+      const redirectTo = safeRedirect(searchParams.get("redirect"));
 
       console.log("LoginPage redirecting to:", redirectTo);
 

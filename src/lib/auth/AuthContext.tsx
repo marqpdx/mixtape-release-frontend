@@ -22,6 +22,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
+export const safeRedirect = (value: string | null, fallback = "/dashboard") => {
+  // allow only same-site paths
+  if (!value) return fallback;
+  try {
+    // absolute URL? reject
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return fallback;
+    return url.pathname + url.search + url.hash;
+  } catch {
+    // relative path is fine if it starts with /
+    return value.startsWith("/") ? value : fallback;
+  }
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserIdentity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
