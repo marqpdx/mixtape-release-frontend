@@ -12,14 +12,23 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// ✅ Add a request interceptor to include the access token
+
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    // ✅ SECURITY FIX: Get token from memory instead of localStorage
     const token = getAccessToken();
-    if (token && config.headers) {
+
+    // Make sure headers exists
+    config.headers = config.headers || {};
+
+    if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      // 🔥 Important: remove any stale Authorization header
+      if ("Authorization" in config.headers) {
+        delete (config.headers as any)["Authorization"];
+      }
     }
+
     return config;
   },
   (error: AxiosError) => {
@@ -27,16 +36,34 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+
+
+
+// // ✅ Add a request interceptor to include the access token
+// axiosInstance.interceptors.request.use(
+
+//   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+//     // ✅ SECURITY FIX: Get token from memory instead of localStorage
+//     const token = getAccessToken();
+//     if (token && config.headers) {
+//       config.headers["Authorization"] = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error: AxiosError) => {
+//     return Promise.reject(error);
+//   }
+// );
+
 // ✅ Add a response interceptor for auto-refresh
+import { clearAccessToken } from "@/lib/auth/tokenStorage";
+// maybe import a central logout handler if you have one
+
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse): AxiosResponse => {
-    // 🔹 If the response is successful, just return it
-    return response;
-  },
+  (response: AxiosResponse): AxiosResponse => response,
   async (error: AxiosError): Promise<AxiosResponse | void> => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // 🔹 If the originalRequest is undefined or _retry flag is set, we stop
     if (!originalRequest || originalRequest._retry) {
       return Promise.reject(error);
     }
@@ -51,29 +78,27 @@ axiosInstance.interceptors.response.use(
       if (newToken) {
         console.log("[Axios Interceptor] Token refreshed. Retrying request.");
 
-        // Token is already stored in memory by refreshAccessToken()
-
-        // ✅ Update global axios header for future requests
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-
-        // ✅ Update this request's header and retry
+        // Token is already in memory via setAccessToken()
         if (originalRequest.headers) {
           originalRequest.headers.set
             ? originalRequest.headers.set("Authorization", `Bearer ${newToken}`)
-            : originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+            : (originalRequest.headers["Authorization"] = `Bearer ${newToken}`);
         }
 
         return axiosInstance(originalRequest);
-
       } else {
-        console.error("[Axios Interceptor] Token refresh failed.");
+        console.error("[Axios Interceptor] Token refresh failed. Clearing auth.");
+        clearAccessToken();
+        delete axiosInstance.defaults.headers.common["Authorization"];
+        // optionally trigger a global logout/redirect here
         return Promise.reject(error);
       }
     }
 
     if (error.response?.status === 403) {
-        console.log("[Axios Interceptor] 🚨 403 Forbidden caught!");
-        console.log("[Axios Interceptor] 🚨 Triggering unauthorized handler.");
+      console.log("[Axios Interceptor] 🚨 403 Forbidden caught!");
+      console.log("[Axios Interceptor] 🚨 Triggering unauthorized handler.");
+      // optional: central unauthorized handler
     }
 
     return Promise.reject(error);

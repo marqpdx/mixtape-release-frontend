@@ -3,6 +3,7 @@
 import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@/types/auth';
 import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStorage';
 import { checkRateLimit, recordSuccess } from './rateLimiter';
+import { axiosInstance } from '@/providers/auth-provider/axiosInstance';
 
 const API_BASE = process.env.NEXT_PUBLIC_ROOT_API_URL;
 
@@ -149,53 +150,71 @@ let refreshPromise: Promise<string | null> | null = null;
  * Uses singleton pattern to prevent concurrent refresh requests
  */
 export async function refreshAccessToken(): Promise<string | null> {
-  // If refresh is already in progress, return the existing promise
-  if (refreshPromise) {
-    return refreshPromise;
-  }
+  if (refreshPromise) return refreshPromise;
 
-  // Create new refresh promise
   refreshPromise = (async () => {
     try {
 
+      const headers = getHeaders();
+      delete (headers as any)["Authorization"];
+
       const response = await fetch(REFRESH_URL, {
-        method: 'POST',
-        headers: getHeaders(), // Includes CSRF token if available
-        credentials: 'include', // Critical: sends httpOnly refresh token cookie
+        method: "POST",
+        headers: headers,
+        credentials: "include",
       });
 
-      const data: AuthResponse = await response.json();
+      let data: AuthResponse | null = null;
 
-      if (!response.ok || !data.success) {
-        // Only log actual errors (not expected no_refresh_cookie on first visit)
-        if (data.code !== 'no_refresh_cookie') {
-          console.warn('Token refresh failed:', data.code);
+      try {
+        data = await response.json();
+      } catch {
+        // Non-JSON response; treat as failure
+        console.warn("Token refresh returned non-JSON response");
+      }
+
+      // Normalize null → {} so we can safely access fields
+      const safeData: AuthResponse & { code?: string } = (data || {}) as any;
+
+      if (!response.ok || !safeData.success) {
+        const code = safeData.code || "unknown";
+
+        if (code !== "no_refresh_cookie") {
+          console.warn("Token refresh failed:", code);
         }
 
-        // Clear tokens on terminal errors
-        if (['user_not_found', 'no_refresh_cookie', 'invalid_refresh_token', 'user_inactive'].includes(data.code || '')) {
+        // Treat all non-success refresh results as terminal
+        if (
+          [
+            "user_not_found",
+            "no_refresh_cookie",
+            "invalid_refresh_token",
+            "user_inactive",
+            "token_error",
+          ].includes(code)
+        ) {
           clearAccessToken();
         }
 
         return null;
       }
 
-      if (!data.access || !data.access_expires) {
+      if (!safeData.access || !safeData.access_expires) {
+        console.warn("Token refresh response missing access or access_expires");
+        clearAccessToken();
         return null;
       }
 
-      // Store new access token in memory
-      const expiresAt = data.access_expires * 1000;
-      setAccessToken(data.access, expiresAt);
+      const expiresAt = safeData.access_expires * 1000;
+      setAccessToken(safeData.access, expiresAt);
 
-      return data.access;
-
+      return safeData.access;
     } catch (error) {
-      console.error('Network error during token refresh:', error);
+      console.error("Network error during token refresh:", error);
+      // On pure network errors, it’s reasonable NOT to clear tokens:
+      // user might just be offline.
       return null;
     } finally {
-      // Reset promise after completion (success or failure)
-      // This allows future refresh attempts
       refreshPromise = null;
     }
   })();
@@ -248,6 +267,10 @@ export async function logout(): Promise<void> {
   } finally {
     // Always clear local tokens
     clearAccessToken();
+
+    // 🔥 Clear axios default Authorization header for safety
+    delete axiosInstance.defaults.headers.common["Authorization"];
+
     csrfToken = null; // Clear CSRF token on logout
   }
 }
