@@ -1,0 +1,532 @@
+// src/components/editor/InkwellControls.tsx - Updated with Progressive Toolbar
+
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import type { Editor } from "@tiptap/react";
+import {
+  Box,
+  HStack,
+  VStack,
+  Button,
+  Text,
+  Badge,
+  Switch,
+  Spacer,
+  Collapsible,
+  Card
+} from "@chakra-ui/react";
+import {
+  EditIntensity,
+  EditStyle,
+  EditCompletePayload,
+  EditStartMeta,
+  streamEdit,
+  fetchSummary,
+  normalizeTipTapToPlaintext
+} from "lib/inkwellApi";
+import { useBackgroundSummary } from "@hooks/editor/useBackgroundSummary";
+import ProgressiveWritingToolbar from "@components/editor/ProgressiveWritingToolbar";
+import { Tooltip } from "@components/ui/tooltip";
+
+interface Props {
+  editor: Editor;
+  editClient?: typeof streamEdit;
+}
+
+type LastResult = {
+  candidate: string;
+  applied: boolean;
+  reverted: boolean;
+  style: EditStyle;
+  intensity?: EditIntensity;
+  policy_applied?: string | null;
+  timestamp: number;
+  debugInfo?: any;
+  rawOutput?: string;
+  streamError?: string;
+};
+
+export default function InkwellControls({ editor, editClient = streamEdit }: Props) {
+  const [preview, setPreview] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [autoApply, setAutoApply] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [last, setLast] = useState<LastResult | null>(null);
+  const [streamStats, setStreamStats] = useState<{
+    tokensReceived: number;
+    eventsReceived: number;
+    startTime?: number;
+    endTime?: number;
+  } | null>(null);
+
+  // Background summary hook
+  const {
+    summary: backgroundSummary,
+    isGenerating: summaryIsGenerating,
+    error: summaryError,
+    forceUpdate: summaryForceUpdate,
+    clearSummary,
+  } = useBackgroundSummary(editor, {
+    enabled: true,
+    debounceMs: 9000,
+    summaryWords: 40,
+    minWordsToSummarize: 50,
+  });
+
+  const debounceRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const idleTimer = useRef<number | null>(null);
+  const currentStyleRef = useRef<EditStyle>("polish");
+
+  // Helper functions
+  const getSelectedText = useCallback((): string => {
+    const { from, to } = editor.state.selection;
+    return editor.state.doc.textBetween(from, to, "\n");
+  }, [editor]);
+
+  const replaceSelection = useCallback((text: string) => {
+    editor.chain().focus().command(({ tr, state, dispatch }) => {
+      const { from, to } = state.selection;
+      tr.insertText(text, from, to);
+      if (dispatch) dispatch(tr);
+      return true;
+    }).run();
+  }, [editor]);
+
+  const insertAtCursor = useCallback((text: string) => {
+    editor.chain().focus().insertContent(text).run();
+  }, [editor]);
+
+  const clearIdle = () => {
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+    idleTimer.current = null;
+  };
+
+  const armIdle = () => {
+    clearIdle();
+    idleTimer.current = window.setTimeout(() => {
+      if (isEditing && preview.trim()) {
+        const candidate = preview.trim();
+        setLast({
+          candidate,
+          applied: false,
+          reverted: false,
+          style: currentStyleRef.current,
+          intensity: "medium",
+          policy_applied: null,
+          timestamp: Date.now(),
+          streamError: "Stream went idle"
+        });
+        setStatus("Stream went idle; kept the result below.");
+        setIsEditing(false);
+        setPreview("");
+      }
+    }, 2000);
+  };
+
+  const runEdit = useCallback(async (style: EditStyle) => {
+    currentStyleRef.current = style;
+    const selection = getSelectedText();
+    if (!selection?.trim()) {
+      setStatus("Select some text to edit.");
+      return;
+    }
+
+    // Reset state
+    setStatus(null);
+    setIsEditing(true);
+    setPreview("");
+    setStreamStats({ tokensReceived: 0, eventsReceived: 0, startTime: Date.now() });
+
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+
+    let tokensReceived = 0;
+    let eventsReceived = 0;
+
+    await editClient({
+      text: selection,
+      style,
+      intensity: "medium",
+      signal: ac.signal,
+      debug: debugMode,
+      onStart: (meta: EditStartMeta) => {
+        eventsReceived++;
+        setPreview("");
+        if (debugMode) {
+          console.log('[InkwellControls] Edit started:', meta);
+        }
+      },
+      onToken: (token: string) => {
+        tokensReceived++;
+        eventsReceived++;
+        setPreview((p) => p + token);
+        setStreamStats(prev => ({
+          ...prev!,
+          tokensReceived,
+          eventsReceived
+        }));
+        armIdle();
+
+        if (debugMode && tokensReceived % 10 === 0) {
+          console.log(`[InkwellControls] Received ${tokensReceived} tokens`);
+        }
+      },
+      onError: (message: string, context?: any) => {
+        clearIdle();
+        console.error('[InkwellControls] Edit error:', message, context);
+        setStatus(`Error: ${message}`);
+        setIsEditing(false);
+        setStreamStats(prev => ({ ...prev!, endTime: Date.now() }));
+
+        // Store error info
+        setLast(prev => prev ? {
+          ...prev,
+          streamError: message,
+          debugInfo: context
+        } : null);
+      },
+      onComplete: (payload: EditCompletePayload) => {
+        clearIdle();
+        const candidate = (payload.edited ?? "").trim();
+        const reverted = Boolean(payload.reverted) || candidate === selection.trim();
+
+        if (debugMode) {
+          console.log('[InkwellControls] Edit complete:', payload);
+        }
+
+        let applied = false;
+        if (candidate && autoApply && !reverted) {
+          replaceSelection(candidate);
+          applied = true;
+          setStatus("Applied successfully!");
+        } else if (reverted) {
+          setStatus("Content was reverted by safety guards. Check debug info below.");
+        } else if (!autoApply) {
+          setStatus("Edit complete. Apply manually if desired.");
+        }
+
+        setLast({
+          candidate,
+          applied,
+          reverted,
+          style: payload.style as EditStyle,
+          intensity: payload.intensity as EditIntensity,
+          policy_applied: payload.policy_applied,
+          timestamp: Date.now(),
+          debugInfo: payload.debug_info,
+          rawOutput: payload.edited_raw,
+        });
+
+        setPreview("");
+        setIsEditing(false);
+        setStreamStats(prev => ({
+          ...prev!,
+          endTime: Date.now(),
+          tokensReceived,
+          eventsReceived
+        }));
+      },
+    });
+  }, [autoApply, editClient, getSelectedText, replaceSelection, debugMode]);
+
+  // Toolbar handlers
+  const handleSummary = useCallback(async () => {
+    console.log('[InkwellControls] Toolbar summary called', {
+      hasBackgroundSummary: !!backgroundSummary,
+      backgroundSummaryPreview: backgroundSummary?.substring(0, 50) || 'EMPTY',
+      backgroundSummaryLength: backgroundSummary?.length || 0,
+    });
+
+    // Use background summary if available
+    if (backgroundSummary?.trim()) {
+      console.log('[InkwellControls] Using existing background summary');
+      setSummary(backgroundSummary);
+      setStatus("Using auto-generated summary");
+      return;
+    }
+
+    // Generate a new summary directly using the API
+    try {
+      setStatus("Generating summary...");
+      console.log('[InkwellControls] Generating summary directly...');
+
+      // Get the editor content
+      const editorJSON = editor.getJSON();
+      const { plaintext } = await normalizeTipTapToPlaintext(editorJSON);
+
+      if (!plaintext || plaintext.trim().length < 50) {
+        setStatus("Need more content to summarize (at least 50 characters)");
+        return;
+      }
+
+      // Call the summary API directly
+      const generatedSummary = await fetchSummary(plaintext, 40, "neutral");
+
+      if (generatedSummary?.trim()) {
+        console.log('[InkwellControls] Generated summary:', generatedSummary);
+        setSummary(generatedSummary.trim());
+        setStatus("Summary generated successfully");
+      } else {
+        console.warn('[InkwellControls] Generated summary was empty');
+        setStatus("Summary generation completed but returned empty result");
+      }
+
+    } catch (e: any) {
+      console.error('[InkwellControls] Summary generation error:', e);
+      setStatus(e?.message || "Could not summarize.");
+    }
+  }, [editor, backgroundSummary]);
+
+  const copyCandidate = useCallback(async () => {
+    if (!last?.candidate) return;
+    try {
+      await navigator.clipboard.writeText(last.candidate);
+      setStatus("Copied.");
+    } catch {
+      setStatus("Copy failed.");
+    }
+  }, [last]);
+
+  return (
+    <Box mt={3}>
+      <VStack align="stretch" gap={3}>
+        {/* Settings Row - Keep for auto-apply and debug toggles */}
+        <HStack gap={2} wrap="wrap" align="center" justify="flex-end">
+          <Tooltip content="If on, faithful edits auto‑replace your selection.">
+            <HStack cursor="help">
+              <Text fontSize="xs">Auto‑apply</Text>
+              <Switch.Root
+                checked={autoApply}
+                onCheckedChange={(e) => setAutoApply(Boolean(e.checked))}
+                size="sm"
+              >
+                <Switch.Control />
+              </Switch.Root>
+            </HStack>
+          </Tooltip>
+
+          <Tooltip content="Show detailed debug information and logs">
+            <HStack cursor="help">
+              <Text fontSize="xs">Debug</Text>
+              <Switch.Root
+                checked={debugMode}
+                onCheckedChange={(e) => setDebugMode(Boolean(e.checked))}
+                size="sm"
+              >
+                <Switch.Control />
+              </Switch.Root>
+            </HStack>
+          </Tooltip>
+
+          {isEditing && <Badge colorScheme="blue">Editing… live</Badge>}
+          {!!backgroundSummary && !summary && <Badge variant="subtle">summary ready</Badge>}
+          {summaryIsGenerating && <Badge colorScheme="yellow">generating summary...</Badge>}
+        </HStack>
+
+        {/* Status and Stream Stats */}
+        {(status || streamStats || summaryIsGenerating) && (
+          <HStack wrap="wrap" gap={2}>
+            {status && <Text fontSize="sm" color="gray.600">{status}</Text>}
+            {streamStats && (
+              <HStack fontSize="xs" color="gray.500" gap={3}>
+                <Text>Tokens: {streamStats.tokensReceived}</Text>
+                <Text>Events: {streamStats.eventsReceived}</Text>
+                {streamStats.startTime && streamStats.endTime && (
+                  <Text>Duration: {streamStats.endTime - streamStats.startTime}ms</Text>
+                )}
+              </HStack>
+            )}
+            {summaryIsGenerating && (
+              <Text fontSize="xs" color="blue.500">Generating summary...</Text>
+            )}
+            {summaryError && (
+              <Text fontSize="xs" color="red.500">Summary error: {summaryError}</Text>
+            )}
+          </HStack>
+        )}
+
+        {/* Streaming Preview / Results */}
+        {(preview || last) && (
+          <Card.Root>
+            <Card.Header>
+              <HStack>
+                <Text fontSize="sm" fontWeight="semibold">
+                  {preview ? "Preview (streaming)" : "Edit result"}
+                </Text>
+                {last?.reverted && <Badge colorScheme="yellow">reverted by guards</Badge>}
+                {last?.applied && <Badge colorScheme="green">applied</Badge>}
+                {!last?.applied && !preview && <Badge>not applied</Badge>}
+                {last?.policy_applied && (
+                  <Badge variant="outline" fontSize="xs">
+                    {last.policy_applied}
+                  </Badge>
+                )}
+                <Spacer />
+                {!preview && last?.candidate && (
+                  <HStack gap={2}>
+                    <Button size="xs" onClick={copyCandidate}>Copy</Button>
+                    <Button size="xs" onClick={() => replaceSelection(last.candidate)}>
+                      Replace selection
+                    </Button>
+                    <Button size="xs" variant="outline" onClick={() => insertAtCursor(last.candidate)}>
+                      Insert at cursor
+                    </Button>
+                    <Button size="xs" variant="ghost" onClick={() => setLast(null)}>
+                      Dismiss
+                    </Button>
+                  </HStack>
+                )}
+              </HStack>
+            </Card.Header>
+
+            <Card.Body>
+              {preview && (
+                <Box>
+                  <Text whiteSpace="pre-wrap" data-cy="inkwell-preview" p={2} bg="blue.50" borderRadius="md">
+                    {preview}
+                  </Text>
+                  {debugMode && (
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      Streaming... {preview.length} characters received
+                    </Text>
+                  )}
+                </Box>
+              )}
+
+              {!preview && last?.candidate && (
+                <Text whiteSpace="pre-wrap" data-cy="inkwell-result" p={2} bg="gray.50" borderRadius="md">
+                  {last.candidate}
+                </Text>
+              )}
+
+              {/* Debug Information */}
+              {debugMode && last && (
+                <Collapsible.Root mt={3}>
+                  <Collapsible.Trigger asChild>
+                    <Button variant="ghost" size="sm">
+                      🔍 Debug Info
+                    </Button>
+                  </Collapsible.Trigger>
+                  <Collapsible.Content>
+                    <VStack align="stretch" gap={2} mt={2} p={3} bg="gray.100" borderRadius="md" fontSize="sm">
+                      <HStack>
+                        <Text fontWeight="semibold">Style:</Text>
+                        <Text>{last.style}</Text>
+                        <Text fontWeight="semibold">Intensity:</Text>
+                        <Text>{last.intensity}</Text>
+                      </HStack>
+
+                      {last.debugInfo && (
+                        <Box>
+                          <Text fontWeight="semibold" mb={1}>Server Debug:</Text>
+                          <VStack align="stretch" fontSize="xs" gap={1}>
+                            {last.debugInfo.stream_error && (
+                              <Text color="red.600">Stream Error: {last.debugInfo.stream_error}</Text>
+                            )}
+                            <Text>Reverted by new info: {String(last.debugInfo.reverted_by_new_info)}</Text>
+                            <Text>Reverted by faithfulness: {String(last.debugInfo.reverted_by_faithfulness)}</Text>
+                            <Text>Length capped: {String(last.debugInfo.length_capped)}</Text>
+                            <Text>Token count: {last.debugInfo.token_count}</Text>
+                            {last.debugInfo.edited_clean && (
+                              <Box>
+                                <Text fontWeight="semibold">Cleaned output:</Text>
+                                <Text fontFamily="mono" bg="white" p={1} borderRadius="sm">
+                                  "{last.debugInfo.edited_clean}"
+                                </Text>
+                              </Box>
+                            )}
+                          </VStack>
+                        </Box>
+                      )}
+
+                      {last.rawOutput && (
+                        <Box>
+                          <Text fontWeight="semibold" mb={1}>Raw Model Output:</Text>
+                          <Text fontFamily="mono" bg="white" p={2} borderRadius="sm" whiteSpace="pre-wrap">
+                            {last.rawOutput}
+                          </Text>
+                        </Box>
+                      )}
+
+                      {last.streamError && (
+                        <Box>
+                          <Text fontWeight="semibold" color="red.600">Stream Error:</Text>
+                          <Text color="red.600">{last.streamError}</Text>
+                        </Box>
+                      )}
+
+                      <Text fontSize="xs" color="gray.500">
+                        Processed at: {new Date(last.timestamp).toLocaleTimeString()}
+                      </Text>
+                    </VStack>
+                  </Collapsible.Content>
+                </Collapsible.Root>
+              )}
+
+              {/* Always show raw output if reverted, even without debug mode */}
+              {!debugMode && last?.reverted && last?.rawOutput && (
+                <Box mt={3} p={2} borderWidth="1px" borderRadius="md" bg="yellow.50">
+                  <Text fontSize="sm" fontWeight="semibold" mb={1}>
+                    Raw Model Output (guards prevented this):
+                  </Text>
+                  <Text whiteSpace="pre-wrap" fontSize="sm" fontFamily="mono">
+                    {last.rawOutput}
+                  </Text>
+                </Box>
+              )}
+            </Card.Body>
+          </Card.Root>
+        )}
+
+        {/* Summary Display */}
+        {(summary || backgroundSummary) && (
+          <Card.Root>
+            <Card.Header>
+              <HStack>
+                <Text fontSize="sm" fontWeight="semibold">Summary</Text>
+                {backgroundSummary && !summary && (
+                  <Badge size="sm" colorScheme="blue">Auto-generated</Badge>
+                )}
+                {summary && summary === backgroundSummary && (
+                  <Badge size="sm" colorScheme="green">Up-to-date</Badge>
+                )}
+                {backgroundSummary && (
+                  <Badge size="sm" variant="outline">
+                    {backgroundSummary.split(' ').length} words
+                  </Badge>
+                )}
+                <Spacer />
+                {!summary && backgroundSummary && (
+                  <Button size="xs" variant="ghost" onClick={() => setSummary(backgroundSummary)}>
+                    Use auto-summary
+                  </Button>
+                )}
+                {summary && (
+                  <HStack gap={2}>
+                    <Button size="xs" variant="ghost" onClick={() => navigator.clipboard.writeText(summary)}>
+                      Copy
+                    </Button>
+                    <Button size="xs" variant="ghost" onClick={() => setSummary(null)}>
+                      Clear
+                    </Button>
+                  </HStack>
+                )}
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <Text data-cy="inkwell-summary" whiteSpace="pre-wrap">
+                {summary || backgroundSummary}
+              </Text>
+            </Card.Body>
+          </Card.Root>
+        )}
+      </VStack>
+    </Box>
+  );
+}
+

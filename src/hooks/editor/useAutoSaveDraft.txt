@@ -1,0 +1,267 @@
+// src/hooks/editor/useDraftAutosave.ts - Fixed version
+
+"use client";
+
+import { useCallback, useRef, useState, useEffect } from "react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+
+type Status = "idle" | "saving" | "saved" | "error";
+
+interface DraftPayload {
+  title: string;
+  docJSON: any;
+  intended_kind?: string;
+  summary?: string;
+}
+
+export function useAutoSaveDraft(options: {
+  debounceMs?: number;
+  draftKey?: string;
+  intendedKind?: string;
+} = {}) {
+  const { debounceMs = 2000, draftKey = "default", intendedKind = "post" } = options;
+
+  // All useState hooks first
+  const [status, setStatus] = useState<Status>("idle");
+
+  // All useRef hooks second
+  const payloadRef = useRef<DraftPayload | null>(null);
+  const draftIdRef = useRef<string | null>(null);
+  const lastSavedRef = useRef<string>("");
+  const isMounted = useRef(true);
+  const retryCount = useRef(0);
+  const debouncedSaveRef = useRef<NodeJS.Timeout | null>(null);
+
+  const MAX_RETRIES = 3;
+
+  // Clear any pending timeouts on unmount
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (debouncedSaveRef.current) {
+        clearTimeout(debouncedSaveRef.current);
+      }
+    };
+  }, []);
+
+  const doSave = useCallback(async () => {
+    const payload = payloadRef.current;
+    if (!payload || !isMounted.current) return;
+
+    console.log("Autosaving draft... payload", payload);
+    // Ensure we always have valid defaults
+    const safePayload = {
+      title: payload.title || "",
+      body_json: payload.docJSON || { type: "doc", content: [] },
+      intended_kind: intendedKind,
+      summary: payload.summary || ""
+    };
+
+    const currentString = JSON.stringify(safePayload);
+
+    // Skip if unchanged
+    if (currentString === lastSavedRef.current) return;
+
+    try {
+      if (!isMounted.current) return;
+      setStatus("saving");
+
+      // Local backup with key-specific storage
+      const stash = {
+        ...safePayload,
+        _ts: Date.now(),
+        id: draftIdRef.current,
+        key: draftKey
+      };
+      localStorage.setItem(`mixtape_draft_${draftKey}`, JSON.stringify(stash));
+
+      // Django API save (create or update)
+      let res;
+      if (!draftIdRef.current) {
+        // Create new draft with safe defaults
+        res = await axiosInstance.post("/api/writing/drafts", safePayload);
+        draftIdRef.current = res.data?.id;
+        console.log("Created draft with ID:", res.data?.id);
+      } else {
+        // Update existing draft
+        console.log("Updating draft with ID:", draftIdRef.current);
+        res = await axiosInstance.patch(`/api/writing/drafts/${draftIdRef.current}`, safePayload);
+      }
+
+      lastSavedRef.current = currentString;
+      retryCount.current = 0;
+
+      if (isMounted.current) {
+        setStatus("saved");
+        // Auto-reset to idle after 2 seconds
+        setTimeout(() => {
+          if (isMounted.current) setStatus("idle");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Draft autosave error", err);
+
+      if (isMounted.current) {
+        setStatus("error");
+
+        // Auto-reset error to idle after 5 seconds
+        setTimeout(() => {
+          if (isMounted.current) setStatus("idle");
+        }, 5000);
+
+        // Retry logic
+        retryCount.current += 1;
+        if (retryCount.current <= MAX_RETRIES) {
+          setTimeout(() => {
+            if (isMounted.current) {
+              triggerSave();
+            }
+          }, 5000);
+        }
+      }
+    }
+  }, [draftKey, intendedKind]);
+
+  // triggerSave using setTimeout instead of lodash debounce
+  const triggerSave = useCallback(() => {
+    // Clear any existing timeout
+    if (debouncedSaveRef.current) {
+      clearTimeout(debouncedSaveRef.current);
+    }
+
+    // Set new timeout
+    debouncedSaveRef.current = setTimeout(() => {
+      if (isMounted.current) {
+        doSave();
+      }
+    }, debounceMs);
+  }, [doSave, debounceMs]);
+
+  // Force immediate save (useful for manual save)
+  const forceSave = useCallback(async () => {
+    if (debouncedSaveRef.current) {
+      clearTimeout(debouncedSaveRef.current);
+    }
+    await doSave();
+  }, [doSave]);
+
+  const setPayload = useCallback((p: DraftPayload) => {
+    payloadRef.current = p;
+  }, []);
+
+  // Load existing draft - look for most recent by user
+  const loadDraft = useCallback(async (): Promise<DraftPayload | null> => {
+    try {
+      // Try localStorage first (for offline-first experience)
+      const localDraft = localStorage.getItem(`mixtape_draft_${draftKey}`);
+      if (localDraft) {
+        const parsed = JSON.parse(localDraft);
+        if (parsed.id) {
+          draftIdRef.current = parsed.id;
+        }
+      }
+
+      // Get most recent draft for this user
+      const response = await axiosInstance.get("/api/writing/drafts", {
+        params: {
+          ordering: "-last_saved_at",
+          limit: 1,
+          intended_kind: intendedKind
+        }
+      });
+
+      const drafts = response.data?.results || response.data;
+      const draft = Array.isArray(drafts) ? drafts[0] : drafts;
+
+      if (draft) {
+        draftIdRef.current = draft.id;
+        const payload: DraftPayload = {
+          title: draft.title || "",
+          docJSON: draft.body_json || { type: "doc", content: [] },
+          intended_kind: draft.intended_kind || intendedKind,
+          summary: draft.summary || ""
+        };
+
+        lastSavedRef.current = JSON.stringify({
+          title: payload.title,
+          body_json: payload.docJSON,
+          intended_kind: intendedKind,
+          summary: payload.summary
+        });
+        return payload;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Failed to load draft:", error);
+
+      // Fallback to localStorage if API fails
+      const localDraft = localStorage.getItem(`mixtape_draft_${draftKey}`);
+      if (localDraft) {
+        try {
+          const parsed = JSON.parse(localDraft);
+          if (parsed.id) {
+            draftIdRef.current = parsed.id;
+          }
+          return {
+            title: parsed.title || "",
+            docJSON: parsed.docJSON || { type: "doc", content: [] },
+            intended_kind: parsed.intended_kind || intendedKind,
+            summary: parsed.summary || ""
+          };
+        } catch (e) {
+          console.error("Failed to parse local draft:", e);
+        }
+      }
+
+      return null;
+    }
+  }, [draftKey, intendedKind]);
+
+  // Clear draft
+  const clearDraft = useCallback(async () => {
+    try {
+      if (draftIdRef.current) {
+        await axiosInstance.delete(`/api/writing/drafts/${draftIdRef.current}`);
+      }
+
+      localStorage.removeItem(`mixtape_draft_${draftKey}`);
+      draftIdRef.current = null;
+      payloadRef.current = null;
+      lastSavedRef.current = "";
+      setStatus("idle");
+    } catch (error) {
+      console.error("Failed to clear draft:", error);
+    }
+  }, [draftKey]);
+
+  // Get draft metadata (useful for showing save count, last saved time, etc.)
+  const getDraftMetadata = useCallback(async () => {
+    if (!draftIdRef.current) return null;
+
+    try {
+      const response = await axiosInstance.get(`/api/writing/drafts/${draftIdRef.current}`);
+      return {
+        auto_save_count: response.data.auto_save_count,
+        last_saved_at: response.data.last_saved_at,
+        created_at: response.data.created_at,
+        intended_kind: response.data.intended_kind
+      };
+    } catch (error) {
+      console.error("Failed to get draft metadata:", error);
+      return null;
+    }
+  }, []);
+
+  return {
+    status,
+    triggerSave,
+    setPayload,
+    draftIdRef,
+    forceSave,
+    loadDraft,
+    clearDraft,
+    getDraftMetadata
+  };
+}

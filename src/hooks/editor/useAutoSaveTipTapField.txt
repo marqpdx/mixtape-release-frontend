@@ -1,0 +1,180 @@
+// src/hooks/editor/useAutoSaveTipTapField.ts
+
+import { useAutoSave } from "./useAutoSave";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { TipTapDoc } from "content/dispatchTypes";
+
+interface TipTapFieldConfig {
+  endpoint: string;           // "/api/profiles/123", "/api/groups/456", etc.
+  fieldName: string;          // "bio_json", "overview_json", "description_json", etc.
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+  enabled?: boolean;          // Allow disabling the hook conditionally
+}
+
+/**
+ * Generic hook for auto-saving TipTap editor content to any API field
+ *
+ * Usage examples:
+ *
+ * // Profile bio
+ * const bioSave = useAutoSaveTipTapField({
+ *   endpoint: `/api/profiles/${userId}`,
+ *   fieldName: "bio_json",
+ *   getContent: () => editor.getJSON(),
+ * });
+ *
+ * // Group overview
+ * const overviewSave = useAutoSaveTipTapField({
+ *   endpoint: `/api/groups/${groupId}`,
+ *   fieldName: "overview_json",
+ *   getContent: () => editor.getJSON(),
+ * });
+ *
+ * // Event description
+ * const descSave = useAutoSaveTipTapField({
+ *   endpoint: `/api/events/${eventId}`,
+ *   fieldName: "description_json",
+ *   getContent: () => editor.getJSON(),
+ *   debounceMs: 3000,
+ * });
+ */
+export function useAutoSaveTipTapField(config: TipTapFieldConfig | null) {
+  return useAutoSave(
+    config && config.enabled !== false ? {
+      getContent: config.getContent,
+      debounceMs: config.debounceMs || 5000,
+      onSave: async (content: TipTapDoc) => {
+        console.log(`[useAutoSaveTipTapField] Saving ${config.fieldName} to ${config.endpoint}`, content);
+
+        const payload = {
+          [config.fieldName]: content,
+        };
+
+        await axiosInstance.patch(config.endpoint, payload);
+
+        console.log(`[useAutoSaveTipTapField] Successfully saved ${config.fieldName}`);
+      },
+      isValid: (content: TipTapDoc) => {
+        // Validate TipTap document structure
+        const isValidStructure = content?.type === "doc" && Array.isArray(content?.content);
+
+        if (!isValidStructure) {
+          console.warn(`[useAutoSaveTipTapField] Invalid TipTap structure for ${config.fieldName}:`, content);
+          return false;
+        }
+
+        // Optional: Check if content is meaningful (not just empty doc)
+        const contentArray = content.content;
+        if (!contentArray) return true; // Allow documents without content array
+
+        const hasContent = contentArray.length > 0;
+        const isEmpty = !hasContent || (
+          contentArray.length === 1 &&
+          contentArray[0]?.type === "paragraph" &&
+          (!contentArray[0]?.content || contentArray[0].content.length === 0)
+        );
+
+        // Allow saving even if empty (user might want to clear content)
+        return true;
+      },
+      // Custom retry settings for API calls
+      retryCount: 3,
+      retryDelayMs: 5000,
+      successResetMs: 2000,  // Show "saved" status briefly
+      errorResetMs: 8000,    // Show error longer for user to notice
+    } : null
+  );
+}
+
+// =============================================================================
+// CONVENIENCE HOOKS FOR COMMON USE CASES
+// =============================================================================
+
+/**
+ * Specialized hook for profile bio editing
+ */
+export function useAutoSaveProfileBio(config: {
+  userId: string;
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+  enabled?: boolean;
+} | null) {
+  return useAutoSaveTipTapField(
+    config ? {
+      endpoint: `/api/profiles/${config.userId}`,
+      fieldName: "bio_json",
+      getContent: config.getContent,
+      debounceMs: config.debounceMs,
+      enabled: config.enabled,
+    } : null
+  );
+}
+
+/**
+ * Specialized hook for group overview editing
+ */
+export function useAutoSaveGroupOverview(config: {
+  groupId: string;
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+  enabled?: boolean;
+} | null) {
+  return useAutoSaveTipTapField(
+    config ? {
+      endpoint: `/api/groups/${config.groupId}`,
+      fieldName: "overview_json",
+      getContent: config.getContent,
+      debounceMs: config.debounceMs,
+      enabled: config.enabled,
+    } : null
+  );
+}
+
+/**
+ * Specialized hook for event description editing
+ */
+export function useAutoSaveEventDescription(config: {
+  eventId: string;
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+  enabled?: boolean;
+} | null) {
+  return useAutoSaveTipTapField(
+    config ? {
+      endpoint: `/api/events/${config.eventId}`,
+      fieldName: "description_json",
+      getContent: config.getContent,
+      debounceMs: config.debounceMs,
+      enabled: config.enabled,
+    } : null
+  );
+}
+
+/**
+ * Specialized hook for any model with a rich text field
+ * Usage: useAutoSaveRichTextField({
+ *   model: "courses",
+ *   id: "123",
+ *   field: "syllabus_json",
+ *   getContent: () => editor.getJSON()
+ * })
+ */
+export function useAutoSaveRichTextField(config: {
+  model: string;    // "courses", "projects", "posts", etc.
+  id: string;       // record ID
+  field: string;    // field name
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+  enabled?: boolean;
+} | null) {
+  return useAutoSaveTipTapField(
+    config ? {
+      endpoint: `/api/${config.model}/${config.id}`,
+      fieldName: config.field,
+      getContent: config.getContent,
+      debounceMs: config.debounceMs,
+      enabled: config.enabled,
+    } : null
+  );
+}

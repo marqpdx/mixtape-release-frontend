@@ -1,0 +1,164 @@
+// src/hooks/editor/useAutoSave.ts - Consolidated base hook
+
+import { useEffect, useRef, useState, useCallback } from "react";
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+interface AutoSaveConfig<T> {
+  getContent: () => T;
+  onSave: (content: T) => Promise<void>;
+  debounceMs?: number;
+  isValid?: (content: T) => boolean;
+  retryCount?: number;
+  retryDelayMs?: number;
+  successResetMs?: number;
+  errorResetMs?: number;
+}
+
+interface AutoSaveReturn {
+  status: SaveStatus;
+  triggerSave: () => void;
+  forceSave: () => Promise<void>;
+  cancel: () => void;
+}
+
+export function useAutoSave<T>(config: AutoSaveConfig<T> | null): AutoSaveReturn {
+  const {
+    getContent,
+    onSave,
+    debounceMs = 5000,
+    isValid,
+    retryCount: maxRetries = 3,
+    retryDelayMs = 5000,
+    successResetMs = 3000,
+    errorResetMs = 5000,
+  } = config || {};
+
+  const [status, setStatus] = useState<SaveStatus>("idle");
+  const isMounted = useRef(true);
+  const lastSaved = useRef<string>("");
+  const retryCount = useRef(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortController = useRef<AbortController | null>(null);
+
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (abortController.current) {
+      abortController.current.abort();
+      abortController.current = null;
+    }
+  }, []);
+
+  // Core save function
+  const performSave = useCallback(async () => {
+    if (!config || !getContent || !onSave) return;
+
+    const content = getContent();
+    if (!content) return;
+
+    // Validation check
+    if (isValid && !isValid(content)) return;
+
+    const contentString = JSON.stringify(content);
+
+    // Skip if unchanged
+    if (contentString === lastSaved.current) return;
+
+    // Cancel previous request
+    if (abortController.current) {
+      abortController.current.abort();
+    }
+    abortController.current = new AbortController();
+
+    setStatus("saving");
+
+    try {
+      await onSave(content);
+      lastSaved.current = contentString;
+      retryCount.current = 0;
+
+      if (isMounted.current) {
+        setStatus("saved");
+        timeoutRef.current = setTimeout(() => {
+          if (isMounted.current) setStatus("idle");
+        }, successResetMs);
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Save request was cancelled');
+        return;
+      }
+
+      console.error("Auto-save failed:", error);
+
+      if (isMounted.current) {
+        setStatus("error");
+
+        // Auto-reset error status
+        timeoutRef.current = setTimeout(() => {
+          if (isMounted.current) setStatus("idle");
+        }, errorResetMs);
+
+        // Retry logic
+        retryCount.current += 1;
+        if (retryCount.current <= maxRetries) {
+          timeoutRef.current = setTimeout(() => {
+            if (isMounted.current) {
+              performSave();
+            }
+          }, retryDelayMs);
+        }
+      }
+    }
+  }, [config, getContent, onSave, isValid, maxRetries, retryDelayMs, successResetMs, errorResetMs]);
+
+  // Debounced save function
+  const triggerSave = useCallback(() => {
+    cleanup();
+    timeoutRef.current = setTimeout(performSave, debounceMs);
+  }, [performSave, debounceMs, cleanup]);
+
+  // Force immediate save
+  const forceSave = useCallback(async () => {
+    cleanup();
+    await performSave();
+  }, [performSave, cleanup]);
+
+  // Cancel pending saves
+  const cancel = useCallback(() => {
+    cleanup();
+    if (isMounted.current) {
+      setStatus("idle");
+    }
+  }, [cleanup]);
+
+  // Setup and cleanup
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      cleanup();
+    };
+  }, [cleanup]);
+
+  // No-op return for null config
+  if (!config) {
+    return {
+      status: "idle",
+      triggerSave: () => {},
+      forceSave: async () => {},
+      cancel: () => {},
+    };
+  }
+
+  return {
+    status,
+    triggerSave,
+    forceSave,
+    cancel,
+  };
+}

@@ -1,0 +1,170 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import StarterKit from "@tiptap/starter-kit";
+import History from "@tiptap/extension-history";
+import Heading from "@tiptap/extension-heading";
+import Bold from "@tiptap/extension-bold";
+import Italic from "@tiptap/extension-italic";
+import * as Y from "yjs";
+
+import Underline from "@tiptap/extension-underline";
+import BulletList from "@tiptap/extension-bullet-list";
+import ListItem from "@tiptap/extension-list-item";
+import Link from "@tiptap/extension-link";
+
+import { Box, Spinner } from "@chakra-ui/react";
+import TipTapToolbar from "./TipTapToolbar";
+import { Prose } from "@components/ui/prose";
+import { Awareness } from "y-protocols/awareness.js";
+
+type ToolbarOption = "bold" | "italic" | "heading" | "underline" | "bulletList" | "link";
+
+interface TipTapEditorProps {
+  initialContent?: JSONContent | string;
+  onContentChange?: (content: JSONContent) => void;
+  autoSave?: {
+    triggerSave: () => void;
+    status: "idle" | "saving" | "saved" | "error";
+  };
+  editable?: boolean;
+  placeholder?: string;
+  toolbarOptions?: ToolbarOption[];
+  collab?: {
+    ydoc: Y.Doc;
+    awareness: Awareness;
+    user: { name: string; color?: string };
+  };
+}
+
+export default function TipTapEditor({
+  initialContent = "",
+  onContentChange,
+  autoSave,
+  editable = true,
+  collab,
+  placeholder = "Type here...",
+  toolbarOptions = ["bold", "italic", "heading", "underline", "bulletList", "link"],
+}: TipTapEditorProps) {
+  const latestContentRef = useRef<JSONContent | null>(null);
+  const isUpdatingContentRef = useRef(false);
+
+  // Build base extensions array
+  const baseExtensions = [
+    StarterKit.configure({
+      // Exclude history from StarterKit - we'll add it manually when needed
+      undoRedo: false,
+    }),
+    // Add history extension only when NOT in collaborative mode
+    ...(collab ? [] : [History]),
+    ...(toolbarOptions.includes("heading") ? [Heading.configure({ levels: [1, 2, 3] })] : []),
+    ...(toolbarOptions.includes("bold") ? [Bold] : []),
+    ...(toolbarOptions.includes("italic") ? [Italic] : []),
+    ...(toolbarOptions.includes("underline") ? [Underline] : []),
+    ...(toolbarOptions.includes("bulletList") ? [BulletList, ListItem] : []),
+    ...(toolbarOptions.includes("link") ? [
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+      }),
+    ] : []),
+  ];
+
+  // Add collaboration extensions if in collaborative mode
+  const extensions = collab && collab.ydoc && collab.awareness
+    ? [
+        ...baseExtensions,
+        Collaboration.configure({
+          document: collab.ydoc,
+          field: 'default', // Specify the field name explicitly
+        }),
+        // CollaborationCursor.configure({
+        //   provider: {
+        //     awareness: collab.awareness,
+        //     doc: collab.ydoc,
+        //   },
+        //   user: collab.user,
+        // })
+      ]
+    : baseExtensions;
+
+  if (collab && collab.ydoc && collab.awareness) {
+    console.log("🤝 Setting up collaboration with Y.Doc:", collab.ydoc);
+    console.log("🤝 Y.Doc clientID:", collab.ydoc.clientID);
+    console.log("🤝 Awareness:", collab.awareness);
+    console.log("🤝 Awareness states:", collab.awareness.getStates());
+  }
+
+  const editorConfig: Parameters<typeof useEditor>[0] = {
+    extensions,
+    editable,
+    editorProps: {
+      attributes: {
+        class: "editor-content",
+        placeholder,
+      },
+    },
+    onUpdate: ({ editor }) => {
+      if (isUpdatingContentRef.current) return; // Skip if we're programmatically updating
+
+      const json = editor.getJSON();
+      latestContentRef.current = json;
+      onContentChange?.(json);
+      autoSave?.triggerSave();
+    },
+    immediatelyRender: false,
+  };
+
+  // Only add initial content if we're NOT in collaborative mode
+  if (!collab) {
+    editorConfig.content = initialContent;
+  }
+
+  const editor = useEditor(editorConfig);
+
+  // Update editor content when initialContent changes (non-collaborative mode only)
+  useEffect(() => {
+    if (!editor || !initialContent || collab) return;
+
+    // Check if the content is actually different to avoid unnecessary updates
+    const currentContent = editor.getJSON();
+    const newContent = typeof initialContent === 'string' ? initialContent : initialContent;
+
+    // Simple comparison - you might want to use a deep comparison library like lodash
+    if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
+      console.log("Updating editor content with:", newContent);
+
+      // Set flag to prevent triggering onContentChange during programmatic update
+      isUpdatingContentRef.current = true;
+
+      // Update the editor content
+      editor.commands.setContent(newContent);
+
+      // Reset flag after a brief delay to ensure the update is complete
+      setTimeout(() => {
+        isUpdatingContentRef.current = false;
+      }, 0);
+    }
+  }, [editor, initialContent, collab]);
+
+  if (!editor) {
+    return (
+      <Box py={4} textAlign="center">
+        <Spinner size="sm" />
+      </Box>
+    );
+  }
+
+  return (
+    <Box borderWidth="1px" borderRadius="md" p={4} minH="300px">
+      <TipTapToolbar editor={editor} />
+      <Prose maxW="full">
+        <EditorContent editor={editor} />
+      </Prose>
+    </Box>
+  );
+}

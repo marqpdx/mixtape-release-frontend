@@ -1,10 +1,10 @@
 // src/components/groups/tabs/columns/postsColumns.tsx
 
-import { FlattenedPlacement } from '@content/writingTypes'
 import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
 import { HStack, VStack, Text, Badge, Box } from '@chakra-ui/react'
 import { formatDistanceToNow } from 'date-fns'
 import { useColorModeValue } from '@components/ui/color-mode'
+import { FlattenedPlacement } from '@/types/writingTypes'
 
 const columnHelper = createColumnHelper<FlattenedPlacement>()
 

@@ -1,0 +1,27 @@
+// src/hooks/editor/useAutoSaveDocument.ts
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { TipTapDoc } from "content/dispatchTypes";
+import { useAutoSave } from "./useAutoSave";
+
+interface DocumentAutoSaveConfig {
+  documentSlug: string;
+  getContent: () => TipTapDoc;
+  debounceMs?: number;
+}
+
+export function useAutoSaveDocument(config: DocumentAutoSaveConfig | null) {
+  return useAutoSave(
+    config ? {
+      getContent: config.getContent,
+      debounceMs: config.debounceMs || 5000,
+      onSave: async (content: TipTapDoc) => {
+        await axiosInstance.patch(`/api/dispatch/documents/${config.documentSlug}`, {
+          content,
+        });
+      },
+      isValid: (content: TipTapDoc) => {
+        return content?.type === "doc" && Array.isArray(content.content);
+      },
+    } : null
+  );
+}

@@ -1,0 +1,135 @@
+// src/components/write/WriteWorkArea.tsx
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { Box, Text, VStack } from "@chakra-ui/react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import WriteComposer from "./WriteComposer";
+import { WritingDraft } from "@components/writing/interfaces";
+
+interface WriteWorkAreaProps {
+  draftId?: string; // Optional draft ID to load
+  onBack?: () => void; // Optional callback to go back to drafts list
+  forceNew?: boolean; // Force a blank new draft (skip autosave loading)
+}
+
+export default function WriteWorkArea({ draftId, onBack, forceNew = false }: WriteWorkAreaProps) {
+  // Draft state lives here so both composer + publish panel can see/update it
+  const [title, setTitle] = useState<string>("");
+  const [docJSON, setDocJSON] = useState<any>({ type: "doc", content: [] });
+  const [summary, setSummary] = useState<string>("");
+
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loadedDraft, setLoadedDraft] = useState<WritingDraft | null>(null);
+
+  // Load specific draft if draftId is provided
+  useEffect(() => {
+    if (!draftId) {
+      // Reset to blank state for new draft
+      setTitle("");
+      setDocJSON({ type: "doc", content: [] });
+      setSummary("");
+      setLoadedDraft(null);
+      return;
+    }
+
+    const loadDraft = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await axiosInstance.get(`/api/writing/drafts/${draftId}`);
+        const draft: WritingDraft = response.data;
+
+        // Populate form with draft data
+        setTitle(draft.title || "");
+        setDocJSON(draft.body_json || { type: "doc", content: [] });
+        setSummary(draft.summary || "");
+        setLoadedDraft(draft);
+
+      } catch (err: any) {
+        console.error('Failed to load draft:', err);
+        setError(err?.response?.data?.message || 'Failed to load draft');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDraft();
+  }, [draftId]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <Box className="writer-composer-parent" w="100%" h="100vh" p={4}>
+        <VStack align="center" justify="center" h="100%">
+          <Text>Loading draft...</Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box className="writer-composer-parent" w="100%" h="100vh" p={4}>
+        <VStack align="center" justify="center" h="100%" gap={4}>
+          <Text color="red.500">Error: {error}</Text>
+          {onBack && (
+            <Text
+              color="blue.500"
+              cursor="pointer"
+              onClick={onBack}
+              textDecoration="underline"
+            >
+              ← Back to My Drafts
+            </Text>
+          )}
+        </VStack>
+      </Box>
+    );
+  }
+
+  return (
+    <Box className="writer-composer-parent" w="100%" h="100vh" overflow="hidden">
+      {/* Optional header showing which draft is being edited */}
+      {draftId && loadedDraft && (
+        <Box p={4} borderBottom="1px solid" borderColor="gray.200" bg="gray.50">
+          <VStack align="start" gap={1}>
+            <Text fontSize="sm" color="gray.600">
+              Editing Draft • Last saved: {new Date(loadedDraft.last_saved_at).toLocaleString()}
+            </Text>
+            {onBack && (
+              <Text
+                fontSize="sm"
+                color="blue.500"
+                cursor="pointer"
+                onClick={onBack}
+                textDecoration="underline"
+                _hover={{ color: "blue.600" }}
+              >
+                ← Back to My Drafts
+              </Text>
+            )}
+          </VStack>
+        </Box>
+      )}
+
+      Main WriteComposer - takes full space
+      <WriteComposer
+        title={title}
+        setTitle={setTitle}
+        docJSON={docJSON}
+        setDocJSON={setDocJSON}
+        summary={summary}  // Pass summary down
+        setSummary={setSummary}  // Pass summary setter down
+        intendedKind={loadedDraft?.intended_kind || "post"}
+        draftId={draftId} // Pass draftId to composer for autosave
+        forceNew={forceNew} // Pass forceNew flag
+      />
+    </Box>
+  );
+}

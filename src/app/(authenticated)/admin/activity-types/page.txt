@@ -1,0 +1,120 @@
+// src/app/(protected)/admin/activity-types/page.tsx
+
+"use client";
+
+import {
+  Box,
+  Heading,
+  VStack,
+  Button,
+  Input,
+  Switch,
+  Text,
+  HStack,
+} from "@chakra-ui/react";
+import {
+  useList,
+  useDelete,
+  useNavigation,
+  HttpError,
+  BaseRecord,
+} from "@refinedev/core";
+import { useForm } from "@refinedev/react-hook-form";
+import { SubmitHandler } from "react-hook-form";
+import { useEffect } from "react";
+
+type ActivityType = {
+  id: number;
+  code: string;
+  label: string;
+  is_user_suppressible: boolean;
+};
+
+export default function ActivityTypeAdminPage() {
+  const { data, refetch } = useList<ActivityType>({
+    resource: "activity/types",
+  });
+
+
+  console.log("Activity Types Data:", data);
+  console.log("Activity Types Data:", data?.data);
+
+  const {
+    refineCore: { onFinish },
+    register,
+    handleSubmit,
+    reset,
+  } = useForm<ActivityType, HttpError, ActivityType>({
+    refineCoreProps: {
+      resource: "activity/types",
+      action: "create",
+    },
+  });
+
+  const { mutate: deleteType } = useDelete();
+
+  const onSubmit = async (values: ActivityType) => {
+    await onFinish(values);
+    reset();
+    refetch();
+  };
+
+  const handleDelete = async (id: number) => {
+    await deleteType({
+      resource: "activity/types",
+      id,
+      mutationMode: "pessimistic",
+    });
+    refetch();
+  };
+
+  return (
+    <Box maxW="800px" mx="auto" py={10}>
+      <Heading size="lg" mb={6}>Activity Types (Admin Only)</Heading>
+
+      <Box as="form" onSubmit={handleSubmit(onSubmit)} mb={8} p={4} borderWidth="1px" borderRadius="md">
+        <VStack align="start" gap={4}>
+          <Input placeholder="Code (e.g. group.new_document)" {...register("code", { required: true })} />
+          <Input placeholder="Label (e.g. New Group Document)" {...register("label", { required: true })} />
+          <HStack>
+            <Text>Suppressible by user?</Text>
+
+
+            <Switch.Root
+              defaultChecked={true}
+              {...register("is_user_suppressible")}
+            >
+              <Switch.HiddenInput />
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.Label>Suppressible by user?</Switch.Label>
+            </Switch.Root>
+
+
+
+
+          </HStack>
+          <Button type="submit">Create Activity Type</Button>
+        </VStack>
+      </Box>
+
+      <VStack align="stretch" gap={4}>
+        {data?.data.map((type) => (
+          <Box key={type.id} p={4} borderWidth="1px" borderRadius="md">
+            <HStack justify="space-between">
+              <Box>
+                <Text fontWeight="bold">{type.label}</Text>
+                <Text fontSize="sm" color="gray.500">{type.code}</Text>
+                <Text fontSize="sm">Suppressible: {type.is_user_suppressible ? "Yes" : "No"}</Text>
+              </Box>
+              <Button colorScheme="red" size="sm" onClick={() => handleDelete(type.id)}>
+                Delete
+              </Button>
+            </HStack>
+          </Box>
+        ))}
+      </VStack>
+    </Box>
+  );
+}

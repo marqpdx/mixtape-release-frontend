@@ -17,6 +17,8 @@ import { UserIdentity } from "@/types/auth";
 import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
 import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
+import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
+import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: any;
@@ -133,53 +135,59 @@ export default function GroupWorkArea({
     );
   }
 
-  // // Writing sections
-  // if (section === "writing") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupWritingWrapper
-  //         groupSlug={group.slug}
-  //         groupId={group.id}
-  //         groupName={group.name}
-  //         setActiveSection={setActiveSection}
-  //         onPublished={(piece) => {
-  //           // Handle the published piece
-  //         }}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
+  // Writing sections
+  if (section === "writing") {
+    return (
+      <WorkAreaWrapper>
+        <GroupWritingWrapper
+          groupSlug={group.slug}
+          groupId={group.id}
+          groupName={group.name}
+          setActiveSection={setActiveSection}
+          onPublished={(piece) => {
+            // Handle the published piece
+          }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
 
-  // if (section === "create-writing") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupWriteWrapper
-  //         groupSlug={group.slug}
-  //         groupId={group.id}
-  //         groupName={group.name}
-  //         writingKind="post"
-  //         // No pieceSlug = create new piece
-  //         onPublished={(piece) => router.push(`/groups/${group.slug}/posts/${piece.slug}`)}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
+  if (section === "create-writing") {
+    return (
+      <WorkAreaWrapper>
+        <WritingEditorWrapper
+          sponsor={{
+            type: 'group',
+            id: group.id,
+            slug: group.slug,
+            displayName: group.name
+          }}
+          writingKind="post"
+          // No pieceId = create new piece
+          onPublished={(piece) => router.push(`/groups/${group.slug}/posts/${piece.slug}`)}
+        />
+      </WorkAreaWrapper>
+    );
+  }
 
-
-  // if (section === "do-writing") {
-  //   const pieceSlug = sectionParams?.piece;
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupWriteWrapper
-  //         groupSlug={group.slug}
-  //         groupId={group.id}
-  //         groupName={group.name}
-  //         pieceSlug={pieceSlug} // Pass the existing piece to edit
-  //         onPublished={(piece) => router.push(`/groups/${group.slug}/writing/${piece.slug}`)}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
+  if (section === "do-writing") {
+    const pieceId = sectionParams?.piece;
+    return (
+      <WorkAreaWrapper>
+        <WritingEditorWrapper
+          sponsor={{
+            type: 'group',
+            id: group.id,
+            slug: group.slug,
+            displayName: group.name
+          }}
+          writingKind="post"
+          pieceId={pieceId} // Pass the existing piece slug to edit
+          onPublished={(piece) => router.push(`/groups/${group.slug}/writing/${piece.slug}`)}
+        />
+      </WorkAreaWrapper>
+    );
+  }
 
 
   // // Events

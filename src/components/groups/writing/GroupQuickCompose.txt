@@ -1,0 +1,155 @@
+// src/components/groups/writing/GroupQuickCompose.tsx
+
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { Box, VStack, Text, Spinner } from '@chakra-ui/react';
+import { createStandaloneToast } from '@chakra-ui/toast';
+import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import GroupWriteComposer from './GroupWriteComposer';
+import type { WritingPiece } from './interfaces';
+import GroupWriteWrapper from './GroupWriteWrapper';
+import { useRouter } from 'next/navigation';
+
+const { toast } = createStandaloneToast();
+
+export default function GroupQuickCompose({
+  groupSlug,
+  groupId,
+  groupName,
+  writingKind = 'post'
+}: {
+  groupSlug: string;
+  groupId: string;
+  groupName: string;
+  writingKind?: 'post' | 'announcement' | 'article';
+}) {
+  const [piece, setPiece] = useState<WritingPiece | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const createdRef = useRef(false);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (createdRef.current) return;
+    createdRef.current = true;
+
+    let mounted = true;
+
+    const createPieceAndWorkingCopy = async () => {
+      try {
+        console.log('🚀 Creating new writing piece for group, slug:', groupSlug);
+        console.log('🚀 Creating new writing piece for group, id:', groupId);
+
+        // Create WritingPiece + WorkingCopy in single API call
+        console.log('🚀 GroupQuickCompose Creating new writing piece for group:', groupSlug);
+
+        const res = await axiosInstance.post(`/api/writing/pieces`, {
+          title: '',
+          writing_kind: writingKind,
+          body_json: { type: 'doc', content: [] },
+          excerpt: '',
+          sponsor_content_type: 'group',
+          sponsor_object_id: groupId,
+          create_working_copy: true,  // Add this flag
+        });
+
+        console.log('aaa Full API response:', res);
+        console.log('aaa Response data:', res.data);
+        console.log('aaa Piece data:', res.data.piece || res.data);
+        console.log('aaa Working copy data:', res.data.working_copy);
+
+        const data = res.data;
+        console.log('✅ Created piece and working copy:', data);
+
+        if (!data.id) {
+          console.error('aaa Create response missing piece.id');
+          throw new Error('Create response missing piece.id');
+        }
+
+        if (!data.working_copy) {
+          console.log('aaa Create response missing working_copy');
+          throw new Error('Create response missing working_copy');
+        }
+
+        const { working_copy, ...pieceData } = data;
+
+        console.log('aaa Extracted pieceData:', pieceData);
+        console.log('aaa pieceData has id?:', pieceData.id);
+
+        setPiece(pieceData);
+        setError(null);
+
+      } catch (e: any) {
+        console.error('❌ Failed to create piece:', e);
+        if (!mounted) return;
+
+        const errorMessage = e?.response?.data?.message || e?.message || 'Failed to create draft';
+        setError(errorMessage);
+        toast({
+          title: 'Could not start draft',
+          description: errorMessage,
+          status: 'error'
+        });
+      } finally {
+        console.log('finally, mounted', mounted);
+        console.log('finally, loading', loading);
+        setLoading(false);
+      }
+    };
+
+    createPieceAndWorkingCopy();
+
+    return () => {
+      mounted = false;
+    };
+  }, [groupSlug, groupId, writingKind]);
+
+
+
+
+  if (loading) {
+    return (
+      <Box p={6} textAlign="center">
+        <VStack gap={3}>
+          <Spinner size="lg" />
+          <Text color="gray.600">Preparing your editor...</Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={6} textAlign="center">
+        <VStack gap={3}>
+          <Text color="red.500" fontSize="lg">Failed to create draft</Text>
+          <Text color="gray.600" fontSize="sm">{error}</Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  if (!piece) {
+    return (
+      <Box p={6} textAlign="center">
+        <VStack gap={3}>
+          <Text color="red.500">Something went wrong</Text>
+          <Text color="gray.600" fontSize="sm">Piece not found after creation</Text>
+        </VStack>
+      </Box>
+    );
+  }
+
+  return (
+    <GroupWriteWrapper
+      groupSlug={groupSlug}
+      groupId={groupId}
+      groupName={groupName}
+      writingKind="post"
+      onPublished={(piece) => router.push(`/groups/${groupSlug}/posts/${piece.slug}`)}
+    />
+  );
+}
