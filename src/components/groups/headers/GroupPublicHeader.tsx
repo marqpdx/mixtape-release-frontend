@@ -50,7 +50,7 @@ export function GroupPublicHeader({
       <Box
         position="relative"
         h="290px"
-        bgImage={group.background_image ? `url(${group.background_image})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}
+        bgImage={group.background_image_url ? `url(${group.background_image_url})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}
         bgSize="cover"
         bgPos="center"
         borderRadius="lg"

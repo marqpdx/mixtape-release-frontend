@@ -21,7 +21,7 @@ import {
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect, useState, useCallback } from "react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-// import { ImageUploadField } from "@components/forms/common/ImageUploadField";
+import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
 // import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
@@ -34,6 +34,8 @@ import { Group, GroupFormData, GroupStatus, GroupType } from "@/types/groupTypes
 import { toaster } from "@/components/ui/toaster";
 import { MixtapeAlert } from "../ui/alerts";
 import GroupVisibilitySelect from "./utils/GroupVisibilitySelect";
+import { useEntityImageUpload } from "@/hooks/useEntityImageUpload";
+import { useImageUpload } from '@hooks/useAssets';
 
 // Helper function to safely render error messages
 const getErrorMessage = (error: any): string => {
@@ -112,6 +114,14 @@ export default function GroupEditForm({
     formState: { errors, isSubmitting },
   } = useForm<GroupFormData>();
 
+  // Currently using deprecated wrapper (works via new sponsor-agnostic API)
+  // To migrate to new API directly, replace with:
+
+  const { handleImageChange, pending, previewUrls } = useImageUpload({
+    sponsorType: 'group',
+    sponsorId: group?.id ?? '',
+    setValue
+  });
   // const { handleImageChange, pending } = useEntityImageUpload<GroupFormData>(
   //   "group",
   //   group?.id ?? "",
@@ -131,8 +141,13 @@ export default function GroupEditForm({
     setValue("visibility", group.visibility || "public");
     setValue("display_layout", group.display_layout || "classic");
     setValue("status", group.status || "draft");
-    setValue("profile_image", group.profile_image);
-    setValue("background_image", group.background_image);
+
+    // Image storage paths (what gets saved to DB)
+    setValue("profile_image_path", group.profile_image_path);
+    setValue("background_image_path", group.background_image_path);
+
+    // Note: profile_image_url and background_image_url are computed properties
+    // on the backend. They're read-only and generated on-demand from the paths.
   }, [group, setValue]);
 
   // Track form changes for draft mode
@@ -407,29 +422,38 @@ export default function GroupEditForm({
             Visual Assets
           </Fieldset.Legend>
           <Fieldset.Content>
+            {/* Hidden inputs for S3 paths (authoritative storage keys) */}
+            {/* <input type="hidden" {...register("profile_image_path")} />
+            <input type="hidden" {...register("background_image_path")} /> */}
+            {/* Note: URL fields removed - backend computes these on-demand */}
+
             <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
               <Field.Root>
                 <Field.Label>Profile Image</Field.Label>
-                {/* <ImageUploadField
+                <ImageUploadField
                   imageType="profile"
+                  // imageUrl={group?.profile_image_url}
+                  imageUrl={previewUrls.profile ?? group?.profile_image_url}
                   pending={pending.profile}
                   watch={watch}
                   register={register}
                   errors={errors}
                   doHandleImageChange={(e) => handleImageChange(e, "profile")}
-                /> */}
+                />
               </Field.Root>
 
               <Field.Root>
                 <Field.Label>Background Image</Field.Label>
-                {/* <ImageUploadField
+                <ImageUploadField
                   imageType="background"
+                  // imageUrl={group?.background_image_url}
+                  imageUrl={previewUrls.background ?? group?.background_image_url}
                   pending={pending.background}
                   watch={watch}
                   register={register}
                   errors={errors}
                   doHandleImageChange={(e) => handleImageChange(e, "background")}
-                /> */}
+                />
               </Field.Root>
             </SimpleGrid>
           </Fieldset.Content>

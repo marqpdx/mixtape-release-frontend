@@ -3,9 +3,10 @@
 
 import { useState } from 'react';
 import { Button, HStack } from '@chakra-ui/react'; // v3 API
-import { applyWorkingCopy, publishAndPlace } from '../api';
+import { applyWorkingCopy, publishAndPlace } from '@/lib/writing/api';
 import { PublishAndPlacePayload } from '@/types/writingTypes';
-// import { PublishAndPlacePayload } from '../interfaces';
+// Note: This component uses the advanced publish-and-place endpoint
+// For standard publishing, see SimplePublishDialog which uses useWritingMutations
 
 export default function GroupPublishControls({
   pieceId,

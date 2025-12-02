@@ -63,6 +63,7 @@ export function PublishingControls({
         onClose={() => setDialogOpen(false)}
         piece={piece}
         groupId={sponsor.id}
+        groupSlug={sponsor.slug}  // Pass slug for cache invalidation
         titleRef={titleRef}
         docJSONRef={docJSONRef}
         excerptRef={excerptRef}

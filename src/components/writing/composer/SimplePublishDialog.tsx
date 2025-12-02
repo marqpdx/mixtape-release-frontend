@@ -13,13 +13,14 @@ import {
   Checkbox,
 } from '@chakra-ui/react'
 import { toaster } from "@/components/ui/toaster"
-import { axiosInstance } from '@providers/auth-provider/axiosInstance'
+import { useWritingMutations } from '@hooks/useWriting'
 
 interface SimplePublishDialogProps {
   isOpen: boolean
   onClose: () => void
   piece: { id: string; title: string }
   groupId: string
+  groupSlug?: string  // For cache invalidation
   titleRef: React.RefObject<string>
   docJSONRef: React.RefObject<any>
   excerptRef: React.RefObject<string>
@@ -31,6 +32,7 @@ export function SimplePublishDialog({
   onClose,
   piece,
   groupId,
+  groupSlug,
   titleRef,
   docJSONRef,
   excerptRef,
@@ -38,24 +40,25 @@ export function SimplePublishDialog({
 }: SimplePublishDialogProps) {
   const [toNoticeboard, setToNoticeboard] = useState(true)
   const [noticeboardExcerpt, setNoticeboardExcerpt] = useState(false)
-  const [isPublishing, setIsPublishing] = useState(false)
+
+  // Use mutation hook for automatic cache invalidation
+  // Note: groupSlug is optional - if not provided, cache won't be invalidated automatically
+  const { publishPiece } = useWritingMutations('group', groupSlug || 'unknown')
 
   const handlePublish = useCallback(async () => {
+    if (!toNoticeboard) {
+      toaster.create({
+        title: 'Select at least one destination',
+        type: 'warning'
+      })
+      return
+    }
+
     try {
-      if (!toNoticeboard) {
-        toaster.create({
-          title: 'Select at least one destination',
-          type: 'warning'
-        })
-        return
-      }
-
-      setIsPublishing(true)
-
-      // Call your existing endpoint
-      const response = await axiosInstance.post(
-        `/api/writing/pieces/${piece.id}/publish`,
-        {
+      // Use the mutation which automatically invalidates cache on success
+      const response = await publishPiece.mutateAsync({
+        pieceId: piece.id,
+        payload: {
           // Update piece fields if changed
           title: titleRef.current,
           body_json: docJSONRef.current,
@@ -73,15 +76,15 @@ export function SimplePublishDialog({
             follow_updates: true
           }
         }
-      )
+      })
 
       toaster.create({
         title: 'Published!',
-        description: `Published to ${response.data.placements_created} destination(s)`,
+        description: `Published to ${response.placements_created} destination(s)`,
         type: 'success'
       })
 
-      onPublished?.(response.data.piece)
+      onPublished?.(response.piece)
       onClose()
     } catch (error: any) {
       toaster.create({
@@ -89,10 +92,8 @@ export function SimplePublishDialog({
         description: error?.response?.data?.error || error?.message,
         type: 'error'
       })
-    } finally {
-      setIsPublishing(false)
     }
-  }, [toNoticeboard, noticeboardExcerpt, piece.id, groupId, titleRef, docJSONRef, excerptRef, onClose, onPublished])
+  }, [toNoticeboard, noticeboardExcerpt, piece.id, groupId, groupSlug, titleRef, docJSONRef, excerptRef, onClose, onPublished, publishPiece])
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={({ open }) => !open && onClose()}>
@@ -168,7 +169,7 @@ export function SimplePublishDialog({
             <Button
               colorScheme="green"
               onClick={handlePublish}
-              loading={isPublishing}
+              loading={publishPiece.isPending}
             >
               Publish
             </Button>

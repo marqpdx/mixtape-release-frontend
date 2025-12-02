@@ -17,8 +17,8 @@ export function middleware(request: NextRequest) {
 
   // Debug: Log all cookies
   const allCookies = request.cookies.getAll();
-  console.log('[Middleware] Path:', pathname);
-  console.log('[Middleware] All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value })));
+  // console.log('[Middleware] Path:', pathname);
+  // console.log('[Middleware] All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value })));
 
   // Check for refresh token cookie (try both possible names)
   const refreshToken = request.cookies.get('refresh_token') ||

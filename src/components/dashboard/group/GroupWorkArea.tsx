@@ -12,6 +12,7 @@ import GroupOverview from "@components/groups/GroupOverview";
 // import CourseForm from "@components/earthlab/CourseForm";
 // import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMembers } from "@hooks/useMembers";
 import { UserIdentity } from "@/types/auth";
 import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
@@ -50,6 +51,22 @@ export default function GroupWorkArea({
   const stableMembers = useMemo(() => groupMembers || [], [groupMembers]);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Handler for when a piece is published
+  // The mutation already invalidates cache, but this ensures it happens even if called from elsewhere
+  const handlePiecePublished = (piece: any) => {
+    // Invalidate writing queries to refresh the list
+    queryClient.invalidateQueries({
+      queryKey: ['writing', 'placements', 'group', group.slug],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['writing', 'drafts', 'group', group.slug],
+    });
+
+    // Navigate to the published piece
+    router.push(`/groups/${group.slug}/writing/${piece.slug}`);
+  };
 
 
   // Dashboard sections
@@ -164,7 +181,7 @@ export default function GroupWorkArea({
           }}
           writingKind="post"
           // No pieceId = create new piece
-          onPublished={(piece) => router.push(`/groups/${group.slug}/posts/${piece.slug}`)}
+          onPublished={handlePiecePublished}
         />
       </WorkAreaWrapper>
     );
@@ -183,7 +200,7 @@ export default function GroupWorkArea({
           }}
           writingKind="post"
           pieceId={pieceId} // Pass the existing piece slug to edit
-          onPublished={(piece) => router.push(`/groups/${group.slug}/writing/${piece.slug}`)}
+          onPublished={handlePiecePublished}
         />
       </WorkAreaWrapper>
     );

@@ -1,0 +1,145 @@
+// src/app/(protected)/groups/[slug]/writing/[id]/page.tsx
+
+'use client';
+
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { Box, Button, VStack, HStack, Text, Heading, Avatar, Badge, Spinner, Container } from '@chakra-ui/react';
+import { IconArrowLeft } from '@tabler/icons-react';
+import Link from 'next/link';
+import { useComments } from '@hooks/useComments';
+import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import { renderProseMirrorContent } from '@components/write/NoticeCard';
+import { CommentsSection } from '@components/comments/CommentsSection';
+
+export default function GroupWritingDetailPage() {
+  const params = useParams();
+  const groupSlug = params.slug as string;
+  const pieceId = params.id as string;
+
+  // Fetch both piece and group data
+  const { data: piece, isLoading: pieceLoading, error: pieceError } = useQuery({
+    queryKey: ['groupWriting', groupSlug, pieceId],
+    queryFn: () => axiosInstance.get(`/api/groups/${groupSlug}/writing/${pieceId}`).then(res => res.data),
+    enabled: !!(groupSlug && pieceId)
+  });
+
+  const { data: group, isLoading: groupLoading } = useQuery({
+    queryKey: ['group', groupSlug],
+    queryFn: () => axiosInstance.get(`/api/groups/${groupSlug}`).then(res => res.data),
+    enabled: !!groupSlug
+  });
+
+  if (pieceLoading || groupLoading) {
+    return (
+      <Box p={6} textAlign="center">
+        <Spinner size="lg" />
+        <Text mt={4}>Loading...</Text>
+      </Box>
+    );
+  }
+
+  if (pieceError || !piece) {
+    return (
+      <Box p={6} textAlign="center">
+        <Text color="red.500">Failed to load post</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Group Banner */}
+      <Box bg="gray.50" borderBottom="1px solid" borderColor="gray.200" py={3}>
+        <Container maxW="5xl">
+          <HStack justify="space-between" align="center">
+            <Button
+              variant="ghost"
+              size="sm"
+            >
+              <Link href={`/groups/${groupSlug}`}>
+                <IconArrowLeft size={16} />
+                Return to group
+              </Link>
+            </Button>
+
+            <Text fontWeight="semibold" fontSize="lg">
+              {group?.title || groupSlug}
+            </Text>
+
+            <Avatar.Root size="sm">
+              {group?.avatar ? (
+                <Avatar.Image src={group.avatar} />
+              ) : (
+                <Avatar.Fallback>{group?.title?.[0] || groupSlug[0].toUpperCase()}</Avatar.Fallback>
+              )}
+            </Avatar.Root>
+          </HStack>
+        </Container>
+      </Box>
+
+      {/* Post content - narrower reading width */}
+      <Container maxW="3xl" py={8}>
+        <VStack align="stretch" gap={6}>
+          {/* Post header */}
+          <VStack align="stretch" gap={4}>
+            <HStack justify="space-between" align="start">
+              <HStack>
+                <Avatar.Root size="md">
+                  <Avatar.Fallback>{piece.author_name?.[0] || "A"}</Avatar.Fallback>
+                </Avatar.Root>
+                <VStack align="start" gap={0}>
+                  <Text fontWeight="bold">{piece.author_name}</Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {new Date(piece.published_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Text>
+                </VStack>
+              </HStack>
+
+              <VStack align="end" gap={1}>
+                {piece.writing_kind === "announcement" && (
+                  <Badge colorScheme="orange">Announcement</Badge>
+                )}
+                <Badge variant="outline" size="sm">
+                  {piece.status}
+                </Badge>
+              </VStack>
+            </HStack>
+
+            <Heading size="xl" lineHeight="shorter">
+              {piece.title}
+            </Heading>
+
+            {piece.excerpt && (
+              <Text fontSize="lg" color="gray.600" fontStyle="italic">
+                {piece.excerpt}
+              </Text>
+            )}
+          </VStack>
+
+          {/* Post body */}
+          <Box fontSize="md" lineHeight="tall">
+            {renderProseMirrorContent(piece.body_json)}
+          </Box>
+
+
+
+
+          {/* Comments section */}
+          <Box borderTop="1px solid" borderColor="gray.200" pt={6}>
+            <CommentsSection groupSlug={groupSlug} pieceId={pieceId} />
+          </Box>
+
+
+
+
+
+        </VStack>
+      </Container>
+    </Box>
+  );
+}

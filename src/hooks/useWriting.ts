@@ -7,6 +7,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 import { FlattenedPlacement, WritingWorkingCopy } from '@/types/writingTypes';
+import { publishPiece as publishPieceApi, publishAndPlace as publishAndPlaceApi } from '@/lib/writing/api';
 // import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
 
 interface SponsorConfig {
@@ -101,6 +102,39 @@ export function useWriting(
 }
 
 /**
+ * Fetch a single published piece by slug
+ *
+ * @param pieceSlug - slug of the piece to fetch
+ *
+ * @example
+ * const { piece, isLoading, error } = useWritingPiece('my-piece-slug');
+ */
+export function useWritingPiece(pieceSlug: string | null) {
+  const {
+    data: piece,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['writing', 'piece', pieceSlug],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/api/writing/pieces/view/${pieceSlug}`);
+      return response.data;
+    },
+    enabled: !!pieceSlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    piece: piece || null,
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+}
+
+/**
  * Mutations for writing operations
  */
 export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug: string) {
@@ -118,10 +152,48 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
     },
   });
 
+  /**
+   * Publish piece mutation - standard publish flow
+   * Used by SimplePublishDialog
+   */
   const publishPiece = useMutation({
+    mutationFn: async ({ pieceId, payload }: {
+      pieceId: string;
+      payload: {
+        title?: string;
+        body_json?: any;
+        excerpt?: string;
+        destinations: {
+          groups?: string[];
+          members?: string[];
+        };
+        placement_options?: {
+          visibility?: 'public' | 'private';
+          is_excerpt?: boolean;
+          follow_updates?: boolean;
+        };
+      }
+    }) => {
+      return publishPieceApi(pieceId, payload);
+    },
+    onSuccess: () => {
+      // Invalidate both placements and drafts to refresh the lists
+      queryClient.invalidateQueries({
+        queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],
+      });
+    },
+  });
+
+  /**
+   * Publish and place mutation - advanced publish flow
+   * Used by GroupPublishControls for publish-and-place endpoint
+   */
+  const publishAndPlace = useMutation({
     mutationFn: async ({ pieceId, payload }: { pieceId: string; payload: any }) => {
-      const response = await axiosInstance.post(`/api/writing/pieces/${pieceId}/publish`, payload);
-      return response.data;
+      return publishAndPlaceApi(pieceId, payload);
     },
     onSuccess: () => {
       // Invalidate both queries
@@ -137,5 +209,6 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
   return {
     deleteDraft,
     publishPiece,
+    publishAndPlace,
   };
 }

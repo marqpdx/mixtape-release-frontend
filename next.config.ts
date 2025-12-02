@@ -32,6 +32,7 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
+      "img-src 'self' https: http://127.0.0.1:9000 http://localhost:9000 data: blob:;",
       // Next/Chakra often need these; remove 'unsafe-eval' if/when you can
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
@@ -62,7 +63,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        // source: '/:path*',
+        source: "/(.*)",
         headers: securityHeaders,
       },
     ];

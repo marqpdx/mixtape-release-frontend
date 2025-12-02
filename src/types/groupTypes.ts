@@ -32,18 +32,31 @@ export interface Group {
   title: string;
   slug: string;
   description: string;
-  summary?: string;           // ⚠️ ADD
-  body?: string;              // ⚠️ ADD
-  author_name?: string;       // ⚠️ ADD
+  summary?: string;
+  body?: string;
+  author_name?: string;
   group_type: GroupType;
   visibility: GroupVisibility;
   display_layout: "classic" | "modern" | "minimal";
-  status?: GroupStatus;            // ⚠️ ADD
+  status?: GroupStatus;
+
+  // DEPRECATED: These fields store expired presigned URLs
+  // Use profile_image_url and background_image_url instead
   profile_image?: string;
   background_image?: string;
+
+  // Authoritative storage paths (S3 keys) - what gets saved to DB
+  profile_image_path?: string;
+  background_image_path?: string;
+
+  // Computed presigned URLs (generated on-demand by backend)
+  profile_image_url?: string;
+  background_image_url?: string;
+
   is_active: boolean;
+  is_member?: boolean;
   submitted_by: string;
-  user_roles: GroupRole[] | null; // or GroupRole[] if you fully control the backend vocab
+  user_roles: GroupRole[] | null;
   created_at: IsoDateString;
   updated_at: IsoDateString;
 
@@ -51,7 +64,7 @@ export interface Group {
   member_count?: number;
   submitted_by_username?: string;
 
-  // emblem?: EmblemInline | null;  // ✅ This is correct
+  // emblem?: EmblemInline | null;
 }
 
 /** GROUP MEMBERSHIP - Flattened polymorphic membership */
@@ -94,14 +107,15 @@ export interface GroupFormData {
   description: string;
   summary: string;
   body: string;
-  // group_type: "community" | "circle" | "persona" | "coalition";
   group_type: GroupType;
   visibility: GroupVisibility;
   display_layout: "classic" | "modern" | "minimal";
   status: GroupStatus;
   author_name: string;
-  profile_image?: string;      // ✨ Changed from File | string | null
-  background_image?: string;   // ✨ Changed from File | string | null
+
+  // Only the path fields are stored (URLs are computed on backend)
+  profile_image_path?: string;
+  background_image_path?: string;
 }
 
 // ---------- API Response types ----------
