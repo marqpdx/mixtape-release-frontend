@@ -197,7 +197,7 @@ export function useBackgroundSummary(
 ) {
   const {
     enabled = true,
-    debounceMs = 12000,  // Increased debounce
+    debounceMs = 11000,
     minWordsToSummarize = 50,
     summaryWords = 40,
   } = options;
