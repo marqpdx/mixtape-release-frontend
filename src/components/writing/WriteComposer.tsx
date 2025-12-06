@@ -1,4 +1,4 @@
-// src/components/write/WriteComposer.tsx - Core component only
+// src/components/write/WriteComposer.tsx
 
 'use client';
 

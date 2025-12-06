@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, Heading, Spinner, Text, Flex, Button } from "@chakra-ui/react";
+import { Box, Heading, Spinner, Text, Flex, Button, Input } from "@chakra-ui/react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { DispatchDocument } from "./interfaces";
 import TipTapEditor from "@components/editor/TipTapEditor";
@@ -21,7 +21,9 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [title, setTitle] = useState<string>("");
   const latestContentRef = useRef<JSONContent | null>(null);
+  const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { user: identity, isLoading: identityLoading } = useAuth();
 
@@ -48,6 +50,7 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
         const res = await axiosInstance.get(`/api/dispatch/documents/${slug}`);
         console.log(" 📄 Shell received document:", res.data);
         setDoc(res.data);
+        setTitle(res.data.title || ""); // Initialize title state
         setError(null);
       } catch (err) {
         console.error(" ❌ Shell failed to load document:", err);
@@ -72,6 +75,38 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
       }
     };
   }, [ydoc, slug, saveYjsState]);
+
+  // Handle title changes with debounced autosave
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+
+    // Clear existing timeout
+    if (titleSaveTimeoutRef.current) {
+      clearTimeout(titleSaveTimeoutRef.current);
+    }
+
+    // Debounce save for 1 second
+    titleSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        console.log("💾 Auto-saving title:", newTitle);
+        await axiosInstance.patch(`/api/dispatch/documents/${slug}`, {
+          title: newTitle,
+        });
+        console.log("✅ Title saved");
+      } catch (err) {
+        console.error("❌ Failed to save title:", err);
+      }
+    }, 1000);
+  };
+
+  // Cleanup title save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (titleSaveTimeoutRef.current) {
+        clearTimeout(titleSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -110,9 +145,21 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
   return (
     <Box maxW="6xl" mx="auto" py={10} px={4}>
       {/* Header with title, save, and share buttons */}
-      <Flex justify="space-between" align="center" mb={4}>
-        <Heading size="lg">{doc.title}</Heading>
-        <Flex gap={2}>
+      <Flex justify="space-between" align="center" mb={4} gap={4}>
+        <Input
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          placeholder="Enter document title..."
+          size="lg"
+          fontSize="xl"
+          fontWeight="semibold"
+          flex="1"
+          _focus={{
+            borderColor: "blue.500",
+            boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)"
+          }}
+        />
+        <Flex gap={2} flexShrink={0}>
           <Button
             variant="solid"
             size="sm"

@@ -35,6 +35,8 @@ export default function GroupDispatchMainWorkArea({
       });
       return res.data;
     },
+    refetchOnMount: true, // Always refetch when component mounts
+    staleTime: 0, // Consider data immediately stale to trigger refetch
   });
 
   const handleCreate = () => {

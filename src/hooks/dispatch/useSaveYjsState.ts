@@ -53,6 +53,14 @@ export function useSaveYjsState(
       setTimeout(() => setStatus("idle"), 3000);
     } catch (err: any) {
       console.error("❌ Failed to save yjs state:", err);
+
+      // Handle authentication errors gracefully
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        console.warn("⚠️ Not authenticated - skipping save");
+        setStatus("idle"); // Don't show error for auth issues
+        return;
+      }
+
       const errorMessage = err?.response?.data?.error || "Failed to save document";
       setError(errorMessage);
       setStatus("error");
