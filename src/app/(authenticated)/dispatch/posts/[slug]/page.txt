@@ -1,0 +1,22 @@
+// import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+
+// interface PostDetailPageProps {
+//   params: {
+//     slug: string;
+//   };
+// }
+
+// export default async function PostDetailPage({ params }: PostDetailPageProps) {
+//   const res = await axiosInstance.get(`/api/dispatch/posts/${params.slug}`);
+//   const post = res.data;
+
+//   // if (!post) return notFound();
+
+//   return (
+//     <div>
+//       <h1>{post.title}</h1>
+//       <p>{post.summary}</p>
+//       <div>{post.body}</div>
+//     </div>
+//   );
+// }

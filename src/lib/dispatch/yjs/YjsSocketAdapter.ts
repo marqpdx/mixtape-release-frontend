@@ -1,11 +1,13 @@
-// src/lib/dispatch/yjs/customTempSocketIOAdapter.ts
+// src/lib/dispatch/yjs/YjsSocketAdapter.ts
+// Primary socket adapter for yjs collaborative editing
+// Uses shared socket connection for efficiency
 
 import * as Y from "yjs";
 import { Socket } from "socket.io-client";
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import { initializeSocket } from "@/lib/socket";
 
-export class customTempSocketIOAdapter {
+export class YjsSocketAdapter {
   public doc: Y.Doc;
   public roomName: string;
   public user: any;
@@ -36,7 +38,7 @@ export class customTempSocketIOAdapter {
     // Ensure the document has the fragment that TipTap expects
     // TipTap uses getXmlFragment('default') for ProseMirror integration
     const fragment = this.doc.getXmlFragment('default');
-    console.log("📄 [Adapter] Initialized document fragment:", fragment);
+    console.log("📄 [YjsAdapter] Initialized document fragment:", fragment);
   }
 
   private setupYjsListeners() {

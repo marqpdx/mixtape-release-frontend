@@ -1,0 +1,57 @@
+"use client";
+
+import { Box, Text, VStack, Badge, Spinner } from "@chakra-ui/react";
+import { useTempSocketProvider } from "lib/dispatch/yjs/useTempSocketProvider";
+
+interface DispatchEditorTempProps {
+  documentSlug: string;
+  userName: string;
+  userColor: string;
+  initialContent: string;
+}
+
+export default function DispatchEditorTemp({
+  documentSlug,
+  userName,
+  userColor,
+  initialContent = "",
+}: DispatchEditorTempProps) {
+  const { provider, ydoc, status } = useTempSocketProvider(documentSlug, {
+    user: { name: userName, color: userColor },
+    enabled: true,
+  });
+
+  return (
+    <Box p={6} borderWidth={1} borderRadius="lg" mt={6}>
+      <VStack gap={4} align="start">
+        <Text fontSize="lg" fontWeight="bold">
+          Temporary Socket.IO Debug Panel
+        </Text>
+        <Text fontSize="sm" color="gray.600">
+          Document Slug: <Badge>{documentSlug}</Badge>
+        </Text>
+        <Text fontSize="sm" color="gray.600">
+          User: <Badge>{userName}</Badge> / <Badge colorScheme="purple">{userColor}</Badge>
+        </Text>
+        <Text fontSize="sm" color="gray.600">
+          Connection Status:{" "}
+          <Badge colorScheme={status === "connected" ? "green" : "red"}>{status}</Badge>
+        </Text>
+        {status === "connecting" && (
+          <Box p={8} textAlign="center">
+            <Spinner />
+            <Text mt={2} fontSize="sm" color="gray.500">
+              Connecting...
+            </Text>
+          </Box>
+        )}
+        <Text fontSize="xs" color="gray.500">
+          {provider ? "Provider instance created ✅" : "Provider not ready..."}
+        </Text>
+        <Text fontSize="xs" color="gray.500">
+          {ydoc ? "Y.Doc initialized ✅" : "Y.Doc not ready..."}
+        </Text>
+      </VStack>
+    </Box>
+  );
+}

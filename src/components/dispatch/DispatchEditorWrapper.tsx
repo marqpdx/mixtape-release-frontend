@@ -1,0 +1,94 @@
+// src/components/dispatch/DispatchEditorWrapper.tsx
+
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { Box, Spinner, Text } from "@chakra-ui/react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import DispatchEditorShell from "./DispatchEditorShell";
+import { DispatchDocument } from "./interfaces";
+
+interface SponsorConfig {
+  type: 'group' | 'member';
+  id: string;
+  slug: string;
+  displayName: string;
+}
+
+interface DispatchEditorWrapperProps {
+  sponsor: SponsorConfig;
+  documentSlug?: string; // For editing existing document
+  onPublished?: (doc: DispatchDocument) => void;
+  onSaved?: (doc: DispatchDocument) => void;
+}
+
+export default function DispatchEditorWrapper({
+  sponsor,
+  documentSlug,
+  onPublished,
+  onSaved,
+}: DispatchEditorWrapperProps) {
+  const [document, setDocument] = useState<DispatchDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const createdRef = useRef(false);
+
+  useEffect(() => {
+    // Prevent double-creation in React StrictMode
+    if (createdRef.current) return;
+    createdRef.current = true;
+
+    const initializeDocument = async () => {
+      try {
+        if (documentSlug) {
+          // Load existing document
+          console.log(`📄 Loading existing document: ${documentSlug}`);
+          const res = await axiosInstance.get(`/api/dispatch/documents/${documentSlug}`);
+          setDocument(res.data);
+        } else {
+          // Create new document with sponsor
+          console.log(`📝 Creating new document for sponsor:`, sponsor);
+          const res = await axiosInstance.post('/api/dispatch/documents', {
+            title: 'Untitled Document',
+            sponsor_type: sponsor.type,
+            sponsor_id: sponsor.id,
+          });
+          setDocument(res.data);
+          console.log(`✅ Document created: ${res.data.slug}`);
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to initialize document:', err);
+        setError('Failed to load or create document');
+        setLoading(false);
+      }
+    };
+
+    initializeDocument();
+  }, [documentSlug, sponsor]);
+
+  if (loading) {
+    return (
+      <Box textAlign="center" py={10}>
+        <Spinner size="lg" />
+        <Text mt={4} fontSize="sm" color="gray.500">
+          {documentSlug ? 'Loading document...' : 'Creating document...'}
+        </Text>
+      </Box>
+    );
+  }
+
+  if (error || !document) {
+    return (
+      <Box textAlign="center" py={10}>
+        <Text color="red.500">{error || 'Failed to load document'}</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <DispatchEditorShell
+      slug={document.slug}
+    />
+  );
+}

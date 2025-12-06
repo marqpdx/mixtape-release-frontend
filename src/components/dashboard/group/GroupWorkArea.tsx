@@ -20,6 +20,8 @@ import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
 import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
+import GroupDispatchWrapper from "@/components/groups/dispatch/GroupDispatchWrapper";
+import DispatchEditorWrapper from "@/components/dispatch/DispatchEditorWrapper";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: any;
@@ -169,25 +171,7 @@ export default function GroupWorkArea({
     );
   }
 
-  if (section === "create-writing") {
-    return (
-      <WorkAreaWrapper>
-        <WritingEditorWrapper
-          sponsor={{
-            type: 'group',
-            id: group.id,
-            slug: group.slug,
-            displayName: group.name
-          }}
-          writingKind="post"
-          // No pieceId = create new piece
-          onPublished={handlePiecePublished}
-        />
-      </WorkAreaWrapper>
-    );
-  }
-
-  if (section === "do-writing") {
+  if (section === "write") {
     const pieceId = sectionParams?.piece;
     return (
       <WorkAreaWrapper>
@@ -199,13 +183,50 @@ export default function GroupWorkArea({
             displayName: group.name
           }}
           writingKind="post"
-          pieceId={pieceId} // Pass the existing piece slug to edit
+          pieceId={pieceId} // If undefined, creates new; if present, loads existing
           onPublished={handlePiecePublished}
         />
       </WorkAreaWrapper>
     );
   }
 
+  // Dispatch sections (parallel to Writing)
+  if (section === "dispatches") {
+    return (
+      <WorkAreaWrapper>
+        <GroupDispatchWrapper
+          groupSlug={group.slug}
+          groupId={group.id}
+          groupName={group.name}
+          setActiveSection={setActiveSection}
+          onPublished={(doc) => {
+            // Handle published document if needed
+            console.log("Document published:", doc);
+          }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "dispatch") {
+    const documentSlug = sectionParams?.document;
+    return (
+      <WorkAreaWrapper>
+        <DispatchEditorWrapper
+          sponsor={{
+            type: 'group',
+            id: group.id,
+            slug: group.slug,
+            displayName: group.name
+          }}
+          documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
+          onPublished={(doc) => {
+            console.log("Document updated:", doc);
+          }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
 
   // // Events
   // if (section === "events-landing") {

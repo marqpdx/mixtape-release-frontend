@@ -1,0 +1,182 @@
+// src/components/dispatch/DispatchEditor.tsx
+
+"use client";
+
+import { Box, HStack, Spinner, Text, Badge } from "@chakra-ui/react";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Heading from "@tiptap/extension-heading";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { useTipTapYjsSocketProvider } from "lib/dispatch/yjs/useTipTapYjsSocketProvider";
+import { TipTapDoc, useAutoSave, UseAutoSaveOutput } from "@hooks/useAutoSave";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@theme/recipes/button.recipe";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+
+interface DispatchEditorProps {
+  documentSlug: string;
+  userName: string;
+  userColor: string;
+}
+
+export default function DispatchEditor({
+  documentSlug,
+  userName,
+  userColor,
+}: DispatchEditorProps) {
+
+  const [hasInitialContent, setHasInitialContent] = useState(false);
+  const latestContentRef = useRef<TipTapDoc>({ type: "doc", content: [] });
+
+  const [initialContent, setInitialContent] = useState<TipTapDoc | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // const { provider, ydoc, status } = useTipTapYjsSocketProvider(documentSlug, {
+  //   user: { name: userName, color: userColor },
+  //   initialContent: initialContent ?? undefined,
+  // });
+
+
+  const { provider, ydoc, status } = useTipTapYjsSocketProvider(documentSlug, {
+    user: { name: userName, color: userColor },
+  });
+
+
+
+  useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        const res = await axiosInstance.get(`/api/dispatch/documents/${documentSlug}`);
+        setInitialContent(res.data.content); // expected to be TipTapDoc
+      } catch (err) {
+        console.error("❌ Failed to fetch document:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (documentSlug) fetchDocument();
+  }, [documentSlug]);
+
+  console.log("aaa- Initial content fetched", initialContent);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Heading,
+      ...(provider && ydoc
+        ? [
+            Collaboration.configure({ document: ydoc }),
+            CollaborationCursor.configure({
+              provider,
+              user: { name: userName, color: userColor },
+            }),
+          ]
+        : []),
+    ],
+    content: "",
+    autofocus: false,
+    editorProps: {
+      attributes: {
+        class: "editor-content",
+      },
+    },
+    immediatelyRender: false,
+    onUpdate: () => {
+      const json = editor?.getJSON();
+      console.log("aaa 🔥 onUpdate getJSON", JSON.stringify(json, null, 2));
+      if (json && typeof json.type === "string") {
+        latestContentRef.current = json;
+        autoSave?.triggerSave();
+      }
+    },
+  });
+
+// 4. One-time content injection into collaborative editor
+  useEffect(() => {
+    if (
+      editor &&
+      initialContent &&
+      status === "connected" &&
+      editor.state.doc.content.size === 0
+    ) {
+      editor.commands.setContent(initialContent);
+      console.log("✅ Injected initial content into Yjs editor");
+    }
+  }, [editor, initialContent, status]);
+
+
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const checkInitial = () => {
+      const json = editor.getJSON();
+      if (json.content && json.content.length > 0 && !hasInitialContent) {
+        console.log("✅ Initial Yjs content detected");
+        setHasInitialContent(true);
+      }
+    };
+
+    editor.on("update", checkInitial);
+
+    return () => {
+      editor.off("update", checkInitial);
+    };
+  }, [editor]);
+
+  const autoSave = useAutoSave({
+    documentSlug,
+    getContent: () => latestContentRef.current,
+  });
+
+  if (!editor || status !== "connected") {
+    return (
+      <Box p={8} textAlign="center">
+        <Spinner />
+      </Box>
+    );
+  }
+
+  return (
+    <Box p={4} borderRadius="xl" borderWidth={1}>
+      <HStack>
+        <SaveStatusBadge status={autoSave?.status} />
+      </HStack>
+      <EditorContent editor={editor} />
+      <Button
+        onClick={() => {
+          const content = editor.getJSON();
+          console.log("Manual content from editor:", content);
+        }}
+      >
+        Debug Save Content
+      </Button>
+    </Box>
+  );
+}
+
+const SaveStatusBadge = ({ status = "idle" }: { status?: "idle" | "saving" | "saved" | "error" }) => {
+  const colorMap = {
+    idle: "gray",
+    saving: "blue",
+    saved: "green",
+    error: "red",
+  };
+
+  const textMap = {
+    idle: "",
+    saving: "Saving...",
+    saved: "Saved",
+    error: "Error – retrying...",
+  };
+
+  if (status === "idle") return null;
+
+  return (
+    <Badge colorScheme={colorMap[status]} fontSize="sm" mt={2}>
+      {textMap[status]}
+    </Badge>
+  );
+};

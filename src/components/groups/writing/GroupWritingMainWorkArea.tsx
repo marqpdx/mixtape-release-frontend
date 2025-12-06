@@ -40,11 +40,10 @@ export default function GroupWritingMainWorkArea({
       canCreatePost={canCreatePost}
       canManagePosts={canManagePosts}
       onNavigateToEditor={(pieceId) => {
-        console.log("000 Navigating to editor for piece ID:", pieceId);
         if (pieceId) {
-          setActiveSection("do-writing", { piece: pieceId });
+          setActiveSection("write", { piece: pieceId });
         } else {
-          setActiveSection("do-writing");
+          setActiveSection("write");
         }
       }}
       onNavigateToDetail={(pieceSlug) => {

@@ -1,0 +1,241 @@
+// // src/components/dispatch/DispatchEditor.tsx
+
+// "use client";
+
+// import { Box, HStack, Spinner, Text, Badge } from "@chakra-ui/react";
+// import { Editor, EditorContent, useEditor } from "@tiptap/react";
+// import StarterKit from "@tiptap/starter-kit";
+// import Heading from "@tiptap/extension-heading";
+// import Collaboration from "@tiptap/extension-collaboration";
+// import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+// import { useTipTapYjsSocketProvider } from "lib/dispatch/yjs/useTipTapYjsSocketProvider";
+// // import { TipTapDoc, useAutoSave, UseAutoSaveOutput } from "@hooks/useAutoSave";
+// import { useEffect, useMemo, useRef, useState } from "react";
+// import { Button } from "@theme/recipes/button.recipe";
+// import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+// import { TipTapDoc } from "content/dispatchTypes";
+
+// interface DispatchEditorProps {
+//   documentSlug: string;
+//   userName: string;
+//   userColor: string;
+//   initialContent?: TipTapDoc; // ✅ Accept content as prop
+// }
+
+// export default function DispatchEditor({
+//   documentSlug,
+//   userName,
+//   userColor,
+//   initialContent: propInitialContent, // ✅ Content from shell
+// }: DispatchEditorProps) {
+//   const latestContentRef = useRef<TipTapDoc>({ type: "doc", content: [] });
+//   const [initialContent, setInitialContent] = useState<TipTapDoc | null>(null);
+//   const [loading, setLoading] = useState(!propInitialContent); // ✅ Don't load if we have content
+
+//   // Fetch initial content only if not provided as prop
+//   useEffect(() => {
+//     if (propInitialContent) {
+//       console.log("📥 Using initial content from props:", propInitialContent);
+//       setInitialContent(propInitialContent);
+//       setLoading(false);
+//       return;
+//     }
+
+//     const fetchDocument = async () => {
+//       try {
+//         const res = await axiosInstance.get(`/api/dispatch/documents/${documentSlug}`);
+//         console.log("📥 Initial content fetched:", res.data.content);
+//         setInitialContent(res.data.content || { type: "doc", content: [] });
+//       } catch (err) {
+//         console.error("❌ Failed to fetch document:", err);
+//         // Set empty content on error so we can still proceed
+//         setInitialContent({ type: "doc", content: [] });
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     if (documentSlug) fetchDocument();
+//   }, [documentSlug, propInitialContent]);
+
+
+
+//   useEffect(() => {
+//     console.log("🔁 YJS useEffect triggered");
+//     return () => {
+//       console.log("🧹 Cleaning up YJS provider");
+//     };
+//   }, [documentSlug]);
+
+
+//   // TEMPORARY: Disable YJS for debugging
+//   // const shouldInitializeYjs = false; // !loading && !!initialContent && !!documentSlug;
+//   // const shouldInitializeYjs = !!documentSlug && !!initialContent;
+
+//   const shouldInitializeYjs = false; // Disable YJS for now
+
+
+
+//   console.log("🔧 Yjs Editor state:", {
+//     loading,
+//     hasInitialContent: !!initialContent,
+//     documentSlug,
+//     shouldInitializeYjs
+//   });
+
+//   const { provider, ydoc, status, isInitialized } = useTipTapYjsSocketProvider(documentSlug, {
+//     user: { name: userName, color: userColor },
+//     initialContent: initialContent ?? undefined,
+//     enabled: shouldInitializeYjs,
+//   });
+
+//   // const { provider, ydoc, status, isInitialized } = useTempSocketProvider(documentSlug, {
+//   //   user: { name: userName, color: userColor },
+//   //   initialContent: initialContent ?? undefined,
+//   //   enabled: shouldInitializeYjs,
+//   // });
+
+//   console.log("🔧 Yjs provider state:", {
+//     provider,
+//     ydoc,
+//     status,
+//     isInitialized,
+//   });
+
+
+//   useEffect(() => {
+//     if (!provider) return;
+
+//     const handleSynced = (isSynced: boolean) => {
+//       console.log("✅ Yjs 'synced' event fired:", isSynced);
+//     };
+
+//     provider.on("synced", handleSynced);
+
+//     return () => {
+//       provider.off("synced", handleSynced);
+//     };
+//   }, [provider]);
+
+//   // Only create editor after YJS is connected and initialized OR if YJS is disabled
+//   const editor = useEditor({
+//     extensions: [
+//       StarterKit,
+//       Heading,
+//       ...(provider && ydoc
+//         ? [
+//             Collaboration.configure({ document: ydoc }),
+//             CollaborationCursor.configure({
+//               provider,
+//               user: { name: userName, color: userColor },
+//             }),
+//           ]
+//         : []),
+//     ],
+//     content: shouldInitializeYjs ? "" : (initialContent || ""), // Use content directly if YJS disabled
+//     autofocus: false,
+//     editorProps: {
+//       attributes: {
+//         class: "editor-content",
+//       },
+//     },
+//     immediatelyRender: false,
+//     onUpdate: () => {
+//       const json = editor?.getJSON();
+//       console.log("📝 Editor updated:", json);
+//       if (json && typeof json.type === "string") {
+//         latestContentRef.current = json;
+//         autoSave?.triggerSave();
+//       }
+//     },
+//   }, [provider, ydoc, status, isInitialized, shouldInitializeYjs, initialContent]); // Re-create editor when YJS is ready
+
+//   const autoSave = useAutoSave({
+//     documentSlug,
+//     getContent: () => latestContentRef.current,
+//   });
+
+//   // Show loading until everything is ready
+//   if (loading) {
+//     return (
+//       <Box p={8} textAlign="center">
+//         <Spinner />
+//         <Text mt={2} fontSize="sm" color="gray.500">
+//           Loading document...
+//         </Text>
+//       </Box>
+//     );
+//   }
+
+//   // If YJS is disabled, just check for editor
+//   if (!shouldInitializeYjs && !editor) {
+//     return (
+//       <Box p={8} textAlign="center">
+//         <Spinner />
+//         <Text mt={2} fontSize="sm" color="gray.500">
+//           Setting up editor...
+//         </Text>
+//       </Box>
+//     );
+//   }
+
+//   // If YJS is enabled, wait for full initialization
+//   if (shouldInitializeYjs && (status !== "connected" || !isInitialized || !editor)) {
+//     return (
+//       <Box p={8} textAlign="center">
+//         <Spinner />
+//         <Text mt={2} fontSize="sm" color="gray.500">
+//           {status !== "connected" ? "Connecting..." :
+//            !isInitialized ? "Initializing..." :
+//            "Setting up editor..."}
+//         </Text>
+//       </Box>
+//     );
+//   }
+
+//   return (
+//     <Box p={4} borderRadius="xl" borderWidth={1}>
+//       <HStack justify="space-between" mb={4}>
+//         <SaveStatusBadge status={autoSave?.status} />
+//         <Text fontSize="sm" color="gray.500">
+//           Status: {status} | Initialized: {isInitialized ? "✅" : "⏳"}
+//         </Text>
+//       </HStack>
+//       <EditorContent editor={editor} />
+//       <Button
+//         onClick={() => {
+//           const content = editor?.getJSON();
+//           console.log("🔍 Manual content from editor:", content);
+//         }}
+//         mt={4}
+//       >
+//         Debug Save Content
+//       </Button>
+//     </Box>
+//   );
+// }
+
+// const SaveStatusBadge = ({ status = "idle" }: { status?: "idle" | "saving" | "saved" | "error" }) => {
+//   const colorMap = {
+//     idle: "gray",
+//     saving: "blue",
+//     saved: "green",
+//     error: "red",
+//   };
+
+//   const textMap = {
+//     idle: "",
+//     saving: "Saving...",
+//     saved: "Saved",
+//     error: "Error – retrying...",
+//   };
+
+//   if (status === "idle") return null;
+
+//   return (
+//     <Badge colorScheme={colorMap[status]} fontSize="sm">
+//       {textMap[status]}
+//     </Badge>
+//   );
+// };
+

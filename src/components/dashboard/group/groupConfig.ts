@@ -64,8 +64,22 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📝",
     subItems: [
       { key: "writing", label: "Posts & Announcements", hidden: false },
-      { key: "do-writing", label: "Write", hidden: false },
-      { key: "drafts", label: "Draft Writing", hidden: false },
+      // { key: "create-writing", label: "Write", hidden: false },
+      { key: "write", label: "Write", hidden: false },
+      { key: "comments", label: "Comments", hidden: true },
+      { key: "pinned", label: "Pinned Writing", hidden: true },
+      { key: "files", label: "File Management", hidden: true },
+      { key: "group-courses", label: "Course Management", hidden: true },
+    ]
+  },
+  {
+    key: "dispatch",
+    label: "Dispatch",
+    icon: "📒",
+    subItems: [
+      { key: "dispatches", label: "Dispatch", hidden: false },
+      { key: "dispatch", label: "Shared Writing", hidden: false },
+      // { key: "do-dispatch", label: "Dddraft Writing", hidden: false },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },

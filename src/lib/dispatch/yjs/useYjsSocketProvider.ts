@@ -1,8 +1,12 @@
+// src/lib/dispatch/yjs/useYjsSocketProvider.ts
+// Primary socket provider for yjs collaborative editing
+// Uses shared socket connection for efficiency
+
 import { useEffect, useState, useRef } from "react";
 import * as Y from "yjs";
-import { customTempSocketIOAdapter } from "./customTempSocketIOAdapter";
+import { YjsSocketAdapter } from "./YjsSocketAdapter";
 
-export function useTempSocketProvider(documentSlug: string, {
+export function useYjsSocketProvider(documentSlug: string, {
   user,
   enabled = true,
 }: {
@@ -10,7 +14,7 @@ export function useTempSocketProvider(documentSlug: string, {
   enabled?: boolean;
 }) {
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
-  const [provider, setProvider] = useState<customTempSocketIOAdapter | null>(null);
+  const [provider, setProvider] = useState<YjsSocketAdapter | null>(null);
   const [ydoc, setYDoc] = useState<Y.Doc | null>(null);
   const [isReady, setIsReady] = useState(false);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -22,23 +26,23 @@ export function useTempSocketProvider(documentSlug: string, {
       return;
     }
 
-    console.log(" 🔧 [TempProvider] Initializing for document:", documentSlug);
+    console.log(" 🔧 [YjsProvider] Initializing for document:", documentSlug);
 
     // Create Y.js document
     const doc = new Y.Doc();
-    console.log(" 📄 [TempProvider] Created Y.Doc:", doc);
+    console.log(" 📄 [YjsProvider] Created Y.Doc:", doc);
 
     // Don't create the text type here - let TipTap handle it
     setYDoc(doc);
 
     // Create adapter
-    const adapter = new customTempSocketIOAdapter(doc, documentSlug, { user });
-    console.log(" 🔌 [TempProvider] Created adapter:", adapter);
+    const adapter = new YjsSocketAdapter(doc, documentSlug, { user });
+    console.log(" 🔌 [YjsProvider] Created adapter:", adapter);
 
     setProvider(adapter);
 
     const cleanup = () => {
-      console.log(" 🧹 [TempProvider] Cleaning up...");
+      console.log(" 🧹 [YjsProvider] Cleaning up...");
       adapter.disconnect?.();
       doc.destroy();
       setProvider(null);
@@ -59,7 +63,7 @@ export function useTempSocketProvider(documentSlug: string, {
         setIsReady(connected && !!doc && !!adapter.awareness);
 
         if (connected) {
-          console.log(" ✅ [TempProvider] Connection established and ready");
+          console.log(" ✅ [YjsProvider] Connection established and ready");
         }
       } else {
         setStatus("connecting");
@@ -77,13 +81,13 @@ export function useTempSocketProvider(documentSlug: string, {
     const setupSocketListeners = () => {
       if (adapter.socket) {
         adapter.socket.on("connect", () => {
-          console.log(" ✅ [TempProvider] Socket connected");
+          console.log(" ✅ [YjsProvider] Socket connected");
           setStatus("connected");
           checkConnection();
         });
 
         adapter.socket.on("disconnect", () => {
-          console.log(" ❌ [TempProvider] Socket disconnected");
+          console.log(" ❌ [YjsProvider] Socket disconnected");
           setStatus("disconnected");
           setIsReady(false);
         });
@@ -124,6 +128,6 @@ export function useTempSocketProvider(documentSlug: string, {
     provider,
     ydoc,
     status,
-    isReady, // New flag to indicate everything is properly initialized
+    isReady, // Flag to indicate everything is properly initialized
   };
 }

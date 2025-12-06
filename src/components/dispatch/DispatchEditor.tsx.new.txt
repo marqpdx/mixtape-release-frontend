@@ -1,0 +1,166 @@
+// src/components/dispatch/DispatchEditor.tsx
+
+"use client";
+
+import { Box, HStack, Spinner, Text, Badge } from "@chakra-ui/react";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Heading from "@tiptap/extension-heading";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { useTipTapYjsSocketProvider } from "lib/dispatch/yjs/useTipTapYjsSocketProvider";
+import { TipTapDoc, useAutoSave, UseAutoSaveOutput } from "@hooks/useAutoSave";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@theme/recipes/button.recipe";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { DispatchDocument } from "./interfaces";
+
+interface DispatchEditorProps {
+  documentSlug: string;
+  userName: string;
+  userColor: string;
+}
+
+export default function DispatchEditor({
+  documentSlug,
+  userName,
+  userColor,
+}: DispatchEditorProps) {
+  const { provider, ydoc, status } = useTipTapYjsSocketProvider(documentSlug, {
+    user: { name: userName, color: userColor },
+  });
+
+  const [doc, setDoc] = useState<DispatchDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [docContent, setDocContent] = useState<TipTapDoc | null>(null);
+
+  const editorRef = useRef<Editor | null>(null);
+
+  useEffect(() => {
+    axiosInstance
+      .get(`/api/dispatch/documents/${documentSlug}`)
+      .then((res) => {
+        setDoc(res.data);
+        setDocContent(res.data.content);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load document", err);
+        setLoading(false);
+      });
+  }, [documentSlug]);
+
+  if (loading || !doc) {
+    return <Spinner />;
+  }
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Heading,
+      ...(provider && ydoc
+        ? [
+            Collaboration.configure({ document: ydoc }),
+            CollaborationCursor.configure({
+              provider,
+              user: { name: userName, color: userColor },
+            }),
+          ]
+        : []),
+    ],
+    content: "",
+    autofocus: false,
+    editorProps: {
+      attributes: {
+        class: "editor-content",
+      },
+    },
+    immediatelyRender: false,
+    onUpdate: () => {
+      autoSave?.triggerSave(); // This is safe even if editor isn’t ready on first render
+    },
+  });
+
+  useEffect(() => {
+    if (editor && docContent) {
+      editor.commands.setContent(docContent);
+    }
+  }, [editor, docContent]);
+
+  useEffect(() => {
+    if (editor) {
+      editorRef.current = editor;
+    }
+  }, [editor]);
+
+
+  // // Always call useAutoSave unconditionally
+  const autoSave = useAutoSave({
+    documentSlug,
+    getContent: () => {
+      const json = editorRef.current?.getJSON?.();
+      console.log("💡 getContent() result", json);
+      return json ?? { type: "doc", content: [] };
+    },
+    // getContent: (): TipTapDoc => editor?.getJSON?.() ?? { type: "doc", content: [] },
+    // getContent: () => {
+    //   const json = editor?.getJSON?.();
+    //   console.log("💡 aaa- getContent() result", json); // <— this must include `type` and `content`
+    //   // Ensure the returned object always has at least a 'type' property
+    //   if (json && typeof json.type === "string") {
+    //     return json;
+    //   }
+    //   return { type: "doc", content: [] };
+    // },
+  });
+
+  if (!editor || status !== "connected") {
+    return (
+      <Box p={8} textAlign="center">
+        <Spinner />
+      </Box>
+    );
+  }
+
+  return (
+    <Box p={4} borderRadius="xl" borderWidth={1}>
+      <HStack>
+        <SaveStatusBadge status={autoSave?.status} />
+      </HStack>
+      <EditorContent editor={editor} />
+      <Button
+        onClick={() => {
+          const content = editor.getJSON();
+          console.log("Manual content from editor:", content);
+        }}
+      >
+        Debug Save Content
+      </Button>
+    </Box>
+  );
+}
+
+const SaveStatusBadge = ({ status = "idle" }: { status?: "idle" | "saving" | "saved" | "error" }) => {
+  const colorMap = {
+    idle: "gray",
+    saving: "blue",
+    saved: "green",
+    error: "red",
+  };
+
+  const textMap = {
+    idle: "",
+    saving: "Saving...",
+    saved: "Saved",
+    error: "Error – retrying...",
+  };
+
+  if (status === "idle") return null;
+
+  return (
+    <Badge colorScheme={colorMap[status]} fontSize="sm" mt={2}>
+      {textMap[status]}
+    </Badge>
+  );
+};
+

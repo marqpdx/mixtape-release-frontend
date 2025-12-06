@@ -1,9 +1,13 @@
-// src/lib/inkwellApi.ts - Complete updated version
+// src/lib/inkwellApi.ts
 
 export type EditStyle = "polish" | "tighten" | "expand";
 export type EditIntensity = "light" | "medium" | "strong";
 
-const BASE = process.env.NEXT_PUBLIC_INKWELL_BASE_URL ?? "";
+let BASE = process.env.NEXT_PUBLIC_INKWELL_BASE_URL ?? "";
+
+console.log("INKWELL BASE", process.env.NEXT_PUBLIC_INKWELL_BASE_URL);
+
+BASE += "/api/inkwell";
 
 export interface EditStartMeta {
   style: EditStyle;

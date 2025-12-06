@@ -286,11 +286,13 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
         }
       }}
     >
-      <TipTapToolbar editor={editor} />
-      <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
-        css={{ '& > *': { marginBlock: 0 } }}>
-          <EditorContent editor={editor} />
-      </Prose>
+      <Box border={'1px solid gray'} pt={1} pl={1}>
+        <TipTapToolbar editor={editor} />
+        <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
+          css={{ '& > *': { marginBlock: 0 } }}>
+            <EditorContent editor={editor} />
+        </Prose>
+      </Box>
 
       {/* <Box
         mt={2}
