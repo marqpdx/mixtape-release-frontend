@@ -184,7 +184,7 @@ export default function DashboardLayout({
                   </Text>
                   {!sidebarCollapsed && (
                     <Text fontSize="lg" fontWeight="bold" color={textColor} lineHeight="1">
-                      Dashboard
+                      Details
                     </Text>
                   )}
                 </HStack>

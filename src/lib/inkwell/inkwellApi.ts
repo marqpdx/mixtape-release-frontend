@@ -1,13 +1,9 @@
 // src/lib/inkwellApi.ts
 
+import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+
 export type EditStyle = "polish" | "tighten" | "expand";
 export type EditIntensity = "light" | "medium" | "strong";
-
-let BASE = process.env.NEXT_PUBLIC_INKWELL_BASE_URL ?? "";
-
-console.log("INKWELL BASE", process.env.NEXT_PUBLIC_INKWELL_BASE_URL);
-
-BASE += "/api/inkwell";
 
 export interface EditStartMeta {
   style: EditStyle;
@@ -74,9 +70,19 @@ export async function streamEdit(opts: StreamEditOptions): Promise<void> {
     const requestBody = { style, intensity, text };
     if (debug) console.log('[streamEdit] Request body:', requestBody);
 
-    res = await fetch(`${BASE}/v1/edit`, {
+    // Get auth token from axiosInstance defaults
+    const authHeader = axiosInstance.defaults.headers.common['Authorization'];
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader as string;
+    }
+
+    // Note: Using fetch for streaming SSE as axios doesn't support it well
+    res = await fetch(`/api/inkwell/v1/edit`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(requestBody),
       signal,
     });
@@ -228,14 +234,12 @@ export async function normalizeTipTapToPlaintext(
   doc: unknown,
   options?: { signal?: AbortSignal }
 ): Promise<{ plaintext: string; normalized: unknown }> {
-  const res = await fetch(`${BASE}/v1/normalize-tiptap`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ doc }),
-    signal: options?.signal,
-  });
-  if (!res.ok) throw new Error(`normalize failed: ${res.status}`);
-  return res.json();
+  const res = await axiosInstance.post(
+    `/api/inkwell/v1/normalize-tiptap`,
+    { doc },
+    { signal: options?.signal }
+  );
+  return res.data;
 }
 
 // NEW: Dedicated summarize function using the new endpoint
@@ -252,25 +256,16 @@ export async function fetchSummary(
 
   const requestBody = { text, words, style };
 
-  const res = await fetch(`${BASE}/v1/summarize/quick`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    signal: options?.signal
-  });
+  const res = await axiosInstance.post(
+    `/api/inkwell/v1/summarize/quick`,
+    requestBody,
+    { signal: options?.signal }
+  );
 
   console.log('[fetchSummary] 📥 Response status:', res.status);
+  console.log('[fetchSummary] 📥 Response data:', res.data);
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('[fetchSummary] ❌ Error response:', errorText);
-    throw new Error(`summarize failed: ${res.status} - ${errorText}`);
-  }
-
-  const responseData = await res.json();
-  console.log('[fetchSummary] 📥 Response data:', responseData);
-
-  const summary = responseData.summary || "";
+  const summary = res.data.summary || "";
   console.log('[fetchSummary] ✅ Final summary:', summary);
 
   return summary;

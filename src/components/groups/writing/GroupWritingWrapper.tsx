@@ -25,7 +25,7 @@ interface Group {
 interface GroupWritingWrapperProps {
   groupSlug: string;
   groupId?: string;
-  groupName?: string;
+  groupTitle?: string;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
   onPublished?: (piece: any) => void;
 }
@@ -33,7 +33,7 @@ interface GroupWritingWrapperProps {
 export default function GroupWritingWrapper({
   groupSlug,
   groupId,
-  groupName,
+  groupTitle,
   setActiveSection,
   onPublished,
 }: GroupWritingWrapperProps) {
@@ -46,11 +46,11 @@ export default function GroupWritingWrapper({
     queryKey: ["group", groupSlug],
     queryFn: () =>
       axiosInstance.get(`/api/groups/${groupSlug}`).then((res) => res.data),
-    enabled: !groupName, // Only fetch if we don't already have group info
+    enabled: !groupTitle, // Only fetch if we don't already have group info
   });
 
   // Use provided data or fetched data
-  const displayName = groupName || group?.name;
+  const displayName = groupTitle || group?.name;
   const canCreatePost = group?.permissions?.canCreatePost ?? true;
   const canManagePosts = group?.permissions?.canManagePosts ?? false;
 
@@ -74,7 +74,7 @@ export default function GroupWritingWrapper({
     <GroupWritingMainWorkArea
       groupSlug={groupSlug}
       // groupId={groupId}
-      groupName={displayName}
+      groupTitle={displayName}
       canCreatePost={canCreatePost}
       canManagePosts={canManagePosts}
       setActiveSection={setActiveSection}

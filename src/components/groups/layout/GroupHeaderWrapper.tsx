@@ -21,7 +21,7 @@ export function GroupHeaderWrapper({
   isAdminOrSteward = false,
 }: GroupHeaderWrapperProps) {
   return (
-    <Box position="relative">
+    <Box position="relative" display={'flex'} justifyContent={'center'}>
       {/* Role Switcher - ALWAYS in exact same position across all headers */}
       {showRoleSwitcher && onRoleChange && (
         <Box className="unified-role-switcher-wrapper"
@@ -39,7 +39,7 @@ export function GroupHeaderWrapper({
       )}
 
       {/* Header content (varies by type - Admin/Member/Public) */}
-      {children}
+      <Box className="whatho" textAlign={'center'}>{children}</Box>
     </Box>
   );
 }

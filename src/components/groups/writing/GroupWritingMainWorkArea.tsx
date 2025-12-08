@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 interface GroupWritingMainWorkAreaProps {
   groupSlug: string;
-  groupName?: string;
+  groupTitle?: string;
   canCreatePost?: boolean;
   canManagePosts?: boolean;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
@@ -23,7 +23,7 @@ interface GroupWritingMainWorkAreaProps {
  */
 export default function GroupWritingMainWorkArea({
   groupSlug,
-  groupName,
+  groupTitle,
   canCreatePost = true,
   canManagePosts = false,
   setActiveSection,
@@ -35,7 +35,7 @@ export default function GroupWritingMainWorkArea({
       sponsor={{
         type: 'group',
         slug: groupSlug,
-        displayName: groupName,
+        displayName: groupTitle,
       }}
       canCreatePost={canCreatePost}
       canManagePosts={canManagePosts}

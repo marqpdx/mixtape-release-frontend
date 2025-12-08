@@ -5,15 +5,16 @@
 import { Box } from "@chakra-ui/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { useGroup } from "@hooks/useGroups";
+import { useGroup } from "@/hooks/groups/useGroups";
 import { GroupAdminHeader } from "@components/groups/headers/GroupAdminHeader";
 import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
-import { getGroupMenuItems } from "@components/dashboard/group/groupConfig";
+import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConfig";
 import DashboardLayout from "@components/common/DashboardLayout";
 import { hasRole, canUserModerateGroup, isGroupMember, getPrimaryRole } from "@/types/groupTypes";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@/types/auth";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
+import { useMyPermissions } from "@/hooks/groups/useGroupPermissions";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -25,6 +26,9 @@ export default function GroupPage() {
 
   const { user: identity } = useAuth();
   const { group, isLoading, refetch } = useGroup(slugStr);
+
+  // Fetch user's permissions for this group
+  const { data: myPermissions } = useMyPermissions(slugStr);
 
   console.log("aaa GroupPage load:", { slugStr, group });
 
@@ -118,7 +122,13 @@ export default function GroupPage() {
 
   if (showAdminDashboard) {
     const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
-    const menuItems = getGroupMenuItems(effectiveRole);
+
+    // Filter menu items based on user's permissions
+    const menuItems = getFilteredGroupMenuItems(
+      effectiveRole,
+      myPermissions?.roles || [],
+      myPermissions?.decorators || []
+    );
 
     const WrappedGroupWorkArea = (props: any) => (
       <GroupWorkArea {...props} group={group} identity={identity} userRole={effectiveRole} />

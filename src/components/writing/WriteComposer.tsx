@@ -3,7 +3,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, HStack, VStack } from '@chakra-ui/react';
+import { Box, Button, Flex, HStack, Text, VStack } from '@chakra-ui/react';
 import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +13,7 @@ import { TitleInput } from '@components/writing/composer/TitleInput';
 import { SummarySection } from '@components/writing/composer/SummarySection';
 import { StatusBar } from '@components/writing/composer/StatusBar';
 import { CopyDesk } from '@components/writing/copydesk/CopyDesk';
+import { TagInput, Tag } from '@components/writing/composer/TagInput';
 
 // Import new split components
 import { QuickPublishBar } from '@components/writing/composer/QuickPublishBar';
@@ -28,6 +29,8 @@ import { useColorModeValue } from '@components/ui/color-mode';
 import { WordCountDisplay } from './composer/WordCountDisplay';
 import { StatusMessage } from './composer/StatusMessage';
 import { WritingKind } from '@/types/writingTypes';
+import { CollaborationDialog } from './composer/CollaborationDialog';
+import { useCollaboration } from '@hooks/useCollaboration';
 // import { WritingKind } from '../groups/writing/interfaces';
 // import { WritingKind } from '@content/writingTypes';
 
@@ -70,6 +73,7 @@ export default function WriteComposer({
   const [title, setTitle] = useState<string>(initialPiece?.title || '');
   const [docJSON, setDocJSON] = useState<any>(initialPiece?.body_json || { type: 'doc', content: [] });
   const [excerpt, setExcerpt] = useState<string>(initialPiece?.excerpt || '');
+  const [tags, setTags] = useState<Tag[]>([]);
 
   // Track last saved state for unsaved changes detection
   const [lastSavedState, setLastSavedState] = useState({
@@ -81,6 +85,22 @@ export default function WriteComposer({
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
+
+  // Collaboration state
+  const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
+  const {
+    isCollaborative,
+    dispatchContent,
+    loading: collaborationLoading,
+    enableCollaboration,
+    rescindCollaboration,
+    addCollaborators,
+    removeCollaborators,
+    canBeRescinded,
+  } = useCollaboration({
+    pieceId: pieceId,
+    autoFetch: true,
+  });
 
   // Text selection and AI summary state
   const [selection, setSelection] = useState<TextSelection | null>(null);
@@ -101,6 +121,21 @@ export default function WriteComposer({
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { docJSONRef.current = docJSON; }, [docJSON]);
   useEffect(() => { excerptRef.current = excerpt; }, [excerpt]);
+
+  // Load tags when piece loads
+  useEffect(() => {
+    async function fetchTags() {
+      if (!pieceId) return;
+
+      try {
+        const response = await axiosInstance.get(`/api/writing/pieces/${pieceId}/tags`);
+        setTags(response.data || []);
+      } catch (err) {
+        console.error('Failed to fetch tags:', err);
+      }
+    }
+    fetchTags();
+  }, [pieceId]);
 
   // Check if there are unsaved changes (compare against last saved state, not initial piece)
   const hasUnsavedChanges = useMemo(() => {
@@ -168,6 +203,21 @@ export default function WriteComposer({
     }
   }, [summaryForceUpdate]);
 
+  // Handler for tag changes
+  const handleTagsChange = useCallback(async (newTags: Tag[]) => {
+    setTags(newTags);
+
+    if (!pieceId) return;
+
+    try {
+      await axiosInstance.put(`/api/writing/pieces/${pieceId}/tags`, {
+        tag_ids: newTags.map(t => t.id)
+      });
+    } catch (err) {
+      console.error('Failed to save tags:', err);
+    }
+  }, [pieceId]);
+
   // Update last saved state when autosave completes
   useEffect(() => {
     if (saveStatus === 'saved') {
@@ -233,9 +283,44 @@ export default function WriteComposer({
 
             {/* Context Header */}
             <Box mb={2}>
-              <Box fontSize="sm" color="gray.600">
-                Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
-              </Box>
+              <Flex justify={'space-between'}>
+                <Box fontSize="sm" color="gray.600">
+                  Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
+                </Box>
+                <Box>
+                  {/* Collaboration Button & Dialog */}
+                  <HStack gap={2}>
+                    <Button
+                      size="xs"
+                      variant={isCollaborative ? "solid" : "outline"}
+                      colorScheme={isCollaborative ? "blue" : "gray"}
+                      onClick={() => setCollaborationDialogOpen(true)}
+                    >
+                      {isCollaborative ? '👥 Collaborative' : '+ Add Collaborators'}
+                    </Button>
+                    {isCollaborative && dispatchContent && (
+                      <HStack gap={1} fontSize="xs" color="gray.600">
+                        <Text>{dispatchContent.editor_count} editors</Text>
+                        <Text>•</Text>
+                        <Text>{dispatchContent.commenter_count} reviewers</Text>
+                      </HStack>
+                    )}
+                  </HStack>
+
+                  <CollaborationDialog
+                    open={collaborationDialogOpen}
+                    onOpenChange={setCollaborationDialogOpen}
+                    isCollaborative={isCollaborative}
+                    dispatchContent={dispatchContent}
+                    onEnableCollaboration={enableCollaboration}
+                    onRescindCollaboration={rescindCollaboration}
+                    onAddCollaborators={addCollaborators}
+                    onRemoveCollaborators={removeCollaborators}
+                    loading={collaborationLoading}
+                    canBeRescinded={canBeRescinded}
+                  />
+                </Box>
+              </Flex>
             </Box>
 
             {/* Title Input */}
@@ -338,6 +423,21 @@ export default function WriteComposer({
                       onSaved={onSaved}
                     />
                   )}
+
+                  {/* Tags Section */}
+                  <Box
+                    p={4}
+                    bg="white"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                  >
+                    <TagInput
+                      selectedTags={tags}
+                      onTagsChange={handleTagsChange}
+                      maxTags={10}
+                    />
+                  </Box>
 
                   {/* Status Bar */}
                   <StatusBar

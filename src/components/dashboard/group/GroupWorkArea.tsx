@@ -1,7 +1,7 @@
 // src/components/dashboard/group/GroupWorkArea.tsx
 
 import React, { useMemo, useState } from "react";
-import { VStack, Text, Button, useDisclosure } from "@chakra-ui/react";
+import { VStack, Text, Button, useDisclosure, Spinner, Box, Heading } from "@chakra-ui/react";
 
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
@@ -9,6 +9,7 @@ import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 
 // Import group-specific components
 import GroupOverview from "@components/groups/GroupOverview";
+import { useGroupPermissions } from "@/hooks/groups/useGroupSectionPermissions";
 // import CourseForm from "@components/earthlab/CourseForm";
 // import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
 import { useRouter } from "next/navigation";
@@ -22,9 +23,11 @@ import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupDispatchWrapper from "@/components/groups/dispatch/GroupDispatchWrapper";
 import DispatchEditorWrapper from "@/components/dispatch/DispatchEditorWrapper";
+import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
+import { Group } from "@/types/groupTypes";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
-  group: any;
+  group: Group;
   identity: UserIdentity;
   userRole: string;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
@@ -55,6 +58,43 @@ export default function GroupWorkArea({
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // Check section permissions
+  const { canAccessSection, isLoading: permissionsLoading, isAdmin, isSteward } = useGroupPermissions(group.slug);
+  const hasAccess = canAccessSection(section);
+
+  // Show loading state while checking permissions
+  if (permissionsLoading) {
+    return (
+      <WorkAreaWrapper>
+        <Box textAlign="center" py={10}>
+          <Spinner size="lg" />
+          <Text mt={4} color="gray.500">
+            Loading permissions...
+          </Text>
+        </Box>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Block access if user doesn't have permission
+  if (!hasAccess) {
+    return (
+      <WorkAreaWrapper>
+        <Box textAlign="center" py={10}>
+          <Heading size="lg" mb={4} color="red.500">
+            Access Denied
+          </Heading>
+          <Text color="gray.600" mb={6}>
+            You don't have permission to access this section.
+          </Text>
+          <Text fontSize="sm" color="gray.500">
+            {isAdmin ? 'Admins have full access.' : isSteward ? 'You need specific permissions to access this area.' : 'You must be a steward to access group management.'}
+          </Text>
+        </Box>
+      </WorkAreaWrapper>
+    );
+  }
+
   // Handler for when a piece is published
   // The mutation already invalidates cache, but this ensures it happens even if called from elsewhere
   const handlePiecePublished = (piece: any) => {
@@ -80,6 +120,14 @@ export default function GroupWorkArea({
           userRole={userRole}
           onNavigate={setActiveSection}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "stewards-permissions") {
+    return (
+      <WorkAreaWrapper>
+        <GroupPermissionsWorkArea groupSlug={group.slug} groupId={group.id} groupTitle={group.title} />
       </WorkAreaWrapper>
     );
   }
@@ -134,6 +182,19 @@ export default function GroupWorkArea({
     );
   }
 
+  // Member Permissions (Admin only)
+  if (section === "members-permissions") {
+    return (
+      <WorkAreaWrapper>
+        <GroupPermissionsWorkArea
+          groupSlug={group.slug}
+          groupId={group.id}
+          groupTitle={group.title}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
   if (section === "invitations") {
     // Note: allSiteMembers currently not fetched - GroupInviteForm will fall back to groupMembers
     // TODO: To enable site-wide member search, add:
@@ -161,7 +222,7 @@ export default function GroupWorkArea({
         <GroupWritingWrapper
           groupSlug={group.slug}
           groupId={group.id}
-          groupName={group.name}
+          groupTitle={group.title}
           setActiveSection={setActiveSection}
           onPublished={(piece) => {
             // Handle the published piece
@@ -180,7 +241,7 @@ export default function GroupWorkArea({
             type: 'group',
             id: group.id,
             slug: group.slug,
-            displayName: group.name
+            displayName: group.title
           }}
           writingKind="post"
           pieceId={pieceId} // If undefined, creates new; if present, loads existing
@@ -197,7 +258,7 @@ export default function GroupWorkArea({
         <GroupDispatchWrapper
           groupSlug={group.slug}
           groupId={group.id}
-          groupName={group.name}
+          groupTitle={group.title}
           setActiveSection={setActiveSection}
           onPublished={(doc) => {
             // Handle published document if needed
@@ -217,7 +278,7 @@ export default function GroupWorkArea({
             type: 'group',
             id: group.id,
             slug: group.slug,
-            displayName: group.name
+            displayName: group.title
           }}
           documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
           onPublished={(doc) => {

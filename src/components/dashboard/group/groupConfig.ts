@@ -1,6 +1,7 @@
 // src/components/dashboard/group/groupConfig.ts
 
 import { MenuItem } from "@components/dashboard/shared/types";
+import { canAccessSection } from "@/config/groupSectionPermissions";
 
 // Admin/Steward Dashboard - Full feature set
 export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
@@ -10,6 +11,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📊",
     subItems: [
       { key: "admin-dashboard", label: "Admin Dashboard" },
+      { key: "stewards-permissions", label: "Stewards & Permission" },
       { key: "activity", label: "Recent Activity", hidden: true },
       { key: "analytics", label: "Analytics", hidden: true },
     ]
@@ -128,4 +130,68 @@ export function getGroupMenuItems(userRole: string | null): MenuItem[] {
   }
 
   return GROUP_MEMBER_MENU_ITEMS;
+}
+
+/**
+ * Filter menu items based on user permissions
+ * @param menuItems - The menu items to filter
+ * @param userRoles - Array of user's roles
+ * @param userDecorators - Array of user's decorator codes
+ * @returns Filtered menu items with only accessible sections
+ */
+export function filterMenuByPermissions(
+  menuItems: MenuItem[],
+  userRoles: string[],
+  userDecorators: string[]
+): MenuItem[] {
+  return menuItems
+    .map(item => {
+      // Filter subItems based on permissions
+      const filteredSubItems = item.subItems
+        ?.filter(subItem => {
+          // Skip hidden items
+          if (subItem.hidden) return false;
+
+          // Check if user has access to this section
+          return canAccessSection(subItem.key, userRoles, userDecorators);
+        });
+
+      // If this is a parent item with subItems, only include if it has accessible children
+      if (item.subItems && item.subItems.length > 0) {
+        if (!filteredSubItems || filteredSubItems.length === 0) {
+          return null; // No accessible subItems, hide parent
+        }
+        return {
+          ...item,
+          subItems: filteredSubItems,
+        };
+      }
+
+      // For items without subItems, check direct access
+      return canAccessSection(item.key, userRoles, userDecorators) ? item : null;
+    })
+    .filter((item): item is MenuItem => item !== null);
+}
+
+/**
+ * Get filtered menu items based on user role and permissions
+ * @param userRole - User's primary role (for determining base menu)
+ * @param userRoles - Array of all user's roles
+ * @param userDecorators - Array of user's decorator codes
+ * @returns Filtered menu items
+ */
+export function getFilteredGroupMenuItems(
+  userRole: string | null,
+  userRoles: string[] = [],
+  userDecorators: string[] = []
+): MenuItem[] {
+  const baseMenu = getGroupMenuItems(userRole);
+
+  // If user is admin or steward, filter the admin menu by permissions
+  if (['admin', 'steward'].includes(userRole || '')) {
+    return filterMenuByPermissions(baseMenu, userRoles, userDecorators);
+  }
+
+  // Regular members get the member menu as-is
+  return baseMenu;
 }

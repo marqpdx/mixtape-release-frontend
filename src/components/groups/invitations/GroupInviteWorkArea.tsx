@@ -17,7 +17,7 @@ import GroupInvitations from "./GroupInvitations";
 import { GroupMembership } from "@/types/groupTypes";
 import { UserProfile } from "@/types/auth";
 import { GroupInviteForm } from "../forms/GroupInviteForm";
-import { useInvitationStatusPoll } from "@/hooks/useInvitationStatusPoll";
+import { useInvitationStatusPoll } from "@/hooks/groups/useInvitationStatusPoll";
 
 interface GroupInviteWorkAreaProps {
   groupSlug: string;

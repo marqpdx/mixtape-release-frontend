@@ -261,12 +261,12 @@ export default function WritingListWrapper({
   return (
     <Box>
       {/* Header */}
-      <VStack align="stretch" gap={6} mb={8}>
+      <VStack align="stretch" gap={6} mb={4}>
         <Box>
           <Heading size="xl" color="green.600" mb={2}>
             Writing & Content
           </Heading>
-          {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>}
+          {/* {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>} */}
         </Box>
       </VStack>
 

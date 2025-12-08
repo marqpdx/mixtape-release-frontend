@@ -12,7 +12,7 @@ import { DispatchDocument } from "@components/dispatch/interfaces";
 interface GroupDispatchMainWorkAreaProps {
   groupSlug: string;
   groupId?: string;
-  groupName?: string;
+  groupTitle?: string;
   canCreateDispatch?: boolean;
   canManageDispatch?: boolean;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
@@ -21,7 +21,7 @@ interface GroupDispatchMainWorkAreaProps {
 export default function GroupDispatchMainWorkArea({
   groupSlug,
   groupId,
-  groupName,
+  groupTitle,
   canCreateDispatch = true,
   canManageDispatch = false,
   setActiveSection,
@@ -68,7 +68,7 @@ export default function GroupDispatchMainWorkArea({
     <Box maxW="6xl" mx="auto" py={10} px={4}>
       <Flex justify="space-between" align="center" mb={6}>
         <Heading size="lg">
-          {groupName ? `${groupName} - Dispatch Documents` : "Dispatch Documents"}
+          {groupTitle ? `${groupTitle} - Dispatch Documents` : "Dispatch Documents"}
         </Heading>
         {canCreateDispatch && (
           <Button onClick={handleCreate} colorScheme="blue">

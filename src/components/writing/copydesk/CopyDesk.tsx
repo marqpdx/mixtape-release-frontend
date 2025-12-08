@@ -65,7 +65,7 @@ export function CopyDesk({
   if (!isOpen) {
     return (
       <Box
-        w="48px"
+        w="0px"
         transition="width 0.3s ease"
         bg={workspaceBg}
         borderLeft="1px solid"
@@ -82,7 +82,7 @@ export function CopyDesk({
   return (
     <Box
       w={width}
-      transition="width 0.3s ease"
+      transition="width .5s ease"
       bg={workspaceBg}
       borderLeft="1px solid"
       borderColor={workspaceBorder}

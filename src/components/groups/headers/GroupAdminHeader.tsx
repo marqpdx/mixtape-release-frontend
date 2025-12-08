@@ -47,13 +47,13 @@ export function GroupAdminHeader({
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
     >
-      <Box bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={4}>
+      <Box bg={"transparent"} borderBottomWidth="1px" borderColor={borderColor} py={4}>
         <Container maxW="7xl">
           <Flex alignItems="center" gap={3}>
-            <GroupTypeIcon size={20} style={{ color: 'var(--chakra-colors-gray-500)' }} />
-            <Heading size="lg">{group.title}</Heading>
+            <GroupTypeIcon size={23} style={{ color: 'var(--chakra-colors-gray-500)' }} />
+            <Heading size="xl">{group.title}</Heading>
             <Text color={textColor} fontSize="sm">
-              • Admin Dashboard
+              • Admin Dashboard!
             </Text>
           </Flex>
         </Container>
