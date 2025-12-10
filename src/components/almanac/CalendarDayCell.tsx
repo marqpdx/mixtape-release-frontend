@@ -5,7 +5,7 @@
  * Shows date and up to 3 occurrence previews with decorators
  */
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Text,
@@ -13,6 +13,9 @@ import {
   HStack,
   Badge,
   AspectRatio,
+  Dialog,
+  Button,
+  Heading,
 } from '@chakra-ui/react';
 import { Tooltip } from '@components/ui/tooltip';
 import { CalendarDay, CalendarOccurrence } from '@lib/almanac/almanacApi';
@@ -36,12 +39,25 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   todayBg,
   otherMonthText,
 }) => {
+  const [showAllModal, setShowAllModal] = useState(false);
+
   const dayNum = day.dayOfMonth;
   const isOtherMonth = !day.isCurrentMonth;
   const hasOccurrences = day.occurrences.length > 0;
 
-  // Show max 3 occurrences, truncate rest
-  const visibleOccurrences = day.occurrences.slice(0, 3);
+  // ✅ Sort occurrences by start time (earliest first) and show max 3
+  const visibleOccurrences = useMemo(() => {
+    return [...day.occurrences]
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+      .slice(0, 3);
+  }, [day.occurrences]);
+
+  // ✅ Sorted list of all occurrences for modal
+  const allOccurrences = useMemo(() => {
+    return [...day.occurrences]
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }, [day.occurrences]);
+
   const hiddenCount = Math.max(0, day.occurrences.length - 3);
 
   const bg = day.isToday ? todayBg : cellBg;
@@ -92,17 +108,14 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
 
               {/* Show count of hidden occurrences */}
               {hiddenCount > 0 && (
-                <Tooltip content={`+${hiddenCount} more event(s)`}>
+                <Tooltip content={`+${hiddenCount} more event(s) - click to see all`}>
                   <Badge
                     size="sm"
-                    colorScheme="gray"
+                    colorScheme="blue"
                     cursor="pointer"
-                    onClick={() => {
-                      // Could expand to show all, or sort by time
-                      // For now, just click first to open drawer
-                      if (day.occurrences.length > 0) {
-                        onOccurrenceClick(day.occurrences[0]);
-                      }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAllModal(true);
                     }}
                   >
                     +{hiddenCount}
@@ -113,6 +126,71 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
           )}
         </VStack>
       </Box>
+
+      {/* ✅ Modal to show all occurrences for the day */}
+      <Dialog.Root open={showAllModal} onOpenChange={(e) => setShowAllModal(e.open)}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>
+                Events on {day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </Dialog.Title>
+              <Dialog.CloseTrigger />
+            </Dialog.Header>
+
+            <Dialog.Body>
+              <VStack align="stretch" gap={2}>
+                {allOccurrences.map((occ, idx) => {
+                  const startTime = new Date(occ.start).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  });
+
+                  return (
+                    <Box
+                      key={occ.id}
+                      p={3}
+                      bg="gray.50"
+                      borderRadius="md"
+                      cursor="pointer"
+                      _hover={{ bg: 'gray.100', shadow: 'sm' }}
+                      onClick={() => {
+                        setShowAllModal(false);
+                        onOccurrenceClick(occ);
+                      }}
+                    >
+                      <VStack align="stretch" gap={1}>
+                        <HStack justify="space-between">
+                          <Text fontWeight="bold" fontSize="sm">
+                            {startTime}
+                          </Text>
+                          {occ.is_full && (
+                            <Badge colorScheme="red" size="sm">
+                              FULL
+                            </Badge>
+                          )}
+                        </HStack>
+                        <Text fontSize="sm">{occ.title}</Text>
+                        {occ.location && (
+                          <Text fontSize="xs" color="gray.600">
+                            📍 {occ.location}
+                          </Text>
+                        )}
+                      </VStack>
+                    </Box>
+                  );
+                })}
+              </VStack>
+            </Dialog.Body>
+
+            <Dialog.Footer>
+              <Button onClick={() => setShowAllModal(false)}>Close</Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </AspectRatio>
   );
 };

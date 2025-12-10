@@ -62,10 +62,53 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
   );
 
   // ✅ AUTO-LOAD events on mount or when groupSlug changes
+  // ✅ With request cancellation to prevent race conditions
   useEffect(() => {
-    console.log('🎯 useGroupEvents mounted/changed, loading for:', groupSlug);
-    loadEvents();
-  }, [groupSlug]);  // ← Only depend on groupSlug, not loadEvents
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log('🎯 useGroupEvents mounted/changed, loading for:', groupSlug);
+        const response = await axiosInstance.get(baseUrl, {
+          signal: controller.signal,
+        });
+
+        if (!cancelled) {
+          const data = response.data.results || response.data;
+          console.log('✅ API Response:', response.data);
+          console.log('✅ Parsed events:', data);
+          setEvents(Array.isArray(data) ? data : [data]);
+        }
+      } catch (err: any) {
+        // Don't set error if request was aborted
+        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+          console.log('🚫 Request cancelled for:', groupSlug);
+          return;
+        }
+
+        if (!cancelled) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to load events';
+          console.error('❌ Failed to load events:', errorMessage);
+          setError(errorMessage);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchEvents();
+
+    // Cleanup: cancel request when component unmounts or groupSlug changes
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [groupSlug, baseUrl]);
 
   // =========================================================================
   // CREATE EVENT

@@ -15,6 +15,7 @@ import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { CalendarDay, CalendarOccurrence } from '@lib/almanac/almanacApi';
 import { CalendarDayCell } from './CalendarDayCell';
+import { isSameDay, parseISO, startOfDay } from 'date-fns';
 
 interface CalendarMonthProps {
   occurrences: CalendarOccurrence[];
@@ -45,15 +46,27 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({
     // First day of month
     const firstDay = new Date(year, month, 1);
 
+    // Last day of month
+    const lastDay = new Date(year, month + 1, 0);
+
     // Starting day of week (0 = Sunday)
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
 
+    // ✅ Calculate how many weeks are needed (5 or 6)
+    // End date is the last day of month plus remaining days to complete the week
+    const endDate = new Date(lastDay);
+    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+
+    const weeksNeeded = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
+
     const weeks: Array<{ days: CalendarDay[] }> = [];
     let currentDate = new Date(startDate);
 
-    // Generate 6 weeks
-    for (let week = 0; week < 6; week++) {
+    // ✅ Generate only the weeks needed (5 or 6)
+    for (let week = 0; week < weeksNeeded; week++) {
       const days: CalendarDay[] = [];
 
       for (let day = 0; day < 7; day++) {
@@ -64,13 +77,17 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({
           currentDate.getMonth() === todayMonth &&
           currentDate.getFullYear() === todayYear;
 
+        // ✅ Timezone-aware date matching using date-fns
         const dayOccurrences = occurrences.filter(occ => {
-          const occDate = new Date(occ.start);
-          return (
-            occDate.getFullYear() === currentDate.getFullYear() &&
-            occDate.getMonth() === currentDate.getMonth() &&
-            occDate.getDate() === dayOfMonth
-          );
+          try {
+            // Parse ISO string and compare dates in local timezone
+            const occDate = parseISO(occ.start);
+            const dayDate = startOfDay(currentDate);
+            return isSameDay(occDate, dayDate);
+          } catch (error) {
+            console.error('Error parsing occurrence date:', occ.start, error);
+            return false;
+          }
         });
 
         days.push({

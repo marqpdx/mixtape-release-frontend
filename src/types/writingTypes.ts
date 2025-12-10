@@ -105,6 +105,21 @@ export interface WritingWorkingCopy {
   last_saved_at: string // ISO datetime
   auto_save_count: number
   client_session_id: string
+
+  // Collaboration fields
+  is_collaborative: boolean
+  collaborator_count: number
+  collaborators: Array<{
+    id: number
+    user: {
+      id: number
+      username: string
+      email?: string
+      first_name?: string
+      last_name?: string
+    }
+    role: 'editor' | 'commenter'
+  }>
 }
 
 /**

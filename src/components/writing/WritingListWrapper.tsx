@@ -17,7 +17,10 @@ import {
   Button,
   Input,
   Tabs,
+  IconButton,
+  Avatar
 } from "@chakra-ui/react";
+import { Tooltip } from "@components/ui/tooltip";
 import { useCallback, useState, useEffect } from "react";
 import {
   IconSearch,
@@ -26,6 +29,8 @@ import {
   IconPlus,
   IconArticle,
   IconFileText,
+  IconUsers,
+  IconFilter,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
@@ -113,8 +118,16 @@ export default function WritingListWrapper({
   const badgeBg = useColorModeValue("green.50", "green.900");
   const badgeColor = useColorModeValue("green.700", "green.300");
 
-  // Use the generic hook
-  const { placements, drafts, isLoading: placementsLoading, draftsLoading, error: placementsError } = useWriting(sponsor.type, sponsor.slug);
+  // Use the generic hook with draft filter support
+  const {
+    placements,
+    drafts,
+    isLoading: placementsLoading,
+    draftsLoading,
+    error: placementsError,
+    draftFilter,
+    setDraftFilter
+  } = useWriting(sponsor.type, sponsor.slug);
 
   console.log("WritingListWrapper - placements:", placements);
   console.log("WritingListWrapper - drafts:", drafts);
@@ -181,6 +194,24 @@ export default function WritingListWrapper({
     return false;
   };
 
+
+  // Adjust types as needed
+  const getCollaboratorDisplayName = (collab: any) => {
+    const first = collab.user.first_name || "";
+    const lastOrUsername = collab.user.last_name || collab.user.username || "";
+    return `${first} ${lastOrUsername}`.trim();
+  };
+
+  const getInitialsFromName = (name: string) =>
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+
+
   const processedPieces = typedPlacements
     .filter((p: FlattenedPlacement) => p.piece_status === 'published')
     .sort((a: FlattenedPlacement, b: FlattenedPlacement) => {
@@ -202,13 +233,18 @@ export default function WritingListWrapper({
     const displayTitle = draft.title || "Untitled Draft";
 
     return (
-      <HStack gap={2} align="center">
+      <HStack gap={2} align="center" wrap="wrap">
         <Text fontWeight="semibold" fontSize="md" color="gray.900" _dark={{ color: "white" }} lineClamp={1}>
           {displayTitle}
         </Text>
         <Badge size="sm" bg={badgeBg} color={badgeColor} px={2} py={1} rounded="full">
           Draft
         </Badge>
+        {draft.is_collaborative && (
+          <Badge size="sm" colorScheme="purple" px={2} py={1} rounded="full">
+            {draft.collaborator_count} collaborator{draft.collaborator_count !== 1 ? 's' : ''}
+          </Badge>
+        )}
       </HStack>
     );
   };
@@ -247,14 +283,81 @@ export default function WritingListWrapper({
       draft.auto_save_count > 0 ? `Autosaved ${draft.auto_save_count} times` : "Not yet saved";
 
     return (
-      <HStack gap={4} fontSize="xs" color="gray.400" mt={1}>
-        <HStack gap={1}>
-          <IconClock size={12} />
-          <Text>Last saved {formatDistanceToNow(lastSaved, { addSuffix: true })}</Text>
+      <VStack align="stretch" gap={2} mt={1}>
+        <HStack gap={4} fontSize="xs" color="gray.400">
+          <HStack gap={1}>
+            <IconClock size={12} />
+            <Text>Last saved {formatDistanceToNow(lastSaved, { addSuffix: true })}</Text>
+          </HStack>
+          <Text>•</Text>
+          <Text>{autoSaveText}</Text>
         </HStack>
-        <Text>•</Text>
-        <Text>{autoSaveText}</Text>
-      </HStack>
+
+        {/* Collaborator Avatars */}
+        {draft.is_collaborative &&
+          draft.collaborators &&
+          draft.collaborators.length > 0 && (
+            <HStack gap={2}>
+              <IconUsers size={14} color="gray" />
+              <HStack gap={-2}>
+                {draft.collaborators.slice(0, 4).map((collab) => {
+                  const displayName = getCollaboratorDisplayName(collab);
+                  const initials = getInitialsFromName(displayName);
+
+                  return (
+                    <Tooltip
+                      key={collab.id}
+                      content={`${displayName} (@${collab.user.username}) - ${collab.role}`}
+                    >
+                      <Avatar.Root
+                        size="xs"
+                        colorPalette={collab.role === "editor" ? "blue" : "purple"}
+                      >
+                        {/* If you later wire up avatar URLs, drop an Avatar.Image here */}
+                        {/* <Avatar.Image src={collab.user.profile?.avatar} alt={displayName} /> */}
+
+                        <Avatar.Fallback>{initials}</Avatar.Fallback>
+                      </Avatar.Root>
+                    </Tooltip>
+                  );
+                })}
+
+                {draft.collaborators.length > 4 && (
+                  <Badge size="xs" variant="subtle" colorScheme="gray">
+                    +{draft.collaborators.length - 4}
+                  </Badge>
+                )}
+              </HStack>
+            </HStack>
+          )}
+
+
+
+        {/* {draft.is_collaborative && draft.collaborators && draft.collaborators.length > 0 && (
+          <HStack gap={2}>
+            <IconUsers size={14} color="gray" />
+            <HStack gap={-2}>
+              {draft.collaborators.slice(0, 4).map((collab) => (
+                <Tooltip
+                  key={collab.id}
+                  content={`${collab.user.first_name || ''} ${collab.user.last_name || ''} (@${collab.user.username}) - ${collab.role}`}
+                >
+                  <Avatar
+                    name={`${collab.user.first_name || ''} ${collab.user.last_name || collab.user.username}`}
+                    size="xs"
+                    colorPalette={collab.role === 'editor' ? 'blue' : 'purple'}
+                  />
+                </Tooltip>
+              ))}
+              {draft.collaborators.length > 4 && (
+                <Badge size="xs" variant="subtle" colorScheme="gray">
+                  +{draft.collaborators.length - 4}
+                </Badge>
+              )}
+            </HStack>
+          </HStack>
+        )} */}
+      </VStack>
     );
   };
 
@@ -327,6 +430,40 @@ export default function WritingListWrapper({
         </Tabs.Content>
 
         <Tabs.Content value="drafts">
+          {/* Draft Filter Buttons */}
+          <HStack gap={2} mb={4}>
+            <HStack gap={1} fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
+              <IconFilter size={16} />
+              <Text fontWeight="medium">Show:</Text>
+            </HStack>
+            <Button
+              size="sm"
+              variant={draftFilter === 'my' ? 'solid' : 'outline'}
+              colorScheme={draftFilter === 'my' ? 'green' : 'gray'}
+              onClick={() => setDraftFilter('my')}
+            >
+              My Drafts
+            </Button>
+            <Button
+              size="sm"
+              variant={draftFilter === 'shared' ? 'solid' : 'outline'}
+              colorScheme={draftFilter === 'shared' ? 'purple' : 'gray'}
+              onClick={() => setDraftFilter('shared')}
+              gap={1}
+            >
+              <IconUsers size={14} />
+              Collaborative
+            </Button>
+            <Button
+              size="sm"
+              variant={draftFilter === 'all' ? 'solid' : 'outline'}
+              colorScheme={draftFilter === 'all' ? 'blue' : 'gray'}
+              onClick={() => setDraftFilter('all')}
+            >
+              All Drafts
+            </Button>
+          </HStack>
+
           <UniversalDataTable<WritingWorkingCopy>
             data={processedDrafts}
             title=""
@@ -334,8 +471,20 @@ export default function WritingListWrapper({
             error={null}
             showAvatar={true}
             avatarFallbackIcon={<IconFileText size={16} />}
-            emptyStateMessage="No drafts found"
-            emptyStateSubtitle="Start writing to create your first draft"
+            emptyStateMessage={
+              draftFilter === 'my'
+                ? "No personal drafts found"
+                : draftFilter === 'shared'
+                ? "No collaborative drafts found"
+                : "No drafts found"
+            }
+            emptyStateSubtitle={
+              draftFilter === 'my'
+                ? "Start writing to create your first draft"
+                : draftFilter === 'shared'
+                ? "Enable collaboration on a draft or join a collaborative writing session"
+                : "Create a draft to get started"
+            }
             actions={[
               {
                 label: "Edit Draft",

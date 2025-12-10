@@ -92,6 +92,7 @@ export default function WriteComposer({
     isCollaborative,
     dispatchContent,
     loading: collaborationLoading,
+    eligibleCollaborators,
     enableCollaboration,
     rescindCollaboration,
     addCollaborators,
@@ -312,6 +313,7 @@ export default function WriteComposer({
                     onOpenChange={setCollaborationDialogOpen}
                     isCollaborative={isCollaborative}
                     dispatchContent={dispatchContent}
+                    eligibleCollaborators={eligibleCollaborators}
                     onEnableCollaboration={enableCollaboration}
                     onRescindCollaboration={rescindCollaboration}
                     onAddCollaborators={addCollaborators}

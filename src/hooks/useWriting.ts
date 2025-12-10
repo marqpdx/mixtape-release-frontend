@@ -4,6 +4,7 @@
  * Works with both Group and Member sponsors
  */
 
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 import { FlattenedPlacement, WritingWorkingCopy } from '@/types/writingTypes';
@@ -23,6 +24,8 @@ interface UseWritingReturn {
   draftsLoading: boolean;
   error: Error | null;
   refetch: () => void;
+  setDraftFilter: (filter: 'my' | 'shared' | 'all') => void;
+  draftFilter: 'my' | 'shared' | 'all';
 }
 
 /**
@@ -30,18 +33,23 @@ interface UseWritingReturn {
  *
  * @param sponsorType - 'group' or 'member'
  * @param sponsorSlug - slug of the sponsor
+ * @param options - Optional configuration
  *
  * @example
  * // For a group
- * const { placements, drafts } = useWriting('group', 'my-group-slug');
+ * const { placements, drafts, setDraftFilter } = useWriting('group', 'my-group-slug');
  *
  * // For a member
  * const { placements, drafts } = useWriting('member', 'username');
  */
 export function useWriting(
   sponsorType: 'group' | 'member',
-  sponsorSlug: string
+  sponsorSlug: string,
+  options?: { defaultDraftFilter?: 'my' | 'shared' | 'all' }
 ): UseWritingReturn {
+  const [draftFilter, setDraftFilter] = React.useState<'my' | 'shared' | 'all'>(
+    options?.defaultDraftFilter || 'my'
+  );
 
   // Fetch placements (published content)
   const {
@@ -71,12 +79,13 @@ export function useWriting(
     error: draftsError,
     refetch: refetchDrafts,
   } = useQuery<WritingWorkingCopy[]>({
-    queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],
+    queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter],
     queryFn: async () => {
       const response = await axiosInstance.get('/api/writing/drafts', {
         params: {
           sponsor_type: sponsorType,
           sponsor_slug: sponsorSlug,
+          filter: draftFilter,
         },
       });
       // return response.data;
@@ -98,6 +107,8 @@ export function useWriting(
     draftsLoading,
     error: (placementsError || draftsError) as Error | null,
     refetch,
+    setDraftFilter,
+    draftFilter,
   };
 }
 

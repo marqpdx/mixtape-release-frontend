@@ -20,6 +20,7 @@ import { CalendarOccurrence } from '@lib/almanac/almanacApi';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { Divider } from '@components/common/Divider';
 import { useEventRSVP } from '@hooks/almanac/useEventRSVP';
+import { toaster } from '@/components/ui/toaster';
 
 interface EventDetailDrawerProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
   const [rsvpStatus, setRsvpStatus] = useState<'going' | 'maybe' | 'not_going'>('going');
   const [rsvpNotes, setRsvpNotes] = useState('');
   const [limitTo, setLimitTo] = useState<number | undefined>();
+  const [limitToError, setLimitToError] = useState<string | null>(null);
 
   // Debug: Log groupSlug when drawer opens
   React.useEffect(() => {
@@ -50,6 +52,42 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
       console.log('🎯 EventDetailDrawer opened with groupSlug:', groupSlug || '(empty!)', 'event:', occurrence?.title);
     }
   }, [isOpen, groupSlug, occurrence?.title]);
+
+  // ✅ Validate limitTo input
+  const handleLimitToChange = (details: { valueAsNumber: number }) => {
+    const value = details.valueAsNumber;
+
+    // Clear if empty/invalid
+    if (!value || isNaN(value)) {
+      setLimitTo(undefined);
+      setLimitToError(null);
+      return;
+    }
+
+    // Validate range (1-52 is reasonable for weekly events up to 1 year)
+    if (value < 1) {
+      setLimitTo(1);
+      setLimitToError('Minimum is 1 session');
+      toaster.create({
+        title: 'Value Adjusted',
+        description: 'Minimum limit is 1 session',
+        type: 'info',
+        duration: 3000,
+      });
+    } else if (value > 52) {
+      setLimitTo(52);
+      setLimitToError('Maximum is 52 sessions');
+      toaster.create({
+        title: 'Value Adjusted',
+        description: 'Maximum limit is 52 sessions (1 year)',
+        type: 'info',
+        duration: 3000,
+      });
+    } else {
+      setLimitTo(value);
+      setLimitToError(null);
+    }
+  };
 
   if (!occurrence && !isLoading) return null;
 
@@ -88,7 +126,12 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
     // Validate groupSlug
     if (!groupSlug) {
       console.error('❌ groupSlug is required to submit RSVP but was:', groupSlug);
-      alert('Error: Group information missing. Please go back and try again.');
+      toaster.create({
+        title: 'Configuration Error',
+        description: 'Group information missing. Please refresh the page and try again.',
+        type: 'error',
+        duration: 5000,
+      });
       return;
     }
 
@@ -333,13 +376,13 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
                         </Field.Root>
 
                         {/* Limit to next N sessions - Chakra UI v3 */}
-                        <Field.Root>
+                        <Field.Root invalid={!!limitToError}>
                           <Field.Label fontSize="sm">
                             Limit to next N sessions (optional)
                           </Field.Label>
                           <NumberInput.Root
                             value={limitTo?.toString() ?? ''}
-                            onValueChange={(val) => setLimitTo(val.valueAsNumber || undefined)}
+                            onValueChange={handleLimitToChange}
                             min={1}
                             max={52}
                           >
@@ -349,6 +392,12 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
                               <NumberInput.IncrementTrigger />
                             </NumberInput.Control>
                           </NumberInput.Root>
+                          {limitToError && (
+                            <Field.ErrorText fontSize="xs">{limitToError}</Field.ErrorText>
+                          )}
+                          <Field.HelperText fontSize="xs">
+                            Max 52 sessions (1 year). Leave blank to RSVP to all.
+                          </Field.HelperText>
                         </Field.Root>
 
                         {/* Submit buttons */}

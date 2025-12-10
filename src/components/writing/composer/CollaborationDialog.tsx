@@ -17,6 +17,7 @@ import {
   Dialog,
   Badge,
   Button,
+  Input,
 } from '@chakra-ui/react';
 import { toaster } from '@/components/ui/toaster';
 import type {
@@ -24,12 +25,14 @@ import type {
   CollaboratorRole,
   DispatchCollaborator,
 } from '@/types/dispatchTypes';
+import type { EligibleCollaborator } from '@hooks/useCollaboration';
 
 interface CollaborationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isCollaborative: boolean;
   dispatchContent: DispatchContent | null;
+  eligibleCollaborators: EligibleCollaborator[];
   onEnableCollaboration: () => Promise<void>;
   onRescindCollaboration: () => Promise<void>;
   onAddCollaborators: (userIds: number[], role: CollaboratorRole) => Promise<void>;
@@ -43,6 +46,7 @@ export function CollaborationDialog({
   onOpenChange,
   isCollaborative,
   dispatchContent,
+  eligibleCollaborators,
   onEnableCollaboration,
   onRescindCollaboration,
   onAddCollaborators,
@@ -51,6 +55,9 @@ export function CollaborationDialog({
   canBeRescinded = false,
 }: CollaborationDialogProps) {
   const [rescinding, setRescinding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCollaborators, setSelectedCollaborators] = useState<Set<number>>(new Set());
+  const [selectedRole, setSelectedRole] = useState<CollaboratorRole>('editor');
 
   // Separate collaborators by role
   const editors = useMemo(
@@ -62,6 +69,28 @@ export function CollaborationDialog({
     () => dispatchContent?.collaborator_details.filter(c => c.role === 'commenter') ?? [],
     [dispatchContent]
   );
+
+  // Filter eligible collaborators by search query and exclude current collaborators
+  const filteredEligibleCollaborators = useMemo(() => {
+    const currentCollaboratorIds = new Set(
+      dispatchContent?.collaborator_details.map(c => c.user.id) ?? []
+    );
+
+    let filtered = eligibleCollaborators.filter(
+      collab => !currentCollaboratorIds.has(collab.member_object.id)
+    );
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(collab => {
+        const fullName = `${collab.member_object.first_name} ${collab.member_object.last_name}`.toLowerCase();
+        const username = collab.member_object.username.toLowerCase();
+        return fullName.includes(query) || username.includes(query);
+      });
+    }
+
+    return filtered;
+  }, [eligibleCollaborators, dispatchContent, searchQuery]);
 
   const handleEnableCollaboration = async () => {
     try {
@@ -100,6 +129,37 @@ export function CollaborationDialog({
   const handleRemove = async (collaborator: DispatchCollaborator) => {
     try {
       await onRemoveCollaborators([collaborator.user.id]);
+    } catch (err) {
+      // Error handled in hook
+    }
+  };
+
+  const toggleCollaboratorSelection = (userId: number) => {
+    setSelectedCollaborators(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddSelectedCollaborators = async () => {
+    if (selectedCollaborators.size === 0) {
+      toaster.create({
+        title: 'No collaborators selected',
+        description: 'Please select at least one person to add',
+        type: 'warning',
+      });
+      return;
+    }
+
+    try {
+      await onAddCollaborators(Array.from(selectedCollaborators), selectedRole);
+      setSelectedCollaborators(new Set());
+      setSearchQuery('');
     } catch (err) {
       // Error handled in hook
     }
@@ -274,11 +334,108 @@ export function CollaborationDialog({
               <Text fontWeight="semibold" fontSize="md" mb={3}>
                 Add Collaborators
               </Text>
-              <Box p={4} bg="gray.50" borderRadius="md">
-                <Text fontSize="sm" color="gray.600" textAlign="center">
-                  Search and invite functionality coming soon
-                </Text>
-              </Box>
+
+              {filteredEligibleCollaborators.length === 0 && !searchQuery ? (
+                <Box p={4} bg="gray.50" borderRadius="md">
+                  <Text fontSize="sm" color="gray.600" textAlign="center">
+                    No eligible collaborators available. Only group members with writing permissions can collaborate.
+                  </Text>
+                </Box>
+              ) : (
+                <VStack align="stretch" gap={3}>
+                  {/* Search input */}
+                  <Input
+                    placeholder="Search by name or username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    size="sm"
+                  />
+
+                  {/* Role selector */}
+                  <HStack gap={2}>
+                    <Text fontSize="sm" fontWeight="medium">Add as:</Text>
+                    <Button
+                      size="xs"
+                      variant={selectedRole === 'editor' ? 'solid' : 'outline'}
+                      colorScheme="blue"
+                      onClick={() => setSelectedRole('editor')}
+                    >
+                      Editor
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant={selectedRole === 'commenter' ? 'solid' : 'outline'}
+                      colorScheme="purple"
+                      onClick={() => setSelectedRole('commenter')}
+                    >
+                      Reviewer
+                    </Button>
+                  </HStack>
+
+                  {/* Eligible collaborators list */}
+                  {filteredEligibleCollaborators.length === 0 && searchQuery ? (
+                    <Text fontSize="sm" color="gray.500" textAlign="center" py={2}>
+                      No members found matching "{searchQuery}"
+                    </Text>
+                  ) : (
+                    <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                      <VStack align="stretch" gap={0}>
+                        {filteredEligibleCollaborators.map((collab) => (
+                          <HStack
+                            key={collab.member_object.id}
+                            p={2}
+                            cursor="pointer"
+                            bg={selectedCollaborators.has(collab.member_object.id) ? 'blue.50' : 'white'}
+                            _hover={{ bg: 'gray.50' }}
+                            borderBottom="1px solid"
+                            borderColor="gray.100"
+                            onClick={() => toggleCollaboratorSelection(collab.member_object.id)}
+                          >
+                            <Box
+                              w="4"
+                              h="4"
+                              borderRadius="sm"
+                              border="2px solid"
+                              borderColor={selectedCollaborators.has(collab.member_object.id) ? 'blue.500' : 'gray.300'}
+                              bg={selectedCollaborators.has(collab.member_object.id) ? 'blue.500' : 'white'}
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                            >
+                              {selectedCollaborators.has(collab.member_object.id) && (
+                                <Box w="2" h="2" bg="white" />
+                              )}
+                            </Box>
+                            <VStack align="start" gap={0} flex={1}>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {collab.member_object.first_name} {collab.member_object.last_name}
+                              </Text>
+                              <Text fontSize="xs" color="gray.600">
+                                @{collab.member_object.username}
+                              </Text>
+                            </VStack>
+                            {collab.roles.includes('steward') && (
+                              <Badge size="xs" colorScheme="green">Steward</Badge>
+                            )}
+                          </HStack>
+                        ))}
+                      </VStack>
+                    </Box>
+                  )}
+
+                  {/* Add button */}
+                  {selectedCollaborators.size > 0 && (
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={handleAddSelectedCollaborators}
+                      loading={loading}
+                    >
+                      Add {selectedCollaborators.size} {selectedRole}(s)
+                    </Button>
+                  )}
+                </VStack>
+              )}
             </Box>
 
             <Separator />

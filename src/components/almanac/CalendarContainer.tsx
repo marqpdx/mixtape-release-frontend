@@ -1,6 +1,6 @@
 // src/components/Calendar/CalendarContainer.tsx - NO TABS, MONTH VIEW ONLY
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -10,9 +10,10 @@ import { CalendarMonth } from './CalendarMonth';
 import { EventDetailDrawer } from './EventDetailDrawer';
 import { CalendarOccurrence } from '@lib/almanac/almanacApi';
 import { MixtapeAlert } from '@components/ui/alerts/MixtapeAlert';
+import { toaster } from '@/components/ui/toaster';
 
 interface CalendarContainerProps {
-  groupSlug?: string;
+  groupSlug: string;  // ← Required (no default)
   occurrences: CalendarOccurrence[];
   isLoading?: boolean;
   error?: string | null;
@@ -23,7 +24,7 @@ interface CalendarContainerProps {
 }
 
 export const CalendarContainer: React.FC<CalendarContainerProps> = ({
-  groupSlug = '',
+  groupSlug,
   occurrences,
   isLoading = false,
   error = null,
@@ -35,8 +36,25 @@ export const CalendarContainer: React.FC<CalendarContainerProps> = ({
   const [selectedOccurrence, setSelectedOccurrence] = useState<CalendarOccurrence | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  // Validate groupSlug on mount
+  useEffect(() => {
+    if (!groupSlug) {
+      console.error('⚠️ CalendarContainer: groupSlug is required but was not provided');
+    }
+  }, [groupSlug]);
+
   const handleOccurrenceClick = (occurrence: CalendarOccurrence) => {
     console.log('🖱️ CalendarContainer.handleOccurrenceClick:', occurrence.title);
+
+    // Validate groupSlug before allowing interaction
+    if (!groupSlug) {
+      toaster.create({
+        title: 'Configuration Error',
+        description: 'Group information missing. Please refresh the page.',
+        type: 'error',
+      });
+      return;
+    }
 
     // Use parent handler if provided
     if (onOccurrenceClick) {

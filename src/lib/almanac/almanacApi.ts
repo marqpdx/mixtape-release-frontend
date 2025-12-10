@@ -360,6 +360,28 @@ class AlmanacApi {
     }
   }
 
+  async getGroupCalendar(
+    groupSlug: string,
+    startDate: Date,
+    endDate: Date,
+    filters?: { decorator?: string; kind?: 'event' | 'gathering' }
+  ): Promise<CalendarOccurrence[]> {
+    try {
+      const params = {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        ...filters,
+      };
+      const response = await this.client.get(
+        `/api/groups/${groupSlug}/events/calendar`,
+        { params }
+      );
+      return response.data || [];
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
   // =========================================================================
   // RSVP & ATTENDANCE
   // =========================================================================

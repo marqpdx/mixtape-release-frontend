@@ -6,7 +6,8 @@
  * Useful for detailed scanning and filtering
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
+import { isSameDay, isToday, isTomorrow, parseISO } from 'date-fns';
 import {
   VStack,
   HStack,
@@ -21,6 +22,7 @@ import { Tooltip } from '@components/ui/tooltip';
 import { CalendarOccurrence } from '@lib/almanac/almanacApi';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { Divider } from '@components/common/Divider';
+import { List } from 'react-window';
 
 interface OccurrencesListProps {
   occurrences: CalendarOccurrence[];
@@ -63,21 +65,44 @@ export const OccurrencesList: React.FC<OccurrencesListProps> = ({
     );
   }, [occurrences, filterDecorator, filterKind]);
 
+  // ✅ Helper to format date labels with "Today", "Tomorrow", etc.
+  const formatDateLabel = (date: Date): string => {
+    if (isToday(date)) {
+      return 'Today';
+    }
+    if (isTomorrow(date)) {
+      return 'Tomorrow';
+    }
+
+    // Check if within this week (next 6 days)
+    const now = new Date();
+    const diffInDays = Math.floor((date.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+
+    if (diffInDays >= 0 && diffInDays <= 6) {
+      // Show day name (e.g., "Monday")
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+
+    // Default format for dates beyond this week
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   // Group by date for visual organization
   const groupedByDate = useMemo(() => {
     const groups: { [key: string]: CalendarOccurrence[] } = {};
 
     filteredOccurrences.forEach(occ => {
-      const date = new Date(occ.start).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      });
+      const occDate = parseISO(occ.start);
+      const dateLabel = formatDateLabel(occDate);
 
-      if (!groups[date]) {
-        groups[date] = [];
+      if (!groups[dateLabel]) {
+        groups[dateLabel] = [];
       }
-      groups[date].push(occ);
+      groups[dateLabel].push(occ);
     });
 
     return groups;
@@ -111,6 +136,71 @@ export const OccurrencesList: React.FC<OccurrencesListProps> = ({
     );
   }
 
+  // ✅ Use virtualization for large lists (> 50 occurrences)
+  const useVirtualization = filteredOccurrences.length > 50;
+
+  if (useVirtualization) {
+    // Flatten the grouped data for virtualization
+    const flatItems: Array<{ type: 'header' | 'item'; data: string | CalendarOccurrence; dateLabel?: string }> = [];
+
+    Object.entries(groupedByDate).forEach(([date, occs]) => {
+      flatItems.push({ type: 'header', data: date });
+      occs.forEach(occ => flatItems.push({ type: 'item', data: occ as CalendarOccurrence, dateLabel: date }));
+    });
+
+    // Row component using closure to access data
+    const Row = React.useCallback(
+      ({ index, style }: { index: number; style: React.CSSProperties }) => {
+        const item = flatItems[index];
+
+        if (item.type === 'header') {
+          return (
+            <div style={style}>
+              <Text
+                fontWeight="bold"
+                fontSize="sm"
+                py={2}
+                color="gray.600"
+                textTransform="uppercase"
+              >
+                {item.data as string}
+              </Text>
+            </div>
+          );
+        }
+
+        return (
+          <div style={style}>
+            <OccurrenceListItem
+              occurrence={item.data as CalendarOccurrence}
+              onClick={() => onOccurrenceClick(item.data as CalendarOccurrence)}
+              cardBg={cardBg}
+              borderColor={borderColor}
+              hoverBg={hoverBg}
+            />
+          </div>
+        );
+      },
+      [flatItems, onOccurrenceClick, cardBg, borderColor, hoverBg]
+    );
+
+    return (
+      <Box>
+        <Text fontSize="sm" color="gray.500" mb={2}>
+          Showing {filteredOccurrences.length} events (virtualized for performance)
+        </Text>
+        <List
+          rowComponent={Row}
+          rowCount={flatItems.length}
+          rowHeight={150}
+          rowProps={{} as any}
+          style={{ height: 600 }}
+        />
+      </Box>
+    );
+  }
+
+  // ✅ Standard rendering for smaller lists
   return (
     <VStack align="stretch" gap={4}>
       {Object.entries(groupedByDate).map(([date, occs]) => (
