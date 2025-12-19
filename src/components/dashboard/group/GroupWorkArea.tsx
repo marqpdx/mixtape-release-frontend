@@ -21,8 +21,6 @@ import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
 import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
-import GroupDispatchWrapper from "@/components/groups/dispatch/GroupDispatchWrapper";
-// import DispatchEditorWrapper from "@/components/dispatch/DispatchEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
 import { Group } from "@/types/groupTypes";
 import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
@@ -255,22 +253,22 @@ export default function GroupWorkArea({
   }
 
   // Dispatch sections (parallel to Writing)
-  if (section === "dispatches") {
-    return (
-      <WorkAreaWrapper>
-        <GroupDispatchWrapper
-          groupSlug={group.slug}
-          groupId={group.id}
-          groupTitle={group.title}
-          setActiveSection={setActiveSection}
-          onPublished={(doc) => {
-            // Handle published document if needed
-            console.log("Document published:", doc);
-          }}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "dispatches") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <GroupDispatchWrapper
+  //         groupSlug={group.slug}
+  //         groupId={group.id}
+  //         groupTitle={group.title}
+  //         setActiveSection={setActiveSection}
+  //         onPublished={(doc) => {
+  //           // Handle published document if needed
+  //           console.log("Document published:", doc);
+  //         }}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
   // if (section === "dispatch") {
   //   const documentSlug = sectionParams?.document;

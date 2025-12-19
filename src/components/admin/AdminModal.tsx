@@ -11,7 +11,7 @@ import { ReactNode, ComponentProps, useMemo } from "react";
 type ModalSize =
   | "xs" | "sm" | "md" | "lg" | "xl"
   | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "7xl"
-  | "full";            // or pass a custom width via contentProps
+  | "full";
 
 const SIZE_MAP: Record<Exclude<ModalSize, "full">, string> = {
   xs:  "20rem", // 320px
@@ -46,9 +46,9 @@ export default function AdminModal({
   isSubmitting?: boolean;
   children: ReactNode;
   submitText?: string;
-  size?: ModalSize; // NEW
-  maxH?: string | number; // NEW
-  contentProps?: ComponentProps<typeof Dialog.Content>; // NEW (advanced overrides)
+  size?: ModalSize;
+  maxH?: string | number;
+  contentProps?: ComponentProps<typeof Dialog.Content>;
 }) {
   const resolvedMaxW = useMemo(() => {
     if (size === "full") return "96vw";
