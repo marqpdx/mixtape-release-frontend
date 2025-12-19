@@ -13,16 +13,21 @@ interface UseSaveYjsStateReturn {
   error: string | null;
 }
 
+interface DispatchContentMinimal {
+  id: string;  // UUID for REST API calls
+  yjs_document_id: string;  // UUID for Socket.IO room name
+}
+
 export function useSaveYjsState(
   ydoc: Y.Doc | null,
-  documentSlug: string
+  dispatchContent: DispatchContentMinimal | null
 ): UseSaveYjsStateReturn {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const saveYjsState = useCallback(async () => {
-    if (!ydoc || !documentSlug) {
-      console.warn("⚠️ Cannot save: missing ydoc or documentSlug");
+    if (!ydoc || !dispatchContent?.id) {
+      console.warn("⚠️ Cannot save: missing ydoc or dispatchContent.id");
       return;
     }
 
@@ -38,11 +43,11 @@ export function useSaveYjsState(
         String.fromCharCode(...new Uint8Array(state))
       );
 
-      console.log("💾 Saving yjs state for document:", documentSlug);
+      console.log("💾 Saving yjs state for document:", dispatchContent.id);
 
-      // Send to backend
+      // Send to backend using DispatchContent.id
       await axiosInstance.patch(
-        `/api/dispatch/documents/${documentSlug}/yjs-state`,
+        `/api/dispatch/content/${dispatchContent.id}/yjs-state`,
         { yjs_state: base64State }
       );
 
@@ -65,7 +70,7 @@ export function useSaveYjsState(
       setError(errorMessage);
       setStatus("error");
     }
-  }, [ydoc, documentSlug]);
+  }, [ydoc, dispatchContent?.id]);
 
   return {
     saveYjsState,

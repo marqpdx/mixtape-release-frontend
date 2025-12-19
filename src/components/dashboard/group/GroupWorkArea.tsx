@@ -22,9 +22,10 @@ import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWork
 import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupDispatchWrapper from "@/components/groups/dispatch/GroupDispatchWrapper";
-import DispatchEditorWrapper from "@/components/dispatch/DispatchEditorWrapper";
+// import DispatchEditorWrapper from "@/components/dispatch/DispatchEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
 import { Group } from "@/types/groupTypes";
+import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -148,16 +149,16 @@ export default function GroupWorkArea({
   // }
 
   // // Communications
-  // if (section === "threadworks") {
-  //   return (
-  //     <ThreadworksWorkArea
-  //       section={section}
-  //       sectionParams={sectionParams}
-  //       setActiveSection={setActiveSection}
-  //       groupSlug={group.slug}
-  //     />
-  //   );
-  // }
+  if (section === "threadworks") {
+    return (
+      <ThreadworksWorkArea
+        section={section}
+        sectionParams={sectionParams}
+        setActiveSection={setActiveSection}
+        groupSlug={group.slug}
+      />
+    );
+  }
 
   // Members sections
   if (section === "members-roles") {
@@ -215,6 +216,8 @@ export default function GroupWorkArea({
     );
   }
 
+
+
   // Writing sections
   if (section === "writing") {
     return (
@@ -269,25 +272,25 @@ export default function GroupWorkArea({
     );
   }
 
-  if (section === "dispatch") {
-    const documentSlug = sectionParams?.document;
-    return (
-      <WorkAreaWrapper>
-        <DispatchEditorWrapper
-          sponsor={{
-            type: 'group',
-            id: group.id,
-            slug: group.slug,
-            displayName: group.title
-          }}
-          documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
-          onPublished={(doc) => {
-            console.log("Document updated:", doc);
-          }}
-        />
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "dispatch") {
+  //   const documentSlug = sectionParams?.document;
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <DispatchEditorWrapper
+  //         sponsor={{
+  //           type: 'group',
+  //           id: group.id,
+  //           slug: group.slug,
+  //           displayName: group.title
+  //         }}
+  //         documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
+  //         onPublished={(doc) => {
+  //           console.log("Document updated:", doc);
+  //         }}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
   // // Events
   // if (section === "events-landing") {

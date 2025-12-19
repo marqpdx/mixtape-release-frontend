@@ -77,14 +77,14 @@ export function CollaborationDialog({
     );
 
     let filtered = eligibleCollaborators.filter(
-      collab => !currentCollaboratorIds.has(collab.member_object.id)
+      collab => !currentCollaboratorIds.has(collab.member_id)
     );
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(collab => {
-        const fullName = `${collab.member_object.first_name} ${collab.member_object.last_name}`.toLowerCase();
-        const username = collab.member_object.username.toLowerCase();
+        const fullName = `${collab.first_name} ${collab.last_name}`.toLowerCase();
+        const username = collab.username.toLowerCase();
         return fullName.includes(query) || username.includes(query);
       });
     }
@@ -382,36 +382,36 @@ export function CollaborationDialog({
                       <VStack align="stretch" gap={0}>
                         {filteredEligibleCollaborators.map((collab) => (
                           <HStack
-                            key={collab.member_object.id}
+                            key={collab.member_id}
                             p={2}
                             cursor="pointer"
-                            bg={selectedCollaborators.has(collab.member_object.id) ? 'blue.50' : 'white'}
+                            bg={selectedCollaborators.has(collab.member_id) ? 'blue.50' : 'white'}
                             _hover={{ bg: 'gray.50' }}
                             borderBottom="1px solid"
                             borderColor="gray.100"
-                            onClick={() => toggleCollaboratorSelection(collab.member_object.id)}
+                            onClick={() => toggleCollaboratorSelection(collab.member_id)}
                           >
                             <Box
                               w="4"
                               h="4"
                               borderRadius="sm"
                               border="2px solid"
-                              borderColor={selectedCollaborators.has(collab.member_object.id) ? 'blue.500' : 'gray.300'}
-                              bg={selectedCollaborators.has(collab.member_object.id) ? 'blue.500' : 'white'}
+                              borderColor={selectedCollaborators.has(collab.member_id) ? 'blue.500' : 'gray.300'}
+                              bg={selectedCollaborators.has(collab.member_id) ? 'blue.500' : 'white'}
                               display="flex"
                               alignItems="center"
                               justifyContent="center"
                             >
-                              {selectedCollaborators.has(collab.member_object.id) && (
+                              {selectedCollaborators.has(collab.member_id) && (
                                 <Box w="2" h="2" bg="white" />
                               )}
                             </Box>
                             <VStack align="start" gap={0} flex={1}>
                               <Text fontSize="sm" fontWeight="medium">
-                                {collab.member_object.first_name} {collab.member_object.last_name}
+                                {collab.first_name} {collab.last_name}
                               </Text>
                               <Text fontSize="xs" color="gray.600">
-                                @{collab.member_object.username}
+                                @{collab.username}
                               </Text>
                             </VStack>
                             {collab.roles.includes('steward') && (

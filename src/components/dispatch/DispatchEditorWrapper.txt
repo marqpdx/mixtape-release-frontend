@@ -43,12 +43,12 @@ export default function DispatchEditorWrapper({
         if (documentSlug) {
           // Load existing document
           console.log(`📄 Loading existing document: ${documentSlug}`);
-          const res = await axiosInstance.get(`/api/dispatch/documents/${documentSlug}`);
+          const res = await axiosInstance.get(`/api/dispatch/content/${documentSlug}`);
           setDocument(res.data);
         } else {
           // Create new document with sponsor
           console.log(`📝 Creating new document for sponsor:`, sponsor);
-          const res = await axiosInstance.post('/api/dispatch/documents', {
+          const res = await axiosInstance.post('/api/dispatch/content', {
             title: 'Untitled Document',
             sponsor_type: sponsor.type,
             sponsor_id: sponsor.id,

@@ -41,7 +41,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Communication",
     icon: "💬",
     subItems: [
-      { key: "threadworks", label: "Threadworks", hidden: true },
+      { key: "threadworks", label: "Threadworks", hidden: false },
       { key: "do-writing", label: "Write", hidden: true },
       { key: "drafts", label: "Draft Writing", hidden: true },
       { key: "comments", label: "Comments", hidden: true },
@@ -79,8 +79,8 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Dispatch",
     icon: "📒",
     subItems: [
-      { key: "dispatches", label: "Dispatch", hidden: false },
-      { key: "dispatch", label: "Shared Writing", hidden: false },
+      { key: "dispatches", label: "Dispatch", hidden: true },
+      { key: "dispatch", label: "Shared Writing", hidden: true },
       // { key: "do-dispatch", label: "Dddraft Writing", hidden: false },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },

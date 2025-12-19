@@ -1,4 +1,4 @@
-// src/components/editor/TipTapEditor.tsx - Updated with forwardRef
+// src/components/editor/TipTapEditor.tsx
 
 "use client";
 
@@ -30,6 +30,10 @@ import { useColorModeValue } from "@components/ui/color-mode";
 
 type ToolbarOption = "bold" | "italic" | "heading" | "underline" | "bulletList" | "link";
 
+// Default toolbar options - defined outside component to maintain stable reference
+// Temporarily empty to debug collaboration issues
+const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [];
+
 interface TipTapEditorProps {
   initialContent?: JSONContent | string;
   onContentChange?: (content: JSONContent) => void;
@@ -41,6 +45,11 @@ interface TipTapEditorProps {
   placeholder?: string;
   toolbarOptions?: ToolbarOption[];
   className?: string;
+  // New Yjs props from MainEditor
+  yjsProvider?: any;
+  ydoc?: Y.Doc;
+  isCollaborative?: boolean;
+  // Legacy collab prop (deprecated)
   collab?: {
     ydoc: Y.Doc;
     awareness: Awareness;
@@ -54,8 +63,11 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
   autoSave,
   editable = true,
   collab,
+  yjsProvider,
+  ydoc,
+  isCollaborative = false,
   placeholder = "Type here...",
-  toolbarOptions = ["bold", "italic", "heading", "underline", "bulletList", "link"],
+  toolbarOptions = DEFAULT_TOOLBAR_OPTIONS,
   className = "",
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
@@ -64,10 +76,50 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
 
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
 
+  // Debug: Track component renders and prop changes
+  console.log("🎨 aaaa TipTapEditor rendered");
+  useEffect(() => {
+    console.log("🔍 aaaa TipTapEditor collab prop changed:", {
+      collabExists: !!collab,
+      collabYdocClientID: collab?.ydoc?.clientID,
+      collabInstance: collab,
+    });
+  }, [collab]);
+
+  // Create unified collab object from either new props or legacy collab prop
+  const collabConfig = useMemo(() => {
+    // If new props are provided, use them
+    if (isCollaborative && yjsProvider && ydoc) {
+      console.log("🤝 TipTapEditor: Using new Yjs provider props", {
+        hasProvider: !!yjsProvider,
+        hasYdoc: !!ydoc,
+        hasAwareness: !!yjsProvider?.awareness,
+        clientID: ydoc.clientID
+      });
+
+      return {
+        ydoc: ydoc,
+        awareness: yjsProvider.awareness,
+        user: {
+          name: 'User', // This will be set by the awareness protocol
+          color: '#000000'
+        }
+      };
+    }
+
+    // Otherwise use legacy collab prop
+    if (collab) {
+      console.log("🤝 TipTapEditor: Using legacy collab prop");
+      return collab;
+    }
+
+    return null;
+  }, [isCollaborative, yjsProvider, ydoc, collab]);
+
   const routingOpts = useMemo(() => {
-    if (collab?.ydoc) {
+    if (collabConfig?.ydoc) {
       // Collaborative storage in Yjs
-      const yMap = collab.ydoc.getMap<RouteMeta>("routeMeta")
+      const yMap = collabConfig.ydoc.getMap<RouteMeta>("routeMeta")
       return {
         getRouteMeta: (blockId: string) => yMap.get(blockId),
         setRouteMeta: (blockId: string, meta: RouteMeta) => yMap.set(blockId, meta),
@@ -82,18 +134,27 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
         },
       }
     }
-  }, [collab?.ydoc])
+  }, [collabConfig?.ydoc])
 
-  // Build base extensions array
-  const baseExtensions = [
+  // Build base extensions array - memoized to prevent editor recreation
+  // Note: Collaboration extension automatically disables History in collaborative mode
+  // Keep bulletList and listItem enabled to support existing content
+  const baseExtensions = useMemo(() => [
     StarterKit.configure({
-      // Exclude history from StarterKit - we'll add it manually when needed
-      undoRedo: false,
+      heading: false,
+      bold: false,
+      italic: false,
+      // Keep bulletList and listItem - needed for existing document content
+      // bulletList: false,
+      // listItem: false,
     }),
-    // Add history extension only when NOT in collaborative mode
-    ...(collab ? [] : [History]),
     BlockId,
     BlockRouting.configure(routingOpts),
+  ], [routingOpts]);
+
+  // Add toolbar extensions to both modes - memoized to prevent editor recreation
+  const toolbarExtensions = useMemo(() => [
+    // Configure extensions manually with custom settings
     ...(toolbarOptions.includes("heading") ? [Heading.configure({ levels: [1, 2, 3] })] : []),
     ...(toolbarOptions.includes("bold") ? [Bold.configure({
       HTMLAttributes: {
@@ -105,6 +166,7 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
         class: 'italic-text',
       },
     })] : []),
+    // Underline is not in StarterKit, so add it directly
     ...(toolbarOptions.includes("underline") ? [Underline.configure({
       HTMLAttributes: {
         class: 'underline-text',
@@ -118,32 +180,70 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
         linkOnPaste: true,
       }),
     ] : []),
-  ];
+  ], [toolbarOptions]);
 
-  // Add collaboration extensions if in collaborative mode
-  const extensions = collab && collab.ydoc && collab.awareness
-    ? [
-        ...baseExtensions,
+  // Combine base extensions with toolbar extensions - memoized to prevent editor recreation
+  const allExtensions = useMemo(() => [...baseExtensions, ...toolbarExtensions], [baseExtensions, toolbarExtensions]);
+
+  // Debug: Track which specific extension array is changing
+  const prevBaseExtensions = useRef(baseExtensions);
+  const prevToolbarExtensions = useRef(toolbarExtensions);
+  const prevRoutingOpts = useRef(routingOpts);
+  const prevToolbarOptions = useRef(toolbarOptions);
+
+  useEffect(() => {
+    if (prevToolbarOptions.current !== toolbarOptions) {
+      console.log("⚠️ dddd toolbarOptions CHANGED!", {
+        previous: prevToolbarOptions.current,
+        current: toolbarOptions,
+        sameReference: prevToolbarOptions.current === toolbarOptions,
+        isDefault: toolbarOptions === DEFAULT_TOOLBAR_OPTIONS,
+      });
+      prevToolbarOptions.current = toolbarOptions;
+    }
+    if (prevBaseExtensions.current !== baseExtensions) {
+      console.log("⚠️ bbbb baseExtensions CHANGED!");
+      prevBaseExtensions.current = baseExtensions;
+    }
+    if (prevToolbarExtensions.current !== toolbarExtensions) {
+      console.log("⚠️ bbbb toolbarExtensions CHANGED!");
+      prevToolbarExtensions.current = toolbarExtensions;
+    }
+    if (prevRoutingOpts.current !== routingOpts) {
+      console.log("⚠️ bbbb routingOpts CHANGED!");
+      prevRoutingOpts.current = routingOpts;
+    }
+  }, [toolbarOptions, baseExtensions, toolbarExtensions, routingOpts]);
+
+  // Add collaboration extensions if in collaborative mode - memoized to prevent editor recreation
+  const extensions = useMemo(() => {
+    console.log("🔧 aaaa Creating new extensions array");
+    if (collabConfig && collabConfig.ydoc && collabConfig.awareness) {
+      console.log("🔧 aaaa Adding Collaboration extension to array");
+      return [
+        ...allExtensions,
         Collaboration.configure({
-          document: collab.ydoc,
+          document: collabConfig.ydoc,
           field: 'default', // Specify the field name explicitly
         }),
         // TODO: Fix CollaborationCursor - currently causes "ystate is undefined" error
         // CollaborationCursor.configure({
         //   provider: {
-        //     awareness: collab.awareness,
-        //     doc: collab.ydoc,
+        //     awareness: collabConfig.awareness,
+        //     doc: collabConfig.ydoc,
         //   },
-        //   user: collab.user,
+        //   user: collabConfig.user,
         // })
-      ]
-    : baseExtensions;
+      ];
+    }
+    return allExtensions;
+  }, [allExtensions, collabConfig]);
 
-  if (collab && collab.ydoc && collab.awareness) {
-    console.log("🤝 Setting up collaboration with Y.Doc:", collab.ydoc);
-    console.log("🤝 Y.Doc clientID:", collab.ydoc.clientID);
-    console.log("🤝 Awareness:", collab.awareness);
-    console.log("🤝 Awareness states:", collab.awareness.getStates());
+  if (collabConfig && collabConfig.ydoc && collabConfig.awareness) {
+    console.log("🤝 aaaa Setting up collaboration with Y.Doc:", collabConfig.ydoc);
+    console.log("🤝 Y.Doc clientID:", collabConfig.ydoc.clientID);
+    console.log("🤝 Awareness:", collabConfig.awareness);
+    console.log("🤝 Awareness states:", collabConfig.awareness.getStates());
   }
 
   const editorConfig: Parameters<typeof useEditor>[0] = {
@@ -158,6 +258,12 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
     onUpdate: ({ editor }) => {
       if (isUpdatingContentRef.current) return; // Skip if we're programmatically updating
 
+      // In collaborative mode, Yjs handles all content sync - don't trigger callbacks
+      if (collabConfig) {
+        console.log("🤝 Collaborative mode: Skipping onContentChange/autoSave (Yjs handles sync)");
+        return;
+      }
+
       const json = editor.getJSON();
       latestContentRef.current = json;
       onContentChange?.(json);
@@ -166,14 +272,14 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
     immediatelyRender: false,
   };
 
-  // Add initial content for both collaborative and non-collaborative modes
-  if (initialContent && !collab) {
+  // Add initial content for non-collaborative mode only
+  if (initialContent && !collabConfig) {
     // Non-collaborative mode - set content normally
     editorConfig.content = initialContent;
-  } else if (initialContent && collab) {
-    // Collaborative mode - we'll set content after editor creation
-    console.log("🔄 Will initialize collaborative editor with content:", initialContent);
   }
+
+  // In collaborative mode, DON'T set initial content here
+  // The Y.Doc should already be populated by the provider before the editor is created
 
   const editor = useEditor(editorConfig);
 
@@ -182,54 +288,30 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
 
   // Add this in the TipTapEditor component after creating the editor
   useEffect(() => {
-    if (editor && collab?.ydoc) {
+    if (editor && collabConfig?.ydoc) {
       const handleUpdate = (update: Uint8Array, origin: any) => {
         console.log("🔄 Y.js document update detected:", {
           updateSize: update.length,
           origin: origin,
-          clientID: collab.ydoc.clientID
+          clientID: collabConfig.ydoc.clientID
         });
       };
 
-      collab.ydoc.on('update', handleUpdate);
+      collabConfig.ydoc.on('update', handleUpdate);
 
       return () => {
-        collab.ydoc.off('update', handleUpdate);
+        collabConfig.ydoc.off('update', handleUpdate);
       };
     }
-  }, [editor, collab]);
+  }, [editor, collabConfig]);
 
-  // Initialize collaborative editor with saved content
-  useEffect(() => {
-    console.log("🐛 Collab init effect triggered:", {
-      hasEditor: !!editor,
-      hasCollab: !!collab,
-      hasInitialContent: !!initialContent,
-      initialContent: initialContent
-    });
-
-    // In TipTapEditor.tsx, update the initialization check:
-    if (editor && collab && initialContent) {
-      const yXmlFragment = collab.ydoc.getXmlFragment('default');
-      console.log("🐛 Y.js fragment length:", yXmlFragment.length);
-
-      // ONLY initialize if fragment is completely empty AND this is the first time
-      if (yXmlFragment.length === 0 && yXmlFragment.toString() === '') {
-        console.log("🔄 Initializing collaborative editor with saved content:", initialContent);
-        isUpdatingContentRef.current = true;
-        editor.commands.setContent(initialContent);
-        setTimeout(() => {
-          isUpdatingContentRef.current = false;
-        }, 100);
-      } else {
-        console.log("🐛 Y.js document already has content, skipping initialization");
-      }
-    }
-  }, [editor, collab, initialContent]);
+  // REMOVED: Don't initialize content in collaborative mode
+  // The Y.Doc is already populated by useYjsSocketProvider before the editor is created
+  // Calling setContent() breaks the Yjs binding between Y.Doc and ProseMirror
 
   // Update editor content when initialContent changes (non-collaborative mode only)
   useEffect(() => {
-    if (!editor || !initialContent || collab) return;
+    if (!editor || !initialContent || collabConfig) return;
 
     // Check if the content is actually different to avoid unnecessary updates
     const currentContent = editor.getJSON();
@@ -250,7 +332,7 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
         isUpdatingContentRef.current = false;
       }, 0);
     }
-  }, [editor, initialContent, collab]);
+  }, [editor, initialContent, collabConfig]);
 
   if (!editor) {
     return (
@@ -287,7 +369,8 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
       }}
     >
       <Box border={'1px solid gray'} pt={1} pl={1}>
-        <TipTapToolbar editor={editor} />
+        {/* Toolbar temporarily disabled for debugging */}
+        {/* <TipTapToolbar editor={editor} /> */}
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />

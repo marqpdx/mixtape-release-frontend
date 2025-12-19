@@ -6,11 +6,18 @@ import { Text } from '@chakra-ui/react';
 
 interface StatusMessageProps {
   status: 'idle' | 'saving' | 'saved' | 'error';
+  mode?: 'solo' | 'collab';
 }
 
-export function StatusMessage({ status }: StatusMessageProps) {
+export function StatusMessage({ status, mode = 'solo' }: StatusMessageProps) {
   const getStatusMessage = () => {
     switch (status) {
+      case 'saving':
+        return (
+          <Text fontSize="xs" color="gray.500">
+            • Saving...
+          </Text>
+        );
       case 'error':
         return (
           <Text fontSize="xs" color="red.500">
@@ -20,7 +27,9 @@ export function StatusMessage({ status }: StatusMessageProps) {
       case 'saved':
         return (
           <Text fontSize="xs" color="green.600">
-            • Title, content & summary auto-saved
+            {mode === 'collab'
+              ? '• Collaborative content auto-saved'
+              : '• Title, content & summary auto-saved'}
           </Text>
         );
       default:

@@ -59,7 +59,7 @@ export default function ShareCollaboratorsModal({
     try {
       setLoading(true);
       const res = await axiosInstance.get(
-        `/api/dispatch/documents/${documentSlug}/collaborators`,
+        `/api/dispatch/content/${documentSlug}/collaborators`,
       );
       setCollaborators(res.data.collaborators || []);
       setAvailableUsers(res.data.available_users || []);
@@ -78,7 +78,7 @@ export default function ShareCollaboratorsModal({
     try {
       setAdding(true);
       await axiosInstance.post(
-        `/api/dispatch/documents/${documentSlug}/collaborators`,
+        `/api/dispatch/content/${documentSlug}/collaborators`,
         {
           user_ids: [userId],
         },
@@ -102,7 +102,7 @@ export default function ShareCollaboratorsModal({
   const removeCollaborator = async (userId: string) => {
     try {
       await axiosInstance.delete(
-        `/api/dispatch/documents/${documentSlug}/collaborators`,
+        `/api/dispatch/content/${documentSlug}/collaborators`,
         {
           data: { user_ids: [userId] },
         },

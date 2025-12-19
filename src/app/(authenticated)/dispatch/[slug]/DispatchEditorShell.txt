@@ -1,20 +1,23 @@
-// src/components/dispatch/DispatchEditorShell.tsx
+// src/app/(authenticated)/dispatch/[slug]/DispatchEditorShell.tsx
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Box, Heading, Spinner, Text, Flex, Button, Input } from "@chakra-ui/react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { DispatchDocument } from "./interfaces";
-import TipTapEditor from "@components/editor/TipTapEditor";
-import { useAutoSaveDispatchDoc } from "@hooks/editor/useAutoSaveDispatchDoc";
-import { JSONContent } from "@tiptap/react";
+import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
-import { useSaveYjsState } from "@hooks/dispatch/useSaveYjsState";
-import { TipTapDoc } from "@/types/dispatchTypes";
-import ShareCollaboratorsModal from "./ShareCollaboratorsModal";
+import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
 import { IconUsers, IconDeviceFloppy } from "@tabler/icons-react";
+import ShareCollaboratorsModal from "@components/dispatch/ShareCollaboratorsModal";
+
+interface DispatchDocument {
+  id: string;
+  yjs_document_id: string;
+  title: string;
+  content: any;
+}
 
 export default function DispatchEditorShell({ slug }: { slug: string }) {
   const [doc, setDoc] = useState<DispatchDocument | null>(null);
@@ -22,79 +25,86 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [title, setTitle] = useState<string>("");
-  const latestContentRef = useRef<JSONContent | null>(null);
   const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editorRef = useRef<any>(null);
 
   const { user: identity, isLoading: identityLoading } = useAuth();
 
+  // Memoize user object to prevent useYjsSocketProvider from recreating on every render
+  const userInfo = useMemo(() => ({
+    name: identity?.profile?.display_name || "Anonymous",
+    color: "#3498db"
+  }), [identity?.profile?.display_name]);
+
+  // Memoize dispatch content object to prevent useYjsSocketProvider from recreating on every render
+  const dispatchContentForYjs = useMemo(() => {
+    if (!doc) return null;
+    return { id: doc.id, yjs_document_id: slug };
+  }, [doc?.id, slug]);
+
   // Initialize yjs socket provider for collaborative editing
-  const { ydoc, provider, isReady } = useYjsSocketProvider(slug, {
-    user: { name: identity?.profile?.display_name || "Anonymous", color: "#3498db" },
-    enabled: !!identity && !identityLoading, // Only enable when identity is loaded
-  });
+  const { ydoc, provider, isReady } = useYjsSocketProvider(
+    dispatchContentForYjs,
+    {
+      user: userInfo,
+      enabled: !!identity && !identityLoading && !!doc,
+      initialContent: doc?.content,
+    }
+  );
 
-  // Hook to save yjs state to backend
-  const { saveYjsState, status: saveStatus, error: saveError } = useSaveYjsState(ydoc, slug);
-
-  // Disable content autosave in collaborative mode (yjs handles sync)
-  const autoSave = useAutoSaveDispatchDoc({
+  // Collaborative autosave hook - saves both yjs_state and content_snapshot
+  const { status: saveStatus, lastSaved, triggerSave } = useCollabAutosave({
     documentSlug: slug,
-    getContent: (): TipTapDoc => latestContentRef.current ?? { type: "doc", content: [] },
-    isCollaborative: true, // All dispatch docs are collaborative
+    ydoc,
+    editor: editorRef.current,
+    enabled: isReady,
+    debounceMs: 2500,      // Wait 2.5s after last change
+    maxWaitMs: 30000,      // Force save every 30s while typing
+    onSaveStart: () => console.log('=� Collaborative save starting...'),
+    onSaveSuccess: () => console.log(' Collaborative save succeeded'),
+    onSaveError: (err) => console.error('L Collaborative save failed:', err),
   });
 
+  // Fetch document on mount
   useEffect(() => {
     const fetchDoc = async () => {
       try {
-        console.log(" 🔍 Shell fetching document:", slug);
-        const res = await axiosInstance.get(`/api/dispatch/documents/${slug}`);
-        console.log(" 📄 Shell received document:", res.data);
+        console.log("= Shell fetching document:", slug);
+        const res = await axiosInstance.get(`/api/dispatch/content/${slug}`);
+        console.log("=� Shell received document:", res.data);
         setDoc(res.data);
-        setTitle(res.data.title || ""); // Initialize title state
+        setTitle(res.data.title || "");
         setError(null);
       } catch (err) {
-        console.error(" ❌ Shell failed to load document:", err);
+        console.error("L Shell failed to load document:", err);
         setError("Failed to load document");
       } finally {
         setLoading(false);
       }
     };
 
-    // Only fetch the document if we have a slug and identity is loaded
     if (slug && !identityLoading) {
       fetchDoc();
     }
   }, [slug, identityLoading]);
 
-  // Auto-save yjs state when navigating away or unmounting
-  useEffect(() => {
-    return () => {
-      if (ydoc && slug) {
-        console.log("💾 Auto-saving yjs state on unmount...");
-        saveYjsState();
-      }
-    };
-  }, [ydoc, slug, saveYjsState]);
-
   // Handle title changes with debounced autosave
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
 
-    // Clear existing timeout
     if (titleSaveTimeoutRef.current) {
       clearTimeout(titleSaveTimeoutRef.current);
     }
 
-    // Debounce save for 1 second
     titleSaveTimeoutRef.current = setTimeout(async () => {
       try {
-        console.log("💾 Auto-saving title:", newTitle);
-        await axiosInstance.patch(`/api/dispatch/documents/${slug}`, {
+        console.log("=� Auto-saving title:", newTitle);
+        await axiosInstance.patch(`/api/dispatch/content/${slug}`, {
           title: newTitle,
         });
-        console.log("✅ Title saved");
+        console.log(" Title saved");
       } catch (err) {
-        console.error("❌ Failed to save title:", err);
+        console.error("L Failed to save title:", err);
       }
     }, 1000);
   };
@@ -125,22 +135,16 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
     );
   }
 
-  console.log(" 📄 Provider:", provider);
-  console.log(" 📄 YDoc:", ydoc);
-  console.log(" 📄 Awareness:", provider?.awareness);
-
-  if (!ydoc || !provider || !provider.awareness) {
+  if (!ydoc || !provider) {
     return (
       <Box p={10} textAlign="center">
         <Spinner />
         <Text mt={2} fontSize="sm" color="gray.500">
-          Connecting to collaborative editing…
+          Connecting to collaborative editing&
         </Text>
       </Box>
     );
   }
-
-  const collabReady = !!(provider && ydoc && provider.awareness);
 
   return (
     <Box maxW="6xl" mx="auto" py={10} px={4}>
@@ -163,7 +167,7 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
           <Button
             variant="solid"
             size="sm"
-            onClick={saveYjsState}
+            onClick={triggerSave}
             disabled={saveStatus === "saving"}
             colorPalette={saveStatus === "saved" ? "green" : saveStatus === "error" ? "red" : "blue"}
           >
@@ -181,6 +185,13 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
         </Flex>
       </Flex>
 
+      {/* Save status indicator */}
+      {lastSaved && (
+        <Text fontSize="xs" color="gray.500" mb={2}>
+          Last saved {lastSaved.toLocaleTimeString()}
+        </Text>
+      )}
+
       {/* Share Modal */}
       <ShareCollaboratorsModal
         open={shareModalOpen}
@@ -188,29 +199,15 @@ export default function DispatchEditorShell({ slug }: { slug: string }) {
         documentSlug={slug}
       />
 
-      {collabReady ? (
-        <TipTapEditor
-          initialContent={doc.content}
-          autoSave={autoSave}
-          onContentChange={(json) => {
-            latestContentRef.current = json;
-          }}
-          collab={{
-            ydoc: ydoc, // Pass the Y.Doc directly, not the provider
-            // provider: provider, // Pass your custom provider
-            awareness: provider.awareness,
-            user: { name: identity?.profile?.display_name || "Anonymous", color: "#3498db" },
-          }}
-        />
-      ) : (
-        <TipTapEditor
-          initialContent={doc.content}
-          autoSave={autoSave}
-          onContentChange={(json) => {
-            latestContentRef.current = json;
-          }}
-        />
-      )}
+      {/* Collaborative Editor */}
+      <TipTapCollabEditor
+        ref={editorRef}
+        initialContent={doc.content}
+        ydoc={ydoc}
+        yjsProvider={provider}
+        editable={true}
+        placeholder="Start writing..."
+      />
     </Box>
   );
 }

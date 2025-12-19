@@ -1,4 +1,5 @@
-// lib/hooks/useSocketSetup.ts
+// src/hooks/useSocketSetup.ts
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";

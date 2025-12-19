@@ -30,8 +30,10 @@ import {
   IconArticle,
   IconFileText,
   IconUsers,
-  IconFilter,
+  IconUsersGroup,
+  IconUser,
 } from "@tabler/icons-react";
+import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
@@ -118,15 +120,17 @@ export default function WritingListWrapper({
   const badgeBg = useColorModeValue("green.50", "green.900");
   const badgeColor = useColorModeValue("green.700", "green.300");
 
-  // Use the generic hook with draft filter support
+  // Use the generic hook with show filter support
   const {
     placements,
     drafts,
     isLoading: placementsLoading,
     draftsLoading,
     error: placementsError,
-    draftFilter,
-    setDraftFilter
+    showSolo,
+    showCollab,
+    setShowSolo,
+    setShowCollab
   } = useWriting(sponsor.type, sponsor.slug);
 
   console.log("WritingListWrapper - placements:", placements);
@@ -223,7 +227,13 @@ export default function WritingListWrapper({
     });
 
   const processedDrafts = (Array.isArray(drafts) ? drafts : [])
-    .filter((draft: WritingWorkingCopy) => searchInDraft(draft, searchFilter))
+    .filter((draft: WritingWorkingCopy) => {
+      // If both filters are off, show nothing
+      if (!showSolo && !showCollab) return false;
+
+      // Otherwise, apply search filter
+      return searchInDraft(draft, searchFilter);
+    })
     .sort((a: WritingWorkingCopy, b: WritingWorkingCopy) => {
       return new Date(b.last_saved_at).getTime() - new Date(a.last_saved_at).getTime();
     });
@@ -231,16 +241,27 @@ export default function WritingListWrapper({
   // Custom renderers for drafts
   const renderDraftTitle = (draft: WritingWorkingCopy) => {
     const displayTitle = draft.title || "Untitled Draft";
+    const isCollab = draft.is_collaborative;
 
     return (
       <HStack gap={2} align="center" wrap="wrap">
+        {/* Icon: Different for solo vs collab */}
+        {isCollab ? (
+          <IconUsersGroup size={18} color="purple" />
+        ) : (
+          <IconUser size={18} color="gray" />
+        )}
+
         <Text fontWeight="semibold" fontSize="md" color="gray.900" _dark={{ color: "white" }} lineClamp={1}>
           {displayTitle}
         </Text>
+
         <Badge size="sm" bg={badgeBg} color={badgeColor} px={2} py={1} rounded="full">
           Draft
         </Badge>
-        {draft.is_collaborative && (
+
+        {/* Only show collaborator count badge for collaborative docs */}
+        {isCollab && draft.collaborator_count > 0 && (
           <Badge size="sm" colorScheme="purple" px={2} py={1} rounded="full">
             {draft.collaborator_count} collaborator{draft.collaborator_count !== 1 ? 's' : ''}
           </Badge>
@@ -387,25 +408,40 @@ export default function WritingListWrapper({
           <Tabs.Indicator />
         </Tabs.List>
 
-        {/* Search and New Writing Action */}
-        <HStack justify="space-between" mb={6}>
-          <HStack flex={1} maxW="400px">
+        {/* Search (only for published tab, drafts have toolbar) */}
+        {activeTab === "published" && (
+          <HStack justify="space-between" mb={6}>
+            <HStack flex={1} maxW="400px">
+              <IconSearch size={16} color="gray" />
+              <Input
+                placeholder={`Search ${activeTab}...`}
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                variant="subtle"
+              />
+            </HStack>
+
+            {canCreatePost && (
+              <Button colorScheme="green" size="sm" onClick={handleStartWriting} gap={2}>
+                <IconPlus size={16} />
+                New Writing
+              </Button>
+            )}
+          </HStack>
+        )}
+
+        {/* Search for drafts tab */}
+        {activeTab === "drafts" && (
+          <HStack flex={1} maxW="400px" mb={4}>
             <IconSearch size={16} color="gray" />
             <Input
-              placeholder={`Search ${activeTab}...`}
+              placeholder="Search drafts..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               variant="subtle"
             />
           </HStack>
-
-          {canCreatePost && (
-            <Button colorScheme="green" size="sm" onClick={handleStartWriting} gap={2}>
-              <IconPlus size={16} />
-              New Writing
-            </Button>
-          )}
-        </HStack>
+        )}
 
         {/* Tab Content */}
         <Tabs.Content value="published">
@@ -430,39 +466,19 @@ export default function WritingListWrapper({
         </Tabs.Content>
 
         <Tabs.Content value="drafts">
-          {/* Draft Filter Buttons */}
-          <HStack gap={2} mb={4}>
-            <HStack gap={1} fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
-              <IconFilter size={16} />
-              <Text fontWeight="medium">Show:</Text>
-            </HStack>
-            <Button
-              size="sm"
-              variant={draftFilter === 'my' ? 'solid' : 'outline'}
-              colorScheme={draftFilter === 'my' ? 'green' : 'gray'}
-              onClick={() => setDraftFilter('my')}
-            >
-              My Drafts
-            </Button>
-            <Button
-              size="sm"
-              variant={draftFilter === 'shared' ? 'solid' : 'outline'}
-              colorScheme={draftFilter === 'shared' ? 'purple' : 'gray'}
-              onClick={() => setDraftFilter('shared')}
-              gap={1}
-            >
-              <IconUsers size={14} />
-              Collaborative
-            </Button>
-            <Button
-              size="sm"
-              variant={draftFilter === 'all' ? 'solid' : 'outline'}
-              colorScheme={draftFilter === 'all' ? 'blue' : 'gray'}
-              onClick={() => setDraftFilter('all')}
-            >
-              All Drafts
-            </Button>
-          </HStack>
+          {/* Compact Filter Toolbar */}
+          <DraftFilterToolbar
+            showSolo={showSolo}
+            showCollab={showCollab}
+            onToggleShowSolo={() => setShowSolo(!showSolo)}
+            onToggleShowCollab={() => setShowCollab(!showCollab)}
+            onShowAll={() => {
+              setShowSolo(true);
+              setShowCollab(true);
+            }}
+            onCreateNew={handleStartWriting}
+            canCreate={canCreatePost}
+          />
 
           <UniversalDataTable<WritingWorkingCopy>
             data={processedDrafts}
@@ -470,18 +486,32 @@ export default function WritingListWrapper({
             isLoading={draftsLoading}
             error={null}
             showAvatar={true}
-            avatarFallbackIcon={<IconFileText size={16} />}
+            renderAvatar={(draft: WritingWorkingCopy) => (
+              <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                <Avatar.Fallback>
+                  {draft.is_collaborative ? (
+                    <IconUsersGroup size={20} color="purple" />
+                  ) : (
+                    <IconUser size={20} color="gray" />
+                  )}
+                </Avatar.Fallback>
+              </Avatar.Root>
+            )}
             emptyStateMessage={
-              draftFilter === 'my'
-                ? "No personal drafts found"
-                : draftFilter === 'shared'
+              !showSolo && !showCollab
+                ? "All documents hidden"
+                : showSolo && !showCollab
+                ? "No solo drafts found"
+                : !showSolo && showCollab
                 ? "No collaborative drafts found"
                 : "No drafts found"
             }
             emptyStateSubtitle={
-              draftFilter === 'my'
-                ? "Start writing to create your first draft"
-                : draftFilter === 'shared'
+              !showSolo && !showCollab
+                ? "Click 'All' or select 'Mine' or 'Collab' to view your drafts"
+                : showSolo && !showCollab
+                ? "Start writing to create your first solo draft"
+                : !showSolo && showCollab
                 ? "Enable collaboration on a draft or join a collaborative writing session"
                 : "Create a draft to get started"
             }

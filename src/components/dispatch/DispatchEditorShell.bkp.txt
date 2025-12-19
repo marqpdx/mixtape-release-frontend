@@ -1,0 +1,277 @@
+// src/components/dispatch/DispatchEditorShell.tsx
+
+"use client";
+
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Box, Spinner, Text, Flex, Button, Input } from "@chakra-ui/react";
+import { useColorModeValue } from "@components/ui/color-mode";
+import { Prose } from "@components/ui/prose";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
+import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
+import { IconUsers, IconDeviceFloppy, IconCheck, IconLoader2 } from "@tabler/icons-react";
+
+interface DispatchDocument {
+  id: string;
+  yjs_document_id: string;
+  title: string;
+  content: any;
+}
+
+// Save status indicator component
+function SaveStatus({ status, lastSaved }: { status: string; lastSaved: Date | null }) {
+  const textColor = useColorModeValue("gray.600", "gray.400");
+
+  if (status === "saving") {
+    return (
+      <Flex align="center" gap={1} fontSize="sm" color={textColor}>
+        <IconLoader2 size={14} className="animate-spin" />
+        <Text>Saving...</Text>
+      </Flex>
+    );
+  }
+
+  if (status === "saved" && lastSaved) {
+    const timeAgo = formatTimeAgo(lastSaved);
+    return (
+      <Flex align="center" gap={1} fontSize="sm" color="green.600">
+        <IconCheck size={14} />
+        <Text>Saved {timeAgo}</Text>
+      </Flex>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <Text fontSize="sm" color="red.600">
+        Error saving
+      </Text>
+    );
+  }
+
+  return null;
+}
+
+function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 10) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
+}
+
+export default function DispatchEditorShell({ slug }: { slug: string }) {
+  const [doc, setDoc] = useState<DispatchDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>("");
+  const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const editorRef = useRef<any>(null);
+
+  const { user: identity, isLoading: identityLoading } = useAuth();
+
+  // Colors
+  const bgColor = useColorModeValue("bg.surface", "bg.surface");
+  const editorBorderColor = useColorModeValue("border.emphasis", "border.emphasis");
+  const focusBorderColor = useColorModeValue("theme.accent", "theme.accent");
+
+  // Memoize user object
+  const userInfo = useMemo(
+    () => ({
+      name: identity?.profile?.display_name || "Anonymous",
+      color: "#3498db",
+    }),
+    [identity?.profile?.display_name]
+  );
+
+  // Memoize dispatch content object
+  const dispatchContentForYjs = useMemo(() => {
+    if (!doc) return null;
+    return { id: doc.id, yjs_document_id: slug };
+  }, [doc?.id, slug]);
+
+  // Initialize yjs socket provider
+  const { ydoc, provider, isReady } = useYjsSocketProvider(dispatchContentForYjs, {
+    user: userInfo,
+    enabled: !!identity && !identityLoading && !!doc,
+    initialContent: doc?.content,
+  });
+
+  // Collaborative autosave
+  const { status: saveStatus, lastSaved, triggerSave } = useCollabAutosave({
+    documentSlug: slug,
+    ydoc,
+    editor: editorRef.current,
+    enabled: isReady,
+  });
+
+  // Fetch document
+  useEffect(() => {
+    const fetchDoc = async () => {
+      try {
+        const res = await axiosInstance.get(`/api/dispatch/content/${slug}`);
+        setDoc(res.data);
+        setTitle(res.data.title || "");
+        setError(null);
+      } catch (err) {
+        console.error("❌ Failed to load document:", err);
+        setError("Failed to load document");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug && !identityLoading) {
+      fetchDoc();
+    }
+  }, [slug, identityLoading]);
+
+  // Handle title changes with debounced save
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+
+    if (titleSaveTimeoutRef.current) {
+      clearTimeout(titleSaveTimeoutRef.current);
+    }
+
+    titleSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await axiosInstance.patch(`/api/dispatch/content/${slug}`, {
+          title: newTitle,
+        });
+      } catch (err) {
+        console.error("❌ Failed to save title:", err);
+      }
+    }, 1000);
+  };
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (titleSaveTimeoutRef.current) {
+        clearTimeout(titleSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Box p={10} textAlign="center">
+        <Spinner />
+        <Text mt={2} fontSize="sm" color="gray.500">
+          Loading document...
+        </Text>
+      </Box>
+    );
+  }
+
+  if (error || !doc) {
+    return (
+      <Box p={10} textAlign="center">
+        <Text color="red.500">{error || "Document not found."}</Text>
+      </Box>
+    );
+  }
+
+  if (!ydoc || !provider) {
+    return (
+      <Box p={10} textAlign="center">
+        <Spinner />
+        <Text mt={2} fontSize="sm" color="gray.500">
+          Connecting to collaborative editing…
+        </Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box maxW="6xl" mx="auto" py={6} px={4}>
+      {/* Header */}
+      <Flex justify="space-between" align="center" mb={3} gap={4}>
+        <Input
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          placeholder="Enter document title..."
+          size="lg"
+          fontSize="xl"
+          fontWeight="semibold"
+          flex="1"
+          variant="ghost"
+          _focus={{
+            borderColor: focusBorderColor,
+          }}
+        />
+        <Flex gap={2} flexShrink={0} align="center">
+          {/* Save status indicator */}
+          <SaveStatus status={saveStatus} lastSaved={lastSaved} />
+
+          {/* Save button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={triggerSave}
+            disabled={saveStatus === "saving"}
+          >
+            <IconDeviceFloppy size={16} style={{ marginRight: "4px" }} />
+            Save
+          </Button>
+
+          {/* Share button */}
+          <Button variant="outline" size="sm">
+            <IconUsers size={16} style={{ marginRight: "4px" }} />
+            Share
+          </Button>
+        </Flex>
+      </Flex>
+
+      {/* Editor with matching height to TipTapEditor */}
+      <Prose className="main-editor-prose" maxW={"none"}>
+        <Box
+          borderWidth="1px"
+          borderColor={editorBorderColor}
+          borderRadius="lg"
+          bg={bgColor}
+          overflow="hidden"
+          transition="all 0.2s"
+          minH="400px"
+          position="relative"
+          _focusWithin={{
+            borderColor: focusBorderColor,
+          }}
+          css={{
+            "& .ProseMirror": {
+              minHeight: "360px",
+              padding: "24px",
+              outline: "none",
+              fontSize: "16px",
+              lineHeight: "1.6",
+              "&:focus": {
+                outline: "none",
+              },
+            },
+            "& .prose": {
+              maxWidth: "none",
+            },
+          }}
+        >
+          <TipTapCollabEditor
+            ref={editorRef}
+            initialContent={doc.content}
+            ydoc={ydoc}
+            yjsProvider={provider}
+            editable={isReady}
+            placeholder="Start writing..."
+            className="borderless-editor"
+          />
+        </Box>
+      </Prose>
+    </Box>
+  );
+}

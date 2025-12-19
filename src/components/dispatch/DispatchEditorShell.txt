@@ -1,0 +1,231 @@
+// src/components/dispatch/DispatchEditorShell.tsx
+
+"use client";
+
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { Box, Heading, Spinner, Text, Flex, Button, Input } from "@chakra-ui/react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { DispatchDocument } from "./interfaces";
+import TipTapEditor from "@components/editor/TipTapEditor";
+import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
+import { useAutoSaveDispatchDoc } from "@hooks/editor/useAutoSaveDispatchDoc";
+import { JSONContent } from "@tiptap/react";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
+import { useSaveYjsState } from "@hooks/dispatch/useSaveYjsState";
+import { TipTapDoc } from "@/types/dispatchTypes";
+import ShareCollaboratorsModal from "./ShareCollaboratorsModal";
+import { IconUsers, IconDeviceFloppy } from "@tabler/icons-react";
+
+export default function DispatchEditorShell({ slug }: { slug: string }) {
+  const [doc, setDoc] = useState<DispatchDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [title, setTitle] = useState<string>("");
+  const latestContentRef = useRef<JSONContent | null>(null);
+  const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { user: identity, isLoading: identityLoading } = useAuth();
+
+  // Memoize user object to prevent useYjsSocketProvider from recreating on every render
+  const userInfo = useMemo(() => ({
+    name: identity?.profile?.display_name || "Anonymous",
+    color: "#3498db"
+  }), [identity?.profile?.display_name]);
+
+  // Memoize dispatch content object to prevent useYjsSocketProvider from recreating on every render
+  const dispatchContentForYjs = useMemo(() => {
+    if (!doc) return null;
+    return { id: doc.id, yjs_document_id: slug };
+  }, [doc?.id, slug]);
+
+  // Initialize yjs socket provider for collaborative editing
+  // Wait for document to be fetched before enabling
+  const { ydoc, provider, isReady } = useYjsSocketProvider(
+    dispatchContentForYjs,
+    {
+      user: userInfo,
+      enabled: !!identity && !identityLoading && !!doc, // Only enable when identity and doc are loaded
+    }
+  );
+
+  // Hook to save yjs state to backend
+  const { saveYjsState, status: saveStatus, error: saveError } = useSaveYjsState(
+    ydoc,
+    doc ? { id: doc.id, yjs_document_id: slug } : null
+  );
+
+  // Disable content autosave in collaborative mode (yjs handles sync)
+  const autoSave = useAutoSaveDispatchDoc({
+    documentSlug: slug,
+    getContent: (): TipTapDoc => latestContentRef.current ?? { type: "doc", content: [] },
+    isCollaborative: true, // All dispatch docs are collaborative
+  });
+
+  useEffect(() => {
+    const fetchDoc = async () => {
+      try {
+        console.log(" 🔍 Shell fetching document:", slug);
+        const res = await axiosInstance.get(`/api/dispatch/content/${slug}`);
+        console.log(" 📄 Shell received document:", res.data);
+        setDoc(res.data);
+        setTitle(res.data.title || ""); // Initialize title state
+        setError(null);
+      } catch (err) {
+        console.error(" ❌ Shell failed to load document:", err);
+        setError("Failed to load document");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only fetch the document if we have a slug and identity is loaded
+    if (slug && !identityLoading) {
+      fetchDoc();
+    }
+  }, [slug, identityLoading]);
+
+  // Auto-save yjs state when navigating away or unmounting
+  useEffect(() => {
+    return () => {
+      if (ydoc && slug) {
+        console.log("💾 Auto-saving yjs state on unmount...");
+        saveYjsState();
+      }
+    };
+  }, [ydoc, slug, saveYjsState]);
+
+  // Handle title changes with debounced autosave
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+
+    // Clear existing timeout
+    if (titleSaveTimeoutRef.current) {
+      clearTimeout(titleSaveTimeoutRef.current);
+    }
+
+    // Debounce save for 1 second
+    titleSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        console.log("💾 Auto-saving title:", newTitle);
+        await axiosInstance.patch(`/api/dispatch/content/${slug}`, {
+          title: newTitle,
+        });
+        console.log("✅ Title saved");
+      } catch (err) {
+        console.error("❌ Failed to save title:", err);
+      }
+    }, 1000);
+  };
+
+  // Cleanup title save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (titleSaveTimeoutRef.current) {
+        clearTimeout(titleSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Box p={10} textAlign="center">
+        <Spinner />
+        <Text mt={2} fontSize="sm" color="gray.500">Loading document...</Text>
+      </Box>
+    );
+  }
+
+  if (error || !doc) {
+    return (
+      <Box p={10} textAlign="center">
+        <Text color="red.500">{error || "Document not found."}</Text>
+      </Box>
+    );
+  }
+
+  console.log(" 📄 Provider:", provider);
+  console.log(" 📄 YDoc:", ydoc);
+  console.log(" 📄 Awareness:", provider?.awareness);
+
+  if (!ydoc || !provider || !provider.awareness) {
+    return (
+      <Box p={10} textAlign="center">
+        <Spinner />
+        <Text mt={2} fontSize="sm" color="gray.500">
+          Connecting to collaborative editing…
+        </Text>
+      </Box>
+    );
+  }
+
+  // Memoize content change handler to prevent TipTapEditor re-renders
+  const handleContentChange = useCallback((json: JSONContent) => {
+    latestContentRef.current = json;
+  }, []);
+
+  const collabReady = !!ydoc && !!provider && !!provider.awareness;
+
+  return (
+    <Box maxW="6xl" mx="auto" py={10} px={4}>
+      {/* Header with title, save, and share buttons */}
+      <Flex justify="space-between" align="center" mb={4} gap={4}>
+        <Input
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          placeholder="Enter document title..."
+          size="lg"
+          fontSize="xl"
+          fontWeight="semibold"
+          flex="1"
+          _focus={{
+            borderColor: "blue.500",
+            boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)"
+          }}
+        />
+        <Flex gap={2} flexShrink={0}>
+          <Button
+            variant="solid"
+            size="sm"
+            onClick={saveYjsState}
+            disabled={saveStatus === "saving"}
+            colorPalette={saveStatus === "saved" ? "green" : saveStatus === "error" ? "red" : "blue"}
+          >
+            <IconDeviceFloppy size={18} style={{ marginRight: '6px' }} />
+            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Error" : "Save"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShareModalOpen(true)}
+          >
+            <IconUsers size={18} style={{ marginRight: '6px' }} />
+            Share
+          </Button>
+        </Flex>
+      </Flex>
+
+      {/* Share Modal */}
+      <ShareCollaboratorsModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        documentSlug={slug}
+      />
+
+      {collabReady ? (
+        <TipTapCollabEditor
+          initialContent={doc.content}
+          ydoc={ydoc}
+          yjsProvider={provider}
+        />
+      ) : (
+        <TipTapEditor
+          initialContent={doc.content}
+          autoSave={autoSave}
+          onContentChange={handleContentChange}
+        />
+      )}
+    </Box>
+  );
+}

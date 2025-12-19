@@ -65,7 +65,7 @@ export function useAutoSaveDispatchDoc(
     setStatus("saving");
 
     try {
-      await axiosInstance.patch(`/api/dispatch/documents/${documentSlug}`, {
+      await axiosInstance.patch(`/api/dispatch/content/${documentSlug}`, {
         content: currentContent,
       });
       lastSaved.current = currentString;

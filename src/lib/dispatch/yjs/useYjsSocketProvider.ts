@@ -1,4 +1,5 @@
 // src/lib/dispatch/yjs/useYjsSocketProvider.ts
+
 // Primary socket provider for yjs collaborative editing
 // Uses shared socket connection for efficiency
 
@@ -7,13 +8,23 @@ import * as Y from "yjs";
 import { YjsSocketAdapter } from "./YjsSocketAdapter";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 
-export function useYjsSocketProvider(documentSlug: string, {
-  user,
-  enabled = true,
-}: {
-  user: { name: string; color?: string };
-  enabled?: boolean;
-}) {
+interface DispatchContentMinimal {
+  id: string;  // UUID for REST API calls
+  yjs_document_id: string;  // UUID for Socket.IO room name
+}
+
+export function useYjsSocketProvider(
+  dispatchContent: DispatchContentMinimal | null,
+  {
+    user,
+    enabled = true,
+    initialContent,
+  }: {
+    user: { name: string; color?: string };
+    enabled?: boolean;
+    initialContent?: any; // TipTap JSON content to initialize Y.Doc if empty
+  }
+) {
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
   const [provider, setProvider] = useState<YjsSocketAdapter | null>(null);
   const [ydoc, setYDoc] = useState<Y.Doc | null>(null);
@@ -21,23 +32,30 @@ export function useYjsSocketProvider(documentSlug: string, {
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!enabled || !documentSlug) {
+    if (!enabled || !dispatchContent?.id || !dispatchContent?.yjs_document_id) {
       setStatus("disconnected");
       setIsReady(false);
       return;
     }
 
-    console.log(" 🔧 [YjsProvider] Initializing for document:", documentSlug);
+    console.log(" 🔧 [YjsProvider] Effect running - document:", dispatchContent.yjs_document_id);
+    console.log(" 🔧 [YjsProvider] Effect deps:", {
+      contentId: dispatchContent.id,
+      yjsDocId: dispatchContent.yjs_document_id,
+      enabled,
+      userName: user?.name,
+      userColor: user?.color,
+    });
 
     const initializeYjsDocument = async () => {
       // Create Y.js document
       const doc = new Y.Doc();
       console.log(" 📄 [YjsProvider] Created Y.Doc:", doc);
 
-      // Load saved yjs state from backend
+      // Load saved yjs state from backend using DispatchContent.id
       try {
         console.log(" 📥 [YjsProvider] Fetching saved yjs state...");
-        const res = await axiosInstance.get(`/api/dispatch/documents/${documentSlug}/yjs-state`);
+        const res = await axiosInstance.get(`/api/dispatch/content/${dispatchContent.id}/yjs-state`);
 
         if (res.data.yjs_state) {
           // Decode base64 state
@@ -58,11 +76,37 @@ export function useYjsSocketProvider(documentSlug: string, {
         console.error(" ⚠️ [YjsProvider] Failed to load saved state, starting fresh:", err);
       }
 
+      // Check if Y.Doc is empty - if so, we need to seed it from backend content_snapshot
+      const fragment = doc.getXmlFragment('default');
+      const isEmpty = fragment.length === 0;
+
+      if (isEmpty) {
+        console.log(" 🔧 [YjsProvider] Y.Doc is empty, fetching content_snapshot to seed...");
+        try {
+          // Fetch content_snapshot from backend
+          const contentRes = await axiosInstance.get(`/api/dispatch/content/${dispatchContent.id}`);
+          const contentSnapshot = contentRes.data.content_snapshot;
+
+          if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
+            console.log(" 🌱 [YjsProvider] Found content_snapshot for seeding");
+            // Store snapshot and ID for TipTap to seed and save back
+            (doc as any).__initialContent = contentSnapshot;
+            (doc as any).__dispatchContentId = dispatchContent.id;
+          } else {
+            console.log(" ℹ️ [YjsProvider] No content_snapshot found, starting with empty doc");
+          }
+        } catch (err) {
+          console.error(" ⚠️ [YjsProvider] Failed to fetch content_snapshot:", err);
+        }
+      } else {
+        console.log(" ✅ [YjsProvider] Y.Doc fragment has content:", fragment.length, "children");
+      }
+
       // Don't create the text type here - let TipTap handle it
       setYDoc(doc);
 
-      // Create adapter
-      const adapter = new YjsSocketAdapter(doc, documentSlug, { user });
+      // Create adapter using yjs_document_id for Socket.IO room name
+      const adapter = new YjsSocketAdapter(doc, dispatchContent.yjs_document_id, { user });
       console.log(" 🔌 [YjsProvider] Created adapter:", adapter);
 
       setProvider(adapter);
@@ -81,68 +125,88 @@ export function useYjsSocketProvider(documentSlug: string, {
       adapter = result.adapter;
       doc = result.doc;
 
-      // Monitor connection status
-      const checkConnection = () => {
-        if (adapter?.socket) {
-          const connected = adapter.socket.connected;
-          setStatus(connected ? "connected" : "disconnected");
+      const recomputeReady = () => {
+        const connected = !!adapter?.socket?.connected;
+        const ready = connected && !!doc && !!adapter && !!adapter.synced;
+        setStatus(connected ? "connected" : "disconnected");
+        setIsReady(ready);
+        return ready;
+      };
 
-          // Only set ready when we have both doc and connected socket
-          setIsReady(connected && !!doc && !!adapter.awareness);
+      // Initial compute
+      recomputeReady();
 
-          if (connected) {
-            console.log(" ✅ [YjsProvider] Connection established and ready");
-          }
-        } else {
-          setStatus("connecting");
+      // Attach listeners once socket exists
+      const attach = () => {
+        if (!adapter?.socket) return false;
+
+        const s = adapter.socket;
+
+        const onConnect = () => {
+          console.log(" ✅ [YjsProvider] Socket connected");
+          recomputeReady();
+        };
+
+        const onDisconnect = () => {
+          console.log(" ❌ [YjsProvider] Socket disconnected");
+          setStatus("disconnected");
           setIsReady(false);
-        }
-      };
+        };
 
-      // Check connection status periodically until connected
-      const interval = setInterval(checkConnection, 300);
+        const onSynced = (payload: any) => {
+          const docId = payload?.documentId;
+          if (docId && docId !== dispatchContent.yjs_document_id) return;
 
-      // Also check immediately
-      checkConnection();
+          console.log(" ✅ [YjsProvider] yjs-synced received for:", docId);
 
-      // Set up socket event listeners for status updates
-      const setupSocketListeners = () => {
-        if (adapter?.socket) {
-          adapter.socket.on("connect", () => {
-            console.log(" ✅ [YjsProvider] Socket connected");
+          // Force ready if socket is connected and doc exists.
+          const connected = !!adapter?.socket?.connected;
+          if (connected && doc) {
             setStatus("connected");
-            checkConnection();
-          });
+            setIsReady(true);
+          } else {
+            recomputeReady();
+          }
+        };
 
-          adapter.socket.on("disconnect", () => {
-            console.log(" ❌ [YjsProvider] Socket disconnected");
-            setStatus("disconnected");
-            setIsReady(false);
-          });
+        s.on("connect", onConnect);
+        s.on("disconnect", onDisconnect);
+        s.on("yjs-synced", onSynced);
 
-          clearInterval(interval);
-        }
+        // Optional: if server sends documentId, filter here to be extra safe
+        // s.on("yjs-synced", ({ documentId }) => { if (documentId === dispatchContent.yjs_document_id) onSynced(); });
+
+        // Store cleanup that removes listeners (important on shared sockets)
+        const prevCleanup = cleanupRef.current;
+        cleanupRef.current = () => {
+          try {
+            s.off("connect", onConnect);
+            s.off("disconnect", onDisconnect);
+            s.off("yjs-synced", onSynced);
+          } catch {}
+          prevCleanup?.();
+        };
+
+        // One more compute after attaching
+        recomputeReady();
+        return true;
       };
 
-      // Try to set up listeners immediately, or wait for socket
-      if (adapter?.socket) {
-        setupSocketListeners();
-      } else {
-        // If socket isn't ready, keep checking
-        const socketCheckInterval = setInterval(() => {
-          if (adapter?.socket) {
-            setupSocketListeners();
-            clearInterval(socketCheckInterval);
-          }
-        }, 100);
-
-        // Clear this interval after 10 seconds to avoid infinite checking
-        setTimeout(() => clearInterval(socketCheckInterval), 10000);
+      // Attach now or soon
+      if (!attach()) {
+        const t = setInterval(() => {
+          if (attach()) clearInterval(t);
+        }, 50);
+        setTimeout(() => clearInterval(t), 10000);
       }
     });
 
+
     const cleanup = () => {
       console.log(" 🧹 [YjsProvider] Cleaning up...");
+      console.warn(" ⚠️ [YjsProvider] Y.Doc being destroyed - this will lose unsaved changes!");
+      console.log(" 🧹 [YjsProvider] Document ID:", dispatchContent.yjs_document_id);
+      console.trace(" 🧹 [YjsProvider] Cleanup stack trace:");
       if (adapter) {
         adapter.disconnect?.();
       }
@@ -158,7 +222,21 @@ export function useYjsSocketProvider(documentSlug: string, {
     cleanupRef.current = cleanup;
 
     return cleanup;
-  }, [documentSlug, enabled, user?.name, user?.color]);
+  }, [
+    dispatchContent?.id,
+    dispatchContent?.yjs_document_id,
+    enabled,
+    // REMOVED user?.name and user?.color - should NOT recreate Y.Doc when user info changes
+    // User info is only used for awareness, which can update without recreating everything
+  ]);
+
+  // Update awareness when user info changes (without recreating Y.Doc)
+  useEffect(() => {
+    if (provider?.awareness && user) {
+      console.log(" 👤 [YjsProvider] Updating awareness with user info:", user);
+      provider.awareness.setLocalStateField("user", user);
+    }
+  }, [provider, user?.name, user?.color]);
 
   // Cleanup on unmount
   useEffect(() => {

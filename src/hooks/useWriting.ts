@@ -24,8 +24,10 @@ interface UseWritingReturn {
   draftsLoading: boolean;
   error: Error | null;
   refetch: () => void;
-  setDraftFilter: (filter: 'my' | 'shared' | 'all') => void;
-  draftFilter: 'my' | 'shared' | 'all';
+  setShowSolo: (show: boolean) => void;
+  setShowCollab: (show: boolean) => void;
+  showSolo: boolean;
+  showCollab: boolean;
 }
 
 /**
@@ -33,23 +35,58 @@ interface UseWritingReturn {
  *
  * @param sponsorType - 'group' or 'member'
  * @param sponsorSlug - slug of the sponsor
- * @param options - Optional configuration
  *
  * @example
  * // For a group
- * const { placements, drafts, setDraftFilter } = useWriting('group', 'my-group-slug');
+ * const { placements, drafts, setShowSolo, setShowCollab } = useWriting('group', 'my-group-slug');
  *
  * // For a member
  * const { placements, drafts } = useWriting('member', 'username');
  */
 export function useWriting(
   sponsorType: 'group' | 'member',
-  sponsorSlug: string,
-  options?: { defaultDraftFilter?: 'my' | 'shared' | 'all' }
+  sponsorSlug: string
 ): UseWritingReturn {
-  const [draftFilter, setDraftFilter] = React.useState<'my' | 'shared' | 'all'>(
-    options?.defaultDraftFilter || 'my'
+  // Get initial state from localStorage, default to showing all (both true)
+  const getInitialShowState = (key: string): boolean => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem(key);
+    return stored === null ? true : stored === 'true';
+  };
+
+  const [showSolo, setShowSoloState] = React.useState<boolean>(() =>
+    getInitialShowState('writing:showSolo')
   );
+  const [showCollab, setShowCollabState] = React.useState<boolean>(() =>
+    getInitialShowState('writing:showCollab')
+  );
+
+  // Persist to localStorage when changed
+  const setShowSolo = React.useCallback((show: boolean) => {
+    setShowSoloState(show);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('writing:showSolo', String(show));
+    }
+  }, []);
+
+  const setShowCollab = React.useCallback((show: boolean) => {
+    setShowCollabState(show);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('writing:showCollab', String(show));
+    }
+  }, []);
+
+  // Convert show flags to API filter
+  // all = show everything (both true)
+  // my = show only solo (solo true, collab false)
+  // shared = show only collab (solo false, collab true)
+  // When both false, we still need to make the API call but will filter on frontend
+  const draftFilter = React.useMemo(() => {
+    if (showSolo && showCollab) return 'all'; // Show everything
+    if (showSolo && !showCollab) return 'my'; // Show only solo docs
+    if (!showSolo && showCollab) return 'shared'; // Show only collab docs
+    return 'all'; // Both false - fetch all but filter to empty on frontend
+  }, [showSolo, showCollab]);
 
   // Fetch placements (published content)
   const {
@@ -107,8 +144,10 @@ export function useWriting(
     draftsLoading,
     error: (placementsError || draftsError) as Error | null,
     refetch,
-    setDraftFilter,
-    draftFilter,
+    setShowSolo,
+    setShowCollab,
+    showSolo,
+    showCollab,
   };
 }
 

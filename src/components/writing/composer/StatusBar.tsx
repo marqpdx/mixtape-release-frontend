@@ -3,15 +3,17 @@
 'use client';
 
 import { HStack, Button, Text } from '@chakra-ui/react';
+import { IconDeviceFloppy } from '@tabler/icons-react';
 
 interface StatusBarProps {
   status: 'idle' | 'saving' | 'saved' | 'error';
   draftId: string;
   onForceSave: () => void;
   onClearDraft: () => void;
+  showSaveButton?: boolean;
 }
 
-export function StatusBar({ status, draftId, onForceSave, onClearDraft }: StatusBarProps) {
+export function StatusBar({ status, draftId, onForceSave, onClearDraft, showSaveButton = true }: StatusBarProps) {
   return (
     <HStack justify="space-between" py={2} fontSize="sm">
       <Text color="text.secondary">
@@ -19,8 +21,19 @@ export function StatusBar({ status, draftId, onForceSave, onClearDraft }: Status
       </Text>
 
       <HStack gap={2}>
+        {showSaveButton && (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={onForceSave}
+            disabled={status === 'saving'}
+          >
+            <IconDeviceFloppy size={14} style={{ marginRight: '4px' }} />
+            {status === 'saving' ? 'Saving...' : 'Save'}
+          </Button>
+        )}
         {status === 'error' && (
-          <Button size="xs" variant="outline" onClick={onForceSave}>
+          <Button size="xs" variant="outline" colorScheme="red" onClick={onForceSave}>
             Retry Save
           </Button>
         )}

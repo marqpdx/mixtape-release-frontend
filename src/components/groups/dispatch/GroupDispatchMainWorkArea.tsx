@@ -30,7 +30,7 @@ export default function GroupDispatchMainWorkArea({
   const { data: documents, isLoading, error } = useQuery<DispatchDocument[]>({
     queryKey: ["dispatch-documents", groupSlug],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/api/dispatch/documents`, {
+      const res = await axiosInstance.get(`/api/dispatch/content`, {
         params: { group_slug: groupSlug }, // Filter by group
       });
       return res.data;

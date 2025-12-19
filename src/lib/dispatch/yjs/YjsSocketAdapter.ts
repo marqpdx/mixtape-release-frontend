@@ -1,11 +1,18 @@
 // src/lib/dispatch/yjs/YjsSocketAdapter.ts
-// Primary socket adapter for yjs collaborative editing
-// Uses shared socket connection for efficiency
 
 import * as Y from "yjs";
 import { Socket } from "socket.io-client";
-import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
+import {
+  Awareness,
+  applyAwarenessUpdate,
+  encodeAwarenessUpdate,
+} from "y-protocols/awareness";
 import { initializeSocket } from "@/lib/socket";
+
+type UpdatePayload =
+  | number[]
+  | Uint8Array
+  | { documentId: string; update: number[] | Uint8Array };
 
 export class YjsSocketAdapter {
   public doc: Y.Doc;
@@ -13,57 +20,126 @@ export class YjsSocketAdapter {
   public user: any;
   public socket: Socket | undefined;
   public awareness: Awareness;
+
   private _synced = false;
   private _connected = false;
+  private _joined = false;
+  private _awarenessUpdateTimeout: NodeJS.Timeout | null = null;
+
+  private _handleYjsUpdate = (payload: any) => {
+    // delegate to the typed version
+    this._onYjsUpdate(payload as UpdatePayload);
+  };
+
+  private _onYjsUpdate = (payload: UpdatePayload) => {
+    const { documentId, updateArray } = this.normalizePayload(payload);
+
+    // Ignore updates for other docs (critical when multiple docs open)
+    if (documentId && documentId !== this.roomName) return;
+
+    const fragmentBefore = this.doc.getXmlFragment("default").length;
+
+    if (updateArray.length <= 2 && fragmentBefore > 0) {
+      console.log("⚠️ [YjsAdapter] Ignoring tiny update (likely empty state) because we have content");
+      return;
+    }
+
+    Y.applyUpdate(this.doc, updateArray, this);
+
+    // Optional but recommended: first applied state implies "synced enough"
+    // (especially if you rely on this for UI readiness)
+    if (!this._synced) this._synced = true;
+  };
+
+  private _onAwareness = (payload: UpdatePayload) => {
+    const { documentId, updateArray } = this.normalizePayload(payload);
+    if (documentId && documentId !== this.roomName) return;
+    applyAwarenessUpdate(this.awareness, updateArray, this);
+  };
+
+  private _onSynced = (payload?: { documentId?: string } | string) => {
+    const documentId =
+      typeof payload === "string" ? payload : payload?.documentId;
+
+    // If server includes docId, filter.
+    // If it doesn't, we fall back to trusting it's for this adapter.
+    if (documentId && documentId !== this.roomName) return;
+
+    this._synced = true;
+    console.log("✅ [YjsAdapter] Sync confirmed by server:", this.roomName);
+  };
+
+  private _onConnect = () => {
+    this._connected = true;
+    this._synced = false;
+    this._joined = false;
+    console.log("✅ [YjsAdapter] Socket connected; will join:", this.roomName);
+    this.scheduleJoinWithGrace();
+  };
+
+  private _onDisconnect = () => {
+    console.log("❌ [YjsAdapter] Socket disconnected");
+    this._connected = false;
+    this._synced = false;
+    this._joined = false;
+  };
 
   constructor(doc: Y.Doc, roomName: string, options: { user: any }) {
     this.doc = doc;
     this.roomName = roomName;
     this.user = options.user;
+
     this.awareness = new Awareness(this.doc);
     this.awareness.setLocalStateField("user", options.user);
 
-    // Ensure the document is ready for TipTap
-    this.initializeDocument();
+    // Ensure fragment exists
+    this.doc.getXmlFragment("default");
 
-    // Set up Y.js document listeners
     this.setupYjsListeners();
 
     this.setupSocket().catch((err) => {
-      console.error("❌ Failed to setup socket connection in adapter:", err);
+      console.error("❌ [YjsAdapter] Failed to setup socket:", err);
     });
-  }
-
-  private initializeDocument() {
-    // Ensure the document has the fragment that TipTap expects
-    // TipTap uses getXmlFragment('default') for ProseMirror integration
-    const fragment = this.doc.getXmlFragment('default');
-    console.log("📄 [YjsAdapter] Initialized document fragment:", fragment);
   }
 
   private setupYjsListeners() {
-    // Listen for local document updates and broadcast them
-    this.doc.on('update', (update: Uint8Array, origin: any) => {
-      // Don't broadcast updates that came from the socket (to avoid loops)
-      if (origin !== this && this.socket?.connected) {
-        console.log("📤 Broadcasting Y.js update to document:", this.roomName);
-        this.socket.emit("yjs-update", {
-          documentId: this.roomName,
-          update: Array.from(update) // Convert Uint8Array to regular array for JSON transport
+    // Local doc updates -> emit to server
+    this.doc.on("update", (update: Uint8Array, origin: any) => {
+      if (origin === this) return; // avoid loop
+
+      if (!this.socket?.connected) {
+        console.log("⏸️  [YjsAdapter] Update occurred before socket connected", {
+          updateSize: update.length,
         });
+        return;
       }
+
+      this.socket.emit("yjs-update", {
+        documentId: this.roomName,
+        update: Array.from(update),
+      });
     });
 
-    // Listen for awareness updates
-    this.awareness.on('update', ({ added, updated, removed }: any) => {
-      if (this.socket?.connected) {
-        console.log("📤 Broadcasting awareness update");
-        const update = encodeAwarenessUpdate(this.awareness, [...added, ...updated, ...removed]);
-        this.socket.emit("yjs-awareness", {
+    // Awareness updates -> emit (throttled)
+    this.awareness.on("update", ({ added, updated, removed }: any) => {
+      if (!this.socket?.connected) return;
+
+      if (this._awarenessUpdateTimeout) clearTimeout(this._awarenessUpdateTimeout);
+
+      this._awarenessUpdateTimeout = setTimeout(() => {
+        const update = encodeAwarenessUpdate(this.awareness, [
+          ...added,
+          ...updated,
+          ...removed,
+        ]);
+
+        this.socket!.emit("yjs-awareness", {
           documentId: this.roomName,
-          update: Array.from(update) // Convert Uint8Array to regular array for JSON transport
+          update: Array.from(update),
         });
-      }
+
+        this._awarenessUpdateTimeout = null;
+      }, 500);
     });
   }
 
@@ -73,93 +149,94 @@ export class YjsSocketAdapter {
 
     this.socket = socket;
 
-    // Set up event listeners
-    this.setupSocketListeners();
+    // Attach ONLY our listeners (shared socket safe)
+    this.socket.on("yjs-update", this._handleYjsUpdate as any);
+    this.socket.on("yjs-awareness", this._onAwareness as any);
+    this.socket.on("yjs-synced", this._onSynced as any);
+    this.socket.on("connect", this._onConnect);
+    this.socket.on("disconnect", this._onDisconnect);
 
-    // Join the document room
-    this.joinDocumentRoom();
+    // If already connected when we attach, run connect handler manually
+    if (this.socket.connected) {
+      this._onConnect();
+    }
   }
 
-  private setupSocketListeners() {
-    if (!this.socket) return;
-
-    // Debug logging for all socket events
-    this.socket.onAny((eventName, ...args) => {
-      console.log(`🎧  Client received socket event: ${eventName}`, args);
-    });
-
-    // Also log what we're sending
-    const originalEmit = this.socket.emit.bind(this.socket);
-    this.socket.emit = function(eventName, ...args) {
-      console.log(`📤 Client  sending socket event: ${eventName}`, args);
-      return originalEmit(eventName, ...args);
-    };
-
-    // Listen for Y.js updates from other clients
-    this.socket.on("yjs-update", (update: number[]) => {
-      console.log("📥 Received Y.js update from server");
-      const updateArray = new Uint8Array(update);
-      // Apply update with 'this' as origin to prevent broadcast loop
-      Y.applyUpdate(this.doc, updateArray, this);
-    });
-
-    // Listen for awareness updates from other clients
-    this.socket.on("yjs-awareness", (update: number[]) => {
-      console.log("📥 Received awareness update from server");
-      // Apply awareness changes
-      const awarenessUpdate = new Uint8Array(update);
-      applyAwarenessUpdate(this.awareness, awarenessUpdate, this);
-    });
-
-    // Handle reconnections gracefully
-    this.socket.on('connect', () => {
-      console.log("✅ Y.js adapter: Socket reconnected, rejoining document:", this.roomName);
-      this._connected = true;
-      this.joinDocumentRoom();
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log("❌ Y.js adapter: Socket disconnected");
-      this._connected = false;
-      this._synced = false;
-    });
-  }
-
-  private joinDocumentRoom() {
+  private scheduleJoinWithGrace() {
     if (!this.socket?.connected) return;
 
-    // Join the document room using server's expected event
-    this.socket.emit("yjs-init", this.roomName);
-    console.log("🧩 Initialized YJS for document:", this.roomName);
-    this._connected = true;
+    const fragmentLengthNow = this.doc.getXmlFragment("default").length;
+
+    const doJoin = () => {
+      console.log("🧩 [YjsAdapter] Join decision", {
+        fragmentLength: this.doc.getXmlFragment("default").length,
+        connected: this.socket?.connected,
+        joined: this._joined,
+      });
+      this.ensureJoined();
+    };
+
+    if (fragmentLengthNow > 0) doJoin();
+    else setTimeout(doJoin, 200);
   }
 
-  // Getter for sync status (TipTap might check this)
+  private ensureJoined() {
+    if (!this.socket?.connected) return;
+    if (this._joined) return;
+    this.socket.emit("yjs-init", this.roomName);
+    this._joined = true;
+    console.log("🧩 [YjsAdapter] yjs-init emitted:", this.roomName);
+  }
+
   get synced(): boolean {
     return this._synced && this.socket?.connected === true;
   }
 
-  // Method to check if provider is connected
   get connected(): boolean {
     return this._connected && this.socket?.connected === true;
   }
 
   disconnect() {
-    if (this.socket) {
-      // Clean disconnect - no SOCKET_EVENTS needed
-      this.socket.off(); // Remove all listeners
-      this.socket = undefined;
+    if (this._awarenessUpdateTimeout) {
+      clearTimeout(this._awarenessUpdateTimeout);
+      this._awarenessUpdateTimeout = null;
     }
 
-    // Clean up Y.js resources
+    if (this.socket) {
+      // ✅ Detach only our listeners
+      // this.socket.off("yjs-update", this._onYjsUpdate as any);
+      this.socket.off("yjs-update", this._handleYjsUpdate as any);
+
+      this.socket.off("yjs-awareness", this._onAwareness as any);
+      this.socket.off("yjs-synced", this._onSynced as any);
+      this.socket.off("connect", this._onConnect);
+      this.socket.off("disconnect", this._onDisconnect);
+    }
+
     this.awareness.destroy();
-    this.doc?.destroy();
+
     this._synced = false;
     this._connected = false;
+    this._joined = false;
   }
 
-  // Additional methods that TipTap collaboration might expect
   destroy() {
     this.disconnect();
+  }
+
+  private normalizePayload(
+    payload: UpdatePayload
+  ): { documentId?: string; updateArray: Uint8Array } {
+    // New shape: { documentId, update }
+    if (payload && typeof payload === "object" && "update" in payload) {
+      const p = payload as { documentId: string; update: number[] | Uint8Array };
+      const updateArray =
+        p.update instanceof Uint8Array ? p.update : new Uint8Array(p.update);
+      return { documentId: p.documentId, updateArray };
+    }
+
+    // Legacy: number[] or Uint8Array
+    if (payload instanceof Uint8Array) return { updateArray: payload };
+    return { updateArray: new Uint8Array(payload as number[]) };
   }
 }

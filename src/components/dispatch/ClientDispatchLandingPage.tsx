@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Heading,
@@ -17,34 +17,24 @@ import { toaster } from "@/components/ui/toaster";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import DispatchFolderList from "@components/dispatch/DispatchFolderList";
 import { motion } from "framer-motion";
-import { DispatchDocument } from "./interfaces";
+import { useDispatchDocuments } from "@hooks/dispatch/useDispatchDocuments";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ClientDispatchLandingPage() {
-  const [documents, setDocuments] = useState<DispatchDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: documents = [], isLoading } = useDispatchDocuments();
 
   const MotionBox = motion(Box);
 
-  const fetchDocuments = async () => {
-    try {
-      const res = await axiosInstance.get("/api/dispatch/documents");
-      console.log("Fetched documents:", res.data);
-      setDocuments(res.data);
-    } catch (err) {
-      toaster.create({
-        title: "Error loading documents",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleCreateDocument = async () => {
     try {
-      const res = await axiosInstance.post("/api/dispatch/documents", {
+      const res = await axiosInstance.post("/api/dispatch/content", {
         title: "Untitled Document",
       });
+
+      // Invalidate and refetch documents
+      queryClient.invalidateQueries({ queryKey: ['dispatch', 'documents'] });
+
       window.location.href = `/dispatch/${res.data.slug}`;
     } catch (err) {
       toaster.create({
@@ -53,10 +43,6 @@ export default function ClientDispatchLandingPage() {
       });
     }
   };
-
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
 
   return (
     <Box maxW="6xl" mx="auto" py={10} px={4}>

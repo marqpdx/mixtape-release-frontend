@@ -1,41 +1,37 @@
 // src/components/write/WriteComposer.tsx
 
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, Flex, HStack, Text, VStack } from '@chakra-ui/react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
-import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { useQueryClient } from "@tanstack/react-query";
 
-// Import unified components
-import { MainEditor } from '@components/writing/composer/MainEditor';
-import { TitleInput } from '@components/writing/composer/TitleInput';
-import { SummarySection } from '@components/writing/composer/SummarySection';
-import { StatusBar } from '@components/writing/composer/StatusBar';
-import { CopyDesk } from '@components/writing/copydesk/CopyDesk';
-import { TagInput, Tag } from '@components/writing/composer/TagInput';
+import { MainEditor } from "@components/writing/composer/MainEditor";
+import { TitleInput } from "@components/writing/composer/TitleInput";
+import { SummarySection } from "@components/writing/composer/SummarySection";
+import { StatusBar } from "@components/writing/composer/StatusBar";
+import { CopyDesk } from "@components/writing/copydesk/CopyDesk";
+import { TagInput, Tag } from "@components/writing/composer/TagInput";
 
-// Import new split components
-import { QuickPublishBar } from '@components/writing/composer/QuickPublishBar';
-import { PublishingControls } from '@components/writing/composer/PublishingControls';
-import { WorkspaceToggle } from '@components/writing/composer/WorkspaceToggle';
-import { ScrollToTopButton } from '@components/writing/composer/ScrollToTopButton';
+import { PublishingControls } from "@components/writing/composer/PublishingControls";
+import { WorkspaceToggle } from "@components/writing/composer/WorkspaceToggle";
+import { ScrollToTopButton } from "@components/writing/composer/ScrollToTopButton";
 
-// Hooks
-import { useWorkingCopyAutosave } from '@lib/writing/useWorkingCopyAutosave';
-import { useEmptyFlagDetection } from '@components/writing/hooks/useEmptyFlagDetection';
-import { TextSelection } from '@components/writing/hooks/useTextSelection';
-import { useColorModeValue } from '@components/ui/color-mode';
-import { WordCountDisplay } from './composer/WordCountDisplay';
-import { StatusMessage } from './composer/StatusMessage';
-import { WritingKind } from '@/types/writingTypes';
-import { CollaborationDialog } from './composer/CollaborationDialog';
-import { useCollaboration } from '@hooks/useCollaboration';
-// import { WritingKind } from '../groups/writing/interfaces';
-// import { WritingKind } from '@content/writingTypes';
+import { useWorkingCopyAutosave } from "@lib/writing/useWorkingCopyAutosave";
+import { useEmptyFlagDetection } from "@components/writing/hooks/useEmptyFlagDetection";
+import { TextSelection } from "@components/writing/hooks/useTextSelection";
+import { useColorModeValue } from "@components/ui/color-mode";
+import { WordCountDisplay } from "./composer/WordCountDisplay";
+import { StatusMessage } from "./composer/StatusMessage";
+import { WritingKind } from "@/types/writingTypes";
+import { CollaborationDialog } from "./composer/CollaborationDialog";
+import { useCollaboration } from "@hooks/useCollaboration";
+import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
+import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
 
 interface SponsorConfig {
-  type: 'group' | 'member';
+  type: "group" | "member";
   id: string;
   slug?: string;
   name?: string;
@@ -55,11 +51,13 @@ interface WriteComposerProps {
   onSaved?: (piece: any) => void;
 }
 
+const EMPTY_DOC = { type: "doc", content: [] };
+
 export default function WriteComposer({
   pieceId,
   initialPiece,
   sponsor,
-  writingKind = 'post',
+  writingKind = "post",
   defaultWorkspaceOpen = true,
   autosaveDebounceMs = 2500,
   autoFocus = true,
@@ -70,40 +68,141 @@ export default function WriteComposer({
   const editorRef = useRef<any>(null);
 
   // Local state for editing
-  const [title, setTitle] = useState<string>(initialPiece?.title || '');
-  const [docJSON, setDocJSON] = useState<any>(initialPiece?.body_json || { type: 'doc', content: [] });
-  const [excerpt, setExcerpt] = useState<string>(initialPiece?.excerpt || '');
+  const [title, setTitle] = useState<string>(initialPiece?.title || "");
+  const [docJSON, setDocJSON] = useState<any>(initialPiece?.body_json || EMPTY_DOC);
+  const [excerpt, setExcerpt] = useState<string>(initialPiece?.excerpt || "");
   const [tags, setTags] = useState<Tag[]>([]);
 
-  // Track last saved state for unsaved changes detection
   const [lastSavedState, setLastSavedState] = useState({
-    title: initialPiece?.title || '',
-    docJSON: initialPiece?.body_json || { type: 'doc', content: [] },
-    excerpt: initialPiece?.excerpt || ''
+    title: initialPiece?.title || "",
+    docJSON: initialPiece?.body_json || EMPTY_DOC,
+    excerpt: initialPiece?.excerpt || "",
   });
+
+  // Reset when switching pieces
+  useEffect(() => {
+    setTitle(initialPiece?.title || "");
+    setDocJSON(initialPiece?.body_json || EMPTY_DOC);
+    setExcerpt(initialPiece?.excerpt || "");
+    setLastSavedState({
+      title: initialPiece?.title || "",
+      docJSON: initialPiece?.body_json || EMPTY_DOC,
+      excerpt: initialPiece?.excerpt || "",
+    });
+  }, [pieceId, initialPiece?.id]);
 
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
 
-  // Collaboration state
+  // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
+
   const {
     isCollaborative,
     dispatchContent,
     loading: collaborationLoading,
+    statusReady: collabStatusReady,
     eligibleCollaborators,
     enableCollaboration,
     rescindCollaboration,
     addCollaborators,
     removeCollaborators,
     canBeRescinded,
-  } = useCollaboration({
-    pieceId: pieceId,
-    autoFetch: true,
+  } = useCollaboration({ pieceId, autoFetch: true });
+
+  const editorMode: "pending" | "solo" | "collab" =
+    !collabStatusReady ? "pending" : isCollaborative ? "collab" : "solo";
+
+  const wantsCollab = editorMode === "collab";
+
+  // Awareness user info (stable)
+  const userInfo = useMemo(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem("user_identity");
+        if (raw) {
+          const user = JSON.parse(raw);
+          return {
+            name: user.username || user.email || "Anonymous",
+            color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error getting user info:", error);
+    }
+    return {
+      name: "Anonymous",
+      color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+    };
+  }, []);
+
+  // Only enable Yjs when truly collab and dispatchContent is valid
+  const yjsEnabled =
+    wantsCollab && !!dispatchContent?.id && !!dispatchContent?.yjs_document_id;
+
+  const { provider: yjsProvider, ydoc, isReady: yjsReady } = useYjsSocketProvider(
+    dispatchContent,
+    {
+      user: userInfo,
+      enabled: yjsEnabled,
+    }
+  );
+
+  const collabReady = wantsCollab && yjsEnabled ? yjsReady : false;
+
+  // Solo autosave (when not in collab mode)
+  const { schedule, saveNow, saveStatus: soloSaveStatus } = useWorkingCopyAutosave(
+    pieceId,
+    autosaveDebounceMs
+  );
+
+  // Track editor instance for collab autosave
+  const [collabEditor, setCollabEditor] = useState<any>(null);
+
+  // Update collab editor when ref changes
+  // Check on every render since refs don't trigger re-renders
+  useEffect(() => {
+    if (wantsCollab && editorRef.current && editorRef.current !== collabEditor) {
+      console.log('📝 [WriteComposer] Setting collab editor from ref');
+      setCollabEditor(editorRef.current);
+    } else if (!wantsCollab && collabEditor) {
+      setCollabEditor(null);
+    }
   });
 
-  // Text selection and AI summary state
+  // Collaborative autosave (when in collab mode)
+  const collabAutosaveEnabled = collabReady && wantsCollab && !!collabEditor;
+
+  const {
+    status: collabSaveStatus,
+    lastSaved: collabLastSaved,
+    triggerSave: collabTriggerSave
+  } = useCollabAutosave({
+    documentSlug: dispatchContent?.id || '',
+    ydoc,
+    editor: collabEditor,
+    enabled: collabAutosaveEnabled,
+  });
+
+  // Debug: Log autosave status
+  useEffect(() => {
+    console.log('🔍 [WriteComposer] Collab autosave status:', {
+      collabReady,
+      wantsCollab,
+      hasCollabEditor: !!collabEditor,
+      hasYdoc: !!ydoc,
+      enabled: collabAutosaveEnabled,
+      editorInstance: collabEditor,
+      dispatchContentId: dispatchContent?.id,
+    });
+  }, [collabReady, wantsCollab, collabEditor, ydoc, collabAutosaveEnabled, dispatchContent?.id]);
+
+  // Unified save status - use collab status when in collab mode, solo otherwise
+  const saveStatus = wantsCollab ? collabSaveStatus : soloSaveStatus;
+
+  // Selection + AI summary state
   const [selection, setSelection] = useState<TextSelection | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
   const [backgroundSummary, setBackgroundSummary] = useState("");
@@ -111,47 +210,41 @@ export default function WriteComposer({
   const [summaryIsPending, setSummaryIsPending] = useState(false);
   const [summaryError, setSummaryError] = useState<any>(null);
   const [summaryWordCount, setSummaryWordCount] = useState(0);
-  const [summaryForceUpdate, setSummaryForceUpdate] = useState<(() => void) | null>(null);
+  const [summaryForceUpdate, setSummaryForceUpdate] = useState<(() => void) | null>(
+    null
+  );
 
-  // Create refs to hold current values for stable autosave
+  // Refs for stable autosave/publish payloads
   const titleRef = useRef(title);
   const docJSONRef = useRef(docJSON);
   const excerptRef = useRef(excerpt);
 
-  // Update refs when state changes
-  useEffect(() => { titleRef.current = title; }, [title]);
-  useEffect(() => { docJSONRef.current = docJSON; }, [docJSON]);
-  useEffect(() => { excerptRef.current = excerpt; }, [excerpt]);
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+  useEffect(() => {
+    docJSONRef.current = docJSON;
+  }, [docJSON]);
+  useEffect(() => {
+    excerptRef.current = excerpt;
+  }, [excerpt]);
 
-  // Load tags when piece loads
+  // Load tags
   useEffect(() => {
     async function fetchTags() {
       if (!pieceId) return;
-
       try {
         const response = await axiosInstance.get(`/api/writing/pieces/${pieceId}/tags`);
         setTags(response.data || []);
       } catch (err) {
-        console.error('Failed to fetch tags:', err);
+        console.error("Failed to fetch tags:", err);
       }
     }
     fetchTags();
   }, [pieceId]);
 
-  // Check if there are unsaved changes (compare against last saved state, not initial piece)
-  const hasUnsavedChanges = useMemo(() => {
-    return title !== lastSavedState.title ||
-           JSON.stringify(docJSON) !== JSON.stringify(lastSavedState.docJSON) ||
-           excerpt !== lastSavedState.excerpt;
-  }, [title, docJSON, excerpt, lastSavedState]);
-
-  // Autosave hook
-  const { schedule, saveNow, saveStatus } = useWorkingCopyAutosave(pieceId, autosaveDebounceMs);
-
-  // Query client for invalidating drafts list
   const queryClient = useQueryClient();
 
-  // Empty flag detection hook
   const { onTitleChange, onDocChange, onExcerptChange } = useEmptyFlagDetection({
     pieceId,
     initialPiece,
@@ -163,25 +256,58 @@ export default function WriteComposer({
     excerptRef,
     schedule,
     onEmptyFlagCleared: () => {
-      // Invalidate drafts query to remove this draft from the list
       if (sponsor.slug) {
         queryClient.invalidateQueries({
-          queryKey: ['writing', 'drafts', sponsor.type, sponsor.slug]
+          queryKey: ["writing", "drafts", sponsor.type, sponsor.slug],
         });
       }
-    }
+    },
   });
 
-  // Calculate responsive width
-  const contentWidth = workspaceOpen ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
+  // ✅ Unsaved changes:
+  // - solo: title/doc/excerpt
+  // - collab: title/excerpt only (doc is Yjs-owned)
+  const hasUnsavedChanges = useMemo(() => {
+    if (wantsCollab) {
+      return title !== lastSavedState.title || excerpt !== lastSavedState.excerpt;
+    }
+    return (
+      title !== lastSavedState.title ||
+      JSON.stringify(docJSON) !== JSON.stringify(lastSavedState.docJSON) ||
+      excerpt !== lastSavedState.excerpt
+    );
+  }, [wantsCollab, title, docJSON, excerpt, lastSavedState]);
 
-  // Handler for receiving selection data from MainEditor
+  // Mark lastSavedState on successful autosave (solo path)
+  useEffect(() => {
+    if (saveStatus === "saved") {
+      setLastSavedState({
+        title: titleRef.current,
+        docJSON: docJSONRef.current,
+        excerpt: excerptRef.current,
+      });
+    }
+  }, [saveStatus]);
+
+  // Word count init from initial JSON (best-effort; collab will be updated by MainEditor callbacks)
+  useEffect(() => {
+    if (initialPiece?.body_json && summaryWordCount === 0) {
+      const extractText = (node: any): string => {
+        if (node?.type === "text") return node.text || "";
+        if (Array.isArray(node?.content)) return node.content.map(extractText).join(" ");
+        return "";
+      };
+      const fullText = (initialPiece.body_json.content || []).map(extractText).join(" ").trim();
+      const wc = fullText ? fullText.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
+      setSummaryWordCount(wc);
+    }
+  }, [initialPiece?.body_json, summaryWordCount]);
+
   const handleSelectionChange = useCallback((newSelection: TextSelection | null) => {
     setSelection(newSelection);
     setHasSelection(!!newSelection && !newSelection.isEmpty);
   }, []);
 
-  // Handler for receiving background summary data from MainEditor
   const handleBackgroundSummaryChange = useCallback((data: {
     summary: string;
     isGenerating: boolean;
@@ -199,70 +325,38 @@ export default function WriteComposer({
   }, []);
 
   const handleGenerateNewSummary = useCallback(() => {
-    if (summaryForceUpdate) {
-      summaryForceUpdate();
-    }
+    summaryForceUpdate?.();
   }, [summaryForceUpdate]);
 
-  // Handler for tag changes
-  const handleTagsChange = useCallback(async (newTags: Tag[]) => {
-    setTags(newTags);
+  const handleTagsChange = useCallback(
+    async (newTags: Tag[]) => {
+      setTags(newTags);
+      if (!pieceId) return;
+      try {
+        await axiosInstance.put(`/api/writing/pieces/${pieceId}/tags`, {
+          tag_ids: newTags.map((t) => t.id),
+        });
+      } catch (err) {
+        console.error("Failed to save tags:", err);
+      }
+    },
+    [pieceId]
+  );
 
-    if (!pieceId) return;
-
-    try {
-      await axiosInstance.put(`/api/writing/pieces/${pieceId}/tags`, {
-        tag_ids: newTags.map(t => t.id)
-      });
-    } catch (err) {
-      console.error('Failed to save tags:', err);
-    }
-  }, [pieceId]);
-
-  // Update last saved state when autosave completes
-  useEffect(() => {
-    if (saveStatus === 'saved') {
-      setLastSavedState({
-        title: titleRef.current,
-        docJSON: docJSONRef.current,
-        excerpt: excerptRef.current
-      });
-    }
-  }, [saveStatus]);
-
-  // Calculate initial word count from existing content
-  useEffect(() => {
-    if (initialPiece?.body_json && summaryWordCount === 0) {
-      const calculateWordCount = (bodyJson: any): number => {
-        if (!bodyJson?.content) return 0;
-
-        const extractText = (node: any): string => {
-          if (node.type === "text") {
-            return node.text || "";
-          }
-          if (node.content && Array.isArray(node.content)) {
-            return node.content.map(extractText).join(" ");
-          }
-          return "";
-        };
-
-        const fullText = bodyJson.content.map(extractText).join(" ").trim();
-        return fullText.split(/\s+/).filter((word: string) => word.length > 0).length;
-      };
-
-      const initialWordCount = calculateWordCount(initialPiece.body_json);
-      setSummaryWordCount(initialWordCount);
-    }
-  }, [initialPiece?.body_json, summaryWordCount]);
-
+  const contentWidth = workspaceOpen ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const sidebarBg = useColorModeValue("gray.50", "gray.900");
+
+  // ✅ Hard remount key prevents cached editor instances from persisting across open/close
+  const collabKey = `${pieceId}:${editorMode}:${dispatchContent?.yjs_document_id ?? "no-yjs"}`;
+
+  // ✅ Always pass docJSON (for seeding Y.Doc when first enabling collab)
+  // But only pass onChange handler in solo mode
+  const soloOnChange = wantsCollab ? undefined : onDocChange;
 
   return (
     <Box className="main-writer-composer" position="relative" w="100%" h="100vh" overflow="hidden">
       <HStack gap={0} h="100%" align="stretch">
-
-        {/* Main Content Area */}
         <Box
           className="main-content-area"
           flex="1"
@@ -281,15 +375,13 @@ export default function WriteComposer({
           }}
         >
           <VStack gap={4} align="stretch" maxW="none" pl={{ base: 1, md: 2, lg: 3 }} minH="80vh">
-
-            {/* Context Header */}
             <Box mb={2}>
-              <Flex justify={'space-between'}>
+              <Flex justify={"space-between"}>
                 <Box fontSize="sm" color="gray.600">
                   Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
                 </Box>
+
                 <Box>
-                  {/* Collaboration Button & Dialog */}
                   <HStack gap={2}>
                     <Button
                       size="xs"
@@ -297,8 +389,9 @@ export default function WriteComposer({
                       colorScheme={isCollaborative ? "blue" : "gray"}
                       onClick={() => setCollaborationDialogOpen(true)}
                     >
-                      {isCollaborative ? '👥 Collaborative' : '+ Add Collaborators'}
+                      {isCollaborative ? "👥 Collaborative" : "+ Add Collaborators"}
                     </Button>
+
                     {isCollaborative && dispatchContent && (
                       <HStack gap={1} fontSize="xs" color="gray.600">
                         <Text>{dispatchContent.editor_count} editors</Text>
@@ -325,35 +418,29 @@ export default function WriteComposer({
               </Flex>
             </Box>
 
-            {/* Title Input */}
-            <TitleInput
-              title={title}
-              setTitle={onTitleChange}
-              placeholder="Enter your title..."
-            />
+            <TitleInput title={title} setTitle={onTitleChange} placeholder="Enter your title..." />
 
-            {/* Main Editor with Enhanced Status Display */}
-            <Box
-              position="relative"
-              w="100%"
-            >
+            <Box position="relative" w="100%">
               <MainEditor
+                key={collabKey}
                 ref={editorRef}
+                editorMode={editorMode}
                 docJSON={docJSON}
-                onContentChange={onDocChange}
+                onContentChange={soloOnChange}
                 placeholder="Start writing your story..."
-                autoSave={{ triggerSave: () => {}, status: saveStatus }}
+                autoSave={{
+                  triggerSave: wantsCollab ? collabTriggerSave : () => {},
+                  status: saveStatus
+                }}
                 onSelectionChange={handleSelectionChange}
                 onBackgroundSummaryChange={handleBackgroundSummaryChange}
+                yjsProvider={yjsProvider}
+                ydoc={ydoc}
+                collabReady={collabReady}
+                debugId={collabKey}
               />
 
-              {/* Word Count and Save Status - positioned at bottom right */}
-              <Box
-                position="absolute"
-                bottom="20px"
-                right="10px"
-                pointerEvents="none"
-              >
+              <Box position="absolute" bottom="20px" right="10px" pointerEvents="none">
                 <WordCountDisplay
                   wordCount={summaryWordCount}
                   saveStatus={saveStatus}
@@ -362,23 +449,19 @@ export default function WriteComposer({
               </Box>
             </Box>
 
-            {/* Status Message - fixed height to prevent layout shift */}
-            <Box className='status-message-container' mt={'-24px'} minH="20px" display="flex" alignItems="center" justifyContent={"end"}>
-              <StatusMessage status={saveStatus} />
+            <Box
+              className="status-message-container"
+              mt={"-24px"}
+              minH="20px"
+              display="flex"
+              alignItems="center"
+              justifyContent={"end"}
+            >
+              <StatusMessage status={saveStatus} mode={wantsCollab ? 'collab' : 'solo'} />
             </Box>
 
-            {/* Summary and Publishing Actions Row */}
-            <HStack
-              align="stretch"
-              gap={6}
-              direction={{ base: "column", lg: "row" }}
-              w="100%"
-            >
-              {/* Summary Section - 70% width on desktop */}
-              <Box
-                flex={{ base: "1", lg: "0 0 70%" }}
-                w={{ base: "100%", lg: "70%" }}
-              >
+            <HStack align="stretch" gap={6} direction={{ base: "column", lg: "row" }} w="100%">
+              <Box flex={{ base: "1", lg: "0 0 70%" }} w={{ base: "100%", lg: "70%" }}>
                 <SummarySection
                   summary={excerpt}
                   setSummary={onExcerptChange}
@@ -390,7 +473,6 @@ export default function WriteComposer({
                 />
               </Box>
 
-              {/* Publishing Controls Sidebar - 30% width on desktop */}
               <Box
                 flex={{ base: "1", lg: "0 0 30%" }}
                 w={{ base: "100%", lg: "30%" }}
@@ -410,7 +492,6 @@ export default function WriteComposer({
                 }}
               >
                 <VStack gap={4} align="stretch">
-                  {/* Publishing Controls */}
                   {showPublishingControls && (
                     <PublishingControls
                       pieceId={pieceId}
@@ -426,59 +507,42 @@ export default function WriteComposer({
                     />
                   )}
 
-                  {/* Tags Section */}
-                  <Box
-                    p={4}
-                    bg="white"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderRadius="md"
-                  >
-                    <TagInput
-                      selectedTags={tags}
-                      onTagsChange={handleTagsChange}
-                      maxTags={10}
-                    />
+                  <Box p={4} bg="white" border="1px solid" borderColor="gray.200" borderRadius="md">
+                    <TagInput selectedTags={tags} onTagsChange={handleTagsChange} maxTags={10} />
                   </Box>
 
-                  {/* Status Bar */}
                   <StatusBar
                     status={saveStatus}
                     draftId={pieceId}
-                    onForceSave={() => saveNow({
-                      title: titleRef.current,
-                      body_json: docJSONRef.current,
-                      excerpt: excerptRef.current
-                    })}
+                    onForceSave={() => {
+                      if (wantsCollab) {
+                        collabTriggerSave();
+                      } else {
+                        saveNow({
+                          title: titleRef.current,
+                          body_json: docJSONRef.current,
+                          excerpt: excerptRef.current,
+                        });
+                      }
+                    }}
                     onClearDraft={() => {
-                      setTitle('');
-                      setDocJSON({ type: 'doc', content: [] });
-                      setExcerpt('');
+                      setTitle("");
+                      setDocJSON(EMPTY_DOC);
+                      setExcerpt("");
                     }}
                   />
                 </VStack>
               </Box>
             </HStack>
 
-            {/* Add some bottom padding for mobile scroll */}
             <Box h={8} />
-
           </VStack>
         </Box>
 
-        {/* Scroll to Top Button */}
-        <ScrollToTopButton
-          workspaceOpen={workspaceOpen}
-          workspaceWidth={workspaceWidth}
-        />
+        <ScrollToTopButton workspaceOpen={workspaceOpen} workspaceWidth={workspaceWidth} />
 
-        {/* Workspace Toggle (when collapsed) */}
-        <WorkspaceToggle
-          workspaceOpen={workspaceOpen}
-          onToggle={() => setWorkspaceOpen(true)}
-        />
+        <WorkspaceToggle workspaceOpen={workspaceOpen} onToggle={() => setWorkspaceOpen(true)} />
 
-        {/* Copy Desk with AI Tools */}
         <CopyDesk
           isOpen={workspaceOpen}
           onToggle={() => setWorkspaceOpen(!workspaceOpen)}
@@ -497,7 +561,6 @@ export default function WriteComposer({
           documentWordCount={summaryWordCount}
           summaryWordCount={excerpt.length}
         />
-
       </HStack>
     </Box>
   );

@@ -58,7 +58,7 @@ export function useAutoSaveDispatchMetadata(
 
     try {
       // Only save metadata fields, NOT content
-      await axiosInstance.patch(`/api/dispatch/documents/${documentSlug}`, metadata);
+      await axiosInstance.patch(`/api/dispatch/content/${documentSlug}`, metadata);
 
       lastSaved.current = metadataString;
       retryCount.current = 0;

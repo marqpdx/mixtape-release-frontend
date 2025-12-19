@@ -107,7 +107,8 @@ class SummaryManager {
       return { summary: this.currentSummary, wordCount: finalWordCount };
 
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      // Handle both AbortError (fetch API) and CanceledError (axios)
+      if (error.name === 'AbortError' || error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
         console.log('🛑 Summary request cancelled');
       } else {
         console.error('❌ Summary generation failed:', error);
