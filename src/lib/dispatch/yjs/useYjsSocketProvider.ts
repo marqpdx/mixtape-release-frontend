@@ -12,6 +12,43 @@ interface DispatchContentMinimal {
 
 type Status = "connecting" | "connected" | "disconnected";
 
+/**
+ * Tiny event emitter shim so TipTapCollabEditor can do:
+ *   provider.on("synced", cb)
+ * even if YjsSocketAdapter doesn't implement .on/.off itself.
+ */
+function ensureProviderEmitter(adapter: any) {
+  if (!adapter) return;
+
+  if (typeof adapter.on === "function" && typeof adapter.off === "function" && typeof adapter.emit === "function") {
+    return; // already has an event API
+  }
+
+  const listeners: Record<string, Set<(...args: any[]) => void>> =
+    adapter.__mt_listeners || (adapter.__mt_listeners = {});
+
+  adapter.on = (event: string, cb: (...args: any[]) => void) => {
+    if (!listeners[event]) listeners[event] = new Set();
+    listeners[event].add(cb);
+  };
+
+  adapter.off = (event: string, cb: (...args: any[]) => void) => {
+    listeners[event]?.delete(cb);
+  };
+
+  adapter.emit = (event: string, ...args: any[]) => {
+    const set = listeners[event];
+    if (!set || set.size === 0) return;
+    for (const cb of Array.from(set)) {
+      try {
+        cb(...args);
+      } catch (e) {
+        console.warn("⚠️ [YjsProvider] listener threw:", event, e);
+      }
+    }
+  };
+}
+
 export function useYjsSocketProvider(
   dispatchContent: DispatchContentMinimal | null,
   {
@@ -53,11 +90,11 @@ export function useYjsSocketProvider(
       didCancel = true;
 
       try {
-        if (adapter) adapter.disconnect?.();
+        adapter?.disconnect?.();
       } catch {}
 
       try {
-        if (doc) doc.destroy();
+        doc?.destroy();
       } catch {}
 
       setProvider(null);
@@ -75,28 +112,11 @@ export function useYjsSocketProvider(
       // 1) Create Y.Doc
       doc = new Y.Doc();
 
-      // // 2) Load saved yjs_state from backend
-      // try {
-      //   console.log("📥 [YjsProvider] fetching yjs_state:", contentId);
-      //   const res = await axiosInstance.get(`/api/dispatch/content/${contentId}/yjs-state`);
-      //   if (didCancel) return;
-
-      //   if (res.data?.yjs_state) {
-      //     const base64State: string = res.data.yjs_state;
-
-      //     // base64 -> Uint8Array
-      //     const binaryString = atob(base64State);
-      //     const bytes = new Uint8Array(binaryString.length);
-      //     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-
-      //     Y.applyUpdate(doc, bytes);
-      //     console.log("✅ [YjsProvider] applied yjs_state");
-      //   } else {
-      //     console.log("ℹ️ [YjsProvider] no yjs_state found");
-      //   }
-      // } catch (err) {
-      //   console.error("⚠️ [YjsProvider] failed to load yjs_state:", err);
-      // }
+      // IMPORTANT: deterministic sync flag owned by this hook.
+      // TipTapCollabEditor should only seed after this becomes true.
+      (doc as any).__serverSynced = false;
+      (doc as any).__yjsRoomId = roomId;
+      (doc as any).__dispatchContentId = contentId;
 
       // 3) If empty, fetch content_snapshot for seeding (TipTap will seed it)
       try {
@@ -111,7 +131,6 @@ export function useYjsSocketProvider(
           const contentSnapshot = contentRes.data?.content_snapshot;
           if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
             (doc as any).__initialContent = contentSnapshot;
-            (doc as any).__dispatchContentId = contentId;
             console.log("✅ [YjsProvider] stored snapshot for seeding");
           } else {
             console.log("ℹ️ [YjsProvider] no content_snapshot found");
@@ -129,6 +148,10 @@ export function useYjsSocketProvider(
 
       // 4) Create adapter (joins socket room)
       adapter = new YjsSocketAdapter(doc, roomId, { user, contentId });
+
+      // Ensure provider has on/off/emit for "synced" event (editor listens to this)
+      ensureProviderEmitter(adapter);
+
       setProvider(adapter);
 
       // 5) Attach listeners once socket exists
@@ -145,8 +168,10 @@ export function useYjsSocketProvider(
         const connected = !!s.connected;
         setStatus(connected ? "connected" : "disconnected");
 
-        // ready means: connected + have doc + have provider + (synced OR fallback fired)
-        const ready = connected && !!doc && !!adapter && !!adapter.synced;
+        // READY IS DETERMINISTIC:
+        // connected + doc + provider + server has ACKed yjs-synced
+        const synced = !!(doc as any).__serverSynced;
+        const ready = connected && !!doc && !!adapter && synced;
         setIsReady(ready);
       };
 
@@ -161,43 +186,40 @@ export function useYjsSocketProvider(
         setIsReady(false);
       };
 
+      // 🔥 The key change: yjs-synced is the ONLY sync signal.
       const onSynced = (payload: any) => {
         const docId = payload?.documentId;
         if (docId && docId !== roomId) return;
 
-        console.log("✅ [YjsProvider] yjs-synced:", docId || roomId);
+        if (!doc) return;
 
-        // trust adapter.synced if it flips, but also force ready if connected
-        if (s.connected) {
-          setStatus("connected");
-          setIsReady(true);
-        } else {
-          recompute();
-        }
+        (doc as any).__serverSynced = true;
+
+        // If adapter tracks a .synced flag, keep it aligned.
+        try {
+          (adapter as any).synced = true;
+        } catch {}
+
+        console.log("✅ [YjsProvider] yjs-synced (authoritative):", docId || roomId);
+
+        // Emit provider-level event for the editor seed gate (deterministic now)
+        try {
+          (adapter as any).emit?.("synced", { documentId: docId || roomId });
+        } catch {}
+
+        recompute();
       };
 
       s.on("connect", onConnect);
       s.on("disconnect", onDisconnect);
       s.on("yjs-synced", onSynced);
 
-      // Initial compute
+      // Initial compute (will be ready=false until yjs-synced arrives)
       recompute();
-
-      // 6) Fallback: if we’re connected but missed yjs-synced, don’t deadlock editing forever.
-      const fallbackTimer = setTimeout(() => {
-        if (didCancel) return;
-        const connected = !!s.connected;
-        if (connected && doc) {
-          console.warn("⚠️ [YjsProvider] no yjs-synced seen; falling back to ready=true");
-          setStatus("connected");
-          setIsReady(true);
-        }
-      }, 2000);
 
       // Replace cleanup to include listener removal
       cleanupRef.current = () => {
         didCancel = true;
-        clearTimeout(fallbackTimer);
 
         try {
           s.off("connect", onConnect);
@@ -220,7 +242,7 @@ export function useYjsSocketProvider(
       };
     };
 
-    boot();
+    void boot();
 
     return () => {
       cleanupRef.current?.();
@@ -238,6 +260,6 @@ export function useYjsSocketProvider(
     provider,
     ydoc,
     status,
-    isReady,
+    isReady, // now deterministic: only true after yjs-synced
   };
 }
