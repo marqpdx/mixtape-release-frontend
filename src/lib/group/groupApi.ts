@@ -44,7 +44,7 @@ export async function fetchGroups(options: FetchGroupsOptions = {}): Promise<Gro
   });
 
   const queryString = params.toString();
-  const url = `/api/groups${queryString ? `?${queryString}` : ''}`;
+  const url = `/api/groups/${queryString ? `?${queryString}` : ''}`;
 
   const response = await axiosInstance.get<GroupsListResponse>(url);
   return unwrapListResponse<Group>(response.data);
