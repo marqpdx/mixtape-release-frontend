@@ -94,7 +94,7 @@ export default function ForumList({
                   borderLeft="2px solid"
                   borderLeftColor="green.500"
                   pl={4}
-                  py={4}
+                  py={1}
                   ml={2}
                 >
                   <ForumDetail

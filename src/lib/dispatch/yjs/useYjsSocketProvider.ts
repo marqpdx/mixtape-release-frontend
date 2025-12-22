@@ -1,218 +1,65 @@
 // src/lib/dispatch/yjs/useYjsSocketProvider.ts
 
-// Primary socket provider for yjs collaborative editing
-// Uses shared socket connection for efficiency
-
 import { useEffect, useState, useRef } from "react";
 import * as Y from "yjs";
 import { YjsSocketAdapter } from "./YjsSocketAdapter";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 
 interface DispatchContentMinimal {
-  id: string;  // UUID for REST API calls
-  yjs_document_id: string;  // UUID for Socket.IO room name
+  id: string; // UUID for REST API calls
+  yjs_document_id: string; // UUID for Socket.IO room name
 }
+
+type Status = "connecting" | "connected" | "disconnected";
 
 export function useYjsSocketProvider(
   dispatchContent: DispatchContentMinimal | null,
   {
     user,
     enabled = true,
-    initialContent,
   }: {
     user: { name: string; color?: string };
     enabled?: boolean;
-    initialContent?: any; // TipTap JSON content to initialize Y.Doc if empty
+    initialContent?: any;
   }
 ) {
-  const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
+  const [status, setStatus] = useState<Status>("disconnected");
   const [provider, setProvider] = useState<YjsSocketAdapter | null>(null);
   const [ydoc, setYDoc] = useState<Y.Doc | null>(null);
   const [isReady, setIsReady] = useState(false);
+
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Hard reset when disabled or no IDs
     if (!enabled || !dispatchContent?.id || !dispatchContent?.yjs_document_id) {
       setStatus("disconnected");
       setIsReady(false);
       return;
     }
 
-    console.log(" 🔧 [YjsProvider] Effect running - document:", dispatchContent.yjs_document_id);
-    console.log(" 🔧 [YjsProvider] Effect deps:", {
-      contentId: dispatchContent.id,
-      yjsDocId: dispatchContent.yjs_document_id,
-      enabled,
-      userName: user?.name,
-      userColor: user?.color,
-    });
+    const contentId = dispatchContent.id;
+    const roomId = dispatchContent.yjs_document_id;
 
-    const initializeYjsDocument = async () => {
-      // Create Y.js document
-      const doc = new Y.Doc();
-      console.log(" 📄 [YjsProvider] Created Y.Doc:", doc);
+    console.log("🔧 [YjsProvider] init:", { contentId, roomId, enabled });
 
-      // Load saved yjs state from backend using DispatchContent.id
-      try {
-        console.log(" 📥 [YjsProvider] Fetching saved yjs state...");
-        const res = await axiosInstance.get(`/api/dispatch/content/${dispatchContent.id}/yjs-state`);
-
-        if (res.data.yjs_state) {
-          // Decode base64 state
-          const base64State = res.data.yjs_state;
-          const binaryString = atob(base64State);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-
-          // Apply saved state to the document
-          Y.applyUpdate(doc, bytes);
-          console.log(" ✅ [YjsProvider] Applied saved yjs state to document");
-        } else {
-          console.log(" ℹ️ [YjsProvider] No saved state found, starting fresh");
-        }
-      } catch (err) {
-        console.error(" ⚠️ [YjsProvider] Failed to load saved state, starting fresh:", err);
-      }
-
-      // Check if Y.Doc is empty - if so, we need to seed it from backend content_snapshot
-      const fragment = doc.getXmlFragment('default');
-      const isEmpty = fragment.length === 0;
-
-      if (isEmpty) {
-        console.log(" 🔧 [YjsProvider] Y.Doc is empty, fetching content_snapshot to seed...");
-        try {
-          // Fetch content_snapshot from backend
-          const contentRes = await axiosInstance.get(`/api/dispatch/content/${dispatchContent.id}`);
-          const contentSnapshot = contentRes.data.content_snapshot;
-
-          if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
-            console.log(" 🌱 [YjsProvider] Found content_snapshot for seeding");
-            // Store snapshot and ID for TipTap to seed and save back
-            (doc as any).__initialContent = contentSnapshot;
-            (doc as any).__dispatchContentId = dispatchContent.id;
-          } else {
-            console.log(" ℹ️ [YjsProvider] No content_snapshot found, starting with empty doc");
-          }
-        } catch (err) {
-          console.error(" ⚠️ [YjsProvider] Failed to fetch content_snapshot:", err);
-        }
-      } else {
-        console.log(" ✅ [YjsProvider] Y.Doc fragment has content:", fragment.length, "children");
-      }
-
-      // Don't create the text type here - let TipTap handle it
-      setYDoc(doc);
-
-      // Create adapter using yjs_document_id for Socket.IO room name
-      const adapter = new YjsSocketAdapter(doc, dispatchContent.yjs_document_id, { user });
-      console.log(" 🔌 [YjsProvider] Created adapter:", adapter);
-
-      setProvider(adapter);
-
-      return { doc, adapter };
-    };
+    let didCancel = false;
 
     let adapter: YjsSocketAdapter | null = null;
     let doc: Y.Doc | null = null;
 
-    const setupPromise = initializeYjsDocument();
-
-    setupPromise.then((result) => {
-      if (!result) return;
-
-      adapter = result.adapter;
-      doc = result.doc;
-
-      const recomputeReady = () => {
-        const connected = !!adapter?.socket?.connected;
-        const ready = connected && !!doc && !!adapter && !!adapter.synced;
-        setStatus(connected ? "connected" : "disconnected");
-        setIsReady(ready);
-        return ready;
-      };
-
-      // Initial compute
-      recomputeReady();
-
-      // Attach listeners once socket exists
-      const attach = () => {
-        if (!adapter?.socket) return false;
-
-        const s = adapter.socket;
-
-        const onConnect = () => {
-          console.log(" ✅ [YjsProvider] Socket connected");
-          recomputeReady();
-        };
-
-        const onDisconnect = () => {
-          console.log(" ❌ [YjsProvider] Socket disconnected");
-          setStatus("disconnected");
-          setIsReady(false);
-        };
-
-        const onSynced = (payload: any) => {
-          const docId = payload?.documentId;
-          if (docId && docId !== dispatchContent.yjs_document_id) return;
-
-          console.log(" ✅ [YjsProvider] yjs-synced received for:", docId);
-
-          // Force ready if socket is connected and doc exists.
-          const connected = !!adapter?.socket?.connected;
-          if (connected && doc) {
-            setStatus("connected");
-            setIsReady(true);
-          } else {
-            recomputeReady();
-          }
-        };
-
-        s.on("connect", onConnect);
-        s.on("disconnect", onDisconnect);
-        s.on("yjs-synced", onSynced);
-
-        // Optional: if server sends documentId, filter here to be extra safe
-        // s.on("yjs-synced", ({ documentId }) => { if (documentId === dispatchContent.yjs_document_id) onSynced(); });
-
-        // Store cleanup that removes listeners (important on shared sockets)
-        const prevCleanup = cleanupRef.current;
-        cleanupRef.current = () => {
-          try {
-            s.off("connect", onConnect);
-            s.off("disconnect", onDisconnect);
-            s.off("yjs-synced", onSynced);
-          } catch {}
-          prevCleanup?.();
-        };
-
-        // One more compute after attaching
-        recomputeReady();
-        return true;
-      };
-
-      // Attach now or soon
-      if (!attach()) {
-        const t = setInterval(() => {
-          if (attach()) clearInterval(t);
-        }, 50);
-        setTimeout(() => clearInterval(t), 10000);
-      }
-    });
-
-
     const cleanup = () => {
-      console.log(" 🧹 [YjsProvider] Cleaning up...");
-      console.warn(" ⚠️ [YjsProvider] Y.Doc being destroyed - this will lose unsaved changes!");
-      console.log(" 🧹 [YjsProvider] Document ID:", dispatchContent.yjs_document_id);
-      console.trace(" 🧹 [YjsProvider] Cleanup stack trace:");
-      if (adapter) {
-        adapter.disconnect?.();
-      }
-      if (doc) {
-        doc.destroy();
-      }
+      if (didCancel) return;
+      didCancel = true;
+
+      try {
+        if (adapter) adapter.disconnect?.();
+      } catch {}
+
+      try {
+        if (doc) doc.destroy();
+      } catch {}
+
       setProvider(null);
       setYDoc(null);
       setStatus("disconnected");
@@ -221,36 +68,176 @@ export function useYjsSocketProvider(
 
     cleanupRef.current = cleanup;
 
-    return cleanup;
-  }, [
-    dispatchContent?.id,
-    dispatchContent?.yjs_document_id,
-    enabled,
-    // REMOVED user?.name and user?.color - should NOT recreate Y.Doc when user info changes
-    // User info is only used for awareness, which can update without recreating everything
-  ]);
+    const boot = async () => {
+      setStatus("connecting");
+      setIsReady(false);
+
+      // 1) Create Y.Doc
+      doc = new Y.Doc();
+
+      // // 2) Load saved yjs_state from backend
+      // try {
+      //   console.log("📥 [YjsProvider] fetching yjs_state:", contentId);
+      //   const res = await axiosInstance.get(`/api/dispatch/content/${contentId}/yjs-state`);
+      //   if (didCancel) return;
+
+      //   if (res.data?.yjs_state) {
+      //     const base64State: string = res.data.yjs_state;
+
+      //     // base64 -> Uint8Array
+      //     const binaryString = atob(base64State);
+      //     const bytes = new Uint8Array(binaryString.length);
+      //     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+
+      //     Y.applyUpdate(doc, bytes);
+      //     console.log("✅ [YjsProvider] applied yjs_state");
+      //   } else {
+      //     console.log("ℹ️ [YjsProvider] no yjs_state found");
+      //   }
+      // } catch (err) {
+      //   console.error("⚠️ [YjsProvider] failed to load yjs_state:", err);
+      // }
+
+      // 3) If empty, fetch content_snapshot for seeding (TipTap will seed it)
+      try {
+        const frag = doc.getXmlFragment("default");
+        const isEmpty = frag.length === 0;
+
+        if (isEmpty) {
+          console.log("🌱 [YjsProvider] doc empty; fetching content_snapshot:", contentId);
+          const contentRes = await axiosInstance.get(`/api/dispatch/content/${contentId}`);
+          if (didCancel) return;
+
+          const contentSnapshot = contentRes.data?.content_snapshot;
+          if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
+            (doc as any).__initialContent = contentSnapshot;
+            (doc as any).__dispatchContentId = contentId;
+            console.log("✅ [YjsProvider] stored snapshot for seeding");
+          } else {
+            console.log("ℹ️ [YjsProvider] no content_snapshot found");
+          }
+        } else {
+          console.log("✅ [YjsProvider] doc has content:", frag.length);
+        }
+      } catch (err) {
+        console.error("⚠️ [YjsProvider] failed to fetch content_snapshot:", err);
+      }
+
+      if (didCancel) return;
+
+      setYDoc(doc);
+
+      // 4) Create adapter (joins socket room)
+      adapter = new YjsSocketAdapter(doc, roomId, { user, contentId });
+      setProvider(adapter);
+
+      // 5) Attach listeners once socket exists
+      await adapter.whenReady();
+      const s = adapter.socket;
+      if (!s) {
+        console.error("❌ [YjsProvider] adapter.socket missing (cannot sync)");
+        setStatus("disconnected");
+        setIsReady(false);
+        return;
+      }
+
+      const recompute = () => {
+        const connected = !!s.connected;
+        setStatus(connected ? "connected" : "disconnected");
+
+        // ready means: connected + have doc + have provider + (synced OR fallback fired)
+        const ready = connected && !!doc && !!adapter && !!adapter.synced;
+        setIsReady(ready);
+      };
+
+      const onConnect = () => {
+        console.log("✅ [YjsProvider] socket connected");
+        recompute();
+      };
+
+      const onDisconnect = () => {
+        console.log("❌ [YjsProvider] socket disconnected");
+        setStatus("disconnected");
+        setIsReady(false);
+      };
+
+      const onSynced = (payload: any) => {
+        const docId = payload?.documentId;
+        if (docId && docId !== roomId) return;
+
+        console.log("✅ [YjsProvider] yjs-synced:", docId || roomId);
+
+        // trust adapter.synced if it flips, but also force ready if connected
+        if (s.connected) {
+          setStatus("connected");
+          setIsReady(true);
+        } else {
+          recompute();
+        }
+      };
+
+      s.on("connect", onConnect);
+      s.on("disconnect", onDisconnect);
+      s.on("yjs-synced", onSynced);
+
+      // Initial compute
+      recompute();
+
+      // 6) Fallback: if we’re connected but missed yjs-synced, don’t deadlock editing forever.
+      const fallbackTimer = setTimeout(() => {
+        if (didCancel) return;
+        const connected = !!s.connected;
+        if (connected && doc) {
+          console.warn("⚠️ [YjsProvider] no yjs-synced seen; falling back to ready=true");
+          setStatus("connected");
+          setIsReady(true);
+        }
+      }, 2000);
+
+      // Replace cleanup to include listener removal
+      cleanupRef.current = () => {
+        didCancel = true;
+        clearTimeout(fallbackTimer);
+
+        try {
+          s.off("connect", onConnect);
+          s.off("disconnect", onDisconnect);
+          s.off("yjs-synced", onSynced);
+        } catch {}
+
+        try {
+          adapter?.disconnect?.();
+        } catch {}
+
+        try {
+          doc?.destroy();
+        } catch {}
+
+        setProvider(null);
+        setYDoc(null);
+        setStatus("disconnected");
+        setIsReady(false);
+      };
+    };
+
+    boot();
+
+    return () => {
+      cleanupRef.current?.();
+    };
+  }, [dispatchContent?.id, dispatchContent?.yjs_document_id, enabled]);
 
   // Update awareness when user info changes (without recreating Y.Doc)
   useEffect(() => {
     if (provider?.awareness && user) {
-      console.log(" 👤 [YjsProvider] Updating awareness with user info:", user);
       provider.awareness.setLocalStateField("user", user);
     }
   }, [provider, user?.name, user?.color]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (cleanupRef.current) {
-        cleanupRef.current();
-      }
-    };
-  }, []);
 
   return {
     provider,
     ydoc,
     status,
-    isReady, // Flag to indicate everything is properly initialized
+    isReady,
   };
 }

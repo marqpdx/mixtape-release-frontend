@@ -21,13 +21,29 @@ export class YjsSocketAdapter {
   public socket: Socket | undefined;
   public awareness: Awareness;
 
+  private contentId?: string;
+
+  private _readyResolve?: () => void;
+  private _readyPromise: Promise<void> = new Promise((res) => (this._readyResolve = res));
+
   private _synced = false;
   private _connected = false;
+
+  /**
+   * IMPORTANT:
+   * - _joined should mean "server has acknowledged and we've joined the doc flow"
+   *   (i.e. we received yjs-synced for this document).
+   * - _joinInFlight prevents repeated yjs-init spam.
+   */
   private _joined = false;
+  private _joinInFlight = false;
+
+  /** Queue outbound local updates until we are joined (server acked). */
+  private _outbox: Uint8Array[] = [];
+
   private _awarenessUpdateTimeout: NodeJS.Timeout | null = null;
 
   private _handleYjsUpdate = (payload: any) => {
-    // delegate to the typed version
     this._onYjsUpdate(payload as UpdatePayload);
   };
 
@@ -37,17 +53,9 @@ export class YjsSocketAdapter {
     // Ignore updates for other docs (critical when multiple docs open)
     if (documentId && documentId !== this.roomName) return;
 
-    const fragmentBefore = this.doc.getXmlFragment("default").length;
-
-    if (updateArray.length <= 2 && fragmentBefore > 0) {
-      console.log("⚠️ [YjsAdapter] Ignoring tiny update (likely empty state) because we have content");
-      return;
-    }
-
     Y.applyUpdate(this.doc, updateArray, this);
 
-    // Optional but recommended: first applied state implies "synced enough"
-    // (especially if you rely on this for UI readiness)
+    // We’ve applied at least one state/update, so UI can consider this “synced enough”
     if (!this._synced) this._synced = true;
   };
 
@@ -62,32 +70,71 @@ export class YjsSocketAdapter {
       typeof payload === "string" ? payload : payload?.documentId;
 
     // If server includes docId, filter.
-    // If it doesn't, we fall back to trusting it's for this adapter.
     if (documentId && documentId !== this.roomName) return;
 
+    // This is the key: joined === server acknowledged doc init
     this._synced = true;
-    console.log("✅ [YjsAdapter] Sync confirmed by server:", this.roomName);
+    this._joined = true;
+    this._joinInFlight = false;
+
+    console.log("✅ [YjsAdapter] Sync confirmed by server:", {
+      documentId: this.roomName,
+      socketId: this.socket?.id,
+      outboxCount: this._outbox.length,
+    });
+
+    // Flush buffered updates now that server acks join
+    if (this.socket?.connected && this._outbox.length) {
+      for (const u of this._outbox) {
+        this.socket.emit("yjs-update", {
+          documentId: this.roomName,
+          update: Array.from(u),
+        });
+      }
+      this._outbox = [];
+    }
   };
 
   private _onConnect = () => {
     this._connected = true;
     this._synced = false;
+
+    // Reset join state; reconnect requires re-init.
     this._joined = false;
-    console.log("✅ [YjsAdapter] Socket connected; will join:", this.roomName);
-    this.scheduleJoinWithGrace();
+    this._joinInFlight = false;
+
+    console.log("✅ [YjsAdapter] Socket connected; ensure join:", {
+      documentId: this.roomName,
+      socketId: this.socket?.id,
+      hasContentId: !!this.contentId,
+    });
+
+    // Deterministic join (no fragment heuristics)
+    this.ensureJoined();
   };
 
   private _onDisconnect = () => {
-    console.log("❌ [YjsAdapter] Socket disconnected");
+    console.log("❌ [YjsAdapter] Socket disconnected", {
+      documentId: this.roomName,
+      socketId: this.socket?.id,
+    });
+
     this._connected = false;
     this._synced = false;
     this._joined = false;
+    this._joinInFlight = false;
+    // NOTE: keep outbox — user may type during reconnect; we’ll flush after next yjs-synced.
   };
 
-  constructor(doc: Y.Doc, roomName: string, options: { user: any }) {
+  constructor(
+    doc: Y.Doc,
+    roomName: string,
+    options: { user: any; contentId?: string }
+  ) {
     this.doc = doc;
     this.roomName = roomName;
     this.user = options.user;
+    this.contentId = options.contentId;
 
     this.awareness = new Awareness(this.doc);
     this.awareness.setLocalStateField("user", options.user);
@@ -105,12 +152,36 @@ export class YjsSocketAdapter {
   private setupYjsListeners() {
     // Local doc updates -> emit to server
     this.doc.on("update", (update: Uint8Array, origin: any) => {
-      if (origin === this) return; // avoid loop
+      if (origin === this) return; // avoid loopback
+
+      // Additional diagnostic log (recommended)
+      console.log("✉️ [YjsAdapter] local update", {
+        documentId: this.roomName,
+        joined: this._joined,
+        joinInFlight: this._joinInFlight,
+        connected: this.socket?.connected === true,
+        bytes: update.length,
+      });
 
       if (!this.socket?.connected) {
-        console.log("⏸️  [YjsAdapter] Update occurred before socket connected", {
+        console.log("⏸️ [YjsAdapter] Update occurred before socket connected", {
+          documentId: this.roomName,
           updateSize: update.length,
         });
+        // We could queue here too, but without a socket there’s no guarantee of continuity.
+        // Keeping the log is still valuable.
+        return;
+      }
+
+      if (!this._joined) {
+        // Critical: DO NOT DROP — queue and ensure join is in progress
+        this._outbox.push(update);
+        console.log("📥 [YjsAdapter] Queued update until joined", {
+          documentId: this.roomName,
+          queued: this._outbox.length,
+          bytes: update.length,
+        });
+        this.ensureJoined();
         return;
       }
 
@@ -156,36 +227,41 @@ export class YjsSocketAdapter {
     this.socket.on("connect", this._onConnect);
     this.socket.on("disconnect", this._onDisconnect);
 
-    // If already connected when we attach, run connect handler manually
+    this._readyResolve?.();
+
     if (this.socket.connected) {
       this._onConnect();
     }
   }
 
-  private scheduleJoinWithGrace() {
-    if (!this.socket?.connected) return;
-
-    const fragmentLengthNow = this.doc.getXmlFragment("default").length;
-
-    const doJoin = () => {
-      console.log("🧩 [YjsAdapter] Join decision", {
-        fragmentLength: this.doc.getXmlFragment("default").length,
-        connected: this.socket?.connected,
-        joined: this._joined,
-      });
-      this.ensureJoined();
-    };
-
-    if (fragmentLengthNow > 0) doJoin();
-    else setTimeout(doJoin, 200);
-  }
-
   private ensureJoined() {
     if (!this.socket?.connected) return;
     if (this._joined) return;
-    this.socket.emit("yjs-init", this.roomName);
-    this._joined = true;
-    console.log("🧩 [YjsAdapter] yjs-init emitted:", this.roomName);
+    if (this._joinInFlight) return;
+
+    this._joinInFlight = true;
+
+    if (!this.contentId) {
+      console.warn(
+        "⚠️ [YjsAdapter] Missing contentId; joining without persistence mapping",
+        { documentId: this.roomName }
+      );
+      this.socket.emit("yjs-init", this.roomName);
+    } else {
+      this.socket.emit("yjs-init", {
+        documentId: this.roomName,
+        contentId: this.contentId,
+      });
+    }
+
+    console.log("🧩 [YjsAdapter] yjs-init emitted:", {
+      documentId: this.roomName,
+      socketId: this.socket?.id,
+      hasContentId: !!this.contentId,
+    });
+
+    // NOTE: we do NOT set _joined=true here anymore.
+    // _joined flips only after yjs-synced ack from server.
   }
 
   get synced(): boolean {
@@ -202,11 +278,18 @@ export class YjsSocketAdapter {
       this._awarenessUpdateTimeout = null;
     }
 
-    if (this.socket) {
-      // ✅ Detach only our listeners
-      // this.socket.off("yjs-update", this._onYjsUpdate as any);
-      this.socket.off("yjs-update", this._handleYjsUpdate as any);
+    // Tell server we're leaving this document room
+    if (this.socket && this._joined && this.socket.connected) {
+      console.log("🚪 [YjsAdapter] Leaving room:", {
+        documentId: this.roomName,
+        socketId: this.socket.id,
+      });
+      this.socket.emit("yjs-leave", { documentId: this.roomName });
+    }
 
+    if (this.socket) {
+      // Detach only our listeners
+      this.socket.off("yjs-update", this._handleYjsUpdate as any);
       this.socket.off("yjs-awareness", this._onAwareness as any);
       this.socket.off("yjs-synced", this._onSynced as any);
       this.socket.off("connect", this._onConnect);
@@ -218,6 +301,10 @@ export class YjsSocketAdapter {
     this._synced = false;
     this._connected = false;
     this._joined = false;
+    this._joinInFlight = false;
+
+    // Optional: clear outbox on explicit disconnect so we don’t send stale edits later
+    this._outbox = [];
   }
 
   destroy() {
@@ -238,5 +325,9 @@ export class YjsSocketAdapter {
     // Legacy: number[] or Uint8Array
     if (payload instanceof Uint8Array) return { updateArray: payload };
     return { updateArray: new Uint8Array(payload as number[]) };
+  }
+
+  public whenReady(): Promise<void> {
+    return this._readyPromise;
   }
 }

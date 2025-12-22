@@ -1,4 +1,4 @@
-// src/components/groups/GroupsTableNew.tsx
+// src/components/groups/GroupsTable.tsx
 
 "use client";
 

@@ -1,11 +1,12 @@
 // src/hooks/dispatch/useCollabAutosave.ts
-// Unified autosave for collaborative editing
-// Saves both Yjs state (for sync) and JSON snapshot (for publishing/search)
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import * as Y from 'yjs';
-import { Editor } from '@tiptap/react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+// Best-practice autosave for collaborative editing
+// Browser saves lightweight snapshot; Node dispatch server saves yjs_state.
+
+import { useEffect, useRef, useCallback, useState } from "react";
+import * as Y from "yjs";
+import { Editor } from "@tiptap/react";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 
 interface UseCollabAutosaveOptions {
   documentSlug: string;
@@ -13,11 +14,9 @@ interface UseCollabAutosaveOptions {
   editor: Editor | null;
   enabled?: boolean;
 
-  // Timing controls
-  debounceMs?: number;      // Time to wait after last change before saving (default: 2500ms)
-  maxWaitMs?: number;        // Max time between saves while actively typing (default: 30000ms)
+  debounceMs?: number; // default: 2500ms
+  maxWaitMs?: number;  // default: 30000ms
 
-  // Callbacks
   onSaveStart?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: any) => void;
@@ -34,68 +33,117 @@ export function useCollabAutosave({
   onSaveSuccess,
   onSaveError,
 }: UseCollabAutosaveOptions) {
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const dirtyRef = useRef(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const maxWaitTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isSavingRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxWaitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The actual save function
+  // single-flight + coalesce
+  const savingRef = useRef(false);
+  const saveAgainRef = useRef(false);
+
+  // diff gating (snapshot)
+  const lastSavedHashRef = useRef<string>("");
+
+  // 429 backoff
+  const backoffUntilRef = useRef<number>(0);
+  const backoffMsRef = useRef<number>(0);
+
+  function hashString(s: string) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return String(h);
+  }
+
   const save = useCallback(async () => {
-    if (!ydoc || !editor || !enabled || isSavingRef.current) {
+    if (!ydoc || !editor || !enabled) return;
+
+    // if we’re in backoff, don’t spam; queue one retry
+    const now = Date.now();
+    if (now < backoffUntilRef.current) {
+      saveAgainRef.current = true;
       return;
     }
 
-    // Nothing changed since last save
-    if (!dirtyRef.current) {
-      console.log('💾 [CollabAutosave] No changes since last save, skipping');
+    // nothing changed
+    if (!dirtyRef.current) return;
+
+    // single-flight
+    if (savingRef.current) {
+      saveAgainRef.current = true;
       return;
     }
 
-    isSavingRef.current = true;
+    savingRef.current = true;
     dirtyRef.current = false;
-    setStatus('saving');
+
+    setStatus("saving");
     onSaveStart?.();
 
     try {
-      // Get current TipTap JSON snapshot
+      // snapshot is the browser’s job; yjs_state is the server’s job
       const bodyJson = editor.getJSON();
+      const snapshotString = JSON.stringify(bodyJson);
+      const snapshotHash = hashString(snapshotString);
 
-      // Get current Yjs state as base64
-      const state = Y.encodeStateAsUpdate(ydoc);
-      const base64State = btoa(String.fromCharCode(...state));
+      // diff gate: don’t PATCH identical snapshot
+      if (snapshotHash === lastSavedHashRef.current) {
+        setStatus("idle");
+        return;
+      }
 
-      // Save both in a single request
       await axiosInstance.patch(`/api/dispatch/content/${documentSlug}`, {
         body_json: bodyJson,
-        yjs_state: base64State,
         updated_at: new Date().toISOString(),
       });
 
-      console.log('✅ [CollabAutosave] Saved successfully');
-      setStatus('saved');
+      // success: clear backoff
+      backoffMsRef.current = 0;
+      backoffUntilRef.current = 0;
+
+      lastSavedHashRef.current = snapshotHash;
+
+      setStatus("saved");
       setLastSaved(new Date());
       onSaveSuccess?.();
 
-      // Clear "saved" status after 2 seconds
-      setTimeout(() => {
-        setStatus('idle');
-      }, 2000);
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (error: any) {
+      const statusCode = error?.response?.status;
 
-    } catch (error) {
-      console.error('❌ [CollabAutosave] Save failed:', error);
-      setStatus('error');
-      dirtyRef.current = true; // Mark dirty again to retry
-      onSaveError?.(error);
+      if (statusCode === 429) {
+        const prev = backoffMsRef.current || 750;
+        const next = Math.min(prev * 2, 15000);
+        backoffMsRef.current = next;
+        backoffUntilRef.current = Date.now() + next;
 
-      // Clear error status after 3 seconds
-      setTimeout(() => {
-        setStatus('idle');
-      }, 3000);
+        console.warn("⚠️ [CollabAutosave] 429; backing off", { ms: next });
+        saveAgainRef.current = true; // ensure we retry once after backoff
+      } else {
+        console.error("❌ [CollabAutosave] Save failed:", error);
+        onSaveError?.(error);
+      }
+
+      setStatus("error");
+      dirtyRef.current = true; // mark dirty to retry
+
+      setTimeout(() => setStatus("idle"), 3000);
     } finally {
-      isSavingRef.current = false;
+      savingRef.current = false;
+
+      // if something changed while saving/backing off, do exactly one more save
+      if (saveAgainRef.current) {
+        saveAgainRef.current = false;
+
+        const wait = Math.max(0, backoffUntilRef.current - Date.now());
+        if (wait > 0) {
+          setTimeout(() => void save(), wait);
+        } else {
+          setTimeout(() => void save(), 250);
+        }
+      }
     }
   }, [documentSlug, ydoc, editor, enabled, onSaveStart, onSaveSuccess, onSaveError]);
 
@@ -103,84 +151,39 @@ export function useCollabAutosave({
   useEffect(() => {
     if (!ydoc || !enabled) return;
 
-    const handleUpdate = (update: Uint8Array, origin: any) => {
-      // Ignore updates from socket (those are already saved by other clients)
-      if (origin === 'socket' || origin?.constructor?.name === 'YjsSocketAdapter') {
-        return;
-      }
+    const handleUpdate = (_update: Uint8Array, origin: any) => {
+      // Ignore remote updates applied by the adapter (those were caused by other clients)
+      if (origin?.constructor?.name === "YjsSocketAdapter") return;
 
-      console.log('📝 [CollabAutosave] Y.Doc changed, marking dirty');
       dirtyRef.current = true;
 
-      // Clear existing debounce timer
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      // debounce save
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => void save(), debounceMs);
 
-      // Set new debounce timer
-      debounceTimerRef.current = setTimeout(() => {
-        console.log('⏰ [CollabAutosave] Debounce timer fired, saving...');
-        save();
-      }, debounceMs);
-
-      // Set max wait timer if not already set
+      // max wait save
       if (!maxWaitTimerRef.current) {
         maxWaitTimerRef.current = setTimeout(() => {
-          console.log('⏰ [CollabAutosave] Max wait timer fired, forcing save...');
           maxWaitTimerRef.current = null;
-          save();
+          void save();
         }, maxWaitMs);
       }
     };
 
-    ydoc.on('update', handleUpdate);
+    ydoc.on("update", handleUpdate);
 
     return () => {
-      ydoc.off('update', handleUpdate);
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      if (maxWaitTimerRef.current) {
-        clearTimeout(maxWaitTimerRef.current);
-      }
+      ydoc.off("update", handleUpdate);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (maxWaitTimerRef.current) clearTimeout(maxWaitTimerRef.current);
     };
   }, [ydoc, enabled, save, debounceMs, maxWaitMs]);
 
-  // Save on unmount if dirty
-  useEffect(() => {
-    return () => {
-      if (dirtyRef.current && ydoc && editor && enabled) {
-        console.log('🧹 [CollabAutosave] Unmounting with unsaved changes, saving now...');
-        // Synchronous save attempt (best effort)
-        const bodyJson = editor.getJSON();
-        const state = Y.encodeStateAsUpdate(ydoc);
-        const base64State = btoa(String.fromCharCode(...state));
-
-        // Use sendBeacon for reliability on page unload
-        const blob = new Blob([JSON.stringify({
-          body_json: bodyJson,
-          yjs_state: base64State,
-          updated_at: new Date().toISOString(),
-        })], { type: 'application/json' });
-
-        navigator.sendBeacon(
-          `/api/dispatch/content/${documentSlug}`,
-          blob
-        );
-      }
-    };
-  }, []); // Only on unmount
-
   // Manual save trigger
   const triggerSave = useCallback(() => {
-    console.log('💾 [CollabAutosave] Manual save triggered');
-    dirtyRef.current = true; // Force dirty
-    save();
+    dirtyRef.current = true;
+    void save();
   }, [save]);
 
-  return {
-    status,
-    lastSaved,
-    triggerSave,
-  };
+  return { status, lastSaved, triggerSave };
 }

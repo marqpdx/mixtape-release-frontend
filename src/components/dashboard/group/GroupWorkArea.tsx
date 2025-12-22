@@ -147,14 +147,30 @@ export default function GroupWorkArea({
   // }
 
   // // Communications
-  if (section === "threadworks") {
+  // if (section === "threadworks-landing") {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <ThreadworksWorkArea
+  //         section={section}
+  //         sectionParams={sectionParams}
+  //         setActiveSection={setActiveSection}
+  //         groupSlug={group.slug}
+  //       />
+  //     </WorkAreaWrapper>
+  //   );
+  // }
+
+
+  if (section === "threadworks-landing") {
     return (
-      <ThreadworksWorkArea
-        section={section}
-        sectionParams={sectionParams}
-        setActiveSection={setActiveSection}
-        groupSlug={group.slug}
-      />
+      <WorkAreaWrapper>
+        <ThreadworksWorkArea
+          section={section}
+          sectionParams={sectionParams}
+          setActiveSection={setActiveSection}
+          groupSlug={group.slug}
+        />
+      </WorkAreaWrapper>
     );
   }
 

@@ -1,4 +1,4 @@
-//src/lib/group/groupApi.ts
+// src/lib/group/groupApi.ts
 
 import {
   Group,
@@ -83,7 +83,7 @@ export async function fetchGroups(options: FetchGroupsOptions = {}): Promise<Gro
   });
 
   const queryString = params.toString();
-  const url = `${API_BASE}/api/groups${queryString ? `?${queryString}` : ''}`;
+  const url = `${API_BASE}/api/groups/${queryString ? `?${queryString}` : ''}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -130,7 +130,7 @@ export async function fetchGroup(slug: string): Promise<Group> {
  * Create a new group
  */
 export async function createGroup(data: GroupCreateFormData): Promise<Group> {
-  const url = `${API_BASE}/api/groups`;
+  const url = `${API_BASE}/api/groups/`;
 
   const response = await fetch(url, {
     method: 'POST',

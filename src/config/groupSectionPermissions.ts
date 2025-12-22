@@ -67,13 +67,19 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   },
 
   // Dispatch - requires dispatch permission
-  'dispatches': {
-    requiredDecorator: 'can__ManageDispatch',
-    description: 'View and manage dispatch documents',
-  },
-  'dispatch': {
-    requiredDecorator: 'can__ManageDispatch',
-    description: 'Create or edit dispatch documents',
+  // 'dispatches': {
+  //   requiredDecorator: 'can__ManageDispatch',
+  //   description: 'View and manage dispatch documents',
+  // },
+  // 'dispatch': {
+  //   requiredDecorator: 'can__ManageDispatch',
+  //   description: 'Create or edit dispatch documents',
+  // },
+
+  // Threadworks - accessible to all stewards
+  'threadworks-landing': {
+    requiredRole: 'admin',
+    description: 'Group forums and discussions',
   },
 
   // Settings - admin only

@@ -32,8 +32,8 @@ import { Group, GroupFormData, GroupStatus, GroupType } from "@/types/groupTypes
 // import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
 // import { EmblemInline } from "@content/emblemTypes";
 import { toaster } from "@/components/ui/toaster";
-import { MixtapeAlert } from "../ui/alerts";
-import GroupVisibilitySelect from "./utils/GroupVisibilitySelect";
+import { MixtapeAlert } from "../../ui/alerts";
+import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
 import { useEntityImageUpload } from "@/hooks/useEntityImageUpload";
 import { useImageUpload } from '@hooks/useAssets';
 

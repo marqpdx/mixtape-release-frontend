@@ -4,6 +4,18 @@
 
 import { Box } from "@chakra-ui/react";
 
-export const Divider = ({ my = 4, borderColor = "gray.200" }) => (
-  <Box borderBottom="1px solid" borderColor={borderColor} my={my} w="100%" />
-);
+interface DividerProps {
+  my?: number;          // integer (or number) spacing
+  borderColor?: string;
+}
+
+export const Divider = ({ my = 4, borderColor = "gray.200" }: DividerProps) => {
+  return (
+    <Box
+      borderBottom="1px solid"
+      borderColor={borderColor}
+      my={my}
+      w="100%"
+    />
+  );
+};

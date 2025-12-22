@@ -249,8 +249,8 @@ class AlmanacApi {
     try {
       // If groupSlug provided, use group-scoped URL
       const url = groupSlug
-        ? `/api/groups/${groupSlug}/events`
-        : `/api/almanac/events`;
+        ? `/api/groups/${groupSlug}/events/`
+        : `/api/almanac/events/`;
 
       const response = await this.client.post(url, payload);
       return response.data;
@@ -274,7 +274,7 @@ class AlmanacApi {
     decorator?: string;
   }): Promise<EventResponse[]> {
     try {
-      const response = await this.client.get('/api/almanac/events', { params });
+      const response = await this.client.get('/api/almanac/events/', { params });
       return response.data.results || response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));

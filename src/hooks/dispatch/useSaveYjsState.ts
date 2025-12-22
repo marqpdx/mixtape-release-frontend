@@ -5,6 +5,17 @@ import { useState, useCallback } from "react";
 import * as Y from "yjs";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 
+// Helper: Convert Uint8Array to base64 in chunks to avoid stack overflow
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const chunkSize = 8192; // Process 8KB at a time
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk) as any);
+  }
+  return btoa(binary);
+}
+
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface UseSaveYjsStateReturn {
@@ -39,9 +50,7 @@ export function useSaveYjsState(
       const state = Y.encodeStateAsUpdate(ydoc);
 
       // Convert to base64 for transmission
-      const base64State = btoa(
-        String.fromCharCode(...new Uint8Array(state))
-      );
+      const base64State = uint8ArrayToBase64(state);
 
       console.log("💾 Saving yjs state for document:", dispatchContent.id);
 

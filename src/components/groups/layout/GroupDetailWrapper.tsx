@@ -5,7 +5,7 @@
 import { Box, Spinner, Center, Text, Alert, HStack, Badge, Button } from "@chakra-ui/react";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useGroup, useGroupMutations, useGroupDraft } from "@/hooks/groups/useGroups";
-import GroupEditForm from "@components/groups/GroupEditForm";
+import GroupEditForm from "@/components/groups/forms/GroupEditForm";
 import { Group } from "@/types/groupTypes";
 
 interface GroupDetailWrapperProps {

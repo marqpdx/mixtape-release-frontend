@@ -11,7 +11,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📊",
     subItems: [
       { key: "admin-dashboard", label: "Admin Dashboard" },
-      { key: "stewards-permissions", label: "Stewards & Permission" },
+      { key: "stewards-permissions", label: "Stewards & Permission", hidden: false },
       { key: "activity", label: "Recent Activity", hidden: true },
       { key: "analytics", label: "Analytics", hidden: true },
     ]
@@ -26,40 +26,34 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "member-requests", label: "Join Requests", hidden: true },
     ]
   },
+  // {
+  //   key: "events",
+  //   label: "Events",
+  //   icon: "👥",
+  //   subItems: [
+  //     { key: "events-landing", label: "E1", hidden: true },
+  //     { key: "events-2", label: "E2", hidden: true },
+  //     { key: "create-event", label: "Create Event", hidden: true },
+  //   ]
+  // },
   {
-    key: "events",
-    label: "Events",
-    icon: "👥",
-    subItems: [
-      { key: "events-landing", label: "E1", hidden: true },
-      { key: "events-2", label: "E2", hidden: true },
-      { key: "create-event", label: "Create Event", hidden: true },
-    ]
-  },
-  {
-    key: "communication",
-    label: "Communication",
+    key: "threadworks",
+    label: "Threadworks",
     icon: "💬",
     subItems: [
-      { key: "threadworks", label: "Threadworks", hidden: false },
-      { key: "do-writing", label: "Write", hidden: true },
-      { key: "drafts", label: "Draft Writing", hidden: true },
-      { key: "comments", label: "Comments", hidden: true },
-      { key: "pinned", label: "Pinned Writing", hidden: true },
-      { key: "files", label: "File Management", hidden: true },
-      { key: "courses", label: "Course Management", hidden: true },
+      { key: "threadworks-landing", label: "Conversations" },
     ]
   },
-  {
-    key: "earthlab",
-    label: "EarthLab",
-    icon: "🌎",
-    subItems: [
-      { key: "earthlab", label: "Learning", hidden: true },
-      { key: "course-detail", label: "Create/Edit", hidden: true },
-      // { key: "create-event", label: "Create Event", hidden: true },
-    ]
-  },
+  // {
+  //   key: "earthlab",
+  //   label: "EarthLab",
+  //   icon: "🌎",
+  //   subItems: [
+  //     { key: "earthlab", label: "Learning", hidden: true },
+  //     { key: "course-detail", label: "Create/Edit", hidden: true },
+  //     // { key: "create-event", label: "Create Event", hidden: true },
+  //   ]
+  // },
   {
     key: "content",
     label: "Content",
@@ -67,6 +61,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "writing", label: "Posts & Announcements", hidden: false },
       // { key: "create-writing", label: "Write", hidden: false },
+      // { key: "threadworks-landing", label: "Threadworks", hidden: false },
       { key: "write", label: "Write", hidden: false },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
@@ -74,27 +69,13 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "group-courses", label: "Course Management", hidden: true },
     ]
   },
-  // {
-  //   key: "dispatch",
-  //   label: "Dispatch",
-  //   icon: "📒",
-  //   subItems: [
-  //     { key: "dispatches", label: "Dispatch", hidden: true },
-  //     { key: "dispatch", label: "Shared Writing", hidden: true },
-  //     // { key: "do-dispatch", label: "Dddraft Writing", hidden: false },
-  //     { key: "comments", label: "Comments", hidden: true },
-  //     { key: "pinned", label: "Pinned Writing", hidden: true },
-  //     { key: "files", label: "File Management", hidden: true },
-  //     { key: "group-courses", label: "Course Management", hidden: true },
-  //   ]
-  // },
   {
     key: "settings",
     label: "Settings",
     icon: "⚙️",
     subItems: [
       { key: "edit-group", label: "Edit Group" },
-      { key: "general", label: "General Settings" },
+      // { key: "general", label: "General Settings" },
       { key: "permissions", label: "Permissions", hidden: true },
       { key: "integrations", label: "Integrations", hidden: true },
     ]

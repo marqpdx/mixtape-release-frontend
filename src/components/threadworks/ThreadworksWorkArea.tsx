@@ -85,13 +85,13 @@ export default function ThreadworksWorkArea({
     await refetch()
   }
 
-  if (section !== 'threadworks') {
-    return (
-      <WorkAreaWrapper>
-        <Text>Threadworks section not found</Text>
-      </WorkAreaWrapper>
-    )
-  }
+  // if (section !== 'threadworks') {
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <Text>Threadworks section not found</Text>
+  //     </WorkAreaWrapper>
+  //   )
+  // }
 
   if (isLoading) {
     return (
@@ -113,7 +113,7 @@ export default function ThreadworksWorkArea({
               Threadworks
             </Heading>
             <Text color={textColor} fontSize="sm">
-              Community discussion forums and collaborative conversations
+              Community forums for discussion and conversations
             </Text>
           </VStack>
 

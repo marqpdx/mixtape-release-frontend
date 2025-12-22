@@ -94,15 +94,15 @@ export default function ForumDetail({
   }
 
   return (
-    <VStack align="stretch" gap={1}>
+    <VStack align="stretch" gap={0}>
       {!selectedDiscussion ? (
         <>
           {/* Forum Description */}
-          {forum.description && (
+          {/* {forum.description && (
             <Text fontSize="sm" color={textColor}>
               {forum.description}
             </Text>
-          )}
+          )} */}
 
           {/* New discussion indicator */}
           {newDiscussionCreators.size > 0 && (
@@ -112,9 +112,11 @@ export default function ForumDetail({
           )}
 
           {/* Discussions Header with New Discussion Button */}
-          <HStack justify="space-between" align="center" my={0}>
+          <HStack justify="space-between" align="center" my={0} mb={2}>
             <Heading as="h3" size="lg" fontWeight="bold">
-              Ongoing Discussions
+              <HStack>
+                <Text fontStyle={'italic'}>{forum.title}</Text> <Text fontWeight={'normal'}>discussions</Text>
+              </HStack>
             </Heading>
             <Button
               size="sm"
@@ -128,7 +130,7 @@ export default function ForumDetail({
             </Button>
           </HStack>
 
-          <Divider />
+          {/* <Divider my={3} /> */}
 
           {/* Search Bar */}
           {discussions.length > 5 && (

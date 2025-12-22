@@ -2,48 +2,81 @@
 
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 
-type WSToken = { token: string; exp: number };
+type WSTokenResponse = { token: string; exp?: number };
 
-let cache: WSToken | null = null;
-let inFlight: Promise<WSToken> | null = null;
+let cache: { token: string; exp: number } | null = null;
+let inFlight: Promise<{ token: string; exp: number } | null> | null = null;
 
-function isExpiringSoon(expUnix: number, skewSec = 60) {
-  const now = Math.floor(Date.now() / 1000);
-  return expUnix - now <= skewSec;
+function nowUnix() {
+  return Math.floor(Date.now() / 1000);
+}
+
+function isExpiringSoon(expUnix: number, skewSec = 90) {
+  return expUnix - nowUnix() <= skewSec;
+}
+
+function decodeJwtExp(token: string): number | null {
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) return null;
+
+    // base64url -> base64
+    const b64 = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(b64);
+    const payload = JSON.parse(json);
+    const exp = payload?.exp;
+    return typeof exp === "number" ? exp : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getLivewireAccessToken(): Promise<string | null> {
   if (cache && !isExpiringSoon(cache.exp)) {
-    console.log('[wsToken] Returning cached WS token');
     return cache.token;
   }
 
   if (inFlight) {
-    console.log('[wsToken] WS token fetch already in flight, waiting...');
     const wsTok = await inFlight;
-    return wsTok.token;
+    return wsTok?.token ?? null;
   }
-
-  console.log('[wsToken] Fetching new WS token from Django...');
 
   inFlight = (async () => {
     try {
-      const { data } = await axiosInstance.post<WSToken>("/api/livewire/token");
-      console.log('[wsToken] ✅ WS token received, expires:', new Date(data.exp * 1000).toISOString());
-      cache = data; // { token, exp }
-      return data;
+      const { data } = await axiosInstance.post<WSTokenResponse>("/api/livewire/token");
+
+      const token = data?.token;
+      if (!token) {
+        console.error("[wsToken] ❌ /api/livewire/token returned no token");
+        return null;
+      }
+
+      // Prefer server exp, but verify/fallback by decoding the JWT
+      const decodedExp = decodeJwtExp(token);
+      const exp = typeof data.exp === "number" ? data.exp : decodedExp;
+
+      if (!exp) {
+        // If we truly can't determine exp, cache it very briefly (worst-case safe)
+        const shortExp = nowUnix() + 30;
+        cache = { token, exp: shortExp };
+        console.warn("[wsToken] ⚠️ Could not determine exp; caching token for 30s only");
+        return cache;
+      }
+
+      cache = { token, exp };
+      return cache;
     } catch (error) {
-      console.error('[wsToken] ❌ Failed to fetch WS token:', error);
-      throw error;
+      console.error("[wsToken] ❌ Failed to fetch WS token:", error);
+      return null;
+    } finally {
+      // IMPORTANT: clear inFlight no matter what
+      // (we also clear again in outer finally, but this guarantees cleanup)
     }
   })();
 
   try {
     const wsTok = await inFlight;
-    return wsTok.token;
-  } catch (error) {
-    console.error('[wsToken] Error in getLivewireAccessToken:', error);
-    return null;
+    return wsTok?.token ?? null;
   } finally {
     inFlight = null;
   }
