@@ -6,9 +6,8 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 import { FlattenedPlacement, WritingWorkingCopy } from '@/types/writingTypes';
-import { publishPiece as publishPieceApi, publishAndPlace as publishAndPlaceApi } from '@/lib/writing/api';
+import * as writingApi from '@/lib/writing/api';
 // import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
 
 interface SponsorConfig {
@@ -78,13 +77,13 @@ export function useWriting(
 
   // Convert show flags to API filter
   // all = show everything (both true)
-  // my = show only solo (solo true, collab false)
-  // shared = show only collab (solo false, collab true)
+  // solo = show only solo (solo true, collab false)
+  // collab = show only collab (solo false, collab true)
   // When both false, we still need to make the API call but will filter on frontend
-  const draftFilter = React.useMemo(() => {
+  const draftFilter = React.useMemo((): 'all' | 'solo' | 'collab' => {
     if (showSolo && showCollab) return 'all'; // Show everything
-    if (showSolo && !showCollab) return 'my'; // Show only solo docs
-    if (!showSolo && showCollab) return 'shared'; // Show only collab docs
+    if (showSolo && !showCollab) return 'solo'; // Show only solo docs
+    if (!showSolo && showCollab) return 'collab'; // Show only collab docs
     return 'all'; // Both false - fetch all but filter to empty on frontend
   }, [showSolo, showCollab]);
 
@@ -96,16 +95,7 @@ export function useWriting(
     refetch: refetchPlacements,
   } = useQuery<FlattenedPlacement[]>({
     queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
-    queryFn: async () => {
-      const response = await axiosInstance.get('/api/writing/placements', {
-        params: {
-          sponsor_type: sponsorType,
-          sponsor_slug: sponsorSlug,
-        },
-      });
-      // return response.data;
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
+    queryFn: () => writingApi.fetchPlacements(sponsorType, sponsorSlug),
     enabled: !!sponsorSlug,
   });
 
@@ -117,17 +107,7 @@ export function useWriting(
     refetch: refetchDrafts,
   } = useQuery<WritingWorkingCopy[]>({
     queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter],
-    queryFn: async () => {
-      const response = await axiosInstance.get('/api/writing/drafts', {
-        params: {
-          sponsor_type: sponsorType,
-          sponsor_slug: sponsorSlug,
-          filter: draftFilter,
-        },
-      });
-      // return response.data;
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    },
+    queryFn: () => writingApi.fetchDrafts(sponsorType, sponsorSlug, draftFilter),
     enabled: !!sponsorSlug,
   });
 
@@ -167,10 +147,7 @@ export function useWritingPiece(pieceSlug: string | null) {
     refetch,
   } = useQuery({
     queryKey: ['writing', 'piece', pieceSlug],
-    queryFn: async () => {
-      const response = await axiosInstance.get(`/api/writing/pieces/view/${pieceSlug}`);
-      return response.data;
-    },
+    queryFn: () => writingApi.fetchPiece(pieceSlug!),
     enabled: !!pieceSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -191,9 +168,7 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
   const queryClient = useQueryClient();
 
   const deleteDraft = useMutation({
-    mutationFn: async (draftId: string) => {
-      await axiosInstance.delete(`/api/writing/drafts/${draftId}`);
-    },
+    mutationFn: (draftId: string) => writingApi.deleteDraft(draftId),
     onSuccess: () => {
       // Invalidate drafts query to refresh the list
       queryClient.invalidateQueries({
@@ -224,7 +199,7 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
         };
       }
     }) => {
-      return publishPieceApi(pieceId, payload);
+      return writingApi.publishPiece(pieceId, payload);
     },
     onSuccess: () => {
       // Invalidate both placements and drafts to refresh the lists
@@ -243,7 +218,7 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
    */
   const publishAndPlace = useMutation({
     mutationFn: async ({ pieceId, payload }: { pieceId: string; payload: any }) => {
-      return publishAndPlaceApi(pieceId, payload);
+      return writingApi.publishAndPlace(pieceId, payload);
     },
     onSuccess: () => {
       // Invalidate both queries

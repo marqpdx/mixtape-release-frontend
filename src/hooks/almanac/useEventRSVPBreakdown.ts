@@ -1,7 +1,7 @@
 // src/hooks/useEventRSVPBreakdown.ts
 
 import { useState, useCallback, useEffect } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import * as almanacApi from '@/lib/almanac/almanacApi';
 
 export interface RSVPBreakdown {
   going: number;
@@ -23,12 +23,10 @@ export function useEventRSVPBreakdown(groupSlug: string, eventId: string) {
     try {
       console.log('📊 Fetching RSVP breakdown:', { groupSlug, eventId });
 
-      const response = await axiosInstance.get(
-        `/api/groups/${groupSlug}/events/${eventId}/rsvp-breakdown`
-      );
+      const data = await almanacApi.fetchGroupEventRSVPBreakdown(groupSlug, eventId);
 
-      console.log('✅ RSVP breakdown fetched:', response.data);
-      setBreakdown(response.data);
+      console.log('✅ RSVP breakdown fetched:', data);
+      setBreakdown(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch RSVP breakdown';
       console.error('❌ Error fetching RSVP breakdown:', errorMessage);

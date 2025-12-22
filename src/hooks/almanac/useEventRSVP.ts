@@ -2,7 +2,7 @@
 // ✅ React Query version with mutations, cache invalidation, and optimistic updates
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import * as almanacApi from '@/lib/almanac/almanacApi';
 import { toaster } from "@/components/ui/toaster";
 
 interface RSVPPayload {
@@ -46,12 +46,7 @@ export function useEventRSVP(): UseEventRSVPReturn {
     }) => {
       console.log('📝 Submitting RSVP:', { groupSlug, eventId, payload });
 
-      const response = await axiosInstance.post<RSVPResponse>(
-        `/api/groups/${groupSlug}/events/${eventId}/rsvp`,
-        payload
-      );
-
-      return response.data;
+      return await almanacApi.rsvpToGroupEvent(groupSlug, eventId, payload);
     },
 
     // ✅ Optimistic update - instant UI feedback

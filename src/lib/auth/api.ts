@@ -1,5 +1,14 @@
 // src/lib/auth/api.ts
 
+/**
+ * Authentication API
+ *
+ * IMPORTANT: This file uses fetch() instead of axiosInstance by design.
+ * Reason: This module manages the authentication flow that initializes axiosInstance.
+ * Using axiosInstance here would create a circular dependency. The token refresh logic
+ * includes rate limiting and must run before axiosInstance's auth interceptors are ready.
+ */
+
 import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@/types/auth';
 import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStorage';
 import { checkRateLimit, recordSuccess } from './rateLimiter';

@@ -8,47 +8,8 @@ import {
   GroupCreateFormData,
   GroupUpdateFormData,
 } from '@/types/groupTypes';
-import { getAccessToken } from '@/lib/auth/tokenStorage';
-
-const API_BASE = process.env.NEXT_PUBLIC_ROOT_API_URL;
-
-/**
- * Get headers with auth token
- */
-function getAuthHeaders(): Record<string, string> {
-  const token = getAccessToken();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return headers;
-}
-
-/**
- * Handle API response and errors
- */
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = `API request failed: ${response.status}`;
-
-    try {
-      const errorData = JSON.parse(errorText);
-      errorMessage = errorData.detail || errorData.error || errorMessage;
-    } catch {
-      // If not JSON, use the text
-      errorMessage = errorText || errorMessage;
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  return response.json();
-}
+import { axiosInstance } from '@/providers/auth-provider/axiosInstance';
+import { unwrapListResponse } from '@/lib/api/utils';
 
 // ============================================================================
 // GROUP API FUNCTIONS
@@ -83,96 +44,49 @@ export async function fetchGroups(options: FetchGroupsOptions = {}): Promise<Gro
   });
 
   const queryString = params.toString();
-  const url = `${API_BASE}/api/groups/${queryString ? `?${queryString}` : ''}`;
+  const url = `/api/groups${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  const data: GroupsListResponse = await handleResponse(response);
-  return data.results || data as unknown as Group[];
+  const response = await axiosInstance.get<GroupsListResponse>(url);
+  return unwrapListResponse<Group>(response.data);
 }
 
 /**
  * Fetch user's groups (groups where current user is a member)
  */
 export async function fetchUserGroups(): Promise<Group[]> {
-  const url = `${API_BASE}/api/groups/my`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  const data: GroupsListResponse = await handleResponse(response);
-  return data.results || data as unknown as Group[];
+  const response = await axiosInstance.get<GroupsListResponse>('/api/groups/my');
+  return unwrapListResponse<Group>(response.data);
 }
 
 /**
  * Fetch a single group by slug
  */
 export async function fetchGroup(slug: string): Promise<Group> {
-  const url = `${API_BASE}/api/groups/${slug}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  return handleResponse<Group>(response);
+  const response = await axiosInstance.get<Group>(`/api/groups/${slug}`);
+  return response.data;
 }
 
 /**
  * Create a new group
  */
 export async function createGroup(data: GroupCreateFormData): Promise<Group> {
-  const url = `${API_BASE}/api/groups/`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-    body: JSON.stringify(data),
-  });
-
-  return handleResponse<Group>(response);
+  const response = await axiosInstance.post<Group>('/api/groups/', data);
+  return response.data;
 }
 
 /**
  * Update a group
  */
 export async function updateGroup(slug: string, updates: GroupUpdateFormData): Promise<Group> {
-  const url = `${API_BASE}/api/groups/${slug}`;
-
-  const response = await fetch(url, {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-    body: JSON.stringify(updates),
-  });
-
-  return handleResponse<Group>(response);
+  const response = await axiosInstance.patch<Group>(`/api/groups/${slug}`, updates);
+  return response.data;
 }
 
 /**
  * Delete a group (soft delete)
  */
 export async function deleteGroup(slug: string): Promise<void> {
-  const url = `${API_BASE}/api/groups/${slug}`;
-
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete group: ${response.status}`);
-  }
+  await axiosInstance.delete(`/api/groups/${slug}`);
 }
 
 /**
@@ -180,15 +94,8 @@ export async function deleteGroup(slug: string): Promise<void> {
  * Note: This endpoint may not exist yet - check backend
  */
 export async function publishGroup(slug: string): Promise<Group> {
-  const url = `${API_BASE}/api/groups/${slug}/publish`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  return handleResponse<Group>(response);
+  const response = await axiosInstance.post<Group>(`/api/groups/${slug}/publish`);
+  return response.data;
 }
 
 // ============================================================================
@@ -210,16 +117,10 @@ export async function fetchGroupMembers(
   });
 
   const queryString = params.toString();
-  const url = `${API_BASE}/api/groups/${groupSlug}/members${queryString ? `?${queryString}` : ''}`;
+  const url = `/api/groups/${groupSlug}/members${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  const data: GroupMembersResponse = await handleResponse(response);
-  return data.results || data as unknown as GroupMembership[];
+  const response = await axiosInstance.get<GroupMembersResponse>(url);
+  return unwrapListResponse<GroupMembership>(response.data);
 }
 
 /**
@@ -231,16 +132,11 @@ export async function addGroupMember(
   userId: string,
   role: string = 'member'
 ): Promise<GroupMembership> {
-  const url = `${API_BASE}/api/groups/${groupSlug}/members`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-    body: JSON.stringify({ user_id: userId, role }),
-  });
-
-  return handleResponse<GroupMembership>(response);
+  const response = await axiosInstance.post<GroupMembership>(
+    `/api/groups/${groupSlug}/members`,
+    { user_id: userId, role }
+  );
+  return response.data;
 }
 
 /**
@@ -251,16 +147,11 @@ export async function updateGroupMember(
   memberId: string,
   updates: { role?: string; is_active?: boolean }
 ): Promise<GroupMembership> {
-  const url = `${API_BASE}/api/groups/${groupSlug}/members/${memberId}`;
-
-  const response = await fetch(url, {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-    body: JSON.stringify(updates),
-  });
-
-  return handleResponse<GroupMembership>(response);
+  const response = await axiosInstance.patch<GroupMembership>(
+    `/api/groups/${groupSlug}/members/${memberId}`,
+    updates
+  );
+  return response.data;
 }
 
 /**
@@ -270,17 +161,7 @@ export async function removeGroupMember(
   groupSlug: string,
   memberId: string
 ): Promise<void> {
-  const url = `${API_BASE}/api/groups/${groupSlug}/members/${memberId}`;
-
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to remove member: ${response.status}`);
-  }
+  await axiosInstance.delete(`/api/groups/${groupSlug}/members/${memberId}`);
 }
 
 // ============================================================================
@@ -299,31 +180,19 @@ export async function inviteToGroup(
   groupSlug: string,
   data: InviteToGroupData
 ): Promise<{ success: boolean; message: string }> {
-  const url = `${API_BASE}/api/groups/${groupSlug}/invite`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-    body: JSON.stringify(data),
-  });
-
-  return handleResponse(response);
+  const response = await axiosInstance.post<{ success: boolean; message: string }>(
+    `/api/groups/${groupSlug}/invite`,
+    data
+  );
+  return response.data;
 }
 
 /**
  * Fetch pending invitations for a group
  */
 export async function fetchGroupInvitations(groupSlug: string): Promise<any[]> {
-  const url = `${API_BASE}/api/groups/${groupSlug}/invitations`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    credentials: 'include',
-  });
-
-  return handleResponse(response);
+  const response = await axiosInstance.get<any[]>(`/api/groups/${groupSlug}/invitations`);
+  return response.data;
 }
 
 // ============================================================================

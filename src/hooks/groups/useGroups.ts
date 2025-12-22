@@ -1,22 +1,13 @@
-// src/hooks/useGroups.ts
+// src/hooks/groups/useGroups.ts
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
-import {
-  fetchGroups as apiFetchGroups,
-  fetchUserGroups as apiFetchUserGroups,
-  fetchGroup as apiFetchGroup,
-  fetchGroupMembers as apiFetchGroupMembers,
-  updateGroup as apiUpdateGroup,
-  publishGroup as apiPublishGroup,
-  FetchGroupsOptions as ApiFetchGroupsOptions,
-  FetchGroupMembersOptions as ApiFetchGroupMembersOptions,
-} from '@/lib/group/groupApi';
+import * as groupApi from '@/lib/group/groupApi';
 import { Group, GroupMembership, UseGroupMembersResult } from '@/types/groupTypes';
 
 // Re-export API types for convenience
-export type FetchGroupsOptions = ApiFetchGroupsOptions;
-export type FetchGroupMembersOptions = ApiFetchGroupMembersOptions;
+export type FetchGroupsOptions = groupApi.FetchGroupsOptions;
+export type FetchGroupMembersOptions = groupApi.FetchGroupMembersOptions;
 
 // Query key factories for consistent caching
 export const groupsQueryKeys = {
@@ -54,56 +45,9 @@ export interface UseGroupMutationsResult {
   updateError: Error | null;
 }
 
-/**
- * Fetch all groups (admin/steward view)
- * Delegates to API layer
- */
-const fetchGroups = async (options: FetchGroupsOptions = {}): Promise<Group[]> => {
-  return apiFetchGroups(options);
-};
-
-/**
- * Fetch user's groups (groups where current user is a member)
- * Delegates to API layer
- */
-const fetchUserGroups = async (): Promise<Group[]> => {
-  return apiFetchUserGroups();
-};
-
-/**
- * Fetch a single group by slug
- * Delegates to API layer
- */
-const fetchGroup = async (slug: string): Promise<Group> => {
-  return apiFetchGroup(slug);
-};
-
-/**
- * Update a group
- * Delegates to API layer
- */
-const updateGroup = async (slug: string, updates: Partial<Group>): Promise<Group> => {
-  return apiUpdateGroup(slug, updates);
-};
-
-/**
- * Publish a group (remove from draft mode)
- * Delegates to API layer
- */
-const publishGroup = async (slug: string): Promise<Group> => {
-  return apiPublishGroup(slug);
-};
-
-/**
- * Fetch members of a specific group
- * Delegates to API layer
- */
-const fetchGroupMembers = async (
-  groupSlug: string,
-  options: FetchGroupMembersOptions = {}
-): Promise<GroupMembership[]> => {
-  return apiFetchGroupMembers(groupSlug, options);
-};
+// ============================================================================
+// HOOKS
+// ============================================================================
 
 /**
  * Hook to fetch ALL groups (admin/steward view)
@@ -116,7 +60,7 @@ export const useGroups = (options: FetchGroupsOptions = {}): UseGroupsResult => 
     refetch
   } = useQuery({
     queryKey: groupsQueryKeys.list(options),
-    queryFn: () => fetchGroups(options),
+    queryFn: () => groupApi.fetchGroups(options),
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
   });
@@ -140,7 +84,7 @@ export const useUserGroups = (): UseGroupsResult => {
     refetch
   } = useQuery({
     queryKey: groupsQueryKeys.userGroups(),
-    queryFn: fetchUserGroups,
+    queryFn: () => groupApi.fetchUserGroups(),
     staleTime: 1 * 60 * 1000, // 1 minute
     refetchOnWindowFocus: false,
   });
@@ -164,7 +108,7 @@ export const useGroup = (slug: string | null): UseGroupResult => {
     refetch
   } = useQuery({
     queryKey: groupsQueryKeys.detail(slug || ''),
-    queryFn: () => fetchGroup(slug!),
+    queryFn: () => groupApi.fetchGroup(slug!),
     enabled: !!slug,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -187,7 +131,7 @@ export const useGroupMutations = (slug: string): UseGroupMutationsResult => {
 
   // Update mutation with optimistic updates
   const updateMutation = useMutation({
-    mutationFn: (updates: Partial<Group>) => updateGroup(slug, updates),
+    mutationFn: (updates: Partial<Group>) => groupApi.updateGroup(slug, updates),
 
     // Optimistic update
     onMutate: async (updates) => {
@@ -229,7 +173,7 @@ export const useGroupMutations = (slug: string): UseGroupMutationsResult => {
 
   // Publish mutation
   const publishMutation = useMutation({
-    mutationFn: () => publishGroup(slug),
+    mutationFn: () => groupApi.publishGroup(slug),
 
     onSuccess: (updatedGroup) => {
       queryClient.setQueryData(groupsQueryKeys.detail(slug), updatedGroup);
@@ -341,7 +285,7 @@ export const useGroupMembers = (
     refetch
   } = useQuery({
     queryKey: groupsQueryKeys.membersList(groupSlug || '', options),
-    queryFn: () => fetchGroupMembers(groupSlug!, options),
+    queryFn: () => groupApi.fetchGroupMembers(groupSlug!, options),
     enabled: !!groupSlug,
     staleTime: 30 * 1000, // 30 seconds
     refetchOnWindowFocus: false,

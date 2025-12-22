@@ -1,8 +1,9 @@
-// /src/components/groups/GroupCreateForm.tsx - FIXED VERSION
+// /src/components/groups/GroupCreateForm.tsx
+// Uses react-hook-form directly (not Refine) and toaster for notifications
 
 "use client";
 
-import { useForm } from "@refinedev/react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import {
   Box,
   Button,
@@ -12,15 +13,20 @@ import {
   Card,
   Heading,
 } from "@chakra-ui/react";
-import { createStandaloneToast } from "@chakra-ui/toast";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { DatePickerInput } from "@components/forms/DatePickerField";
-import { Input } from "@theme/recipes/input.recipe";
-import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
-import { useWatch } from "react-hook-form";
+import { Input } from "@/theme/recipes/input.recipe";
+import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
+import { toaster } from "@/components/ui/toaster";
+import * as groupApi from "@/lib/group/groupApi";
+import type { GroupCreateFormData, GroupType, GroupVisibility } from "@/types/groupTypes";
 
-const { toast } = createStandaloneToast();
+// Extended form data to include circle/community specific fields
+interface GroupCreateFormValues extends GroupCreateFormData {
+  tagline?: string;
+  start_date?: Date | null;
+  end_date?: Date | null;
+}
 
 const groupTypeOptions = [
   { id: "community", label: "Community", value: "community" },
@@ -29,17 +35,18 @@ const groupTypeOptions = [
 
 // FIXED: Move FormContent OUTSIDE the component to prevent recreation on every render
 interface FormContentProps {
-  handleSubmit: any;
-  onSubmit: (data: any) => void;
-  onSubmitAndEdit?: (data: any) => void;
-  register: any;
+  handleSubmit: ReturnType<typeof useForm<GroupCreateFormValues>>['handleSubmit'];
+  onSubmit: (data: GroupCreateFormValues) => void;
+  onSubmitAndEdit?: (data: GroupCreateFormValues) => void;
+  register: ReturnType<typeof useForm<GroupCreateFormValues>>['register'];
+  control: ReturnType<typeof useForm<GroupCreateFormValues>>['control'];
   showCard: boolean;
   title: string;
-  visibility: string;
-  groupType: string;
-  startDate: any;
-  handleRadioChange: (val: any) => void;
-  handleVisibilityChange: (val: any) => void;
+  visibility: GroupVisibility;
+  groupType: GroupType;
+  startDate: Date | null | undefined;
+  handleRadioChange: (details: { value: string | null }) => void;
+  handleVisibilityChange: (val: string) => void;
   isSubmitting: boolean;
   onSuccessAndEdit?: (slug: string) => void;
 }
@@ -49,6 +56,7 @@ const FormContent = ({
   onSubmit,
   onSubmitAndEdit,
   register,
+  control,
   showCard,
   title,
   visibility,
@@ -140,14 +148,14 @@ const FormContent = ({
 
             <DatePickerInput
               name="start_date"
-              control={register.control}
+              control={control}
               isRequired={false}
               placeholder="Start Date & Time (Optional)"
             />
 
             <DatePickerInput
               name="end_date"
-              control={register.control}
+              control={control}
               isRequired={false}
               placeholder="End Date & Time (Optional)"
               validateFn={(value: Date | null) => {
@@ -229,13 +237,13 @@ const GroupCreateForm = memo(function GroupCreateForm({
     setValue,
     control,
     formState: { isSubmitting },
-  } = useForm({
+  } = useForm<GroupCreateFormValues>({
     mode: "onBlur",
     defaultValues: {
       title: "",
       description: "",
-      visibility: "public",
-      group_type: "community",
+      visibility: "public" as GroupVisibility,
+      group_type: "community" as GroupType,
       tagline: "",
       start_date: null,
       end_date: null,
@@ -267,51 +275,47 @@ const GroupCreateForm = memo(function GroupCreateForm({
   }, [setValue]);
 
   // FIXED: Stable handlers using useCallback
-  const createGroup = useCallback(async (values: any): Promise<string | null> => {
+  const createGroup = useCallback(async (values: GroupCreateFormValues): Promise<string | null> => {
     try {
-      const res = await axiosInstance.post("/api/groups", values);
-      toast({
+      const group = await groupApi.createGroup(values);
+      toaster.create({
         title: "Group Created",
         description: `Your ${values.group_type} was created successfully.`,
-        status: "success",
-        duration: 5000,
-        isClosable: true,
+        type: "success",
       });
-      return res.data?.slug ?? null;
+      return group.slug ?? null;
     } catch (err) {
       console.error("Error creating group:", err);
-      toast({
+      toaster.create({
         title: "Error",
         description: "Group creation failed. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
+        type: "error",
       });
       return null;
     }
   }, []);
 
-  const onSubmit = useCallback(async (values: any) => {
+  const onSubmit = useCallback(async (values: GroupCreateFormValues) => {
     const slug = await createGroup(values);
     if (slug && onSuccess) {
       onSuccess(slug);
     }
   }, [createGroup, onSuccess]);
 
-  const onSubmitAndEdit = useCallback(async (values: any) => {
+  const onSubmitAndEdit = useCallback(async (values: GroupCreateFormValues) => {
     const slug = await createGroup(values);
     if (slug && onSuccessAndEdit) {
       onSuccessAndEdit(slug);
     }
   }, [createGroup, onSuccessAndEdit]);
 
-  const handleRadioChange = useCallback((val: any) => {
-    const finalVal = typeof val === "object" && val?.value ? val.value : val;
-    setValue("group_type", finalVal, { shouldValidate: true, shouldDirty: true });
+  const handleRadioChange = useCallback((details: { value: string | null }) => {
+    if (!details.value) return;
+    setValue("group_type", details.value as GroupType, { shouldValidate: true, shouldDirty: true });
   }, [setValue]);
 
-  const handleVisibilityChange = useCallback((val: any) => {
-    setValue("visibility", val);
+  const handleVisibilityChange = useCallback((val: string) => {
+    setValue("visibility", val as GroupVisibility);
   }, [setValue]);
 
   // FIXED: Pass all props to external FormContent component
@@ -322,6 +326,7 @@ const GroupCreateForm = memo(function GroupCreateForm({
         onSubmit={onSubmit}
         onSubmitAndEdit={onSubmitAndEdit}
         register={register}
+        control={control}
         showCard={showCard}
         title={title}
         visibility={visibility}
@@ -344,6 +349,7 @@ const GroupCreateForm = memo(function GroupCreateForm({
             onSubmit={onSubmit}
             onSubmitAndEdit={onSubmitAndEdit}
             register={register}
+            control={control}
             showCard={showCard}
             title={title}
             visibility={visibility}

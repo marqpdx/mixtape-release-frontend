@@ -516,3 +516,103 @@ class AlmanacApi {
 
 // Export singleton instance
 export const almanacApi = new AlmanacApi();
+
+// ============================================================================
+// GROUP-SCOPED EVENT FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetch events for a specific group
+ */
+export async function fetchGroupEvents(
+  groupSlug: string,
+  params?: { status?: 'draft' | 'published' | 'archived'; kind?: 'event' | 'gathering'; decorator?: string }
+): Promise<EventResponse[]> {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events`, { params });
+  return Array.isArray(response.data) ? response.data : response.data.results || [];
+}
+
+/**
+ * Fetch a single event within a group context
+ */
+export async function fetchGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}`);
+  return response.data;
+}
+
+/**
+ * Create event within a group
+ */
+export async function createGroupEvent(
+  groupSlug: string,
+  payload: EventCreatePayload
+): Promise<EventResponse> {
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events`, payload);
+  return response.data;
+}
+
+/**
+ * Update event within a group
+ */
+export async function updateGroupEvent(
+  groupSlug: string,
+  eventId: string,
+  payload: Partial<EventCreatePayload>
+): Promise<EventResponse> {
+  const response = await axiosInstance.put(`/api/groups/${groupSlug}/events/${eventId}`, payload);
+  return response.data;
+}
+
+/**
+ * Delete event within a group
+ */
+export async function deleteGroupEvent(groupSlug: string, eventId: string): Promise<void> {
+  await axiosInstance.delete(`/api/groups/${groupSlug}/events/${eventId}`);
+}
+
+/**
+ * Publish event within a group
+ */
+export async function publishGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events/${eventId}/publish`);
+  return response.data;
+}
+
+/**
+ * Unpublish event within a group
+ */
+export async function unpublishGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events/${eventId}/unpublish`);
+  return response.data;
+}
+
+/**
+ * RSVP to event within a group
+ */
+export async function rsvpToGroupEvent(
+  groupSlug: string,
+  eventId: string,
+  payload: { status: 'going' | 'maybe' | 'not_going'; registration_notes?: string }
+) {
+  const response = await axiosInstance.post(
+    `/api/groups/${groupSlug}/events/${eventId}/rsvp`,
+    payload
+  );
+  return response.data;
+}
+
+/**
+ * Get event attendees within a group
+ */
+export async function fetchGroupEventAttendees(groupSlug: string, eventId: string) {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}/attendees`);
+  return response.data;
+}
+
+/**
+ * Get RSVP breakdown for event within a group
+ */
+export async function fetchGroupEventRSVPBreakdown(groupSlug: string, eventId: string) {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}/rsvp-breakdown`);
+  return response.data;
+}

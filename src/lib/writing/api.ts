@@ -4,8 +4,9 @@
  * Pure API calls for writing operations (working copies, publishing, placement)
  */
 
-import { PublishAndPlacePayload } from "@/types/writingTypes";
+import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@/types/writingTypes";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { unwrapListResponse } from "@/lib/api/utils";
 
 
 export async function upsertWorkingCopy(pieceId: string, data: any) {
@@ -41,4 +42,53 @@ export async function publishPiece(pieceId: string, payload: {
 }) {
   const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/publish`, payload);
   return res.data;
+}
+
+/**
+ * Fetch placements for a sponsor (group or member)
+ */
+export async function fetchPlacements(
+  sponsorType: 'group' | 'member',
+  sponsorSlug: string
+): Promise<FlattenedPlacement[]> {
+  const response = await axiosInstance.get('/api/writing/placements', {
+    params: {
+      sponsor_type: sponsorType,
+      sponsor_slug: sponsorSlug,
+    },
+  });
+  return unwrapListResponse<FlattenedPlacement>(response.data);
+}
+
+/**
+ * Fetch drafts (working copies) for a sponsor
+ */
+export async function fetchDrafts(
+  sponsorType: 'group' | 'member',
+  sponsorSlug: string,
+  filter?: 'all' | 'solo' | 'collab'
+): Promise<WritingWorkingCopy[]> {
+  const response = await axiosInstance.get('/api/writing/drafts', {
+    params: {
+      sponsor_type: sponsorType,
+      sponsor_slug: sponsorSlug,
+      filter,
+    },
+  });
+  return unwrapListResponse<WritingWorkingCopy>(response.data);
+}
+
+/**
+ * Fetch a single published piece by slug
+ */
+export async function fetchPiece(pieceSlug: string) {
+  const response = await axiosInstance.get(`/api/writing/pieces/view/${pieceSlug}`);
+  return response.data;
+}
+
+/**
+ * Delete a draft by ID
+ */
+export async function deleteDraft(draftId: string): Promise<void> {
+  await axiosInstance.delete(`/api/writing/drafts/${draftId}`);
 }

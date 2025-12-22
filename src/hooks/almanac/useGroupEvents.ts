@@ -1,7 +1,7 @@
-// src/hooks/useGroupEvents.ts - AUTO-LOADS ON MOUNT
+// src/hooks/almanac/useGroupEvents.ts - AUTO-LOADS ON MOUNT
 
 import { useState, useCallback, useEffect } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import * as almanacApi from '@lib/almanac/almanacApi';
 import { EventResponse, EventCreatePayload } from '@lib/almanac/almanacApi';
 
 interface UseGroupEventsReturn {
@@ -28,9 +28,6 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Base URL now includes group context
-  const baseUrl = `/api/groups/${groupSlug}/events`;
-
   // =========================================================================
   // LIST EVENTS
   // =========================================================================
@@ -44,12 +41,10 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setIsLoading(true);
       setError(null);
       try {
-        console.log('🔄 Loading events from:', baseUrl, 'params:', params);
-        const response = await axiosInstance.get(baseUrl, { params });
-        const data = response.data.results || response.data;
-        console.log('✅ API Response:', response.data);
+        console.log('🔄 Loading events for group:', groupSlug, 'params:', params);
+        const data = await almanacApi.fetchGroupEvents(groupSlug, params);
         console.log('✅ Parsed events:', data);
-        setEvents(Array.isArray(data) ? data : [data]);
+        setEvents(data);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load events';
         console.error('❌ Failed to load events:', errorMessage);
@@ -58,7 +53,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         setIsLoading(false);
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // ✅ AUTO-LOAD events on mount or when groupSlug changes
@@ -72,15 +67,11 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         console.log('🎯 useGroupEvents mounted/changed, loading for:', groupSlug);
-        const response = await axiosInstance.get(baseUrl, {
-          signal: controller.signal,
-        });
+        const data = await almanacApi.fetchGroupEvents(groupSlug);
 
         if (!cancelled) {
-          const data = response.data.results || response.data;
-          console.log('✅ API Response:', response.data);
           console.log('✅ Parsed events:', data);
-          setEvents(Array.isArray(data) ? data : [data]);
+          setEvents(data);
         }
       } catch (err: any) {
         // Don't set error if request was aborted
@@ -108,7 +99,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       cancelled = true;
       controller.abort();
     };
-  }, [groupSlug, baseUrl]);
+  }, [groupSlug]);
 
   // =========================================================================
   // CREATE EVENT
@@ -118,8 +109,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (payload: EventCreatePayload): Promise<EventResponse> => {
       setError(null);
       try {
-        const response = await axiosInstance.post(baseUrl, payload);
-        const newEvent = response.data;
+        const newEvent = await almanacApi.createGroupEvent(groupSlug, payload);
         console.log('✅ Event created:', newEvent);
         setEvents(prev => [newEvent, ...prev]);
         return newEvent;
@@ -130,7 +120,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================
@@ -141,8 +131,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (eventId: string, payload: Partial<EventCreatePayload>): Promise<EventResponse> => {
       setError(null);
       try {
-        const response = await axiosInstance.put(`${baseUrl}/${eventId}`, payload);
-        const updatedEvent = response.data;
+        const updatedEvent = await almanacApi.updateGroupEvent(groupSlug, eventId, payload);
         console.log('✅ Event updated:', updatedEvent);
         setEvents(prev =>
           prev.map(event => (event.id === eventId ? updatedEvent : event))
@@ -155,7 +144,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================
@@ -167,7 +156,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         console.log('🗑️ Deleting event:', eventId);
-        await axiosInstance.delete(`${baseUrl}/${eventId}`);
+        await almanacApi.deleteGroupEvent(groupSlug, eventId);
         setEvents(prev => prev.filter(e => e.id !== eventId));
         console.log('✅ Event deleted');
       } catch (err) {
@@ -177,7 +166,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================
@@ -188,8 +177,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (eventId: string): Promise<EventResponse> => {
       setError(null);
       try {
-        const response = await axiosInstance.get(`${baseUrl}/${eventId}`);
-        return response.data;
+        return await almanacApi.fetchGroupEvent(groupSlug, eventId);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch event';
         console.error('❌ Failed to fetch event:', errorMessage);
@@ -197,7 +185,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================
@@ -209,8 +197,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         console.log('🚀 Publishing event:', eventId);
-        const response = await axiosInstance.post(`${baseUrl}/${eventId}/publish`);
-        const updatedEvent = response.data;
+        const updatedEvent = await almanacApi.publishGroupEvent(groupSlug, eventId);
         console.log('✅ Event published, response:', updatedEvent);
         console.log('   Status:', updatedEvent.status);
         console.log('   Published at:', updatedEvent.published_at);
@@ -225,7 +212,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================
@@ -237,8 +224,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         console.log('🔄 Unpublishing event:', eventId);
-        const response = await axiosInstance.post(`${baseUrl}/${eventId}/unpublish`);
-        const updatedEvent = response.data;
+        const updatedEvent = await almanacApi.unpublishGroupEvent(groupSlug, eventId);
         console.log('✅ Event unpublished, response:', updatedEvent);
         console.log('   Status:', updatedEvent.status);
         setEvents(prev =>
@@ -252,7 +238,7 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         throw err;
       }
     },
-    [baseUrl]
+    [groupSlug]
   );
 
   // =========================================================================

@@ -1,5 +1,13 @@
 // src/lib/inkwellApi.ts
 
+/**
+ * Inkwell API - AI editing and summarization
+ *
+ * HYBRID APPROACH: This file uses both fetch() and axiosInstance:
+ * - fetch() for Server-Sent Events (SSE) streaming - axios doesn't support ReadableStream well
+ * - axiosInstance for regular non-streaming endpoints (summarize, etc.)
+ */
+
 import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 
 export type EditStyle = "polish" | "tighten" | "expand";

@@ -75,6 +75,12 @@ const AVAILABLE_PERMISSIONS: Permission[] = [
     description: "Send invitations to new members",
     category: "capability",
   },
+  {
+    code: "can__CreateSponsoredCircle",
+    name: "Create Circles",
+    description: "Create Circles sponsored by this Community",
+    category: "capability",
+  },
 ];
 
 // Mock data - will be replaced with API call

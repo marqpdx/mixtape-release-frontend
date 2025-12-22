@@ -62,6 +62,24 @@ import { clearAccessToken } from "@/lib/auth/tokenStorage";
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
   async (error: AxiosError): Promise<AxiosResponse | void> => {
+    // Extract Django error messages for better UX
+    if (error.response?.data) {
+      const data = error.response.data as any;
+      // Try to extract meaningful error message from Django response
+      const extractedMessage =
+        data.detail ||
+        data.error ||
+        (typeof data === 'object' && !Array.isArray(data)
+          ? Object.entries(data)
+              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+              .join('; ')
+          : null);
+
+      if (extractedMessage && typeof extractedMessage === 'string') {
+        error.message = extractedMessage;
+      }
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (!originalRequest || originalRequest._retry) {

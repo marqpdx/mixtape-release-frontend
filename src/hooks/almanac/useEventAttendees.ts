@@ -1,7 +1,7 @@
 // src/hooks/useEventAttendees.ts
 
 import { useState, useCallback, useEffect } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import * as almanacApi from '@/lib/almanac/almanacApi';
 
 export interface EventAttendee {
   id: string;
@@ -25,16 +25,9 @@ export function useEventAttendees(groupSlug: string, eventId: string) {
     try {
       console.log('👥 bbb Fetching attendees:', { groupSlug, eventId });
 
-      const response = await axiosInstance.get(
-        `/api/groups/${groupSlug}/events/${eventId}/attendees`
-      );
+      const data = await almanacApi.fetchGroupEventAttendees(groupSlug, eventId);
 
-      console.log('✅ bbb Raw response:', response.data);
-
-      // Check if response is paginated (has 'results' key)
-      const data = response.data.results || response.data;
-
-      console.log('✅ bbb Extracted data:', data);
+      console.log('✅ bbb Raw response:', data);
       console.log('✅ bbb First attendee:', data[0]);
 
       setAttendees(Array.isArray(data) ? data : []);
