@@ -20,6 +20,8 @@ export const groupsQueryKeys = {
   members: (groupSlug: string) => [...groupsQueryKeys.detail(groupSlug), 'members'] as const,
   membersList: (groupSlug: string, options: FetchGroupMembersOptions) =>
     [...groupsQueryKeys.members(groupSlug), options] as const,
+  sponsorCircles: (sponsorGroupSlug: string) =>
+    [...groupsQueryKeys.all, "sponsor", sponsorGroupSlug, "circles"] as const,
 };
 
 // Hook return type interfaces
@@ -121,6 +123,31 @@ export const useGroup = (slug: string | null): UseGroupResult => {
     refetch
   };
 };
+
+
+/**
+ * Hook to fetch a groups' circles (sponsored circles)
+ */
+export const useGroupCircles = (
+  sponsorGroupSlug: string | null,
+  options: FetchGroupsOptions = {}
+) => {
+  const {
+    data: circles = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [...groupsQueryKeys.sponsorCircles(sponsorGroupSlug || ""), options],
+    queryFn: () => groupApi.fetchGroupCircles(sponsorGroupSlug!, options),
+    enabled: !!sponsorGroupSlug,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { circles, isLoading, error: error as Error | null, refetch };
+};
+
 
 /**
  * Hook for group mutations (update, publish, etc.)

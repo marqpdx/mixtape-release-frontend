@@ -187,12 +187,42 @@ export async function inviteToGroup(
   return response.data;
 }
 
+// --- Circles (group-scoped) ---
+
 /**
  * Fetch pending invitations for a group
  */
 export async function fetchGroupInvitations(groupSlug: string): Promise<any[]> {
   const response = await axiosInstance.get<any[]>(`/api/groups/${groupSlug}/invitations`);
   return response.data;
+}
+
+export async function createGroupCircle(
+  sponsorGroupSlug: string,
+  data: GroupCreateFormData
+): Promise<Group> {
+  // Sponsor-scoped circles endpoint
+  const response = await axiosInstance.post<Group>(
+    `/api/groups/${sponsorGroupSlug}/circles`,
+    data
+  );
+  return response.data;
+}
+
+export async function fetchGroupCircles(
+  sponsorGroupSlug: string,
+  options: FetchGroupsOptions = {}
+): Promise<Group[]> {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([key, value]) => {
+    if (value !== undefined) params.append(key, value.toString());
+  });
+
+  const qs = params.toString();
+  const url = `/api/groups/${sponsorGroupSlug}/circles${qs ? `?${qs}` : ""}`;
+
+  const response = await axiosInstance.get<GroupsListResponse>(url);
+  return unwrapListResponse<Group>(response.data);
 }
 
 // ============================================================================

@@ -26,16 +26,6 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "member-requests", label: "Join Requests", hidden: true },
     ]
   },
-  // {
-  //   key: "events",
-  //   label: "Events",
-  //   icon: "👥",
-  //   subItems: [
-  //     { key: "events-landing", label: "E1", hidden: true },
-  //     { key: "events-2", label: "E2", hidden: true },
-  //     { key: "create-event", label: "Create Event", hidden: true },
-  //   ]
-  // },
   {
     key: "threadworks",
     label: "Threadworks",
@@ -44,6 +34,25 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "threadworks-landing", label: "Conversations" },
     ]
   },
+  {
+    key: "almanac",
+    label: "Almanac",
+    icon: "📅",
+    subItems: [
+      { key: "almanac-landing", label: "Events & Calendar" },
+    ]
+  },
+
+  {
+    key: "mill",
+    label: "Mill",
+    icon: "🌾",
+    subItems: [
+      { key: "mill", label: "Grist Mill" },
+    ]
+  },
+
+
   // {
   //   key: "earthlab",
   //   label: "EarthLab",
@@ -75,6 +84,8 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "⚙️",
     subItems: [
       { key: "edit-group", label: "Edit Group" },
+      { key: "circles-landing", label: "Circles", hidden: false },
+      { key: "circle-create", label: "Create Circle", hidden: false },
       // { key: "general", label: "General Settings" },
       { key: "permissions", label: "Permissions", hidden: true },
       { key: "integrations", label: "Integrations", hidden: true },

@@ -53,6 +53,7 @@ export interface EventCreatePayload {
 
 export interface EventResponse {
   id: string;
+  slug: string;
   title: string;
   description: string;
   location: string;
@@ -249,7 +250,7 @@ class AlmanacApi {
     try {
       // If groupSlug provided, use group-scoped URL
       const url = groupSlug
-        ? `/api/groups/${groupSlug}/events/`
+        ? `/api/groups/${groupSlug}/almanac/`
         : `/api/almanac/events/`;
 
       const response = await this.client.post(url, payload);
@@ -259,40 +260,63 @@ class AlmanacApi {
     }
   }
 
-  async getEvent(eventId: string): Promise<EventResponse> {
+  async getEvent(eventId: string, groupSlug?: string): Promise<EventResponse> {
     try {
-      const response = await this.client.get(`/api/almanac/events/${eventId}`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}`
+        : `/api/almanac/events/${eventId}`;
+
+      const response = await this.client.get(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async listEvents(params?: {
-    status?: 'draft' | 'published' | 'archived';
-    kind?: 'event' | 'gathering';
-    decorator?: string;
-  }): Promise<EventResponse[]> {
+  async listEvents(
+    params?: {
+      status?: 'draft' | 'published' | 'archived';
+      kind?: 'event' | 'gathering';
+      decorator?: string;
+    },
+    groupSlug?: string
+  ): Promise<EventResponse[]> {
     try {
-      const response = await this.client.get('/api/almanac/events/', { params });
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/`
+        : `/api/almanac/`;
+
+      const response = await this.client.get(url, { params });
       return response.data.results || response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async updateEvent(eventId: string, payload: Partial<EventCreatePayload>): Promise<EventResponse> {
+  async updateEvent(
+    eventId: string,
+    payload: Partial<EventCreatePayload>,
+    groupSlug?: string
+  ): Promise<EventResponse> {
     try {
-      const response = await this.client.put(`/api/almanac/events/${eventId}`, payload);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}`
+        : `/api/almanac/${eventId}`;
+
+      const response = await this.client.put(url, payload);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async deleteEvent(eventId: string): Promise<void> {
+  async deleteEvent(eventId: string, groupSlug?: string): Promise<void> {
     try {
-      await this.client.delete(`/api/almanac/events/${eventId}`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}`
+        : `/api/almanac/${eventId}`;
+
+      await this.client.delete(url);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
@@ -302,18 +326,26 @@ class AlmanacApi {
   // PUBLISHING WORKFLOW - ✅ NEW
   // =========================================================================
 
-  async publishEvent(eventId: string): Promise<EventResponse> {
+  async publishEvent(eventId: string, groupSlug?: string): Promise<EventResponse> {
     try {
-      const response = await this.client.post(`/api/almanac/events/${eventId}/publish`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/publish`
+        : `/api/almanac/${eventId}/publish`;
+
+      const response = await this.client.post(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async unpublishEvent(eventId: string): Promise<EventResponse> {
+  async unpublishEvent(eventId: string, groupSlug?: string): Promise<EventResponse> {
     try {
-      const response = await this.client.post(`/api/almanac/events/${eventId}/unpublish`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/unpublish`
+        : `/api/almanac/${eventId}/unpublish`;
+
+      const response = await this.client.post(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
@@ -373,7 +405,7 @@ class AlmanacApi {
         ...filters,
       };
       const response = await this.client.get(
-        `/api/groups/${groupSlug}/events/calendar`,
+        `/api/groups/${groupSlug}/almanac/calendar`,
         { params }
       );
       return response.data || [];
@@ -392,10 +424,15 @@ class AlmanacApi {
    */
   async rsvpToEvent(
     eventId: string,
-    payload: RSVPPayload
+    payload: RSVPPayload,
+    groupSlug?: string
   ): Promise<AttendanceResponse> {
     try {
-      const response = await this.client.post(`/api/almanac/events/${eventId}/rsvp`, payload);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/rsvp`
+        : `/api/almanac/events/${eventId}/rsvp`;
+
+      const response = await this.client.post(url, payload);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
@@ -460,10 +497,15 @@ class AlmanacApi {
 
   async followEvent(
     eventId: string,
-    followType?: 'following' | 'interested' | 'organizer'
+    followType?: 'following' | 'interested' | 'organizer',
+    groupSlug?: string
   ): Promise<any> {
     try {
-      const response = await this.client.post(`/api/almanac/events/${eventId}/follow`, {
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/follow`
+        : `/api/almanac/${eventId}/follow`;
+
+      const response = await this.client.post(url, {
         follow_type: followType || 'following',
         notify_new_occurrences: true,
         notify_changes: true,
@@ -474,9 +516,13 @@ class AlmanacApi {
     }
   }
 
-  async unfollowEvent(eventId: string): Promise<void> {
+  async unfollowEvent(eventId: string, groupSlug?: string): Promise<void> {
     try {
-      await this.client.delete(`/api/almanac/events/${eventId}/follow`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/follow`
+        : `/api/almanac/${eventId}/follow`;
+
+      await this.client.delete(url);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
@@ -486,27 +532,39 @@ class AlmanacApi {
   // ANALYTICS & MANAGEMENT
   // =========================================================================
 
-  async getEventAnalytics(eventId: string): Promise<any> {
+  async getEventAnalytics(eventId: string, groupSlug?: string): Promise<any> {
     try {
-      const response = await this.client.get(`/api/almanac/events/${eventId}/analytics`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/analytics`
+        : `/api/almanac/${eventId}/analytics`;
+
+      const response = await this.client.get(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async syncEventRsvps(eventId: string): Promise<any> {
+  async syncEventRsvps(eventId: string, groupSlug?: string): Promise<any> {
     try {
-      const response = await this.client.post(`/api/almanac/events/${eventId}/sync-rsvps`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/sync-rsvps`
+        : `/api/almanac/${eventId}/sync-rsvps`;
+
+      const response = await this.client.post(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
   }
 
-  async getEventAttendees(eventId: string): Promise<any[]> {
+  async getEventAttendees(eventId: string, groupSlug?: string): Promise<any[]> {
     try {
-      const response = await this.client.get(`/api/almanac/events/${eventId}/attendees`);
+      const url = groupSlug
+        ? `/api/groups/${groupSlug}/almanac/${eventId}/attendees`
+        : `/api/almanac/${eventId}/attendees`;
+
+      const response = await this.client.get(url);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
@@ -528,7 +586,7 @@ export async function fetchGroupEvents(
   groupSlug: string,
   params?: { status?: 'draft' | 'published' | 'archived'; kind?: 'event' | 'gathering'; decorator?: string }
 ): Promise<EventResponse[]> {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events`, { params });
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/`, { params });
   return Array.isArray(response.data) ? response.data : response.data.results || [];
 }
 
@@ -536,7 +594,7 @@ export async function fetchGroupEvents(
  * Fetch a single event within a group context
  */
 export async function fetchGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}`);
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/${eventId}`);
   return response.data;
 }
 
@@ -547,7 +605,7 @@ export async function createGroupEvent(
   groupSlug: string,
   payload: EventCreatePayload
 ): Promise<EventResponse> {
-  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events`, payload);
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/almanac/`, payload);
   return response.data;
 }
 
@@ -559,7 +617,7 @@ export async function updateGroupEvent(
   eventId: string,
   payload: Partial<EventCreatePayload>
 ): Promise<EventResponse> {
-  const response = await axiosInstance.put(`/api/groups/${groupSlug}/events/${eventId}`, payload);
+  const response = await axiosInstance.put(`/api/groups/${groupSlug}/almanac/${eventId}`, payload);
   return response.data;
 }
 
@@ -567,14 +625,14 @@ export async function updateGroupEvent(
  * Delete event within a group
  */
 export async function deleteGroupEvent(groupSlug: string, eventId: string): Promise<void> {
-  await axiosInstance.delete(`/api/groups/${groupSlug}/events/${eventId}`);
+  await axiosInstance.delete(`/api/groups/${groupSlug}/almanac/${eventId}`);
 }
 
 /**
  * Publish event within a group
  */
 export async function publishGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
-  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events/${eventId}/publish`);
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/almanac/${eventId}/publish`);
   return response.data;
 }
 
@@ -582,7 +640,7 @@ export async function publishGroupEvent(groupSlug: string, eventId: string): Pro
  * Unpublish event within a group
  */
 export async function unpublishGroupEvent(groupSlug: string, eventId: string): Promise<EventResponse> {
-  const response = await axiosInstance.post(`/api/groups/${groupSlug}/events/${eventId}/unpublish`);
+  const response = await axiosInstance.post(`/api/groups/${groupSlug}/almanac/${eventId}/unpublish`);
   return response.data;
 }
 
@@ -595,7 +653,7 @@ export async function rsvpToGroupEvent(
   payload: { status: 'going' | 'maybe' | 'not_going'; registration_notes?: string }
 ) {
   const response = await axiosInstance.post(
-    `/api/groups/${groupSlug}/events/${eventId}/rsvp`,
+    `/api/groups/${groupSlug}/almanac/${eventId}/rsvp`,
     payload
   );
   return response.data;
@@ -605,7 +663,7 @@ export async function rsvpToGroupEvent(
  * Get event attendees within a group
  */
 export async function fetchGroupEventAttendees(groupSlug: string, eventId: string) {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}/attendees`);
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/${eventId}/attendees`);
   return response.data;
 }
 
@@ -613,6 +671,6 @@ export async function fetchGroupEventAttendees(groupSlug: string, eventId: strin
  * Get RSVP breakdown for event within a group
  */
 export async function fetchGroupEventRSVPBreakdown(groupSlug: string, eventId: string) {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventId}/rsvp-breakdown`);
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/${eventId}/rsvp-breakdown`);
   return response.data;
 }

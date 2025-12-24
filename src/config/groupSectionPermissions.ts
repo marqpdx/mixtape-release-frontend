@@ -1,4 +1,5 @@
 // src/config/groupSectionPermissions.ts
+
 /**
  * Permission requirements for group work area sections
  *
@@ -81,6 +82,30 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredRole: 'admin',
     description: 'Group forums and discussions',
   },
+
+  // Almanac - accessible to all stewards
+  'almanac-landing': {
+    public: true,
+    description: 'Group events and calendar management',
+  },
+
+  // Almanac - accessible to all stewards
+  'mill': {
+    requiredRole: 'admin',
+    description: 'Mill for Grist creation and management',
+  },
+
+  'circles-landing': {
+    requiredRole: 'admin',
+    description: 'Landing page for group circles management',
+  },
+
+  'circle-create': {
+    requiredRole: 'admin',
+    description: 'Create a new circle within the group',
+  },
+
+
 
   // Settings - admin only
   'edit-group': {

@@ -1,4 +1,5 @@
 // src/hooks/groups/useGroupSectionPermissions.ts
+
 /**
  * Hook for checking group section access permissions
  */

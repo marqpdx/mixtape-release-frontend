@@ -323,18 +323,73 @@ export const groupMemberToUserIdentity = (member: GroupMembership): UserIdentity
 
 // ---------- Form types ----------
 
+// export interface GroupCreateFormData {
+//   title: string;
+//   description: string;
+//   group_type: GroupType;
+//   visibility: GroupVisibility;
+//   profile_image?: string;
+//   background_image?: string;
+// }
+
+// export interface GroupUpdateFormData extends Partial<GroupCreateFormData> {
+//   // All fields optional for updates
+// }
+
+
+
+
+// ---------- Group types ----------
+
+// export type GroupType = "community" | "circle" | "persona" | "coalition";
+// export type GroupVisibility = "public" | "invite_only" | "private" | "hidden";
+
+// Circles: “Open Join vs Invite Only” lives inside scope/settings.
+// Keep names consistent with backend enums.
+export type CircleJoinMode = "open" | "request" | "invite_only";
+
+// Sponsorship lock (how circles live “inside” a sponsor)
+export type SponsorRef =
+  | { sponsor_type: "group"; sponsor_id: string }   // community/persona
+  | { sponsor_type: "member"; sponsor_id: string }; // member-sponsored circle
+
+// ---------- Form types ----------
+
 export interface GroupCreateFormData {
+  // required
   title: string;
   description: string;
   group_type: GroupType;
   visibility: GroupVisibility;
-  profile_image?: string;
-  background_image?: string;
+
+  // optional “common”
+  tagline?: string;       // community-ish
+  summary?: string;
+  body?: string;
+
+  // images (you’ve started moving to path/url split — good)
+  profile_image_path?: string;
+  background_image_path?: string;
+
+  // circle-ish
+  start_date?: string | null; // ISO string
+  end_date?: string | null;   // ISO string
+  join_mode?: CircleJoinMode; // circle scope policy (MVP)
+  allow_share_upward?: boolean; // circle-level gate (MVP: default false)
+
+  // sponsorship (usually injected by wrapper, not user-entered)
+  // sponsor?: SponsorRef;
 }
 
-export interface GroupUpdateFormData extends Partial<GroupCreateFormData> {
-  // All fields optional for updates
+export interface GroupUpdateFormData extends Partial<GroupCreateFormData> {}
+
+
+export interface GroupCreateFormValues
+  extends Omit<GroupCreateFormData, "start_date" | "end_date"> {
+  start_date?: Date | null;
+  end_date?: Date | null;
 }
+
 
 // ---------- Filter/search types ----------
 

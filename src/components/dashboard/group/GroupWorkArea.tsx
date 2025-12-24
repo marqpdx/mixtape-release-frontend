@@ -24,6 +24,11 @@ import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
 import { Group } from "@/types/groupTypes";
 import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
+import { AlmanacWorkArea } from "@/components/almanac";
+import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
+import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea";
+// import { GroupCirclesLandingArea } from "@/components/groups/circles/GroupCirclesLandingArea";
+import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -173,6 +178,51 @@ export default function GroupWorkArea({
       </WorkAreaWrapper>
     );
   }
+
+  // Almanac (Events & Gatherings)
+  if (section === "almanac-landing") {
+    return (
+      <WorkAreaWrapper>
+        <AlmanacWorkArea
+          section={section}
+          sectionParams={sectionParams}
+          setActiveSection={setActiveSection}
+          groupSlug={group.slug}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Grist Mill (Content Creation)
+  if (section === "mill") {
+    return (
+      <WorkAreaWrapper>
+        <MillWorkArea sponsor={{ type: 'group', slug: group.slug }} />
+      </WorkAreaWrapper>
+    );
+  }
+
+
+if (section === "circles-landing") {
+  return (
+    <WorkAreaWrapper>
+      <GroupCirclesWorkArea groupSlug={group.slug} />
+    </WorkAreaWrapper>
+  );
+}
+
+if (section === "circle-create") {
+  return (
+    <WorkAreaWrapper>
+      <GroupCircleCreateWorkArea
+        groupSlug={group.slug}
+        setActiveSection={setActiveSection}
+      />
+    </WorkAreaWrapper>
+  );
+}
+
+
 
   // Members sections
   if (section === "members-roles") {

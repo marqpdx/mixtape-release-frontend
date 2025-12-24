@@ -1,4 +1,5 @@
 // /src/components/groups/GroupCreateForm.tsx
+
 // Uses react-hook-form directly (not Refine) and toaster for notifications
 
 "use client";
@@ -19,14 +20,10 @@ import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
 import { toaster } from "@/components/ui/toaster";
 import * as groupApi from "@/lib/group/groupApi";
-import type { GroupCreateFormData, GroupType, GroupVisibility } from "@/types/groupTypes";
+import type { GroupCreateFormData, GroupCreateFormValues, GroupType, GroupVisibility } from "@/types/groupTypes";
 
 // Extended form data to include circle/community specific fields
-interface GroupCreateFormValues extends GroupCreateFormData {
-  tagline?: string;
-  start_date?: Date | null;
-  end_date?: Date | null;
-}
+
 
 const groupTypeOptions = [
   { id: "community", label: "Community", value: "community" },
@@ -277,7 +274,12 @@ const GroupCreateForm = memo(function GroupCreateForm({
   // FIXED: Stable handlers using useCallback
   const createGroup = useCallback(async (values: GroupCreateFormValues): Promise<string | null> => {
     try {
-      const group = await groupApi.createGroup(values);
+      const payload: GroupCreateFormData = {
+        ...values,
+        start_date: values.start_date ? values.start_date.toISOString() : null,
+        end_date: values.end_date ? values.end_date.toISOString() : null,
+      };
+      const group = await groupApi.createGroup(payload);
       toaster.create({
         title: "Group Created",
         description: `Your ${values.group_type} was created successfully.`,

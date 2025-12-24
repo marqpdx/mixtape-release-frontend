@@ -1,0 +1,31 @@
+"use client";
+
+import { VStack, HStack, Button, Text, Box } from "@chakra-ui/react";
+
+interface GroupCirclesLandingAreaProps {
+  groupSlug: string;
+  setActiveSection: (section: string, params?: Record<string, string>) => void;
+}
+
+export function GroupCirclesLandingArea({ groupSlug, setActiveSection }: GroupCirclesLandingAreaProps) {
+  return (
+    <VStack align="stretch" gap={6}>
+      <HStack justify="space-between" align="center">
+        <Box>
+          <Text fontSize="lg" fontWeight="semibold">Circles</Text>
+          <Text fontSize="sm" color="gray.600">
+            Private sub-spaces inside this community.
+          </Text>
+        </Box>
+
+        <Button colorScheme="green" onClick={() => setActiveSection("circles-create")}>
+          Create Circle
+        </Button>
+      </HStack>
+
+      <Box py={10} textAlign="center">
+        <Text color="gray.500">Circle list coming next (reuse your GroupsList).</Text>
+      </Box>
+    </VStack>
+  );
+}

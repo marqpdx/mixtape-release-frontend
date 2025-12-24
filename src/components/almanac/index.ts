@@ -1,7 +1,8 @@
-// src/components/Calendar/index.ts
+// src/components/almanac/index.ts
 
-export { CalendarMonth } from './CalendarMonth';
-export { CalendarDayCell } from './CalendarDayCell';
-export { OccurrencesList } from './OccurrencesList';
-export { EventDetailDrawer } from './EventDetailDrawer';
-export { CalendarContainer } from './CalendarContainer';
+export { AlmanacWorkArea } from './AlmanacWorkArea';
+export { EventDraftList } from './EventDraftList';
+export { EventPublishedList } from './EventPublishedList';
+export { EventDetailView } from './EventDetailView';
+export { EventEditForm } from './EventEditForm';
+export { EventCalendar } from './EventCalendar';
