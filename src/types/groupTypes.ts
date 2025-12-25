@@ -40,6 +40,13 @@ export interface Group {
   display_layout: "classic" | "modern" | "minimal";
   status?: GroupStatus;
 
+  // Parent group info for circles
+  sponsor_group?: {
+    slug: string;
+    title: string;
+    id: string;
+  } | null;
+
   // DEPRECATED: These fields store expired presigned URLs
   // Use profile_image_url and background_image_url instead
   profile_image?: string;

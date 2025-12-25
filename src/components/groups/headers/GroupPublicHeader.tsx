@@ -33,6 +33,10 @@ export function GroupPublicHeader({
 }: GroupPublicHeaderProps) {
   const canJoin = group.visibility === 'public' && group.join_policy !== 'closed';
 
+  console.log("aaa GroupPublicHeader render:", { group, isMember, testRole });
+
+
+
   const groupAvatarRaw = group.avatar ?? null;
 
   const groupAvatar =
@@ -47,7 +51,7 @@ export function GroupPublicHeader({
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
     >
-      <Box
+      <Box className="lete"
         position="relative"
         h="290px"
         bgImage={group.background_image_url ? `url(${group.background_image_url})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}
@@ -55,6 +59,7 @@ export function GroupPublicHeader({
         bgPos="center"
         borderRadius="lg"
         mb={4}
+        minW={"100vw"}
       >
         {/* Hero Content - Bottom */}
         <Box

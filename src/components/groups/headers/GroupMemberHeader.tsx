@@ -47,7 +47,9 @@ export function GroupMemberHeader({
   const emblemSrc =
     group.emblem?.size_96_url?.trim() ||
     group.emblem?.url?.trim() ||
-    null;
+    group.profile_image_url;
+
+  console.log('Emblem Src:', emblemSrc);
 
   return (
     <GroupHeaderWrapper
@@ -56,13 +58,13 @@ export function GroupMemberHeader({
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
     >
-      <Box bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
+      <Box minW={'100vw'} bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
         <Container maxW="7xl">
           <Flex alignItems="center" gap={6}>
 
             {/* Right side: Group emblem */}
             <Flex alignItems="center" gap={3}>
-              <Image alt={`${group.title} emblem`} src={emblemSrc} />
+              <Image alt={`${group.title} emblem`} height={"96px"} width={"96px"} src={emblemSrc} />
             </Flex>
 
             <Box flex="1">

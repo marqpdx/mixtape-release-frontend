@@ -2,6 +2,7 @@
 
 import { MenuItem } from "@components/dashboard/shared/types";
 import { canAccessSection } from "@/config/groupSectionPermissions";
+import { isSectionAllowedForGroupType } from "@/config/groupTypeSections";
 
 // Admin/Steward Dashboard - Full feature set
 export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
@@ -125,24 +126,31 @@ export function getGroupMenuItems(userRole: string | null): MenuItem[] {
 }
 
 /**
- * Filter menu items based on user permissions
+ * Filter menu items based on user permissions and group type
  * @param menuItems - The menu items to filter
  * @param userRoles - Array of user's roles
  * @param userDecorators - Array of user's decorator codes
+ * @param groupType - The group type ('community' or 'circle') - defaults to 'community'
  * @returns Filtered menu items with only accessible sections
  */
 export function filterMenuByPermissions(
   menuItems: MenuItem[],
   userRoles: string[],
-  userDecorators: string[]
+  userDecorators: string[],
+  groupType: string = 'community'
 ): MenuItem[] {
   return menuItems
     .map(item => {
-      // Filter subItems based on permissions
+      // Filter subItems based on permissions and group type
       const filteredSubItems = item.subItems
         ?.filter(subItem => {
           // Skip hidden items
           if (subItem.hidden) return false;
+
+          // Check if section is allowed for this group type
+          if (!isSectionAllowedForGroupType(subItem.key, groupType)) {
+            return false;
+          }
 
           // Check if user has access to this section
           return canAccessSection(subItem.key, userRoles, userDecorators);
@@ -166,22 +174,24 @@ export function filterMenuByPermissions(
 }
 
 /**
- * Get filtered menu items based on user role and permissions
+ * Get filtered menu items based on user role, permissions, and group type
  * @param userRole - User's primary role (for determining base menu)
  * @param userRoles - Array of all user's roles
  * @param userDecorators - Array of user's decorator codes
+ * @param groupType - The group type ('community' or 'circle') - defaults to 'community'
  * @returns Filtered menu items
  */
 export function getFilteredGroupMenuItems(
   userRole: string | null,
   userRoles: string[] = [],
-  userDecorators: string[] = []
+  userDecorators: string[] = [],
+  groupType: string = 'community'
 ): MenuItem[] {
   const baseMenu = getGroupMenuItems(userRole);
 
-  // If user is admin or steward, filter the admin menu by permissions
+  // If user is admin or steward, filter the admin menu by permissions and group type
   if (['admin', 'steward'].includes(userRole || '')) {
-    return filterMenuByPermissions(baseMenu, userRoles, userDecorators);
+    return filterMenuByPermissions(baseMenu, userRoles, userDecorators, groupType);
   }
 
   // Regular members get the member menu as-is

@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@/types/auth";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
 import { useMyPermissions } from "@/hooks/groups/useGroupPermissions";
+import { CircleParentBar } from "@/components/groups/CircleParentBar";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -120,14 +121,18 @@ export default function GroupPage() {
   const viewingAsAdmin = testRole === "admin";
   const showAdminDashboard = isAdminOrSteward && viewingAsAdmin;
 
+  // Circle parent context bar (shown for all views)
+  const circleBar = <CircleParentBar group={group} />;
+
   if (showAdminDashboard) {
     const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
 
-    // Filter menu items based on user's permissions
+    // Filter menu items based on user's permissions and group type
     const menuItems = getFilteredGroupMenuItems(
       effectiveRole,
       myPermissions?.roles || [],
-      myPermissions?.decorators || []
+      myPermissions?.decorators || [],
+      group.group_type || 'community'
     );
 
     const WrappedGroupWorkArea = (props: any) => (
@@ -143,6 +148,7 @@ export default function GroupPage() {
           onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
           isAdminOrSteward={isAdminOrSteward}
         />
+        {circleBar}
         <DashboardLayout
           title={group.title}
           menuItems={menuItems}
@@ -157,6 +163,7 @@ export default function GroupPage() {
   // Member or Public landing
   return (
     <Box className="sixty-box" pt={0} px={2}>
+      {circleBar}
       <GroupLanding
         group={group}
         userRole={primaryRole as any}

@@ -57,7 +57,20 @@ export default function GroupWorkArea({
 
   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
 
+  // For circles, fetch parent group members for invitation restrictions
+  const isCircle = group.group_type === 'circle';
+  const parentGroupSlug = group.sponsor_group?.slug;
+  const { members: parentMembers } = useMembers(isCircle && parentGroupSlug ? parentGroupSlug : null);
+
   const stableMembers = useMemo(() => groupMembers || [], [groupMembers]);
+
+  // For circles, use parent members as the invitation pool; otherwise use current group members
+  const invitationPool = useMemo(() => {
+    if (isCircle && parentMembers) {
+      return parentMembers;
+    }
+    return stableMembers;
+  }, [isCircle, parentMembers, stableMembers]);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -261,20 +274,17 @@ if (section === "circle-create") {
   }
 
   if (section === "invitations") {
-    // Note: allSiteMembers currently not fetched - GroupInviteForm will fall back to groupMembers
-    // TODO: To enable site-wide member search, add:
-    // const { data: allProfiles, isLoading: profilesLoading } = useQuery({
-    //   queryKey: ['profiles', 'all'],
-    //   queryFn: () => fetch('/api/profiles').then(r => r.json())
-    // });
+    // For circles: restrict invitations to parent group members only
+    // For communities: use all group members (could be expanded to site-wide in future)
     return (
       <WorkAreaWrapper>
         <GroupInviteWorkArea
           groupSlug={group.slug}
           onMembersRefetch={refetch}
-          groupMembers={stableMembers}
+          groupMembers={invitationPool}
           allSiteMembers={[]}
           siteMembersLoading={false}
+          parentGroupName={isCircle && group.sponsor_group ? group.sponsor_group.title : undefined}
         />
       </WorkAreaWrapper>
     );

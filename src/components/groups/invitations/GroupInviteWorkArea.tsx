@@ -25,6 +25,7 @@ interface GroupInviteWorkAreaProps {
   groupMembers: GroupMembership[];
   allSiteMembers?: UserProfile[];
   siteMembersLoading: boolean;
+  parentGroupName?: string;
 }
 
 export default function GroupInviteWorkArea({
@@ -33,6 +34,7 @@ export default function GroupInviteWorkArea({
   groupMembers,
   allSiteMembers,
   siteMembersLoading,
+  parentGroupName,
 }: GroupInviteWorkAreaProps) {
   const [pollInvitationId, setPollInvitationId] = useState<number | null>(null);
   const [inviteStatusMessage, setInviteStatusMessage] = useState<string | null>(null);
@@ -122,7 +124,10 @@ export default function GroupInviteWorkArea({
         {/* Send Invites Tab */}
         <Tabs.Content value="send">
           <Text mb={4} color="gray.600">
-            Send an invitation to join this group. They'll receive an email with instructions to accept the invitation.
+            {parentGroupName
+              ? `Invite members from ${parentGroupName} to join this circle.`
+              : "Send an invitation to join this group. They'll receive an email with instructions to accept the invitation."
+            }
           </Text>
 
           <GroupInviteForm
@@ -131,6 +136,7 @@ export default function GroupInviteWorkArea({
             groupMembers={groupMembers}
             allSiteMembers={allSiteMembers}
             siteMembersLoading={siteMembersLoading}
+            parentGroupName={parentGroupName}
           />
 
           {/* Status Messages */}

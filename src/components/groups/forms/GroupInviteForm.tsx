@@ -26,6 +26,7 @@ interface InviteFormProps {
   groupMembers?: GroupMembership[];
   allSiteMembers?: UserProfile[];
   siteMembersLoading?: boolean;
+  parentGroupName?: string;
 }
 
 interface UserSuggestion {
@@ -106,9 +107,10 @@ interface MemberSelectorProps {
   members: GroupMembership[];
   onAdd: (usernames: string[]) => void;
   onClose: () => void;
+  parentGroupName?: string;
 }
 
-const MemberSelector = ({ members, onAdd, onClose }: MemberSelectorProps) => {
+const MemberSelector = ({ members, onAdd, onClose, parentGroupName }: MemberSelectorProps) => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -178,7 +180,9 @@ const MemberSelector = ({ members, onAdd, onClose }: MemberSelectorProps) => {
       >
         {/* Header */}
         <HStack justify="space-between" p={4} borderBottom="1px solid" borderColor="gray.200">
-          <Text fontWeight="bold" fontSize="lg">Select Group Members</Text>
+          <Text fontWeight="bold" fontSize="lg">
+            {parentGroupName ? `Select from ${parentGroupName}` : 'Select Group Members'}
+          </Text>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <IconX size={18} />
           </Button>
@@ -268,6 +272,7 @@ export const GroupInviteForm = ({
   groupMembers = [],
   allSiteMembers = [],
   siteMembersLoading = false,
+  parentGroupName,
 }: InviteFormProps) => {
   const { handleSubmit, reset, control, setValue, watch } = useForm({
     defaultValues: {
@@ -575,7 +580,10 @@ export const GroupInviteForm = ({
           </HStack>
 
           <Text fontSize="sm" color="gray.600">
-            Enter emails, or @usernames for existing members. Separate multiple entries with commas.
+            {parentGroupName
+              ? `Select members from ${parentGroupName} using the button above, or enter @usernames.`
+              : "Enter emails, or @usernames for existing members. Separate multiple entries with commas."
+            }
           </Text>
         </Box>
 
@@ -610,6 +618,7 @@ export const GroupInviteForm = ({
           members={groupMembers}
           onAdd={handleAddMembers}
           onClose={() => setShowMemberSelector(false)}
+          parentGroupName={parentGroupName}
         />
       )}
     </Box>

@@ -63,6 +63,7 @@ export interface EventResponse {
   max_attendees?: number;
   registration_required: boolean;
   registration_deadline_hours: number;
+  visible_to_parent: boolean;
 
   // Computed fields
   is_recurring: boolean;

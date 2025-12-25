@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateGroupEvent } from '@/lib/almanac/almanacApi';
 import { toaster } from '@/components/ui/toaster';
 import type { EventResponse } from '@/lib/almanac/almanacApi';
+import { useGroup } from '@/hooks/groups/useGroups';
 
 interface EventEditFormProps {
   groupSlug: string;
@@ -28,6 +29,11 @@ interface EventEditFormProps {
 export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEditFormProps) {
   const queryClient = useQueryClient();
 
+  // Fetch group data to check if this is a circle
+  const { group } = useGroup(groupSlug);
+  const isCircle = group?.group_type === 'circle';
+  const parentGroup = group?.sponsor_group;
+
   // Form state
   const [formData, setFormData] = useState({
     title: event.title || '',
@@ -36,6 +42,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
     event_format: event.event_format || 'workshop',
     max_attendees: event.max_attendees?.toString() || '',
     registration_required: event.registration_required,
+    visible_to_parent: event.visible_to_parent || false,
   });
 
   // Update mutation
@@ -72,6 +79,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
       event_format: formData.event_format,
       max_attendees: formData.max_attendees ? parseInt(formData.max_attendees, 10) : null,
       registration_required: formData.registration_required,
+      visible_to_parent: formData.visible_to_parent,
     };
 
     updateMutation.mutate(payload);
@@ -164,6 +172,24 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
             Require RSVP before attending
           </Field.HelperText>
         </Field.Root>
+
+        {/* Visible to Parent - checkbox (circles only) */}
+        {isCircle && parentGroup && (
+          <Field.Root>
+            <label>
+              <input
+                type="checkbox"
+                checked={formData.visible_to_parent}
+                onChange={(e) => handleChange('visible_to_parent', e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              Also add to {parentGroup.title} calendar
+            </label>
+            <Field.HelperText>
+              Make this event visible on the parent community's calendar
+            </Field.HelperText>
+          </Field.Root>
+        )}
 
         {/* Note about date/time */}
         <Box p={3} bg="blue.50" borderRadius="md" fontSize="sm" color="blue.800">
