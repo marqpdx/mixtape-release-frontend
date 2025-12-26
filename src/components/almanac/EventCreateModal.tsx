@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Box,
@@ -12,12 +13,16 @@ import {
   RadioGroup,
   Fieldset,
   Dialog,
+  HStack,
+  Badge,
 } from '@chakra-ui/react';
 import { Input } from '@/theme/recipes/input.recipe';
 import { DatePickerInput } from '@/components/forms/DatePickerField';
 import { toaster } from '@/components/ui/toaster';
 import * as almanacApi from '@/lib/almanac/almanacApi';
 import type { EventCreatePayload } from '@/lib/almanac/almanacApi';
+import { RecurrenceFeaturelet, type RecurrenceConfig } from './RecurrenceFeaturelet';
+import { configToRRule } from '@/lib/almanac/recurrenceUtils';
 
 interface EventCreateModalProps {
   isOpen: boolean;
@@ -45,6 +50,9 @@ export default function EventCreateModal({
   groupSlug,
   onSuccess,
 }: EventCreateModalProps) {
+  const [isRecurrenceOpen, setIsRecurrenceOpen] = useState(false);
+  const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -72,11 +80,54 @@ export default function EventCreateModal({
   const eventFormat = watch('event_format');
   const startTime = watch('start_time');
 
+  const handleRecurrenceSave = (config: RecurrenceConfig) => {
+    setRecurrenceConfig(config);
+    toaster.create({
+      title: 'Recurrence Configured',
+      description: 'Your recurrence pattern has been saved',
+      type: 'success',
+      duration: 2000,
+    });
+  };
+
+  const getRecurrencePreview = () => {
+    if (!recurrenceConfig || !recurrenceConfig.pattern) return null;
+
+    let text = '';
+    const { pattern, frequency, daysOfWeek, endType, endDate, occurrenceCount } = recurrenceConfig;
+
+    if (pattern === 'daily') {
+      text = frequency === 1 ? 'Daily' : `Every ${frequency} days`;
+    } else if (pattern === 'weekly') {
+      text = frequency === 1 ? 'Weekly' : `Every ${frequency} weeks`;
+      if (daysOfWeek.length > 0) {
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const selectedDays = daysOfWeek.map(d => dayNames[d]);
+        text += ` on ${selectedDays.join(', ')}`;
+      }
+    } else if (pattern === 'monthly') {
+      text = frequency === 1 ? 'Monthly' : `Every ${frequency} months`;
+    } else if (pattern === 'yearly') {
+      text = frequency === 1 ? 'Yearly' : `Every ${frequency} years`;
+    }
+
+    if (endType === 'on_date' && endDate) {
+      text += `, until ${new Date(endDate).toLocaleDateString()}`;
+    } else if (endType === 'after_count' && occurrenceCount) {
+      text += `, ${occurrenceCount} times`;
+    }
+
+    return text;
+  };
+
   const onSubmit = async (data: EventFormValues) => {
     try {
+      // Check if we have a recurrence configuration
+      const hasRecurrence = recurrenceConfig?.pattern && recurrenceConfig.pattern !== 'custom';
+
       // Convert form data to API payload
       const payload: EventCreatePayload = {
-        event_type: data.event_type,
+        event_type: hasRecurrence ? 'recurring' : data.event_type,
         title: data.title,
         description: data.description,
         location: data.location || '',
@@ -87,9 +138,23 @@ export default function EventCreateModal({
       };
 
       // Add start/end times for single events
-      if (data.event_type === 'single' && data.start_time && data.end_time) {
+      if (data.event_type === 'single' && data.start_time && data.end_time && !hasRecurrence) {
         payload.start_time = data.start_time.toISOString();
         payload.end_time = data.end_time.toISOString();
+      }
+
+      // Add recurrence info if configured
+      if (hasRecurrence && recurrenceConfig && data.start_time && data.end_time) {
+        const rrule = configToRRule(recurrenceConfig, data.start_time);
+        if (rrule) {
+          payload.rrule = rrule;
+          payload.start_time = data.start_time.toISOString();
+          payload.end_time = data.end_time.toISOString();
+          payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          // Calculate duration in minutes
+          const durationMs = data.end_time.getTime() - data.start_time.getTime();
+          payload.default_duration_minutes = Math.round(durationMs / (1000 * 60));
+        }
       }
 
       // Create event
@@ -241,6 +306,47 @@ export default function EventCreateModal({
                 </RadioGroup.Root>
               </Fieldset.Root>
 
+              {/* Recurrence Configuration */}
+              {eventType !== 'gathering' && (
+                <Box>
+                  <HStack justify="space-between" align="center" mb={2}>
+                    <Text fontWeight="medium">Recurrence (Optional)</Text>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      colorScheme="blue"
+                      onClick={() => setIsRecurrenceOpen(true)}
+                    >
+                      {recurrenceConfig?.pattern ? 'Edit Recurrence' : 'Set Up Recurrence'}
+                    </Button>
+                  </HStack>
+
+                  {recurrenceConfig?.pattern && (
+                    <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="blue.900">
+                          {getRecurrencePreview()}
+                        </Text>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="red"
+                          onClick={() => setRecurrenceConfig(null)}
+                        >
+                          Clear
+                        </Button>
+                      </HStack>
+                    </Box>
+                  )}
+
+                  {!recurrenceConfig?.pattern && (
+                    <Text fontSize="sm" color="gray.600">
+                      Click the button to configure recurring event patterns
+                    </Text>
+                  )}
+                </Box>
+              )}
+
               {/* Date/Time for Single Events */}
               {eventType === 'single' && (
                 <>
@@ -320,6 +426,14 @@ export default function EventCreateModal({
           </Flex>
         </Dialog.Footer>
       </Dialog.Content>
+
+      {/* Recurrence Featurelet */}
+      <RecurrenceFeaturelet
+        isOpen={isRecurrenceOpen}
+        onClose={() => setIsRecurrenceOpen(false)}
+        onSave={handleRecurrenceSave}
+        initialConfig={recurrenceConfig || undefined}
+      />
     </Dialog.Root>
   );
 }

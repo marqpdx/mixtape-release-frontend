@@ -36,8 +36,6 @@ export function GroupLanding({
   // Only show role switcher if they're actually a member
   const showRoleSwitcher = isMember;
 
-  // ... rest of component
-
   return (
     <Box className="group-landing" bg={bgColor} minH="100vh">
       {viewingAsMember ? (

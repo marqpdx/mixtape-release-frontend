@@ -31,8 +31,6 @@ export default function GroupPage() {
   // Fetch user's permissions for this group
   const { data: myPermissions } = useMyPermissions(slugStr);
 
-  console.log("aaa GroupPage load:", { slugStr, group });
-
   const isMember = group ? isGroupMember(group) : false;
   const isAdmin = group ? hasRole(group, "admin") : false;
   const isSteward = group ? hasRole(group, "steward") : false;
@@ -46,7 +44,7 @@ export default function GroupPage() {
     [group]
   );
 
-  console.log("aaa GroupPage debug:", { slugStr, group, isMember, isAdmin, isSteward, primaryRole, roles });
+  // console.log("aaa GroupPage debug:", { slugStr, group, isMember, isAdmin, isSteward, primaryRole, roles });
 
   // UI state: what view to render as
   const [testRole, setTestRole] = useState<ViewRole>("public");

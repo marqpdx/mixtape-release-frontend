@@ -25,7 +25,7 @@ export interface AdHocSlot {
 }
 
 export interface EventCreatePayload {
-  event_type: 'single' | 'adhoc_series' | 'gathering';
+  event_type: 'single' | 'adhoc_series' | 'gathering' | 'recurring';
   title: string;
   description: string;
   location?: string;
@@ -40,6 +40,11 @@ export interface EventCreatePayload {
   // For single events
   start_time?: string;
   end_time?: string;
+
+  // For recurring events
+  rrule?: string;
+  timezone?: string;
+  default_duration_minutes?: number;
 
   // Decorators - uses context_data (not context)
   decorators?: DecoratorAssignment[];
@@ -67,6 +72,8 @@ export interface EventResponse {
 
   // Computed fields
   is_recurring: boolean;
+  registration_deadline?: string;
+  total_attendees: number;
   next_occurrence?: EventOccurrence;
   upcoming_occurrences?: CalendarOccurrence[];
 
@@ -157,6 +164,7 @@ export interface CalendarOccurrence {
   id: string;
   series_id: string;
   event_id: string;
+  event_slug: string;
   title: string;
   kind: 'event' | 'gathering';
   start: string;
@@ -177,6 +185,20 @@ export interface CalendarOccurrence {
   accommodation_available: boolean;
   meals_included: boolean;
   is_cancelled: boolean;
+}
+
+export interface EventAttendee {
+  id: string;
+  user: string;
+  name: string;
+  occurrence: string;
+  occurrence_title: string;
+  status: 'going' | 'maybe' | 'not_going' | 'attended';
+  rsvp_date: string;
+  notes: string;
+  checked_in_at: string | null;
+  feedback: string | null;
+  rating: number | null;
 }
 
 export interface EventSummary {
@@ -663,8 +685,18 @@ export async function rsvpToGroupEvent(
 /**
  * Get event attendees within a group
  */
-export async function fetchGroupEventAttendees(groupSlug: string, eventId: string) {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/${eventId}/attendees`);
+export async function fetchGroupEventAttendees(groupSlug: string, eventSlug: string): Promise<EventAttendee[]> {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventSlug}/attendees`);
+  return response.data;
+}
+
+/**
+ * Check in an attendee (organizer only)
+ */
+export async function checkInAttendee(groupSlug: string, eventSlug: string, attendeeId: string): Promise<EventAttendee> {
+  const response = await axiosInstance.patch(
+    `/api/groups/${groupSlug}/events/${eventSlug}/attendees/${attendeeId}/check-in`
+  );
   return response.data;
 }
 

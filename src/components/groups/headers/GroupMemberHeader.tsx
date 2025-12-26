@@ -49,8 +49,6 @@ export function GroupMemberHeader({
     group.emblem?.url?.trim() ||
     group.profile_image_url;
 
-  console.log('Emblem Src:', emblemSrc);
-
   return (
     <GroupHeaderWrapper
       showRoleSwitcher={true}

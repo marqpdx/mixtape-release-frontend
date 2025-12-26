@@ -1,4 +1,5 @@
 // src/components/almanac/EventDetailView.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -22,12 +23,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGroupEvent, publishGroupEvent, unpublishGroupEvent } from '@/lib/almanac/almanacApi';
+import { fetchGroupEvent, publishGroupEvent, unpublishGroupEvent, rsvpToGroupEvent } from '@/lib/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
 import { toaster } from '@/components/ui/toaster';
 import { Divider } from '../common/Divider';
 import { EventEditForm } from './EventEditForm';
+import { AttendeeList } from './AttendeeList';
+import { OccurrenceListManager } from './OccurrenceListManager';
 
 interface EventDetailViewProps {
   groupSlug: string;
@@ -86,6 +89,35 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
       toaster.create({
         title: 'Unpublish Failed',
         description: error.message || 'Could not unpublish event',
+        type: 'error',
+        duration: 5000,
+      });
+    },
+  });
+
+  // RSVP mutation
+  const rsvpMutation = useMutation({
+    mutationFn: (status: 'going' | 'maybe' | 'not_going') =>
+      rsvpToGroupEvent(groupSlug, eventSlug, { status }),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['almanac', 'event', groupSlug, eventSlug] });
+      queryClient.invalidateQueries({ queryKey: ['almanac', 'calendar'] });
+      const statusLabels = {
+        going: "You're going!",
+        maybe: "Marked as maybe",
+        not_going: "RSVP updated"
+      };
+      toaster.create({
+        title: 'RSVP Updated',
+        description: statusLabels[variables],
+        type: 'success',
+        duration: 3000,
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: 'RSVP Failed',
+        description: error.message || 'Could not update RSVP',
         type: 'error',
         duration: 5000,
       });
@@ -175,8 +207,83 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
               <Text>{event.registration_required ? 'Required' : 'Not required'}</Text>
             </HStack>
           )}
+          {event.is_recurring && event.series?.rrule && (
+            <HStack>
+              <Text fontWeight="medium" minW="140px">Recurrence:</Text>
+              <Badge colorScheme="purple">Recurring Event</Badge>
+            </HStack>
+          )}
         </VStack>
       </Box>
+
+      {/* Series Management - Only show for recurring events */}
+      {event.is_recurring && event.series && (
+        <>
+          <Divider />
+          <Box>
+            <Text fontWeight="semibold" mb={3}>Event Series Management</Text>
+            <OccurrenceListManager
+              groupSlug={groupSlug}
+              eventSlug={eventSlug}
+              seriesId={event.series.id}
+            />
+          </Box>
+        </>
+      )}
+
+      {/* RSVP Section - Only show for published events */}
+      {isPublished && (
+        <>
+          <Divider />
+          <Box>
+            <Text fontWeight="semibold" mb={3}>Attendance</Text>
+            <HStack gap={2}>
+              <Button
+                size="sm"
+                colorScheme="green"
+                variant="solid"
+                onClick={() => rsvpMutation.mutate('going')}
+                loading={rsvpMutation.isPending}
+              >
+                ✓ Going
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="yellow"
+                variant="outline"
+                onClick={() => rsvpMutation.mutate('maybe')}
+                loading={rsvpMutation.isPending}
+              >
+                ? Maybe
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => rsvpMutation.mutate('not_going')}
+                loading={rsvpMutation.isPending}
+              >
+                ✗ Can't Go
+              </Button>
+            </HStack>
+            {event.max_attendees && (
+              <Text fontSize="sm" color="gray.600" mt={2}>
+                {event.total_attendees || 0} / {event.max_attendees} attending
+              </Text>
+            )}
+          </Box>
+        </>
+      )}
+
+      {/* Attendee List - Only show for published events */}
+      {isPublished && (
+        <>
+          <Divider />
+          <Box>
+            <Text fontWeight="semibold" mb={3}>Attendees & RSVPs</Text>
+            <AttendeeList groupSlug={groupSlug} eventSlug={eventSlug} />
+          </Box>
+        </>
+      )}
 
       <Divider />
 

@@ -2,14 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import * as almanacApi from '@/lib/almanac/almanacApi';
-
-export interface EventAttendee {
-  id: string;
-  name: string;
-  status: 'going' | 'maybe' | 'not_going';
-  rsvp_date: string;
-  notes?: string;
-}
+import type { EventAttendee } from '@/lib/almanac/almanacApi';
 
 export function useEventAttendees(groupSlug: string, eventId: string) {
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);

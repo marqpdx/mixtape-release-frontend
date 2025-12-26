@@ -44,14 +44,14 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
 
-  {
-    key: "mill",
-    label: "Mill",
-    icon: "🌾",
-    subItems: [
-      { key: "mill", label: "Grist Mill" },
-    ]
-  },
+  // {
+  //   key: "mill",
+  //   label: "Mill",
+  //   icon: "🌾",
+  //   subItems: [
+  //     { key: "mill", label: "Grist Mill" },
+  //   ]
+  // },
 
 
   // {
@@ -87,6 +87,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "edit-group", label: "Edit Group" },
       { key: "circles-landing", label: "Circles", hidden: false },
       { key: "circle-create", label: "Create Circle", hidden: false },
+      { key: "mill", label: "Grist Mill" },
       // { key: "general", label: "General Settings" },
       { key: "permissions", label: "Permissions", hidden: true },
       { key: "integrations", label: "Integrations", hidden: true },
