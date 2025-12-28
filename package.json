@@ -11,8 +11,11 @@
   },
   "scripts": {
     "dev": "yarn workspace @mixtape/app dev",
+    "dev:crossroads": "yarn workspace @crossroads/app dev",
     "build": "yarn workspace @mixtape/app build",
+    "build:crossroads": "yarn workspace @crossroads/app build",
     "start": "yarn workspace @mixtape/app start",
+    "start:crossroads": "yarn workspace @crossroads/app start",
     "lint": "yarn workspace @mixtape/app lint",
     "test": "yarn workspace @mixtape/app test",
     "test:ui": "yarn workspace @mixtape/app test:ui",

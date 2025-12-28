@@ -1,0 +1,29 @@
+{
+  "name": "@crossroads/app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3010",
+    "build": "next build",
+    "start": "next start -p 3010",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.4.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@tanstack/react-query": "^5.66.1",
+    "framer-motion": "^12.0.2",
+    "next": "15.5.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@mixtape/core": "*",
+    "@mixtape/api": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.6",
+    "typescript": "^5.9.2"
+  }
+}
