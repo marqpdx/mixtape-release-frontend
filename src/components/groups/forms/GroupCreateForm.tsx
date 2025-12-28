@@ -19,7 +19,7 @@ import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
 import { toaster } from "@/components/ui/toaster";
-import * as groupApi from "@/lib/group/groupApi";
+import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import type { GroupCreateFormData, GroupCreateFormValues, GroupType, GroupVisibility } from "@mixtape/core/types/groupTypes";
 
 // Extended form data to include circle/community specific fields

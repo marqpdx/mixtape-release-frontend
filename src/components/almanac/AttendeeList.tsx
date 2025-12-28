@@ -14,7 +14,7 @@ import {
   Checkbox,
 } from '@chakra-ui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGroupEventAttendees, checkInAttendee, type EventAttendee } from '@/lib/almanac/almanacApi';
+import { fetchGroupEventAttendees, checkInAttendee, type EventAttendee } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
 import { toaster } from '@/components/ui/toaster';

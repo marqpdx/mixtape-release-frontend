@@ -24,7 +24,7 @@ import { Divider } from "@components/common/Divider";
 // import { SuccessAlert } from "@components/ui/alerts/SuccessAlert";
 import { LanternmailList } from "@mixtape/core/types/lanternmailTypes";
 import { Alert } from "../ui/alerts";
-import { useLanternmail } from "@/hooks/lanternmail/useLanternmail";
+import { useLanternmail } from "@mixtape/api/hooks/lanternmail/useLanternmail";
 import { toaster } from "../ui/toaster";
 
 interface Props {

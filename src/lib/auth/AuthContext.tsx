@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { UserIdentity, LoginCredentials, RegisterData } from '@mixtape/core/types/auth';
-import * as authApi from './api';
+import * as authApi from '@mixtape/api/clients/auth/api';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {

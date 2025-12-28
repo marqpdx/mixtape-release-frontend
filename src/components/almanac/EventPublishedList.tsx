@@ -3,7 +3,7 @@
 
 import { Box, Button, HStack, Spinner, Table, Text, VStack, Badge } from '@chakra-ui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGroupEvents, unpublishGroupEvent } from '@/lib/almanac/almanacApi';
+import { fetchGroupEvents, unpublishGroupEvent } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
 import { toaster } from '@/components/ui/toaster';

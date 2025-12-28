@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button, HStack } from '@chakra-ui/react'; // v3 API
-import { applyWorkingCopy, publishAndPlace } from '@/lib/writing/api';
+import { applyWorkingCopy, publishAndPlace } from '@mixtape/api/clients/writing/api';
 import { PublishAndPlacePayload } from '@mixtape/core/types/writingTypes';
 // Note: This component uses the advanced publish-and-place endpoint
 // For standard publishing, see SimplePublishDialog which uses useWritingMutations

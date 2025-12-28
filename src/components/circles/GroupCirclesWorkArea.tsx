@@ -6,8 +6,8 @@ import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import GroupsList from "@/components/groups/lists/GroupsList";
 
-import { useUserGroups, useGroupCircles } from "@/hooks/groups/useGroups";
-import { useHasPermission } from "@/hooks/groups/useGroupPermissions";
+import { useUserGroups, useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
+import { useHasPermission } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import GroupCreateCircle from "@/components/groups/create/GroupCreateCircle";
 
 const PERM_CREATE_SPONSORED_CIRCLE = "can__CreateSponsoredCircle";
@@ -160,8 +160,8 @@ export function GroupCirclesWorkArea({ groupSlug }: GroupCirclesWorkAreaProps) {
 // import type { Group } from "@mixtape/core/types/groupTypes";
 // import GroupsList from "@/components/groups/lists/GroupsList";
 
-// import { useUserGroups, useGroupCircles } from "@/hooks/groups/useGroups";
-// import { useHasPermission } from "@/hooks/groups/useGroupPermissions";
+// import { useUserGroups, useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
+// import { useHasPermission } from "@mixtape/api/hooks/groups/useGroupPermissions";
 // import GroupCreateCircle from "../groups/create/GroupCreateCircle";
 
 // const PERM_CREATE_SPONSORED_CIRCLE = "can__CreateSponsoredCircle";
@@ -323,11 +323,11 @@ export function GroupCirclesWorkArea({ groupSlug }: GroupCirclesWorkAreaProps) {
 // // import { useMemo, useState } from "react";
 // // import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 // // // import { useHasPermission } from "@hooks/useGroupPermissions";
-// // import { useGroups, useUserGroups } from "@/hooks/groups/useGroups";
+// // import { useGroups, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 // // import GroupsList from "@/components/groups/lists/GroupsList";
 // // // import GroupCreateGroup from "@/components/groups/create/GroupCreateGroup"; // (your wrapper)
 // // import type { Group } from "@mixtape/core/types/groupTypes";
-// // import { useHasPermission } from "@/hooks/groups/useGroupPermissions";
+// // import { useHasPermission } from "@mixtape/api/hooks/groups/useGroupPermissions";
 // // import GroupCreateCircle from "../groups/create/GroupCreateCircle";
 
 // // const PERM_CREATE_SPONSORED_CIRCLE = "can__CreateSponsoredCircle";

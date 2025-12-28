@@ -18,8 +18,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
-import { almanacApi } from '@/lib/almanac/almanacApi';
-import type { CalendarOccurrence } from '@/lib/almanac/almanacApi';
+import { almanacApi } from '@mixtape/api/clients/almanac/almanacApi';
+import type { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { EventDetailView } from './EventDetailView';
 

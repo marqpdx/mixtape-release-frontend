@@ -17,7 +17,7 @@ import GroupInvitations from "./GroupInvitations";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
 import { UserProfile } from "@mixtape/core/types/auth";
 import { GroupInviteForm } from "../forms/GroupInviteForm";
-import { useInvitationStatusPoll } from "@/hooks/groups/useInvitationStatusPoll";
+import { useInvitationStatusPoll } from "@mixtape/api/hooks/groups/useInvitationStatusPoll";
 
 interface GroupInviteWorkAreaProps {
   groupSlug: string;

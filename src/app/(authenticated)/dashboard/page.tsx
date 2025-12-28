@@ -8,8 +8,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 // import type { Metadata } from 'next';
 import { useAuth } from "@/lib/auth/AuthContext";
 // import { UserIdentity } from "@mixtape/core/types/auth";
-import { useUserGroups } from "@/hooks/groups/useGroups";
-import { useUsers } from "@/hooks/useUsers";
+import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
+import { useUsers } from "@mixtape/api/hooks/useUsers";
 // import { getRoleBooleans } from "lib/auth/roles";
 // import { useSocketSetup } from "lib/hooks/useSocketSetup";
 

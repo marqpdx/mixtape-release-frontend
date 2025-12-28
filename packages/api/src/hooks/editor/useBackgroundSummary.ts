@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // import type { Editor } from "@tiptap/react";
 // import { normalizeTipTapToPlaintext, fetchSummary } from "lib/inkwell/inkwellApi";
 import { Editor } from "@tiptap/react";
-import { fetchSummary, normalizeTipTapToPlaintext } from "@/lib/inkwell/inkwellApi";
+import { fetchSummary, normalizeTipTapToPlaintext } from "@mixtape/api/clients/inkwell/inkwellApi";
 
 interface BackgroundSummaryOptions {
   enabled?: boolean;

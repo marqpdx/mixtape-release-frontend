@@ -8,8 +8,8 @@ import type {
   ListStatsResponse,
   SendInvitationsResponse,
 } from "@mixtape/core/types/lanternmailTypes";
-import { lanternmailApi } from "@/lib/lanternmail/lanternmailApi";
-// import { lanternmailApi } from "@/lib/lanternmail/lanternmailApi";
+import { lanternmailApi } from "@mixtape/api/clients/lanternmail/lanternmailApi";
+// import { lanternmailApi } from "@mixtape/api/clients/lanternmail/lanternmailApi";
 
 /**
  * React hook for LanternMail operations

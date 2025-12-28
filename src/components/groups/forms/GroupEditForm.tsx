@@ -34,7 +34,7 @@ import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/type
 import { toaster } from "@/components/ui/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
-import { useEntityImageUpload } from "@/hooks/useEntityImageUpload";
+import { useEntityImageUpload } from "@mixtape/api/hooks/useEntityImageUpload";
 import { useImageUpload } from '@hooks/useAssets';
 
 // Helper function to safely render error messages

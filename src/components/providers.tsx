@@ -5,7 +5,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { AuthProvider } from '@lib/auth/AuthContext';
+import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
 import { ColorModeProvider } from '@components/ui/color-mode';
 import { Toaster } from '@/components/ui/toaster';

@@ -22,7 +22,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
-import type { EventAttendee } from '@/lib/almanac/almanacApi';
+import type { EventAttendee } from '@mixtape/api/clients/almanac/almanacApi';
 
 interface OccurrenceAttendeesModalProps {
   groupSlug: string;

@@ -4,7 +4,7 @@
 
 import { Box, Spinner, Center, Text, Alert, HStack, Badge, Button } from "@chakra-ui/react";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useGroup, useGroupMutations, useGroupDraft } from "@/hooks/groups/useGroups";
+import { useGroup, useGroupMutations, useGroupDraft } from "@mixtape/api/hooks/groups/useGroups";
 import GroupEditForm from "@/components/groups/forms/GroupEditForm";
 import { Group } from "@mixtape/core/types/groupTypes";
 

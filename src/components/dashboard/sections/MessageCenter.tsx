@@ -5,7 +5,7 @@
 import { Box, Text, VStack, Flex, Button } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useUsersExcludingCurrent } from "@/hooks/useUsers";
+import { useUsersExcludingCurrent } from "@mixtape/api/hooks/useUsers";
 import { ConversationList } from "@components/chat/ConversationList";
 import { ConversationDetail } from "@components/chat/ConversationDetail";
 import { newConversationDialog } from "@components/chat/NewConversationDialog";

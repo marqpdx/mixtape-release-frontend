@@ -1,7 +1,7 @@
 // src/providers/auth/axiosInstance.ts
 
 import { getAccessToken, setAccessToken } from "@/lib/auth/tokenStorage";
-import { refreshAccessToken } from "@/lib/auth/api";
+import { refreshAccessToken } from "@mixtape/api/clients/auth/api";
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 export const axiosInstance = axios.create({

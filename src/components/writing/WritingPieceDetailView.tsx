@@ -19,7 +19,7 @@ import { IconArrowLeft, IconClock, IconEye } from '@tabler/icons-react'
 import { formatDistanceToNow } from 'date-fns'
 
 // Import hooks
-import { useGroup } from '@/hooks/groups/useGroups'
+import { useGroup } from '@mixtape/api/hooks/groups/useGroups'
 import { useWritingPiece } from '@hooks/useWriting'
 
 // Import your headers for continuity

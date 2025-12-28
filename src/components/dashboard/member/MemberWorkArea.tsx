@@ -18,7 +18,7 @@ import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 // import { Socket } from "socket.io-client";
 // import GroupCreateForm from "@components/groups/GroupCreateForm";
 // import GroupsTableNew from "@components/groups/GroupsTable";
-import { useGroups, useUserGroups } from "@/hooks/groups/useGroups";
+import { useGroups, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 // import GroupsTable from "@components/groups/GroupsTable";
 // import { Group } from "@components/groups/interfaces";
 import router from "next/router";

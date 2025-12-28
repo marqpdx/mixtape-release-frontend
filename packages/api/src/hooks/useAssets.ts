@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { UseFormSetValue, FieldValues, Path } from "react-hook-form";
 import { toaster } from "@/components/ui/toaster";
-import { uploadImage, SponsorType, ImageRole } from "@/lib/assets/assetsApi";
+import { uploadImage, SponsorType, ImageRole } from "@mixtape/api/clients/assets/assetsApi";
 
 type ImageType = "profile" | "background";
 

@@ -18,7 +18,7 @@ import { PublishingControls } from "@components/writing/composer/PublishingContr
 import { WorkspaceToggle } from "@components/writing/composer/WorkspaceToggle";
 import { ScrollToTopButton } from "@components/writing/composer/ScrollToTopButton";
 
-import { useWorkingCopyAutosave } from "@lib/writing/useWorkingCopyAutosave";
+import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
 import { useEmptyFlagDetection } from "@components/writing/hooks/useEmptyFlagDetection";
 import { TextSelection } from "@components/writing/hooks/useTextSelection";
 import { useColorModeValue } from "@components/ui/color-mode";

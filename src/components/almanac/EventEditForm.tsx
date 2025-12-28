@@ -14,10 +14,10 @@ import {
   NativeSelectField,
 } from '@chakra-ui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateGroupEvent } from '@/lib/almanac/almanacApi';
+import { updateGroupEvent } from '@mixtape/api/clients/almanac/almanacApi';
 import { toaster } from '@/components/ui/toaster';
-import type { EventResponse } from '@/lib/almanac/almanacApi';
-import { useGroup } from '@/hooks/groups/useGroups';
+import type { EventResponse } from '@mixtape/api/clients/almanac/almanacApi';
+import { useGroup } from '@mixtape/api/hooks/groups/useGroups';
 
 interface EventEditFormProps {
   groupSlug: string;

@@ -5,7 +5,7 @@
 import { Box } from "@chakra-ui/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { useGroup } from "@/hooks/groups/useGroups";
+import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { GroupAdminHeader } from "@components/groups/headers/GroupAdminHeader";
 import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
 import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConfig";
@@ -14,7 +14,7 @@ import { hasRole, canUserModerateGroup, isGroupMember, getPrimaryRole } from "@m
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
-import { useMyPermissions } from "@/hooks/groups/useGroupPermissions";
+import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 
 type ViewRole = "admin" | "member" | "public";

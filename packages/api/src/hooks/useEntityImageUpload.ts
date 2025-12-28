@@ -23,7 +23,7 @@
 
 import { UseFormSetValue, FieldValues } from "react-hook-form";
 import { useImageUpload } from "./useAssets";
-import type { SponsorType } from "@/lib/assets/assetsApi";
+import type { SponsorType } from "@mixtape/api/clients/assets/assetsApi";
 
 export function useEntityImageUpload<TFormData extends FieldValues = FieldValues>(
   entityType: "user" | "group",

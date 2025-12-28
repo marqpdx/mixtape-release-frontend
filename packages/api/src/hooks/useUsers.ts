@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { fetchUsers as apiFetchUsers, fetchUser as apiFetchUser } from '@/lib/user/userApi';
+import { fetchUsers as apiFetchUsers, fetchUser as apiFetchUser } from '@mixtape/api/clients/user/userApi';
 import { UserIdentity } from '@mixtape/core/types/auth';
 
 // ============================================================================

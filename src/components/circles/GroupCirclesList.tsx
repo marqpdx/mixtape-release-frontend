@@ -1,7 +1,7 @@
 "use client";
 
 import GroupsList from "@/components/groups/list/GroupsList";
-import { useGroupCircles } from "@/hooks/groups/useGroups";
+import { useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
 import type { Group } from "@mixtape/core/types/groupTypes";
 
 type GroupCirclesListProps = {

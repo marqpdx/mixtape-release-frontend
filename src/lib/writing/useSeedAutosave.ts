@@ -2,7 +2,7 @@
 import { useCallback, useRef, useState } from "react";
 import { toaster } from "@/components/ui/toaster";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { useAutosave } from "@/hooks/useAutosave";
+import { useAutosave } from "@mixtape/api/hooks/useAutosave";
 // import { useAutosave } from "lib/hooks/useAutosave";
 
 type SeedPayload = { body_text: string };

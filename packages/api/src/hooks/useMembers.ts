@@ -11,7 +11,7 @@ import {
   FetchMembersOptions as ApiFetchMembersOptions,
   AddMemberData,
   UpdateMemberData,
-} from '@/lib/group/memberApi';
+} from '@mixtape/api/clients/group/memberApi';
 import { GroupMembership, GroupRole } from '@mixtape/core/types/groupTypes';
 
 // ============================================================================

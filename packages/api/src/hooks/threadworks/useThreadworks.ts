@@ -14,7 +14,7 @@ import {
   UseDiscussionResult,
   UseThreadworksMutationsResult,
 } from '@mixtape/core/types/threadworksTypes';
-import * as threadworksApi from '@/lib/threadworks/threadworksApi';
+import * as threadworksApi from '@mixtape/api/clients/threadworks/threadworksApi';
 
 // ============================================================================
 // QUERY KEY FACTORIES

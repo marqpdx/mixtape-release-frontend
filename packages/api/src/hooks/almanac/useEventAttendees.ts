@@ -1,8 +1,8 @@
 // src/hooks/useEventAttendees.ts
 
 import { useState, useCallback, useEffect } from 'react';
-import * as almanacApi from '@/lib/almanac/almanacApi';
-import type { EventAttendee } from '@/lib/almanac/almanacApi';
+import * as almanacApi from '@mixtape/api/clients/almanac/almanacApi';
+import type { EventAttendee } from '@mixtape/api/clients/almanac/almanacApi';
 
 export function useEventAttendees(groupSlug: string, eventId: string) {
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);

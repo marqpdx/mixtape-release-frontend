@@ -1,7 +1,7 @@
 // src/hooks/useEventRSVPBreakdown.ts
 
 import { useState, useCallback, useEffect } from 'react';
-import * as almanacApi from '@/lib/almanac/almanacApi';
+import * as almanacApi from '@mixtape/api/clients/almanac/almanacApi';
 
 export interface RSVPBreakdown {
   going: number;

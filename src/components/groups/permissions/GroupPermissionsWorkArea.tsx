@@ -22,7 +22,7 @@ import {
   useAvailablePermissions,
   useGrantPermission,
   useRevokePermission,
-} from "@/hooks/groups/useGroupPermissions";
+} from "@mixtape/api/hooks/groups/useGroupPermissions";
 
 // Data structures
 interface User {

@@ -6,7 +6,7 @@ import { Box, Text } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { IconChevronDown } from "@tabler/icons-react";
-import { useUserGroups } from "@/hooks/groups/useGroups";
+import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 
 interface GroupSwitcherProps {
   currentGroupSlug: string;

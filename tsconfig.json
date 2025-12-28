@@ -21,14 +21,16 @@
     "paths": {
       "@mixtape/core": ["./packages/core/src"],
       "@mixtape/core/*": ["./packages/core/src/*"],
+      "@mixtape/api": ["./packages/api/src"],
+      "@mixtape/api/*": ["./packages/api/src/*"],
       "@/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
       "@contexts/*": ["./src/contexts/*"],
       "@providers/*": ["./src/providers/*"],
-      "@lib/*": ["./src/lib/*"],
+      "@lib/*": ["./packages/api/src/clients/*"],
       "@utils/*": ["./src/utils/*"],
       "@types/*": ["./packages/core/src/types/*"],
-      "@hooks/*": ["./src/hooks/*"]
+      "@hooks/*": ["./packages/api/src/hooks/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "packages/*/src/**/*.ts"],

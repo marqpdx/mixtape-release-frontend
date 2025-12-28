@@ -16,7 +16,7 @@ import {
   IconUserCircle,
   IconNetwork
 } from "@tabler/icons-react";
-import { useUserGroups } from "@/hooks/groups/useGroups";
+import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { GroupType } from "@mixtape/core/types/groupTypes";
 import { GroupAdminRoleSwitcher } from "../utils/GroupAdminRoleSwitcher";
 

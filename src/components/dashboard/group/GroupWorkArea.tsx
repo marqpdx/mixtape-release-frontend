@@ -9,12 +9,12 @@ import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 
 // Import group-specific components
 import GroupOverview from "@components/groups/GroupOverview";
-import { useGroupPermissions } from "@/hooks/groups/useGroupSectionPermissions";
+import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
 // import CourseForm from "@components/earthlab/CourseForm";
 // import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMembers } from "@hooks/useMembers";
+// import { useMembers } from "@hooks/useMembers";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
 import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
@@ -31,6 +31,7 @@ import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea"
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
 import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
+import { useMembers } from "../../../../packages/api/src/hooks";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;

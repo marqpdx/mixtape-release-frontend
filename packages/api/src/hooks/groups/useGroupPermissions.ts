@@ -3,7 +3,7 @@
 // React hooks for group permissions management
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { groupPermsApi, MemberPermissions } from "@/lib/group/groupPermsApi";
+import { groupPermsApi, MemberPermissions } from "@mixtape/api/clients/group/groupPermsApi";
 import { toaster } from "@/components/ui/toaster";
 
 /**

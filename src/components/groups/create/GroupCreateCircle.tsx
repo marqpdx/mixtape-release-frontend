@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@/components/ui/toaster";
 import GroupCreateForm2 from "./GroupCreateForm2";
-import * as groupApi from "@/lib/group/groupApi";
+import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import type { GroupCreateFormData, GroupCreateFormValues } from "@mixtape/core/types/groupTypes";
-import { groupsQueryKeys } from "@/hooks/groups/useGroups";
+import { groupsQueryKeys } from "@mixtape/api/hooks/groups/useGroups";
 
 function toIsoOrNull(d?: Date | null): string | null | undefined {
   if (d === undefined) return undefined;

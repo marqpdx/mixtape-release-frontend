@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Box, Textarea, VStack, Button, Text, HStack } from '@chakra-ui/react';
-import { parseGrist, saveDraft, promoteDraft } from '@/lib/gristmill/gristmillApi';
+import { parseGrist, saveDraft, promoteDraft } from '@mixtape/api/clients/gristmill/gristmillApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import type { GristBlock, SponsorContext } from './types';
 

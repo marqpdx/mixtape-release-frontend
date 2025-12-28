@@ -11,7 +11,7 @@ import {
   Table,
 } from "@chakra-ui/react";
 import { Avatar } from "@chakra-ui/react";
-import { lanternmailApi } from "@/lib/lanternmail/lanternmailApi";
+import { lanternmailApi } from "@mixtape/api/clients/lanternmail/lanternmailApi";
 import {
   useReactTable,
   getCoreRowModel,

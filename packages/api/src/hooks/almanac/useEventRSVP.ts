@@ -2,7 +2,7 @@
 // ✅ React Query version with mutations, cache invalidation, and optimistic updates
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as almanacApi from '@/lib/almanac/almanacApi';
+import * as almanacApi from '@mixtape/api/clients/almanac/almanacApi';
 import { toaster } from "@/components/ui/toaster";
 
 interface RSVPPayload {
