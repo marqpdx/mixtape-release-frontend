@@ -45,20 +45,31 @@ yarn build
 
 ### Option 2: Custom Public Site + Mixtape Workspace
 
-Build your own custom public site while using Mixtape for the workspace.
+Build your own custom public site while using Mixtape for the workspace. See `apps/crossroads` for a working example of this pattern.
+
+**Using the crossroads example as a starting point:**
 
 ```bash
-# Copy workspace routes to your custom app
-cp -r apps/mixtape/app/(authenticated) your-site/app/
-cp -r apps/mixtape/app/(auth) your-site/app/
-cp -r apps/mixtape/components your-site/
+# Copy the crossroads app as a template for your custom site
+cp -r apps/crossroads apps/your-site
 
-# Build your own public pages in your-site/app/(root)/
+# Update package.json name
+# Edit apps/your-site/package.json: change "@crossroads/app" to "@yoursite/app"
+
+# Customize your public pages in apps/your-site/src/app/
+```
+
+**Or build from scratch:**
+
+```bash
+# Create your own custom app from scratch
+# See apps/crossroads for a minimal example structure
 ```
 
 **What you get:**
 - Full control over public-facing pages
-- Mixtape workspace functionality at `/dashboard`, `/groups`, etc.
+- Separate public site and workspace applications
+- Share common packages (@mixtape/core, @mixtape/api, @mixtape/auth)
 - Customize branding, content, and user experience
 
 **Deployment with nginx (recommended):**
