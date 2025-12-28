@@ -1,0 +1,64 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@mixtape/core": [
+        "../../packages/core/src"
+      ],
+      "@mixtape/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@mixtape/api": [
+        "../../packages/api/src"
+      ],
+      "@mixtape/api/*": [
+        "../../packages/api/src/*"
+      ],
+      "@mixtape/auth": [
+        "../../packages/auth/src"
+      ],
+      "@mixtape/auth/*": [
+        "../../packages/auth/src/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@contexts/*": [
+        "./src/contexts/*"
+      ],
+      "@providers/*": [
+        "./src/providers/*"
+      ],
+      "@lib/*": [
+        "../../packages/api/src/clients/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@types/*": [
+        "../../packages/core/src/types/*"
+      ],
+      "@hooks/*": [
+        "../../packages/api/src/hooks/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

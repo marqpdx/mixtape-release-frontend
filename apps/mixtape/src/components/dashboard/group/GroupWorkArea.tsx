@@ -31,7 +31,7 @@ import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea"
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
 import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
-import { useMembers } from "../../../../packages/api/src/hooks";
+import { useMembers } from "@mixtape/api/hooks";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
