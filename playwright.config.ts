@@ -31,7 +31,7 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for navigation
-    baseURL: 'http://127.0.0.1:3010',
+    baseURL: 'http://localhost:3010',
 
     // Collect trace on first retry for debugging
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
@@ -74,7 +74,7 @@ export default defineConfig({
   // See scripts/run-test-servers.sh for server startup
   webServer: process.env.CI ? undefined : {
     command: 'yarn dev',
-    url: 'http://127.0.0.1:3010',
+    url: 'http://localhost:3010',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
