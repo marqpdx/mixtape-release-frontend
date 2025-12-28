@@ -44,14 +44,15 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
 
-  // {
-  //   key: "mill",
-  //   label: "Mill",
-  //   icon: "🌾",
-  //   subItems: [
-  //     { key: "mill", label: "Grist Mill" },
-  //   ]
-  // },
+  {
+    key: "lanternmail",
+    label: "Lanternmail",
+    icon: "✉️",
+    subItems: [
+      { key: "lanternmail-landing", label: "Lanternmail" },
+      { key: "lanternmail-create", label: "Create List" },
+    ]
+  },
 
 
   // {

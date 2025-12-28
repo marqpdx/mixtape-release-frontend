@@ -89,6 +89,16 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Group events and calendar management',
   },
 
+  'lanternmail-landing': {
+    requiredRole: 'admin',
+    description: 'Landing page for Lanternmail management',
+  },
+
+  'lanternmail-create': {
+    requiredRole: 'admin',
+    description: 'Create a new Lanternmail list',
+  },
+
   // Almanac - accessible to all stewards
   'mill': {
     requiredRole: 'admin',

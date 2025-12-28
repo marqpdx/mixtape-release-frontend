@@ -29,6 +29,8 @@ import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
 import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea";
 // import { GroupCirclesLandingArea } from "@/components/groups/circles/GroupCirclesLandingArea";
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
+import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
+import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -432,16 +434,22 @@ if (section === "circle-create") {
   }
 
 
-  // if (section === "group-details") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <VStack align="stretch" gap={4}>
-  //         <Text fontSize="xl" fontWeight="bold">Group Details</Text>
-  //         <Text>Group settings coming soon...</Text>
-  //       </VStack>
-  //     </WorkAreaWrapper>
-  //   );
-  // }
+  if (section === "lanternmail-landing") {
+    return (
+      <WorkAreaWrapper>
+        <LanternmailWorkArea group={group} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "lanternmail-create") {
+    return (
+      <WorkAreaWrapper>
+        {/* <LanternmailWorkArea group={group} /> */}
+        <LanternmailCreateListWorkArea group={group} />
+      </WorkAreaWrapper>
+    );
+  }
 
   // Default fallback
   return (
