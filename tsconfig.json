@@ -23,6 +23,8 @@
       "@mixtape/core/*": ["./packages/core/src/*"],
       "@mixtape/api": ["./packages/api/src"],
       "@mixtape/api/*": ["./packages/api/src/*"],
+      "@mixtape/auth": ["./packages/auth/src"],
+      "@mixtape/auth/*": ["./packages/auth/src/*"],
       "@/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
       "@contexts/*": ["./src/contexts/*"],

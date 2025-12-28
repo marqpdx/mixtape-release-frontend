@@ -5,7 +5,7 @@
 
 import { BaseContentBox } from "@/components/layout/BaseContentBox";
 // import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
-// import { usePermissions } from "@/lib/auth/usePermissions";
+// import { usePermissions } from "@mixtape/auth/usePermissions";
 
 export default function RootLayout({
   children,

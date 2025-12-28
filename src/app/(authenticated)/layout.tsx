@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Box, Spinner, Text } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { usePermissions } from "@/lib/auth/usePermissions";
+import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
 // import AdminSeedButtonWithModal from "@components/writing/AdminSeedButtonWithModal";
 // import Footer from "@components/layout/Footer";

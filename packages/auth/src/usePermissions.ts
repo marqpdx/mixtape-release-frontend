@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Permission } from '@mixtape/core/types/auth';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/lib/auth/AuthContext';
 import {
   hasPermission,
   hasAnyPermission,

@@ -1,6 +1,6 @@
 // src/providers/auth/axiosInstance.ts
 
-import { getAccessToken, setAccessToken } from "@/lib/auth/tokenStorage";
+import { getAccessToken, setAccessToken } from "@mixtape/auth/tokenStorage";
 import { refreshAccessToken } from "@mixtape/api/clients/auth/api";
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
@@ -56,7 +56,7 @@ axiosInstance.interceptors.request.use(
 // );
 
 // ✅ Add a response interceptor for auto-refresh
-import { clearAccessToken } from "@/lib/auth/tokenStorage";
+import { clearAccessToken } from "@mixtape/auth/tokenStorage";
 // maybe import a central logout handler if you have one
 
 axiosInstance.interceptors.response.use(

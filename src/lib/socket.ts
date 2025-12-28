@@ -1,6 +1,6 @@
 // lib/socket.ts
 
-import { getLivewireAccessToken } from "@/lib/auth/wsToken";
+import { getLivewireAccessToken } from "@mixtape/auth/wsToken";
 import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;

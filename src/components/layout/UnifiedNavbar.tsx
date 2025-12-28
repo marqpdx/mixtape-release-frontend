@@ -27,7 +27,7 @@ import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { usePermissions } from "@/lib/auth/usePermissions";
+import { usePermissions } from "@mixtape/auth/usePermissions";
 import { ThemeSelector } from "@components/common/ThemeSelector";
 import { IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";

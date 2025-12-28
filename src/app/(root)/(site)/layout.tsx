@@ -6,7 +6,7 @@ import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
-import { usePermissions } from "@/lib/auth/usePermissions";
+import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@/components/admin/AdminTodoButtonWithModal";
 
 export default function SiteLayout({
