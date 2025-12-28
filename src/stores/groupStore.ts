@@ -1,6 +1,6 @@
 // src/stores/groupStore.ts
 
-import { Group } from "@/types/groupTypes";
+import { Group } from "@mixtape/core/types/groupTypes";
 import { create } from "zustand";
 // import { Group } from "@components/groups/interfaces";
 

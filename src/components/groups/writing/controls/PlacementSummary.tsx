@@ -2,7 +2,7 @@
 
 'use client';
 
-import { PlacementOptions, PublishDestinations } from '@/types/writingTypes';
+import { PlacementOptions, PublishDestinations } from '@mixtape/core/types/writingTypes';
 import { Card, Text, Stack } from '@chakra-ui/react';
 // import type { PublishDestinations, PlacementOptions } from '../interfaces';
 

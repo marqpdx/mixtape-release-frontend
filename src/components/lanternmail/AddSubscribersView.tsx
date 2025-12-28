@@ -22,7 +22,7 @@ import { Divider } from "@components/common/Divider";
 // import { ErrorAlert, } from "@components/ui/alerts/ErrorAlert";
 // import { createStandaloneToast } from "@chakra-ui/toast";
 // import { SuccessAlert } from "@components/ui/alerts/SuccessAlert";
-import { LanternmailList } from "@/types/lanternmailTypes";
+import { LanternmailList } from "@mixtape/core/types/lanternmailTypes";
 import { Alert } from "../ui/alerts";
 import { useLanternmail } from "@/hooks/lanternmail/useLanternmail";
 import { toaster } from "../ui/toaster";

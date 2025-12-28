@@ -13,7 +13,7 @@ import {
   Portal,
   createListCollection,
 } from '@chakra-ui/react';
-import { GroupOverridesMap, PlacementOptions, PublishDestinations, Visibility } from '@/types/writingTypes';
+import { GroupOverridesMap, PlacementOptions, PublishDestinations, Visibility } from '@mixtape/core/types/writingTypes';
 // import type { Visibility, PublishDestinations, PlacementOptions, GroupOverridesMap } from '../interfaces';
 
 type Props = {

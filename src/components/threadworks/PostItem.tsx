@@ -2,7 +2,7 @@
 
 import { Box, HStack, Avatar, Text } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
-import { Post } from '@/types/threadworksTypes'
+import { Post } from '@mixtape/core/types/threadworksTypes'
 import { formatTimeAgo } from './threadworksUtils'
 
 interface PostItemProps {

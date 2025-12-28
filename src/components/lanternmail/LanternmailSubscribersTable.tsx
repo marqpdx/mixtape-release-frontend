@@ -23,7 +23,7 @@ import {
   type Row,
   type Cell,
 } from "@tanstack/react-table";
-import type { GroupSubscriberAggregated } from "@/types/lanternmailTypes";
+import type { GroupSubscriberAggregated } from "@mixtape/core/types/lanternmailTypes";
 
 interface LanternmailSubscribersTableProps {
   groupSlug: string;

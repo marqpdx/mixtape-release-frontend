@@ -14,8 +14,8 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconSend, IconList } from "@tabler/icons-react";
 import GroupInvitations from "./GroupInvitations";
-import { GroupMembership } from "@/types/groupTypes";
-import { UserProfile } from "@/types/auth";
+import { GroupMembership } from "@mixtape/core/types/groupTypes";
+import { UserProfile } from "@mixtape/core/types/auth";
 import { GroupInviteForm } from "../forms/GroupInviteForm";
 import { useInvitationStatusPoll } from "@/hooks/groups/useInvitationStatusPoll";
 

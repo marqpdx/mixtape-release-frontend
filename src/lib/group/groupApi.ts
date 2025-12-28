@@ -7,7 +7,7 @@ import {
   GroupMembersResponse,
   GroupCreateFormData,
   GroupUpdateFormData,
-} from '@/types/groupTypes';
+} from '@mixtape/core/types/groupTypes';
 import { axiosInstance } from '@/providers/auth-provider/axiosInstance';
 import { unwrapListResponse } from '@/lib/api/utils';
 

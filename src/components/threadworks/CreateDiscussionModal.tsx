@@ -3,7 +3,7 @@
 import { VStack, Text, Input, Textarea, HStack } from '@chakra-ui/react'
 import AdminModal from '@components/admin/AdminModal'
 import { useState } from 'react'
-import { CreateDiscussionData } from '@/types/threadworksTypes'
+import { CreateDiscussionData } from '@mixtape/core/types/threadworksTypes'
 
 interface CreateDiscussionModalProps {
   isOpen: boolean

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { fetchUsers as apiFetchUsers, fetchUser as apiFetchUser } from '@/lib/user/userApi';
-import { UserIdentity } from '@/types/auth';
+import { UserIdentity } from '@mixtape/core/types/auth';
 
 // ============================================================================
 // QUERY KEY FACTORY

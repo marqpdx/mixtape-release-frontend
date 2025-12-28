@@ -25,8 +25,8 @@ import router from "next/router";
 // import MinimalRHFForm from "@components/groups/GroupCreateForm";
 // import { Group } from "content/groupTypes";
 import GroupsTable from "@components/groups/GroupsTable";
-import { Group } from "@/types/groupTypes";
-import { UserIdentity } from "@/types/auth";
+import { Group } from "@mixtape/core/types/groupTypes";
+import { UserIdentity } from "@mixtape/core/types/auth";
 import MessageCenter from "../sections/MessageCenter";
 // import NotificationsList from "@components/activity/NotificationsList";
 

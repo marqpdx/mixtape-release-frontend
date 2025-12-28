@@ -7,7 +7,7 @@ import { Text } from "@chakra-ui/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 // import type { Metadata } from 'next';
 import { useAuth } from "@/lib/auth/AuthContext";
-// import { UserIdentity } from "@/types/auth";
+// import { UserIdentity } from "@mixtape/core/types/auth";
 import { useUserGroups } from "@/hooks/groups/useGroups";
 import { useUsers } from "@/hooks/useUsers";
 // import { getRoleBooleans } from "lib/auth/roles";

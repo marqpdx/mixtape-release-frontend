@@ -4,7 +4,7 @@ import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
 import { HStack, VStack, Text, Badge, Box } from '@chakra-ui/react'
 import { formatDistanceToNow } from 'date-fns'
 import { useColorModeValue } from '@components/ui/color-mode'
-import { FlattenedPlacement } from '@/types/writingTypes'
+import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
 
 const columnHelper = createColumnHelper<FlattenedPlacement>()
 

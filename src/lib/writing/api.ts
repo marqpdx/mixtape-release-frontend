@@ -4,7 +4,7 @@
  * Pure API calls for writing operations (working copies, publishing, placement)
  */
 
-import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@/types/writingTypes";
+import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { unwrapListResponse } from "@/lib/api/utils";
 

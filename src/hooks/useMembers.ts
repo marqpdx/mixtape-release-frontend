@@ -12,7 +12,7 @@ import {
   AddMemberData,
   UpdateMemberData,
 } from '@/lib/group/memberApi';
-import { GroupMembership, GroupRole } from '@/types/groupTypes';
+import { GroupMembership, GroupRole } from '@mixtape/core/types/groupTypes';
 
 // ============================================================================
 // RE-EXPORT API TYPES

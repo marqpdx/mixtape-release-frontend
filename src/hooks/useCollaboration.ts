@@ -13,7 +13,7 @@ import type {
   AddCollaboratorsRequest,
   RemoveCollaboratorsRequest,
   CollaboratorRole,
-} from '@/types/dispatchTypes';
+} from '@mixtape/core/types/dispatchTypes';
 
 interface EligibleCollaborator {
   id: number;

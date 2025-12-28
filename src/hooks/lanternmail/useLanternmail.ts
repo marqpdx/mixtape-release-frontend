@@ -7,7 +7,7 @@ import type {
   CreateListResponse,
   ListStatsResponse,
   SendInvitationsResponse,
-} from "@/types/lanternmailTypes";
+} from "@mixtape/core/types/lanternmailTypes";
 import { lanternmailApi } from "@/lib/lanternmail/lanternmailApi";
 // import { lanternmailApi } from "@/lib/lanternmail/lanternmailApi";
 

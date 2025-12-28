@@ -21,7 +21,7 @@ import {
 // import { useLanternmail } from "@hooks/useLanternamil";
 import { Divider } from "@components/common/Divider";
 import AddSubscribersView from "./AddSubscribersView";
-import { LanternmailList } from "@/types/lanternmailTypes";
+import { LanternmailList } from "@mixtape/core/types/lanternmailTypes";
 import { Alert } from "../ui/alerts";
 import { useLanternmail } from "@/hooks/lanternmail/useLanternmail";
 

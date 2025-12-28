@@ -2,7 +2,7 @@
 
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@utils/cache";
 import { axiosInstance } from "./axiosInstance";
-import { UserIdentity } from "@/types/auth";
+import { UserIdentity } from "@mixtape/core/types/auth";
 
 const NEXT_PUBLIC_ROOT_API_URL = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
 const API_BASE = `${NEXT_PUBLIC_ROOT_API_URL}/api/user`;

@@ -1,6 +1,6 @@
 // src/lib/auth/permissions.ts
 
-import { Role, Permission, UserIdentity } from '@/types/auth';
+import { Role, Permission, UserIdentity } from '@mixtape/core/types/auth';
 
 /**
  * Role-Based Access Control (RBAC) Configuration

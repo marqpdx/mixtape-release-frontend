@@ -2,7 +2,7 @@
 
 import GroupsList from "@/components/groups/list/GroupsList";
 import { useGroupCircles } from "@/hooks/groups/useGroups";
-import type { Group } from "@/types/groupTypes";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
 type GroupCirclesListProps = {
   sponsorGroupSlug: string;

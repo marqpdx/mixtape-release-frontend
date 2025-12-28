@@ -20,8 +20,8 @@ import { useLanternmail } from "@hooks/lanternmail/useLanternmail";
 // import { LanternMailList } from "content/lanternTypes";
 // import { Group } from "content/groupTypes";
 import { Alert } from "../ui/alerts";
-import { Group } from "@/types/groupTypes";
-import { LanternmailList } from "@/types/lanternmailTypes";
+import { Group } from "@mixtape/core/types/groupTypes";
+import { LanternmailList } from "@mixtape/core/types/lanternmailTypes";
 import { toaster } from "../ui/toaster";
 // import { Group } from "@components/groups/interfaces";
 

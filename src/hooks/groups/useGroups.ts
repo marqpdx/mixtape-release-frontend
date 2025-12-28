@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
 import * as groupApi from '@/lib/group/groupApi';
-import { Group, GroupMembership, UseGroupMembersResult } from '@/types/groupTypes';
+import { Group, GroupMembership, UseGroupMembersResult } from '@mixtape/core/types/groupTypes';
 
 // Re-export API types for convenience
 export type FetchGroupsOptions = groupApi.FetchGroupsOptions;

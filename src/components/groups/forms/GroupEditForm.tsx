@@ -25,7 +25,7 @@ import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
 // import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
-import { Group, GroupFormData, GroupStatus, GroupType } from "@/types/groupTypes";
+import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/types/groupTypes";
 // import { EmblemPicker } from "@components/emblems/EmblemPicker";
 // import { useEntityImageUpload } from "@hooks/useEntityImageUpload";
 // import { useEmblemAttachment } from "@hooks/useEmblemAttachment";

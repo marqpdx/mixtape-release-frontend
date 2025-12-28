@@ -24,7 +24,7 @@ import { TextSelection } from "@components/writing/hooks/useTextSelection";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { WordCountDisplay } from "./composer/WordCountDisplay";
 import { StatusMessage } from "./composer/StatusMessage";
-import { WritingKind } from "@/types/writingTypes";
+import { WritingKind } from "@mixtape/core/types/writingTypes";
 import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { useCollaboration } from "@hooks/useCollaboration";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";

@@ -1,7 +1,7 @@
 // src/lib/user/userApi.ts
 
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { UserIdentity } from "@/types/auth";
+import { UserIdentity } from "@mixtape/core/types/auth";
 
 /**
  * Fetch all users in the system

@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Permission } from '@/types/auth';
+import { Permission } from '@mixtape/core/types/auth';
 import { useAuth } from './AuthContext';
 import {
   hasPermission,

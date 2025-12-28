@@ -7,7 +7,7 @@ import { Text, HStack, Box, Avatar } from "@chakra-ui/react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { AvatarGroup } from "@chakra-ui/react";
-import { Group } from "@/types/groupTypes";
+import { Group } from "@mixtape/core/types/groupTypes";
 
 interface GroupsTableProps {
   groups: Group[];

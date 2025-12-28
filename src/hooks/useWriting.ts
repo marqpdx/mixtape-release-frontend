@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FlattenedPlacement, WritingWorkingCopy } from '@/types/writingTypes';
+import { FlattenedPlacement, WritingWorkingCopy } from '@mixtape/core/types/writingTypes';
 import * as writingApi from '@/lib/writing/api';
 // import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
 

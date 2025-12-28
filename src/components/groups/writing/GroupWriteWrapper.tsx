@@ -6,7 +6,7 @@
 
 'use client';
 
-import { WritingKind, WritingPiece } from '@/types/writingTypes';
+import { WritingKind, WritingPiece } from '@mixtape/core/types/writingTypes';
 import WritingEditorWrapper from '@components/writing/WritingEditorWrapper';
 // import type { WritingPiece, WritingKind } from '@content/writingTypes';
 

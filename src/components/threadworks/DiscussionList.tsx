@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { Box, Badge, Heading, VStack, HStack, Text, Flex } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import { IconUser, IconClock, IconMessageCircle } from '@tabler/icons-react'
-import { Discussion, formatPostCount } from '@/types/threadworksTypes'
+import { Discussion, formatThreadPostCount } from '@mixtape/core/types/threadworksTypes'
 import { formatTimeAgo, truncateText } from './threadworksUtils'
 
 interface DiscussionListProps {
@@ -78,7 +78,7 @@ export default function DiscussionList({
                 </VStack>
               </HStack>
               <Badge colorScheme="blue" size="sm" flexShrink={0}>
-                {formatPostCount(discussion.post_count)}
+                {formatThreadPostCount(discussion.post_count)}
               </Badge>
             </Flex>
             {latestPost && (

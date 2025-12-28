@@ -23,7 +23,7 @@ import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
 // import { setupConversationSocket } from "lib/chat/setupConversationSocket";
 // import { useChatUnread } from "contexts/ChatUnreadContext";
 // import { getSocket } from "lib/socket";
-import { UserIdentity } from "@/types/auth";
+import { UserIdentity } from "@mixtape/core/types/auth";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";

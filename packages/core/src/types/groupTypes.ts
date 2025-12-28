@@ -244,9 +244,9 @@ export const getGroupTypeLabel = (groupType: GroupType): string => {
 };
 
 /**
- * Get human-readable visibility label
+ * Get human-readable visibility label for groups
  */
-export const getVisibilityLabel = (visibility: GroupVisibility): string => {
+export const getGroupVisibilityLabel = (visibility: GroupVisibility): string => {
   const labels: Record<GroupVisibility, string> = {
     public: 'Public',
     invite_only: 'Invite Only',

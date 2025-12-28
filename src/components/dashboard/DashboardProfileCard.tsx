@@ -2,7 +2,7 @@
 
 "use client";
 
-import { UserIdentity } from "@/types/auth";
+import { UserIdentity } from "@mixtape/core/types/auth";
 import {
   Box,
   Flex,

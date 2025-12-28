@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 
-import type { Group } from "@/types/groupTypes";
+import type { Group } from "@mixtape/core/types/groupTypes";
 import GroupsList from "@/components/groups/lists/GroupsList";
 
 import { useUserGroups, useGroupCircles } from "@/hooks/groups/useGroups";
@@ -157,7 +157,7 @@ export function GroupCirclesWorkArea({ groupSlug }: GroupCirclesWorkAreaProps) {
 // import { useMemo, useState } from "react";
 // import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 
-// import type { Group } from "@/types/groupTypes";
+// import type { Group } from "@mixtape/core/types/groupTypes";
 // import GroupsList from "@/components/groups/lists/GroupsList";
 
 // import { useUserGroups, useGroupCircles } from "@/hooks/groups/useGroups";
@@ -326,7 +326,7 @@ export function GroupCirclesWorkArea({ groupSlug }: GroupCirclesWorkAreaProps) {
 // // import { useGroups, useUserGroups } from "@/hooks/groups/useGroups";
 // // import GroupsList from "@/components/groups/lists/GroupsList";
 // // // import GroupCreateGroup from "@/components/groups/create/GroupCreateGroup"; // (your wrapper)
-// // import type { Group } from "@/types/groupTypes";
+// // import type { Group } from "@mixtape/core/types/groupTypes";
 // // import { useHasPermission } from "@/hooks/groups/useGroupPermissions";
 // // import GroupCreateCircle from "../groups/create/GroupCreateCircle";
 

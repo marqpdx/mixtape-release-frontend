@@ -1,7 +1,7 @@
 // src/hooks/editor/useAutoSaveProfileBio.ts
 
 // import { TipTapDoc } from "content/dispatchTypes";
-import { TipTapDoc } from "@/types/dispatchTypes";
+import { TipTapDoc } from "@mixtape/core/types/dispatchTypes";
 import { useGenericAutoSave } from "./useGenericAutoSave";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 

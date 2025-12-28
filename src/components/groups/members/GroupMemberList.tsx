@@ -21,7 +21,7 @@ import { IconGrid3x3, IconList, IconMessage, IconCalendar } from "@tabler/icons-
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
-import { getMemberDisplayName, Group, GroupMembership } from "@/types/groupTypes";
+import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
 
 interface GroupMemberListProps {
   group: Group;

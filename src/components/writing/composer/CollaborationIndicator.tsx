@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { Button, HStack, Text, Badge } from '@chakra-ui/react';
 // import { Button } from '@/components/ui/button';
-import type { DispatchContent } from '@/types/dispatchTypes';
+import type { DispatchContent } from '@mixtape/core/types/dispatchTypes';
 
 interface CollaborationIndicatorProps {
   isCollaborative: boolean;

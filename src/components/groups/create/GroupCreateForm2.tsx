@@ -6,7 +6,7 @@ import { Box, Button, RadioGroup, Stack, Text, Card, Heading } from "@chakra-ui/
 import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
-import type { GroupCreateFormValues, GroupType, GroupVisibility } from "@/types/groupTypes";
+import type { GroupCreateFormValues, GroupType, GroupVisibility } from "@mixtape/core/types/groupTypes";
 // import { GroupCreateFormValues } from "../forms/GroupCreateForm";
 
 interface GroupCreateForm2Props {

@@ -5,7 +5,7 @@ import { Box, Text, VStack, Input, InputGroup, Button, useDisclosure, HStack, He
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Divider } from '@components/common/Divider'
 import { IconSearch, IconPlus, IconBrandMastodon } from '@tabler/icons-react'
-import { Forum, CreateDiscussionData } from '@/types/threadworksTypes'
+import { Forum, CreateDiscussionData } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations } from '@hooks/threadworks/useThreadworks'
 import DiscussionList from './DiscussionList'
 import DiscussionDetail from './DiscussionDetail'

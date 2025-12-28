@@ -277,8 +277,8 @@ export interface PublishWritingPieceRequest {
   scheduled_for?: string | null // ISO datetime or null for immediate publish
 }
 
-// Helper for formatting
-export const formatPostCount = (count: number): string => {
+// Helper for formatting writing post counts
+export const formatWritingPostCount = (count: number): string => {
   if (count === 0) return 'No posts'
   if (count === 1) return '1 post'
   return `${count} posts`

@@ -197,9 +197,9 @@ export const isDiscussionArchived = (discussion: Discussion): boolean => {
 };
 
 /**
- * Get human-readable visibility label
+ * Get human-readable visibility label for forums
  */
-export const getVisibilityLabel = (visibility: ForumVisibility): string => {
+export const getForumVisibilityLabel = (visibility: ForumVisibility): string => {
   const labels: Record<ForumVisibility, string> = {
     public: 'Public',
     members: 'Members Only',
@@ -209,9 +209,9 @@ export const getVisibilityLabel = (visibility: ForumVisibility): string => {
 };
 
 /**
- * Get human-readable status label
+ * Get human-readable status label for discussions
  */
-export const getStatusLabel = (status: DiscussionStatus): string => {
+export const getDiscussionStatusLabel = (status: DiscussionStatus): string => {
   const labels: Record<DiscussionStatus, string> = {
     active: 'Active',
     archived: 'Archived',
@@ -221,9 +221,9 @@ export const getStatusLabel = (status: DiscussionStatus): string => {
 };
 
 /**
- * Format post count for display
+ * Format post count for display in threadworks
  */
-export const formatPostCount = (count: number): string => {
+export const formatThreadPostCount = (count: number): string => {
   return `${count} ${count === 1 ? 'post' : 'posts'}`;
 };
 

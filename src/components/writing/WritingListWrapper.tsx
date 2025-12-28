@@ -39,7 +39,7 @@ import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
 import { useWriting } from "@hooks/useWriting";
 import { useRouter } from "next/navigation";
-import { FlattenedPlacement, WritingWorkingCopy } from "@/types/writingTypes";
+import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
 

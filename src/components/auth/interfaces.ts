@@ -1,6 +1,6 @@
 // src/components/auth/interfaces.ts
 // Form interfaces for auth components
-// For UserIdentity and auth types, see @/types/auth.ts
+// For UserIdentity and auth types, see @mixtape/core/types/auth.ts
 
 export interface AuthShared {
   email: string;

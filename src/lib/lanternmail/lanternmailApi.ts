@@ -8,7 +8,7 @@ import type {
   ListStatsResponse,
   SendInvitationsResponse,
   AllSubscribersResponse,
-} from "@/types/lanternmailTypes";
+} from "@mixtape/core/types/lanternmailTypes";
 
 /**
  * LanternMail API Client

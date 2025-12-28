@@ -13,7 +13,7 @@ import {
   UseForumResult,
   UseDiscussionResult,
   UseThreadworksMutationsResult,
-} from '@/types/threadworksTypes';
+} from '@mixtape/core/types/threadworksTypes';
 import * as threadworksApi from '@/lib/threadworks/threadworksApi';
 
 // ============================================================================

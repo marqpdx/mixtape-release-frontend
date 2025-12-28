@@ -13,7 +13,7 @@ import {
   FetchForumsOptions,
   FetchDiscussionsOptions,
   ThreadworksListResponse,
-} from '@/types/threadworksTypes';
+} from '@mixtape/core/types/threadworksTypes';
 
 // ============================================================================
 // FORUMS

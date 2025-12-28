@@ -26,7 +26,7 @@ import {
   Forum,
   CreateForumData,
   CreateDiscussionData,
-} from '@/types/threadworksTypes'
+} from '@mixtape/core/types/threadworksTypes'
 import ForumList from './ForumList'
 import CreateForumModal from './CreateForumModal'
 

@@ -9,7 +9,7 @@
  * includes rate limiting and must run before axiosInstance's auth interceptors are ready.
  */
 
-import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@/types/auth';
+import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@mixtape/core/types/auth';
 import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStorage';
 import { checkRateLimit, recordSuccess } from './rateLimiter';
 import { axiosInstance } from '@/providers/auth-provider/axiosInstance';

@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@/components/ui/toaster";
 import GroupCreateForm2 from "./GroupCreateForm2";
 import * as groupApi from "@/lib/group/groupApi";
-import type { GroupCreateFormData, GroupCreateFormValues } from "@/types/groupTypes";
+import type { GroupCreateFormData, GroupCreateFormValues } from "@mixtape/core/types/groupTypes";
 import { groupsQueryKeys } from "@/hooks/groups/useGroups";
 
 function toIsoOrNull(d?: Date | null): string | null | undefined {

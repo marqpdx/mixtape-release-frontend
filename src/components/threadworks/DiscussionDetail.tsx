@@ -5,7 +5,7 @@ import { Box, Button, Heading, VStack, HStack, Spacer, Textarea, Text, Spinner, 
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Divider } from '@components/common/Divider'
 import { IconUser, IconClock, IconMessageCircle } from '@tabler/icons-react'
-import { Discussion, CreatePostData } from '@/types/threadworksTypes'
+import { Discussion, CreatePostData } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations, useDiscussion } from '@hooks/threadworks/useThreadworks'
 import { formatTimeAgo } from './threadworksUtils'
 import PostItem from './PostItem'

@@ -17,7 +17,7 @@ import {
   IconNetwork
 } from "@tabler/icons-react";
 import { useUserGroups } from "@/hooks/groups/useGroups";
-import { GroupType } from "@/types/groupTypes";
+import { GroupType } from "@mixtape/core/types/groupTypes";
 import { GroupAdminRoleSwitcher } from "../utils/GroupAdminRoleSwitcher";
 
 interface GroupHeaderBarProps {

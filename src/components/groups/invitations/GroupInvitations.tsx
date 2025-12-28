@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { toaster } from "@/components/ui/toaster";
 import { Tooltip } from "@components/ui/tooltip";
-import { GroupInvitation, invitationStatusIconMap } from "@/types/groupTypes";
+import { GroupInvitation, invitationStatusIconMap } from "@mixtape/core/types/groupTypes";
 
 // import { GroupInvitation, invitationStatusIconMap } from "./interfaces";
 

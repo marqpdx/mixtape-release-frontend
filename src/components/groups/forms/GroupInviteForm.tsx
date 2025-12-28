@@ -17,8 +17,8 @@ import { toaster } from "@/components/ui/toaster";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { IconUsers, IconX } from "@tabler/icons-react";
 import { Checkbox } from "@chakra-ui/react";
-import { UserProfile } from "@/types/auth";
-import { GroupMembership } from "@/types/groupTypes";
+import { UserProfile } from "@mixtape/core/types/auth";
+import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
 interface InviteFormProps {
   groupSlug: string;

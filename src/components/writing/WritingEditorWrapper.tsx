@@ -12,7 +12,7 @@ import { Box, VStack, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from "@/components/ui/toaster";
 import { axiosInstance } from '@providers/auth-provider/axiosInstance';
 import WriteComposer from '@components/writing/WriteComposer';
-import { WritingKind, WritingPiece, WritingWorkingCopyLight } from '@/types/writingTypes';
+import { WritingKind, WritingPiece, WritingWorkingCopyLight } from '@mixtape/core/types/writingTypes';
 // import type { WritingPiece, WritingKind } from '@content/writingTypes';
 
 interface SponsorConfig {

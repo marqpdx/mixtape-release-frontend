@@ -1,7 +1,7 @@
 // src/components/threadworks/ForumList.tsx
 
 import { Accordion, Badge, HStack, Heading, VStack, Box, Text } from '@chakra-ui/react'
-import { Forum, getVisibilityLabel } from '@/types/threadworksTypes'
+import { Forum, getForumVisibilityLabel } from '@mixtape/core/types/threadworksTypes'
 import { IconMessages } from '@tabler/icons-react'
 import ForumDetail from './ForumDetail'
 import { useColorModeValue } from '@components/ui/color-mode'
@@ -76,7 +76,7 @@ export default function ForumList({
                     {/* Badges */}
                     <HStack gap={2} fontSize="xs">
                       <Badge colorScheme="green" size="sm" variant="subtle">
-                        {getVisibilityLabel(forum.visibility)}
+                        {getForumVisibilityLabel(forum.visibility)}
                       </Badge>
                       <Badge colorScheme="blue" variant="subtle" size="sm">
                         {forum.discussion_count} {forum.discussion_count === 1 ? 'discussion' : 'discussions'}

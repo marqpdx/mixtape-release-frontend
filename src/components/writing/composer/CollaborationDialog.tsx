@@ -24,7 +24,7 @@ import type {
   DispatchContent,
   CollaboratorRole,
   DispatchCollaborator,
-} from '@/types/dispatchTypes';
+} from '@mixtape/core/types/dispatchTypes';
 import type { EligibleCollaborator } from '@hooks/useCollaboration';
 
 interface CollaborationDialogProps {

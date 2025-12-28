@@ -2,7 +2,7 @@
 
 import { VStack, Text, Input, Textarea, HStack, Button } from '@chakra-ui/react'
 import { useState } from 'react'
-import { CreateForumData, ForumVisibility } from '@/types/threadworksTypes'
+import { CreateForumData, ForumVisibility } from '@mixtape/core/types/threadworksTypes'
 import AdminModal from '@components/admin/AdminModal'
 
 interface CreateForumModalProps {

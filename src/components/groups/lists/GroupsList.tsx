@@ -5,7 +5,7 @@
 import { useRouter } from "next/navigation";
 import { Avatar, Box, HStack, Text } from "@chakra-ui/react";
 import UniversalDataTable from "@/components/common/UniversalDataTable";
-import type { Group } from "@/types/groupTypes";
+import type { Group } from "@mixtape/core/types/groupTypes";
 import { Icons } from "@/components/icons/IconMap";
 
 export interface GroupsListProps {

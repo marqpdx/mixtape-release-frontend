@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { getSocket, initializeSocket } from "@/lib/socket";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { UserIdentity } from "@/types/auth";
+import { UserIdentity } from "@mixtape/core/types/auth";
 
 /**
  * Initializes the shared socket, registers the user, and joins all conversation rooms.
