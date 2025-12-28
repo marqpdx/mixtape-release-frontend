@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3010 -H localhost",
+    "dev": "next dev -p 3011 -H localhost",
     "build": "next build",
-    "start": "next start -p 3010 -H localhost",
+    "start": "next start -p 3011 -H localhost",
     "lint": "next lint",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
