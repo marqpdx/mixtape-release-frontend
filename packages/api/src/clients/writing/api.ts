@@ -5,8 +5,8 @@
  */
 
 import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { unwrapListResponse } from "@/lib/api/utils";
+import { axiosInstance } from "../../lib/axiosInstance";
+import { unwrapListResponse } from "../../lib/utils";
 
 
 export async function upsertWorkingCopy(pieceId: string, data: any) {

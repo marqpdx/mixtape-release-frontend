@@ -1,6 +1,6 @@
 // lib/chat/createOrGetConversation.ts
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export const createOrGetConversation = async (
   participants: string[],

@@ -17,7 +17,7 @@ import { useColorModeValue } from '@components/ui/color-mode'
 import { Card, Field } from '@chakra-ui/react'
 import { IconDeviceFloppy, IconUsers, IconWorld, IconLock } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
-import { axiosInstance } from '@providers/auth-provider/axiosInstance'
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance'
 import { MixtapeAlert } from '@components/ui/alerts/MixtapeAlert'
 
 interface ForumCreateProps {

@@ -3,7 +3,7 @@
 "use client";
 
 import { Conversation } from "@components/chat/interfaces";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { create } from "zustand";
 
 interface ConversationStatus {

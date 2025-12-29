@@ -5,7 +5,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 import GroupCreateForm2 from "./GroupCreateForm2";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import type { GroupCreateFormData, GroupCreateFormValues } from "@mixtape/core/types/groupTypes";

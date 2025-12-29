@@ -18,7 +18,7 @@ import {
   Heading,
 } from '@chakra-ui/react';
 import { Tooltip } from '@components/ui/tooltip';
-import { CalendarDay, CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { CalendarDay, CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 
 interface CalendarDayCellProps {
   day: CalendarDay;

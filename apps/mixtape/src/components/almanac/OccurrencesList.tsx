@@ -19,7 +19,7 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { Tooltip } from '@components/ui/tooltip';
-import { CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { Divider } from '@components/common/Divider';
 import { List } from 'react-window';

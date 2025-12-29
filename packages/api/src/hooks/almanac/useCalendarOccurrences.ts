@@ -2,7 +2,7 @@
 // ✅ React Query version with automatic caching and background refetching
 
 import { useQuery } from '@tanstack/react-query';
-import { almanacApi, CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { almanacApi, CalendarOccurrence } from '../../clients/almanac/almanacApi';
 
 interface UseCalendarOccurrencesOptions {
   groupSlug: string;

@@ -4,8 +4,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
-import { getSocket, initializeSocket } from "@/lib/socket";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { getSocket, initializeSocket } from "../lib/socket";
+import { axiosInstance } from "../lib/axiosInstance";
 import { UserIdentity } from "@mixtape/core/types/auth";
 
 /**

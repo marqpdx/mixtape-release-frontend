@@ -8,9 +8,9 @@ import {
 import { useColorModeValue } from '@components/ui/color-mode';
 import { CalendarMonth } from './CalendarMonth';
 import { EventDetailDrawer } from './EventDetailDrawer';
-import { CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@components/ui/alerts/MixtapeAlert';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 
 interface CalendarContainerProps {
   groupSlug: string;  // ← Required (no default)

@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { CalendarDay, CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { CalendarDay, CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { CalendarDayCell } from './CalendarDayCell';
 import { isSameDay, parseISO, startOfDay } from 'date-fns';
 

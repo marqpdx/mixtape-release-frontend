@@ -6,7 +6,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import * as Y from "yjs";
 import { Editor } from "@tiptap/react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 interface UseCollabAutosaveOptions {
   documentSlug: string;

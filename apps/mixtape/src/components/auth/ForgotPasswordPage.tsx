@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 const ForgotPasswordPage: React.FC = () => {
   const router = useRouter();

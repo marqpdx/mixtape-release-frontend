@@ -1,8 +1,8 @@
 // src/hooks/almanac/useGroupEvents.ts - AUTO-LOADS ON MOUNT
 
 import { useState, useCallback, useEffect } from 'react';
-import * as almanacApi from '@lib/almanac/almanacApi';
-import { EventResponse, EventCreatePayload } from '@lib/almanac/almanacApi';
+import * as almanacApi from '../../clients/almanac/almanacApi';
+import { EventResponse, EventCreatePayload } from '../../clients/almanac/almanacApi';
 
 interface UseGroupEventsReturn {
   // State

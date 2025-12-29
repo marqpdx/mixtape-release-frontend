@@ -7,6 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "@mixtape/core": "*",
+    "@tanstack/react-query": "^5.90.8",
     "axios": "^1.13.2"
   },
   "devDependencies": {

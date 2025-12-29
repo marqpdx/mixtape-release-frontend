@@ -1,7 +1,7 @@
 // src/components/write/hooks/useEmptyFlagDetection.ts
 
 import { useCallback, useRef, useState } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
 interface UseEmptyFlagDetectionProps {
   pieceId: string;

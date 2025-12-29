@@ -6,7 +6,7 @@
 import { useForm } from "react-hook-form";
 import { Button, Input, Textarea, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export default function PostCreateForm() {
   const { register, handleSubmit } = useForm();

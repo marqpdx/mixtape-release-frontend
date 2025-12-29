@@ -40,11 +40,15 @@ export interface Group {
   display_layout: "classic" | "modern" | "minimal";
   status?: GroupStatus;
 
-  // Parent group info for circles
+  // Parent group/member info for circles
   sponsor_group?: {
-    slug: string;
-    title: string;
     id: string;
+    slug?: string;           // For group sponsors
+    title?: string;          // For group sponsors
+    group_type?: GroupType;  // For group sponsors
+    username?: string;       // For member sponsors
+    display_name?: string;   // For member sponsors
+    type?: 'member';         // Discriminator for member sponsors
   } | null;
 
   // DEPRECATED: These fields store expired presigned URLs

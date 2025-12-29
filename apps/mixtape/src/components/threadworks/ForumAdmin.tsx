@@ -1,7 +1,7 @@
 // src/components/threadworks/ForumAdmin.tsx
 
 import { useEffect, useState } from "react"
-import { axiosInstance } from "@providers/auth-provider/axiosInstance"
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance"
 import { Forum } from "./interfaces"
 import ForumListGrid from "./ForumListGrid"
 

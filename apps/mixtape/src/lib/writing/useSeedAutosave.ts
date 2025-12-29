@@ -1,7 +1,7 @@
 // src/lib/writing/useSeedAutosave.ts
 import { useCallback, useRef, useState } from "react";
-import { toaster } from "@/components/ui/toaster";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAutosave } from "@mixtape/api/hooks/useAutosave";
 // import { useAutosave } from "lib/hooks/useAutosave";
 

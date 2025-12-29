@@ -15,14 +15,14 @@ import { usePermissions } from "@mixtape/auth/usePermissions";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 // import PageContainer from "@components/layout/PageContainer";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
-import { initializeSocket } from "@/lib/socket";
+import { initializeSocket } from "@mixtape/api/lib/socket";
 import { ChatRealtimeWire } from "@/components/chat/ChatRealtimeWire";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoading: identityLoading, isAuthenticated } = useAuth();
-  const { isAdmin } = usePermissions();
+  const { user, isLoading: identityLoading, isAuthenticated, can, canInGroup } = useAuth();
+  const { isAdmin } = usePermissions({ user, can, canInGroup });
   const [socketInitialized, setSocketInitialized] = useState(false);
 
   // Auth check - redirect to login if not authenticated

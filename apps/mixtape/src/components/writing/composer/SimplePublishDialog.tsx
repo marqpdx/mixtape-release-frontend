@@ -12,7 +12,7 @@ import {
   Heading,
   Checkbox,
 } from '@chakra-ui/react'
-import { toaster } from "@/components/ui/toaster"
+import { toaster } from "@mixtape/core/lib/toaster"
 import { useWritingMutations } from '@hooks/useWriting'
 
 interface SimplePublishDialogProps {

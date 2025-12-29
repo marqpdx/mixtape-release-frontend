@@ -28,7 +28,7 @@ import {
   IconChevronDown,
   IconChevronUp
 } from "@tabler/icons-react";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 // -----------------------------
 // Types

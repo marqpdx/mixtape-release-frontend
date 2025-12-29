@@ -12,7 +12,22 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@mixtape/core": ["./packages/core/src"],
+      "@mixtape/core/*": ["./packages/core/src/*"],
+      "@mixtape/api": ["./packages/api/src"],
+      "@mixtape/api/*": ["./packages/api/src/*"],
+      "@mixtape/auth": ["./packages/auth/src"],
+      "@mixtape/auth/*": ["./packages/auth/src/*"]
+    }
   },
-  "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": [
+    "node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "apps/**"
+  ]
 }

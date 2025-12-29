@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
-import { toaster } from '@/components/ui/toaster';
+import { axiosInstance } from '../lib/axiosInstance';
+import { toaster } from '@mixtape/core/lib/toaster';
 import type {
   CollaborationStatus,
   DispatchContent,

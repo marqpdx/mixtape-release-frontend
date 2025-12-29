@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { MainEditor } from "@components/writing/composer/MainEditor";

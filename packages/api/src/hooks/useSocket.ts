@@ -1,7 +1,7 @@
 // hooks/useSocket.ts
 
 import { useEffect, useState } from 'react';
-import { initializeSocket, getSocket } from '@/lib/socket';
+import { initializeSocket, getSocket } from '../lib/socket';
 import type { Socket } from 'socket.io-client';
 
 /**

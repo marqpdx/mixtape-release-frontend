@@ -19,7 +19,7 @@ import {
   Button,
   Input,
 } from '@chakra-ui/react';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 import type {
   DispatchContent,
   CollaboratorRole,

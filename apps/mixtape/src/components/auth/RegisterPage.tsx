@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 import { RegisterFormProps } from "./interfaces";
 

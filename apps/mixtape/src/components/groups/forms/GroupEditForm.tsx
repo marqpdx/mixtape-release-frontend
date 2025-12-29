@@ -20,7 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect, useState, useCallback } from "react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
 // import { Input } from "@theme/recipes/input.recipe";
@@ -31,7 +31,7 @@ import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/type
 // import { useEmblemAttachment } from "@hooks/useEmblemAttachment";
 // import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
 // import { EmblemInline } from "@content/emblemTypes";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
 import { useEntityImageUpload } from "@mixtape/api/hooks/useEntityImageUpload";

@@ -12,8 +12,8 @@ import {
   HStack,
 } from "@chakra-ui/react";
 import { Controller, useForm } from "react-hook-form";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { toaster } from "@/components/ui/toaster";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { IconUsers, IconX } from "@tabler/icons-react";
 import { Checkbox } from "@chakra-ui/react";

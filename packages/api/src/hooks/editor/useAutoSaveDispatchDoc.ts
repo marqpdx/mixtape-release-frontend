@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import debounce from "lodash.debounce";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { TipTapDoc } from "@mixtape/core/types/dispatchTypes";
 // import { TipTapDoc } from "content/dispatchTypes";
 

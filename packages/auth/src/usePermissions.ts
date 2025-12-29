@@ -1,9 +1,8 @@
-// src/lib/auth/usePermissions.ts
+// packages/auth/src/usePermissions.ts
 'use client';
 
 import { useMemo } from 'react';
-import { Permission } from '@mixtape/core/types/auth';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { Permission, UserIdentity } from '@mixtape/core/types/auth';
 import {
   hasPermission,
   hasAnyPermission,
@@ -14,26 +13,34 @@ import {
   isMember,
 } from './permissions';
 
+export interface UsePermissionsParams {
+  user: UserIdentity | null;
+  can: (permission: string) => boolean;
+  canInGroup: (permission: string, groupSlug: string) => boolean;
+}
+
 /**
  * Hook for checking user permissions and roles
+ *
+ * @param params - User and permission check functions from auth context
  *
  * @example
  * ```tsx
  * function PostActions() {
- *   const { can, canInGroup, isAdmin } = usePermissions();
+ *   const { user, can, canInGroup } = useAuth();
+ *   const permissions = usePermissions({ user, can, canInGroup });
  *
  *   return (
  *     <div>
- *       {can('create_course') && <button>Create Course</button>}
- *       {canInGroup('edit_course', 'my-group') && <button>Edit</button>}
- *       {isAdmin && <button>Admin Panel</button>}
+ *       {permissions.can('create_course') && <button>Create Course</button>}
+ *       {permissions.canInGroup('edit_course', 'my-group') && <button>Edit</button>}
+ *       {permissions.isAdmin && <button>Admin Panel</button>}
  *     </div>
  *   );
  * }
  * ```
  */
-export function usePermissions() {
-  const { user, can: authCan, canInGroup: authCanInGroup } = useAuth();
+export function usePermissions({ user, can: authCan, canInGroup: authCanInGroup }: UsePermissionsParams) {
 
   const permissions = useMemo(() => {
     /**

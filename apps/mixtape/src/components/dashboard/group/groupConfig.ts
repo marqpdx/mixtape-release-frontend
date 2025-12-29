@@ -1,7 +1,7 @@
 // src/components/dashboard/group/groupConfig.ts
 
 import { MenuItem } from "@components/dashboard/shared/types";
-import { canAccessSection } from "@/config/groupSectionPermissions";
+import { canAccessSection } from "@mixtape/core/config/groupSectionPermissions";
 import { isSectionAllowedForGroupType } from "@/config/groupTypeSections";
 
 // Admin/Steward Dashboard - Full feature set

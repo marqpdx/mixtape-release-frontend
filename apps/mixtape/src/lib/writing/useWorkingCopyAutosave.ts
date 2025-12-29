@@ -1,8 +1,8 @@
 // src/lib/writing/useWorkingCopyAutosave.ts
 
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
-import { toaster } from "@/components/ui/toaster";
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
+import { toaster } from "@mixtape/core/lib/toaster";
 
 interface WorkingCopyData {
   title: string;

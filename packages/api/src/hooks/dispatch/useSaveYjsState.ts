@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from "react";
 import * as Y from "yjs";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 // Helper: Convert Uint8Array to base64 in chunks to avoid stack overflow
 function uint8ArrayToBase64(bytes: Uint8Array): string {

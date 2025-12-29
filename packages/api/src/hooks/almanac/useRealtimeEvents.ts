@@ -1,6 +1,6 @@
 // src/hooks/useRealtimeEvents.ts
 
-import { getSocket } from '@/lib/socket'
+import { getSocket } from '../../lib/socket'
 import { useEffect, useCallback, useRef } from 'react'
 // import { useSocket } from '@hooks/useSocket' // Assumes you have this
 

@@ -1,7 +1,7 @@
 // src/hooks/usePolling.ts
 
 import { useEffect, useRef } from "react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "../lib/axiosInstance";
 
 type PollingOptions<T> = {
   url: string;

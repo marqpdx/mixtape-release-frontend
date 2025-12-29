@@ -72,6 +72,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  webpack: (config, { isServer }) => {
+    // Suppress the annoying "Serializing big strings" warning
+    config.infrastructureLogging = {
+      level: 'error',
+      ...(config.infrastructureLogging || {}),
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

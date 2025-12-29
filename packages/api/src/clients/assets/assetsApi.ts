@@ -1,6 +1,6 @@
 // src/lib/assets/assetsApi.ts
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type SponsorType = 'group' | 'member';
 export type ImageRole = 'profile_image' | 'background_image' | 'avatar';

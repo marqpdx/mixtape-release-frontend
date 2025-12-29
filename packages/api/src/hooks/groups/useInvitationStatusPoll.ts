@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import axios from "axios";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "../../lib/axiosInstance";
 
 type InvitationStatusPollOptions = {
   groupId: string | number;

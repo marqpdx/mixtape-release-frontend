@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { getSocket } from "@/lib/socket";
+import { getSocket } from "@mixtape/api/lib/socket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
 import { useConversationStore } from "@/stores/conversationStore";
 

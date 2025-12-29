@@ -1,7 +1,7 @@
 // src/api/groupPermsApi.ts
 // API interface for group permissions management
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 /**
  * Data structures (based on UI needs)

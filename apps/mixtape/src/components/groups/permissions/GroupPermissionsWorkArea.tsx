@@ -16,7 +16,7 @@ import {
   Avatar,
   Collapsible,
 } from "@chakra-ui/react";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 import {
   useMemberPermissions,
   useAvailablePermissions,

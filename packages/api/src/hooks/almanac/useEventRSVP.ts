@@ -3,7 +3,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as almanacApi from '@mixtape/api/clients/almanac/almanacApi';
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 interface RSVPPayload {
   status: 'going' | 'maybe' | 'not_going';

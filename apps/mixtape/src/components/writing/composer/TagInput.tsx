@@ -20,8 +20,8 @@ import {
   Button,
   Spinner,
 } from '@chakra-ui/react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
-import { toaster } from '@/components/ui/toaster';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
+import { toaster } from '@mixtape/core/lib/toaster';
 
 export interface Tag {
   id: number;

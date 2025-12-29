@@ -1,6 +1,6 @@
 // src/utils/file/uploadEntityImage
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export async function uploadEntityImage({
   entityType,

@@ -13,8 +13,8 @@ import {
   Icon,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { toaster } from "@/components/ui/toaster";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { Tooltip } from "@components/ui/tooltip";
 import { GroupInvitation, invitationStatusIconMap } from "@mixtape/core/types/groupTypes";
 

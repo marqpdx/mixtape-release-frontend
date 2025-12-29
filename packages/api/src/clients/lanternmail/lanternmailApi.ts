@@ -1,6 +1,6 @@
 // src/lib/lanternmail/lanternmailApi.ts
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import type {
   LanternmailList,
   GroupLanternmailMember,

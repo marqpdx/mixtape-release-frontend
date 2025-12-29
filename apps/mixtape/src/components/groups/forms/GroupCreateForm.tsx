@@ -18,7 +18,7 @@ import { useEffect, useRef, useState, memo, useCallback } from "react";
 import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import type { GroupCreateFormData, GroupCreateFormValues, GroupType, GroupVisibility } from "@mixtape/core/types/groupTypes";
 

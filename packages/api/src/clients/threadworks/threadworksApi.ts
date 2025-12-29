@@ -1,6 +1,6 @@
 // src/lib/threadworks/threadworksApi.ts
 
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import { axiosInstance } from '../../lib/axiosInstance';
 import {
   Forum,
   Discussion,

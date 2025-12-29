@@ -6,7 +6,7 @@
 
 import { useMemo } from 'react';
 import { useMyPermissions } from './useGroupPermissions';
-import { canAccessSection, getAccessibleSections, SECTION_PERMISSIONS } from '@/config/groupSectionPermissions';
+import { canAccessSection, getAccessibleSections, SECTION_PERMISSIONS } from '@mixtape/core/config/groupSectionPermissions';
 
 /**
  * Hook to check if current user can access a specific section

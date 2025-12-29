@@ -1,6 +1,6 @@
 // src/lib/user/userApi.ts
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { UserIdentity } from "@mixtape/core/types/auth";
 
 /**

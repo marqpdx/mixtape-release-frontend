@@ -6,8 +6,8 @@ import {
   GroupRole,
   MemberType,
 } from '@mixtape/core/types/groupTypes';
-import { axiosInstance } from '@/providers/auth-provider/axiosInstance';
-import { unwrapListResponse } from '@/lib/api/utils';
+import { axiosInstance } from '../../lib/axiosInstance';
+import { unwrapListResponse } from '../../lib/utils';
 
 // ============================================================================
 // OPTIONS INTERFACES

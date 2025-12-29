@@ -1,6 +1,6 @@
 // lib/auth/wsToken.ts
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 type WSTokenResponse = { token: string; exp?: number };
 

@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useState, useEffect, useRef } from "react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
 // import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "lib/reactions";
@@ -27,7 +27,7 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
-import { getSocket } from "@/lib/socket";
+import { getSocket } from "@mixtape/api/lib/socket";
 
 type MessageReaction = {
   id: string;

@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateGroupEvent } from '@mixtape/api/clients/almanac/almanacApi';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 import type { EventResponse } from '@mixtape/api/clients/almanac/almanacApi';
 import { useGroup } from '@mixtape/api/hooks/groups/useGroups';
 

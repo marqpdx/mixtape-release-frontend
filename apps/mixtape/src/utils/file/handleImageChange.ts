@@ -1,6 +1,6 @@
 // src/utils/file/handleImageChange.tx
 
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 interface HandleImageChangeProps {
   event: React.ChangeEvent<HTMLInputElement>;

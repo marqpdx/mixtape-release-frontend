@@ -3,7 +3,7 @@
 // import { TipTapDoc } from "content/dispatchTypes";
 import { TipTapDoc } from "@mixtape/core/types/dispatchTypes";
 import { useGenericAutoSave } from "./useGenericAutoSave";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 type Props = {
   userId: string;

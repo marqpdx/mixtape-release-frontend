@@ -18,7 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { Input } from '@/theme/recipes/input.recipe';
 import { DatePickerInput } from '@/components/forms/DatePickerField';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 import * as almanacApi from '@mixtape/api/clients/almanac/almanacApi';
 import type { EventCreatePayload } from '@mixtape/api/clients/almanac/almanacApi';
 import { RecurrenceFeaturelet, type RecurrenceConfig } from './RecurrenceFeaturelet';

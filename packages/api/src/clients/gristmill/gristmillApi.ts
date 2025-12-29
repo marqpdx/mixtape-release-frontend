@@ -1,6 +1,6 @@
 // src/lib/gristmill/gristmillApi.ts
 
-import { axiosInstance } from "@/providers/auth-provider/axiosInstance";
+import { axiosInstance } from "../../lib/axiosInstance";
 
 export interface GristBlock {
   type: string;

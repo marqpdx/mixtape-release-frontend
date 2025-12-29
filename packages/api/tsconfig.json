@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@mixtape/core": ["../core/src"],
+      "@mixtape/core/*": ["../core/src/*"],
+      "@mixtape/auth": ["../auth/src"],
+      "@mixtape/auth/*": ["../auth/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import * as Y from "yjs";
 import { YjsSocketAdapter } from "./YjsSocketAdapter";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 interface DispatchContentMinimal {
   id: string; // UUID for REST API calls

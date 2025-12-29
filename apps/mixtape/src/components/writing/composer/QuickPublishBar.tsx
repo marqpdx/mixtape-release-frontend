@@ -4,9 +4,9 @@
 
 import { useState } from 'react';
 import { Card, Flex, HStack, Text, Kbd, Button } from '@chakra-ui/react';
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { IconCheck } from '@tabler/icons-react';
-import { axiosInstance } from '@providers/auth-provider/axiosInstance';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
 interface SponsorConfig {
   type: 'group' | 'member';

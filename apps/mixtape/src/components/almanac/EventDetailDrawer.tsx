@@ -16,11 +16,11 @@ import {
   NumberInput,
   Field,
 } from '@chakra-ui/react';
-import { CalendarOccurrence } from '@lib/almanac/almanacApi';
+import { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { Divider } from '@components/common/Divider';
 import { useEventRSVP } from '@hooks/almanac/useEventRSVP';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 
 interface EventDetailDrawerProps {
   isOpen: boolean;

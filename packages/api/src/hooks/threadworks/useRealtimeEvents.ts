@@ -1,7 +1,7 @@
 // src/hooks/useRealtimeEvents.ts
 
 import { useEffect, useCallback, useRef } from 'react'
-import { useSocket } from '@hooks/useSocket' // Assumes you have this
+import { useSocket } from '../useSocket' // Assumes you have this
 
 type Entity = 'forum' | 'discussion'
 type EventType = 'typing' | 'reaction' | 'post_created' | 'discussion_created'

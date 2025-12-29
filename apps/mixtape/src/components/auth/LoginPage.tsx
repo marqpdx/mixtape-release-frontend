@@ -17,7 +17,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 import { LoginFormProps } from "./interfaces";
 

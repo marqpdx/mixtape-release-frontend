@@ -8,7 +8,7 @@ import {
   Checkbox, HStack, Switch, Badge, Alert
 } from "@chakra-ui/react";
 import { IconExternalLink, IconMail, IconUsers, IconUser } from "@tabler/icons-react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 interface PublishDestination {
   personal: boolean;

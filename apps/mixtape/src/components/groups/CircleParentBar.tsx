@@ -3,17 +3,7 @@
 
 import { HStack, Text, Button, Badge } from '@chakra-ui/react';
 import Link from 'next/link';
-
-interface SponsorGroup {
-  slug: string;
-  title: string;
-  id: string;
-}
-
-interface Group {
-  group_type: string;
-  sponsor_group?: SponsorGroup | null;
-}
+import { Group } from '@mixtape/core/types/groupTypes';
 
 interface CircleParentBarProps {
   group: Group;

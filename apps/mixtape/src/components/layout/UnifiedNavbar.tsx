@@ -32,7 +32,7 @@ import { ThemeSelector } from "@components/common/ThemeSelector";
 import { IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@mixtape/core/lib/toaster";
 
 // Navigation item types
 type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
@@ -86,8 +86,8 @@ export default function UnifiedNavbar({
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user: identity, logout, isLoading } = useAuth();
-  const { isAdmin, isSteward, isMember } = usePermissions();
+  const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
+  const { isAdmin, isSteward, isMember } = usePermissions({ user: identity, can, canInGroup });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
 

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchGroupEvents, publishGroupEvent, deleteGroupEvent } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 
 interface EventDraftListProps {
   groupSlug: string;

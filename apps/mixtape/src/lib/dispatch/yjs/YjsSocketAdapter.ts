@@ -7,7 +7,7 @@ import {
   applyAwarenessUpdate,
   encodeAwarenessUpdate,
 } from "y-protocols/awareness";
-import { initializeSocket } from "@/lib/socket";
+import { initializeSocket } from "@mixtape/api/lib/socket";
 
 type UpdatePayload =
   | number[]

@@ -18,8 +18,8 @@ import {
   Dialog,
   Avatar,
 } from "@chakra-ui/react";
-import { toaster } from "@/components/ui/toaster";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { IconX, IconUserPlus } from "@tabler/icons-react";
 
 interface User {

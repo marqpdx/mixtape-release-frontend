@@ -34,7 +34,7 @@
         "./src/providers/*"
       ],
       "@lib/*": [
-        "../../packages/api/src/clients/*"
+        "./src/lib/*"
       ],
       "@utils/*": [
         "./src/utils/*"

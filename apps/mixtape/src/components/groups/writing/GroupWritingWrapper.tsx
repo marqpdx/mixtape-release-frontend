@@ -4,7 +4,7 @@
 
 import { Box } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import GroupWritingMainWorkArea from "./GroupWritingMainWorkArea";
 
 interface GroupPermissions {

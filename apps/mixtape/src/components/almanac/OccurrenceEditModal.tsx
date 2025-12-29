@@ -21,7 +21,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toaster } from '@/components/ui/toaster';
+import { toaster } from '@mixtape/core/lib/toaster';
 
 interface OccurrenceEditModalProps {
   groupSlug: string;

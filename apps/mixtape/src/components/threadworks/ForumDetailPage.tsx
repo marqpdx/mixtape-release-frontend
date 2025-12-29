@@ -21,8 +21,8 @@ import {
 } from "@chakra-ui/react";
 import { Divider } from "@components/common/Divider";
 import AdminModal from "@components/admin/AdminModal";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
-import { toaster } from "@/components/ui/toaster";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
 import {
   IconMessageCircle,
   IconClock,
@@ -639,7 +639,7 @@ export default ForumDetailPage;
 // } from "@chakra-ui/react";
 // import { Divider } from "@components/common/Divider";
 // import AdminModal from "@components/admin/AdminModal";
-// import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+// import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 // import { createStandaloneToast } from "@chakra-ui/toast";
 
 // const { toast } = createStandaloneToast();

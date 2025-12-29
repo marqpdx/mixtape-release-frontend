@@ -1,4 +1,4 @@
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useEffect, useState } from "react";
 
 export type NoticeboardItem = {

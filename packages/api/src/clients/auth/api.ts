@@ -12,7 +12,7 @@
 import { AuthResponse, LoginCredentials, RegisterData, UserIdentity, PermissionsData } from '@mixtape/core/types/auth';
 import { getAccessToken, setAccessToken, clearAccessToken } from '@mixtape/auth/tokenStorage';
 import { checkRateLimit, recordSuccess } from '@mixtape/auth/rateLimiter';
-import { axiosInstance } from '@/providers/auth-provider/axiosInstance';
+import { axiosInstance } from '../../lib/axiosInstance';
 
 const API_BASE = process.env.NEXT_PUBLIC_ROOT_API_URL;
 
