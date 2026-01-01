@@ -1,4 +1,4 @@
-// mixtape-release-frontend/src/app/(root)/page.tsx
+// mixtape-release-frontend/src/app/page.tsx
 
 "use client";
 
@@ -204,9 +204,7 @@ export default function CrossroadsHomepage() {
         >
           <Text as="span" fontWeight="bold">@noaa</Text>
           <Text as="span" ml={2}>image courtesy of NOAA</Text>
-          <Box  marginLeft="4px" verticalAlign="middle">
-            <LuExternalLink />
-          </Box>
+          <LuExternalLink style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
         </Link>
       </Box>
     </Box>
