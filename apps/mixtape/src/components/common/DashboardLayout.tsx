@@ -383,7 +383,7 @@ function MobileTabs({
           {overflowTabs.length > 0 && (
             <Popover.Root
               open={open}
-              onOpenChange={(open) => {
+              onOpenChange={({ open }: { open: boolean }) => {
                 if (open) onOpen();
                 else onClose();
               }}

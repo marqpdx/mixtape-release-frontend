@@ -138,7 +138,7 @@ export default function ShareCollaboratorsModal({
     user.profile?.display_name || user.username;
 
   return (
-    <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
+    <Dialog.Root open={open} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
       <Dialog.Content maxW="2xl">
         <Dialog.Header>
           <Heading size="md">Share Document</Heading>

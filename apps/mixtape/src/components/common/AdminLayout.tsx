@@ -177,13 +177,10 @@ export default function AdminLayout({
                   <Collapsible.Root
                     key={menuItem.key}
                     open={openSections[menuItem.key]}
-                    onOpenChange={(open) => {
-                      const openValue =
-                        typeof open === "boolean" ? open : open?.open ?? false;
-
+                    onOpenChange={({ open }: { open: boolean }) => {
                       setOpenSections((prev) => ({
                         ...prev,
-                        [menuItem.key]: openValue,
+                        [menuItem.key]: open,
                       }));
                     }}
                   >

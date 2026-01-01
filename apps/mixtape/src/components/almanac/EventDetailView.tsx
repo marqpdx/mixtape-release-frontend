@@ -324,7 +324,7 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
       {/* Edit Dialog */}
       <DialogRoot
         open={isEditDrawerOpen}
-        onOpenChange={(e) => setIsEditDrawerOpen(e.open)}
+        onOpenChange={({ open }: { open: boolean }) => setIsEditDrawerOpen(open)}
         size="lg"
       >
         <DialogBackdrop />

@@ -96,7 +96,7 @@ export function SimplePublishDialog({
   }, [toNoticeboard, noticeboardExcerpt, piece.id, groupId, groupSlug, titleRef, docJSONRef, excerptRef, onClose, onPublished, publishPiece])
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={({ open }) => !open && onClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content maxW="450px">

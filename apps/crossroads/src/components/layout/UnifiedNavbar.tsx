@@ -335,7 +335,7 @@ export default function UnifiedNavbar({
       </Container>
 
       {/* Mobile Drawer */}
-      <Drawer.Root open={open} onOpenChange={({ open }) => (open ? onOpen() : onClose())} placement="start">
+      <Drawer.Root open={open} onOpenChange={({ open }: { open: boolean }) => (open ? onOpen() : onClose())} placement="start">
         <Drawer.Backdrop />
         <Drawer.Positioner>
           <Drawer.Content maxW="xs" bg="theme.surface" borderColor="theme.border">

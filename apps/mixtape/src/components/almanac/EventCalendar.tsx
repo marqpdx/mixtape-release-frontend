@@ -394,7 +394,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
       {selectedEventSlug && (
         <DialogRoot
           open={isModalOpen}
-          onOpenChange={(e) => setIsModalOpen(e.open)}
+          onOpenChange={({ open }: { open: boolean }) => setIsModalOpen(open)}
           size="xl"
         >
           <DialogBackdrop />

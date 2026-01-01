@@ -225,7 +225,7 @@ export default function AgreementsPage() {
               >
                 <Collapsible.Root
                   open={isOpen}
-                  onOpenChange={({ open }) =>
+                  onOpenChange={({ open }: { open: boolean }) =>
                     setOpenMap((m) => ({ ...m, [sec.id]: open }))
                   }
                 >

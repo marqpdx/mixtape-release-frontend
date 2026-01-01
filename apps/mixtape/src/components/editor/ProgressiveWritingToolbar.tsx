@@ -291,7 +291,7 @@ export default function ProgressiveWritingToolbar({
       {/* Expanded Drawer */}
       <Drawer.Root
         open={isExpanded}
-        onOpenChange={({ open }) => setIsExpanded(open)}
+        onOpenChange={({ open }: { open: boolean }) => setIsExpanded(open)}
         placement="end"
         size="sm"
       >

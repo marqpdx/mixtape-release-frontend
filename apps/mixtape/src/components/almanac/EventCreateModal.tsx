@@ -188,7 +188,7 @@ export default function EventCreateModal({
   return (
     <Dialog.Root
       open={isOpen}
-      onOpenChange={(e) => !e.open && handleClose()}
+      onOpenChange={({ open }: { open: boolean }) => !open && handleClose()}
       size="lg"
     >
       <Dialog.Content>

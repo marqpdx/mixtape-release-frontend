@@ -213,7 +213,7 @@ export default function WelcomeFinishPage() {
         >
           <Collapsible.Root
             open={openMore}
-            onOpenChange={({ open }) => setOpenMore(open)}
+            onOpenChange={({ open }: { open: boolean }) => setOpenMore(open)}
           >
             <Collapsible.Trigger asChild>
               <Button
