@@ -311,7 +311,7 @@ export default function AgreementsPage() {
         <HStack mt={8} justify="space-between" align="center">
           <Checkbox.Root
             checked={agreeChecked}
-            onCheckedChange={({ checked }) => setAgreeChecked(!!checked)}
+            onCheckedChange={({ checked }: { checked: boolean | string }) => setAgreeChecked(!!checked)}
           >
             <Checkbox.HiddenInput />
             <HStack gap={3}>

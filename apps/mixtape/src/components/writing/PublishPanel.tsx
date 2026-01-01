@@ -198,7 +198,7 @@ export default function PublishPanel({
           <Stack gap={2}>
             <Checkbox.Root
               checked={toPersonal}
-              onCheckedChange={(checked) => setToPersonal(!!checked)}
+              onCheckedChange={({ checked }: { checked: boolean | string }) => setToPersonal(!!checked)}
             >
               <Checkbox.Control>
                 <Checkbox.Indicator />
@@ -213,7 +213,7 @@ export default function PublishPanel({
 
             <Checkbox.Root
               checked={toLantern}
-              onCheckedChange={(checked) => setToLantern(!!checked)}
+              onCheckedChange={({ checked }: { checked: boolean | string }) => setToLantern(!!checked)}
             >
               <Checkbox.Control>
                 <Checkbox.Indicator />

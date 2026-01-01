@@ -125,7 +125,7 @@ export default function GroupEditToolbar({
         <HStack gap={3}>
           <Checkbox.Root
             checked={autoSaveEnabled}
-            onCheckedChange={(details) => onAutoSaveToggle(details.checked === true)}
+            onCheckedChange={(details: { checked: boolean | string }) => onAutoSaveToggle(details.checked === true)}
             disabled={mode === 'draft'}
           >
             <Checkbox.HiddenInput />

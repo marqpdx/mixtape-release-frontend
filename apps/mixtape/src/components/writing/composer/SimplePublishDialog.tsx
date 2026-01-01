@@ -110,7 +110,7 @@ export function SimplePublishDialog({
               <VStack gap={3} p={4} borderRadius="md" bg="gray.50" borderWidth="1px">
                 <Checkbox.Root
                   checked={toNoticeboard}
-                  onCheckedChange={(e) => setToNoticeboard(!!e.checked)}
+                  onCheckedChange={({ checked }: { checked: boolean | string }) => setToNoticeboard(!!checked)}
                 >
                   <HStack align="start" gap={0} ml={0}>
                     <Checkbox.Control>
@@ -132,7 +132,7 @@ export function SimplePublishDialog({
                     <HStack gap={4}>
                       <Checkbox.Root
                         checked={!noticeboardExcerpt}
-                        onCheckedChange={(e) => setNoticeboardExcerpt(!e.checked)}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) => setNoticeboardExcerpt(!checked)}
                       >
                         <Checkbox.HiddenInput />
                         <Checkbox.Control>
@@ -145,7 +145,7 @@ export function SimplePublishDialog({
 
                       <Checkbox.Root
                         checked={noticeboardExcerpt}
-                        onCheckedChange={(e) => setNoticeboardExcerpt(!!e.checked)}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) => setNoticeboardExcerpt(!!checked)}
                       >
                         <Checkbox.HiddenInput />
                         <Checkbox.Control>
