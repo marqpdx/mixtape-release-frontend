@@ -1,4 +1,4 @@
-// /src/components/providers.tsx
+// apps/crossroads/src/components/providers.tsx
 
 'use client';
 
@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
 import { ColorModeProvider } from '@components/ui/color-mode';
-import { Toaster } from '@mixtape/core/lib/toaster';
+import { Toaster } from '@/components/ui/toaster';
 import { system } from '@/theme/theme';
 
 export function Providers({ children }: { children: React.ReactNode }) {

@@ -15,7 +15,7 @@ export default function SiteLayout({
   children: React.ReactNode;
 }) {
   const bgColor = useColorModeValue("white", "gray.900");
-  const { isAdmin } = usePermissions();
+  // const { isAdmin } = usePermissions();
 
   return (
     <Box minH="100vh" bg={bgColor}>

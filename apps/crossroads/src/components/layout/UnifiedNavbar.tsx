@@ -87,7 +87,8 @@ export default function UnifiedNavbar({
   const pathname = usePathname();
   const router = useRouter();
   const { user: identity, logout, isLoading } = useAuth();
-  const { isAdmin, isSteward, isMember } = usePermissions();
+  // const { isAdmin, isSteward, isMember } = usePermissions();
+  // const { isAdmin, isSteward, isMember } = usePermissions({ user: identity });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
 
@@ -110,6 +111,7 @@ export default function UnifiedNavbar({
   // For rendering purposes, both /admin and /dashboard use authenticated nav
   const navSection: NavSection = detectedSection;
 
+  const { isAdmin, isSteward } = { isAdmin: false, isSteward: false };
 
   // Filter items based on current section and permissions
   const visibleItems = NAV_ITEMS.filter(item => {
