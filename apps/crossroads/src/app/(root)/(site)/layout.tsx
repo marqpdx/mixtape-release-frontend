@@ -5,9 +5,14 @@
 import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import Footer from "@components/layout/Footer";
-import UnifiedNavbar from "@components/layout/UnifiedNavbar";
-import { usePermissions } from "@mixtape/auth/usePermissions";
+import dynamic from "next/dynamic";
+// import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@/components/admin/AdminTodoButtonWithModal";
+
+// Dynamically import UnifiedNavbar to avoid SSR/prerendering issues with useAuth
+const UnifiedNavbar = dynamic(() => import("@components/layout/UnifiedNavbar"), {
+  ssr: false,
+});
 
 export default function SiteLayout({
   children,

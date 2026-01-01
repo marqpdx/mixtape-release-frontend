@@ -1,4 +1,4 @@
-// src/app/(root)/privacy
+// apps/crossroads/src/app/(root)/privacy
 
 "use client";
 
