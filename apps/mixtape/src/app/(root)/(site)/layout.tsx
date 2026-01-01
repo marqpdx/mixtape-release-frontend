@@ -5,10 +5,15 @@
 import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import Footer from "@components/layout/Footer";
-import UnifiedNavbar from "@components/layout/UnifiedNavbar";
-import { usePermissions } from "@mixtape/auth/usePermissions";
-import { useAuth } from "@/lib/auth/AuthContext";
+import dynamic from "next/dynamic";
+// import { usePermissions } from "@mixtape/auth/usePermissions";
+// import { useAuth } from "@/lib/auth/AuthContext";
 // import AdminTodoButtonWithModal from "@/components/admin/AdminTodoButtonWithModal";
+
+// Dynamically import UnifiedNavbar to avoid SSR/prerendering issues with useAuth
+const UnifiedNavbar = dynamic(() => import("@components/layout/UnifiedNavbar"), {
+  ssr: false,
+});
 
 export default function SiteLayout({
   children,
@@ -16,8 +21,8 @@ export default function SiteLayout({
   children: React.ReactNode;
 }) {
   const bgColor = useColorModeValue("white", "gray.900");
-  const { user, can, canInGroup } = useAuth();
-  const { isAdmin } = usePermissions({ user, can, canInGroup });
+  // const { user, can, canInGroup } = useAuth();
+  // const { isAdmin } = usePermissions({ user, can, canInGroup });
 
   return (
     <Box minH="100vh" bg={bgColor}>

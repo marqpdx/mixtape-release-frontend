@@ -202,7 +202,7 @@ export default function GroupWelcomeInvitePage() {
               >
                 <Collapsible.Root
                   open={openGroup}
-                  onOpenChange={({ open }) => setOpenGroup(open)}
+                  onOpenChange={(details: { open: boolean }) => setOpenGroup(details.open)}
                 >
                   <Collapsible.Trigger asChild>
                     <Button
