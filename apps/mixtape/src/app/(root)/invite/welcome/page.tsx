@@ -256,7 +256,7 @@ export default function GroupWelcomeInvitePage() {
               >
                 <Collapsible.Root
                   open={openCrossroads}
-                  onOpenChange={({ open }) => setOpenCrossroads(open)}
+                  onOpenChange={(details: { open: boolean }) => setOpenCrossroads(details.open)}
                 >
                   <Collapsible.Trigger asChild>
                     <Button
