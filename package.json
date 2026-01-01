@@ -2,10 +2,16 @@
   "name": "mixtape-monorepo",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*",
+      "apps/*"
+    ],
+    "nohoist": [
+      "**/mobile",
+      "**/mobile/**"
+    ]
+  },
   "engines": {
     "node": ">=18.0.0"
   },
@@ -26,5 +32,9 @@
   },
   "devDependencies": {
     "typescript": "^5.9.2"
+  },
+  "resolutions": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }

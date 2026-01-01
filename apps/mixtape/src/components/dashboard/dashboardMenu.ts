@@ -54,6 +54,15 @@ export const DASHBOARD_MENU_ITEMS: MenuItem[] = [
       { key: "forum-detail", label: "Forum Detail", minRole: "member", hidden: true },
     ]
   },
+  {
+    key: "stackroom",
+    label: "Stackroom",
+    minRole: "member",
+    subItems: [
+      { key: "search", label: "Search Library", minRole: "member" },
+      { key: "libraries", label: "My Libraries", minRole: "member" },
+    ]
+  },
   // {
   //   key: "writing",
   //   label: "Writing",

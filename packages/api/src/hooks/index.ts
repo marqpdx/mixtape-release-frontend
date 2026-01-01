@@ -6,6 +6,7 @@ export * from './dispatch'
 export * from './editor'
 export * from './groups'
 export * from './lanternmail'
+export * from './stackroom'
 export * from './threadworks'
 
 // Root-level hooks

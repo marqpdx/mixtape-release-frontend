@@ -61,10 +61,11 @@ const NAV_ITEMS: NavItem[] = [
 
   // Authenticated section (members + admins)
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
   // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
   { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
-  { key: "dispatch", label: "Dispatch", href: "/dispatch", section: "authenticated", memberOnly: true, shortLabel: "Dispatch" },
+
   { key: "map", label: "Map", href: "/demos/map", section: "authenticated", memberOnly: true },
   { key: "admin-panel", label: "Admin", href: "/admin", section: "authenticated", adminOnly: true, shortLabel: "Admin" },
 ];
@@ -102,7 +103,7 @@ export default function UnifiedNavbar({
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||
                   pathname.startsWith("/loom-and-codex") ||
-                  pathname.startsWith("/dispatch") ||
+                  pathname.startsWith("/stackroom") ||
                   pathname.startsWith("/map") ||
                   pathname.startsWith("/admin")) ? "authenticated" :
      "public");

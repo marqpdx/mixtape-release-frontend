@@ -1,15 +1,15 @@
-// src/components/groups/GroupsTable.tsx
+// apps/mixtape/src/components/groups/GroupsTable.tsx
 
 "use client";
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Text, HStack, Box, Avatar, Image, Button, VStack } from "@chakra-ui/react";
+import { Text, HStack, Box, Avatar, Image, Button, VStack, IconButton } from "@chakra-ui/react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { AvatarGroup, CollapsibleRoot, CollapsibleTrigger, CollapsibleContent } from "@chakra-ui/react";
 import { Group } from "@mixtape/core/types/groupTypes";
-import { LuLayoutList, LuFolderTree } from "react-icons/lu";
+import { LuLayoutList, LuFolderTree, LuChevronDown, LuChevronUp } from "react-icons/lu";
 
 interface GroupsTableProps {
   groups: Group[];
@@ -43,6 +43,7 @@ export default function GroupsTable({
 }: GroupsTableProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchical');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Organize groups into hierarchy
   const hierarchy = useMemo<GroupHierarchy>(() => {
@@ -96,6 +97,18 @@ export default function GroupsTable({
     } else {
       router.push("/groups/create");
     }
+  };
+
+  const toggleGroupExpansion = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
   };
 
   // Shared renderers
@@ -324,7 +337,8 @@ export default function GroupsTable({
                   {hierarchy.memberCircles.map(circle => (
                     <Box
                       key={circle.id}
-                      p={3}
+                      py={2}
+                      px={3}
                       mb={2}
                       borderWidth="1px"
                       borderRadius="md"
@@ -333,7 +347,6 @@ export default function GroupsTable({
                       cursor="pointer"
                       onClick={() => handleGroupClick(circle)}
                       _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
-                      height="60%" // 60% of parent height
                     >
                       <HStack align="start">
                         {renderAvatar(circle)}
@@ -355,70 +368,93 @@ export default function GroupsTable({
         {hierarchy.parentGroups.map(parentGroup => {
           const childCircles = hierarchy.groupCirclesMap.get(parentGroup.id) || [];
           const hasChildren = childCircles.length > 0;
+          const isExpanded = expandedGroups.has(parentGroup.id);
 
           return (
             <Box key={parentGroup.id}>
               {hasChildren ? (
-                <CollapsibleRoot defaultOpen>
-                  <Box
-                    borderWidth="1px"
-                    borderRadius="lg"
-                    p={4}
-                    bg="white"
-                    _dark={{ bg: "gray.800" }}
+                <Box
+                  borderWidth="1px"
+                  borderRadius="lg"
+                  p={4}
+                  bg="white"
+                  _dark={{ bg: "gray.800" }}
+                >
+                  <HStack
+                    align="start"
+                    gap={2}
+                    position="relative"
                   >
-                    <CollapsibleTrigger asChild>
-                      <Box
-                        cursor="pointer"
-                        _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
-                        p={2}
-                        borderRadius="md"
-                      >
-                        <HStack align="start">
-                          {renderAvatar(parentGroup)}
-                          <VStack align="start" flex={1} gap={1}>
-                            {renderTitle(parentGroup)}
-                            {renderDescription(parentGroup)}
-                            <HStack justify="space-between" w="full">
-                              {renderMetadata(parentGroup)}
-                              <Text fontSize="xs" color="blue.500" fontWeight="medium">
-                                {childCircles.length} {childCircles.length === 1 ? 'circle' : 'circles'}
-                              </Text>
-                            </HStack>
-                          </VStack>
+                    {/* Clickable area for navigation */}
+                    <HStack
+                      flex={1}
+                      cursor="pointer"
+                      onClick={() => handleGroupClick(parentGroup)}
+                      _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
+                      p={2}
+                      borderRadius="md"
+                      mr={10}
+                    >
+                      {renderAvatar(parentGroup)}
+                      <VStack align="start" flex={1} gap={1}>
+                        {renderTitle(parentGroup)}
+                        {renderDescription(parentGroup)}
+                        <HStack justify="space-between" w="full">
+                          {renderMetadata(parentGroup)}
+                          <Text fontSize="xs" color="blue.500" fontWeight="medium">
+                            {childCircles.length} {childCircles.length === 1 ? 'circle' : 'circles'}
+                          </Text>
                         </HStack>
-                      </Box>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <Box mt={4} pl={4}>
-                        {childCircles.map(circle => (
-                          <Box
-                            key={circle.id}
-                            p={3}
-                            mb={2}
-                            borderWidth="1px"
-                            borderRadius="md"
-                            bg="gray.50"
-                            _dark={{ bg: "gray.700" }}
-                            cursor="pointer"
-                            onClick={() => handleGroupClick(circle)}
-                            _hover={{ bg: "gray.100", _dark: { bg: "gray.600" } }}
-                            height="60%" // 60% of parent height
-                          >
-                            <HStack align="start">
-                              {renderAvatar(circle)}
-                              <VStack align="start" flex={1} gap={1}>
-                                {renderTitle(circle)}
-                                {renderDescription(circle)}
-                                {renderMetadata(circle)}
-                              </VStack>
-                            </HStack>
-                          </Box>
-                        ))}
-                      </Box>
-                    </CollapsibleContent>
-                  </Box>
-                </CollapsibleRoot>
+                      </VStack>
+                    </HStack>
+
+                    {/* Chevron button for expand/collapse */}
+                    <IconButton
+                      aria-label={isExpanded ? "Collapse" : "Expand"}
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroupExpansion(parentGroup.id);
+                      }}
+                      position="absolute"
+                      right={0}
+                      top={2}
+                    >
+                      {isExpanded ? <LuChevronUp /> : <LuChevronDown />}
+                    </IconButton>
+                  </HStack>
+
+                  {/* Child circles - shown when expanded */}
+                  {isExpanded && (
+                    <Box mt={4} pl={4}>
+                      {childCircles.map(circle => (
+                        <Box
+                          key={circle.id}
+                          py={2}
+                          px={3}
+                          mb={2}
+                          borderWidth="1px"
+                          borderRadius="md"
+                          bg="gray.50"
+                          _dark={{ bg: "gray.700" }}
+                          cursor="pointer"
+                          onClick={() => handleGroupClick(circle)}
+                          _hover={{ bg: "gray.100", _dark: { bg: "gray.600" } }}
+                        >
+                          <HStack align="start">
+                            {renderAvatar(circle)}
+                            <VStack align="start" flex={1} gap={1}>
+                              {renderTitle(circle)}
+                              {renderDescription(circle)}
+                              {renderMetadata(circle)}
+                            </VStack>
+                          </HStack>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
               ) : (
                 <Box
                   borderWidth="1px"

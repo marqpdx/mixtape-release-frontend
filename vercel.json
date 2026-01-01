@@ -1,7 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd apps/mixtape && yarn build",
-  "devCommand": "cd apps/mixtape && yarn dev",
-  "installCommand": "yarn install",
-  "outputDirectory": "apps/mixtape/.next"
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }

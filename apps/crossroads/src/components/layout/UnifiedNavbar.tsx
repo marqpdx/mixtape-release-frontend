@@ -1,4 +1,4 @@
-// /src/components/layout/UnifiedNavbar.tsx
+// apps/crossroads/src/components/layout/UnifiedNavbar.tsx
 
 "use client";
 

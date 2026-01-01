@@ -4,5 +4,6 @@ export * from './dispatchTypes';
 export * from './groupTypes';
 export * from './lanternmailTypes';
 export * from './socketTypes';
+export * from './stackroomTypes';
 export * from './threadworksTypes';
 export * from './writingTypes';
