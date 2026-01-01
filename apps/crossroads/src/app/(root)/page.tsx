@@ -204,7 +204,9 @@ export default function CrossroadsHomepage() {
         >
           <Text as="span" fontWeight="bold">@noaa</Text>
           <Text as="span" ml={2}>image courtesy of NOAA</Text>
-          <LuExternalLink style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
+          <Box  marginLeft="4px" verticalAlign="middle">
+            <LuExternalLink />
+          </Box>
         </Link>
       </Box>
     </Box>
