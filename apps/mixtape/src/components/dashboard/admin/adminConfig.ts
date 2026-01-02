@@ -1,7 +1,5 @@
 // src/components/dashboard/admin/adminConfig.ts
 
-import { MenuItem } from "@components/dashboard/shared/types";
-
 /**
  * ADMIN DASHBOARD MENU CONFIGURATION
  *

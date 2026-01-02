@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,6 @@ import {
   HStack,
   Input,
   Spinner,
-  Badge,
   IconButton,
   Dialog,
   Avatar,
@@ -49,13 +48,25 @@ export default function ShareCollaboratorsModal({
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    if (open && documentSlug) {
-      fetchCollaborators();
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object") {
+      if ("response" in error) {
+        const response = (error as { response?: { data?: { error?: string } } })
+          .response;
+        if (response?.data?.error) return response.data.error;
+      }
+      if (
+        "message" in error &&
+        typeof (error as { message?: string }).message === "string"
+      ) {
+        return (error as { message?: string }).message ?? fallback;
+      }
     }
-  }, [open, documentSlug]);
+    return fallback;
+  };
 
-  const fetchCollaborators = async () => {
+  const fetchCollaborators = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get(
@@ -72,7 +83,13 @@ export default function ShareCollaboratorsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [documentSlug]);
+
+  useEffect(() => {
+    if (open && documentSlug) {
+      fetchCollaborators();
+    }
+  }, [open, documentSlug, fetchCollaborators]);
 
   const addCollaborator = async (userId: string) => {
     try {
@@ -88,10 +105,10 @@ export default function ShareCollaboratorsModal({
         title: "Collaborator added",
         type: "success",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to add collaborator:", error);
       toaster.create({
-        title: error.response?.data?.error || "Failed to add collaborator",
+        title: getErrorMessage(error, "Failed to add collaborator"),
         type: "error",
       });
     } finally {
@@ -112,10 +129,10 @@ export default function ShareCollaboratorsModal({
         title: "Collaborator removed",
         type: "success",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to remove collaborator:", error);
       toaster.create({
-        title: error.response?.data?.error || "Failed to remove collaborator",
+        title: getErrorMessage(error, "Failed to remove collaborator"),
         type: "error",
       });
     }

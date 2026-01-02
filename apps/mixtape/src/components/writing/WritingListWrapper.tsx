@@ -17,7 +17,6 @@ import {
   Button,
   Input,
   Tabs,
-  IconButton,
   Avatar
 } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
@@ -38,10 +37,31 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
 import { useWriting } from "@hooks/useWriting";
-import { useRouter } from "next/navigation";
 import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
+
+type ProseMirrorNode = {
+  type?: string;
+  text?: string;
+  content?: ProseMirrorNode[];
+};
+
+type ProseMirrorDoc = {
+  content?: ProseMirrorNode[];
+};
+
+type CollaboratorUser = {
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+};
+
+type Collaborator = {
+  id: number | string;
+  role?: string;
+  user: CollaboratorUser;
+};
 
 interface SponsorConfig {
   type: 'group' | 'member';
@@ -88,8 +108,6 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-
-  const router = useRouter();
 
   // Load persisted tab from localStorage on mount
   useEffect(() => {
@@ -156,10 +174,10 @@ export default function WritingListWrapper({
   }, [onNavigateToEditor]);
 
   // Helper function to extract text from ProseMirror JSON
-  const extractTextFromProseMirror = (bodyJson: Record<string, any>): string => {
+  const extractTextFromProseMirror = (bodyJson: ProseMirrorDoc | null): string => {
     if (!bodyJson?.content) return "";
 
-    const extractText = (node: any): string => {
+    const extractText = (node: ProseMirrorNode): string => {
       if (node.type === "text") {
         return node.text || "";
       }
@@ -176,7 +194,7 @@ export default function WritingListWrapper({
   };
 
   // Helper function for displaying excerpts (truncated)
-  const extractDisplayTextFromProseMirror = (bodyJson: Record<string, any>): string => {
+  const extractDisplayTextFromProseMirror = (bodyJson: ProseMirrorDoc | null): string => {
     const fullText = extractTextFromProseMirror(bodyJson);
     return fullText.length > 150 ? fullText.substring(0, 150) + "..." : fullText;
   };
@@ -191,7 +209,7 @@ export default function WritingListWrapper({
     if (draft.excerpt?.toLowerCase().includes(term)) return true;
 
     if (draft.body_json?.content) {
-      const bodyText = extractTextFromProseMirror(draft.body_json);
+      const bodyText = extractTextFromProseMirror(draft.body_json as ProseMirrorDoc);
       if (bodyText.toLowerCase().includes(term)) return true;
     }
 
@@ -200,7 +218,7 @@ export default function WritingListWrapper({
 
 
   // Adjust types as needed
-  const getCollaboratorDisplayName = (collab: any) => {
+  const getCollaboratorDisplayName = (collab: Collaborator) => {
     const first = collab.user.first_name || "";
     const lastOrUsername = collab.user.last_name || collab.user.username || "";
     return `${first} ${lastOrUsername}`.trim();
@@ -275,7 +293,7 @@ export default function WritingListWrapper({
 
     if (!excerpt) {
       if (draft.body_json?.content) {
-        const textContent = extractDisplayTextFromProseMirror(draft.body_json);
+        const textContent = extractDisplayTextFromProseMirror(draft.body_json as ProseMirrorDoc);
         if (textContent) {
           return (
             <Text fontSize="sm" color={textSecondary} lineClamp={2} wordBreak="break-word">
@@ -519,12 +537,12 @@ export default function WritingListWrapper({
               {
                 label: "Edit Draft",
                 icon: <IconEdit size={16} />,
-                onClick: handleDraftClick,
+                onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
                 variant: "ghost",
                 colorScheme: "green",
               },
             ]}
-            onRowClick={handleDraftClick}
+            onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
             showCreateButton={false}
             canEdit={() => true}
             canView={() => true}

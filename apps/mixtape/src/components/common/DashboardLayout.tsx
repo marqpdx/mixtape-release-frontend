@@ -5,7 +5,6 @@
 import {
   Box,
   Flex,
-  Heading,
   VStack,
   Text,
   Tabs,
@@ -30,7 +29,7 @@ import {
   DashboardLayoutProps
 } from "@components/dashboard/shared/types";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { IconArrowForward, IconChevronLeft, IconChevronRight, IconFold, IconPlaceholder } from "@tabler/icons-react";
+import { IconArrowForward, IconChevronRight, IconFold } from "@tabler/icons-react";
 import { openParentForSection } from "@components/groups/navigationUtils";
 
 export default function DashboardLayout({
@@ -44,6 +43,8 @@ export default function DashboardLayout({
   loading = false,
   localStorageKey = "dashboardActiveSection",
 }: DashboardLayoutProps) {
+  void title;
+  void defaultOpenParentMap;
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [allExpanded, setAllExpanded] = useState(false);
 
@@ -56,6 +57,8 @@ export default function DashboardLayout({
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
+  void expandedSections;
+  void subtleTextColor;
   const sidebarBg = useColorModeValue('white', 'gray.800');
 
   // Load active section from localStorage with custom key
@@ -323,7 +326,7 @@ function MobileTabs({
   primaryTabs: MenuItem[];
   overflowTabs: MenuItem[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
-  workAreaProps: Record<string, any>;
+  workAreaProps: Record<string, unknown>;
 }) {
   const { open, onOpen, onClose } = useDisclosure();
 

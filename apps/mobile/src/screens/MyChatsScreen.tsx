@@ -66,31 +66,29 @@ export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
       ) : (
         <FlatList
           data={conversations}
-          keyExtractor={(item) => item.slug}
-          renderItem={({ item }) => (
-            <ConversationListItem
-              conversation={{
-                ...item,
-                title: item.title?.trim()
-                  ? item.title
-                  : (item.participants || [])
-                      .filter((p) => p !== currentUser?.username)
-                      .join(', ') || item.slug,
-              }}
-              unreadCount={unreadCounts[item.slug] || 0}
-              preview={conversationPreviews[item.slug]}
-              onPress={() =>
-                handleConversationPress(
-                  item.slug,
-                  item.title?.trim()
-                    ? item.title
-                    : (item.participants || [])
-                        .filter((p) => p !== currentUser?.username)
-                        .join(', ') || item.slug
-                )
-              }
-            />
-          )}
+          keyExtractor={(item, index) => item.slug || (item as any).conversation_slug || item.id || `conv-${index}`}
+          renderItem={({ item }) => {
+            const conversationSlug =
+              item.slug || (item as any).conversation_slug || item.id || '';
+            const fallbackTitle =
+              (item.participants || [])
+                .filter((p) => p !== currentUser?.username)
+                .join(', ') || conversationSlug;
+            const displayTitle = item.title?.trim() ? item.title : fallbackTitle;
+
+            return (
+              <ConversationListItem
+                conversation={{
+                  ...item,
+                  slug: conversationSlug,
+                  title: displayTitle,
+                }}
+                unreadCount={unreadCounts[conversationSlug] || 0}
+                preview={conversationPreviews[conversationSlug]}
+                onPress={() => handleConversationPress(conversationSlug, displayTitle)}
+              />
+            );
+          }}
           refreshControl={
             <RefreshControl
               refreshing={loading && conversations.length > 0}

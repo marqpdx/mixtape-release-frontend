@@ -1,11 +1,12 @@
 import { Card, Flex, Heading, Button, VStack, Link, Text } from "@chakra-ui/react";
 import { useNoticeboard } from "./useNoticeboard";
 import { NoticeCard } from "@/components/writing/NoticeCard";
+import type { Group } from "@mixtape/core/types/groupTypes";
 // import { NoticeCard } from "@components/write/NoticeCard";
 
 
 // / GroupLanding noticeboard integration
-export function GroupNoticeboard({ group }: { group: any }) {
+export function GroupNoticeboard({ group }: { group: Group }) {
   const {
     items: noticeboard,
     loading: nbLoading,

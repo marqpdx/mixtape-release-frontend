@@ -2,10 +2,10 @@
 
 import { IconButton } from "@chakra-ui/react"
 import { forwardRef } from "react"
+import type { ComponentProps } from "react"
 
-interface CloseButtonProps {
+type CloseButtonProps = Omit<ComponentProps<typeof IconButton>, "aria-label"> & {
   size?: "sm" | "md" | "lg"
-  [key: string]: any
 }
 
 export const CloseButton = forwardRef<HTMLButtonElement, CloseButtonProps>(

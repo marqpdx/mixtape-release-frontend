@@ -100,7 +100,7 @@ export function CollaborationDialog({
         description: 'You can now invite others to collaborate',
         type: 'success',
       });
-    } catch (err) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -119,7 +119,7 @@ export function CollaborationDialog({
     try {
       await onRescindCollaboration();
       onOpenChange(false);
-    } catch (err) {
+    } catch {
       // Error handled in hook
     } finally {
       setRescinding(false);
@@ -129,7 +129,7 @@ export function CollaborationDialog({
   const handleRemove = async (collaborator: DispatchCollaborator) => {
     try {
       await onRemoveCollaborators([collaborator.user.id]);
-    } catch (err) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -160,7 +160,7 @@ export function CollaborationDialog({
       await onAddCollaborators(Array.from(selectedCollaborators), selectedRole);
       setSelectedCollaborators(new Set());
       setSearchQuery('');
-    } catch (err) {
+    } catch {
       // Error handled in hook
     }
   };

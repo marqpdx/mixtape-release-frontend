@@ -15,7 +15,7 @@ export default function GroupPublishControls({
 }: {
   pieceId: string;
   buildPayload: () => PublishAndPlacePayload;
-  onSuccess?: (result: any) => void;
+  onSuccess?: (result: Record<string, unknown>) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
 

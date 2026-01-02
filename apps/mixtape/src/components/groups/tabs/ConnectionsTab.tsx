@@ -19,13 +19,14 @@ import {
   IconMessage,
   IconPin,
   IconWorld,
-  IconChevronRight,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Divider } from "@components/common/Divider";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
-export function ConnectionsTab({ group }: { group: any }) {
+export function ConnectionsTab({ group }: { group: Group }) {
   const cardBg = useColorModeValue('white', 'gray.800');
+  void group;
 
   return (
     <Stack gap={6}>

@@ -28,7 +28,13 @@ const GROUP_TYPE_ICONS = {
 };
 
 interface GroupMemberHeaderProps {
-  group: any;
+  group: {
+    title: string;
+    group_type?: string;
+    emblem?: { size_96_url?: string; url?: string };
+    profile_image_url?: string;
+    member_count?: number;
+  };
   testRole?: 'admin' | 'member' | 'public' | null;
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isAdminOrSteward?: boolean;

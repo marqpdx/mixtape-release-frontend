@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import {
-  Box,
   Button,
   VStack,
   Input,
@@ -93,10 +92,11 @@ export function OccurrenceEditModal({
       });
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Could not update occurrence';
       toaster.create({
         title: 'Update Failed',
-        description: error.message || 'Could not update occurrence',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -104,15 +104,20 @@ export function OccurrenceEditModal({
   });
 
   const handleSubmit = () => {
-    const data: any = {};
+    const data: {
+      title_override?: string;
+      location_override?: string;
+      start?: string;
+      end?: string;
+    } = {};
 
     // Only send fields that have been modified
     if (titleOverride !== (occurrence.title_override || '')) {
-      data.title_override = titleOverride || null;
+      data.title_override = titleOverride || undefined;
     }
 
     if (locationOverride !== (occurrence.location_override || '')) {
-      data.location_override = locationOverride || null;
+      data.location_override = locationOverride || undefined;
     }
 
     const originalStart = new Date(occurrence.start).toISOString().slice(0, 16);

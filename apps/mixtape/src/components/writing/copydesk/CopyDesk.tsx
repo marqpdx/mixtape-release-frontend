@@ -29,7 +29,7 @@ export interface CopyDeskProps {
   backgroundSummary: string;
   summaryIsGenerating: boolean;
   summaryIsPending: boolean;
-  summaryError: any;
+  summaryError: unknown;
   onGenerateNewSummary: () => void;
   summary: string;
   setSummary: (summary: string) => void;

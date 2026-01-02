@@ -13,13 +13,6 @@ type ConversationListProps = {
   selectedSlug?: string;
 };
 
-type Conversation = {
-  slug: string;
-  name: string;
-  participants: string[];
-  created_at: string;
-};
-
 export const ConversationList = ({ onSelect, selectedSlug }: ConversationListProps) => {
   const [loading, setLoading] = useState(true);
   const hasInitialized = useRef(false);
@@ -34,13 +27,14 @@ export const ConversationList = ({ onSelect, selectedSlug }: ConversationListPro
   const hoverBg = useColorModeValue("gray.50", "gray.700");
 
   useEffect(() => {
+    const id = componentId.current;
     if (process.env.NODE_ENV === 'development') {
-      console.log(`ConversationList ${componentId.current} mounted`);
+      console.log(`ConversationList ${id} mounted`);
     }
 
     return () => {
       if (process.env.NODE_ENV === 'development') {
-        console.log(`ConversationList ${componentId.current} unmounting`);
+        console.log(`ConversationList ${id} unmounting`);
       }
     };
   }, []);

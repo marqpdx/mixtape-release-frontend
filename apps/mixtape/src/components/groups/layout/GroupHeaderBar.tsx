@@ -6,12 +6,8 @@ import { Box, Text, HStack, IconButton } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  IconChevronDown,
   IconUsers,
   IconBuildingCommunity,
-  IconSchool,
-  IconTree,
-  IconSparkles,
   IconCircleDot,
   IconUserCircle,
   IconNetwork
@@ -47,9 +43,8 @@ export function GroupHeaderBar({
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
-  const {groups: myGroups, isLoading: myGroupsLoading, error: myGroupsError, refetch: myGroupsRefetch } = useUserGroups();
+  const { groups: myGroups, isLoading: myGroupsLoading } = useUserGroups();
 
-  const currentGroup = myGroups.find(g => g.slug === currentGroupSlug);
   const otherGroups = myGroups.filter(g => g.slug !== currentGroupSlug);
 
   const GroupTypeIcon = GROUP_TYPE_ICONS[groupType] || IconBuildingCommunity;

@@ -2,6 +2,11 @@
 
 export type HeadingLevels = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
+const defaultVariants = {
+  level: "h2",
+  visual: "default",
+} as const;
+
 export const sharedHeadingConfig = {
   base: {
     fontWeight: "700",
@@ -42,8 +47,5 @@ export const sharedHeadingConfig = {
       },
     },
   },
-  defaultVariants: {
-    level: "h2" as "h2",
-    visual: "default" as "default",
-  },
+  defaultVariants,
 };

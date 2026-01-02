@@ -42,10 +42,10 @@ interface BaseItem {
 interface TableAction {
   label: string;
   icon?: ReactNode;
-  onClick: (item: any) => void;
+  onClick: (item: BaseItem) => void;
   variant?: "ghost" | "outline" | "solid";
   colorScheme?: string;
-  showIf?: (item: any) => boolean;
+  showIf?: (item: BaseItem) => boolean;
 }
 
 interface UniversalDataTableProps<T extends BaseItem> {
@@ -115,6 +115,7 @@ export default function UniversalDataTable<T extends BaseItem>({
   renderAvatar,
   basePath,
 }: UniversalDataTableProps<T>) {
+  void pageSize;
   const router = useRouter();
   const columnHelper = createColumnHelper<T>();
   const [sorting, setSorting] = useState<SortingState>([

@@ -21,7 +21,12 @@ export const handleImageChange = async ({
     return null;
   }
 
-  const payload: any = {
+  const payload: {
+    fileName: string;
+    contentType: string;
+    visibility: "public";
+    groupId?: string | number;
+  } = {
     fileName,
     contentType: file.type,
     visibility: "public",

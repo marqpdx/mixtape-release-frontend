@@ -6,9 +6,24 @@ import { toaster } from "@mixtape/core/lib/toaster";
 
 interface WorkingCopyData {
   title: string;
-  body_json: any;
+  body_json: unknown;
   excerpt: string;
 }
+
+type ApiError = { response?: { data?: { message?: string } } };
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === 'object') {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) {
+      return apiError.response.data.message;
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+};
 
 export function useWorkingCopyAutosave(
   pieceId: string,
@@ -43,13 +58,13 @@ export function useWorkingCopyAutosave(
         setSaveStatus('idle');
       }, 2000);
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSaveStatus('error');
       console.error('❌ Failed to save working copy:', e);
 
       toaster.create({
         title: 'Autosave failed',
-        description: e?.response?.data?.message || e?.message || 'Please try again',
+        description: getErrorMessage(e, 'Please try again'),
         type: 'error'
       });
 

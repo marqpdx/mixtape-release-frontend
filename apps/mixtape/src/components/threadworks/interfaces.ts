@@ -39,7 +39,7 @@ interface Post {
   replies?: Post[];
 }
 
-interface Topic {
+export interface Topic {
   id: string;
   title: string;
   slug: string;

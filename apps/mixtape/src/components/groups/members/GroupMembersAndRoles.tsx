@@ -4,11 +4,12 @@ import React from 'react';
 import { VStack, Text, Table } from '@chakra-ui/react';
 
 interface GroupMembersAndRolesProps {
-  group: any;
+  group: { id: string; slug?: string; title?: string };
   userRole: string;
 }
 
 export default function GroupMembersAndRoles({ group, userRole }: GroupMembersAndRolesProps) {
+  void group;
   return (
     <VStack align="stretch" gap={4}>
       <Text fontSize="xl" fontWeight="bold">

@@ -4,7 +4,6 @@
 
 import {
   Box,
-  Flex,
   Heading,
   Text,
   Button,
@@ -15,7 +14,14 @@ import {
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 interface GroupPublicHeaderProps {
-  group: any;
+  group: {
+    title?: string;
+    visibility?: string;
+    join_policy?: string;
+    avatar?: string;
+    background_image_url?: string;
+    tagline?: string;
+  };
   isMember?: boolean;
   isAdminOrSteward?: boolean;
   testRole?: 'admin' | 'member' | 'public' | null;

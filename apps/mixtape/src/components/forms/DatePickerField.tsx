@@ -4,25 +4,25 @@ import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Input, Text } from "@chakra-ui/react";
-import { useController, Control } from "react-hook-form";
+import { useController, Control, FieldValues, FieldPath } from "react-hook-form";
 
 
-type DatePickerInputProps = {
-  name: string;
-  control: Control<any>;
+type DatePickerInputProps<T extends FieldValues> = {
+  name: FieldPath<T>;
+  control: Control<T>;
   label?: string;
   isRequired?: boolean;
   placeholder?: string;
   validateFn?: (value: Date | null) => string | boolean;
 };
 
-export const DatePickerInput = ({
+export const DatePickerInput = <T extends FieldValues>({
   name,
   control,
   placeholder,
   isRequired = false,
   validateFn,
-}: DatePickerInputProps) => {
+}: DatePickerInputProps<T>) => {
   const {
     field: { onChange, value },
     fieldState: { error },

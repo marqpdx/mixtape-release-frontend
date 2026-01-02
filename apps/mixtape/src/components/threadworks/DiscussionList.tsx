@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { Box, Badge, Heading, VStack, HStack, Text, Flex } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
-import { IconUser, IconClock, IconMessageCircle } from '@tabler/icons-react'
+import { IconUser, IconMessageCircle } from '@tabler/icons-react'
 import { Discussion, formatThreadPostCount } from '@mixtape/core/types/threadworksTypes'
 import { formatTimeAgo, truncateText } from './threadworksUtils'
 

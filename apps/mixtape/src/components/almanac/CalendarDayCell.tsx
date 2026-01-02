@@ -15,14 +15,12 @@ import {
   AspectRatio,
   Dialog,
   Button,
-  Heading,
 } from '@chakra-ui/react';
 import { Tooltip } from '@components/ui/tooltip';
 import { CalendarDay, CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 
 interface CalendarDayCellProps {
   day: CalendarDay;
-  isLoading: boolean;
   onOccurrenceClick: (occurrence: CalendarOccurrence) => void;
   cellBg: string;
   cellBorder: string;
@@ -32,7 +30,6 @@ interface CalendarDayCellProps {
 
 export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   day,
-  isLoading,
   onOccurrenceClick,
   cellBg,
   cellBorder,
@@ -141,7 +138,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
 
             <Dialog.Body>
               <VStack align="stretch" gap={2}>
-                {allOccurrences.map((occ, idx) => {
+                {allOccurrences.map((occ) => {
                   const startTime = new Date(occ.start).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',

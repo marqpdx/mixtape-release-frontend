@@ -24,7 +24,7 @@ import {
   MenuPositioner,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
@@ -86,9 +86,8 @@ export default function UnifiedNavbar({
   extraCompact = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
-  const { isAdmin, isSteward, isMember } = usePermissions({ user: identity, can, canInGroup });
+  const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
 
@@ -142,7 +141,6 @@ export default function UnifiedNavbar({
     }
   };
 
-  const verticalPadding = extraCompact ? 1 : (compact ? 2 : 3);
   const horizontalPadding = extraCompact ? 2 : (compact ? 3 : 4);
 
   // Loading state - show skeleton while checking auth

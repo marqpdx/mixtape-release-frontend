@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, Spinner, Text, HStack, VStack, Button, Badge, Checkbox } from '@chakra-ui/react';
 import {
   DialogRoot,
@@ -17,6 +17,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import type { DatesSetArg, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
 import { useQuery } from '@tanstack/react-query';
 import { almanacApi } from '@mixtape/api/clients/almanac/almanacApi';
 import type { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
@@ -27,6 +28,16 @@ interface EventCalendarProps {
   groupSlug: string;
   onViewEvent?: (eventSlug: string) => void;
 }
+
+type CalendarResponse = CalendarOccurrence[] | { results: CalendarOccurrence[] };
+type EventExtendedProps = {
+  eventSlug?: string;
+  location?: string;
+};
+type TooltipTarget = HTMLElement & {
+  tooltipElement?: HTMLDivElement;
+  updatePosition?: (e: MouseEvent) => void;
+};
 
 export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
@@ -48,7 +59,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
   });
 
   // Fetch calendar occurrences
-  const { data: occurrences, isLoading, error } = useQuery({
+  const { data: occurrences, isLoading, error } = useQuery<CalendarResponse, Error>({
     queryKey: ['almanac', 'calendar', groupSlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: () => almanacApi.getGroupCalendar(groupSlug, dateRange.start, dateRange.end),
   });
@@ -56,7 +67,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
   // Handle paginated response from backend
   const occurrencesList: CalendarOccurrence[] = Array.isArray(occurrences)
     ? occurrences
-    : ((occurrences as any)?.results || []);
+    : (occurrences?.results || []);
 
   // Extract available filter options from data
   const availableFormats: string[] = Array.from(new Set(occurrencesList.map((o: CalendarOccurrence) => o.event_format).filter(Boolean)));
@@ -124,7 +135,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
   console.log('[EventCalendar] Converted events for FullCalendar:', events);
 
   // Handle date range changes
-  const handleDatesSet = (arg: any) => {
+  const handleDatesSet = (arg: DatesSetArg) => {
     setDateRange({
       start: arg.start,
       end: arg.end,
@@ -132,21 +143,36 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
   };
 
   // Handle event click - open detail modal
-  const handleEventClick = (clickInfo: any) => {
-    const eventSlug = clickInfo.event.extendedProps.eventSlug;
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    const props = clickInfo.event.extendedProps as EventExtendedProps;
+    const eventSlug = props.eventSlug;
 
     console.log('Event clicked:', eventSlug);
 
     if (eventSlug) {
+      if (onViewEvent) {
+        onViewEvent(eventSlug);
+        return;
+      }
       setSelectedEventSlug(eventSlug);
       setIsModalOpen(true);
     }
   };
 
   // Handle event hover - show tooltip
-  const handleEventMouseEnter = (info: any) => {
+  const handleEventMouseEnter = (info: EventHoveringArg) => {
     const event = info.event;
-    const props = event.extendedProps;
+    const props = event.extendedProps as EventExtendedProps;
+    const target = info.el as TooltipTarget;
+    const startText = event.start
+      ? new Date(event.start).toLocaleString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      : 'TBD';
 
     // Create tooltip content
     const tooltip = document.createElement('div');
@@ -165,13 +191,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
           ${event.title}
         </div>
         <div style="font-size: 13px; color: #4a5568; margin-bottom: 4px;">
-          📅 ${new Date(event.start).toLocaleString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-          })}
+          📅 ${startText}
         </div>
         ${props.location ? `
           <div style="font-size: 13px; color: #4a5568; margin-bottom: 4px;">
@@ -190,7 +210,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
     document.body.appendChild(tooltip);
 
     // Store tooltip reference on the element
-    info.el.tooltipElement = tooltip;
+    target.tooltipElement = tooltip;
 
     // Update position on mouse move
     const updatePosition = (e: MouseEvent) => {
@@ -198,21 +218,22 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
       tooltip.style.top = (e.pageY + 15) + 'px';
     };
 
-    info.el.addEventListener('mousemove', updatePosition);
-    info.el.updatePosition = updatePosition;
+    target.addEventListener('mousemove', updatePosition);
+    target.updatePosition = updatePosition;
   };
 
-  const handleEventMouseLeave = (info: any) => {
+  const handleEventMouseLeave = (info: EventHoveringArg) => {
+    const target = info.el as TooltipTarget;
     // Remove tooltip
-    if (info.el.tooltipElement) {
-      document.body.removeChild(info.el.tooltipElement);
-      info.el.tooltipElement = null;
+    if (target.tooltipElement) {
+      document.body.removeChild(target.tooltipElement);
+      target.tooltipElement = undefined;
     }
 
     // Remove event listener
-    if (info.el.updatePosition) {
-      info.el.removeEventListener('mousemove', info.el.updatePosition);
-      info.el.updatePosition = null;
+    if (target.updatePosition) {
+      target.removeEventListener('mousemove', target.updatePosition);
+      target.updatePosition = undefined;
     }
   };
 

@@ -82,7 +82,7 @@ export function ResultCard({
         duration: 2000,
         closable: true,
       });
-    } catch (error) {
+    } catch {
       toaster.create({
         title: 'Failed to copy',
         description: 'Could not copy text to clipboard',

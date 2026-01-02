@@ -20,7 +20,7 @@ export function formatDateTime(dateString: string | null | undefined): string {
       minute: '2-digit',
       hour12: true,
     });
-  } catch (error) {
+  } catch {
     return dateString;
   }
 }
@@ -41,7 +41,7 @@ export function formatDate(dateString: string | null | undefined): string {
       day: 'numeric',
       year: 'numeric',
     });
-  } catch (error) {
+  } catch {
     return dateString;
   }
 }
@@ -62,7 +62,7 @@ export function formatTime(dateString: string | null | undefined): string {
       minute: '2-digit',
       hour12: true,
     });
-  } catch (error) {
+  } catch {
     return dateString;
   }
 }

@@ -45,7 +45,7 @@ export default function WelcomeStartPage() {
           locale: data.locale.trim(),
         };
         window.localStorage.setItem("onboarding_minimal_profile", JSON.stringify(minimal));
-      } catch (_) {
+      } catch {
         // Ignore storage errors
       }
     }

@@ -5,10 +5,22 @@
 import { useState, useEffect } from "react";
 import {
   Box, Stack, Heading, Button, Input, Textarea, Text,
-  Checkbox, HStack, Switch, Badge, Alert
+  Checkbox, HStack, Badge, Alert
 } from "@chakra-ui/react";
 import { IconExternalLink, IconMail, IconUsers, IconUser } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+
+type ProseMirrorNode = {
+  type?: string;
+  text?: string;
+  content?: ProseMirrorNode[];
+};
+
+type ProseMirrorDoc = {
+  content?: ProseMirrorNode[];
+};
+
+type DocumentJSON = Record<string, unknown>;
 
 interface PublishDestination {
   personal: boolean;
@@ -18,7 +30,7 @@ interface PublishDestination {
 
 interface PublishPayload {
   title: string;
-  body_json: any;
+  body_json: DocumentJSON;
   excerpt?: string;
   writing_kind: 'post' | 'article' | 'dispatch' | 'forum' | 'announcement' | 'almanac' | 'page' | 'other';
   destinations: PublishDestination;
@@ -30,7 +42,7 @@ interface PublishPayload {
 interface Props {
   draftId?: string;
   title: string;
-  docJSON: any;
+  docJSON: DocumentJSON;
   tags?: string[];
   onPublishSuccess?: (pieceId: string) => void;
   onClose?: () => void;
@@ -57,6 +69,8 @@ export default function PublishPanel({
   // Scheduling (future feature)
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
+  void setIsScheduled;
+  void setScheduledFor;
 
   // UI state
   const [busy, setBusy] = useState(false);
@@ -66,16 +80,16 @@ export default function PublishPanel({
   // Auto-generate excerpt from content if empty
   useEffect(() => {
     if (!excerpt && docJSON && docJSON.content) {
-      const textContent = extractTextFromDoc(docJSON);
+      const textContent = extractTextFromDoc(docJSON as ProseMirrorDoc);
       const autoExcerpt = textContent.slice(0, 200);
       setExcerpt(autoExcerpt + (textContent.length > 200 ? "..." : ""));
     }
   }, [docJSON, excerpt]);
 
-  const extractTextFromDoc = (doc: any): string => {
+  const extractTextFromDoc = (doc: ProseMirrorDoc | null): string => {
     if (!doc || !doc.content) return "";
 
-    const extractText = (node: any): string => {
+    const extractText = (node: ProseMirrorNode): string => {
       if (node.type === "text") {
         return node.text || "";
       }
@@ -135,14 +149,23 @@ export default function PublishPanel({
         if (onClose) onClose();
       }, 2000);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Publish error:', error);
-      const errorMsg = error?.response?.data?.message || error?.message || 'Unknown error';
+      const errorMsg = getErrorMessage(error);
       setResultMsg(`Publish failed: ${errorMsg}`);
       setResultType('error');
     } finally {
       setBusy(false);
     }
+  };
+
+  const getErrorMessage = (error: unknown): string => {
+    if (error && typeof error === 'object') {
+      const data = (error as { response?: { data?: { message?: string } } }).response?.data;
+      if (data?.message) return data.message;
+    }
+    if (error instanceof Error) return error.message;
+    return 'Unknown error';
   };
 
   const getDestinationPreview = () => {

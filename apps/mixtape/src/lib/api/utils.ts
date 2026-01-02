@@ -22,10 +22,11 @@
  * const groups = unwrapListResponse<Group>(response.data);
  * ```
  */
-export function unwrapListResponse<T>(data: any): T[] {
+export function unwrapListResponse<T>(data: unknown): T[] {
   // If data has a 'results' property, it's paginated
   if (data && typeof data === 'object' && 'results' in data) {
-    return Array.isArray(data.results) ? data.results : [];
+    const results = (data as { results?: unknown }).results;
+    return Array.isArray(results) ? (results as T[]) : [];
   }
 
   // If data is already an array, return it

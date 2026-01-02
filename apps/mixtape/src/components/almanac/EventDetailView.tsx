@@ -42,6 +42,7 @@ interface EventDetailViewProps {
 export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventDetailViewProps) {
   const queryClient = useQueryClient();
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  void onEdit;
 
   // Fetch event
   const { data: event, isLoading, error } = useQuery({
@@ -62,10 +63,11 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not publish event';
       toaster.create({
         title: 'Publish Failed',
-        description: error.message || 'Could not publish event',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -85,10 +87,11 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not unpublish event';
       toaster.create({
         title: 'Unpublish Failed',
-        description: error.message || 'Could not unpublish event',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -114,10 +117,11 @@ export function EventDetailView({ groupSlug, eventSlug, onEdit, onBack }: EventD
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not update RSVP';
       toaster.create({
         title: 'RSVP Failed',
-        description: error.message || 'Could not update RSVP',
+        description: message,
         type: 'error',
         duration: 5000,
       });

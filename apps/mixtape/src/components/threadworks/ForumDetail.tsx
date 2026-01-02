@@ -1,10 +1,8 @@
 // src/components/threadworks/ForumDetail.tsx
 
 import { useEffect, useState } from 'react'
-import { Box, Text, VStack, Input, InputGroup, Button, useDisclosure, HStack, Heading } from '@chakra-ui/react'
-import { useColorModeValue } from '@components/ui/color-mode'
-import { Divider } from '@components/common/Divider'
-import { IconSearch, IconPlus, IconBrandMastodon } from '@tabler/icons-react'
+import { Text, VStack, Input, InputGroup, Button, useDisclosure, HStack, Heading } from '@chakra-ui/react'
+import { IconSearch, IconPlus } from '@tabler/icons-react'
 import { Forum, CreateDiscussionData } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations } from '@hooks/threadworks/useThreadworks'
 import DiscussionList from './DiscussionList'
@@ -25,12 +23,12 @@ export default function ForumDetail({
   setActiveSection,
   onDiscussionCreated,
 }: ForumDetailProps) {
+  void setActiveSection
   const [searchFilter, setSearchFilter] = useState('')
   const [selectedDiscussionId, setSelectedDiscussionId] = useState<string | null>(null)
   const [newDiscussionCreators, setNewDiscussionCreators] = useState<Set<string>>(new Set())
 
   const { joinRoom, leaveRoom, subscribe } = useRealtimeEvents()
-  const textColor = useColorModeValue('gray.600', 'gray.300')
 
   const { open, onOpen, onClose } = useDisclosure()
   const mutations = useThreadworksMutations(groupSlug)

@@ -23,6 +23,16 @@ export interface UseTextSelectionReturn {
   clearSelection: () => void;
 }
 
+type TextEditor = {
+  state?: {
+    selection?: { from: number; to: number };
+    doc: { textBetween: (from: number, to: number) => string };
+  };
+  on?: (event: string, callback: () => void) => void;
+  off?: (event: string, callback: () => void) => void;
+  view?: { dom?: HTMLElement };
+};
+
 const EMPTY_SELECTION: TextSelection = {
   text: '',
   from: 0,
@@ -33,7 +43,7 @@ const EMPTY_SELECTION: TextSelection = {
 };
 
 export function useTextSelection(
-  editorRef: React.RefObject<any>,
+  editorRef: React.RefObject<TextEditor | null>,
   options: UseTextSelectionOptions = {}
 ): UseTextSelectionReturn {
   const {
@@ -45,7 +55,7 @@ export function useTextSelection(
   const [isSelecting, setIsSelecting] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const extractSelection = useCallback((editor: any): TextSelection => {
+  const extractSelection = useCallback((editor: TextEditor | null): TextSelection => {
     if (!editor?.state) return EMPTY_SELECTION;
 
     const { state } = editor;
@@ -134,8 +144,8 @@ export function useTextSelection(
 
     // TipTap editor event listeners
     try {
-      editor.on('selectionUpdate', handleUpdate);
-      editor.on('update', handleUpdate);
+      editor.on?.('selectionUpdate', handleUpdate);
+      editor.on?.('update', handleUpdate);
       console.log("🔍 Event listeners attached successfully");
     } catch (error) {
       console.error("🔍 Failed to attach event listeners:", error);
@@ -143,8 +153,8 @@ export function useTextSelection(
 
     return () => {
       try {
-        editor.off('selectionUpdate', handleUpdate);
-        editor.off('update', handleUpdate);
+        editor.off?.('selectionUpdate', handleUpdate);
+        editor.off?.('update', handleUpdate);
         console.log("🔍 Event listeners removed");
       } catch (error) {
         console.error("🔍 Failed to remove event listeners:", error);
@@ -154,7 +164,7 @@ export function useTextSelection(
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [editorRef.current, handleSelectionChange]); // Watch for editorRef.current changes
+  }, [editorRef, handleSelectionChange]); // editorRef identity is stable, but include for lint
 
   // Clear selection when editor loses focus
   useEffect(() => {

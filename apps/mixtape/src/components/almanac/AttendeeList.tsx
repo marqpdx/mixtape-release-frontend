@@ -14,7 +14,7 @@ import {
   Checkbox,
 } from '@chakra-ui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGroupEventAttendees, checkInAttendee, type EventAttendee } from '@mixtape/api/clients/almanac/almanacApi';
+import { fetchGroupEventAttendees, checkInAttendee } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
 import { toaster } from '@mixtape/core/lib/toaster';
@@ -47,10 +47,11 @@ export function AttendeeList({ groupSlug, eventSlug }: AttendeeListProps) {
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not check in attendee';
       toaster.create({
         title: 'Check-in Failed',
-        description: error.message || 'Could not check in attendee',
+        description: message,
         type: 'error',
         duration: 5000,
       });

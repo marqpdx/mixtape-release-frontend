@@ -35,10 +35,11 @@ export function EventPublishedList({ groupSlug, onViewEvent }: EventPublishedLis
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not unpublish event';
       toaster.create({
         title: 'Unpublish Failed',
-        description: error.message || 'Could not unpublish event',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -79,11 +80,11 @@ export function EventPublishedList({ groupSlug, onViewEvent }: EventPublishedLis
 
   // Separate upcoming and past events
   const now = new Date();
-  const upcomingEvents = events.filter((event: any) => {
+  const upcomingEvents = events.filter((event) => {
     const eventDate = event.next_occurrence?.start;
     return eventDate && new Date(eventDate) >= now;
   });
-  const pastEvents = events.filter((event: any) => {
+  const pastEvents = events.filter((event) => {
     const eventDate = event.next_occurrence?.start;
     return eventDate && new Date(eventDate) < now;
   });
@@ -110,7 +111,7 @@ export function EventPublishedList({ groupSlug, onViewEvent }: EventPublishedLis
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {upcomingEvents.map((event: any) => (
+                {upcomingEvents.map((event) => (
                   <Table.Row key={event.id}>
                     <Table.Cell fontWeight="medium">{event.title}</Table.Cell>
                     <Table.Cell>
@@ -173,7 +174,7 @@ export function EventPublishedList({ groupSlug, onViewEvent }: EventPublishedLis
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {pastEvents.map((event: any) => (
+                {pastEvents.map((event) => (
                   <Table.Row key={event.id} opacity={0.7}>
                     <Table.Cell fontWeight="medium">{event.title}</Table.Cell>
                     <Table.Cell>

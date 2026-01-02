@@ -67,10 +67,11 @@ const LoginPage: React.FC = () => {
 
       console.log("LoginPage login successful");
 
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid credentials";
       toaster.error({
         title: "Login failed",
-        description: error.message || "Invalid credentials",
+        description: message,
       });
     } finally {
       setIsLoading(false);

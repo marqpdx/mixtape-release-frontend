@@ -3,13 +3,15 @@
 'use client'
 
 import { VStack, Heading, Text, Box } from '@chakra-ui/react'
+import type { Group } from "@mixtape/core/types/groupTypes";
 // import { Noticeboard } from '@components/noticeboard/Noticeboard'
 
 interface NoticeboardTabProps {
-  group: any
+  group: Group
 }
 
 export function NoticeboardTab({ group }: NoticeboardTabProps) {
+  void group;
   return (
     <VStack align="stretch" gap={6}>
       <Box>

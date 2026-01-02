@@ -4,6 +4,7 @@
 
 import { useRouter } from "next/navigation";
 import { Avatar, Box, HStack, Text } from "@chakra-ui/react";
+import type { ComponentType } from "react";
 import UniversalDataTable from "@/components/common/UniversalDataTable";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { Icons } from "@/components/icons/IconMap";
@@ -44,11 +45,16 @@ export interface GroupsListProps {
   badgeText?: (group: Group) => string | null;
 }
 
-function DefaultAvatar({ group }: { group: Group }) {
-  const groupIcons = (Icons.group ?? {}) as Record<string, any>;
-  const GroupIcon = groupIcons[group.group_type];
+type GroupWithProfileImage = Group & {
+  profile_image_url?: string | null;
+  profile_image?: string | null;
+};
 
-  const raw = (group as any).profile_image_url ?? (group as any).profile_image ?? null;
+function DefaultAvatar({ group }: { group: GroupWithProfileImage }) {
+  const groupIcons = (Icons.group ?? {}) as Record<string, unknown>;
+  const GroupIcon = groupIcons[group.group_type] as ComponentType<{ size?: number }> | undefined;
+
+  const raw = group.profile_image_url ?? group.profile_image ?? null;
   const src = raw && String(raw).trim() !== "" ? String(raw).trim() : undefined;
 
   return (
@@ -119,9 +125,14 @@ function DefaultDescription({ group }: { group: Group }) {
   );
 }
 
-function DefaultMetadata({ group }: { group: Group }) {
-  const createdAt = (group as any).created_at;
-  const memberCount = (group as any).member_count;
+type GroupWithMeta = Group & {
+  created_at?: string;
+  member_count?: number;
+};
+
+function DefaultMetadata({ group }: { group: GroupWithMeta }) {
+  const createdAt = group.created_at;
+  const memberCount = group.member_count;
 
   return (
     <HStack gap={4} mt={1}>
@@ -167,6 +178,7 @@ export default function GroupsList({
   canEditGroup = () => true,
 
 }: GroupsListProps) {
+  void canEditGroup;
   const router = useRouter();
 
   const handleRowClick = (group: Group) => {

@@ -5,9 +5,10 @@ import { Box, Container } from "@chakra-ui/react";
 import { GroupMemberHeader } from "../headers/GroupMemberHeader";
 import { GroupPublicHeader } from "../headers/GroupPublicHeader";
 import { GroupTabs } from "../tabs/GroupTabs";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
 interface GroupLandingProps {
-  group: any;
+  group: Group;
   userRole?: 'admin' | 'steward' | 'member' | null; // ACTUAL role
   onJoinGroup?: () => void;
   loading?: boolean;
@@ -27,11 +28,12 @@ export function GroupLanding({
   isMember = false,
   isAdminOrSteward = false,
 }: GroupLandingProps) {
+  void userRole;
+  void loading;
   const bgColor = useColorModeValue('gray.50', 'gray.900');
 
   // Viewing logic based on testRole
   const viewingAsMember = testRole === 'member' || testRole === 'admin';
-  const viewingAsPublic = !viewingAsMember;
 
   // Only show role switcher if they're actually a member
   const showRoleSwitcher = isMember;

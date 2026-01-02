@@ -70,7 +70,7 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
       // on-demand via the `${imageType}_image_url` property.
 
       if (data.url) {
-        setPreviewUrls((prev) => ({
+        setPreviewUrls((prev: Record<ImageType, string | undefined>) => ({
           ...prev,
           [imageType]: data.url,
         }));
@@ -83,7 +83,7 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
         duration: 3000,
       });
 
-      setPending((prev) => ({ ...prev, [imageType]: false }));
+      setPending((prev: Record<ImageType, boolean>) => ({ ...prev, [imageType]: false }));
     },
     onError: (error, variables) => {
       const imageType = variables.role.replace('_image', '') as ImageType;
@@ -96,7 +96,7 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
         duration: 5000,
       });
 
-      setPending((prev) => ({ ...prev, [imageType]: false }));
+      setPending((prev: Record<ImageType, boolean>) => ({ ...prev, [imageType]: false }));
     },
   });
 
@@ -129,7 +129,7 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
         return;
       }
 
-      setPending((prev) => ({ ...prev, [imgType]: true }));
+      setPending((prev: Record<ImageType, boolean>) => ({ ...prev, [imgType]: true }));
 
       uploadMutation.mutate({
         sponsorType,

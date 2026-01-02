@@ -10,8 +10,6 @@ import {
   Text,
   Input,
   Button,
-  Badge,
-  Heading,
   RadioGroup,
   Field,
   type RadioGroupValueChangeDetails,

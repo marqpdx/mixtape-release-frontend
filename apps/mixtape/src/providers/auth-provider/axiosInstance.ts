@@ -1,6 +1,6 @@
 // src/providers/auth/axiosInstance.ts
 
-import { getAccessToken, setAccessToken } from "@mixtape/auth/tokenStorage";
+import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { refreshAccessToken } from "@mixtape/api/clients/auth/api";
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
@@ -11,6 +11,29 @@ export const axiosInstance = axios.create({
   },
   withCredentials: true,
 });
+
+const extractErrorMessage = (data: unknown): string | null => {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+
+  const record = data as Record<string, unknown>;
+  if (typeof record.detail === "string") {
+    return record.detail;
+  }
+  if (typeof record.error === "string") {
+    return record.error;
+  }
+
+  const entries = Object.entries(record);
+  if (!entries.length) {
+    return null;
+  }
+
+  return entries
+    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : String(value)}`)
+    .join("; ");
+};
 
 
 axiosInstance.interceptors.request.use(
@@ -25,7 +48,7 @@ axiosInstance.interceptors.request.use(
     } else {
       // 🔥 Important: remove any stale Authorization header
       if ("Authorization" in config.headers) {
-        delete (config.headers as any)["Authorization"];
+        delete (config.headers as Record<string, string>)["Authorization"];
       }
     }
 
@@ -64,16 +87,12 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError): Promise<AxiosResponse | void> => {
     // Extract Django error messages for better UX
     if (error.response?.data) {
-      const data = error.response.data as any;
+      const data = error.response.data as unknown;
+      const dataMessage = extractErrorMessage(data);
       // Try to extract meaningful error message from Django response
       const extractedMessage =
-        data.detail ||
-        data.error ||
-        (typeof data === 'object' && !Array.isArray(data)
-          ? Object.entries(data)
-              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-              .join('; ')
-          : null);
+        dataMessage ||
+        (typeof data === 'string' ? data : null);
 
       if (extractedMessage && typeof extractedMessage === 'string') {
         error.message = extractedMessage;
@@ -98,9 +117,11 @@ axiosInstance.interceptors.response.use(
 
         // Token is already in memory via setAccessToken()
         if (originalRequest.headers) {
-          originalRequest.headers.set
-            ? originalRequest.headers.set("Authorization", `Bearer ${newToken}`)
-            : (originalRequest.headers["Authorization"] = `Bearer ${newToken}`);
+          if (originalRequest.headers.set) {
+            originalRequest.headers.set("Authorization", `Bearer ${newToken}`);
+          } else {
+            originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+          }
         }
 
         return axiosInstance(originalRequest);

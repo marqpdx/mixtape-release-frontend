@@ -1,7 +1,7 @@
 // apps/mixtape/src/components/stackroom/ActivityTab.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, VStack, HStack, Heading, Text, Spinner, Code, Card, Table, IconButton } from '@chakra-ui/react';
 import { fetchLibraryActivity } from '@mixtape/api/clients/stackroom/stackroomApi';
 import { LuRefreshCw } from 'react-icons/lu';
@@ -10,17 +10,70 @@ interface ActivityTabProps {
   libraryId: string;
 }
 
+type LibraryStats = {
+  library_name: string;
+  files_count: number;
+  artifacts_count: number;
+  chunks_count: number;
+  embeddings_count: number;
+  embeddings_complete: number;
+  embeddings_pending: number;
+  embeddings_failed: number;
+};
+
+type EmbeddingModel = {
+  name: string;
+  version: string;
+  dimensions: number;
+  embedding_count: number;
+};
+
+type IngestionRun = {
+  id: string;
+  filename: string;
+  status: 'success' | 'failed' | 'running' | string;
+  artifact_count: number;
+  created_at: string;
+  finished_at?: string | null;
+};
+
+type SampleChunk = {
+  chunk_id: string;
+  filename: string;
+  chunk_type: string;
+  order_index: number;
+  token_estimate: number;
+  has_embedding: boolean;
+  text_preview: string;
+};
+
+type QdrantCollection = {
+  name: string;
+  vectors_count: number;
+  points_count: number;
+};
+
+type QdrantStatus = {
+  available: boolean;
+  collections?: QdrantCollection[];
+};
+
+type LibraryActivityData = {
+  library_stats: LibraryStats;
+  chunk_type_distribution: Record<string, number>;
+  embedding_models?: EmbeddingModel[];
+  ingestion_runs?: IngestionRun[];
+  sample_chunks?: SampleChunk[];
+  qdrant_status?: QdrantStatus;
+};
+
 export function ActivityTab({ libraryId }: ActivityTabProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<LibraryActivityData | null>(null);
 
-  useEffect(() => {
-    loadActivity();
-  }, [libraryId]);
-
-  const loadActivity = async (isRefresh = false) => {
+  const loadActivity = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -28,15 +81,20 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
         setLoading(true);
       }
       const activityData = await fetchLibraryActivity(libraryId);
-      setData(activityData);
+      setData(activityData as LibraryActivityData);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load activity data');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load activity data';
+      setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [libraryId]);
+
+  useEffect(() => {
+    loadActivity();
+  }, [loadActivity]);
 
   const handleRefresh = () => {
     loadActivity(true);
@@ -159,7 +217,7 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {data.embedding_models.map((model: any, idx: number) => (
+                {data.embedding_models.map((model, idx) => (
                   <Table.Row key={idx}>
                     <Table.Cell><Code fontSize="xs">{model.name}</Code></Table.Cell>
                     <Table.Cell>{model.version}</Table.Cell>
@@ -191,7 +249,7 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {data.ingestion_runs.map((run: any) => (
+                {data.ingestion_runs.map((run) => (
                   <Table.Row key={run.id}>
                     <Table.Cell>{run.filename}</Table.Cell>
                     <Table.Cell>
@@ -231,7 +289,7 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
           </Card.Header>
           <Card.Body>
             <VStack align="stretch" gap={4}>
-              {data.sample_chunks.map((chunk: any) => (
+              {data.sample_chunks.map((chunk) => (
                 <Box key={chunk.chunk_id} p={3} borderWidth="1px" borderRadius="md" bg="gray.50">
                   <HStack gap={2} mb={2} fontSize="xs" color="gray.600">
                     <Text fontWeight="medium">{chunk.filename}</Text>
@@ -270,7 +328,7 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
                 <Box>
                   <Text fontWeight="medium" mb={2}>Collections:</Text>
                   <VStack align="stretch" gap={2}>
-                    {data.qdrant_status.collections.map((col: any) => (
+                    {data.qdrant_status.collections.map((col) => (
                       <Box key={col.name} p={2} borderWidth="1px" borderRadius="md" fontSize="sm">
                         <Code fontSize="xs" mb={1} display="block">{col.name}</Code>
                         <Text fontSize="xs" color="gray.600">

@@ -1,3 +1,5 @@
+// packages/api/src/clients/chat/chatApi.ts
+
 // Chat/Conversation API client
 // Shared between web and mobile apps
 

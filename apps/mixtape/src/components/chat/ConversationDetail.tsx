@@ -23,7 +23,6 @@ import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
 // import { setupConversationSocket } from "lib/chat/setupConversationSocket";
 // import { useChatUnread } from "contexts/ChatUnreadContext";
 // import { getSocket } from "lib/socket";
-import { UserIdentity } from "@mixtape/core/types/auth";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
@@ -97,7 +96,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   // Mention autocomplete state
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
-  const [mentionQuery, setMentionQuery] = useState("");
+  void typingUsers;
   const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAckRef = useRef<{ slug: string; lastMessageId?: string } | null>(null);
@@ -225,7 +224,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
 
     if (mentionMatch) {
       const query = mentionMatch[1];
-      setMentionQuery(query);
       setShowMentions(true);
       fetchMentionSuggestions(query);
     } else {
@@ -351,7 +349,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
       console.error('🎭 Failed to add reaction:', error);
       if (process.env.NODE_ENV === 'development') {
         if (typeof error === "object" && error !== null && "response" in error) {
-          // @ts-ignore
+          // @ts-expect-error - error may be an axios-like object in dev logging
           console.error('🎭 Error details:', error.response?.data, error.response?.status);
         } else {
           console.error('🎭 Error details:', error);
@@ -624,7 +622,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
           overflowY="auto"
           zIndex={10}
         >
-          {mentionSuggestions.map((suggestion, idx) => (
+          {mentionSuggestions.map((suggestion) => (
             <Box
               key={suggestion.id}
               p={2}

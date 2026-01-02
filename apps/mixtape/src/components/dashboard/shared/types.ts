@@ -10,8 +10,9 @@ export interface MenuItem {
 
 export interface WorkAreaProps {
   section: string;
-  setActiveSection: (section: string) => void;
-  [key: string]: any;
+  sectionParams?: Record<string, string>;
+  setActiveSection: (section: string, params?: Record<string, string>) => void;
+  [key: string]: unknown;
 }
 
 export interface DashboardLayoutProps {
@@ -21,7 +22,7 @@ export interface DashboardLayoutProps {
   defaultOpenParentMap?: Record<string, string>;
   userRoles?: string[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
-  workAreaProps?: Record<string, any>;
+  workAreaProps?: Record<string, unknown>;
   loading?: boolean;
   localStorageKey?: string;
 }

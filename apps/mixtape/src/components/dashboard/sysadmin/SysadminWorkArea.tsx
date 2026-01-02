@@ -16,8 +16,6 @@ interface SysadminWorkAreaProps extends WorkAreaProps {
 
 export default function SysadminWorkArea({
   section,
-  setActiveSection,
-  identity,
 }: SysadminWorkAreaProps) {
 
   if (section === "system-overview") {

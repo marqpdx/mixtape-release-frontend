@@ -7,10 +7,13 @@
   "license": "MIT",
   "dependencies": {
     "@mixtape/core": "*",
-    "@tanstack/react-query": "^5.90.8",
     "axios": "^1.13.2"
   },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.90.8"
+  },
   "devDependencies": {
+    "@types/react": "^19.1.11",
     "typescript": "^5.9.2"
   }
 }

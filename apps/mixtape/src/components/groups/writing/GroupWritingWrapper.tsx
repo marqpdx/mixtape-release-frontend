@@ -27,7 +27,7 @@ interface GroupWritingWrapperProps {
   groupId?: string;
   groupTitle?: string;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
-  onPublished?: (piece: any) => void;
+  onPublished?: (piece: { id: string; slug?: string }) => void;
 }
 
 export default function GroupWritingWrapper({
@@ -37,6 +37,8 @@ export default function GroupWritingWrapper({
   setActiveSection,
   onPublished,
 }: GroupWritingWrapperProps) {
+  void groupId;
+  void onPublished;
   // Fetch group data and permissions if not provided
   const {
     data: group,

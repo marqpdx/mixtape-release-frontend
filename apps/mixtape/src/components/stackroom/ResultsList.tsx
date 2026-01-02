@@ -1,6 +1,6 @@
 'use client';
 
-import { VStack, Stack, Skeleton, Text, Button, Box, Center } from '@chakra-ui/react';
+import { VStack, Stack, Skeleton, Text, Button, Center } from '@chakra-ui/react';
 import {
   MagnifyingGlassIcon,
   ExclamationTriangleIcon,

@@ -9,7 +9,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   HStack,
@@ -52,6 +52,89 @@ export function TagInput({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const getErrorMessage = useCallback((error: unknown): string => {
+    if (error && typeof error === 'object') {
+      const data = (error as { response?: { data?: { title?: string[] } } }).response?.data;
+      if (data?.title?.[0]) return data.title[0];
+    }
+    if (error instanceof Error) return error.message;
+    return 'Please try again';
+  }, []);
+
+  /**
+   * Calculate Levenshtein distance (edit distance)
+   * Used to detect typos like "bakery" vs "bakerys"
+   */
+  const levenshteinDistance = useCallback((a: string, b: string): number => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix: number[][] = [];
+
+    // Initialize matrix
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    // Fill matrix
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+
+    return matrix[b.length][a.length];
+  }, []);
+
+  /**
+   * Fuzzy match to detect similar tags
+   * Detects: plurals, typos, case differences
+   */
+  const checkSimilarTags = useCallback((input: string, tags: Tag[]): Tag | null => {
+    const normalized = input.toLowerCase().trim();
+
+    // Check for plurals: remove trailing 's', 'es', 'ies'
+    const singularized = normalized
+      .replace(/ies$/, 'y')
+      .replace(/es$/, 'e')
+      .replace(/s$/, '');
+
+    for (const tag of tags) {
+      const tagNormalized = tag.title.toLowerCase();
+
+      // Skip exact matches
+      if (normalized === tagNormalized) continue;
+
+      const tagSingularized = tagNormalized
+        .replace(/ies$/, 'y')
+        .replace(/es$/, 'e')
+        .replace(/s$/, '');
+
+      // Check if roots are the same (handles plural/singular)
+      if (singularized === tagSingularized) {
+        return tag;
+      }
+
+      // Check Levenshtein distance (typos within 2 characters)
+      if (levenshteinDistance(normalized, tagNormalized) <= 2) {
+        return tag;
+      }
+    }
+
+    return null;
+  }, [levenshteinDistance]);
 
   // Fetch suggestions as user types
   useEffect(() => {
@@ -101,7 +184,7 @@ export function TagInput({
 
     const debounceTimer = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimer);
-  }, [inputValue, selectedTags]);
+  }, [inputValue, selectedTags, checkSimilarTags]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -119,80 +202,6 @@ export function TagInput({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  /**
-   * Fuzzy match to detect similar tags
-   * Detects: plurals, typos, case differences
-   */
-  const checkSimilarTags = (input: string, tags: Tag[]): Tag | null => {
-    const normalized = input.toLowerCase().trim();
-
-    // Check for plurals: remove trailing 's', 'es', 'ies'
-    const singularized = normalized
-      .replace(/ies$/, 'y')
-      .replace(/es$/, 'e')
-      .replace(/s$/, '');
-
-    for (const tag of tags) {
-      const tagNormalized = tag.title.toLowerCase();
-
-      // Skip exact matches
-      if (normalized === tagNormalized) continue;
-
-      const tagSingularized = tagNormalized
-        .replace(/ies$/, 'y')
-        .replace(/es$/, 'e')
-        .replace(/s$/, '');
-
-      // Check if roots are the same (handles plural/singular)
-      if (singularized === tagSingularized) {
-        return tag;
-      }
-
-      // Check Levenshtein distance (typos within 2 characters)
-      if (levenshteinDistance(normalized, tagNormalized) <= 2) {
-        return tag;
-      }
-    }
-
-    return null;
-  };
-
-  /**
-   * Calculate Levenshtein distance (edit distance)
-   * Used to detect typos like "bakery" vs "bakerys"
-   */
-  const levenshteinDistance = (a: string, b: string): number => {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
-
-    const matrix: number[][] = [];
-
-    // Initialize matrix
-    for (let i = 0; i <= b.length; i++) {
-      matrix[i] = [i];
-    }
-    for (let j = 0; j <= a.length; j++) {
-      matrix[0][j] = j;
-    }
-
-    // Fill matrix
-    for (let i = 1; i <= b.length; i++) {
-      for (let j = 1; j <= a.length; j++) {
-        if (b.charAt(i - 1) === a.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1,     // insertion
-            matrix[i - 1][j] + 1      // deletion
-          );
-        }
-      }
-    }
-
-    return matrix[b.length][a.length];
-  };
 
   /**
    * Select existing tag from suggestions
@@ -264,10 +273,10 @@ export function TagInput({
       setSimilarWarning(null);
       setIsOpen(false);
       inputRef.current?.focus();
-    } catch (err: any) {
+    } catch (error) {
       toaster.create({
         title: 'Failed to create tag',
-        description: err?.response?.data?.title?.[0] || 'Please try again',
+        description: getErrorMessage(error),
         type: 'error',
       });
     } finally {

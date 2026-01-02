@@ -17,7 +17,7 @@ export default function MinimalCollabTest() {
     const doc = new Y.Doc();
 
     // Listen for updates
-    doc.on('update', (update: Uint8Array, origin: any) => {
+    doc.on('update', (update: Uint8Array, origin: unknown) => {
       console.log("🔄 ✅ Y.Doc UPDATE EVENT FIRED!", {
         updateSize: update.length,
         origin: origin,

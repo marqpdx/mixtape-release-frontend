@@ -7,7 +7,7 @@ import {
   Text,
   Box
 } from '@chakra-ui/react';
-import { IconChartArrows, IconChartBar } from '@tabler/icons-react';
+import { IconChartBar } from '@tabler/icons-react';
 import { AgentContainer } from '../shared/AgentContainer';
 
 export interface StatisticsAgentProps {

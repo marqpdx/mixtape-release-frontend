@@ -146,8 +146,9 @@ export const initializeSocket = async (): Promise<Socket | null> => {
       if (reason === "io client disconnect") return;
     });
 
-    socket.on("connect_error", async (err: any) => {
-      const msg = String(err?.message || err || "").toLowerCase();
+    socket.on("connect_error", async (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err ?? "");
+      const msg = message.toLowerCase();
       console.warn("[socket.ts] connect_error:", msg);
 
       const isAuthish =

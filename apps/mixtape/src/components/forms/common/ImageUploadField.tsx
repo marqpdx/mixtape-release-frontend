@@ -4,7 +4,6 @@ import {
   Box,
   Flex,
   Heading,
-  HStack,
   Text,
   VStack,
   Image,
@@ -32,7 +31,7 @@ interface ImageUploadFieldProps<T extends FieldValues = FieldValues> extends Def
 }
 
 // Make the component generic with more flexible constraints
-export const ImageUploadField = <T extends Record<string, any> = FieldValues>({
+export const ImageUploadField = <T extends FieldValues = FieldValues>({
   errors,
   register,
   pending,
@@ -42,6 +41,7 @@ export const ImageUploadField = <T extends Record<string, any> = FieldValues>({
   imageUrl,
   doHandleImageChange
 }: ImageUploadFieldProps<T>) => {
+  void watch;
   const fieldName = `${imageType}_image_path` as Path<T>;
   const capLabel = capitalizeFirstLetter(imageType);
   const [fileName, setFileName] = useState<string>("");

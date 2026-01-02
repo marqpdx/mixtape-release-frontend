@@ -33,8 +33,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <AuthProvider>
             {children}
           </AuthProvider>
+          <Toaster />
         </QueryClientProvider>
-        <Toaster />
       </ThemeProvider>
     </ChakraProvider>
   );

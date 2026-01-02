@@ -13,10 +13,12 @@ import {
   IconMoodConfuzed,
   IconCheck
 } from "@tabler/icons-react";
+import type { IconProps } from "@tabler/icons-react";
+import type { ComponentType } from "react";
 
 export type ReactionConfig = {
   name: string;
-  icon: React.ComponentType<any>;
+  icon: ComponentType<IconProps>;
   emoji: string;
   label: string;
   color?: string;

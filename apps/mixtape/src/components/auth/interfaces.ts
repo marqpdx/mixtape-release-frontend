@@ -18,7 +18,7 @@ export interface RegisterFormProps extends AuthShared {
   password: string;
 }
 
-export interface ResetPasswordForm extends AuthShared {}
+export type ResetPasswordForm = AuthShared;
 
 export interface FormProps<T> {
   formProps?: T;

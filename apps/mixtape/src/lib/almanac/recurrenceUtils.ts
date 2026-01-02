@@ -6,7 +6,7 @@ import type { RecurrenceConfig } from '@/components/almanac/RecurrenceFeaturelet
  * Convert RecurrenceConfig to iCalendar RRULE string
  * https://icalendar.org/iCalendar-RFC-5545/3-8-5-3-recurrence-rule.html
  */
-export function configToRRule(config: RecurrenceConfig, startDate?: Date): string | null {
+export function configToRRule(config: RecurrenceConfig): string | null {
   if (!config.pattern || config.pattern === 'custom') {
     return null;
   }

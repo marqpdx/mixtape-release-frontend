@@ -274,6 +274,7 @@ export const GroupInviteForm = ({
   siteMembersLoading = false,
   parentGroupName,
 }: InviteFormProps) => {
+  void siteMembersLoading;
   const { handleSubmit, reset, control, setValue, watch } = useForm({
     defaultValues: {
       invitee: "",
@@ -424,7 +425,7 @@ export const GroupInviteForm = ({
     }
   }, [showSuggestions, userSuggestions, selectedIndex, handleUserSelect]); // ← Add handleUserSelect here
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: { invitee: string; message?: string }) => {
     const inviteeValue = data.invitee.trim();
 
     if (!inviteeValue) {
@@ -492,7 +493,7 @@ export const GroupInviteForm = ({
 
       const res = await axiosInstance.post(`/api/groups/${groupSlug}/invite`, submitData);
 
-      const invitationsCreated = res.data.invitations_created || 1;
+      void res.data.invitations_created;
       const totalInvites = submitData.invited_emails.length + submitData.invited_usernames.length;
 
       reset();
@@ -505,12 +506,14 @@ export const GroupInviteForm = ({
         });
       }
 
-    } catch (err: any) {
-      console.error("Error sending invite:", err);
+    } catch (error) {
+      console.error("Error sending invite:", error);
 
-      if (err?.response?.status === 207) {
-        const created = err.response.data.invitations_created || 0;
-        const errors = err.response.data.errors?.length || 0;
+      const response = (error as { response?: { status?: number; data?: { invitations_created?: number; errors?: unknown[]; detail?: string } } }).response;
+
+      if (response?.status === 207) {
+        const created = response.data?.invitations_created || 0;
+        const errors = response.data?.errors?.length || 0;
 
         toaster.create({
           title: "Partial Success",
@@ -521,7 +524,7 @@ export const GroupInviteForm = ({
       } else {
         toaster.create({
           title: "Invite Failed",
-          description: err?.response?.data?.detail || "Could not send invites.",
+          description: response?.data?.detail || "Could not send invites.",
           type: "error",
           duration: 5000,
         });

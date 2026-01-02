@@ -5,7 +5,9 @@ import { Card } from '@chakra-ui/react';
 import WorkAreaWrapper from '@components/dashboard/shared/WorkAreaWrapper';
 
 interface GroupOverviewProps {
-  group: any;
+  group: {
+    member_count?: number | null;
+  };
   userRole: string;
   onNavigate: (section: string) => void;
 }

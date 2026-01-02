@@ -8,7 +8,6 @@ import {
   Text,
   Button,
   Badge,
-  Card,
   Separator,
   IconButton,
 } from '@chakra-ui/react';

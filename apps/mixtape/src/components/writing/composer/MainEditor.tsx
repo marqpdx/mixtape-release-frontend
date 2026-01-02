@@ -9,10 +9,31 @@ import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
 import { useTextSelection, TextSelection } from "../hooks/useTextSelection";
 import { useBackgroundSummary } from "@hooks/editor/useBackgroundSummary";
 
+type DocumentJSON = Record<string, unknown>;
+
+type BackgroundSummaryData = {
+  summary: string;
+  isGenerating: boolean;
+  isPending: boolean;
+  error: unknown;
+  wordCount: number;
+  forceUpdate: () => void;
+};
+
+type YjsDoc = {
+  guid?: string;
+} & Record<string, unknown>;
+
+type YjsProvider = Record<string, unknown>;
+
+type EditorInstance = {
+  getText?: () => string;
+} & Record<string, unknown>;
+
 export interface MainEditorProps {
   // ✅ Solo-only
-  docJSON?: any;
-  onContentChange?: (json: any) => void;
+  docJSON?: DocumentJSON | null;
+  onContentChange?: (json: DocumentJSON) => void;
 
   placeholder?: string;
   autoSave?: {
@@ -21,18 +42,11 @@ export interface MainEditorProps {
   };
 
   onSelectionChange?: (selection: TextSelection | null) => void;
-  onBackgroundSummaryChange?: (data: {
-    summary: string;
-    isGenerating: boolean;
-    isPending: boolean;
-    error: any;
-    wordCount: number;
-    forceUpdate: () => void;
-  }) => void;
+  onBackgroundSummaryChange?: (data: BackgroundSummaryData) => void;
 
   // ✅ Collab-only
-  yjsProvider?: any;
-  ydoc?: any;
+  yjsProvider?: YjsProvider;
+  ydoc?: YjsDoc;
 
   /**
    * Explicit mode control.
@@ -49,7 +63,7 @@ export interface MainEditorProps {
   debugId?: string;
 }
 
-export const MainEditor = forwardRef<any, MainEditorProps>(
+export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
   (
     {
       docJSON,
@@ -77,6 +91,8 @@ export const MainEditor = forwardRef<any, MainEditorProps>(
     const hasCollabDeps = !!ydoc && !!yjsProvider;
     const showCollabEditor = wantsCollab && hasCollabDeps;
     const collabEditable = wantsCollab ? !!collabReady : true;
+    void wantsSolo;
+    void collabEditable;
 
     // Features should run only when:
     // - solo editor exists, or
@@ -109,24 +125,30 @@ export const MainEditor = forwardRef<any, MainEditorProps>(
       ) : null;
 
     // ---------- Imperative ref ----------
-    const editorRef = React.useRef<any>(null);
-    const [editorInstance, setEditorInstance] = React.useState<any>(null);
+    const editorRef = React.useRef<EditorInstance | null>(null);
+    const [editorInstance, setEditorInstance] = React.useState<EditorInstance | null>(null);
 
-    const handleEditorRef = React.useCallback((instance: any) => {
+    const handleEditorRef = React.useCallback((instance: EditorInstance | null) => {
       editorRef.current = instance ?? null;
-      setEditorInstance((prev: any) => (prev === instance ? prev : instance));
+      setEditorInstance((prev) => (prev === instance ? prev : instance));
     }, []);
 
     // Update parent ref whenever editor instance changes
-    React.useImperativeHandle(ref, () => editorInstance, [editorInstance]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    React.useImperativeHandle(ref, () => editorInstance as any, [editorInstance]);
 
     // ---------- Selection + summary ----------
-    const { selection, hasSelection } = useTextSelection(editorRef, {
-      debounceMs: 300,
-      minSelectionLength: 1,
-    });
+    const { selection, hasSelection } = useTextSelection(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      editorRef as React.RefObject<any>,
+      {
+        debounceMs: 300,
+        minSelectionLength: 1,
+      }
+    );
 
-    const backgroundSummaryData = useBackgroundSummary(editorInstance, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const backgroundSummaryData = useBackgroundSummary(editorInstance as any, {
       enabled: !!editorInstance && editorFeaturesEnabled,
       debounceMs: 9000,
       summaryWords: 40,
@@ -231,12 +253,12 @@ export const MainEditor = forwardRef<any, MainEditorProps>(
               <Box position="relative">
                 <TipTapCollabEditor
                   // ✅ force remount if ydoc changes identity
-                  key={`${ydoc ? (ydoc as any).guid ?? "ydoc" : "no-ydoc"}:${String(collabReady)}`} // ✅ force remount when ready flips
-                  ref={handleEditorRef}
+                  key={`${ydoc?.guid ?? "no-ydoc"}:${String(collabReady)}`} // ✅ force remount when ready flips
+                  ref={handleEditorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                   // DO NOT pass initialContent - causes duplication on remount
                   // Y.Doc seeding happens in useYjsSocketProvider from backend yjs_state
                   initialContent={undefined}
-                  ydoc={ydoc}
+                  ydoc={ydoc as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                   yjsProvider={yjsProvider}
                   placeholder={placeholder}
                   className="borderless-editor"
@@ -272,9 +294,9 @@ export const MainEditor = forwardRef<any, MainEditorProps>(
             )
           ) : (
             <TipTapEditor
-              ref={handleEditorRef}
-              initialContent={docJSON}
-              onContentChange={(json) => onContentChange?.(json)}
+              ref={handleEditorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+              initialContent={docJSON ?? undefined}
+              onContentChange={(json: DocumentJSON) => onContentChange?.(json)}
               autoSave={autoSave}
               placeholder={placeholder}
               className="borderless-editor"

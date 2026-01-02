@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   Table,
@@ -23,24 +23,6 @@ import {
   useGrantPermission,
   useRevokePermission,
 } from "@mixtape/api/hooks/groups/useGroupPermissions";
-
-// Data structures
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  profile?: {
-    display_name?: string;
-    avatar?: string;
-  };
-}
-
-interface MemberPermissions {
-  userId: string;
-  user: User;
-  roles: string[]; // ['member', 'steward', 'admin']
-  decorators: string[]; // ['can__ManageWriting', 'can__InviteMembers', etc.]
-}
 
 interface Permission {
   code: string;
@@ -83,48 +65,13 @@ const AVAILABLE_PERMISSIONS: Permission[] = [
   },
 ];
 
-// Mock data - will be replaced with API call
-const MOCK_MEMBERS: MemberPermissions[] = [
-  {
-    userId: "1",
-    user: {
-      id: "1",
-      username: "alice",
-      email: "alice@example.com",
-      profile: { display_name: "Alice Admin" },
-    },
-    roles: ["member", "admin"],
-    decorators: [],
-  },
-  {
-    userId: "2",
-    user: {
-      id: "2",
-      username: "bob",
-      email: "bob@example.com",
-      profile: { display_name: "Bob Writer" },
-    },
-    roles: ["member", "steward"],
-    decorators: ["can__ManageWriting", "can__ManageDispatch"],
-  },
-  {
-    userId: "3",
-    user: {
-      id: "3",
-      username: "charlie",
-      email: "charlie@example.com",
-      profile: { display_name: "Charlie Member" },
-    },
-    roles: ["member"],
-    decorators: [],
-  },
-];
-
 export default function GroupPermissionsWorkArea({
   groupSlug,
   groupId,
   groupTitle,
 }: GroupPermissionsWorkAreaProps) {
+  void groupId;
+  void groupTitle;
   const [saving, setSaving] = useState<string | null>(null); // userId being saved
 
   // Fetch data from API

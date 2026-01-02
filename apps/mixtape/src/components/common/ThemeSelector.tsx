@@ -12,13 +12,12 @@ import {
   IconButton,
   Grid,
   Separator,
-  Fieldset,
 } from '@chakra-ui/react';
 import { useTheme } from '@contexts/ThemeContext';
-import type { ContrastMode, FontScale } from '@contexts/ThemeContext';
+import type { FontScale } from '@contexts/ThemeContext';
 
 const ColorSwatch: React.FC<{
-  colors: any;
+  colors: { bg?: string; surface?: string; accent?: string } | null;
   name: string;
   isActive: boolean;
   onClick: () => void

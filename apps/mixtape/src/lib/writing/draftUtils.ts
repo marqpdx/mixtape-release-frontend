@@ -2,7 +2,7 @@
 
 export interface DraftPayload {
   title: string;
-  docJSON: any;
+  docJSON: unknown;
   summary: string;
 }
 

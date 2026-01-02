@@ -45,6 +45,8 @@ export const FileUploadField = forwardRef<
     doHandleFileChange,
   } = props;
 
+  const { ref: registerRef, onChange: registerOnChange, ...registerProps } =
+    register(fieldName);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -88,12 +90,19 @@ export const FileUploadField = forwardRef<
           </label>
 
           <input
-            ref={inputRef}
+            ref={(node) => {
+              registerRef(node);
+              inputRef.current = node;
+            }}
             id={`file-input-${fieldName}`}
             type="file"
             accept={allowedFileTypes?.join(",")}
             style={{ display: "none" }}
-            onChange={handleInputChange}
+            {...registerProps}
+            onChange={async (event) => {
+              registerOnChange?.(event);
+              await handleInputChange(event);
+            }}
           />
 
           {pending && (
@@ -128,3 +137,5 @@ export const FileUploadField = forwardRef<
     </Box>
   );
 });
+
+FileUploadField.displayName = "FileUploadField";

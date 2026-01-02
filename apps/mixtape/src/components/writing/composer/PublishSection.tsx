@@ -10,7 +10,7 @@ import PublishPanel from '../PublishPanel'; // Assuming this exists
 export interface PublishSectionProps {
   draftId?: string;
   title: string;
-  docJSON: any;
+  docJSON: Record<string, unknown> | null;
   tags: string[];
 }
 
@@ -26,7 +26,7 @@ export function PublishSection({
         <PublishPanel
           draftId={draftId}
           title={title}
-          docJSON={docJSON}
+          docJSON={docJSON ?? {}}
           tags={tags}
         />
       </Box>

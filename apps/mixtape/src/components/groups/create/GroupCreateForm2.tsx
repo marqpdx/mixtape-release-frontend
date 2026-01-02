@@ -2,7 +2,7 @@
 
 import { useEffect, memo, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Box, Button, RadioGroup, Stack, Text, Card, Heading } from "@chakra-ui/react";
+import { Box, Button, RadioGroup, Stack, Text, Heading } from "@chakra-ui/react";
 import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
@@ -129,11 +129,11 @@ function FormInner({
             <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
               Visibility
             </Text>
-            <GroupVisibilitySelect
-              register={register as any}
-              value={visibility}
-              onChange={handleVisibilityChange}
-            />
+          <GroupVisibilitySelect
+            register={register}
+            value={visibility}
+            onChange={handleVisibilityChange}
+          />
           </Box>
 
           <Box>

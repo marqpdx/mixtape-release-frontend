@@ -12,31 +12,50 @@ interface DispatchContentMinimal {
 
 type Status = "connecting" | "connected" | "disconnected";
 
+type EmitterListener = (...args: unknown[]) => void;
+type ProviderEmitter = {
+  on?: (event: string, cb: EmitterListener) => void;
+  off?: (event: string, cb: EmitterListener) => void;
+  emit?: (event: string, ...args: unknown[]) => void;
+  __mt_listeners?: Record<string, Set<EmitterListener>>;
+};
+type ProviderEmitterTarget = Record<string, unknown> & ProviderEmitter;
+
+type YDocWithMeta = Y.Doc & {
+  __serverSynced?: boolean;
+  __yjsRoomId?: string;
+  __dispatchContentId?: string;
+  __initialContent?: Record<string, unknown>;
+};
+
+type SyncPayload = { documentId?: string };
+
 /**
  * Tiny event emitter shim so TipTapCollabEditor can do:
  *   provider.on("synced", cb)
  * even if YjsSocketAdapter doesn't implement .on/.off itself.
  */
-function ensureProviderEmitter(adapter: any) {
+function ensureProviderEmitter(adapter: object | null) {
   if (!adapter) return;
+  const target = adapter as ProviderEmitterTarget;
 
-  if (typeof adapter.on === "function" && typeof adapter.off === "function" && typeof adapter.emit === "function") {
+  if (typeof target.on === "function" && typeof target.off === "function" && typeof target.emit === "function") {
     return; // already has an event API
   }
 
-  const listeners: Record<string, Set<(...args: any[]) => void>> =
-    adapter.__mt_listeners || (adapter.__mt_listeners = {});
+  const listeners: Record<string, Set<EmitterListener>> =
+    target.__mt_listeners || (target.__mt_listeners = {});
 
-  adapter.on = (event: string, cb: (...args: any[]) => void) => {
+  target.on = (event: string, cb: EmitterListener) => {
     if (!listeners[event]) listeners[event] = new Set();
     listeners[event].add(cb);
   };
 
-  adapter.off = (event: string, cb: (...args: any[]) => void) => {
+  target.off = (event: string, cb: EmitterListener) => {
     listeners[event]?.delete(cb);
   };
 
-  adapter.emit = (event: string, ...args: any[]) => {
+  target.emit = (event: string, ...args: unknown[]) => {
     const set = listeners[event];
     if (!set || set.size === 0) return;
     for (const cb of Array.from(set)) {
@@ -57,7 +76,7 @@ export function useYjsSocketProvider(
   }: {
     user: { name: string; color?: string };
     enabled?: boolean;
-    initialContent?: any;
+    initialContent?: Record<string, unknown>;
   }
 ) {
   const [status, setStatus] = useState<Status>("disconnected");
@@ -66,6 +85,11 @@ export function useYjsSocketProvider(
   const [isReady, setIsReady] = useState(false);
 
   const cleanupRef = useRef<(() => void) | null>(null);
+  const userRef = useRef(user);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     // Hard reset when disabled or no IDs
@@ -83,7 +107,7 @@ export function useYjsSocketProvider(
     let didCancel = false;
 
     let adapter: YjsSocketAdapter | null = null;
-    let doc: Y.Doc | null = null;
+    let doc: YDocWithMeta | null = null;
 
     const cleanup = () => {
       if (didCancel) return;
@@ -110,13 +134,13 @@ export function useYjsSocketProvider(
       setIsReady(false);
 
       // 1) Create Y.Doc
-      doc = new Y.Doc();
+      doc = new Y.Doc() as YDocWithMeta;
 
       // IMPORTANT: deterministic sync flag owned by this hook.
       // TipTapCollabEditor should only seed after this becomes true.
-      (doc as any).__serverSynced = false;
-      (doc as any).__yjsRoomId = roomId;
-      (doc as any).__dispatchContentId = contentId;
+      doc.__serverSynced = false;
+      doc.__yjsRoomId = roomId;
+      doc.__dispatchContentId = contentId;
 
       // 3) If empty, fetch content_snapshot for seeding (TipTap will seed it)
       try {
@@ -128,9 +152,9 @@ export function useYjsSocketProvider(
           const contentRes = await axiosInstance.get(`/api/dispatch/content/${contentId}`);
           if (didCancel) return;
 
-          const contentSnapshot = contentRes.data?.content_snapshot;
+          const contentSnapshot = contentRes.data?.content_snapshot as Record<string, unknown> | undefined;
           if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
-            (doc as any).__initialContent = contentSnapshot;
+            doc.__initialContent = contentSnapshot;
             console.log("✅ [YjsProvider] stored snapshot for seeding");
           } else {
             console.log("ℹ️ [YjsProvider] no content_snapshot found");
@@ -147,7 +171,7 @@ export function useYjsSocketProvider(
       setYDoc(doc);
 
       // 4) Create adapter (joins socket room)
-      adapter = new YjsSocketAdapter(doc, roomId, { user, contentId });
+      adapter = new YjsSocketAdapter(doc, roomId, { user: userRef.current, contentId });
 
       // Ensure provider has on/off/emit for "synced" event (editor listens to this)
       ensureProviderEmitter(adapter);
@@ -170,7 +194,7 @@ export function useYjsSocketProvider(
 
         // READY IS DETERMINISTIC:
         // connected + doc + provider + server has ACKed yjs-synced
-        const synced = !!(doc as any).__serverSynced;
+        const synced = !!doc?.__serverSynced;
         const ready = connected && !!doc && !!adapter && synced;
         setIsReady(ready);
       };
@@ -187,25 +211,27 @@ export function useYjsSocketProvider(
       };
 
       // 🔥 The key change: yjs-synced is the ONLY sync signal.
-      const onSynced = (payload: any) => {
-        const docId = payload?.documentId;
+      const onSynced = (payload: unknown) => {
+        const docId =
+          typeof payload === "string"
+            ? payload
+            : (payload as SyncPayload | null)?.documentId;
         if (docId && docId !== roomId) return;
 
         if (!doc) return;
 
-        (doc as any).__serverSynced = true;
+        doc.__serverSynced = true;
 
         // If adapter tracks a .synced flag, keep it aligned.
         try {
-          (adapter as any).synced = true;
+          (adapter as YjsSocketAdapter & { synced?: boolean }).synced = true;
         } catch {}
 
         console.log("✅ [YjsProvider] yjs-synced (authoritative):", docId || roomId);
 
         // Emit provider-level event for the editor seed gate (deterministic now)
-        try {
-          (adapter as any).emit?.("synced", { documentId: docId || roomId });
-        } catch {}
+        const adapterEmitter = adapter as ProviderEmitter;
+        adapterEmitter.emit?.("synced", { documentId: docId || roomId });
 
         recompute();
       };
@@ -254,7 +280,7 @@ export function useYjsSocketProvider(
     if (provider?.awareness && user) {
       provider.awareness.setLocalStateField("user", user);
     }
-  }, [provider, user?.name, user?.color]);
+  }, [provider, user]);
 
   return {
     provider,

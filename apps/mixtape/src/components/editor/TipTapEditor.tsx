@@ -3,12 +3,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
-import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
+import { useEditor, EditorContent, JSONContent, Editor } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 // import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
 import StarterKit from "@tiptap/starter-kit";
-import History from "@tiptap/extension-history";
 import Heading from "@tiptap/extension-heading";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
@@ -20,7 +19,6 @@ import ListItem from "@tiptap/extension-list-item";
 import Link from "@tiptap/extension-link";
 
 import { Box, Spinner } from "@chakra-ui/react";
-import TipTapToolbar from "./TipTapToolbar";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
 import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
@@ -46,7 +44,7 @@ interface TipTapEditorProps {
   toolbarOptions?: ToolbarOption[];
   className?: string;
   // New Yjs props from MainEditor
-  yjsProvider?: any;
+  yjsProvider?: { awareness?: Awareness };
   ydoc?: Y.Doc;
   isCollaborative?: boolean;
   // Legacy collab prop (deprecated)
@@ -57,7 +55,7 @@ interface TipTapEditorProps {
   };
 }
 
-const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
+const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   initialContent = "",
   onContentChange,
   autoSave,
@@ -284,12 +282,13 @@ const TipTapEditor = forwardRef<any, TipTapEditorProps>(({
   const editor = useEditor(editorConfig);
 
   // Expose editor instance via ref
-  useImperativeHandle(ref, () => editor, [editor]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useImperativeHandle(ref, () => editor as any, [editor]);
 
   // Add this in the TipTapEditor component after creating the editor
   useEffect(() => {
     if (editor && collabConfig?.ydoc) {
-      const handleUpdate = (update: Uint8Array, origin: any) => {
+      const handleUpdate = (update: Uint8Array, origin: unknown) => {
         console.log("🔄 Y.js document update detected:", {
           updateSize: update.length,
           origin: origin,

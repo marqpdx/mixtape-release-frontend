@@ -92,7 +92,6 @@ export const CalendarContainer: React.FC<CalendarContainerProps> = ({
         <CalendarMonth
           occurrences={occurrences}
           onOccurrenceClick={handleOccurrenceClick}
-          isLoading={isLoading}
           currentMonth={currentMonth}
           onMonthChange={onMonthChange}
         />

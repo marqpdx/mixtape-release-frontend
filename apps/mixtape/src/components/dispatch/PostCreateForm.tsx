@@ -8,11 +8,17 @@ import { Button, Input, Textarea, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
+type PostCreateValues = {
+  title: string;
+  summary: string;
+  body: string;
+};
+
 export default function PostCreateForm() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit } = useForm<PostCreateValues>();
   const router = useRouter();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PostCreateValues) => {
     try {
       const res = await axiosInstance.post("/api/dispatch/posts", data);
       router.push(`/dispatch/posts/${res.data.slug}`);

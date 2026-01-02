@@ -20,7 +20,7 @@ const GROUP_TYPE_ICONS = {
 };
 
 interface GroupAdminHeaderProps {
-  group: any;
+  group: { title: string; group_type?: string };
   currentGroupSlug: string;
   testRole?: 'admin' | 'member' | 'public' | null;
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
@@ -34,7 +34,8 @@ export function GroupAdminHeader({
   onRoleChange,
   isAdminOrSteward = false,
 }: GroupAdminHeaderProps) {
-  const cardBg = useColorModeValue('white', 'gray.800');
+  void currentGroupSlug;
+  void useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.600', 'gray.400');
 

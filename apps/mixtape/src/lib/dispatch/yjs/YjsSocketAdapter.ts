@@ -14,10 +14,12 @@ type UpdatePayload =
   | Uint8Array
   | { documentId: string; update: number[] | Uint8Array };
 
+type AwarenessUser = Record<string, unknown>;
+
 export class YjsSocketAdapter {
   public doc: Y.Doc;
   public roomName: string;
-  public user: any;
+  public user: AwarenessUser;
   public socket: Socket | undefined;
   public awareness: Awareness;
 
@@ -43,7 +45,7 @@ export class YjsSocketAdapter {
 
   private _awarenessUpdateTimeout: NodeJS.Timeout | null = null;
 
-  private _handleYjsUpdate = (payload: any) => {
+  private _handleYjsUpdate = (payload: UpdatePayload) => {
     this._onYjsUpdate(payload as UpdatePayload);
   };
 
@@ -129,7 +131,7 @@ export class YjsSocketAdapter {
   constructor(
     doc: Y.Doc,
     roomName: string,
-    options: { user: any; contentId?: string }
+    options: { user: AwarenessUser; contentId?: string }
   ) {
     this.doc = doc;
     this.roomName = roomName;
@@ -151,7 +153,7 @@ export class YjsSocketAdapter {
 
   private setupYjsListeners() {
     // Local doc updates -> emit to server
-    this.doc.on("update", (update: Uint8Array, origin: any) => {
+    this.doc.on("update", (update: Uint8Array, origin: unknown) => {
       if (origin === this) return; // avoid loopback
 
       // Additional diagnostic log (recommended)
@@ -192,7 +194,7 @@ export class YjsSocketAdapter {
     });
 
     // Awareness updates -> emit (throttled)
-    this.awareness.on("update", ({ added, updated, removed }: any) => {
+    this.awareness.on("update", ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }) => {
       if (!this.socket?.connected) return;
 
       if (this._awarenessUpdateTimeout) clearTimeout(this._awarenessUpdateTimeout);
@@ -221,9 +223,9 @@ export class YjsSocketAdapter {
     this.socket = socket;
 
     // Attach ONLY our listeners (shared socket safe)
-    this.socket.on("yjs-update", this._handleYjsUpdate as any);
-    this.socket.on("yjs-awareness", this._onAwareness as any);
-    this.socket.on("yjs-synced", this._onSynced as any);
+    this.socket.on("yjs-update", this._handleYjsUpdate);
+    this.socket.on("yjs-awareness", this._onAwareness);
+    this.socket.on("yjs-synced", this._onSynced);
     this.socket.on("connect", this._onConnect);
     this.socket.on("disconnect", this._onDisconnect);
 
@@ -289,9 +291,9 @@ export class YjsSocketAdapter {
 
     if (this.socket) {
       // Detach only our listeners
-      this.socket.off("yjs-update", this._handleYjsUpdate as any);
-      this.socket.off("yjs-awareness", this._onAwareness as any);
-      this.socket.off("yjs-synced", this._onSynced as any);
+      this.socket.off("yjs-update", this._handleYjsUpdate);
+      this.socket.off("yjs-awareness", this._onAwareness);
+      this.socket.off("yjs-synced", this._onSynced);
       this.socket.off("connect", this._onConnect);
       this.socket.off("disconnect", this._onDisconnect);
     }

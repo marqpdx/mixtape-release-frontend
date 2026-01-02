@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input, IconButton, HStack, Text } from '@chakra-ui/react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import debounce from 'lodash.debounce';
@@ -30,8 +30,8 @@ export function SearchInput({
   const [charCount, setCharCount] = useState(value.length);
 
   // Debounced search function
-  const debouncedSearch = useCallback(
-    debounce((searchValue: string) => {
+  const debouncedSearch = useMemo(
+    () => debounce((searchValue: string) => {
       if (searchValue.length >= minLength && searchValue.length <= maxLength) {
         onSearch(searchValue);
       }
@@ -79,7 +79,6 @@ export function SearchInput({
     };
   }, [debouncedSearch]);
 
-  const isValid = charCount >= minLength && charCount <= maxLength;
   const showError = charCount > 0 && charCount < minLength;
   const showWarning = charCount > maxLength;
 

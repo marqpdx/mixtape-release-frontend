@@ -1,8 +1,8 @@
 // src/components/editor/TipTapToolbar.tsx
 
 import { Editor } from "@tiptap/react";
-import { Button, HStack, IconButton } from "@chakra-ui/react";
-import { IconBold, IconItalic, IconHeading, IconList, IconLink, IconUnderline, IconShare } from "@tabler/icons-react";
+import { HStack, IconButton } from "@chakra-ui/react";
+import { IconBold, IconItalic, IconLink, IconUnderline, IconShare } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
@@ -54,9 +54,10 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
             const ids = getSelectedBlockIds(editor)
             ids.forEach((id) => {
               editor.commands.appendBlockDestination(id, { kind: "post", id: "123" })
-              const meta = (editor.extensionManager.extensions.find(e => e.name === "blockRouting") as any)
-                ?.options
-                ?.getRouteMeta(id)
+              const blockRouting = editor.extensionManager.extensions.find(e => e.name === "blockRouting") as
+                | { options?: { getRouteMeta?: (blockId: string) => unknown } }
+                | undefined
+              const meta = blockRouting?.options?.getRouteMeta?.(id)
               console.log("🔎 Route meta for block:", meta)
             })
             console.log("✅ Routed blocks:", ids)

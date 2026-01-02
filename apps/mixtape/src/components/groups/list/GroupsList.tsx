@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Box, HStack, Text, Avatar, AvatarGroup } from "@chakra-ui/react";
+import type { ComponentType } from "react";
 import UniversalDataTable from "@/components/common/UniversalDataTable";
 import { Icons } from "@/components/icons/IconMap";
 import type { Group } from "@mixtape/core/types/groupTypes";
@@ -93,8 +94,8 @@ export default function GroupsList({
       emptyStateMessage={emptyStateMessage}
       emptyStateSubtitle={emptyStateSubtitle}
       renderAvatar={(group) => {
-        const groupIcons = Icons.group as Record<string, any>;
-        const GroupIcon = groupIcons[group.group_type];
+        const groupIcons = Icons.group as Record<string, unknown>;
+        const GroupIcon = groupIcons[group.group_type] as ComponentType<{ size?: number }> | undefined;
 
         const imgRaw = group.profile_image_url ?? group.profile_image ?? null;
         const img =

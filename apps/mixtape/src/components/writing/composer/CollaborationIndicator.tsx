@@ -6,7 +6,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { Button, HStack, Text, Badge } from '@chakra-ui/react';
 // import { Button } from '@/components/ui/button';
 import type { DispatchContent } from '@mixtape/core/types/dispatchTypes';
@@ -42,7 +41,6 @@ export function CollaborationIndicator({
   }
 
   // Collaborative mode
-  const totalCollaborators = dispatchContent.collaborator_count;
   const editors = dispatchContent.editor_count;
   const commenters = dispatchContent.commenter_count;
 

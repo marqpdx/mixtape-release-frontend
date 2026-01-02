@@ -1,7 +1,7 @@
 // src/components/almanac/EventEditForm.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -46,8 +46,18 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
   });
 
   // Update mutation
+  type UpdatePayload = {
+    title: string;
+    description: string;
+    location: string;
+    event_format: string;
+    max_attendees?: number;
+    registration_required: boolean;
+    visible_to_parent: boolean;
+  };
+
   const updateMutation = useMutation({
-    mutationFn: (data: any) => updateGroupEvent(groupSlug, event.slug, data),
+    mutationFn: (data: UpdatePayload) => updateGroupEvent(groupSlug, event.slug, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['almanac', 'event', groupSlug, event.slug] });
       queryClient.invalidateQueries({ queryKey: ['almanac', 'events'] });
@@ -59,10 +69,11 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
       });
       onSuccess?.();
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not update event';
       toaster.create({
         title: 'Update Failed',
-        description: error.message || 'Could not update event',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -77,7 +88,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
       description: formData.description,
       location: formData.location,
       event_format: formData.event_format,
-      max_attendees: formData.max_attendees ? parseInt(formData.max_attendees, 10) : null,
+      max_attendees: formData.max_attendees ? parseInt(formData.max_attendees, 10) : undefined,
       registration_required: formData.registration_required,
       visible_to_parent: formData.visible_to_parent,
     };
@@ -85,7 +96,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
     updateMutation.mutate(payload);
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: keyof typeof formData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

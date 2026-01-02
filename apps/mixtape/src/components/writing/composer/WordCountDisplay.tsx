@@ -2,8 +2,8 @@
 
 'use client';
 
-import { HStack, Text, Badge } from '@chakra-ui/react';
-import { IconSun, IconSunFilled, IconShield, IconShieldFilled } from '@tabler/icons-react';
+import { HStack, Text } from '@chakra-ui/react';
+import { IconSunFilled, IconShieldFilled } from '@tabler/icons-react';
 
 interface WordCountDisplayProps {
   wordCount: number;
@@ -42,24 +42,6 @@ export function WordCountDisplay({
         return 'Error';
       default:
         return null; // No status text for saved/idle states
-    }
-  };
-
-  const getStatusColor = () => {
-    if (hasUnsavedChanges || saveStatus === 'unsaved') {
-      return 'orange';
-    }
-
-    switch (saveStatus) {
-      case 'saving':
-        return 'yellow';
-      case 'saved':
-      case 'idle':
-        return 'green';
-      case 'error':
-        return 'red';
-      default:
-        return 'gray';
     }
   };
 

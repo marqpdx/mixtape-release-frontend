@@ -1,6 +1,6 @@
 // src/components/Calendar/CalendarMonth.tsx - CONTROLLED MONTH
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Button,
@@ -8,7 +8,6 @@ import {
   Grid,
   Heading,
   HStack,
-  Text,
   VStack,
 } from '@chakra-ui/react';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
@@ -20,7 +19,6 @@ import { isSameDay, parseISO, startOfDay } from 'date-fns';
 interface CalendarMonthProps {
   occurrences: CalendarOccurrence[];
   onOccurrenceClick: (occurrence: CalendarOccurrence) => void;
-  isLoading?: boolean;
   currentMonth?: Date;  // ← Controlled month from parent
   onMonthChange?: (date: Date) => void;  // ← Notify parent of changes
 }
@@ -28,7 +26,6 @@ interface CalendarMonthProps {
 export const CalendarMonth: React.FC<CalendarMonthProps> = ({
   occurrences,
   onOccurrenceClick,
-  isLoading = false,
   currentMonth = new Date(),
   onMonthChange,
 }) => {
@@ -63,7 +60,7 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({
     );
 
     const weeks: Array<{ days: CalendarDay[] }> = [];
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
 
     // ✅ Generate only the weeks needed (5 or 6)
     for (let week = 0; week < weeksNeeded; week++) {
@@ -200,7 +197,6 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({
             <CalendarDayCell
               key={`${weekIdx}-${dayIdx}`}
               day={day}
-              isLoading={isLoading}
               onOccurrenceClick={onOccurrenceClick}
               cellBg={cellBg}
               cellBorder={cellBorder}

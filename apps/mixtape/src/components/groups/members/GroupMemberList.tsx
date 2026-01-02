@@ -17,6 +17,7 @@ import {
   Avatar,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import Image from "next/image";
 import { IconGrid3x3, IconList, IconMessage, IconCalendar } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
@@ -51,12 +52,13 @@ export function GroupMemberList({
   onMemberClick,
   canEditMember = () => false
 }: GroupMemberListProps) {
+  void group;
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
 
-  const AVATAR_SIZE = "148px";
+  const AVATAR_SIZE = 148;
 
   // Helper to get display name (uses utility from groupTypes)
   const getDisplayName = (membership: GroupMembership): string => {
@@ -69,18 +71,6 @@ export function GroupMemberList({
   };
 
   // Helper function to get role badge color
-  const getRoleBadgeColor = (role: string): string => {
-    switch (role.toLowerCase()) {
-      case 'admin':
-      case 'owner':
-        return 'green';
-      case 'moderator':
-        return 'purple';
-      default:
-        return 'blue';
-    }
-  };
-
   // Transform members for UniversalDataTable
   const transformMemberForTable = (membership: GroupMembership): MemberTableItem => {
     return {
@@ -276,7 +266,7 @@ export function GroupMemberList({
           const membership = members.find(m => m.member_id === memberItem.member_id);
           if (!membership) return null;
 
-          let avatar_pre = getAvatar(membership);
+          const avatar_pre = getAvatar(membership);
           const avatar = avatar_pre === "" ? undefined : avatar_pre;
 
           const displayName = getDisplayName(membership);
@@ -302,14 +292,13 @@ export function GroupMemberList({
                   bg="white"
                   shadow="sm"
                 >
-                  <img
+                  <Image
                     src={avatar}
                     alt={`${displayName} profile`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
+                    width={AVATAR_SIZE}
+                    height={AVATAR_SIZE}
+                    sizes={`${AVATAR_SIZE}px`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </Box>
               ) : (

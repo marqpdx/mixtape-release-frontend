@@ -1,7 +1,6 @@
 // Group List Screen - Shows user's groups
 // Allows navigation to group-specific conversations
 
-import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,34 +12,18 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { fetchUserGroups } from '@mixtape/api/clients/group/groupApi';
+import { useUserGroups } from '@mixtape/api/hooks/groups/useGroups';
 import type { Group } from '@mixtape/core/types/groupTypes';
 
 type GroupListScreenProps = NativeStackScreenProps<RootStackParamList, 'Groups'>;
 
 export default function GroupListScreen({ navigation }: GroupListScreenProps) {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Load user's groups
-  useEffect(() => {
-    loadGroups();
-  }, []);
-
-  const loadGroups = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchUserGroups();
-      setGroups(data);
-    } catch (err) {
-      console.error('[GroupListScreen] Error loading groups:', err);
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    groups,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useUserGroups();
 
   // Handle group selection
   const handleGroupPress = (group: Group) => {
@@ -108,7 +91,7 @@ export default function GroupListScreen({ navigation }: GroupListScreenProps) {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyTitle}>Error loading groups</Text>
         <Text style={styles.emptySubtitle}>{error.message}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadGroups}>
+        <TouchableOpacity style={styles.retryButton} onPress={refetch}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -124,7 +107,7 @@ export default function GroupListScreen({ navigation }: GroupListScreenProps) {
         refreshControl={
           <RefreshControl
             refreshing={loading && groups.length > 0}
-            onRefresh={loadGroups}
+            onRefresh={refetch}
             tintColor="#007AFF"
           />
         }

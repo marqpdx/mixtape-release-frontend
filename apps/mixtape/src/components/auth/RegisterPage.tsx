@@ -54,10 +54,11 @@ const RegisterPage: React.FC = () => {
       });
 
       // AuthContext redirects to login automatically
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not create account";
       toaster.error({
         title: "Registration failed",
-        description: error.message || "Could not create account",
+        description: message,
       });
     } finally {
       setIsLoading(false);

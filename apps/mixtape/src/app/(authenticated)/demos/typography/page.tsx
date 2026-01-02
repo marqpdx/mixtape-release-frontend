@@ -11,7 +11,6 @@ import {
   Separator,
   Grid,
   Code,
-  Link,
 } from '@chakra-ui/react';
 import { useTheme } from '@contexts/ThemeContext';
 
@@ -213,6 +212,16 @@ export default function TypographyDemoPage() {
 }
 
 // Helper Components
+type DemoTextStyle =
+  | "display1"
+  | "display2"
+  | "bodyLarge"
+  | "body"
+  | "bodySmall"
+  | "label"
+  | "caption"
+  | "overline";
+
 function Section({
   title,
   subtitle,
@@ -241,14 +250,14 @@ function DemoItem({
   code,
   description
 }: {
-  style: string;
+  style: DemoTextStyle;
   text: string;
   code: string;
   description?: string;
 }) {
   return (
     <Box p={4} bg="theme.surface" borderRadius="md" border="1px solid" borderColor="theme.border">
-      <Text textStyle={style as any} mb={2}>
+      <Text textStyle={style} mb={2}>
         {text}
       </Text>
       {description && (

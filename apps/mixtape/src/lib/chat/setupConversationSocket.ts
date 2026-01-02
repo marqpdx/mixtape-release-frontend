@@ -4,10 +4,31 @@ import { useConversationStore } from "@/stores/conversationStore";
 import { Dispatch, SetStateAction } from "react";
 import { Socket } from "socket.io-client";
 
+type ConversationMessage = {
+  id: string;
+  text: string;
+  created_at: string;
+  sender: { username: string };
+};
+
+type MessageEventPayload = {
+  sender?: { username?: string } | string;
+  text?: string;
+  createdAt?: string;
+  conversationSlug: string;
+  messageId?: string;
+};
+
+type TypingEventPayload = {
+  username: string;
+  conversationSlug: string;
+  isTyping: boolean;
+};
+
 export const setupConversationSocket = (
   socket: Socket,
   slug: string,
-  setMessages: Dispatch<SetStateAction<any[]>>,
+  setMessages: Dispatch<SetStateAction<ConversationMessage[]>>,
   setTypingUsers: Dispatch<SetStateAction<string[]>>,
 ): () => void => {
 
@@ -17,7 +38,13 @@ export const setupConversationSocket = (
   socket.emit("join_conversation", { conversationSlug: slug });
   console.log("[setupConversationSocket] 🧩 Emitted join_conversation for", slug);
 
-  const messageHandler = ({ sender, text, createdAt, conversationSlug, messageId }: any) => {
+  const messageHandler = ({
+    sender,
+    text,
+    createdAt,
+    conversationSlug,
+    messageId,
+  }: MessageEventPayload) => {
     console.log('📨 receive_message event received:', {
       sender,
       text,
@@ -29,7 +56,6 @@ export const setupConversationSocket = (
 
     const {
       conversations,
-      selectedConversationSlug,
       incrementUnread,
       refetchConversations,
     } = useConversationStore.getState();
@@ -46,7 +72,8 @@ export const setupConversationSocket = (
       console.log('✅ Message is for current conversation, adding to messages');
 
       // Backend sends sender as { username, avatarUrl }, so extract username
-      const senderUsername = sender?.username || sender;
+    const senderUsername =
+      typeof sender === 'string' ? sender : sender?.username ?? 'Unknown';
 
       setMessages((prev) => {
         const newMessage = {
@@ -65,7 +92,7 @@ export const setupConversationSocket = (
     }
   };
 
-  const typingHandler = ({ username, conversationSlug, isTyping }: any) => {
+  const typingHandler = ({ username, conversationSlug, isTyping }: TypingEventPayload) => {
     if (conversationSlug !== slug) return;
 
     setTypingUsers((prev) => {

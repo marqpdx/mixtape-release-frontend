@@ -14,7 +14,7 @@ import {
   Card,
   Heading,
 } from "@chakra-ui/react";
-import { useEffect, useRef, useState, memo, useCallback } from "react";
+import { useEffect, memo, useCallback } from "react";
 import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";

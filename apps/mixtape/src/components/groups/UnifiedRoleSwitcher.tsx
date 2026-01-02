@@ -5,7 +5,7 @@
 import { HStack, IconButton, Box } from "@chakra-ui/react";
 import { IconShield, IconUser, IconEyeOff } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
-import { useColorMode, useColorModeValue } from "@components/ui/color-mode";
+import { useColorModeValue } from "@components/ui/color-mode";
 
 interface UnifiedRoleSwitcherProps {
   testRole?: 'admin' | 'member' | 'public' | null;

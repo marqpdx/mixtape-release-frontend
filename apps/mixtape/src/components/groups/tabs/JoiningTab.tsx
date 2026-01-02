@@ -1,8 +1,9 @@
 // src/components/groups/tabs/JoiningTab.tsx
 //
-import { Card, Heading, VStack, Text, Button, Box } from "@chakra-ui/react";
+import { Card, Heading, VStack, Text, Button } from "@chakra-ui/react";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
-export function JoiningTab({ group, isMember, onJoinGroup }: { group: any; isMember: boolean; onJoinGroup?: () => void }) {
+export function JoiningTab({ group, isMember, onJoinGroup }: { group: Group; isMember: boolean; onJoinGroup?: () => void }) {
   return (
     <Card.Root maxW="2xl" mx="auto">
       <Card.Header>
@@ -19,21 +20,19 @@ export function JoiningTab({ group, isMember, onJoinGroup }: { group: any; isMem
         ) : (
           <VStack gap={4}>
             <Text>
-              {group.join_policy === 'open' && "This group is open for anyone to join!"}
-              {group.join_policy === 'approval' && "Membership requires approval from group admins."}
-              {group.join_policy === 'invite' && "This group is invite-only."}
+              {group.visibility === 'public' && "This group is open for anyone to join!"}
+              {group.visibility === 'invite_only' && "This group is invite-only."}
+              {(group.visibility === 'private' || group.visibility === 'hidden') && "This group is private."}
             </Text>
-            {group.join_policy !== 'closed' && onJoinGroup && (
+            {group.visibility === 'public' && onJoinGroup && (
               <Button colorScheme="green" size="lg" w="full" onClick={onJoinGroup}>
-                {group.join_policy === 'approval' ? "Request to Join" : "Join Group"}
+                Join Group
               </Button>
             )}
-            {group.joining_instructions && (
-              <Box p={4} bg="gray.50" borderRadius="md" w="full">
-                <Text fontSize="sm" whiteSpace="pre-line">
-                  {group.joining_instructions}
-                </Text>
-              </Box>
+            {group.visibility === 'invite_only' && onJoinGroup && (
+              <Button colorScheme="green" size="lg" w="full" onClick={onJoinGroup}>
+                Request to Join
+              </Button>
             )}
           </VStack>
         )}

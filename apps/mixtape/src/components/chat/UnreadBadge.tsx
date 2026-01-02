@@ -1,6 +1,6 @@
 // components/chat/UnreadBadge.tsx
 
-import { Box, Text } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 
 interface UnreadBadgeProps {
   name: string | null;
@@ -10,6 +10,8 @@ interface UnreadBadgeProps {
 
 export const UnreadBadge = ({ name, participants, unreadCount }: UnreadBadgeProps) => (
   <Box position="relative">
+    {void name}
+    {void participants}
     {/* <Text fontWeight="bold">
       {name || participants.join(", ")}
     </Text> */}

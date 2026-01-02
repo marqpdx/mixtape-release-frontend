@@ -21,11 +21,28 @@ interface QuickPublishBarProps {
   sponsor: SponsorConfig;
   writingKind: string;
   hasUnsavedChanges?: boolean;
-  onQuickPublishEvent?: (result: any) => void;
-  saveNow: (data: any) => Promise<any>;
+  onQuickPublishEvent?: (result: Record<string, unknown>) => void;
+  saveNow: (data: PublishSavePayload) => Promise<unknown>;
   titleRef: React.RefObject<string>;
-  docJSONRef: React.RefObject<any>;
+  docJSONRef: React.RefObject<DocumentJSON | null>;
   excerptRef: React.RefObject<string>;
+}
+
+type DocumentJSON = Record<string, unknown>
+type PublishSavePayload = {
+  title: string
+  body_json: DocumentJSON | null
+  excerpt: string
+}
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === 'object') {
+    const data = (error as { response?: { data?: { error?: string; message?: string } } }).response?.data
+    if (data?.error) return data.error
+    if (data?.message) return data.message
+  }
+  if (error instanceof Error) return error.message
+  return fallback
 }
 
 export function QuickPublishBar({
@@ -41,6 +58,7 @@ export function QuickPublishBar({
 }: QuickPublishBarProps) {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
+  void hasUnsavedChanges;
 
   const handleQuickPublish = async () => {
     try {
@@ -92,11 +110,11 @@ export function QuickPublishBar({
         type: 'success'
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Quick publish failed:', error);
       toaster.create({
         title: 'Publish failed',
-        description: error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Please try again',
+        description: getErrorMessage(error, 'Please try again'),
         type: 'error'
       });
     } finally {

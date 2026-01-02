@@ -1,10 +1,11 @@
 // lib/chat/createOrGetConversation.ts
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import type { Conversation } from "@/components/chat/interfaces";
 
 export const createOrGetConversation = async (
   participants: string[],
-): Promise<any | null> => {
+): Promise<Conversation | null> => {
   try {
     const res = await axiosInstance.post("/api/chat/conversations", {
       participants,

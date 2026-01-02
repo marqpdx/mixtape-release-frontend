@@ -10,7 +10,7 @@ interface RealtimeListener {
   entity: Entity
   entitySlug: string
   type: EventType
-  callback: (payload: Record<string, any>, user: string) => void
+  callback: (payload: Record<string, unknown>, user: string) => void
 }
 
 export const useRealtimeEvents = () => {
@@ -41,13 +41,13 @@ export const useRealtimeEvents = () => {
       entity: Entity,
       entitySlug: string,
       type: EventType,
-      callback: (payload: Record<string, any>, user: string) => void  // Update signature
+      callback: (payload: Record<string, unknown>, user: string) => void
     ) => {
       const listener: RealtimeListener = { entity, entitySlug, type, callback }
       listenersRef.current.push(listener)
 
       return () => {
-        listenersRef.current = listenersRef.current.filter((l) => l !== listener)
+        listenersRef.current = listenersRef.current.filter((existing) => existing !== listener)
       }
     },
     []
@@ -55,7 +55,7 @@ export const useRealtimeEvents = () => {
 
   // Emit a threadworks event
   const emit = useCallback(
-    (entity: Entity, entitySlug: string, type: EventType, payload: Record<string, any>) => {
+    (entity: Entity, entitySlug: string, type: EventType, payload: Record<string, unknown>) => {
       if (!socket) return
       socket.emit('threadworks:realtime_event', { entity, entitySlug, type, payload })
     },
@@ -70,11 +70,11 @@ export const useRealtimeEvents = () => {
       entity: Entity
       entitySlug: string
       type: EventType
-      payload: Record<string, any>
+      payload: Record<string, unknown>
       user: string
       timestamp: number
     }) => {
-      listenersRef.current.forEach((listener) => {
+      listenersRef.current.forEach((listener: RealtimeListener) => {
         if (
           listener.entity === data.entity &&
           listener.entitySlug === data.entitySlug &&

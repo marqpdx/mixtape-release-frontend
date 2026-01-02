@@ -15,8 +15,19 @@ import { useConversationStore } from "@/stores/conversationStore";
  * - New conversation notifications
  * - Message notifications (future: toasts)
  */
+type UnreadCountPayload = {
+  conversationSlug?: string;
+  count?: number;
+  countDelta?: number;
+};
+
+type NewMessagePayload = {
+  conversationSlug?: string;
+  conversationId?: string;
+};
+
 export function ChatRealtimeWire() {
-  const { setAllUnreads, incrementUnread, resetUnread, unreads } = useChatUnread();
+  const { setAllUnreads, incrementUnread, resetUnread } = useChatUnread();
   const { refetchConversations } = useConversationStore();
 
   useEffect(() => {
@@ -47,7 +58,7 @@ export function ChatRealtimeWire() {
         console.log('[ChatRealtimeWire] 📡 Setting up global chat event listeners');
 
       // Handle new conversation created
-      const handleConversationCreated = (payload: any) => {
+      const handleConversationCreated = (payload: Record<string, unknown>) => {
         console.log('[ChatRealtimeWire] 🆕 New conversation created:', payload);
         refetchConversations();
       };
@@ -59,8 +70,10 @@ export function ChatRealtimeWire() {
       };
 
       // Handle unread count updates
-      const handleUnreadCount = ({ conversationSlug, count, countDelta }: any) => {
+      const handleUnreadCount = ({ conversationSlug, count, countDelta }: UnreadCountPayload) => {
         console.log('[ChatRealtimeWire] 📊 Unread count update:', { conversationSlug, count, countDelta });
+        if (!conversationSlug) return;
+
         if (count !== undefined) {
           if (count === 0) {
             resetUnread(conversationSlug);
@@ -73,7 +86,7 @@ export function ChatRealtimeWire() {
       };
 
       // Handle new message notifications
-      const handleNewMessage = (payload: any) => {
+      const handleNewMessage = (payload: NewMessagePayload) => {
         console.log('[ChatRealtimeWire] 🔔 ========== NEW MESSAGE EVENT ==========');
         console.log('[ChatRealtimeWire] 🔔 Full payload:', JSON.stringify(payload, null, 2));
 

@@ -14,7 +14,6 @@ import {
   Fieldset,
   Dialog,
   HStack,
-  Badge,
   type RadioGroupValueChangeDetails,
 } from '@chakra-ui/react';
 import { Input } from '@/theme/recipes/input.recipe';
@@ -146,7 +145,7 @@ export default function EventCreateModal({
 
       // Add recurrence info if configured
       if (hasRecurrence && recurrenceConfig && data.start_time && data.end_time) {
-        const rrule = configToRRule(recurrenceConfig, data.start_time);
+        const rrule = configToRRule(recurrenceConfig);
         if (rrule) {
           payload.rrule = rrule;
           payload.start_time = data.start_time.toISOString();

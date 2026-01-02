@@ -21,30 +21,43 @@ import { chakra } from "@chakra-ui/react";
 const MotionBox = chakra(motion.div);
 
 export default function ContactPage() {
+  type ContactFormValues = {
+    name: string;
+    email: string;
+    message: string;
+    subject?: string;
+    honeypot?: string;
+  };
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm<ContactFormValues>();
 
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: ContactFormValues) => {
     try {
       await axiosInstance.post("/api/contact", values);
 
       setStatusMessage("✅ Your message has been sent!");
       reset();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
 
-      const data = err?.response?.data;
+      const data =
+        err && typeof err === "object" && "response" in err
+          ? (err as {
+              response?: { data?: { detail?: string; non_field_errors?: string[] } };
+            }).response?.data
+          : undefined;
       let errorMessage = "Could not send message.";
 
       if (data?.detail) {
         errorMessage = data.detail;
-      } else if (data?.non_field_errors?.length > 0) {
+      } else if (data?.non_field_errors && data.non_field_errors.length > 0) {
         errorMessage = data.non_field_errors.join(" ");
       }
 

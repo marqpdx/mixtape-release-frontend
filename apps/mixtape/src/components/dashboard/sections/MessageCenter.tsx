@@ -20,7 +20,7 @@ export default function MessageCenter() {
   const { user: identity, isLoading: identityLoading } = useAuth();
   const { users: members, isLoading: membersLoading } = useUsersExcludingCurrent(identity?.username);
 
-  const { conversations, refetchConversations } = useConversationStore();
+  const { refetchConversations } = useConversationStore();
 
   // Handle responsive mobile view
   useEffect(() => {

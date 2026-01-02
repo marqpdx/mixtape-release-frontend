@@ -8,11 +8,10 @@ import {
   Table,
   Text,
   HStack,
-  Badge,
   Spinner,
   Icon,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { Tooltip } from "@components/ui/tooltip";
@@ -24,31 +23,13 @@ export interface GroupInvitationsProps {
   slug: string;
 }
 
-const statusColorMap: Record<string, string> = {
-  pending: "orange",
-  joined: "green",
-  declined: "red",
-  expired: "gray",
-};
-
-const statusLabelMap: Record<string, string> = {
-  pending: "Pending",
-  joined: "Joined",
-  declined: "Declined",
-  expired: "Expired",
-};
-
 export default function GroupInvitations({
   slug,
 }: GroupInvitationsProps) {
   const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchInvitations();
-  }, []);
-
-  const fetchInvitations = async () => {
+  const fetchInvitations = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axiosInstance.get(
@@ -66,7 +47,11 @@ export default function GroupInvitations({
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    fetchInvitations();
+  }, [fetchInvitations]);
 
   console.log('invitations', invitations)
 

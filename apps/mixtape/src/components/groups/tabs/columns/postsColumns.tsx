@@ -3,60 +3,135 @@
 import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
 import { HStack, VStack, Text, Badge, Box } from '@chakra-ui/react'
 import { formatDistanceToNow } from 'date-fns'
-import { useColorModeValue } from '@components/ui/color-mode'
 import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
 
 const columnHelper = createColumnHelper<FlattenedPlacement>()
+
+// Create a separate component for the cell content so we can use hooks
+function PostCell({
+  placement,
+  onRowClick
+}: {
+  placement: FlattenedPlacement;
+  onRowClick?: (placement: FlattenedPlacement) => void
+}) {
+  // Now we can use hooks here since this is a proper React component
+  // However, for hover colors, we can use Chakra's _dark pseudo-prop instead
+
+  return (
+    <Box
+      cursor={onRowClick ? 'pointer' : 'default'}
+      onClick={() => onRowClick?.(placement)}
+      _hover={onRowClick ? {
+        bg: { base: 'gray.50', _dark: 'gray.700' }
+      } : {}}
+      px={3}
+      mx={-3}
+      py={2}
+      rounded="md"
+      transition="all 0.2s"
+    >
+      <VStack align="start" gap={1} flex={1}>
+        <HStack gap={2}>
+          <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
+            {placement.piece_title}
+          </Text>
+          {placement.is_pinned && (
+            <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
+          )}
+          {placement.is_announcement && (
+            <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+          )}
+        </HStack>
+
+        {placement.display?.excerpt && (
+          <Text fontSize="sm" color="gray.600" lineClamp={2}>
+            {placement.display.excerpt}
+          </Text>
+        )}
+
+        <VStack gap={1} align="start" fontSize="xs" color="gray.500">
+          <Text>
+            By {placement.author_name} • Published {formatDistanceToNow(new Date(placement.published_at), { addSuffix: true })}
+          </Text>
+          <Text>
+            Visibility: {placement.visibility === 'public' ? '🌍 Public' : '👥 Members Only'}
+          </Text>
+        </VStack>
+      </VStack>
+    </Box>
+  )
+}
 
 export const postsColumns = (onRowClick?: (placement: FlattenedPlacement) => void): ColumnDef<FlattenedPlacement>[] => [
   columnHelper.display({
     id: 'post_info',
     header: 'Posts',
-    cell: ({ row }) => {
-      const placement = row.original
-      const bgHover = useColorModeValue('gray.50', 'gray.700')
-
-      return (
-        <Box
-          cursor={onRowClick ? 'pointer' : 'default'}
-          onClick={() => onRowClick?.(placement)}
-          _hover={onRowClick ? { bg: bgHover } : {}}
-          px={3}
-          mx={-3}
-          py={2}
-          rounded="md"
-          transition="all 0.2s"
-        >
-          <VStack align="start" gap={1} flex={1}>
-            <HStack gap={2}>
-              <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
-                {placement.piece_title}
-              </Text>
-              {placement.is_pinned && (
-                <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
-              )}
-              {placement.is_announcement && (
-                <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
-              )}
-            </HStack>
-
-            {placement.display?.excerpt && (
-              <Text fontSize="sm" color="gray.600" lineClamp={2}>
-                {placement.display.excerpt}
-              </Text>
-            )}
-
-            <VStack gap={1} align="start" fontSize="xs" color="gray.500">
-              <Text>
-                By {placement.author_name} • Published {formatDistanceToNow(new Date(placement.published_at), { addSuffix: true })}
-              </Text>
-              <Text>
-                Visibility: {placement.visibility === 'public' ? '🌍 Public' : '👥 Members Only'}
-              </Text>
-            </VStack>
-          </VStack>
-        </Box>
-      )
-    },
+    cell: ({ row }) => (
+      <PostCell placement={row.original} onRowClick={onRowClick} />
+    ),
   }),
 ]
+
+// // src/components/groups/tabs/columns/postsColumns.tsx
+
+// import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
+// import { HStack, VStack, Text, Badge, Box } from '@chakra-ui/react'
+// import { formatDistanceToNow } from 'date-fns'
+// import { useColorModeValue } from '@components/ui/color-mode'
+// import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
+
+// const columnHelper = createColumnHelper<FlattenedPlacement>()
+
+// export const postsColumns = (onRowClick?: (placement: FlattenedPlacement) => void): ColumnDef<FlattenedPlacement>[] => [
+//   columnHelper.display({
+//     id: 'post_info',
+//     header: 'Posts',
+//     cell: ({ row }) => {
+//       const placement = row.original
+//       const bgHover = useColorModeValue('gray.50', 'gray.700')
+
+//       return (
+//         <Box
+//           cursor={onRowClick ? 'pointer' : 'default'}
+//           onClick={() => onRowClick?.(placement)}
+//           _hover={onRowClick ? { bg: bgHover } : {}}
+//           px={3}
+//           mx={-3}
+//           py={2}
+//           rounded="md"
+//           transition="all 0.2s"
+//         >
+//           <VStack align="start" gap={1} flex={1}>
+//             <HStack gap={2}>
+//               <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
+//                 {placement.piece_title}
+//               </Text>
+//               {placement.is_pinned && (
+//                 <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
+//               )}
+//               {placement.is_announcement && (
+//                 <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+//               )}
+//             </HStack>
+
+//             {placement.display?.excerpt && (
+//               <Text fontSize="sm" color="gray.600" lineClamp={2}>
+//                 {placement.display.excerpt}
+//               </Text>
+//             )}
+
+//             <VStack gap={1} align="start" fontSize="xs" color="gray.500">
+//               <Text>
+//                 By {placement.author_name} • Published {formatDistanceToNow(new Date(placement.published_at), { addSuffix: true })}
+//               </Text>
+//               <Text>
+//                 Visibility: {placement.visibility === 'public' ? '🌍 Public' : '👥 Members Only'}
+//               </Text>
+//             </VStack>
+//           </VStack>
+//         </Box>
+//       )
+//     },
+//   }),
+// ]

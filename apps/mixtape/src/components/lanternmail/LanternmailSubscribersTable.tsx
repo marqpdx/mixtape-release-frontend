@@ -47,9 +47,10 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
           { list_id: filterListId }
         );
         setSubscribers(response.data || []);
-      } catch (err: any) {
-        console.error("Failed to fetch subscribers:", err);
-        setError(err.message || "Failed to load subscribers");
+      } catch (error) {
+        console.error("Failed to fetch subscribers:", error);
+        const message = error instanceof Error ? error.message : "Failed to load subscribers";
+        setError(message);
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +59,7 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
     fetchSubscribers();
   }, [groupSlug, filterListId]);
 
-  const columns = useMemo<ColumnDef<GroupSubscriberAggregated, any>[]>(
+  const columns = useMemo<ColumnDef<GroupSubscriberAggregated, unknown>[]>(
     () => [
       {
         id: "avatar",

@@ -1,5 +1,5 @@
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export type NoticeboardItem = {
   id: string;
@@ -7,7 +7,7 @@ export type NoticeboardItem = {
     id: string;
     title: string;
     excerpt?: string;
-    body_json: any;
+    body_json: ProseMirrorDoc | null;
     author: string; // UUID string
     published_at: string;
     writing_kind: string;
@@ -20,6 +20,16 @@ export type NoticeboardItem = {
   created_at: string;
   updated_at: string;
   author_name: string; // This comes from the serializer
+};
+
+type ProseMirrorNode = {
+  type?: string;
+  text?: string;
+  content?: ProseMirrorNode[];
+};
+
+type ProseMirrorDoc = {
+  content?: ProseMirrorNode[];
 };
 
 export async function fetchNoticeboard(groupSlug: string, page = 1, limit = 10) {
@@ -37,9 +47,13 @@ export async function fetchNoticeboard(groupSlug: string, page = 1, limit = 10) 
       previous?: string | null;
       count: number;
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to fetch noticeboard:', error);
-    throw new Error(error?.response?.data?.message || 'Failed to load noticeboard');
+    const message =
+      error && typeof error === 'object'
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+    throw new Error(message || 'Failed to load noticeboard');
   }
 }
 
@@ -51,7 +65,7 @@ export function useNoticeboard(groupSlug: string) {
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  const load = async (reset = false, pageToLoad?: number) => {
+  const load = useCallback(async (reset = false, pageToLoad?: number) => {
     if (loading) return;
     setLoading(true);
     setError(null);
@@ -70,12 +84,13 @@ export function useNoticeboard(groupSlug: string) {
 
       setTotalCount(response.count);
       setHasMore(Boolean(response.next));
-    } catch (e: any) {
-      setError(e.message ?? "Error loading noticeboard");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error loading noticeboard";
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [groupSlug, loading, currentPage]);
 
   // Initial load
   useEffect(() => {
@@ -83,7 +98,7 @@ export function useNoticeboard(groupSlug: string) {
     setCurrentPage(1);
     setHasMore(true);
     load(true);
-  }, [groupSlug]);
+  }, [groupSlug, load]);
 
   // Load more (pagination)
   const loadMore = () => {
@@ -119,10 +134,10 @@ export function timeAgo(iso: string) {
 }
 
 // Helper function to extract text content from ProseMirror JSON
-export function extractTextFromProseMirror(bodyJson: any): string {
+export function extractTextFromProseMirror(bodyJson: ProseMirrorDoc | null): string {
   if (!bodyJson?.content) return "";
 
-  const extractText = (node: any): string => {
+  const extractText = (node: ProseMirrorNode): string => {
     if (node.type === "text") {
       return node.text || "";
     }
@@ -135,4 +150,3 @@ export function extractTextFromProseMirror(bodyJson: any): string {
   const fullText = bodyJson.content.map(extractText).join(" ").trim();
   return fullText.length > 150 ? fullText.substring(0, 150) + "..." : fullText;
 }
-

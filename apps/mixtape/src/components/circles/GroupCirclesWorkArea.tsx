@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 
-import type { Group } from "@mixtape/core/types/groupTypes";
 import GroupsList from "@/components/groups/lists/GroupsList";
 
 import { useUserGroups, useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
@@ -48,14 +47,16 @@ export function GroupCirclesWorkArea({ groupSlug }: GroupCirclesWorkAreaProps) {
     return mine.filter((g) => sponsorCircleSlugSet.has(g.slug));
   }, [myGroups, sponsorCircleSlugSet]);
 
-  // “Open circles” inside this sponsor group
+  // "Open circles" inside this sponsor group (public visibility)
   const openCircles = useMemo(() => {
-    return sponsoredCircles.filter((g: any) => g.visibility === "public" || g.visibility === "open");
+    return sponsoredCircles.filter(
+      (g) => g.visibility === "public"
+    );
   }, [sponsoredCircles]);
 
   // Optional: decide editability in list (for now: let table show edit affordance only when you canCreate)
   const canEditGroup = useMemo(() => {
-    return (_group: Group) => !!canCreate;
+    return () => !!canCreate;
   }, [canCreate]);
 
   return (

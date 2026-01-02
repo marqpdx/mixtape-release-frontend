@@ -1,21 +1,16 @@
 // src/components/dashboard/group/GroupWorkArea.tsx
 
-import React, { useMemo, useState } from "react";
-import { VStack, Text, Button, useDisclosure, Spinner, Box, Heading } from "@chakra-ui/react";
+import React, { useMemo } from "react";
+import { VStack, Text, Spinner, Box, Heading } from "@chakra-ui/react";
 
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
-// import { UserIdentity } from "@components/auth/interfaces";
 
 // Import group-specific components
 import GroupOverview from "@components/groups/GroupOverview";
 import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
-// import CourseForm from "@components/earthlab/CourseForm";
-// import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-// import { useMembers } from "@hooks/useMembers";
-import { UserIdentity } from "@mixtape/core/types/auth";
 import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
 import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
@@ -23,11 +18,11 @@ import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
 import { Group } from "@mixtape/core/types/groupTypes";
+import { WritingPiece } from "@mixtape/core/types/writingTypes";
 import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
 import { AlmanacWorkArea } from "@/components/almanac";
 import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
 import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea";
-// import { GroupCirclesLandingArea } from "@/components/groups/circles/GroupCirclesLandingArea";
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
 import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
@@ -35,7 +30,6 @@ import { useMembers } from "@mixtape/api/hooks";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
-  identity: UserIdentity;
   userRole: string;
   setActiveSection: (section: string, params?: Record<string, string>) => void;
 }
@@ -45,18 +39,8 @@ export default function GroupWorkArea({
   sectionParams = {},
   setActiveSection,
   group,
-  identity,
   userRole,
 }: GroupWorkAreaProps) {
-
-  const [selectedForumSlug, setSelectedForumSlug] = useState<string | null>(null);
-  const [editingCourseSlug, setEditingCourseSlug] = useState<string | null>(null);
-
-  // const [members, setMembers] = useState<Member[]>(group.members ?? []);
-
-  const composerDisclosure = useDisclosure();
-  const [composerPieceId, setComposerPieceId] = useState<string | null>(null);
-  const openComposer = (id: string) => { setComposerPieceId(id); composerDisclosure.onOpen(); };
 
   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
 
@@ -117,7 +101,7 @@ export default function GroupWorkArea({
 
   // Handler for when a piece is published
   // The mutation already invalidates cache, but this ensures it happens even if called from elsewhere
-  const handlePiecePublished = (piece: any) => {
+  const handlePiecePublished = (piece: WritingPiece) => {
     // Invalidate writing queries to refresh the list
     queryClient.invalidateQueries({
       queryKey: ['writing', 'placements', 'group', group.slug],
@@ -151,36 +135,6 @@ export default function GroupWorkArea({
       </WorkAreaWrapper>
     );
   }
-
-  // if (section === "activity") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupActivityDashboard
-  //         group={group}
-  //         setActiveSection={setActiveSection}
-  //         // setHighlightedMemberId={setHighlightedMemberId}
-  //         onViewAll={(sectionKey) => {
-  //           setActiveSection(sectionKey);
-  //         }}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // // Communications
-  // if (section === "threadworks-landing") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <ThreadworksWorkArea
-  //         section={section}
-  //         sectionParams={sectionParams}
-  //         setActiveSection={setActiveSection}
-  //         groupSlug={group.slug}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
 
   if (section === "threadworks-landing") {
     return (
@@ -218,47 +172,38 @@ export default function GroupWorkArea({
     );
   }
 
+  if (section === "circles-landing") {
+    return (
+      <WorkAreaWrapper>
+        <GroupCirclesWorkArea groupSlug={group.slug} />
+      </WorkAreaWrapper>
+    );
+  }
 
-if (section === "circles-landing") {
-  return (
-    <WorkAreaWrapper>
-      <GroupCirclesWorkArea groupSlug={group.slug} />
-    </WorkAreaWrapper>
-  );
-}
-
-if (section === "circle-create") {
-  return (
-    <WorkAreaWrapper>
-      <GroupCircleCreateWorkArea
-        groupSlug={group.slug}
-        setActiveSection={setActiveSection}
-      />
-    </WorkAreaWrapper>
-  );
-}
-
-
+  if (section === "circle-create") {
+    return (
+      <WorkAreaWrapper>
+        <GroupCircleCreateWorkArea
+          groupSlug={group.slug}
+          setActiveSection={setActiveSection}
+        />
+      </WorkAreaWrapper>
+    );
+  }
 
   // Members sections
   if (section === "members-roles") {
     return (
       <WorkAreaWrapper>
-        {/* <GroupMembersAndRoles
-          group={group}
-          userRole={userRole}
-        /> */}
-
         <GroupMemberList
           group={group}
           members={stableMembers}
           isLoading={groupMembersLoading}
           error={error?.message}
           showPrivateInfo={userRole === "admin"}
-          onMemberClick={(membership) => console.log("Member clicked:", membership)}
-          canEditMember={(membership) => userRole === "admin"}
+          onMemberClick={() => {}}
+          canEditMember={() => userRole === "admin"}
         />
-
       </WorkAreaWrapper>
     );
   }
@@ -293,8 +238,6 @@ if (section === "circle-create") {
     );
   }
 
-
-
   // Writing sections
   if (section === "writing") {
     return (
@@ -304,7 +247,7 @@ if (section === "circle-create") {
           groupId={group.id}
           groupTitle={group.title}
           setActiveSection={setActiveSection}
-          onPublished={(piece) => {
+          onPublished={() => {
             // Handle the published piece
           }}
         />
@@ -331,96 +274,7 @@ if (section === "circle-create") {
     );
   }
 
-  // Dispatch sections (parallel to Writing)
-  // if (section === "dispatches") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupDispatchWrapper
-  //         groupSlug={group.slug}
-  //         groupId={group.id}
-  //         groupTitle={group.title}
-  //         setActiveSection={setActiveSection}
-  //         onPublished={(doc) => {
-  //           // Handle published document if needed
-  //           console.log("Document published:", doc);
-  //         }}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // if (section === "dispatch") {
-  //   const documentSlug = sectionParams?.document;
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <DispatchEditorWrapper
-  //         sponsor={{
-  //           type: 'group',
-  //           id: group.id,
-  //           slug: group.slug,
-  //           displayName: group.title
-  //         }}
-  //         documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
-  //         onPublished={(doc) => {
-  //           console.log("Document updated:", doc);
-  //         }}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // // Events
-  // if (section === "events-landing") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <Text>dkdkd</Text>
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // // Events 2
-  // if (section === "events-2") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupEventsWorkArea groupSlug={group.slug} />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // if (section === "create-event") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <GroupEventCreateWorkArea groupSlug={group.slug} />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // // EarthLab sections
-  // // Update the CourseList import and usage in GroupWorkArea.tsx
-  // if (section === "earthlab") {
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <EarthLabWorkArea
-  //         groupSlug={group.slug}
-  //         setActiveSection={setActiveSection}
-  //       />
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // if (section === "course-detail") {
-  //   const courseIdToEdit = sectionParams?.courseId;
-  //   return (
-  //     <CourseDetailsWorkArea
-  //       groupSlug={group.slug}
-  //       courseIdToEdit={courseIdToEdit}
-  //       onBack={() => setActiveSection("earthlab")}
-  //     />
-  //   );
-  // }
-
   // Settings sections
-
   if (section === "edit-group") {
     return (
       <WorkAreaWrapper>
@@ -434,7 +288,6 @@ if (section === "circle-create") {
     );
   }
 
-
   if (section === "lanternmail-landing") {
     return (
       <WorkAreaWrapper>
@@ -446,7 +299,6 @@ if (section === "circle-create") {
   if (section === "lanternmail-create") {
     return (
       <WorkAreaWrapper>
-        {/* <LanternmailWorkArea group={group} /> */}
         <LanternmailCreateListWorkArea group={group} />
       </WorkAreaWrapper>
     );
@@ -462,3 +314,791 @@ if (section === "circle-create") {
     </WorkAreaWrapper>
   );
 }
+
+// // src/components/dashboard/group/GroupWorkArea.tsx
+
+// import React, { useMemo } from "react";
+// import { VStack, Text, Spinner, Box, Heading } from "@chakra-ui/react";
+
+// import { WorkAreaProps } from "@components/dashboard/shared/types";
+// import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
+
+// // Import group-specific components
+// import GroupOverview from "@components/groups/GroupOverview";
+// import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
+// import { useRouter } from "next/navigation";
+// import { useQueryClient } from "@tanstack/react-query";
+// import { UserIdentity } from "@mixtape/core/types/auth";
+// import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
+// import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
+// import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
+// import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
+// import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
+// import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
+// import { Group } from "@mixtape/core/types/groupTypes";
+// import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
+// import { AlmanacWorkArea } from "@/components/almanac";
+// import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
+// import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea";
+// import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
+// import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
+// import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
+// import { useMembers } from "@mixtape/api/hooks";
+
+// interface GroupWorkAreaProps extends WorkAreaProps {
+//   group: Group;
+//   identity: UserIdentity;
+//   userRole: string;
+//   setActiveSection: (section: string, params?: Record<string, string>) => void;
+// }
+
+// interface PublishedPiece {
+//   slug: string;
+//   [key: string]: unknown;
+// }
+
+// export default function GroupWorkArea({
+//   section,
+//   sectionParams = {},
+//   setActiveSection,
+//   group,
+//   userRole,
+// }: GroupWorkAreaProps) {
+
+//   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
+
+//   // For circles, fetch parent group members for invitation restrictions
+//   const isCircle = group.group_type === 'circle';
+//   const parentGroupSlug = group.sponsor_group?.slug;
+//   const { members: parentMembers } = useMembers(isCircle && parentGroupSlug ? parentGroupSlug : null);
+
+//   const stableMembers = useMemo(() => groupMembers || [], [groupMembers]);
+
+//   // For circles, use parent members as the invitation pool; otherwise use current group members
+//   const invitationPool = useMemo(() => {
+//     if (isCircle && parentMembers) {
+//       return parentMembers;
+//     }
+//     return stableMembers;
+//   }, [isCircle, parentMembers, stableMembers]);
+
+//   const router = useRouter();
+//   const queryClient = useQueryClient();
+
+//   // Check section permissions
+//   const { canAccessSection, isLoading: permissionsLoading, isAdmin, isSteward } = useGroupPermissions(group.slug);
+//   const hasAccess = canAccessSection(section);
+
+//   // Show loading state while checking permissions
+//   if (permissionsLoading) {
+//     return (
+//       <WorkAreaWrapper>
+//         <Box textAlign="center" py={10}>
+//           <Spinner size="lg" />
+//           <Text mt={4} color="gray.500">
+//             Loading permissions...
+//           </Text>
+//         </Box>
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Block access if user doesn't have permission
+//   if (!hasAccess) {
+//     return (
+//       <WorkAreaWrapper>
+//         <Box textAlign="center" py={10}>
+//           <Heading size="lg" mb={4} color="red.500">
+//             Access Denied
+//           </Heading>
+//           <Text color="gray.600" mb={6}>
+//             You don't have permission to access this section.
+//           </Text>
+//           <Text fontSize="sm" color="gray.500">
+//             {isAdmin ? 'Admins have full access.' : isSteward ? 'You need specific permissions to access this area.' : 'You must be a steward to access group management.'}
+//           </Text>
+//         </Box>
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Handler for when a piece is published
+//   // The mutation already invalidates cache, but this ensures it happens even if called from elsewhere
+//   const handlePiecePublished = (piece: PublishedPiece) => {
+//     // Invalidate writing queries to refresh the list
+//     queryClient.invalidateQueries({
+//       queryKey: ['writing', 'placements', 'group', group.slug],
+//     });
+//     queryClient.invalidateQueries({
+//       queryKey: ['writing', 'drafts', 'group', group.slug],
+//     });
+
+//     // Navigate to the published piece
+//     router.push(`/groups/${group.slug}/writing/${piece.slug}`);
+//   };
+
+
+//   // Dashboard sections
+//   if (section === "admin-dashboard" || section === "dashboard") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupOverview
+//           group={group}
+//           userRole={userRole}
+//           onNavigate={setActiveSection}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "stewards-permissions") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupPermissionsWorkArea groupSlug={group.slug} groupId={group.id} groupTitle={group.title} />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "threadworks-landing") {
+//     return (
+//       <WorkAreaWrapper>
+//         <ThreadworksWorkArea
+//           section={section}
+//           sectionParams={sectionParams}
+//           setActiveSection={setActiveSection}
+//           groupSlug={group.slug}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Almanac (Events & Gatherings)
+//   if (section === "almanac-landing") {
+//     return (
+//       <WorkAreaWrapper>
+//         <AlmanacWorkArea
+//           section={section}
+//           sectionParams={sectionParams}
+//           setActiveSection={setActiveSection}
+//           groupSlug={group.slug}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Grist Mill (Content Creation)
+//   if (section === "mill") {
+//     return (
+//       <WorkAreaWrapper>
+//         <MillWorkArea sponsor={{ type: 'group', slug: group.slug }} />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "circles-landing") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupCirclesWorkArea groupSlug={group.slug} />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "circle-create") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupCircleCreateWorkArea
+//           groupSlug={group.slug}
+//           setActiveSection={setActiveSection}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Members sections
+//   if (section === "members-roles") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupMemberList
+//           group={group}
+//           members={stableMembers}
+//           isLoading={groupMembersLoading}
+//           error={error?.message}
+//           showPrivateInfo={userRole === "admin"}
+//           onMemberClick={() => {}}
+//           canEditMember={() => userRole === "admin"}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Member Permissions (Admin only)
+//   if (section === "members-permissions") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupPermissionsWorkArea
+//           groupSlug={group.slug}
+//           groupId={group.id}
+//           groupTitle={group.title}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "invitations") {
+//     // For circles: restrict invitations to parent group members only
+//     // For communities: use all group members (could be expanded to site-wide in future)
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupInviteWorkArea
+//           groupSlug={group.slug}
+//           onMembersRefetch={refetch}
+//           groupMembers={invitationPool}
+//           allSiteMembers={[]}
+//           siteMembersLoading={false}
+//           parentGroupName={isCircle && group.sponsor_group ? group.sponsor_group.title : undefined}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Writing sections
+//   if (section === "writing") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupWritingWrapper
+//           groupSlug={group.slug}
+//           groupId={group.id}
+//           groupTitle={group.title}
+//           setActiveSection={setActiveSection}
+//           onPublished={() => {
+//             // Handle the published piece
+//           }}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "write") {
+//     const pieceId = sectionParams?.piece;
+//     return (
+//       <WorkAreaWrapper>
+//         <WritingEditorWrapper
+//           sponsor={{
+//             type: 'group',
+//             id: group.id,
+//             slug: group.slug,
+//             displayName: group.title
+//           }}
+//           writingKind="post"
+//           pieceId={pieceId} // If undefined, creates new; if present, loads existing
+//           onPublished={handlePiecePublished}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Settings sections
+//   if (section === "edit-group") {
+//     return (
+//       <WorkAreaWrapper>
+//         <GroupDetailWrapper
+//           slug={group.slug}
+//           onSuccess={() => {
+//             router.push(`/groups/${group.slug}`);
+//           }}
+//         />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "lanternmail-landing") {
+//     return (
+//       <WorkAreaWrapper>
+//         <LanternmailWorkArea group={group} />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   if (section === "lanternmail-create") {
+//     return (
+//       <WorkAreaWrapper>
+//         <LanternmailCreateListWorkArea group={group} />
+//       </WorkAreaWrapper>
+//     );
+//   }
+
+//   // Default fallback
+//   return (
+//     <WorkAreaWrapper>
+//       <VStack align="stretch" gap={4}>
+//         <Text fontSize="xl" fontWeight="bold">Section: {section}</Text>
+//         <Text>This group section is under under development.</Text>
+//       </VStack>
+//     </WorkAreaWrapper>
+//   );
+// }
+
+// // // src/components/dashboard/group/GroupWorkArea.tsx
+
+// // import React, { useMemo, useState } from "react";
+// // import { VStack, Text, Button, useDisclosure, Spinner, Box, Heading } from "@chakra-ui/react";
+
+// // import { WorkAreaProps } from "@components/dashboard/shared/types";
+// // import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
+// // // import { UserIdentity } from "@components/auth/interfaces";
+
+// // // Import group-specific components
+// // import GroupOverview from "@components/groups/GroupOverview";
+// // import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
+// // // import CourseForm from "@components/earthlab/CourseForm";
+// // // import GroupInviteWorkArea from "@components/groups/GroupInviteWorkArea";
+// // import { useRouter } from "next/navigation";
+// // import { useQueryClient } from "@tanstack/react-query";
+// // // import { useMembers } from "@hooks/useMembers";
+// // import { UserIdentity } from "@mixtape/core/types/auth";
+// // import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
+// // import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
+// // import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
+// // import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
+// // import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
+// // import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
+// // import { Group } from "@mixtape/core/types/groupTypes";
+// // import ThreadworksWorkArea from "@/components/threadworks/ThreadworksWorkArea";
+// // import { AlmanacWorkArea } from "@/components/almanac";
+// // import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
+// // import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea";
+// // // import { GroupCirclesLandingArea } from "@/components/groups/circles/GroupCirclesLandingArea";
+// // import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
+// // import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
+// // import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
+// // import { useMembers } from "@mixtape/api/hooks";
+
+// // interface GroupWorkAreaProps extends WorkAreaProps {
+// //   group: Group;
+// //   identity: UserIdentity;
+// //   userRole: string;
+// //   setActiveSection: (section: string, params?: Record<string, string>) => void;
+// // }
+
+// // export default function GroupWorkArea({
+// //   section,
+// //   sectionParams = {},
+// //   setActiveSection,
+// //   group,
+// //   identity,
+// //   userRole,
+// // }: GroupWorkAreaProps) {
+
+// //   const [selectedForumSlug, setSelectedForumSlug] = useState<string | null>(null);
+// //   const [editingCourseSlug, setEditingCourseSlug] = useState<string | null>(null);
+
+// //   // const [members, setMembers] = useState<Member[]>(group.members ?? []);
+
+// //   const composerDisclosure = useDisclosure();
+// //   const [composerPieceId, setComposerPieceId] = useState<string | null>(null);
+// //   const openComposer = (id: string) => { setComposerPieceId(id); composerDisclosure.onOpen(); };
+
+// //   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
+
+// //   // For circles, fetch parent group members for invitation restrictions
+// //   const isCircle = group.group_type === 'circle';
+// //   const parentGroupSlug = group.sponsor_group?.slug;
+// //   const { members: parentMembers } = useMembers(isCircle && parentGroupSlug ? parentGroupSlug : null);
+
+// //   const stableMembers = useMemo(() => groupMembers || [], [groupMembers]);
+
+// //   // For circles, use parent members as the invitation pool; otherwise use current group members
+// //   const invitationPool = useMemo(() => {
+// //     if (isCircle && parentMembers) {
+// //       return parentMembers;
+// //     }
+// //     return stableMembers;
+// //   }, [isCircle, parentMembers, stableMembers]);
+
+// //   const router = useRouter();
+// //   const queryClient = useQueryClient();
+
+// //   // Check section permissions
+// //   const { canAccessSection, isLoading: permissionsLoading, isAdmin, isSteward } = useGroupPermissions(group.slug);
+// //   const hasAccess = canAccessSection(section);
+
+// //   // Show loading state while checking permissions
+// //   if (permissionsLoading) {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <Box textAlign="center" py={10}>
+// //           <Spinner size="lg" />
+// //           <Text mt={4} color="gray.500">
+// //             Loading permissions...
+// //           </Text>
+// //         </Box>
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Block access if user doesn't have permission
+// //   if (!hasAccess) {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <Box textAlign="center" py={10}>
+// //           <Heading size="lg" mb={4} color="red.500">
+// //             Access Denied
+// //           </Heading>
+// //           <Text color="gray.600" mb={6}>
+// //             You don't have permission to access this section.
+// //           </Text>
+// //           <Text fontSize="sm" color="gray.500">
+// //             {isAdmin ? 'Admins have full access.' : isSteward ? 'You need specific permissions to access this area.' : 'You must be a steward to access group management.'}
+// //           </Text>
+// //         </Box>
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Handler for when a piece is published
+// //   // The mutation already invalidates cache, but this ensures it happens even if called from elsewhere
+// //   const handlePiecePublished = (piece: any) => {
+// //     // Invalidate writing queries to refresh the list
+// //     queryClient.invalidateQueries({
+// //       queryKey: ['writing', 'placements', 'group', group.slug],
+// //     });
+// //     queryClient.invalidateQueries({
+// //       queryKey: ['writing', 'drafts', 'group', group.slug],
+// //     });
+
+// //     // Navigate to the published piece
+// //     router.push(`/groups/${group.slug}/writing/${piece.slug}`);
+// //   };
+
+
+// //   // Dashboard sections
+// //   if (section === "admin-dashboard" || section === "dashboard") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupOverview
+// //           group={group}
+// //           userRole={userRole}
+// //           onNavigate={setActiveSection}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   if (section === "stewards-permissions") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupPermissionsWorkArea groupSlug={group.slug} groupId={group.id} groupTitle={group.title} />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // if (section === "activity") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <GroupActivityDashboard
+// //   //         group={group}
+// //   //         setActiveSection={setActiveSection}
+// //   //         // setHighlightedMemberId={setHighlightedMemberId}
+// //   //         onViewAll={(sectionKey) => {
+// //   //           setActiveSection(sectionKey);
+// //   //         }}
+// //   //       />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // // Communications
+// //   // if (section === "threadworks-landing") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <ThreadworksWorkArea
+// //   //         section={section}
+// //   //         sectionParams={sectionParams}
+// //   //         setActiveSection={setActiveSection}
+// //   //         groupSlug={group.slug}
+// //   //       />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+
+// //   if (section === "threadworks-landing") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <ThreadworksWorkArea
+// //           section={section}
+// //           sectionParams={sectionParams}
+// //           setActiveSection={setActiveSection}
+// //           groupSlug={group.slug}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Almanac (Events & Gatherings)
+// //   if (section === "almanac-landing") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <AlmanacWorkArea
+// //           section={section}
+// //           sectionParams={sectionParams}
+// //           setActiveSection={setActiveSection}
+// //           groupSlug={group.slug}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Grist Mill (Content Creation)
+// //   if (section === "mill") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <MillWorkArea sponsor={{ type: 'group', slug: group.slug }} />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+
+// // if (section === "circles-landing") {
+// //   return (
+// //     <WorkAreaWrapper>
+// //       <GroupCirclesWorkArea groupSlug={group.slug} />
+// //     </WorkAreaWrapper>
+// //   );
+// // }
+
+// // if (section === "circle-create") {
+// //   return (
+// //     <WorkAreaWrapper>
+// //       <GroupCircleCreateWorkArea
+// //         groupSlug={group.slug}
+// //         setActiveSection={setActiveSection}
+// //       />
+// //     </WorkAreaWrapper>
+// //   );
+// // }
+
+
+
+// //   // Members sections
+// //   if (section === "members-roles") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         {/* <GroupMembersAndRoles
+// //           group={group}
+// //           userRole={userRole}
+// //         /> */}
+
+// //         <GroupMemberList
+// //           group={group}
+// //           members={stableMembers}
+// //           isLoading={groupMembersLoading}
+// //           error={error?.message}
+// //           showPrivateInfo={userRole === "admin"}
+// //           onMemberClick={(membership) => console.log("Member clicked:", membership)}
+// //           canEditMember={(membership) => userRole === "admin"}
+// //         />
+
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Member Permissions (Admin only)
+// //   if (section === "members-permissions") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupPermissionsWorkArea
+// //           groupSlug={group.slug}
+// //           groupId={group.id}
+// //           groupTitle={group.title}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   if (section === "invitations") {
+// //     // For circles: restrict invitations to parent group members only
+// //     // For communities: use all group members (could be expanded to site-wide in future)
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupInviteWorkArea
+// //           groupSlug={group.slug}
+// //           onMembersRefetch={refetch}
+// //           groupMembers={invitationPool}
+// //           allSiteMembers={[]}
+// //           siteMembersLoading={false}
+// //           parentGroupName={isCircle && group.sponsor_group ? group.sponsor_group.title : undefined}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+
+
+// //   // Writing sections
+// //   if (section === "writing") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupWritingWrapper
+// //           groupSlug={group.slug}
+// //           groupId={group.id}
+// //           groupTitle={group.title}
+// //           setActiveSection={setActiveSection}
+// //           onPublished={(piece) => {
+// //             // Handle the published piece
+// //           }}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   if (section === "write") {
+// //     const pieceId = sectionParams?.piece;
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <WritingEditorWrapper
+// //           sponsor={{
+// //             type: 'group',
+// //             id: group.id,
+// //             slug: group.slug,
+// //             displayName: group.title
+// //           }}
+// //           writingKind="post"
+// //           pieceId={pieceId} // If undefined, creates new; if present, loads existing
+// //           onPublished={handlePiecePublished}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Dispatch sections (parallel to Writing)
+// //   // if (section === "dispatches") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <GroupDispatchWrapper
+// //   //         groupSlug={group.slug}
+// //   //         groupId={group.id}
+// //   //         groupTitle={group.title}
+// //   //         setActiveSection={setActiveSection}
+// //   //         onPublished={(doc) => {
+// //   //           // Handle published document if needed
+// //   //           console.log("Document published:", doc);
+// //   //         }}
+// //   //       />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // if (section === "dispatch") {
+// //   //   const documentSlug = sectionParams?.document;
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <DispatchEditorWrapper
+// //   //         sponsor={{
+// //   //           type: 'group',
+// //   //           id: group.id,
+// //   //           slug: group.slug,
+// //   //           displayName: group.title
+// //   //         }}
+// //   //         documentSlug={documentSlug} // If undefined, creates new; if present, loads existing
+// //   //         onPublished={(doc) => {
+// //   //           console.log("Document updated:", doc);
+// //   //         }}
+// //   //       />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // // Events
+// //   // if (section === "events-landing") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <Text>dkdkd</Text>
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // // Events 2
+// //   // if (section === "events-2") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <GroupEventsWorkArea groupSlug={group.slug} />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // if (section === "create-event") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <GroupEventCreateWorkArea groupSlug={group.slug} />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // // EarthLab sections
+// //   // // Update the CourseList import and usage in GroupWorkArea.tsx
+// //   // if (section === "earthlab") {
+// //   //   return (
+// //   //     <WorkAreaWrapper>
+// //   //       <EarthLabWorkArea
+// //   //         groupSlug={group.slug}
+// //   //         setActiveSection={setActiveSection}
+// //   //       />
+// //   //     </WorkAreaWrapper>
+// //   //   );
+// //   // }
+
+// //   // if (section === "course-detail") {
+// //   //   const courseIdToEdit = sectionParams?.courseId;
+// //   //   return (
+// //   //     <CourseDetailsWorkArea
+// //   //       groupSlug={group.slug}
+// //   //       courseIdToEdit={courseIdToEdit}
+// //   //       onBack={() => setActiveSection("earthlab")}
+// //   //     />
+// //   //   );
+// //   // }
+
+// //   // Settings sections
+
+// //   if (section === "edit-group") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <GroupDetailWrapper
+// //           slug={group.slug}
+// //           onSuccess={() => {
+// //             router.push(`/groups/${group.slug}`);
+// //           }}
+// //         />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+
+// //   if (section === "lanternmail-landing") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         <LanternmailWorkArea group={group} />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   if (section === "lanternmail-create") {
+// //     return (
+// //       <WorkAreaWrapper>
+// //         {/* <LanternmailWorkArea group={group} /> */}
+// //         <LanternmailCreateListWorkArea group={group} />
+// //       </WorkAreaWrapper>
+// //     );
+// //   }
+
+// //   // Default fallback
+// //   return (
+// //     <WorkAreaWrapper>
+// //       <VStack align="stretch" gap={4}>
+// //         <Text fontSize="xl" fontWeight="bold">Section: {section}</Text>
+// //         <Text>This group section is under under development.</Text>
+// //       </VStack>
+// //     </WorkAreaWrapper>
+// //   );
+// // }

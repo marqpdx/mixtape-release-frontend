@@ -15,10 +15,7 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Debug: Log all cookies
-  const allCookies = request.cookies.getAll();
   // console.log('[Middleware] Path:', pathname);
-  // console.log('[Middleware] All cookies:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value })));
 
   // Check for refresh token cookie (try both possible names)
   const refreshToken = request.cookies.get('refresh_token') ||
@@ -42,9 +39,6 @@ export function middleware(request: NextRequest) {
                           pathname.startsWith('/admin') ||
                           pathname.startsWith('/profile');
 
-  const isPublicPage = pathname === '/' ||
-                       pathname.startsWith('/about') ||
-                       pathname.startsWith('/contact');
 
   // Redirect unauthenticated users trying to access protected pages
   if (isProtectedPage && !isAuthenticated) {

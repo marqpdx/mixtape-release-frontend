@@ -178,6 +178,7 @@ export default function StackroomSearchPage() {
                 <FileUpload
                   libraryId={selectedLibraryId}
                   onUploadComplete={(fileId) => {
+                    void fileId;
                     toaster.create({
                       title: 'Upload complete',
                       description: 'File uploaded successfully and is being processed',

@@ -23,9 +23,10 @@ import { FilesTab } from "./FilesTab";
 import { NoticeboardTab } from "./NoticeboardTab";  // ← NEW
 import { LandingTab } from "./LandingTab";
 import { JoiningTab } from "./JoiningTab";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
 interface GroupTabsProps {
-  group: any;
+  group: Group;
   viewingAsMember: boolean;
   isMember: boolean;
   onJoinGroup?: () => void;
@@ -63,7 +64,7 @@ export function GroupTabs({
       const saved = localStorage.getItem(storageKey);
       setActiveTab(saved || tabsToShow[0].key);
     }
-  }, [storageKey, viewingAsMember]);
+  }, [storageKey, viewingAsMember, tabsToShow]);
 
   if (!activeTab) return null;
 

@@ -19,6 +19,7 @@
 import { renderHook } from '@testing-library/react';
 import { usePermissions } from '../usePermissions';
 import { useAuth } from '../AuthContext';
+import type { UserIdentity } from '@mixtape/core/types/auth';
 
 // Mock the useAuth hook
 jest.mock('../AuthContext', () => ({
@@ -26,6 +27,34 @@ jest.mock('../AuthContext', () => ({
 }));
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+type AuthState = ReturnType<typeof useAuth>;
+
+const makeUser = (overrides: Partial<UserIdentity>): UserIdentity => ({
+  id: '1',
+  username: 'testuser',
+  email: 'test@example.com',
+  is_active: true,
+  is_staff: false,
+  is_superuser: false,
+  date_joined: new Date().toISOString(),
+  roles: [],
+  profile: null,
+  ...overrides,
+});
+
+const makeAuth = (overrides: Partial<AuthState>): AuthState => ({
+  user: null,
+  isLoading: false,
+  isAuthenticated: Boolean(overrides.user),
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
+  refreshPermissions: async () => {},
+  can: () => false,
+  canInGroup: () => false,
+  ...overrides,
+});
 
 describe('usePermissions', () => {
   beforeEach(() => {
@@ -36,20 +65,20 @@ describe('usePermissions', () => {
   describe('can() method', () => {
     it('should return true when user has permission globally', () => {
       // Mock user with permissions
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['create_course', 'edit_course', 'view_content'],
-            effective: ['create_course', 'edit_course', 'view_content'],
-            groups: {},
-          },
-        },
-        can: (permission: string) => ['create_course', 'edit_course', 'view_content'].includes(permission),
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['create_course', 'edit_course', 'view_content'],
+              effective: ['create_course', 'edit_course', 'view_content'],
+              groups: {},
+            },
+          }),
+          can: (permission: string) =>
+            ['create_course', 'edit_course', 'view_content'].includes(permission),
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -59,20 +88,19 @@ describe('usePermissions', () => {
     });
 
     it('should return false when user does not have permission', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['view_content'],
-            effective: ['view_content'],
-            groups: {},
-          },
-        },
-        can: (permission: string) => permission === 'view_content',
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['view_content'],
+              effective: ['view_content'],
+              groups: {},
+            },
+          }),
+          can: (permission: string) => permission === 'view_content',
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -81,11 +109,13 @@ describe('usePermissions', () => {
     });
 
     it('should return false when user is not authenticated', () => {
-      mockUseAuth.mockReturnValue({
-        user: null,
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: null,
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -94,16 +124,13 @@ describe('usePermissions', () => {
     });
 
     it('should return false when user has no permissions data', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          // No permissions field
-        },
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({}),
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -113,35 +140,34 @@ describe('usePermissions', () => {
 
   describe('canInGroup() method', () => {
     it('should return true when user has permission in specific group', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['create_course', 'view_content'],
-            effective: ['create_course', 'view_content'],
-            groups: {
-              'education-hub': {
-                roles: ['admin'],
-                permissions: ['create_course', 'edit_course', 'manage_members'],
-              },
-              'community-center': {
-                roles: ['member'],
-                permissions: ['view_content'],
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['create_course', 'view_content'],
+              effective: ['create_course', 'view_content'],
+              groups: {
+                'education-hub': {
+                  roles: ['admin'],
+                  permissions: ['create_course', 'edit_course', 'manage_members'],
+                },
+                'community-center': {
+                  roles: ['member'],
+                  permissions: ['view_content'],
+                },
               },
             },
+          }),
+          can: () => true,
+          canInGroup: (permission: string, groupSlug: string) => {
+            const groups: Record<string, string[]> = {
+              'education-hub': ['create_course', 'edit_course', 'manage_members'],
+              'community-center': ['view_content'],
+            };
+            return groups[groupSlug]?.includes(permission) || false;
           },
-        },
-        can: () => true,
-        canInGroup: (permission: string, groupSlug: string) => {
-          const groups: any = {
-            'education-hub': ['create_course', 'edit_course', 'manage_members'],
-            'community-center': ['view_content'],
-          };
-          return groups[groupSlug]?.includes(permission) || false;
-        },
-      } as any);
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -155,30 +181,29 @@ describe('usePermissions', () => {
     });
 
     it('should return false when user lacks permission in specific group', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['view_content'],
-            effective: ['view_content'],
-            groups: {
-              'community-center': {
-                roles: ['member'],
-                permissions: ['view_content'],
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['view_content'],
+              effective: ['view_content'],
+              groups: {
+                'community-center': {
+                  roles: ['member'],
+                  permissions: ['view_content'],
+                },
               },
             },
+          }),
+          can: () => false,
+          canInGroup: (permission: string, groupSlug: string) => {
+            if (groupSlug === 'community-center' && permission === 'view_content') {
+              return true;
+            }
+            return false;
           },
-        },
-        can: () => false,
-        canInGroup: (permission: string, groupSlug: string) => {
-          if (groupSlug === 'community-center' && permission === 'view_content') {
-            return true;
-          }
-          return false;
-        },
-      } as any);
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -188,20 +213,19 @@ describe('usePermissions', () => {
     });
 
     it('should return false when user has no membership in group', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: [],
-            effective: [],
-            groups: {},
-          },
-        },
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: [],
+              effective: [],
+              groups: {},
+            },
+          }),
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -209,28 +233,27 @@ describe('usePermissions', () => {
     });
 
     it('should return false when group permissions are undefined', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['view_content'],
-            effective: ['view_content'],
-            groups: {
-              'community-center': {
-                roles: ['member'],
-                permissions: ['view_content'],
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['view_content'],
+              effective: ['view_content'],
+              groups: {
+                'community-center': {
+                  roles: ['member'],
+                  permissions: ['view_content'],
+                },
               },
             },
+          }),
+          can: () => false,
+          canInGroup: (permission: string, groupSlug: string) => {
+            // education-hub doesn't exist
+            return groupSlug === 'community-center' && permission === 'view_content';
           },
-        },
-        can: () => false,
-        canInGroup: (permission: string, groupSlug: string) => {
-          // education-hub doesn't exist
-          return groupSlug === 'community-center' && permission === 'view_content';
-        },
-      } as any);
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -241,17 +264,18 @@ describe('usePermissions', () => {
 
   describe('Legacy role check methods', () => {
     it('should correctly identify admin role', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'admin',
-          email: 'admin@example.com',
-          is_staff: true,
-          is_superuser: true,
-        },
-        can: () => true,
-        canInGroup: () => true,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            username: 'admin',
+            email: 'admin@example.com',
+            is_staff: true,
+            is_superuser: true,
+          }),
+          can: () => true,
+          canInGroup: () => true,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -259,17 +283,18 @@ describe('usePermissions', () => {
     });
 
     it('should correctly identify steward role', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'steward',
-          email: 'steward@example.com',
-          is_staff: true,
-          is_superuser: false,
-        },
-        can: () => true,
-        canInGroup: () => true,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            username: 'steward',
+            email: 'steward@example.com',
+            is_staff: true,
+            is_superuser: false,
+          }),
+          can: () => true,
+          canInGroup: () => true,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -277,17 +302,18 @@ describe('usePermissions', () => {
     });
 
     it('should correctly identify member role', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'member',
-          email: 'member@example.com',
-          is_staff: false,
-          is_superuser: false,
-        },
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            username: 'member',
+            email: 'member@example.com',
+            is_staff: false,
+            is_superuser: false,
+          }),
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -297,42 +323,40 @@ describe('usePermissions', () => {
 
   describe('Permissions with multiple groups', () => {
     it('should handle permissions across multiple groups correctly', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: ['create_course', 'edit_course', 'view_content', 'manage_members'],
-            effective: ['create_course', 'edit_course', 'view_content', 'manage_members'],
-            groups: {
-              'education-hub': {
-                roles: ['admin'],
-                permissions: ['create_course', 'edit_course', 'manage_members', 'view_content'],
-              },
-              'community-center': {
-                roles: ['coordinator'],
-                permissions: ['create_course', 'edit_course', 'view_content'],
-              },
-              'test-group': {
-                roles: ['member'],
-                permissions: ['view_content'],
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: ['create_course', 'edit_course', 'view_content', 'manage_members'],
+              effective: ['create_course', 'edit_course', 'view_content', 'manage_members'],
+              groups: {
+                'education-hub': {
+                  roles: ['admin'],
+                  permissions: ['create_course', 'edit_course', 'manage_members', 'view_content'],
+                },
+                'community-center': {
+                  roles: ['coordinator'],
+                  permissions: ['create_course', 'edit_course', 'view_content'],
+                },
+                'test-group': {
+                  roles: ['member'],
+                  permissions: ['view_content'],
+                },
               },
             },
+          }),
+          can: (permission: string) =>
+            ['create_course', 'edit_course', 'view_content', 'manage_members'].includes(permission),
+          canInGroup: (permission: string, groupSlug: string) => {
+            const groups: Record<string, string[]> = {
+              'education-hub': ['create_course', 'edit_course', 'manage_members', 'view_content'],
+              'community-center': ['create_course', 'edit_course', 'view_content'],
+              'test-group': ['view_content'],
+            };
+            return groups[groupSlug]?.includes(permission) || false;
           },
-        },
-        can: (permission: string) => {
-          return ['create_course', 'edit_course', 'view_content', 'manage_members'].includes(permission);
-        },
-        canInGroup: (permission: string, groupSlug: string) => {
-          const groups: any = {
-            'education-hub': ['create_course', 'edit_course', 'manage_members', 'view_content'],
-            'community-center': ['create_course', 'edit_course', 'view_content'],
-            'test-group': ['view_content'],
-          };
-          return groups[groupSlug]?.includes(permission) || false;
-        },
-      } as any);
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -354,20 +378,19 @@ describe('usePermissions', () => {
 
   describe('Edge cases', () => {
     it('should handle empty permission strings', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: {
-            granted: [],
-            effective: [],
-            groups: {},
-          },
-        },
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: {
+              granted: [],
+              effective: [],
+              groups: {},
+            },
+          }),
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 
@@ -376,16 +399,15 @@ describe('usePermissions', () => {
     });
 
     it('should handle malformed permission data gracefully', () => {
-      mockUseAuth.mockReturnValue({
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com',
-          permissions: null as any, // Malformed
-        },
-        can: () => false,
-        canInGroup: () => false,
-      } as any);
+      mockUseAuth.mockReturnValue(
+        makeAuth({
+          user: makeUser({
+            permissions: null as unknown as UserIdentity['permissions'], // Malformed
+          }),
+          can: () => false,
+          canInGroup: () => false,
+        })
+      );
 
       const { result } = renderHook(() => usePermissions());
 

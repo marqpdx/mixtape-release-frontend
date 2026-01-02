@@ -32,7 +32,7 @@ interface ConversationStore {
   setIsTyping: (typing: boolean) => void;
 }
 
-export const useConversationStore = create<ConversationStore>((set, get) => ({
+export const useConversationStore = create<ConversationStore>((set) => ({
   selectedConversationSlug: null,
 
   setSelectedConversation: (slug) =>

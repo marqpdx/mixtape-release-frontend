@@ -1,7 +1,7 @@
 // src/components/gristmill/MillWorkArea.tsx
 'use client';
 
-import { Box, Text } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import { Mill } from './Mill';
 import type { SponsorContext } from './types';

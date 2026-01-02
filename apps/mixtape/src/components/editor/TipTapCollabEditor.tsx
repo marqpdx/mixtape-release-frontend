@@ -45,14 +45,20 @@ const CollabStarterKit = StarterKit.configure({
 
 interface TipTapCollabEditorProps {
   initialContent?: JSONContent | string;
-  yjsProvider: any;
+  yjsProvider: Record<string, unknown>;
   ydoc: Y.Doc;
   editable?: boolean;
   placeholder?: string;
   className?: string;
 }
 
-const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
+type YDocWithMeta = Y.Doc & {
+  __serverSynced?: boolean;
+  __didSeed?: boolean;
+  __initialContent?: JSONContent | string;
+};
+
+const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollabEditorProps>(
   (
     {
       initialContent = "",
@@ -65,6 +71,8 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
     ref
   ) => {
     const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
+    void initialContent;
+    void yjsProvider;
 
     // Heuristic: if state has any meaningful bytes, treat as non-empty
     function ydocLooksEmpty(doc: Y.Doc) {
@@ -100,7 +108,8 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
       },
     });
 
-    useImperativeHandle(ref, () => editor, [editor]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useImperativeHandle(ref, () => editor as any, [editor]);
 
     // Ensure editor respects editable prop changes
     useEffect(() => {
@@ -122,12 +131,13 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
       if (!ydoc) return;
 
       // Already handled for this Y.Doc instance
-      if ((ydoc as any).__didSeed) return;
+      const ydocWithMeta = ydoc as YDocWithMeta;
+      if (ydocWithMeta.__didSeed) return;
 
-      const hasInitialContent = !!(ydoc as any).__initialContent;
+      const hasInitialContent = !!ydocWithMeta.__initialContent;
       if (!hasInitialContent) return;
 
-      const contentToSeed = (ydoc as any).__initialContent;
+      const contentToSeed = ydocWithMeta.__initialContent;
 
       let cancelled = false;
 
@@ -136,12 +146,12 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
         // Tight poll; cheap and deterministic.
         for (let i = 0; i < 200; i++) {
           if (cancelled) return;
-          if ((ydoc as any).__serverSynced) break;
+          if (ydocWithMeta.__serverSynced) break;
           await new Promise((r) => setTimeout(r, 25));
         }
         if (cancelled) return;
 
-        if (!(ydoc as any).__serverSynced) {
+        if (!ydocWithMeta.__serverSynced) {
           // If we never saw the sync ack, do NOT seed.
           // Seeding without sync is the classic way to create duplication.
           console.warn("⚠️ [CollabEditor] Never saw __serverSynced; skipping seed to avoid duplication");
@@ -151,8 +161,8 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
         // After sync: if doc already has content, DO NOT seed.
         if (!ydocLooksEmpty(ydoc)) {
           console.log("✅ [CollabEditor] Doc not empty after server sync; skipping seed");
-          (ydoc as any).__didSeed = true;
-          delete (ydoc as any).__initialContent;
+          ydocWithMeta.__didSeed = true;
+          delete ydocWithMeta.__initialContent;
           return;
         }
 
@@ -160,10 +170,12 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
 
         // Option A:
         // emitUpdate=true writes into Yjs so it can sync + be persisted by Node dispatch server.
-        editor?.commands.setContent(contentToSeed as any, { emitUpdate: true });
+        if (contentToSeed) {
+          editor?.commands.setContent(contentToSeed, { emitUpdate: true });
+        }
 
-        (ydoc as any).__didSeed = true;
-        delete (ydoc as any).__initialContent;
+        ydocWithMeta.__didSeed = true;
+        delete ydocWithMeta.__initialContent;
       }
 
       void maybeSeedAfterServerSync();
@@ -178,7 +190,7 @@ const TipTapCollabEditor = forwardRef<any, TipTapCollabEditorProps>(
     useEffect(() => {
       if (!ydoc) return;
 
-      const handleUpdate = (update: Uint8Array, origin: any) => {
+      const handleUpdate = (update: Uint8Array, origin: unknown) => {
         console.log("🔄 [CollabEditor] Y.Doc update", {
           updateSize: update.length,
           originType: origin?.constructor?.name,
@@ -508,4 +520,3 @@ export default TipTapCollabEditor;
 
 // TipTapCollabEditor.displayName = "TipTapCollabEditor";
 // export default TipTapCollabEditor;
-

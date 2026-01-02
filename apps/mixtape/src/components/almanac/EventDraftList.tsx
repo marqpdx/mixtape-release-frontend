@@ -36,10 +36,11 @@ export function EventDraftList({ groupSlug, onViewEvent }: EventDraftListProps) 
 
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not publish event';
       toaster.create({
         title: 'Publish Failed',
-        description: error.message || 'Could not publish event',
+        description: message,
         type: 'error',
         duration: 5000,
 
@@ -59,10 +60,11 @@ export function EventDraftList({ groupSlug, onViewEvent }: EventDraftListProps) 
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Could not delete event';
       toaster.create({
         title: 'Delete Failed',
-        description: error.message || 'Could not delete event',
+        description: message,
         type: 'error',
         duration: 5000,
       });
@@ -125,7 +127,7 @@ export function EventDraftList({ groupSlug, onViewEvent }: EventDraftListProps) 
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {events.map((event: any) => (
+            {events.map((event) => (
               <Table.Row key={event.id}>
                 <Table.Cell fontWeight="medium">{event.title}</Table.Cell>
                 <Table.Cell>

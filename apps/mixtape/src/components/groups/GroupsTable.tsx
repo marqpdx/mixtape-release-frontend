@@ -5,6 +5,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Text, HStack, Box, Avatar, Image, Button, VStack, IconButton } from "@chakra-ui/react";
+import type { ComponentType } from "react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { AvatarGroup, CollapsibleRoot, CollapsibleTrigger, CollapsibleContent } from "@chakra-ui/react";
@@ -113,8 +114,8 @@ export default function GroupsTable({
 
   // Shared renderers
   const renderAvatar = (group: Group) => {
-    const groupIcons = Icons.group as Record<string, any>;
-    const GroupIcon = groupIcons[group.group_type];
+    const groupIcons = Icons.group as Record<string, unknown>;
+    const GroupIcon = groupIcons[group.group_type] as ComponentType<{ size?: number }> | undefined;
     const groupProfileImageRaw = group.profile_image ?? null;
     const groupProfileImage =
       groupProfileImageRaw && groupProfileImageRaw.trim() !== ""

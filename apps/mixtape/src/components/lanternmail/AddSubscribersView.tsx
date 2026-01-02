@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   VStack,
   HStack,
@@ -54,19 +54,20 @@ export default function AddSubscribersView({ list, onBack, onComplete }: Props) 
   const [showDoneConfirmation, setShowDoneConfirmation] = useState(false);
   // const { toast } = createStandaloneToast();
 
-  useEffect(() => {
-    fetchGroupMembers();
-  }, []);
-
-  const fetchGroupMembers = async () => {
+  const fetchGroupMembers = useCallback(async () => {
     try {
       setError(null);
       const members = await getGroupMembers(list.group_slug, list.id);
       setGroupMembers(members);
-    } catch (err: any) {
-      setError(err.message || "Failed to load group members");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load group members";
+      setError(message);
     }
-  };
+  }, [getGroupMembers, list.group_slug, list.id]);
+
+  useEffect(() => {
+    fetchGroupMembers();
+  }, [fetchGroupMembers]);
 
   const handleMemberToggle = (memberId: string) => {
     const newSelection = new Set(selectedMembers);
@@ -120,7 +121,7 @@ export default function AddSubscribersView({ list, onBack, onComplete }: Props) 
         return;
       }
 
-      const result = await sendInvitations(list.group_slug, list.id, emailsToInvite);
+      await sendInvitations(list.group_slug, list.id, emailsToInvite);
 
       setSuccessMessage(`Invitations sent to ${emailsToInvite.length} recipients`);
       toaster.create({
@@ -138,8 +139,9 @@ export default function AddSubscribersView({ list, onBack, onComplete }: Props) 
       // Refresh member data
       await fetchGroupMembers();
 
-    } catch (err: any) {
-      setError(err.message || "Failed to send invitations");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send invitations";
+      setError(message);
     } finally {
       setIsInviting(false);
     }

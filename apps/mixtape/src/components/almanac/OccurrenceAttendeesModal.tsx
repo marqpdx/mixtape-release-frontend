@@ -60,7 +60,7 @@ export function OccurrenceAttendeesModal({
   // Group attendees by status
   const goingCount = attendees?.filter(a => a.status === 'going' || a.status === 'attended').length || 0;
   const maybeCount = attendees?.filter(a => a.status === 'maybe').length || 0;
-  const notGoingCount = attendees?.filter(a => a.status === 'not_going').length || 0;
+  void attendees?.filter(a => a.status === 'not_going').length;
   const attendedCount = attendees?.filter(a => a.status === 'attended').length || 0;
 
   const getStatusBadge = (status: string) => {

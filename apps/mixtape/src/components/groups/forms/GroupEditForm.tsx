@@ -15,11 +15,10 @@ import {
   SimpleGrid,
   Portal,
   Input,
-  useDisclosure,
   Heading,
 } from "@chakra-ui/react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
@@ -34,13 +33,14 @@ import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/type
 import { toaster } from "@mixtape/core/lib/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
-import { useEntityImageUpload } from "@mixtape/api/hooks/useEntityImageUpload";
 import { useImageUpload } from '@hooks/useAssets';
 
 // Helper function to safely render error messages
-const getErrorMessage = (error: any): string => {
+const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'string') return error;
-  if (error && typeof error.message === 'string') return error.message;
+  if (error && typeof error === 'object' && typeof (error as { message?: string }).message === 'string') {
+    return (error as { message?: string }).message ?? '';
+  }
   return '';
 };
 
@@ -86,7 +86,6 @@ export default function GroupEditForm({
   const [error, setError] = useState<string | null>(null);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
 
-  const emblemDisclosure = useDisclosure();
   // const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
   //   group?.emblem ?? null
   // );
@@ -217,7 +216,12 @@ export default function GroupEditForm({
       });
 
       onSuccess?.();
-    } catch (err) {
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : `Could not ${group?.slug ? 'save' : 'create'} the group. Please try again.`
+      );
       toaster.create({
         title: group?.slug ? "Update Failed" : "Creation Failed",
         description: `Could not ${group?.slug ? 'save' : 'create'} the group. Please try again.`,

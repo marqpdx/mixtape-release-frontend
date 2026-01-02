@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react';
+import { Button, HStack, VStack } from '@chakra-ui/react';
 import { EventDraftList } from './EventDraftList';
 import { EventPublishedList } from './EventPublishedList';
 import { EventDetailView } from './EventDetailView';
@@ -15,12 +15,7 @@ interface AlmanacWorkAreaProps {
   groupSlug: string;
 }
 
-export function AlmanacWorkArea({
-  section,
-  sectionParams = {},
-  setActiveSection,
-  groupSlug,
-}: AlmanacWorkAreaProps) {
+export function AlmanacWorkArea({ groupSlug }: AlmanacWorkAreaProps) {
   const [view, setView] = useState<'drafts' | 'published' | 'calendar' | 'event-detail'>('drafts');
   const [selectedEventSlug, setSelectedEventSlug] = useState<string | null>(null);
 

@@ -1,6 +1,18 @@
+import type { ReactNode } from "react";
 import { Avatar, HStack, VStack, Text, Box, Button, Badge, Heading } from "@chakra-ui/react";
 import Link from "next/link";
 import { extractTextFromProseMirror, NoticeboardItem, timeAgo } from "@components/groups/writing/useNoticeboard";
+
+type ProseMirrorNode = {
+  type?: string;
+  text?: string;
+  content?: ProseMirrorNode[];
+  attrs?: { level?: number };
+};
+
+type ProseMirrorDoc = {
+  content?: ProseMirrorNode[];
+};
 
 export function NoticeCard({ item, groupSlug }: { item: NoticeboardItem; groupSlug: string }) {
   // Extract excerpt from piece data or body_json
@@ -64,13 +76,13 @@ export function NoticeCard({ item, groupSlug }: { item: NoticeboardItem; groupSl
 
 
 // Helper to render ProseMirror JSON as readable content
-export function renderProseMirrorContent(bodyJson: any) {
+export function renderProseMirrorContent(bodyJson: ProseMirrorDoc | null): ReactNode {
   if (!bodyJson?.content) return <Text color="gray.500">No content available</Text>;
 
-  const renderNode = (node: any, index: number): React.ReactNode => {
+  const renderNode = (node: ProseMirrorNode, index: number): ReactNode => {
     switch (node.type) {
       case 'paragraph':
-        const paragraphContent = node.content?.map((child: any, childIndex: number) => {
+        const paragraphContent = node.content?.map((child: ProseMirrorNode, childIndex: number) => {
           if (child.type === 'text') {
             return child.text;
           }
@@ -87,7 +99,7 @@ export function renderProseMirrorContent(bodyJson: any) {
         );
 
       case 'heading':
-        const headingContent = node.content?.map((child: any) => child.text).join('') || '';
+        const headingContent = node.content?.map((child: ProseMirrorNode) => child.text).join('') || '';
         const level = node.attrs?.level || 1;
 
         return (
@@ -101,9 +113,9 @@ export function renderProseMirrorContent(bodyJson: any) {
         const ListComponent = node.type === 'bulletList' ? 'ul' : 'ol';
         return (
           <Box key={index} as={ListComponent} pl={6} mb={4}>
-            {node.content?.map((listItem: any, itemIndex: number) => (
+            {node.content?.map((listItem: ProseMirrorNode, itemIndex: number) => (
               <Box as="li" key={itemIndex} mb={1}>
-                {listItem.content?.map((para: any, paraIndex: number) =>
+                {listItem.content?.map((para: ProseMirrorNode, paraIndex: number) =>
                   renderNode(para, paraIndex)
                 )}
               </Box>
@@ -113,7 +125,7 @@ export function renderProseMirrorContent(bodyJson: any) {
 
       default:
         // Fallback for unknown node types - extract text content
-        const extractText = (n: any): string => {
+        const extractText = (n: ProseMirrorNode): string => {
           if (n.type === 'text') return n.text || '';
           if (n.content) return n.content.map(extractText).join('');
           return '';
@@ -130,7 +142,7 @@ export function renderProseMirrorContent(bodyJson: any) {
 
   return (
     <Box>
-      {bodyJson.content.map((node: any, index: number) => renderNode(node, index))}
+      {bodyJson.content.map((node: ProseMirrorNode, index: number) => renderNode(node, index))}
     </Box>
   );
 }

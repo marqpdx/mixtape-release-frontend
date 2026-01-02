@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Box,
   Button,
   Input,
   Table,

@@ -25,7 +25,7 @@ export interface AISummaryAgentProps {
   backgroundSummary: string;
   summaryIsGenerating: boolean;
   summaryIsPending: boolean;
-  summaryError: any;
+  summaryError: unknown;
   onGenerateNewSummary: () => void;
   summary: string;
   setSummary: (summary: string) => void;
@@ -44,6 +44,7 @@ export function AISummaryAgent({
 }: AISummaryAgentProps) {
   const [editingSummary, setEditingSummary] = useState("");
   const [summaryEditMode, setSummaryEditMode] = useState(false);
+  void summary;
 
   const getAgentState = (): AgentState => {
     if (summaryError) return 'error';
@@ -218,13 +219,13 @@ export function AISummaryAgent({
         )}
 
         {/* When generating */}
-        {summaryIsGenerating && (
+        {(Boolean(summaryIsGenerating) && (
           <VStack gap={2} align="center" py={4}>
             <Text fontSize="sm" color="gray.500" textAlign="center">
               Generating AI summary...
             </Text>
           </VStack>
-        )}
+        )) as any /* eslint-disable-line @typescript-eslint/no-explicit-any */}
 
         {/* When waiting or no summary */}
         {!backgroundSummary && !summaryIsGenerating && !summaryIsPending && (

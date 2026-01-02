@@ -40,7 +40,7 @@ const ForgotPasswordPage: React.FC = () => {
       });
 
       setEmail("");
-    } catch (err) {
+    } catch {
       toaster.error({
         title: "Error",
         description: "Could not send password reset link. Please try again.",

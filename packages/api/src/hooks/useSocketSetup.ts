@@ -65,7 +65,7 @@ export function useSocketSetup(identity: UserIdentity | null | undefined) {
       if (!s2) return;
 
       // Leave only the rooms this hook joined
-      joinedSlugsRef.current.forEach((slug) => {
+      joinedSlugsRef.current.forEach((slug: string) => {
         s2.emit("leave_conversation", { conversationSlug: slug });
       });
       joinedSlugsRef.current.clear();

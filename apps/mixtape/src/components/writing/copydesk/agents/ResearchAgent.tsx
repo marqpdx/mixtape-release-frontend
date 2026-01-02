@@ -11,7 +11,6 @@ import {
 } from '@chakra-ui/react';
 import {
   IconSearch,
-  IconBook,
   IconSparkles,
   IconBulb,
   IconExternalLink
@@ -49,37 +48,6 @@ export function ResearchAgent({ selection, hasSelection }: ResearchAgentProps) {
   // Color mode values
   const bgColor = useColorModeValue("white", "#111");
   const borderColor = useColorModeValue("gray.200", "gray.700");
-
-  // Utility to truncate text at sentence boundaries
-  const truncateToSentence = (text: string, maxLength: number = 200): string => {
-    if (text.length <= maxLength) return text;
-
-    // Find the last sentence ending before maxLength
-    const truncated = text.substring(0, maxLength);
-    const sentenceEndings = [
-      truncated.lastIndexOf('. '),
-      truncated.lastIndexOf('! '),
-      truncated.lastIndexOf('? '),
-      truncated.lastIndexOf('.\n'),
-      truncated.lastIndexOf('!\n'),
-      truncated.lastIndexOf('?\n')
-    ];
-
-    const lastSentenceEnd = Math.max(...sentenceEndings.filter(pos => pos > -1));
-
-    // If we found a good sentence break after position 100, use it
-    if (lastSentenceEnd > 100) {
-      return text.substring(0, lastSentenceEnd + 1).trim();
-    }
-
-    // Otherwise, find the last complete word before maxLength
-    const lastSpace = truncated.lastIndexOf(' ');
-    if (lastSpace > 100) {
-      return text.substring(0, lastSpace) + '...';
-    }
-
-    return truncated + '...';
-  };
 
   // Debug logging
   React.useEffect(() => {

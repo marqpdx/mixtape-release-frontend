@@ -2,7 +2,6 @@
 
 "use client";
 
-import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -44,10 +43,14 @@ export default function GroupCreateCircle({ sponsorGroupSlug, onCreated }: Group
         onCreated?.(group.slug);
       }
     },
-    onError: (err: any) => {
+    onError: (error) => {
+      const detail =
+        error && typeof error === "object"
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined;
       toaster.create({
         title: "Create failed",
-        description: err?.response?.data?.detail ?? "Could not create the circle.",
+        description: detail ?? "Could not create the circle.",
         type: "error",
       });
     },

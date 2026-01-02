@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   Portal,
@@ -12,14 +12,12 @@ import {
   HStack,
   Text,
   Badge,
-  Stat,
   Box,
   Tabs,
   Spinner,
 } from "@chakra-ui/react";
 // import { LanternmailList } from "content/lanternTypes";
 // import { useLanternmail } from "@hooks/useLanternamil";
-import { Divider } from "@components/common/Divider";
 import AddSubscribersView from "./AddSubscribersView";
 import { LanternmailList } from "@mixtape/core/types/lanternmailTypes";
 import { Alert } from "../ui/alerts";
@@ -45,21 +43,22 @@ export default function ListDetailModal({ list, isOpen, onClose }: Props) {
   const [activeTab, setActiveTab] = useState("overview");
   const [view, setView] = useState<'details' | 'add-subscribers'>('details');
 
-  useEffect(() => {
-    if (isOpen && list) {
-      fetchListDetails();
-    }
-  }, [isOpen, list]);
-
-  const fetchListDetails = async () => {
+  const fetchListDetails = useCallback(async () => {
     try {
       setError(null);
       const details = await getListDetails(list.group_slug, list.id);
       setStats(details);
-    } catch (err: any) {
-      setError(err.message || "Failed to load list details");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load list details";
+      setError(message);
     }
-  };
+  }, [getListDetails, list.group_slug, list.id]);
+
+  useEffect(() => {
+    if (isOpen && list) {
+      fetchListDetails();
+    }
+  }, [isOpen, list, fetchListDetails]);
 
 
   return (

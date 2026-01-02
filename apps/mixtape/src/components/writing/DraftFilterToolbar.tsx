@@ -6,7 +6,7 @@
 
 "use client";
 
-import { HStack, Button, Text, Box, Separator } from "@chakra-ui/react";
+import { HStack, Button, Text, Box } from "@chakra-ui/react";
 import { IconPlus } from "@tabler/icons-react";
 
 interface DraftFilterToolbarProps {

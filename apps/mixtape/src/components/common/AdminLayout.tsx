@@ -17,7 +17,7 @@ import {
   Stack,
   HStack,
 } from "@chakra-ui/react";
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect } from "react";
 // import { Button } from "@theme/recipes/button.recipe";
 import { ChevronIcon } from "@components/icons/IconMap";
 import { openParentForSection } from "@components/groups/navigationUtils";
@@ -38,7 +38,7 @@ export interface AdminLayoutProps {
   defaultOpenParentMap?: Record<string, string>;
   userRoles?: string[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
-  workAreaProps?: Record<string, any>;
+  workAreaProps?: Record<string, unknown>;
   loading?: boolean;
   localStorageKey?: string;
 }
@@ -46,7 +46,7 @@ export interface AdminLayoutProps {
 export interface WorkAreaProps {
   section: string;
   setActiveSection: (section: string) => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function AdminLayout({
@@ -60,6 +60,7 @@ export default function AdminLayout({
   loading = false,
   localStorageKey = "adminActiveSection",
 }: AdminLayoutProps) {
+  void defaultOpenParentMap;
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -250,7 +251,7 @@ function MobileTabs({
   primaryTabs: MenuItem[];
   overflowTabs: MenuItem[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
-  workAreaProps: Record<string, any>;
+  workAreaProps: Record<string, unknown>;
 }) {
   const { open, onOpen, onClose } = useDisclosure();
 

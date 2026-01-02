@@ -10,7 +10,6 @@ import {
   Text,
   Badge,
   Button,
-  Spinner,
   Card,
   Heading,
   SimpleGrid,
@@ -49,8 +48,9 @@ export default function LanternmailWorkArea({ group }: { group: Group }) {
       try {
         const result = await getGroupLists(group.slug);
         setLists(result);
-      } catch (err: any) {
-        setError(err.message || "Failed to load mailing lists");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load mailing lists";
+        setError(message);
       }
     };
 
@@ -62,8 +62,9 @@ export default function LanternmailWorkArea({ group }: { group: Group }) {
     try {
       const result = await getAllGroupLists();
       setLists(result);
-    } catch (err: any) {
-      setError(err.message || "Failed to refresh lists");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to refresh lists";
+      setError(message);
     }
   };
 

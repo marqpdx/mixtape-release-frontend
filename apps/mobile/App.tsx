@@ -4,17 +4,20 @@ import './src/config/env';
 import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
+import { QueryProvider } from './src/providers/QueryProvider';
 
 export default function App() {
   console.log('App.tsx rendering...');
 
   try {
     return (
-      <SafeAreaProvider>
-        <View style={styles.container}>
-          <AppNavigator />
-        </View>
-      </SafeAreaProvider>
+      <QueryProvider>
+        <SafeAreaProvider>
+          <View style={styles.container}>
+            <AppNavigator />
+          </View>
+        </SafeAreaProvider>
+      </QueryProvider>
     );
   } catch (error) {
     console.error('Error rendering AppNavigator:', error);

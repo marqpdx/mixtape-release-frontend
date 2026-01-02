@@ -18,7 +18,7 @@ config.resolver.nodeModulesPaths = [
 // Force Metro to resolve to a single instance of React
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Ensure react and react-native resolve to the mobile app's node_modules
-  if (moduleName === 'react' || moduleName === 'react-native') {
+  if (moduleName === 'react' || moduleName === 'react-native' || moduleName === '@tanstack/react-query') {
     const modulePath = path.resolve(
       projectRoot,
       'node_modules',

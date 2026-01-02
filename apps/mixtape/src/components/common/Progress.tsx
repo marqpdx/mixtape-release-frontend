@@ -5,12 +5,8 @@
 import {
   Progress as ChakraProgress,
   ProgressRootProps,
-  ProgressTrackProps,
-  ProgressRangeProps,
-  ProgressLabelProps,
-  ProgressValueTextProps,
 } from "@chakra-ui/react";
-import { Box, Text } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 
 interface ProgressProps extends ProgressRootProps {
   value: number;

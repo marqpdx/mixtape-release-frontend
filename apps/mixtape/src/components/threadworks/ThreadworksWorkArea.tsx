@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Heading,
@@ -11,7 +11,6 @@ import {
   VStack,
   Flex,
   Spinner,
-  Accordion,
   HStack,
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
@@ -22,11 +21,7 @@ import {
   useThreadworks,
   useThreadworksMutations,
 } from '@hooks/threadworks/useThreadworks'
-import {
-  Forum,
-  CreateForumData,
-  CreateDiscussionData,
-} from '@mixtape/core/types/threadworksTypes'
+import { CreateForumData } from '@mixtape/core/types/threadworksTypes'
 import ForumList from './ForumList'
 import CreateForumModal from './CreateForumModal'
 
@@ -39,13 +34,12 @@ interface ThreadworksWorkAreaProps {
 
 export default function ThreadworksWorkArea({
   section,
-  sectionParams = {},
   setActiveSection,
   groupSlug,
 }: ThreadworksWorkAreaProps) {
+  void section
   const [expandedForums, setExpandedForums] = useState<string[]>([])
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const bgColor = useColorModeValue('transparent', 'gray.900')
   const textColor = useColorModeValue('gray.600', 'gray.300')
@@ -81,10 +75,6 @@ export default function ThreadworksWorkArea({
   }
 
   // Callback when discussion is created - refetch the forum
-  const handleDiscussionCreated = async (forumId: string, data: any) => {
-    await refetch()
-  }
-
   // if (section !== 'threadworks') {
   //   return (
   //     <WorkAreaWrapper>

@@ -5,16 +5,29 @@ import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
 interface UseEmptyFlagDetectionProps {
   pieceId: string;
-  initialPiece: any;
+  initialPiece: { is_empty?: boolean } | null;
   setTitle: (title: string) => void;
-  setDocJSON: (doc: any) => void;
+  setDocJSON: (doc: DocumentJSON | null) => void;
   setExcerpt: (excerpt: string) => void;
   titleRef: React.RefObject<string>;
-  docJSONRef: React.RefObject<any>;
+  docJSONRef: React.RefObject<DocumentJSON | null>;
   excerptRef: React.RefObject<string>;
-  schedule: (data: any) => void;
+  schedule: (data: AutosavePayload) => void;
   onEmptyFlagCleared?: () => void;
 }
+
+type DocumentJSON = {
+  content?: Array<{
+    type?: string;
+    content?: Array<{ type?: string; text?: string }>;
+  }>;
+};
+
+type AutosavePayload = {
+  title: string;
+  body_json: DocumentJSON | null;
+  excerpt: string;
+};
 
 export function useEmptyFlagDetection({
   pieceId,
@@ -35,18 +48,18 @@ export function useEmptyFlagDetection({
   const emptyFlagCleared = useRef(false);
 
   // Helper to check if there is any meaningful content
-  const checkHasContent = useCallback((title: string, doc: any, excerpt: string) => {
+  const checkHasContent = useCallback((title: string, doc: DocumentJSON | null, excerpt: string) => {
     const hasTitle = !!title && title.trim().length > 0;
     const hasExcerpt = !!excerpt && excerpt.trim().length > 0;
 
     let hasDocContent = false;
     if (doc && Array.isArray(doc.content) && doc.content.length > 0) {
-      hasDocContent = doc.content.some((node: any) => {
+      hasDocContent = doc.content.some((node) => {
         if (node.type === 'paragraph') {
           if (!node.content || !Array.isArray(node.content) || node.content.length === 0) {
             return false;
           }
-          return node.content.some((textNode: any) =>
+          return node.content.some((textNode) =>
             textNode.type === 'text' &&
             textNode.text &&
             textNode.text.trim().length > 0
@@ -78,7 +91,7 @@ export function useEmptyFlagDetection({
       onEmptyFlagCleared?.();
 
       console.log('000 ✅ Empty flag cleared successfully');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('000 ❌ Failed to clear empty flag:', e);
       emptyFlagCleared.current = false; // Reset on failure
     }
@@ -102,7 +115,7 @@ export function useEmptyFlagDetection({
     schedule(data);
   }, [setTitle, schedule, wasEmpty, hasRealContent, checkHasContent, clearEmptyFlag, docJSONRef, excerptRef]);
 
-  const onDocChange = useCallback((newDoc: any) => {
+  const onDocChange = useCallback((newDoc: DocumentJSON | null) => {
     setDocJSON(newDoc);
 
     const data = {

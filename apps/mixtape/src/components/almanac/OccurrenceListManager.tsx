@@ -11,7 +11,6 @@ import {
   Badge,
   Spinner,
   Table,
-  IconButton,
 } from '@chakra-ui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
@@ -80,10 +79,11 @@ export function OccurrenceListManager({ groupSlug, eventSlug, seriesId }: Occurr
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Could not cancel occurrence';
       toaster.create({
         title: 'Cancellation Failed',
-        description: error.message || 'Could not cancel occurrence',
+        description: message,
         type: 'error',
         duration: 5000,
       });

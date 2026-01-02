@@ -29,7 +29,7 @@ const checkUsernameAvailable = async (username: string) => {
   try {
     const res = await axiosInstance.get(`/api/auth/check-username/${username}`);
     return res.data.available;
-  } catch (err) {
+  } catch {
     return false;
   }
 };
@@ -52,14 +52,14 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
     formState: { errors },
   } = useForm();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: { username?: string; password?: string }) => {
     setSubmitting(true);
 
     try {
       if (!shortcode) throw new Error("Missing invite shortcode");
 
       // Build payload based on user type
-      const payload: any = {
+      const payload: { shortcode: string; username?: string; password?: string } = {
         shortcode,
       };
 
@@ -95,14 +95,15 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         const groupSlug = res.data.group?.slug;
         router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }
-    } catch (err: any) {
-      console.error("Invite acceptance error:", err);
+    } catch (error) {
+      console.error("Invite acceptance error:", error);
+      const response = (error as { response?: { data?: { error?: string; detail?: string } } }).response;
 
       toaster.error({
         title: "Invalid or expired invite",
         description:
-          err?.response?.data?.error ||
-          err?.response?.data?.detail ||
+          response?.data?.error ||
+          response?.data?.detail ||
           "Could not accept invitation.",
       });
     } finally {

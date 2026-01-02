@@ -22,9 +22,20 @@ interface SimplePublishDialogProps {
   groupId: string
   groupSlug?: string  // For cache invalidation
   titleRef: React.RefObject<string>
-  docJSONRef: React.RefObject<any>
+  docJSONRef: React.RefObject<DocumentJSON | null>
   excerptRef: React.RefObject<string>
-  onPublished?: (piece: any) => void
+  onPublished?: (piece: Record<string, unknown>) => void
+}
+
+type DocumentJSON = Record<string, unknown>
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error && typeof error === 'object') {
+    const data = (error as { response?: { data?: { error?: string } } }).response?.data
+    if (data?.error) return data.error
+  }
+  if (error instanceof Error) return error.message
+  return undefined
 }
 
 export function SimplePublishDialog({
@@ -86,14 +97,14 @@ export function SimplePublishDialog({
 
       onPublished?.(response.piece)
       onClose()
-    } catch (error: any) {
+    } catch (error: unknown) {
       toaster.create({
         title: 'Publish failed',
-        description: error?.response?.data?.error || error?.message,
+        description: getErrorMessage(error),
         type: 'error'
       })
     }
-  }, [toNoticeboard, noticeboardExcerpt, piece.id, groupId, groupSlug, titleRef, docJSONRef, excerptRef, onClose, onPublished, publishPiece])
+  }, [toNoticeboard, noticeboardExcerpt, piece.id, groupId, titleRef, docJSONRef, excerptRef, onClose, onPublished, publishPiece])
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>

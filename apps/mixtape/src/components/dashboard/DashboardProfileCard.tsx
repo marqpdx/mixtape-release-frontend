@@ -7,10 +7,8 @@ import {
   Box,
   Flex,
   Text,
-  Heading,
   Badge,
   Button,
-  Image,
 } from "@chakra-ui/react";
 import { AvatarGroup, Avatar } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";

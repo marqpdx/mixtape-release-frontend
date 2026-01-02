@@ -16,7 +16,7 @@ export function GroupSwitcher({ currentGroupSlug }: GroupSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
-  const {groups: myGroups, isLoading: myGroupsLoading, error: myGroupsError, refetch: myGroupsRefetch } = useUserGroups();
+  const { groups: myGroups, isLoading: myGroupsLoading } = useUserGroups();
 
   const currentGroup = myGroups.find(g => g.slug === currentGroupSlug);
   const otherGroups = myGroups.filter(g => g.slug !== currentGroupSlug);

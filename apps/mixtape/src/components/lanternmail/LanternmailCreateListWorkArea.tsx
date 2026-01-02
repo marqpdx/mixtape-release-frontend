@@ -62,9 +62,10 @@ export default function LanternmailCreateListWorkArea({ group }: { group: Group 
         duration: 5000,
         closable: true,
       });
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Error creating list.");
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : "Error creating list.";
+      setError(message);
     }
   };
 

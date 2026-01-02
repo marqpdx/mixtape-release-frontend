@@ -12,11 +12,9 @@ import {
   Card,
   Badge,
   SimpleGrid,
-  AvatarGroup,
   Avatar,
   Button,
   Progress,
-  Flex,
   GridItem,
 } from "@chakra-ui/react";
 // import { UserIdentity } from "@components/auth/interfaces";
@@ -34,7 +32,12 @@ interface ToDoItem {
 
 interface PersonalOverviewProps {
   identity: UserIdentity;
-  groups: any[];
+  groups: Array<{
+    id: string | number;
+    name?: string;
+    member_count?: number;
+    role?: string;
+  }>;
   todos?: ToDoItem[];
   isAdmin: boolean;
   isSteward: boolean;
@@ -52,6 +55,7 @@ export default function PersonalOverview({
   const completionRate = todos.length > 0 ? (completedTodos.length / todos.length) * 100 : 0;
 
   const textColor = useColorModeValue('gray.800', 'gray.200');
+  void textColor;
   const mutedTextColor = useColorModeValue('gray.700', 'gray.300');
   const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
 

@@ -4,18 +4,17 @@
 
 import { Box } from "@chakra-ui/react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { GroupAdminHeader } from "@components/groups/headers/GroupAdminHeader";
 import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
 import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConfig";
 import DashboardLayout from "@components/common/DashboardLayout";
-import { hasRole, canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
-import { useAuth } from "@/lib/auth/AuthContext";
-import { UserIdentity } from "@mixtape/core/types/auth";
+import { canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
+import { WorkAreaProps } from "@components/dashboard/shared/types";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -25,18 +24,14 @@ export default function GroupPage() {
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view") as ViewRole | null;
 
-  const { user: identity } = useAuth();
   const { group, isLoading, refetch } = useGroup(slugStr);
 
   // Fetch user's permissions for this group
   const { data: myPermissions } = useMyPermissions(slugStr);
 
   const isMember = group ? isGroupMember(group) : false;
-  const isAdmin = group ? hasRole(group, "admin") : false;
-  const isSteward = group ? hasRole(group, "steward") : false;
   const isAdminOrSteward = group ? canUserModerateGroup(group) : false;
   const primaryRole = group ? getPrimaryRole(group) : null;
-  const roles = group?.user_roles || [];
 
   // One canonical storage key (once group is known)
   const storageKey = useMemo(
@@ -53,11 +48,11 @@ export default function GroupPage() {
   const [didInit, setDidInit] = useState(false);
 
   // Helper: validate a candidate view for current permissions
-  const clampViewToPermissions = (candidate: ViewRole): ViewRole => {
+  const clampViewToPermissions = useCallback((candidate: ViewRole): ViewRole => {
     if (isAdminOrSteward) return candidate; // admins/stewards can see any
     if (isMember) return candidate === "admin" ? "member" : candidate; // members: no admin
     return "public"; // public: only public
-  };
+  }, [isAdminOrSteward, isMember]);
 
   // Decide initial view (reads localStorage *after* group is available)
   useEffect(() => {
@@ -88,7 +83,7 @@ export default function GroupPage() {
 
     setTestRole(chosen);
     setDidInit(true); // allow subsequent saves
-  }, [group, isAdminOrSteward, isMember, storageKey, urlView]);
+  }, [group, isAdminOrSteward, isMember, storageKey, urlView, clampViewToPermissions]);
 
   // Persist preference only *after* initialization
   useEffect(() => {
@@ -133,10 +128,6 @@ export default function GroupPage() {
       group.group_type || 'community'
     );
 
-    const WrappedGroupWorkArea = (props: any) => (
-      <GroupWorkArea {...props} group={group} identity={identity} userRole={effectiveRole} />
-    );
-
     return (
       <Box className="sixty-box" pt={0} px={2}>
         <GroupAdminHeader
@@ -150,7 +141,8 @@ export default function GroupPage() {
         <DashboardLayout
           title={group.title}
           menuItems={menuItems}
-          WorkAreaComponent={WrappedGroupWorkArea}
+          WorkAreaComponent={GroupWorkArea as React.ComponentType<WorkAreaProps>}
+          workAreaProps={{ group, userRole: effectiveRole }}
           defaultSection={menuItems[0]?.subItems?.[0]?.key || menuItems[0]?.key}
           localStorageKey={`group-${group.slug}-dashboard`}
         />
@@ -164,7 +156,7 @@ export default function GroupPage() {
       {circleBar}
       <GroupLanding
         group={group}
-        userRole={primaryRole as any}
+        userRole={primaryRole}
         onJoinGroup={handleJoinGroup}
         testRole={testRole}
         onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}

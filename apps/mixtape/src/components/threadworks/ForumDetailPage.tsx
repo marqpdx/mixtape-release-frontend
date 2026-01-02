@@ -10,7 +10,6 @@ import {
   HStack,
   Badge,
   Flex,
-  Spacer,
   Input,
   Textarea,
   useDisclosure,
@@ -25,14 +24,7 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import {
   IconMessageCircle,
-  IconClock,
-  IconUser,
-  IconPlus,
-  IconPin,
-  IconLock,
-  IconSearch,
-  IconChevronDown,
-  IconChevronUp
+  IconPlus
 } from "@tabler/icons-react";
 import ConversationCard from "./ConversationCard";
 
@@ -129,128 +121,6 @@ const createTopic = async (forumSlug: string, topicData: CreateTopicData): Promi
 // Helper Functions
 // -----------------------------
 
-const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-  if (diffInHours < 1) return "Just now";
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-  return date.toLocaleDateString();
-};
-
-const getDisplayName = (user: User): string => {
-  if (user.name) return user.name;
-  if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
-  if (user.first_name) return user.first_name;
-  return user.username || 'Unknown User';
-};
-
-const getTotalReplies = (posts: Post[]): number => {
-  return posts.length - 1; // Subtract 1 for the main post
-};
-
-const getRecentParticipants = (posts: Post[], limit: number = 10): User[] => {
-  const participantMap = new Map<string, { user: User; lastActivity: string }>();
-
-  // Find the conversation starter (author of the first post)
-  const conversationStarter = posts[0]?.author;
-
-  posts.forEach(post => {
-    const existing = participantMap.get(post.author.id);
-    if (!existing || new Date(post.created_at) > new Date(existing.lastActivity)) {
-      participantMap.set(post.author.id, {
-        user: post.author,
-        lastActivity: post.created_at
-      });
-    }
-  });
-
-  const allParticipants = Array.from(participantMap.values())
-    .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
-    .map(p => p.user);
-
-  // Put conversation starter first, then others
-  const starterFirst = conversationStarter
-    ? [conversationStarter, ...allParticipants.filter(p => p.id !== conversationStarter.id)]
-    : allParticipants;
-
-  return starterFirst.slice(0, limit);
-};
-
-// -----------------------------
-// Components
-// -----------------------------
-
-const TopicCard = ({
-  topic,
-  onTopicClick
-}: {
-  topic: Topic;
-  onTopicClick: (topic: Topic) => void;
-}) => {
-  return (
-    <Box
-      bg="white"
-      borderWidth={1}
-      borderColor="gray.200"
-      borderRadius="xl"
-      p={6}
-      shadow="sm"
-      _hover={{ shadow: "md", cursor: "pointer" }}
-      transition="all 0.2s"
-      onClick={() => onTopicClick(topic)}
-    >
-      <Flex align="start" justify="space-between">
-        <Box flex={1}>
-          <HStack gap={2} mb={2}>
-            {topic.is_pinned && (
-              <Badge colorScheme="blue" variant="subtle" size="sm">
-                <IconPin size={12} style={{ marginRight: '4px' }} />
-                Pinned
-              </Badge>
-            )}
-            {topic.is_locked && (
-              <Badge colorScheme="red" variant="subtle" size="sm">
-                <IconLock size={12} style={{ marginRight: '4px' }} />
-                Locked
-              </Badge>
-            )}
-          </HStack>
-
-          <Heading size="md" color="gray.800" mb={2} lineHeight="1.3">
-            {topic.title}
-          </Heading>
-
-          <HStack gap={4} fontSize="sm" color="gray.500" mb={3}>
-            <HStack gap={1}>
-              <IconUser size={16} />
-              <Text>{topic.author.name}</Text>
-            </HStack>
-            <HStack gap={1}>
-              <IconClock size={16} />
-              <Text>{formatTimeAgo(topic.created_at)}</Text>
-            </HStack>
-            <HStack gap={1}>
-              <IconMessageCircle size={16} />
-              <Text>{topic.post_count} {topic.post_count === 1 ? 'post' : 'posts'}</Text>
-            </HStack>
-          </HStack>
-
-          {topic.last_post && (
-            <Box bg="gray.50" p={3} borderRadius="md" fontSize="sm">
-              <Text color="gray.600">
-                Latest by <Text as="span" fontWeight="semibold">{topic.last_post.author.name}</Text>
-                {' '}{formatTimeAgo(topic.last_post.created_at)}
-              </Text>
-            </Box>
-          )}
-        </Box>
-      </Flex>
-    </Box>
-  );
-};
 
 const CreateTopicModal = ({
   isOpen,
@@ -434,12 +304,7 @@ const ForumDetailPage: React.FC<ForumDetailPageProps> = ({
     }
   };
 
-  // Handle topic selection (if still needed for future features)
-  const handleTopicClick = (topic: Topic) => {
-    if (onTopicSelect) {
-      onTopicSelect(topic);
-    }
-  };
+  void onTopicSelect;
 
 
   // Handle reply to conversation

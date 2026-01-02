@@ -6,6 +6,20 @@ import { useAutosave } from "@mixtape/api/hooks/useAutosave";
 // import { useAutosave } from "lib/hooks/useAutosave";
 
 type SeedPayload = { body_text: string };
+type ApiError = { response?: { data?: { message?: string } } };
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === "object") {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) {
+      return apiError.response.data.message;
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+};
 
 export function useSeedAutosave(initialText = "", debounceMs = 1500) {
   const [seedId, setSeedId] = useState<string | null>(null);
@@ -36,10 +50,10 @@ export function useSeedAutosave(initialText = "", debounceMs = 1500) {
     try {
       await saveNow({ body_text: currentTextRef.current });
       return seedId;
-    } catch (e: any) {
+    } catch (e: unknown) {
       toaster.create({
         title: "Save failed",
-        description: e?.response?.data?.message || e?.message || "Please try again.",
+        description: getErrorMessage(e, "Please try again."),
         type: "error",
       });
       throw e;

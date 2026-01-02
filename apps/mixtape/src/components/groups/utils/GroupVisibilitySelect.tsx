@@ -20,7 +20,7 @@ export default function GroupVisibilitySelect({
   value,
   onChange,
 }: {
-  register?: any;
+  register?: (field: "visibility") => Record<string, unknown>;
   value?: string;
   onChange?: (val: string) => void;
 }) {

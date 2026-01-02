@@ -20,9 +20,10 @@ import {
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconCalendar, IconPhoto, IconExternalLink } from "@tabler/icons-react";
 import React from "react";
+import type { Group } from "@mixtape/core/types/groupTypes";
 
-export function LandingTab({ group, isMember, onJoinGroup }: { group: any; isMember: boolean; onJoinGroup?: () => void }) {
-  const cardBg = useColorModeValue('white', 'gray.800');
+export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isMember: boolean; onJoinGroup?: () => void }) {
+  void useColorModeValue('white', 'gray.800');
   const sidebarBg = useColorModeValue('gray.50', 'gray.700');
   const [showFullDescription, setShowFullDescription] = React.useState(false);
 
@@ -32,7 +33,7 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: any; isMem
     ? description.substring(0, 300) + "..."
     : description;
 
-  const canJoin = group.visibility === 'public' && group.join_policy !== 'closed';
+  const canJoin = group.visibility === 'public';
 
   return (
     <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={4}>
