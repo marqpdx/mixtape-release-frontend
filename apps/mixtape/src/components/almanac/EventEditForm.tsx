@@ -119,7 +119,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
           <NativeSelectRoot>
             <NativeSelectField
               value={formData.event_format}
-              onChange={(e) => handleChange('event_format', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleChange('event_format', e.target.value)}
             >
               <option value="workshop">Workshop</option>
               <option value="lecture">Lecture</option>
@@ -138,7 +138,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
           <Field.Label>Description</Field.Label>
           <Textarea
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange('description', e.target.value)}
             placeholder="Event description..."
             rows={5}
           />
@@ -150,7 +150,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
           <Input
             type="number"
             value={formData.max_attendees}
-            onChange={(e) => handleChange('max_attendees', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('max_attendees', e.target.value)}
             placeholder="Leave empty for unlimited"
             min="1"
           />
@@ -180,7 +180,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
               <input
                 type="checkbox"
                 checked={formData.visible_to_parent}
-                onChange={(e) => handleChange('visible_to_parent', e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('visible_to_parent', e.target.checked)}
                 style={{ marginRight: '8px' }}
               />
               Also add to {parentGroup.title} calendar

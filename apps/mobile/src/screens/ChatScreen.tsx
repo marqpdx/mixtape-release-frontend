@@ -28,6 +28,7 @@ export function ChatScreen({ route }: ChatScreenProps) {
   const { conversationId } = route.params;
   const currentUser = useAuthStore((state) => state.user);
   const clearUnread = useChatStore((state) => state.clearUnread);
+  const updatePreview = useChatStore((state) => state.updatePreview);
   const [inputText, setInputText] = useState('');
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
@@ -126,6 +127,14 @@ export function ChatScreen({ route }: ChatScreenProps) {
     if (inputText.trim()) {
       console.log('[ChatScreen] Sending message:', inputText.trim());
       sendMessage(inputText.trim());
+      if (currentUser?.username) {
+        updatePreview(
+          conversationId,
+          inputText.trim(),
+          new Date().toISOString(),
+          currentUser.username
+        );
+      }
       setInputText('');
       stopTyping();
     }
