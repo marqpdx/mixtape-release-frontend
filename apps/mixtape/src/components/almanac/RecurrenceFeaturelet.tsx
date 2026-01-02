@@ -14,6 +14,7 @@ import {
   Heading,
   RadioGroup,
   Field,
+  type RadioGroupValueChangeDetails,
 } from '@chakra-ui/react';
 import {
   DialogRoot,
@@ -145,7 +146,9 @@ export function RecurrenceFeaturelet({
               <Field.Label>Recurrence Pattern</Field.Label>
               <RadioGroup.Root
                 value={config.pattern || ''}
-                onValueChange={(e) => handlePatternChange(e.value)}
+                onValueChange={(details: RadioGroupValueChangeDetails) =>
+                  handlePatternChange(details.value as NonNullable<RecurrenceConfig['pattern']>)
+                }
               >
                 <VStack align="stretch" gap={2}>
                   <RadioGroup.Item value="daily">
@@ -242,8 +245,11 @@ export function RecurrenceFeaturelet({
                   <Field.Label>Ends</Field.Label>
                   <RadioGroup.Root
                     value={config.endType}
-                    onValueChange={(e) =>
-                      setConfig(prev => ({ ...prev, endType: e.value as RecurrenceConfig['endType'] }))
+                    onValueChange={(details: RadioGroupValueChangeDetails) =>
+                      setConfig(prev => ({
+                        ...prev,
+                        endType: details.value as RecurrenceConfig['endType'],
+                      }))
                     }
                   >
                     <VStack align="stretch" gap={3}>

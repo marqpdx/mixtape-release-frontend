@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useConversations } from '../hooks/useConversations';
+import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 import { ConversationListItem } from '../components/ConversationListItem';
 
@@ -14,6 +15,7 @@ type MyChatsScreenProps = NativeStackScreenProps<RootStackParamList, 'Messages'>
 
 export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
   const { conversations, loading, error, refresh } = useConversations();
+  const currentUser = useAuthStore((state) => state.user);
   const { unreadCounts, conversationPreviews } = useChatStore();
 
   const handleConversationPress = (conversationSlug: string, title: string) => {
@@ -67,10 +69,26 @@ export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
           keyExtractor={(item) => item.slug}
           renderItem={({ item }) => (
             <ConversationListItem
-              conversation={item}
+              conversation={{
+                ...item,
+                title: item.title?.trim()
+                  ? item.title
+                  : (item.participants || [])
+                      .filter((p) => p !== currentUser?.username)
+                      .join(', ') || item.slug,
+              }}
               unreadCount={unreadCounts[item.slug] || 0}
               preview={conversationPreviews[item.slug]}
-              onPress={() => handleConversationPress(item.slug, item.title)}
+              onPress={() =>
+                handleConversationPress(
+                  item.slug,
+                  item.title?.trim()
+                    ? item.title
+                    : (item.participants || [])
+                        .filter((p) => p !== currentUser?.username)
+                        .join(', ') || item.slug
+                )
+              }
             />
           )}
           refreshControl={

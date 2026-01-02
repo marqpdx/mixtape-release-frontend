@@ -15,6 +15,7 @@ import {
   RadioGroup,
   NumberInput,
   Field,
+  type RadioGroupValueChangeDetails,
 } from '@chakra-ui/react';
 import { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { useColorModeValue } from '@components/ui/color-mode';
@@ -343,7 +344,12 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
                         <Heading size="sm">RSVP Status</Heading>
 
                         {/* Status radio group - Chakra UI v3 */}
-                        <RadioGroup.Root value={rsvpStatus} onValueChange={(val) => setRsvpStatus(val.value as any)}>
+                        <RadioGroup.Root
+                          value={rsvpStatus}
+                          onValueChange={(details: RadioGroupValueChangeDetails) =>
+                            setRsvpStatus(details.value as typeof rsvpStatus)
+                          }
+                        >
                           <VStack align="start" gap={2}>
                             <RadioGroup.Item value="going">
                               <RadioGroup.ItemHiddenInput />
