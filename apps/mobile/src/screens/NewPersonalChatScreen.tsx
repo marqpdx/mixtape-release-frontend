@@ -58,10 +58,17 @@ export default function NewPersonalChatScreen({ navigation }: NewPersonalChatScr
     try {
       setCreating(true);
 
-      // Include current user in participants
-      const participantIds = [...selectedUserIds];
-      if (currentUser?.id && !participantIds.includes(currentUser.id)) {
-        participantIds.push(currentUser.id);
+      // Use usernames for participants (API expects usernames, not IDs)
+      const participantUsernames = selectedUsers
+        .map((user) => user.username)
+        .filter((username) => !!username);
+      if (currentUser?.username && !participantUsernames.includes(currentUser.username)) {
+        participantUsernames.push(currentUser.username);
+      }
+
+      if (participantUsernames.length === 0) {
+        Alert.alert('Invalid selection', 'Selected users are missing usernames.');
+        return;
       }
 
       // Auto-generate title based on number of participants
@@ -74,7 +81,7 @@ export default function NewPersonalChatScreen({ navigation }: NewPersonalChatScr
       }
 
       // Create conversation
-      const conversation = await createConversation(participantIds, title);
+      const conversation = await createConversation(participantUsernames, title);
 
       // Navigate to the chat screen
       navigation.replace('Chat', {

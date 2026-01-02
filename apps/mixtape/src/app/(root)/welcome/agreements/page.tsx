@@ -377,7 +377,7 @@ export default function AgreementsPage() {
             <Textarea
               rows={5}
               value={draftNote}
-              onChange={(e) => setDraftNote(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDraftNote(e.target.value)}
               placeholder="Share your thoughts or questions..."
               bg="theme.surface"
               borderColor="theme.border"
