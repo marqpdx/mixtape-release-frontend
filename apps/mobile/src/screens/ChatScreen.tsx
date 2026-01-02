@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useMessaging } from '../hooks/useMessaging';
@@ -34,6 +35,7 @@ export function ChatScreen({ route }: ChatScreenProps) {
   const [inputText, setInputText] = useState('');
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const headerHeight = useHeaderHeight();
 
   const {
     sendMessage,
@@ -149,7 +151,7 @@ export function ChatScreen({ route }: ChatScreenProps) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+      keyboardVerticalOffset={Math.max(headerHeight - 112, 0)}
     >
       <View style={styles.messagesWrapper}>
         {!isConnected && (

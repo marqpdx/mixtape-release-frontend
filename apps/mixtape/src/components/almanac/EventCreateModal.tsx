@@ -15,6 +15,7 @@ import {
   Dialog,
   HStack,
   Badge,
+  type RadioGroupValueChangeDetails,
 } from '@chakra-ui/react';
 import { Input } from '@/theme/recipes/input.recipe';
 import { DatePickerInput } from '@/components/forms/DatePickerField';
@@ -205,7 +206,9 @@ export default function EventCreateModal({
                 </Fieldset.Legend>
                 <RadioGroup.Root
                   value={eventType}
-                  onValueChange={(details) => setValue('event_type', details.value as any)}
+                  onValueChange={(details: RadioGroupValueChangeDetails) =>
+                    setValue('event_type', details.value as EventFormValues['event_type'])
+                  }
                 >
                   <Stack direction="row" gap={4}>
                     <RadioGroup.Item value="single">
@@ -284,7 +287,9 @@ export default function EventCreateModal({
                 </Fieldset.Legend>
                 <RadioGroup.Root
                   value={eventFormat}
-                  onValueChange={(details) => setValue('event_format', details.value as any)}
+                  onValueChange={(details: RadioGroupValueChangeDetails) =>
+                    setValue('event_format', details.value as EventFormValues['event_format'])
+                  }
                 >
                   <Stack direction="row" gap={4}>
                     <RadioGroup.Item value="in_person">
