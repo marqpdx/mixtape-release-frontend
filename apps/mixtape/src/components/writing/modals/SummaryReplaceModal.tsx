@@ -43,7 +43,7 @@ export function SummaryReplaceModal({
         p="6"
         maxW="md"
         w="90%"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <VStack gap={4} align="stretch">
           <Text fontWeight="bold" fontSize="lg">

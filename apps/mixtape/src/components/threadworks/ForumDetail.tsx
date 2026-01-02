@@ -138,7 +138,7 @@ export default function ForumDetail({
               <Input
                 placeholder="Search discussions..."
                 value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchFilter(e.target.value)}
                 size="sm"
               />
             </InputGroup>

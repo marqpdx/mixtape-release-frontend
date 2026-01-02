@@ -221,7 +221,7 @@ export default function UniversalDataTable<T extends BaseItem>({
                         size="sm"
                         variant={action.variant || "ghost"}
                         colorScheme={action.colorScheme || "green"}
-                        onClick={(e) => {
+                        onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           action.onClick(item);
                         }}
@@ -238,7 +238,7 @@ export default function UniversalDataTable<T extends BaseItem>({
                       size="sm"
                       variant="ghost"
                       colorScheme="green"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         router.push(`${basePath}/${item.slug || item.id}/edit`);
                       }}
@@ -254,7 +254,7 @@ export default function UniversalDataTable<T extends BaseItem>({
                       size="sm"
                       variant="ghost"
                       colorScheme="blue"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         router.push(`${basePath}/${item.slug || item.id}/show`);
                       }}

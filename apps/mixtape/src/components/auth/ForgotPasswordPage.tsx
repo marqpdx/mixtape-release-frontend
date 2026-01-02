@@ -75,7 +75,7 @@ const ForgotPasswordPage: React.FC = () => {
                 type="email"
                 placeholder="Email address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 bg={useColorModeValue("yellow.100", "gray.800")}
                 required
               />

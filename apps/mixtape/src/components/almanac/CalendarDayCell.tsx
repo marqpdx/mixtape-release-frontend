@@ -113,7 +113,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
                     size="sm"
                     colorScheme="blue"
                     cursor="pointer"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
                       setShowAllModal(true);
                     }}

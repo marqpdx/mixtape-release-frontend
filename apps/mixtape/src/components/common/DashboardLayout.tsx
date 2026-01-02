@@ -235,7 +235,7 @@ export default function DashboardLayout({
                       textAlign="left"
                       _hover={{ bg: "gray.100" }}
                       borderRadius="none"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         // If sidebar is collapsed, expand it and open this section
                         if (sidebarCollapsed) {
                           e.stopPropagation(); // Prevent collapsible toggle

@@ -413,7 +413,7 @@ export default function GroupsTable({
                       aria-label={isExpanded ? "Collapse" : "Expand"}
                       size="sm"
                       variant="ghost"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         toggleGroupExpansion(parentGroup.id);
                       }}

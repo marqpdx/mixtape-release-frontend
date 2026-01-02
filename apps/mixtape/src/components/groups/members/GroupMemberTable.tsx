@@ -103,7 +103,7 @@ export default function GroupMembersTable({
               key={header.id}
               placeholder={`Filter ${header.column.id}`}
               value={(header.column.getFilterValue() ?? "") as string}
-              onChange={e => header.column.setFilterValue(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => header.column.setFilterValue(e.target.value)}
               size="sm"
             />
           ) : null

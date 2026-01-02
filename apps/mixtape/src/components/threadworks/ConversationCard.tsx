@@ -727,7 +727,7 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
               <Input
                 placeholder='Search messages... (use "quotes" for exact matches)'
                 value={localSearchFilter}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
                 fontSize="sm"
               />
             </InputGroup>
@@ -870,7 +870,7 @@ const ConversationCard: React.FC<ConversationCardProps> = ({
                     : "Add your thoughts to this conversation..."
                 }
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReplyContent(e.target.value)}
                 resize="vertical"
                 minH="80px"
                 fontSize="sm"
@@ -1405,7 +1405,7 @@ export default ConversationCard;
 //               <Input
 //                 placeholder='Search messages... (use "quotes" for exact matches)'
 //                 value={localSearchFilter}
-//                 onChange={(e) => handleSearchChange(e.target.value)}
+//                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
 //                 fontSize="sm"
 //               />
 //             </InputGroup>
@@ -1535,7 +1535,7 @@ export default ConversationCard;
 //                     : "Add your thoughts to this conversation..."
 //                 }
 //                 value={replyContent}
-//                 onChange={(e) => setReplyContent(e.target.value)}
+//                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReplyContent(e.target.value)}
 //                 resize="vertical"
 //                 minH="80px"
 //                 fontSize="sm"
@@ -2020,7 +2020,7 @@ export default ConversationCard;
 // //               <Input
 // //                 placeholder='Search messages... (use "quotes" for exact matches)'
 // //                 value={localSearchFilter}
-// //                 onChange={(e) => handleSearchChange(e.target.value)}
+// //                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
 // //                 fontSize="sm"
 // //               />
 // //             </InputGroup>
@@ -2142,7 +2142,7 @@ export default ConversationCard;
 // //                     : "Add your thoughts to this conversation..."
 // //                 }
 // //                 value={replyContent}
-// //                 onChange={(e) => setReplyContent(e.target.value)}
+// //                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReplyContent(e.target.value)}
 // //                 resize="vertical"
 // //                 minH="80px"
 // //                 fontSize="sm"
