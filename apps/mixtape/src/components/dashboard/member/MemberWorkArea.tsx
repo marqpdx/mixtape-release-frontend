@@ -2,7 +2,7 @@
 // MEMBER WORK AREA - Community features & content creation
 // =====================================================
 
-// src/components/dashboard/member/MemberWorkArea.tsx
+// apps/mixtape/src/components/dashboard/member/MemberWorkArea.tsx
 
 import React, { useCallback, useState, useMemo, useRef } from "react";
 import { VStack, Text, Box } from "@chakra-ui/react";

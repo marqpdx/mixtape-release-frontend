@@ -97,7 +97,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
           <Field.Label>Event Title</Field.Label>
           <Input
             value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('title', e.target.value)}
             placeholder="e.g., Weekly Meditation"
             required
           />
@@ -108,7 +108,7 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
           <Field.Label>Location</Field.Label>
           <Input
             value={formData.location}
-            onChange={(e) => handleChange('location', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('location', e.target.value)}
             placeholder="e.g., Main Hall"
           />
         </Field.Root>
@@ -163,7 +163,9 @@ export function EventEditForm({ groupSlug, event, onSuccess, onCancel }: EventEd
             <input
               type="checkbox"
               checked={formData.registration_required}
-              onChange={(e) => handleChange('registration_required', e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleChange('registration_required', e.target.checked)
+              }
               style={{ marginRight: '8px' }}
             />
             Registration Required

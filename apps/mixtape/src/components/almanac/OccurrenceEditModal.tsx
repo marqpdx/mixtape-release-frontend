@@ -154,7 +154,7 @@ export function OccurrenceEditModal({
               <Field.Label>Title Override (optional)</Field.Label>
               <Input
                 value={titleOverride}
-                onChange={(e) => setTitleOverride(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitleOverride(e.target.value)}
                 placeholder={occurrence.effective_title}
               />
               <Field.HelperText>
@@ -166,7 +166,7 @@ export function OccurrenceEditModal({
               <Field.Label>Location Override (optional)</Field.Label>
               <Input
                 value={locationOverride}
-                onChange={(e) => setLocationOverride(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocationOverride(e.target.value)}
                 placeholder={occurrence.effective_location || 'No location'}
               />
               <Field.HelperText>
@@ -179,7 +179,7 @@ export function OccurrenceEditModal({
               <Input
                 type="datetime-local"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
               />
             </Field.Root>
 
@@ -188,7 +188,7 @@ export function OccurrenceEditModal({
               <Input
                 type="datetime-local"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
               />
             </Field.Root>
           </VStack>

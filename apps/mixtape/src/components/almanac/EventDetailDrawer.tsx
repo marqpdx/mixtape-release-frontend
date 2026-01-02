@@ -375,7 +375,9 @@ export const EventDetailDrawer: React.FC<EventDetailDrawerProps> = ({
                           <Textarea
                             placeholder="Any dietary restrictions, questions, etc."
                             value={rsvpNotes}
-                            onChange={(e) => setRsvpNotes(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                              setRsvpNotes(e.target.value)
+                            }
                             size="sm"
                             rows={3}
                           />

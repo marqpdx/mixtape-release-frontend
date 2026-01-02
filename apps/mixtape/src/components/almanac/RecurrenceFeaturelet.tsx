@@ -190,7 +190,7 @@ export function RecurrenceFeaturelet({
                     min={1}
                     max={365}
                     value={config.frequency}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setConfig(prev => ({
                         ...prev,
                         frequency: parseInt(e.target.value) || 1,
@@ -268,7 +268,7 @@ export function RecurrenceFeaturelet({
                         <Input
                           type="date"
                           value={config.endDate || ''}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setConfig(prev => ({
                               ...prev,
                               endDate: e.target.value,
@@ -291,7 +291,7 @@ export function RecurrenceFeaturelet({
                           min={1}
                           max={365}
                           value={config.occurrenceCount || ''}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setConfig(prev => ({
                               ...prev,
                               occurrenceCount: parseInt(e.target.value) || null,
