@@ -9,6 +9,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -124,24 +126,31 @@ export function ChatScreen({ route }: ChatScreenProps) {
 
   // Send message
   const handleSend = () => {
-    if (inputText.trim()) {
-      console.log('[ChatScreen] Sending message:', inputText.trim());
-      sendMessage(inputText.trim());
-      if (currentUser?.username) {
-        updatePreview(
-          conversationId,
-          inputText.trim(),
-          new Date().toISOString(),
-          currentUser.username
-        );
-      }
-      setInputText('');
-      stopTyping();
+    const trimmed = inputText.trim();
+    if (!trimmed) return;
+
+    console.log('[ChatScreen] Sending message:', trimmed);
+    sendMessage(trimmed);
+
+    const nowIso = new Date().toISOString();
+    if (currentUser?.username) {
+      updatePreview(conversationId, trimmed, nowIso, currentUser.username);
     }
+
+    setInputText('');
+    stopTyping();
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+    >
       <View style={styles.messagesWrapper}>
         {!isConnected && (
           <View style={styles.reconnectingBanner}>
@@ -258,7 +267,7 @@ export function ChatScreen({ route }: ChatScreenProps) {
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

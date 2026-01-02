@@ -13,7 +13,7 @@ import { ConversationListItem } from '../components/ConversationListItem';
 type MyChatsScreenProps = NativeStackScreenProps<RootStackParamList, 'Messages'>;
 
 export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
-  const { conversations, loading, refresh } = useConversations();
+  const { conversations, loading, error, refresh } = useConversations();
   const { unreadCounts, conversationPreviews } = useChatStore();
 
   const handleConversationPress = (conversationSlug: string, title: string) => {
@@ -28,6 +28,19 @@ export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
       refresh();
     }, [refresh])
   );
+
+  // Error state
+  if (error && conversations.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyTitle}>Error loading conversations</Text>
+        <Text style={styles.emptySubtitle}>{error.message}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={refresh}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Empty state
   if (!loading && conversations.length === 0) {
@@ -116,6 +129,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   emptyList: {
     flex: 1,
