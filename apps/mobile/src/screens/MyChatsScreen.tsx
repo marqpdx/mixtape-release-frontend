@@ -2,18 +2,13 @@
 // Phase 2 implementation
 
 import { View, FlatList, Text, StyleSheet, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { CompositeScreenProps } from '@react-navigation/native';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, MainTabParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { useConversations } from '../hooks/useConversations';
 import { useChatStore } from '../stores/chatStore';
 import { ConversationListItem } from '../components/ConversationListItem';
 
-type MyChatsScreenProps = CompositeScreenProps<
-  BottomTabScreenProps<MainTabParamList, 'MyChats'>,
-  NativeStackScreenProps<RootStackParamList>
->;
+type MyChatsScreenProps = NativeStackScreenProps<RootStackParamList, 'Messages'>;
 
 export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
   const { conversations, loading, refresh } = useConversations({ scope: 'personal' });

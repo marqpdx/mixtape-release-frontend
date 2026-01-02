@@ -43,6 +43,17 @@ yarn start
 
 Then scan the QR code with your custom dev client app.
 
+### API Base URLs (Local vs Staging/Prod)
+
+Set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_LIVEWIRE_URL` based on where you run:
+
+- Android emulator: `http://10.0.2.2:8010` (host machine alias)
+- iOS simulator: `http://localhost:8010`
+- Physical device on LAN: `http://<your-host-ip>:8010` (server must bind `0.0.0.0`)
+- Staging/Prod: `https://<your-domain>`
+
+These are passed through `src/config/env.ts` so shared packages can read them.
+
 ### Production Builds
 
 **Build for App Store/Play Store:**

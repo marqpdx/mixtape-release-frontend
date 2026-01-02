@@ -152,7 +152,7 @@ export const ThemeSelector: React.FC = () => {
       </IconButton>
 
       {/* Theme Selector - Proper Chakra v3 Syntax */}
-      <Popover.Root open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
+      <Popover.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => setIsOpen(open)}>
         <Popover.Trigger asChild>
           <Button
             variant="ghost"

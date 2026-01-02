@@ -75,7 +75,7 @@ export function OccurrenceAttendeesModal({
   };
 
   return (
-    <DialogRoot open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+    <DialogRoot open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()} size="xl">
       <DialogBackdrop />
       <DialogContent>
         <DialogHeader>

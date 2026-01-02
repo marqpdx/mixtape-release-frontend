@@ -311,7 +311,7 @@ export default function AgreementsPage() {
         <HStack mt={8} justify="space-between" align="center">
           <Checkbox.Root
             checked={agreeChecked}
-            onCheckedChange={({ checked }) => setAgreeChecked(!!checked)}
+            onCheckedChange={({ checked }: { checked: boolean | string }) => setAgreeChecked(!!checked)}
           >
             <Checkbox.HiddenInput />
             <HStack gap={3}>
@@ -351,7 +351,7 @@ export default function AgreementsPage() {
       </Container>
 
       {/* Note Dialog */}
-      <Dialog.Root open={noteOpen} onOpenChange={(e) => setNoteOpen(!!e.open)}>
+      <Dialog.Root open={noteOpen} onOpenChange={({ open }: { open: boolean }) => setNoteOpen(open)}>
         <Dialog.Content
           maxW="lg"
           bg="theme.surface"

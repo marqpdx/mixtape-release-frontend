@@ -141,7 +141,7 @@ export function OccurrenceEditModal({
   };
 
   return (
-    <DialogRoot open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="lg">
+    <DialogRoot open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()} size="lg">
       <DialogBackdrop />
       <DialogContent>
         <DialogHeader>

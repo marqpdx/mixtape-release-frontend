@@ -130,7 +130,7 @@ export function RecurrenceFeaturelet({
   };
 
   return (
-    <DialogRoot open={isOpen} onOpenChange={(e) => !e.open && handleCancel()} size="lg">
+    <DialogRoot open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && handleCancel()} size="lg">
       <DialogBackdrop />
       <DialogContent>
         <DialogHeader>

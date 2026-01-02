@@ -128,7 +128,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
       </Box>
 
       {/* ✅ Modal to show all occurrences for the day */}
-      <Dialog.Root open={showAllModal} onOpenChange={(e) => setShowAllModal(e.open)}>
+      <Dialog.Root open={showAllModal} onOpenChange={({ open }: { open: boolean }) => setShowAllModal(open)}>
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>

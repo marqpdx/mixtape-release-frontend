@@ -219,8 +219,8 @@ export default function DashboardLayout({
                   <Collapsible.Root
                     key={menuItem.key}
                     open={openSections[menuItem.key]}
-                    onOpenChange={(open) => {
-                      const openValue = typeof open === "boolean" ? open : open?.open ?? false;
+                    onOpenChange={(details: { open: boolean } | boolean) => {
+                      const openValue = typeof details === "boolean" ? details : details.open ?? false;
                       setOpenSections((prev) => ({
                         ...prev,
                         [menuItem.key]: openValue,

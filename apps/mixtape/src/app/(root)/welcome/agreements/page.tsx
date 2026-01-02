@@ -351,7 +351,7 @@ export default function AgreementsPage() {
       </Container>
 
       {/* Note Dialog */}
-      <Dialog.Root open={noteOpen} onOpenChange={(e) => setNoteOpen(!!e.open)}>
+      <Dialog.Root open={noteOpen} onOpenChange={({ open }: { open: boolean }) => setNoteOpen(open)}>
         <Dialog.Content
           maxW="lg"
           bg="theme.surface"

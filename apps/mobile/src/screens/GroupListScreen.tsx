@@ -11,17 +11,12 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { CompositeScreenProps } from '@react-navigation/native';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, MainTabParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { fetchUserGroups } from '@mixtape/api/clients/group/groupApi';
 import type { Group } from '@mixtape/core/types/groupTypes';
 
-type GroupListScreenProps = CompositeScreenProps<
-  BottomTabScreenProps<MainTabParamList, 'Groups'>,
-  NativeStackScreenProps<RootStackParamList>
->;
+type GroupListScreenProps = NativeStackScreenProps<RootStackParamList, 'Groups'>;
 
 export default function GroupListScreen({ navigation }: GroupListScreenProps) {
   const [groups, setGroups] = useState<Group[]>([]);

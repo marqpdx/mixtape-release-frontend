@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import LoginScreen from '../screens/LoginScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
@@ -10,6 +9,7 @@ import NewPersonalChatScreen from '../screens/NewPersonalChatScreen';
 import NewGroupChatScreen from '../screens/NewGroupChatScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { ChatStateManager } from '../components/ChatStateManager';
+import LandingScreen from '../screens/LandingScreen';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -17,64 +17,16 @@ import { ChatStateManager } from '../components/ChatStateManager';
 
 export type RootStackParamList = {
   Login: undefined;
-  Main: undefined;
+  Landing: undefined;
+  Messages: undefined;
+  Groups: undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
   NewGroupChat: { groupSlug: string; groupName: string };
 };
 
-export type MainTabParamList = {
-  MyChats: undefined;
-  Groups: undefined;
-};
-
 const RootStack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<MainTabParamList>();
-
-// ============================================================================
-// TAB NAVIGATOR
-// ============================================================================
-
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E5EA',
-        },
-        headerStyle: {
-          backgroundColor: '#007AFF',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      }}
-    >
-      <Tab.Screen
-        name="MyChats"
-        component={MyChatsScreen}
-        options={{
-          title: 'My Chats',
-          tabBarLabel: 'Chats',
-        }}
-      />
-      <Tab.Screen
-        name="Groups"
-        component={GroupListScreen}
-        options={{
-          title: 'Groups',
-          tabBarLabel: 'Groups',
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
 
 // ============================================================================
 // ROOT NAVIGATOR
@@ -108,9 +60,25 @@ export default function AppNavigator() {
         ) : (
           <>
             <RootStack.Screen
-              name="Main"
-              component={MainTabs}
+              name="Landing"
+              component={LandingScreen}
               options={{ headerShown: false }}
+            />
+            <RootStack.Screen
+              name="Messages"
+              component={MyChatsScreen}
+              options={{
+                headerShown: true,
+                title: 'Messages',
+              }}
+            />
+            <RootStack.Screen
+              name="Groups"
+              component={GroupListScreen}
+              options={{
+                headerShown: true,
+                title: 'Groups',
+              }}
             />
             <RootStack.Screen
               name="Chat"

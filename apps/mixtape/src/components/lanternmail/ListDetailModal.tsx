@@ -63,7 +63,7 @@ export default function ListDetailModal({ list, isOpen, onClose }: Props) {
 
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={({ open }) => !open && onClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
