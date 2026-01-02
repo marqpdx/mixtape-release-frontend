@@ -81,7 +81,7 @@ export default function WelcomeStartPage() {
                 placeholder="M"
                 maxLength={1}
                 value={(firstInitial || "").toUpperCase()}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = e.target.value.toUpperCase().slice(0, 1);
                   const fakeEvent = { target: { name: "firstInitial", value: val } } as unknown as React.ChangeEvent<HTMLInputElement>;
                   register("firstInitial").onChange(fakeEvent);

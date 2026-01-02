@@ -1,7 +1,9 @@
 // My Chats Screen - Personal conversations list
 // Phase 2 implementation
 
+import { useCallback } from 'react';
 import { View, FlatList, Text, StyleSheet, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useConversations } from '../hooks/useConversations';
@@ -11,7 +13,7 @@ import { ConversationListItem } from '../components/ConversationListItem';
 type MyChatsScreenProps = NativeStackScreenProps<RootStackParamList, 'Messages'>;
 
 export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
-  const { conversations, loading, refresh } = useConversations({ scope: 'personal' });
+  const { conversations, loading, refresh } = useConversations();
   const { unreadCounts, conversationPreviews } = useChatStore();
 
   const handleConversationPress = (conversationSlug: string, title: string) => {
@@ -20,6 +22,12 @@ export default function MyChatsScreen({ navigation }: MyChatsScreenProps) {
       title,
     });
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   // Empty state
   if (!loading && conversations.length === 0) {
