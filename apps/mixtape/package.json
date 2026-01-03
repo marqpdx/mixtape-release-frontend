@@ -27,7 +27,7 @@
     "@mixtape/auth": "*",
     "@mixtape/core": "*",
     "@tabler/icons-react": "^3.36.0",
-    "@tanstack/react-query": "^5.90.8",
+    "@tanstack/react-query": "5.90.14",
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/core": "^3.11.1",
     "@tiptap/extension-collaboration": "^3.11.1",
