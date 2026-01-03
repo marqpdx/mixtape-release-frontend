@@ -1,6 +1,7 @@
 // apps/mixtape/next.config.ts
 
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -62,7 +63,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath: "/app",
-  outputFileTracingRoot: __dirname,
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   async headers() {
     return [
       {
@@ -83,4 +84,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
