@@ -89,6 +89,11 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Group events and calendar management',
   },
 
+  'projects': {
+    public: true,
+    description: 'Projects and task boards',
+  },
+
   'lanternmail-landing': {
     requiredRole: 'admin',
     description: 'Landing page for Lanternmail management',

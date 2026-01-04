@@ -89,7 +89,8 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "circles-landing", label: "Circles", hidden: false },
       { key: "circle-create", label: "Create Circle", hidden: false },
       { key: "mill", label: "Grist Mill" },
-      // { key: "general", label: "General Settings" },
+      { key: "stackroom-landing", label: "Stackroom" },
+      { key: "projects", label: "Projects" },
       { key: "permissions", label: "Permissions", hidden: true },
       { key: "integrations", label: "Integrations", hidden: true },
     ]

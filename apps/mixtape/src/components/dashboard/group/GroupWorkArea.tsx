@@ -1,4 +1,4 @@
-// src/components/dashboard/group/GroupWorkArea.tsx
+// apps/mixtape/src/components/dashboard/group/GroupWorkArea.tsx
 
 import React, { useMemo } from "react";
 import { VStack, Text, Spinner, Box, Heading } from "@chakra-ui/react";
@@ -26,7 +26,9 @@ import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea"
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
 import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
+import { StackroomWorkArea } from "@/components/stackroom/StackroomWorkArea";
 import { useMembers } from "@mixtape/api/hooks";
+import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -163,11 +165,39 @@ export default function GroupWorkArea({
     );
   }
 
+  if (section === "projects") {
+    return (
+      <WorkAreaWrapper>
+        <ProjectsWorkArea
+          groupId={group.id}
+          groupSlug={group.slug}
+          groupTitle={group.title}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
   // Grist Mill (Content Creation)
   if (section === "mill") {
     return (
       <WorkAreaWrapper>
         <MillWorkArea sponsor={{ type: 'group', slug: group.slug }} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Stackroom (Document Libraries)
+  if (section === "stackroom-landing") {
+    return (
+      <WorkAreaWrapper>
+        <StackroomWorkArea
+          sponsor={{
+            type: 'group',
+            id: group.id,
+            slug: group.slug,
+            displayName: group.title
+          }}
+        />
       </WorkAreaWrapper>
     );
   }
@@ -190,6 +220,22 @@ export default function GroupWorkArea({
       </WorkAreaWrapper>
     );
   }
+
+
+  // Projects section
+  if (section === "projects") {
+    return (
+      <WorkAreaWrapper>
+        <ProjectsWorkArea
+          groupId={group.id}
+          groupSlug={group.slug}
+          groupTitle={group.title}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+
 
   // Members sections
   if (section === "members-roles") {

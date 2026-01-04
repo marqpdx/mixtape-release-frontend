@@ -64,14 +64,30 @@ export interface RetrievalError {
 
 /**
  * Library metadata
+ * Now inherits from BaseContent with sponsor pattern
  */
 export interface Library {
   id: string;
-  tenant_type: 'group' | 'user';
-  tenant_id: string;
-  name: string;
+
+  // BaseContent fields
+  title: string; // Library name (was 'name')
+  slug: string; // Auto-generated from title, unique per sponsor
+  summary: string; // Short description
+  body: string; // Detailed description/purpose
+
+  // Sponsor (replaces tenant_type/tenant_id)
+  sponsor_type: 'group' | 'user';
+  sponsor_id: string;
+
+  // Author tracking (from BaseContent)
+  author_id: string | null;
+  author_name: string;
+  submitted_by_id: string | null;
+
+  // Timestamps
   created_at: string;
   updated_at: string;
+  published_at: string | null;
 }
 
 /**

@@ -3,6 +3,7 @@ export * from './auth';
 export * from './dispatchTypes';
 export * from './groupTypes';
 export * from './lanternmailTypes';
+export * from './projectsTypes';
 export * from './socketTypes';
 export * from './stackroomTypes';
 export * from './threadworksTypes';

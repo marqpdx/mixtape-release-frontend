@@ -185,3 +185,48 @@ export const useArtifactContent = (artifactId: string | null) => {
     refetch,
   };
 };
+
+/**
+ * Hook to create a new library
+ */
+export const useCreateLibrary = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      title: string;
+      summary?: string;
+      body?: string;
+      sponsor_type: 'group' | 'user';
+      sponsor_id: string;
+    }) => stackroomApi.createLibrary(data),
+    onSuccess: () => {
+      // Invalidate libraries query to refresh the list
+      queryClient.invalidateQueries({ queryKey: stackroomQueryKeys.libraries() });
+    },
+  });
+};
+
+/**
+ * Hook to update/rename a library
+ */
+export const useUpdateLibrary = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ libraryId, data }: {
+      libraryId: string;
+      data: {
+        title?: string;
+        summary?: string;
+        body?: string;
+      };
+    }) => stackroomApi.updateLibrary(libraryId, data),
+    onSuccess: (updatedLibrary) => {
+      // Invalidate libraries query to refresh the list
+      queryClient.invalidateQueries({ queryKey: stackroomQueryKeys.libraries() });
+      // Invalidate the specific library query
+      queryClient.invalidateQueries({ queryKey: stackroomQueryKeys.library(updatedLibrary.id) });
+    },
+  });
+};

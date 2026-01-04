@@ -1,4 +1,4 @@
-// src/lib/almanacApi.ts
+// packages/api/src/clients/almanac/almanacApi.ts
 
 /**
  * Almanac API Service

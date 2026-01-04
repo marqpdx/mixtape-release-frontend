@@ -105,6 +105,16 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create a new circle within the group',
   },
 
+  'stackroom-landing': {
+    requiredRole: 'admin',
+    description: 'Landing page for group Stackroom management',
+  },
+
+  'projects': {
+    requiredRole: 'admin',
+    description: 'Landing page for group Projects management',
+  },
+
   // Settings - admin only
   'edit-group': {
     requiredRole: 'admin',

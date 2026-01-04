@@ -1,4 +1,5 @@
-// src/components/almanac/AlmanacWorkArea.tsx
+// apps/mixtape/src/components/almanac/AlmanacWorkArea.tsx
+
 'use client';
 
 import { useState } from 'react';

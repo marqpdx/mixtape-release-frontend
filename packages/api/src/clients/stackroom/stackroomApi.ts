@@ -61,6 +61,35 @@ export async function fetchLibrary(libraryId: string): Promise<Library> {
   return response.data;
 }
 
+/**
+ * Create a new library
+ */
+export async function createLibrary(data: {
+  title: string;
+  summary?: string;
+  body?: string;
+  sponsor_type: 'group' | 'user';
+  sponsor_id: string;
+}): Promise<Library> {
+  const response = await axiosInstance.post<Library>('/api/stackroom/libraries', data);
+  return response.data;
+}
+
+/**
+ * Update/rename a library
+ */
+export async function updateLibrary(
+  libraryId: string,
+  data: {
+    title?: string;
+    summary?: string;
+    body?: string;
+  }
+): Promise<Library> {
+  const response = await axiosInstance.patch<Library>(`/api/stackroom/libraries/${libraryId}`, data);
+  return response.data;
+}
+
 // ============================================================================
 // SOURCE FILE API FUNCTIONS
 // ============================================================================
