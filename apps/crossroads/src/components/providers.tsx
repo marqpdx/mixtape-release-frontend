@@ -27,15 +27,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ChakraProvider value={system}>
-      <ColorModeProvider />
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </QueryClientProvider>
-        <Toaster />
-      </ThemeProvider>
+      <ColorModeProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </QueryClientProvider>
+          <Toaster />
+        </ThemeProvider>
+      </ColorModeProvider>
     </ChakraProvider>
   );
 }

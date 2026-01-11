@@ -3,3 +3,15 @@
 
 // Export all types
 export * from './types';
+export {
+  ColorModeProvider,
+  useColorMode,
+  useColorModeValue,
+  ColorModeIcon,
+  ColorModeButton,
+  LightMode,
+  DarkMode,
+} from './theme/color-mode';
+export type { ColorModeProviderProps, UseColorModeReturn } from './theme/color-mode';
+export * from './theme/theme-context';
+export * from './theme/theme-selector';

@@ -64,6 +64,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   basePath: "/app",
   outputFileTracingRoot: path.join(__dirname, '../..'),
+  allowedDevOrigins: ["http://127.0.0.1:3011", "http://localhost:3011"],
   async headers() {
     return [
       {

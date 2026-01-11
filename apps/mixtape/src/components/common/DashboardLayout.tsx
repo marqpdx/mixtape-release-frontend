@@ -28,7 +28,6 @@ import {
   WorkAreaProps,
   DashboardLayoutProps
 } from "@components/dashboard/shared/types";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { IconArrowForward, IconChevronRight, IconFold } from "@tabler/icons-react";
 import { openParentForSection } from "@components/groups/navigationUtils";
 
@@ -54,12 +53,12 @@ export default function DashboardLayout({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
+  const textColor = "theme.text";
+  const borderColor = "theme.border";
+  const subtleTextColor = "theme.textSecondary";
   void expandedSections;
   void subtleTextColor;
-  const sidebarBg = useColorModeValue('white', 'gray.800');
+  const sidebarBg = "theme.bgSecondary";
 
   // Load active section from localStorage with custom key
   const [activeSection, setActiveSection] = useState<string>(() => {
@@ -148,7 +147,7 @@ export default function DashboardLayout({
   const overflowTabs = visibleMenuItems.slice(3);
 
   return (
-    <Box className="dashboard-layout" bg="bg.main" minH="100vh">
+    <Box className="dashboard-layout" bg="theme.bg" minH="100vh">
       {isMobile ? (
         <MobileTabs
           activeSection={activeSection}
@@ -236,7 +235,7 @@ export default function DashboardLayout({
                       py={2}
                       fontWeight="bold"
                       textAlign="left"
-                      _hover={{ bg: "gray.100" }}
+                      _hover={{ bg: "theme.surface" }}
                       borderRadius="none"
                       onClick={(e: React.MouseEvent) => {
                         // If sidebar is collapsed, expand it and open this section
@@ -374,7 +373,7 @@ function MobileTabs({
               py={2}
               borderRadius="md"
               _selected={{
-                bg: "blue.500",
+                bg: "theme.accent",
                 color: "white",
               }}
             >

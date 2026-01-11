@@ -29,6 +29,8 @@ import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailC
 import { StackroomWorkArea } from "@/components/stackroom/StackroomWorkArea";
 import { useMembers } from "@mixtape/api/hooks";
 import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
+import { CollectionsWorkArea, CollectionDetailWorkArea } from "@/components/collections";
+import ThemeWorkArea from "@/components/groups/themes/ThemeWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -177,6 +179,14 @@ export default function GroupWorkArea({
     );
   }
 
+  if (section === "theme-library") {
+    return (
+      <WorkAreaWrapper>
+        <ThemeWorkArea groupId={group.id} groupSlug={group.slug} groupTitle={group.title} />
+      </WorkAreaWrapper>
+    );
+  }
+
   // Grist Mill (Content Creation)
   if (section === "mill") {
     return (
@@ -197,6 +207,45 @@ export default function GroupWorkArea({
             slug: group.slug,
             displayName: group.title
           }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Collections (User-friendly curated content)
+  if (section === "collections-landing") {
+    return (
+      <WorkAreaWrapper>
+        <CollectionsWorkArea
+          sponsor={{
+            type: 'group',
+            id: group.id,
+            slug: group.slug,
+            displayName: group.title
+          }}
+          onNavigateToCollection={(collectionId) => {
+            setActiveSection('collection-detail', { collectionId });
+          }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "collection-detail") {
+    const collectionId = sectionParams?.collectionId;
+    if (!collectionId) {
+      return (
+        <WorkAreaWrapper>
+          <Text color="red.500">Collection ID is required</Text>
+        </WorkAreaWrapper>
+      );
+    }
+
+    return (
+      <WorkAreaWrapper>
+        <CollectionDetailWorkArea
+          collectionId={collectionId}
+          onBack={() => setActiveSection('collections-landing')}
         />
       </WorkAreaWrapper>
     );

@@ -8,3 +8,4 @@ Conservative operating rules:
 - Do not create commits, tags, or branches unless explicitly requested.
 - Prefer read-only inspection first; ask before touching files outside the project root.
 - If instructions conflict, stop and ask for clarification.
+- Ensure the use of the latest Chakra UI v3 code

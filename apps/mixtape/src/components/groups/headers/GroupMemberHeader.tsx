@@ -17,7 +17,6 @@ import {
   IconUserCircle,
   IconNetwork,
 } from "@tabler/icons-react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 const GROUP_TYPE_ICONS = {
@@ -46,8 +45,8 @@ export function GroupMemberHeader({
   onRoleChange,
   isAdminOrSteward = false,
 }: GroupMemberHeaderProps) {
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const cardBg = "theme.bgSecondary";
+  const borderColor = "theme.border";
 
   const GroupTypeIcon = GROUP_TYPE_ICONS[group.group_type as keyof typeof GROUP_TYPE_ICONS] || IconBuildingCommunity;
   const emblemSrc =
@@ -62,7 +61,7 @@ export function GroupMemberHeader({
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
     >
-      <Box minW={'100vw'} bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
+      <Box minW="100vw" bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
         <Container maxW="7xl">
           <Flex alignItems="center" gap={6}>
 
@@ -73,13 +72,13 @@ export function GroupMemberHeader({
 
             <Box flex="1">
               <Flex alignItems="center" gap={2} mb={2}>
-                <GroupTypeIcon size={24} style={{ color: 'var(--chakra-colors-gray-600)' }} />
+                <GroupTypeIcon size={24} style={{ color: "var(--theme-text-secondary)" }} />
                 <Heading size="2xl">
                   {group.title}
                 </Heading>
               </Flex>
               <Flex alignItems="center" gap={4}>
-                <Text color="gray.600" fontSize="lg">
+                <Text color="theme.textSecondary" fontSize="lg">
                   {group.member_count || 0} members
                 </Text>
                 <Badge colorScheme="green" fontSize="sm" px={3} py={1}>

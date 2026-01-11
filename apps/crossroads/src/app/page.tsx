@@ -14,47 +14,38 @@ import {
 import { IconArrowRight, IconUsers, IconLogin } from '@tabler/icons-react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { LuExternalLink } from "react-icons/lu";
-import { CrossroadsLogo } from '@components/common/CrossroadsLogo';
+import UnifiedNavbar from '@components/layout/UnifiedNavbar';
 
 export default function CrossroadsHomepage() {
   const overlayBg = useColorModeValue('whiteAlpha.200', 'blackAlpha.300');
   const textColor = useColorModeValue('white', 'white');
   const watermarkTextColor = useColorModeValue('gray.300', 'gray.400');
   const buttonColor = useColorModeValue("text.light", "text.light");
-  const logoColor = useColorModeValue('black', 'white');
-
   const backgroundImage = "/homepage/noaa-zdj3p00Rep0-unsplash.jpg";
 
   return (
-    <Box className="homepage-container"
+    <Box
       position="relative"
       width="100vw"
-      height="100vh"
+      minH="100vh"
       backgroundImage={`url(${backgroundImage})`}
       backgroundSize="cover"
       backgroundPosition="center"
       backgroundRepeat="no-repeat"
-      display="flex"
-      alignItems={{ base: "center", md: "flex-end" }}
-      justifyContent="center"
-      pb={{ base: 4, md: "19vh" }}
       overflow="hidden"
     >
-      {/* Logo in top right - MUCH SMALLER CONTAINER */}
+      <UnifiedNavbar />
       <Box
-        position="absolute"
-        top={4}
-        right={4}
-        zIndex={10}
-        _hover={{
-          transform: 'scale(1.05)',
-          filter: 'drop-shadow(0 4px 12px rgba(255,255,255,0.3))'
-        }}
-        transition="all 0.3s ease"
+        className="homepage-container"
+        position="relative"
+        width="100%"
+        minHeight="100vh"
+        display="flex"
+        alignItems={{ base: "center", md: "flex-end" }}
+        justifyContent="center"
+        pb={{ base: 4, md: "19vh" }}
+        pt={{ base: 6, md: 10 }}
       >
-        <CrossroadsLogo size={280} />
-      </Box>
-
       {/* Main Content Container */}
       <HStack
         gap={8}
@@ -208,6 +199,7 @@ export default function CrossroadsHomepage() {
             <LuExternalLink />
           </Box>
         </Link>
+      </Box>
       </Box>
     </Box>
   );

@@ -60,14 +60,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
-  { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
-  // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
-  { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
-
-  { key: "map", label: "Map", href: "/demos/map", section: "authenticated", memberOnly: true },
-  { key: "admin-panel", label: "Admin", href: "/admin", section: "authenticated", adminOnly: true, shortLabel: "Admin" },
+  { key: "dashboard", label: "Dashboard", href: "/app/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "stackroom", label: "Stackroom", href: "/app/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
+  { key: "constellation", label: "Constellation", href: "/app/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
+  // { key: "threadworks", label: "Threadworks", href: "/app/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
+  { key: "loom-codex", label: "Loom & Codex", href: "/app/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
+  { key: "map", label: "Map", href: "/app/demos/map", section: "authenticated", memberOnly: true },
+  { key: "admin-panel", label: "Admin", href: "/app/admin", section: "authenticated", adminOnly: true, shortLabel: "Admin" },
 ];
 
 interface UnifiedNavbarProps {

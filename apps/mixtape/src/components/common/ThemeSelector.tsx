@@ -1,266 +1,103 @@
-// /src/components/ThemeSelector.tsx
+// apps/mixtape/src/components/common/ThemeSelector.tsx
 "use client";
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  HStack,
-  VStack,
-  Text,
-  Popover,
-  IconButton,
-  Grid,
-  Separator,
-} from '@chakra-ui/react';
-import { useTheme } from '@contexts/ThemeContext';
-import type { FontScale } from '@contexts/ThemeContext';
+import React from "react";
+import { ThemeSelector as BaseThemeSelector, type ThemeDefinition } from "@mixtape/core";
+import { usePathname } from "next/navigation";
+import { themes as baseThemes } from "@/theme/themes";
+import { useGroupThemeSettings } from "@mixtape/api/hooks/appearance";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Badge, HStack } from "@chakra-ui/react";
 
-const ColorSwatch: React.FC<{
-  colors: { bg?: string; surface?: string; accent?: string } | null;
-  name: string;
-  isActive: boolean;
-  onClick: () => void
-}> = ({ colors, name, isActive, onClick }) => {
-  // Add safety check for colors
-  if (!colors) {
-    return null;
-  }
+const LAST_GROUP_SLUG_KEY = "mixtape-last-group-slug";
 
+function getGroupSlugFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/groups\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+function isThemeColors(value: unknown): value is ThemeDefinition["light"] {
+  if (!value || typeof value !== "object") return false;
+  const colors = value as Record<string, unknown>;
   return (
-    <Box
-      onClick={onClick}
-      cursor="pointer"
-      p={3}
-      rounded="md"
-      border="2px solid"
-      borderColor={isActive ? 'theme.accent' : 'theme.border'}
-      bg="theme.surface"
-      _hover={{ transform: 'translateY(-1px)', shadow: 'md' }}
-      transition="all 0.2s"
-    >
-      <VStack gap={2}>
-        <HStack gap={1}>
-          <Box
-            w={3}
-            h={3}
-            rounded="sm"
-            bg={colors.bg || 'gray.100'}
-            border="1px solid"
-            borderColor="theme.border"
-          />
-          <Box
-            w={3}
-            h={3}
-            rounded="sm"
-            bg={colors.surface || 'white'}
-            border="1px solid"
-            borderColor="theme.border"
-          />
-          <Box w={3} h={3} rounded="sm" bg={colors.accent || 'gray.500'} />
-        </HStack>
-        <Text
-          fontSize="xs"
-          fontWeight={isActive ? 'bold' : 'medium'}
-          color="theme.text"
-          textAlign="center"
-          lineHeight="tight"
-        >
-          {name}
-        </Text>
-      </VStack>
-    </Box>
+    typeof colors.bg === "string" &&
+    (typeof colors.bgSecondary === "string" || typeof colors.bgSecondary === "undefined") &&
+    typeof colors.surface === "string" &&
+    typeof colors.accent === "string" &&
+    typeof colors.text === "string" &&
+    typeof colors.textSecondary === "string" &&
+    typeof colors.border === "string"
   );
-};
+}
 
-const SunIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="5"/>
-    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-  </svg>
-);
+function isThemeDefinition(value: unknown): value is ThemeDefinition {
+  if (!value || typeof value !== "object") return false;
+  const theme = value as Record<string, unknown>;
+  return (
+    typeof theme.id === "string" &&
+    typeof theme.name === "string" &&
+    isThemeColors(theme.light) &&
+    isThemeColors(theme.dark) &&
+    (typeof theme.lightHighContrast === "undefined" || isThemeColors(theme.lightHighContrast)) &&
+    (typeof theme.darkHighContrast === "undefined" || isThemeColors(theme.darkHighContrast))
+  );
+}
 
-const MoonIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-  </svg>
-);
+function buildAvailableThemes(
+  hiddenThemeIds: string[],
+  groupThemes: ThemeDefinition[]
+): ThemeDefinition[] {
+  const hidden = new Set(hiddenThemeIds);
+  const combined = [...baseThemes, ...groupThemes];
+  return combined.filter((theme) => !hidden.has(theme.id));
+}
 
-const PaletteIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="13.5" cy="6.5" r=".5"/>
-    <circle cx="17.5" cy="10.5" r=".5"/>
-    <circle cx="8.5" cy="7.5" r=".5"/>
-    <circle cx="6.5" cy="12.5" r=".5"/>
-    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
-  </svg>
-);
-
-export const ThemeSelector: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Add error boundary and loading state
+export function ThemeSelector() {
+  const pathname = usePathname();
+  const groupSlug = React.useMemo(() => getGroupSlugFromPath(pathname), [pathname]);
+  const [storedGroupSlug, setStoredGroupSlug] = React.useState<string | null>(null);
   const themeContext = useTheme();
+  const usingStoredGroup = !groupSlug && !!storedGroupSlug;
 
-  if (!themeContext) {
-    return (
-      <HStack gap={2}>
-        <IconButton
-          aria-label="Toggle color mode"
-          variant="ghost"
-          color="gray.600"
-        >
-          <MoonIcon />
-        </IconButton>
-        <Button variant="ghost" color="gray.600" fontSize="sm" loading>
-          Loading...
-        </Button>
-      </HStack>
-    );
-  }
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(LAST_GROUP_SLUG_KEY);
+    if (saved) {
+      setStoredGroupSlug(saved);
+    }
+  }, []);
 
-  const {
-    currentTheme,
-    colorMode,
-    contrastMode,
-    fontScale,
-    setTheme,
-    toggleColorMode,
-    setContrastMode,
-    setFontScale,
-    availableThemes
-  } = themeContext;
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !groupSlug) return;
+    window.localStorage.setItem(LAST_GROUP_SLUG_KEY, groupSlug);
+    setStoredGroupSlug(groupSlug);
+  }, [groupSlug]);
 
-  const handleThemeSelect = (themeId: string) => {
-    setTheme(themeId);
-    setIsOpen(false); // ← Auto-close the popover immediately
-  };
+  const effectiveGroupSlug = groupSlug ?? storedGroupSlug;
+  const { data } = useGroupThemeSettings(effectiveGroupSlug);
+
+  const availableThemes = React.useMemo(() => {
+    if (!effectiveGroupSlug) {
+      return baseThemes;
+    }
+    const hiddenThemeIds = data?.hidden_theme_ids ?? [];
+    const groupThemes = (data?.group_themes ?? []).filter(isThemeDefinition);
+    return buildAvailableThemes(hiddenThemeIds, groupThemes);
+  }, [data?.group_themes, data?.hidden_theme_ids, effectiveGroupSlug]);
+
+  React.useEffect(() => {
+    if (!themeContext) return;
+    themeContext.setAvailableThemes(availableThemes);
+  }, [availableThemes, themeContext]);
 
   return (
-    <HStack gap={2}>
-      {/* Light/Dark Toggle - Reset to original colors */}
-      <IconButton
-        aria-label={`Switch to ${colorMode === 'light' ? 'dark' : 'light'} mode`}
-        onClick={toggleColorMode}
-        variant="ghost"
-        color="theme.text"
-        _hover={{ bg: 'theme.border' }}
-        transition="all 0.2s"
-      >
-        {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
-      </IconButton>
-
-      {/* Theme Selector - Proper Chakra v3 Syntax */}
-      <Popover.Root open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
-        <Popover.Trigger asChild>
-          <Button
-            variant="ghost"
-            color="theme.text"
-            _hover={{ bg: 'theme.border' }}
-            fontSize="sm"
-            gap={2}
-          >
-            <PaletteIcon />
-            <Text display={{ base: 'none', md: 'block' }}>
-              {currentTheme?.name || 'Gallery Minimal'}
-            </Text>
-          </Button>
-        </Popover.Trigger>
-
-        <Popover.Positioner>
-          <Popover.Content
-            bg="theme.surface"
-            borderColor="theme.border"
-            maxW="340px"
-            shadow="xl"
-            zIndex={9999}
-          >
-            <Popover.Body p={4}>
-              <VStack gap={4} align="stretch">
-                <Text fontSize="sm" fontWeight="semibold" color="theme.text">
-                  Choose Your Theme
-                </Text>
-                <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                  {availableThemes?.map((theme) => {
-                    // Safety check for theme and colorMode
-                    const themeColors = theme?.[colorMode];
-                    if (!themeColors) return null;
-
-                    return (
-                      <ColorSwatch
-                        key={theme.id}
-                        colors={themeColors}
-                        name={theme.name}
-                        isActive={theme.id === currentTheme?.id}
-                        onClick={() => handleThemeSelect(theme.id)}
-                      />
-                    );
-                  })}
-                </Grid>
-
-                <Separator />
-
-                {/* Accessibility Controls */}
-                <VStack gap={3} align="stretch">
-                  <Text fontSize="sm" fontWeight="semibold" color="theme.text">
-                    Accessibility
-                  </Text>
-
-                  {/* Contrast Mode */}
-                  <Box>
-                    <Text fontSize="xs" fontWeight="medium" color="theme.text" mb={2}>
-                      Contrast
-                    </Text>
-                    <HStack gap={2}>
-                      <Button
-                        size="sm"
-                        variant={contrastMode === 'normal' ? 'solid' : 'outline'}
-                        onClick={() => setContrastMode('normal')}
-                        flex={1}
-                      >
-                        Normal
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={contrastMode === 'high' ? 'solid' : 'outline'}
-                        onClick={() => setContrastMode('high')}
-                        flex={1}
-                      >
-                        High
-                      </Button>
-                    </HStack>
-                  </Box>
-
-                  {/* Font Scale */}
-                  <Box>
-                    <Text fontSize="xs" fontWeight="medium" color="theme.text" mb={2}>
-                      Text Size
-                    </Text>
-                    <HStack gap={1}>
-                      {[0.875, 1, 1.125, 1.25, 1.5].map((scale) => (
-                        <Button
-                          key={scale}
-                          size="xs"
-                          variant={fontScale === scale ? 'solid' : 'outline'}
-                          onClick={() => setFontScale(scale as FontScale)}
-                          flex={1}
-                          fontSize={scale === 0.875 ? 'xs' : scale === 1.5 ? 'md' : 'sm'}
-                        >
-                          {scale === 0.875 ? 'S' : scale === 1 ? 'M' : scale === 1.125 ? 'L' : scale === 1.25 ? 'XL' : 'XXL'}
-                        </Button>
-                      ))}
-                    </HStack>
-                  </Box>
-                </VStack>
-
-                <Text fontSize="xs" color="theme.textSecondary" textAlign="center">
-                  Changes apply instantly and are saved for your next visit
-                </Text>
-              </VStack>
-            </Popover.Body>
-          </Popover.Content>
-        </Popover.Positioner>
-      </Popover.Root>
+    <HStack gap={2} align="center">
+      <BaseThemeSelector />
+      {usingStoredGroup && (
+        <Badge size="sm" variant="subtle">
+          Last group palette
+        </Badge>
+      )}
     </HStack>
   );
-};
+}

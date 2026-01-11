@@ -6,6 +6,13 @@
   "types": "src/index.ts",
   "license": "MIT",
   "dependencies": {},
+  "peerDependencies": {
+    "@chakra-ui/react": "^3.2.2",
+    "next-themes": "^0.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0"
+  },
   "devDependencies": {
     "typescript": "^5.9.2"
   }

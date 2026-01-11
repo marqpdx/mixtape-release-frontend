@@ -81,11 +81,21 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    key: "collections",
+    label: "Collections",
+    icon: "📚",
+    subItems: [
+      { key: "collections-landing", label: "Browse Collections" },
+      { key: "collection-detail", label: "Collection Detail", hidden: true },
+    ]
+  },
+  {
     key: "settings",
     label: "Settings",
     icon: "⚙️",
     subItems: [
       { key: "edit-group", label: "Edit Group" },
+      { key: "theme-library", label: "Themes" },
       { key: "circles-landing", label: "Circles", hidden: false },
       { key: "circle-create", label: "Create Circle", hidden: false },
       { key: "mill", label: "Grist Mill" },

@@ -1,6 +1,7 @@
 // API Client exports
 export * from './almanac/almanacApi'
 export * from './assets/assetsApi'
+export * from './appearance/appearanceApi'
 export * from './auth/api'
 export * from './chat/chatApi'
 export * from './gristmill/gristmillApi'

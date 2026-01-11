@@ -52,6 +52,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   // Public section
   { key: "home", label: "Home", href: "/", section: "public" },
+  { key: "about", label: "About", href: "/about", section: "public" },
+  { key: "contact", label: "Contact", href: "/contact", section: "public" },
 
   // About section
   { key: "about", label: "About", href: "/about", section: "about" },
@@ -91,6 +93,7 @@ export default function UnifiedNavbar({
   // const { isAdmin, isSteward, isMember } = usePermissions({ user: identity });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
+  const navBackground = useColorModeValue("rgba(255, 255, 255, 0.75)", "rgba(17, 24, 39, 0.75)");
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
 
@@ -185,7 +188,7 @@ export default function UnifiedNavbar({
       id="navigation"
       role="navigation"
       aria-label="Main navigation"
-      bg="theme.surface"
+      bg={navBackground}
       borderBottom="1px solid"
       borderColor="theme.border"
       py={0}
@@ -193,7 +196,7 @@ export default function UnifiedNavbar({
       position={sticky ? "sticky" : "relative"}
       top={sticky ? 0 : "auto"}
       zIndex={1000}
-      backdropFilter="blur(10px)"
+      backdropFilter="blur(5px)"
       transition="all 0.3s ease"
     >
       <Container maxW="7xl">

@@ -120,6 +120,27 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredRole: 'admin',
     description: 'Edit group settings and details',
   },
+
+  // Themes - stewards and admins
+  'theme-library': {
+    public: true,
+    description: 'Manage visible theme palettes for the group',
+  },
+
+  'collections-landing': {
+    requiredRole: 'admin',
+    description: 'Landing page for group Collections management',
+  },
+
+  'collection-detail': {
+    requiredRole: 'admin',
+    description: 'Collection Detail',
+  },
+
+
+
+      //   { key: "collections-landing", label: "Browse Collections" },
+      // { key: "collection-detail", label: "Collection Detail", hidden: true },
 };
 
 /**

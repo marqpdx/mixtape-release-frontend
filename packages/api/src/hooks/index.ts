@@ -2,6 +2,7 @@
 
 // Subdirectory hooks
 export * from './almanac'
+export * from './appearance'
 export * from './dispatch'
 export * from './editor'
 export * from './groups'

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Provider } from "@/providers/provider";
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "Crossroads",
@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Provider>{children}</Provider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

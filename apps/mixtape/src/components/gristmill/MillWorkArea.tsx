@@ -1,4 +1,5 @@
-// src/components/gristmill/MillWorkArea.tsx
+// apps/mixtape/src/components/gristmill/MillWorkArea.tsx
+
 'use client';
 
 import { Box } from '@chakra-ui/react';

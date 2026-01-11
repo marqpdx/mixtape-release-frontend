@@ -19,7 +19,7 @@ import {
   XCircleIcon,
 } from '@heroicons/react/24/outline';
 import type { FileUploadProgress } from '@mixtape/core/types/stackroomTypes';
-import { uploadFile } from '@mixtape/api/clients/stackroom/stackroomApi';
+import { uploadFile, uploadToCollection } from '@mixtape/api/clients/stackroom/stackroomApi';
 
 interface FileUploadProps {
   libraryId: string;
@@ -27,6 +27,8 @@ interface FileUploadProps {
   onUploadError?: (error: string) => void;
   acceptedFileTypes?: string[];
   maxFileSizeMB?: number;
+  /** Upload mode: 'stackroom' for immediate processing, 'collection' for deferred processing */
+  mode?: 'stackroom' | 'collection';
 }
 
 export function FileUpload({
@@ -44,6 +46,7 @@ export function FileUpload({
     '.csv',
   ],
   maxFileSizeMB = 50,
+  mode = 'stackroom', // Default to stackroom for backwards compatibility
 }: FileUploadProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadQueue, setUploadQueue] = useState<FileUploadProgress[]>([]);
@@ -60,14 +63,22 @@ export function FileUpload({
         )
       );
 
-      // Upload with progress tracking
-      const response = await uploadFile(libraryId, file, (progress) => {
-        setUploadQueue((prev) =>
-          prev.map((upload) =>
-            upload.file_id === fileId ? { ...upload, progress } : upload
-          )
-        );
-      });
+      // Upload with progress tracking - use different endpoint based on mode
+      const response = mode === 'collection'
+        ? await uploadToCollection(libraryId, file, (progress) => {
+            setUploadQueue((prev) =>
+              prev.map((upload) =>
+                upload.file_id === fileId ? { ...upload, progress } : upload
+              )
+            );
+          })
+        : await uploadFile(libraryId, file, (progress) => {
+            setUploadQueue((prev) =>
+              prev.map((upload) =>
+                upload.file_id === fileId ? { ...upload, progress } : upload
+              )
+            );
+          });
 
       // Mark as complete
       setUploadQueue((prev) =>
@@ -78,7 +89,7 @@ export function FileUpload({
                 status: 'complete',
                 progress: 100,
                 source_file_id: response.source_file_id,
-                ingestion_run_id: response.ingestion_run_id,
+                ingestion_run_id: 'ingestion_run_id' in response ? response.ingestion_run_id : undefined,
               }
             : upload
         )
@@ -124,7 +135,7 @@ export function FileUpload({
 
       onUploadError?.(errorMessage);
     }
-  }, [libraryId, onUploadComplete, onUploadError]);
+  }, [libraryId, mode, onUploadComplete, onUploadError]);
 
   // Process files
   const handleFiles = useCallback(

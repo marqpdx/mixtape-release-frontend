@@ -127,6 +127,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredRole: 'admin',
     description: 'Edit group settings and details',
   },
+
+  // Themes - stewards and admins
+  'theme-library': {
+    public: true,
+    description: 'Manage visible theme palettes for the group',
+  },
 };
 
 /**

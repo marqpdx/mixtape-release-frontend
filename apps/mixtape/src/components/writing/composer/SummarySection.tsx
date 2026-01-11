@@ -1,4 +1,4 @@
-// src/components/write/composer/SummarySection.tsx
+// apps/mixtape/src/components/writing/composer/SummarySection.tsx
 
 import React from 'react';
 import {

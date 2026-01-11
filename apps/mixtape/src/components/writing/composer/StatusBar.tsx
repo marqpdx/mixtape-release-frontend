@@ -1,4 +1,4 @@
-// src/components/write/composer/StatusBar.tsx - Simplified version
+// apps/mixtape/src/components/writing/composer/StatusBar.tsx - Simplified version
 
 'use client';
 

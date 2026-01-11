@@ -3,7 +3,6 @@
 "use client";
 
 import { Box, Container, Flex, Heading, Text } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import {
   IconBuildingCommunity,
   IconCircleDot,
@@ -35,9 +34,8 @@ export function GroupAdminHeader({
   isAdminOrSteward = false,
 }: GroupAdminHeaderProps) {
   void currentGroupSlug;
-  void useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const textColor = useColorModeValue('gray.600', 'gray.400');
+  const borderColor = "theme.border";
+  const textColor = "theme.textSecondary";
 
   const GroupTypeIcon = GROUP_TYPE_ICONS[group.group_type as keyof typeof GROUP_TYPE_ICONS] || IconBuildingCommunity;
 
@@ -48,10 +46,10 @@ export function GroupAdminHeader({
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
     >
-      <Box bg={"transparent"} borderBottomWidth="1px" borderColor={borderColor} py={4}>
+      <Box bg="transparent" borderBottomWidth="1px" borderColor={borderColor} py={4}>
         <Container maxW="7xl">
           <Flex alignItems="center" gap={3}>
-            <GroupTypeIcon size={23} style={{ color: 'var(--chakra-colors-gray-500)' }} />
+            <GroupTypeIcon size={23} style={{ color: "var(--theme-text-secondary)" }} />
             <Heading size="xl">{group.title}</Heading>
             <Text color={textColor} fontSize="sm">
               • Admin Dashboard!

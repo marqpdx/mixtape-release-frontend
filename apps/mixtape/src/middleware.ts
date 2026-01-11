@@ -30,15 +30,14 @@ export function middleware(request: NextRequest) {
   const isLogoutRedirect = request.nextUrl.searchParams.get('logout') === 'true';
 
   // Define route categories
-  const isAuthPage = pathname.startsWith('/login') ||
-                     pathname.startsWith('/signup') ||
-                     pathname.startsWith('/forgot-password');
+  const isAuthPage = pathname.startsWith('/app/login') ||
+                     pathname.startsWith('/app/signup') ||
+                     pathname.startsWith('/app/forgot-password');
 
-  const isProtectedPage = pathname.startsWith('/dashboard') ||
-                          pathname.startsWith('/settings') ||
-                          pathname.startsWith('/admin') ||
-                          pathname.startsWith('/profile');
-
+  const isProtectedPage = pathname.startsWith('/app/dashboard') ||
+                          pathname.startsWith('/app/settings') ||
+                          pathname.startsWith('/app/admin') ||
+                          pathname.startsWith('/app/profile');
 
   // Redirect unauthenticated users trying to access protected pages
   if (isProtectedPage && !isAuthenticated) {

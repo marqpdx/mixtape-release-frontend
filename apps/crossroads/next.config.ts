@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
   },
+  allowedDevOrigins: ["http://127.0.0.1:3010", "http://localhost:3010"],
 
   async rewrites() {
     return [

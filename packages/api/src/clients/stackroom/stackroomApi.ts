@@ -71,7 +71,15 @@ export async function createLibrary(data: {
   sponsor_type: 'group' | 'user';
   sponsor_id: string;
 }): Promise<Library> {
-  const response = await axiosInstance.post<Library>('/api/stackroom/libraries', data);
+  // Map frontend naming to backend naming
+  const payload = {
+    title: data.title,  // Backend model uses 'title', not 'name'
+    summary: data.summary,
+    body: data.body,
+    tenant_type: data.sponsor_type,
+    tenant_id: data.sponsor_id,
+  };
+  const response = await axiosInstance.post<Library>('/api/stackroom/libraries/', payload);
   return response.data;
 }
 
@@ -151,11 +159,10 @@ export function getDefaultEmbeddingModel(): { name: string; version: string } {
 // ============================================================================
 
 /**
- * Upload a file for ingestion
+ * Upload a file for ingestion (Stackroom workflow - immediate processing)
  *
- * NOTE: This requires a simplified upload endpoint on the backend
- * that handles the full ingestion process. Current backend API
- * expects clients to orchestrate the ingestion steps.
+ * NOTE: This triggers immediate text extraction, chunking, and embedding.
+ * For Collection uploads (deferred processing), use uploadToCollection instead.
  *
  * @param libraryId - Library to upload to
  * @param file - File to upload
@@ -192,6 +199,64 @@ export async function uploadFile(
     // Handle 409 Conflict - file already exists
     if (error.response?.status === 409) {
       const duplicateError: any = new Error('File already exists in library');
+      duplicateError.isDuplicate = true;
+      duplicateError.source_file_id = error.response.data.source_file_id;
+      throw duplicateError;
+    }
+
+    if (error.response?.data) {
+      throw new Error(error.response.data.detail || 'Upload failed');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Upload a file to a Collection (curation workflow - deferred processing)
+ *
+ * This is the Collection-focused upload that:
+ * - Creates file metadata only
+ * - Saves file for later processing
+ * - Returns immediately (fast upload)
+ * - Background task processes files asynchronously
+ *
+ * Use this for Collections where users care about curation, not immediate indexing.
+ * For Stackroom uploads where indexing is immediate, use uploadFile instead.
+ *
+ * @param collectionId - Collection to upload to
+ * @param file - File to upload
+ * @param onProgress - Progress callback
+ */
+export async function uploadToCollection(
+  collectionId: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<{ source_file_id: string; filename: string; status: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await axiosInstance.post<{ source_file_id: string; filename: string; status: string }>(
+      `/api/collections/${collectionId}/upload/`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            // Clamp to 0-100 range to avoid UI errors
+            onProgress(Math.min(100, Math.max(0, progress)));
+          }
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    // Handle 409 Conflict - file already exists
+    if (error.response?.status === 409) {
+      const duplicateError: any = new Error('File already exists in collection');
       duplicateError.isDuplicate = true;
       duplicateError.source_file_id = error.response.data.source_file_id;
       throw duplicateError;

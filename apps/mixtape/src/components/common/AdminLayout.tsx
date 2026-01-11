@@ -158,7 +158,9 @@ export default function AdminLayout({
           {/* Left Navigation */}
           <Box
             w="19%"
-            borderRight="1px solid #ddd"
+            borderRight="1px solid"
+            borderColor="theme.border"
+            bg="theme.bgSecondary"
             minH="80vh"
             p={0}
           >
@@ -191,7 +193,7 @@ export default function AdminLayout({
                       py={2}
                       fontWeight="bold"
                       textAlign="left"
-                      _hover={{ bg: "gray.500" }}
+                      _hover={{ bg: "theme.surface" }}
                     >
                       <HStack>
                         {menuItem.label}
@@ -299,7 +301,7 @@ function MobileTabs({
               py={2}
               borderRadius="md"
               _selected={{
-                bg: "blue.500",
+                bg: "theme.accent",
                 color: "white",
               }}
             >

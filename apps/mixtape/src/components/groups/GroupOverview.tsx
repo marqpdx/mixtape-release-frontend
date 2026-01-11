@@ -77,7 +77,7 @@ export default function GroupOverview({ group, userRole, onNavigate }: GroupOver
           </Card.Body>
         </Card.Root>
 
-        <Text color="gray.600">
+        <Text color="theme.textSecondary">
           Group overview dashboard coming soon with more detailed analytics and insights.
         </Text>
       </VStack>

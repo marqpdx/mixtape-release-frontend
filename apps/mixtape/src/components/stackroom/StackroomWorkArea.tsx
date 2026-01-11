@@ -1,4 +1,4 @@
-// components/stackroom/StackroomWorkArea.tsx
+// apps/mixtape/src/components/stackroom/StackroomWorkArea.tsx
 
 'use client';
 

@@ -1,4 +1,5 @@
-// src/hooks/almanac/useCalendarOccurrences.ts
+// packages/api/src/hooks/almanac/useCalendarOccurrences.ts
+
 // ✅ React Query version with automatic caching and background refetching
 
 import { useQuery } from '@tanstack/react-query';
