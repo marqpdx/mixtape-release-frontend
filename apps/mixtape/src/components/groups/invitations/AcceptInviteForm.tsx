@@ -93,7 +93,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       } else {
         // Redirect to the group page
         const groupSlug = res.data.group?.slug;
-        router.push(groupSlug ? `/groups/${groupSlug}` : "/app/dashboard");
+        router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }
     } catch (error) {
       console.error("Invite acceptance error:", error);

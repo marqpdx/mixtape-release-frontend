@@ -14,6 +14,7 @@ import { useGroups, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import GroupsTable from "@components/groups/GroupsTable";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import MessageCenter from "../sections/MessageCenter";
+import GroupCreateWorkArea from "@/components/groups/create/GroupCreateWorkArea";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -101,12 +102,10 @@ export default function MemberWorkArea({
   if (section === "create-group") {
     return (
       <WorkAreaWrapper>
-        <></>
-        {/* <MinimalRHFForm
-          // showCard={false}
-          onSuccess={stableCallbacks.handleGroupSuccess}
-          // onSuccessAndEdit={stableCallbacks.handleGroupSuccessAndEdit}
-        /> */}
+        <GroupCreateWorkArea
+          onCancel={() => setActiveSection("my-groups")}
+          onCreated={() => setActiveSection("my-groups")}
+        />
       </WorkAreaWrapper>
     );
   }
