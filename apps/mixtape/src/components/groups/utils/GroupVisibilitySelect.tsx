@@ -9,9 +9,8 @@ import { createListCollection } from "@chakra-ui/react";
 export const groupVisibilityCollection = createListCollection({
   items: [
     { label: "Public", value: "public" },
-    { label: "Invite-Only", value: "invite_only" },
     { label: "Private", value: "private" },
-    { label: "Hidden", value: "hidden" },
+    { label: "Unlisted", value: "unlisted" },
   ],
 });
 

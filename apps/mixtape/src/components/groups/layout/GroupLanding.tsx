@@ -1,4 +1,4 @@
-// src/components/groups/GroupLanding.tsx - Updated interface
+// apps/mixtape/src/components/groups/layout/GroupLanding.tsx
 
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Box, Container } from "@chakra-ui/react";

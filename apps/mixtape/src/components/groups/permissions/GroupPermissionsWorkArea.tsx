@@ -1,4 +1,4 @@
-// src/components/groups/permissions/GroupPermissionsWorkArea.tsx
+// apps/mixtape/src/components/groups/permissions/GroupPermissionsWorkArea.tsx
 
 "use client";
 
@@ -61,6 +61,18 @@ const AVAILABLE_PERMISSIONS: Permission[] = [
     code: "can__CreateSponsoredCircle",
     name: "Create Circles",
     description: "Create Circles sponsored by this Community",
+    category: "capability",
+  },
+  {
+    code: "can__ManageThreadworks",
+    name: "Manage Threadworks",
+    description: "Create, edit, and manage forums and discussions",
+    category: "capability",
+  },
+  {
+    code: "can__ManageLanternmail",
+    name: "Manage Lanternmail",
+    description: "Create, edit, and manage mailing lists",
     category: "capability",
   },
 ];

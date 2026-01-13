@@ -21,17 +21,17 @@ export function JoiningTab({ group, isMember, onJoinGroup }: { group: Group; isM
           <VStack gap={4}>
             <Text>
               {group.visibility === 'public' && "This group is open for anyone to join!"}
-              {group.visibility === 'invite_only' && "This group is invite-only."}
-              {(group.visibility === 'private' || group.visibility === 'hidden') && "This group is private."}
+              {group.visibility === 'unlisted' && "This group is unlisted."}
+              {group.visibility === 'private' && "This group is private."}
             </Text>
             {group.visibility === 'public' && onJoinGroup && (
               <Button colorScheme="green" size="lg" w="full" onClick={onJoinGroup}>
                 Join Group
               </Button>
             )}
-            {group.visibility === 'invite_only' && onJoinGroup && (
+            {group.visibility === 'unlisted' && onJoinGroup && (
               <Button colorScheme="green" size="lg" w="full" onClick={onJoinGroup}>
-                Request to Join
+                Request Access
               </Button>
             )}
           </VStack>

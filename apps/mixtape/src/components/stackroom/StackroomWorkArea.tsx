@@ -10,6 +10,7 @@ import { SearchInput } from '@/components/stackroom/SearchInput';
 import { ResultsList } from '@/components/stackroom/ResultsList';
 import { FileUpload } from '@/components/stackroom/FileUpload';
 import { ActivityTab } from '@/components/stackroom/ActivityTab';
+import { PuddlejumpImport } from '@/components/stackroom/PuddlejumpImport';
 import { useSearchLibrary, useLibraries, useCreateLibrary } from '@mixtape/api';
 import { getDefaultEmbeddingModel } from '@mixtape/api/clients/stackroom/stackroomApi';
 import type { ChunkResult } from '@mixtape/core/types/stackroomTypes';
@@ -180,6 +181,7 @@ export function StackroomWorkArea({ sponsor }: StackroomWorkAreaProps) {
         <Tabs.Root defaultValue="search">
           <Tabs.List>
             <Tabs.Trigger value="upload">Upload & Ingest</Tabs.Trigger>
+            <Tabs.Trigger value="import">Import Puddlejump</Tabs.Trigger>
             <Tabs.Trigger value="search">Search Library</Tabs.Trigger>
             <Tabs.Trigger value="activity">Activity</Tabs.Trigger>
           </Tabs.List>
@@ -309,6 +311,33 @@ export function StackroomWorkArea({ sponsor }: StackroomWorkAreaProps) {
                   }}
                 />
               )}
+            </VStack>
+          </Tabs.Content>
+
+          {/* Import Puddlejump Tab */}
+          <Tabs.Content value="import" py={6}>
+            <VStack gap={6} align="stretch">
+              <Box>
+                <Heading size="md" mb={2}>
+                  Import Puddlejump Bundle
+                </Heading>
+                <Text fontSize="sm" color="gray.600">
+                  Import a portable document library bundle (.zip) to create a new collection
+                </Text>
+              </Box>
+
+              <PuddlejumpImport
+                onImportComplete={(result) => {
+                  // Navigation is handled automatically in component
+                  void result;
+                }}
+                onImportError={(error) => {
+                  // Error toasting is handled in component
+                  void error;
+                }}
+                autoIngest={true}
+                conflictStrategy="replace"
+              />
             </VStack>
           </Tabs.Content>
 

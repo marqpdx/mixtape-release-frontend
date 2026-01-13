@@ -79,7 +79,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
   // Threadworks - accessible to all stewards
   'threadworks-landing': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageThreadworks',
     description: 'Group forums and discussions',
   },
 
@@ -95,12 +95,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   },
 
   'lanternmail-landing': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageLanternmail',
     description: 'Landing page for Lanternmail management',
   },
 
   'lanternmail-create': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageLanternmail',
     description: 'Create a new Lanternmail list',
   },
 

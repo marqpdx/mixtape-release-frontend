@@ -1,4 +1,4 @@
-// src/components/groups/tabs/GroupTabs.tsx (UPDATED)
+// apps/mixtape/src/components/groups/tabs/GroupTabs.tsx
 
 "use client";
 
@@ -15,7 +15,7 @@ import {
   IconList,  // ← NEW: for Noticeboard
 } from "@tabler/icons-react";
 import { OverviewTab } from "./OverviewTab";
-import { ConnectionsTab } from "./ConnectionsTab";
+import { ThreadworksTab } from "./ThreadworksTab";
 // import { EventsTab } from "./EventsTab";
 import { CoursesTab } from "./CoursesTab";
 import { MembersTab } from "./MembersTab";
@@ -34,11 +34,11 @@ interface GroupTabsProps {
 
 const memberTabs = [
   { key: 'overview', label: 'Overview', icon: IconInfoHexagon },
+  { key: 'members', label: 'Members', icon: IconUsers },
   { key: 'noticeboard', label: 'Noticeboard', icon: IconList },  // ← NEW
-  { key: 'connections', label: 'Connections', icon: IconMessages },
+  { key: 'threadworks', label: 'Threadworks', icon: IconMessages },
   { key: 'events', label: 'Events', icon: IconCalendar },
   { key: 'courses', label: 'Courses', icon: IconSchool },
-  { key: 'members', label: 'Members', icon: IconUsers },
   { key: 'files', label: 'Files/Resources', icon: IconFolderOpen },
 ];
 
@@ -106,8 +106,8 @@ export function GroupTabs({
           <Tabs.Content value="noticeboard">
             <NoticeboardTab group={group} />
           </Tabs.Content>
-          <Tabs.Content value="connections">
-            <ConnectionsTab group={group} />
+          <Tabs.Content value="threadworks">
+            <ThreadworksTab group={group} />
           </Tabs.Content>
           <Tabs.Content value="events">
             {/* <EventsTab group={group} /> */}

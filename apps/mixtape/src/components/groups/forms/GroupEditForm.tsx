@@ -338,7 +338,7 @@ export default function GroupEditForm({
                   <GroupVisibilitySelect
                     register={register}
                     value={watch("visibility")}
-                    onChange={(val) => setValue("visibility", val as "public" | "invite_only" | "private" | "hidden")}
+                    onChange={(val) => setValue("visibility", val as "public" | "private" | "unlisted")}
                   />
                 </Field.Root>
               </SimpleGrid>

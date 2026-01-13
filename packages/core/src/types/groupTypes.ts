@@ -16,7 +16,7 @@ import {
 // ---------- Shared unions & enums ----------
 
 export type GroupType = 'community' | 'circle' | 'persona' | 'coalition';
-export type GroupVisibility = 'public' | 'invite_only' | 'private' | 'hidden';
+export type GroupVisibility = 'public' | 'private' | 'unlisted';
 export type GroupRole = 'admin' | 'steward' | 'member';
 export type GroupStatus = 'draft' | 'published' | 'archived';
 export type MemberType = 'customuser' | 'group' | 'organization';
@@ -253,9 +253,8 @@ export const getGroupTypeLabel = (groupType: GroupType): string => {
 export const getGroupVisibilityLabel = (visibility: GroupVisibility): string => {
   const labels: Record<GroupVisibility, string> = {
     public: 'Public',
-    invite_only: 'Invite Only',
     private: 'Private',
-    hidden: 'Hidden'
+    unlisted: 'Unlisted'
   };
   return labels[visibility] || visibility;
 };
@@ -475,4 +474,3 @@ export const invitationStatusIconMap: Record<
     strokeWidth: STROKEWIDTH,
   },
 };
-

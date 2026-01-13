@@ -1,4 +1,4 @@
-// src/app/(authenticate)/groups/[slug]/page.tsx
+// apps/mixtape/src/app/(authenticated)/groups/[slug]/page.tsx
 
 "use client";
 
