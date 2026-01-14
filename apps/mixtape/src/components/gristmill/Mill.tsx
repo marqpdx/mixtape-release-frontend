@@ -6,6 +6,7 @@ import { Box, Textarea, VStack, Button, Text, HStack } from '@chakra-ui/react';
 import { parseGrist, saveDraft, promoteDraft } from '@mixtape/api/clients/gristmill/gristmillApi';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
 import type { GristBlock, SponsorContext } from './types';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface MillProps {
   sponsor: SponsorContext;
@@ -17,6 +18,7 @@ export function Mill({ sponsor }: MillProps) {
   const [draftId, setDraftId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleParse = async () => {
     try {
@@ -52,8 +54,18 @@ export function Mill({ sponsor }: MillProps) {
     try {
       setIsLoading(true);
       // Pass sponsor context to promotion
-      const result = await promoteDraft(draftId, sponsor.type === 'group' ? sponsor.slug : undefined);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const result = await promoteDraft(
+        draftId,
+        sponsor.type === 'group' ? sponsor.slug : undefined,
+        timezone
+      );
       setMessage(`Event created: ${result.event_slug}`);
+      if (sponsor.type === 'group') {
+        queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'drafts', sponsor.slug] });
+        queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'published', sponsor.slug] });
+        queryClient.invalidateQueries({ queryKey: ['almanac', 'calendar', sponsor.slug] });
+      }
     } catch (error) {
       setMessage(`Promote error: ${error}`);
     } finally {

@@ -3,7 +3,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Box, Spinner, Text, HStack, VStack, Button, Badge, Checkbox } from '@chakra-ui/react';
+import { Box, Spinner, Text, HStack, VStack, Button, Badge, Checkbox, Stack } from '@chakra-ui/react';
 import {
   DialogRoot,
   DialogBackdrop,
@@ -17,7 +17,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { DatesSetArg, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
+import type { DatesSetArg, DateClickArg, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
 import { useQuery } from '@tanstack/react-query';
 import { almanacApi } from '@mixtape/api/clients/almanac/almanacApi';
 import type { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
@@ -45,10 +45,15 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // Start of current month
     end: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0), // End of next month
   });
+  const [currentMonthStart, setCurrentMonthStart] = useState(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEventSlug, setSelectedEventSlug] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [isDayAgendaOpen, setIsDayAgendaOpen] = useState(false);
 
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
@@ -104,6 +109,16 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
     return true;
   });
 
+  const monthOccurrences = filteredOccurrences
+    .filter((occurrence: CalendarOccurrence) => {
+      const start = new Date(occurrence.start);
+      return (
+        start.getFullYear() === currentMonthStart.getFullYear() &&
+        start.getMonth() === currentMonthStart.getMonth()
+      );
+    })
+    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
   // DEBUG: Log calendar data
   console.log('[EventCalendar] Debug Info:', {
     groupSlug,
@@ -134,12 +149,26 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
 
   console.log('[EventCalendar] Converted events for FullCalendar:', events);
 
+  const dayAgendaOccurrences = selectedDay
+    ? filteredOccurrences.filter((occurrence: CalendarOccurrence) => {
+        const start = new Date(occurrence.start);
+        return (
+          start.getFullYear() === selectedDay.getFullYear() &&
+          start.getMonth() === selectedDay.getMonth() &&
+          start.getDate() === selectedDay.getDate()
+        );
+      })
+    : [];
+
   // Handle date range changes
   const handleDatesSet = (arg: DatesSetArg) => {
     setDateRange({
       start: arg.start,
       end: arg.end,
     });
+    if (arg.view?.currentStart) {
+      setCurrentMonthStart(arg.view.currentStart);
+    }
   };
 
   // Handle event click - open detail modal
@@ -157,6 +186,11 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
       setSelectedEventSlug(eventSlug);
       setIsModalOpen(true);
     }
+  };
+
+  const handleDateClick = (info: DateClickArg) => {
+    setSelectedDay(info.date);
+    setIsDayAgendaOpen(true);
   };
 
   // Handle event hover - show tooltip
@@ -382,33 +416,88 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
           </Box>
         )}
 
-        <Box>
-          <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
-          }}
-          events={events}
-          eventClick={handleEventClick}
-          eventMouseEnter={handleEventMouseEnter}
-          eventMouseLeave={handleEventMouseLeave}
-          datesSet={handleDatesSet}
-          height="auto"
-          eventColor="#3182ce"
-          eventDisplay="block"
-          displayEventTime={true}
-          displayEventEnd={false}
-          eventTimeFormat={{
-            hour: 'numeric',
-            minute: '2-digit',
-            meridiem: 'short',
-          }}
-        />
-        </Box>
+        <Stack direction={{ base: "column", lg: "row" }} align="start" gap={6}>
+          <Box
+            w={{ base: "full", lg: "280px" }}
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={3}
+          >
+            <Text fontWeight="semibold" mb={3}>
+              This Month
+            </Text>
+            {monthOccurrences.length === 0 ? (
+              <Text fontSize="sm" color="gray.500">
+                No events scheduled.
+              </Text>
+            ) : (
+              <Stack gap={3}>
+                {monthOccurrences.map((occurrence) => (
+                  <Box
+                    key={occurrence.id}
+                    p={2}
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    cursor="pointer"
+                    _hover={{ bg: "gray.50" }}
+                    onClick={() => {
+                      if (onViewEvent) {
+                        onViewEvent(occurrence.event_slug);
+                        return;
+                      }
+                      setSelectedEventSlug(occurrence.event_slug);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <Text fontWeight="medium" fontSize="sm" mb={1} noOfLines={1}>
+                      {occurrence.title}
+                    </Text>
+                    <Text fontSize="xs" color="gray.600">
+                      {new Date(occurrence.start).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </Text>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+
+          <Box flex="1" minW={0} w="full">
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay',
+              }}
+              events={events}
+              eventClick={handleEventClick}
+              dateClick={handleDateClick}
+              eventMouseEnter={handleEventMouseEnter}
+              eventMouseLeave={handleEventMouseLeave}
+              datesSet={handleDatesSet}
+              height="auto"
+              eventColor="#3182ce"
+              eventDisplay="block"
+              displayEventTime={true}
+              displayEventEnd={false}
+              eventTimeFormat={{
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short',
+              }}
+            />
+          </Box>
+        </Stack>
       </VStack>
 
       {/* Event Detail Modal */}
@@ -430,6 +519,71 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
                 eventSlug={selectedEventSlug}
                 onBack={() => setIsModalOpen(false)}
               />
+            </DialogBody>
+          </DialogContent>
+        </DialogRoot>
+      )}
+
+      {selectedDay && (
+        <DialogRoot
+          open={isDayAgendaOpen}
+          onOpenChange={({ open }: { open: boolean }) => setIsDayAgendaOpen(open)}
+          size="md"
+        >
+          <DialogBackdrop />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedDay.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </DialogTitle>
+              <DialogCloseTrigger />
+            </DialogHeader>
+            <DialogBody>
+              {dayAgendaOccurrences.length === 0 ? (
+                <Text color="gray.500">No events scheduled for this day.</Text>
+              ) : (
+                <Stack gap={3}>
+                  {dayAgendaOccurrences.map((occurrence) => (
+                    <Box
+                      key={occurrence.id}
+                      p={3}
+                      border="1px solid"
+                      borderColor="gray.200"
+                      borderRadius="md"
+                      cursor="pointer"
+                      _hover={{ bg: "gray.50" }}
+                      onClick={() => {
+                        if (onViewEvent) {
+                          onViewEvent(occurrence.event_slug);
+                          return;
+                        }
+                        setSelectedEventSlug(occurrence.event_slug);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <Text fontWeight="semibold" mb={1}>
+                        {occurrence.title}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {new Date(occurrence.start).toLocaleString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </Text>
+                      {occurrence.location && (
+                        <Text fontSize="xs" color="gray.500">
+                          {occurrence.location}
+                        </Text>
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
+              )}
             </DialogBody>
           </DialogContent>
         </DialogRoot>

@@ -686,8 +686,12 @@ export async function rsvpToGroupEvent(
  * Get event attendees within a group
  */
 export async function fetchGroupEventAttendees(groupSlug: string, eventSlug: string): Promise<EventAttendee[]> {
-  const response = await axiosInstance.get(`/api/groups/${groupSlug}/events/${eventSlug}/attendees`);
-  return response.data;
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/almanac/${eventSlug}/attendees`);
+  const data = response.data as EventAttendee[] | { results?: EventAttendee[] };
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return data?.results || [];
 }
 
 /**
@@ -695,7 +699,7 @@ export async function fetchGroupEventAttendees(groupSlug: string, eventSlug: str
  */
 export async function checkInAttendee(groupSlug: string, eventSlug: string, attendeeId: string): Promise<EventAttendee> {
   const response = await axiosInstance.patch(
-    `/api/groups/${groupSlug}/events/${eventSlug}/attendees/${attendeeId}/check-in`
+    `/api/groups/${groupSlug}/almanac/${eventSlug}/attendees/${attendeeId}/check-in`
   );
   return response.data;
 }

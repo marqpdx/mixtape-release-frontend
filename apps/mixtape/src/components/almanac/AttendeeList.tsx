@@ -30,7 +30,7 @@ export function AttendeeList({ groupSlug, eventSlug }: AttendeeListProps) {
   const [showCheckedIn, setShowCheckedIn] = useState<boolean>(false);
 
   // Fetch attendees
-  const { data: attendees, isLoading, error } = useQuery({
+  const { data: attendees = [], isLoading, error } = useQuery({
     queryKey: ['almanac', 'attendees', groupSlug, eventSlug],
     queryFn: () => fetchGroupEventAttendees(groupSlug, eventSlug),
   });
@@ -77,7 +77,7 @@ export function AttendeeList({ groupSlug, eventSlug }: AttendeeListProps) {
     );
   }
 
-  if (!attendees || attendees.length === 0) {
+  if (attendees.length === 0) {
     return (
       <Box textAlign="center" py={10}>
         <Text color="gray.500">No RSVPs yet</Text>

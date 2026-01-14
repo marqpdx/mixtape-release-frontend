@@ -36,8 +36,11 @@ export async function listDrafts(): Promise<MillDraft[]> {
   return response.data;
 }
 
-export async function promoteDraft(draftId: string, groupSlug?: string) {
-  const params = groupSlug ? { group_slug: groupSlug } : {};
+export async function promoteDraft(draftId: string, groupSlug?: string, timezone?: string) {
+  const params = {
+    ...(groupSlug ? { group_slug: groupSlug } : {}),
+    ...(timezone ? { timezone } : {}),
+  };
   const response = await axiosInstance.post(`/api/gristmill/drafts/${draftId}/promote`, params);
   return response.data;
 }

@@ -12,17 +12,50 @@ import type { NextRequest } from 'next/server';
  * Security Note: We check for the refresh token cookie (not access token)
  * because the access token is stored in memory and not accessible to middleware.
  */
+/**
+ * Sanitize URL for logging by removing sensitive query parameters
+ */
+function sanitizeUrl(url: URL): string {
+  const sensitiveParams = [
+    'password',
+    'token',
+    'secret',
+    'key',
+    'refresh_token',
+    'access_token',
+    'identifier', // Could contain email (PII)
+  ];
+  const sanitized = new URL(url);
+
+  sensitiveParams.forEach(param => {
+    if (sanitized.searchParams.has(param)) {
+      sanitized.searchParams.set(param, '[REDACTED]');
+    }
+  });
+
+  return `${sanitized.pathname}${sanitized.search}`;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // console.log('[Middleware] Path:', pathname);
+  // Security: Block requests with sensitive data in query params
+  // Credentials should NEVER be in URLs
+  if (request.nextUrl.searchParams.has('password') ||
+      request.nextUrl.searchParams.has('secret') ||
+      request.nextUrl.searchParams.has('access_token')) {
+    console.error('[Security] Blocked request with sensitive data in URL:', sanitizeUrl(request.nextUrl));
+    return new NextResponse('Bad Request: Sensitive data must not be in URL', { status: 400 });
+  }
 
   // Check for refresh token cookie (try both possible names)
   const refreshToken = request.cookies.get('refresh_token') ||
                        request.cookies.get('refresh') ||
                        request.cookies.get('refreshtoken');
 
-  console.log('[Middleware] Refresh token found:', !!refreshToken);
+  // Log with sanitized URL (remove passwords/tokens from logs)
+  const sanitizedPath = sanitizeUrl(request.nextUrl);
+  console.log('[Middleware] Path:', sanitizedPath, '| Auth:', !!refreshToken);
 
   const isAuthenticated = !!refreshToken;
 

@@ -1,3 +1,5 @@
+// packages/api/src/clients/stackroom/stackroomApi.ts
+
 // Stackroom API client
 // Semantic retrieval and IR operations
 

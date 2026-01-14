@@ -90,7 +90,11 @@ export function AvailableFilesList({
                       <IconFile size={24} />
                     </Box>
                     <VStack align="start" gap={1} flex={1}>
-                      <Text fontWeight="medium" fontSize="sm">
+                      <Text
+                        fontWeight="medium"
+                        fontSize="sm"
+                        color={file.in_collection ? "gray.400" : "inherit"}
+                      >
                         {file.filename}
                       </Text>
                       <HStack gap={2} fontSize="xs" color="gray.600">
@@ -111,20 +115,10 @@ export function AvailableFilesList({
 
                   {/* Add/Status Button */}
                   {file.in_collection ? (
-                    <HStack gap={1}>
-                      <Badge colorPalette="green" size="sm">
-                        <IconCheck size={12} />
-                        Added ({file.item_count})
-                      </Badge>
-                      <IconButton
-                        aria-label="Add another instance"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onAddFile(file.id)}
-                      >
-                        <IconPlus size={20} />
-                      </IconButton>
-                    </HStack>
+                    <Badge colorPalette="green" size="sm">
+                      <IconCheck size={12} />
+                      Added
+                    </Badge>
                   ) : (
                     <IconButton
                       aria-label="Add to collection"

@@ -4,10 +4,12 @@
 
 import { useState } from 'react';
 import { Button, HStack, VStack } from '@chakra-ui/react';
+import { useQuery } from '@tanstack/react-query';
 import { EventDraftList } from './EventDraftList';
 import { EventPublishedList } from './EventPublishedList';
 import { EventDetailView } from './EventDetailView';
 import { EventCalendar } from './EventCalendar';
+import { fetchGroupEvents } from '@mixtape/api/clients/almanac/almanacApi';
 
 interface AlmanacWorkAreaProps {
   section: string;
@@ -19,6 +21,11 @@ interface AlmanacWorkAreaProps {
 export function AlmanacWorkArea({ groupSlug }: AlmanacWorkAreaProps) {
   const [view, setView] = useState<'drafts' | 'published' | 'calendar' | 'event-detail'>('drafts');
   const [selectedEventSlug, setSelectedEventSlug] = useState<string | null>(null);
+  const { data: draftEvents } = useQuery({
+    queryKey: ['almanac', 'events', 'drafts', groupSlug],
+    queryFn: () => fetchGroupEvents(groupSlug, { status: 'draft' }),
+  });
+  const draftCount = draftEvents?.length ?? 0;
 
   // View: Event Detail
   if (view === 'event-detail' && selectedEventSlug) {
@@ -48,7 +55,7 @@ export function AlmanacWorkArea({ groupSlug }: AlmanacWorkAreaProps) {
           onClick={() => setView('drafts')}
           size="sm"
         >
-          Drafts
+          Drafts{draftCount > 0 ? ` (${draftCount})` : ''}
         </Button>
         <Button
           variant={view === 'published' ? 'solid' : 'ghost'}
