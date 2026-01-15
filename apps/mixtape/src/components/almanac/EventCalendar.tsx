@@ -469,7 +469,16 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
             )}
           </Box>
 
-          <Box flex="1" minW={0} w="full">
+          <Box
+            flex="1"
+            minW={0}
+            w="full"
+            sx={{
+              "& .fc-daygrid-day-number": {
+                cursor: "pointer",
+              },
+            }}
+          >
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

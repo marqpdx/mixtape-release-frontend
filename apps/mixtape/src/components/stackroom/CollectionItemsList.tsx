@@ -9,11 +9,14 @@ import {
   HStack,
   Text,
   Input,
+  Card,
   Select,
   Spinner,
   EmptyState,
   Stack,
+  Heading,
   Button,
+  Checkbox,
 } from '@chakra-ui/react';
 import { IconFolder, IconFolderPlus } from '@tabler/icons-react';
 import {
@@ -37,6 +40,7 @@ import {
   useDeleteLibraryItem,
   useReorderLibraryItems,
   useCreateLibraryItem,
+  useCollectionTextSearch,
 } from '@mixtape/api/hooks/stackroom/useCollections';
 import { CollectionItemCard } from './CollectionItemCard';
 import { toaster } from '../ui/toaster';
@@ -45,6 +49,7 @@ import { createListCollection } from '@chakra-ui/react';
 interface CollectionItemsListProps {
   collectionId: string;
   onEditItem?: (itemId: string) => void;
+  onCreateFolder?: () => void;
 }
 
 const SORT_OPTIONS = createListCollection({
@@ -59,12 +64,15 @@ const SORT_OPTIONS = createListCollection({
 export function CollectionItemsList({
   collectionId,
   onEditItem,
+  onCreateFolder,
 }: CollectionItemsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchWithinDocs, setSearchWithinDocs] = useState(false);
   const [sortBy, setSortBy] = useState('order');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const { items, isLoading, refetch } = useCollectionItems(collectionId);
+  const { searchResults, isSearching, search, clearSearch } = useCollectionTextSearch(collectionId);
   const updateMutation = useUpdateLibraryItem();
   const deleteMutation = useDeleteLibraryItem();
   const reorderMutation = useReorderLibraryItems();
@@ -185,60 +193,68 @@ export function CollectionItemsList({
     }
   };
 
-  const handleCreateFolder = async () => {
-    const folderName = prompt('Enter folder name:', 'New Folder');
-
-    if (!folderName) return;
-
-    try {
-      // Note: Backend may need updating to support folder creation
-      // Folders don't have content_type/content_id, they use is_folder=true
-      // Using type assertion for folder creation which isn't fully supported yet
-      await createMutation.mutateAsync({
-        collectionId,
-        data: {
-          content_type: 'folder',
-          content_id: '',
-          is_folder: true,
-          title: folderName,
-          order_index: items.length,
-        } as unknown as Parameters<typeof createMutation.mutateAsync>[0]['data'],
-      });
-
-      toaster.create({
-        title: 'Folder created',
-        description: `Folder "${folderName}" has been created`,
-        type: 'success',
-      });
-
-      refetch();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
-      toaster.create({
-        title: 'Error',
-        description: errorMessage,
-        type: 'error',
-      });
+  // Folder creation handled by parent component now
+  const handleCreateFolder = () => {
+    if (onCreateFolder) {
+      onCreateFolder();
     }
   };
 
-  // Filter and sort items
-  const filteredItems = items.filter((item) => {
-    const searchLower = searchQuery.toLowerCase();
+  // Handle search input changes
+  const handleSearchQueryChange = (query: string) => {
+    setSearchQuery(query);
 
-    if (item.content_type === 'source_file') {
-      return item.content.filename.toLowerCase().includes(searchLower);
+    // If search-within-docs is enabled, trigger backend search
+    if (searchWithinDocs && query.trim()) {
+      search({ query: query.trim(), limit: 20 });
+    } else if (!query.trim()) {
+      // Clear search if query is empty
+      clearSearch();
     }
+  };
 
-    if (item.content_type === 'writing_piece') {
-      return (
-        item.content.title.toLowerCase().includes(searchLower) ||
-        item.content.summary.toLowerCase().includes(searchLower)
-      );
+  // Handle checkbox toggle
+  const handleSearchWithinDocsToggle = (checked: boolean) => {
+    setSearchWithinDocs(checked);
+
+    // If enabling and query exists, trigger backend search immediately
+    if (checked && searchQuery.trim()) {
+      search({ query: searchQuery.trim(), limit: 20 });
+    } else if (!checked) {
+      // Clear backend search results when disabling
+      clearSearch();
     }
+  };
 
-    return false;
-  });
+  // One-click: Enable checkbox AND search immediately
+  const handleSearchInDocumentsClick = () => {
+    if (!searchQuery.trim()) return;
+
+    setSearchWithinDocs(true);
+    search({ query: searchQuery.trim(), limit: 20 });
+  };
+
+  // Filter and sort items (Simple Search - in-memory filtering)
+  const filteredItems = !searchWithinDocs
+    ? items.filter((item) => {
+        if (!searchQuery) return true;
+
+        const searchLower = searchQuery.toLowerCase();
+
+        if (item.content_type === 'source_file') {
+          return item.content.filename.toLowerCase().includes(searchLower);
+        }
+
+        if (item.content_type === 'writing_piece') {
+          return (
+            item.content.title.toLowerCase().includes(searchLower) ||
+            item.content.summary.toLowerCase().includes(searchLower)
+          );
+        }
+
+        return false;
+      })
+    : items; // Don't filter in full-text mode (show all items, results shown separately)
 
   const sortedItems = [...filteredItems].sort((a, b) => {
     switch (sortBy) {
@@ -335,43 +351,129 @@ export function CollectionItemsList({
 
   return (
     <VStack align="stretch" gap={4}>
-      {/* Search, Sort, and Actions */}
-      <HStack gap={3}>
-        <Input
-          placeholder="Search items..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="md"
-          flex={1}
-        />
-        <Select.Root
-          collection={SORT_OPTIONS}
-          value={[sortBy]}
-          onValueChange={(e) => setSortBy(e.value[0])}
-          size="md"
-          width="200px"
+      {/* Search Input */}
+      <VStack align="stretch" gap={2}>
+        <HStack gap={3} justify="space-between">
+          <Input
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => handleSearchQueryChange(e.target.value)}
+            size="md"
+            flex={1}
+          />
+          <Select.Root
+            collection={SORT_OPTIONS}
+            value={[sortBy]}
+            onValueChange={(e) => setSortBy(e.value[0])}
+            size="md"
+            width="200px"
+          >
+            <Select.Trigger>
+              <Select.ValueText placeholder="Sort by" />
+            </Select.Trigger>
+            <Select.Content>
+              {SORT_OPTIONS.items.map((item) => (
+                <Select.Item key={item.value} item={item}>
+                  {item.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </HStack>
+
+      {/* Checkbox and One-Click Search Button */}
+      <HStack gap={3} justify="space-between">
+        <Checkbox.Root
+          checked={searchWithinDocs}
+          onCheckedChange={(e) => handleSearchWithinDocsToggle(!!e.checked)}
+          size="sm"
         >
-          <Select.Trigger>
-            <Select.ValueText placeholder="Sort by" />
-          </Select.Trigger>
-          <Select.Content>
-            {SORT_OPTIONS.items.map((item) => (
-              <Select.Item key={item.value} item={item}>
-                {item.label}
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Root>
-        <Button
-          size="md"
-          variant="outline"
-          onClick={handleCreateFolder}
-          colorPalette="blue"
-        >
-          <IconFolderPlus size={18} />
-          New Folder
-        </Button>
+          <Checkbox.HiddenInput />
+          <Checkbox.Control>
+            <Checkbox.Indicator />
+          </Checkbox.Control>
+          <Checkbox.Label>
+            <Text fontSize="sm" color="gray.700">
+              Search within document content
+            </Text>
+          </Checkbox.Label>
+        </Checkbox.Root>
+
+        {/* One-click button: appears when query exists and checkbox is unchecked */}
+        {searchQuery.trim() && !searchWithinDocs && (
+          <Button
+            size="sm"
+            variant="solid"
+            colorPalette="blue"
+            onClick={handleSearchInDocumentsClick}
+          >
+            Search in documents
+          </Button>
+        )}
       </HStack>
+    </VStack>
+
+      {/* Full-text Search Results */}
+      {searchWithinDocs && searchQuery && (
+        <Card.Root>
+          <Card.Header>
+            <Heading size="sm">Search Results</Heading>
+          </Card.Header>
+          <Card.Body>
+            {isSearching ? (
+              <Box textAlign="center" py={4}>
+                <Spinner size="md" />
+                <Text mt={2} fontSize="sm" color="gray.600">
+                  Searching documents...
+                </Text>
+              </Box>
+            ) : searchResults && searchResults.results.length > 0 ? (
+              <VStack align="stretch" gap={3}>
+                {searchResults.results.map((result) => {
+                  // Highlight matched terms by bolding them
+                  const highlightMatch = (text: string, query: string) => {
+                    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+                    return parts.map((part, i) =>
+                      part.toLowerCase() === query.toLowerCase() ? (
+                        <strong key={i}>{part}</strong>
+                      ) : (
+                        part
+                      )
+                    );
+                  };
+
+                  return (
+                    <Card.Root key={result.chunk_id} size="sm">
+                      <Card.Body>
+                        <VStack align="stretch" gap={2}>
+                          <Text fontWeight="medium" fontSize="sm">
+                            {result.filename}
+                          </Text>
+                          <Text fontSize="xs" color="gray.700" lineHeight="1.6">
+                            {highlightMatch(result.chunk_text, searchQuery)}
+                          </Text>
+                        </VStack>
+                      </Card.Body>
+                    </Card.Root>
+                  );
+                })}
+                <Text fontSize="sm" color="gray.600" textAlign="center">
+                  Found {searchResults.total} matches
+                </Text>
+              </VStack>
+            ) : (
+              <EmptyState.Root>
+                <EmptyState.Content>
+                  <EmptyState.Title>No matches</EmptyState.Title>
+                  <EmptyState.Description>
+                    No items match "{searchQuery}" within document content
+                  </EmptyState.Description>
+                </EmptyState.Content>
+              </EmptyState.Root>
+            )}
+          </Card.Body>
+        </Card.Root>
+      )}
 
       {/* Items List */}
       {sortedItems.length === 0 ? (

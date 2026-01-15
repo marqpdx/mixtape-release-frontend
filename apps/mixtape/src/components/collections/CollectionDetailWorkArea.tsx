@@ -26,11 +26,13 @@ import {
   IconX,
   IconFolder,
   IconFile,
+  IconFolderPlus,
 } from '@tabler/icons-react';
 import {
   useCollection,
   useUpdateCollection,
   useDeleteCollection,
+  useCreateLibraryItem,
 } from '@mixtape/api/hooks/stackroom/useCollections';
 import { CollectionItemsList } from '@/components/stackroom/CollectionItemsList';
 import { CollectionBrowser } from '@/components/stackroom/CollectionBrowser';
@@ -53,6 +55,7 @@ export function CollectionDetailWorkArea({
   const { collection, isLoading, refetch } = useCollection(collectionId);
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
+  const createItemMutation = useCreateLibraryItem();
 
   // Initialize edit form when entering edit mode
   const handleStartEdit = () => {
@@ -106,6 +109,39 @@ export function CollectionDetailWorkArea({
     setEditSummary('');
   };
 
+  const handleCreateFolder = async () => {
+    const folderName = prompt('Enter folder name:', 'New Folder');
+
+    if (!folderName || !collection) return;
+
+    try {
+      await createItemMutation.mutateAsync({
+        collectionId,
+        data: {
+          content_type: 'folder',
+          content_id: '',
+          is_folder: true,
+          title: folderName,
+          order_index: collection.item_count,
+        } as any,
+      });
+
+      toaster.create({
+        title: 'Folder created',
+        description: `Folder "${folderName}" has been created`,
+        type: 'success',
+      });
+
+      refetch();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
+      toaster.create({
+        title: 'Error',
+        description: errorMessage,
+        type: 'error',
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm('Delete this collection? This action cannot be undone.')) {
@@ -331,12 +367,23 @@ export function CollectionDetailWorkArea({
           {/* Left Pane: This Collection */}
           <Card.Root>
             <Card.Header>
-              <HStack gap={2}>
-                <IconFile size={24} />
-                <Heading size="md">This Collection</Heading>
-                <Badge colorPalette="blue" size="sm">
-                  {collection.item_count} items
-                </Badge>
+              <HStack gap={2} justify="space-between" width="100%">
+                <HStack gap={2}>
+                  <IconFile size={24} />
+                  <Heading size="md">This Collection</Heading>
+                  <Badge colorPalette="blue" size="sm">
+                    {collection.item_count} items
+                  </Badge>
+                </HStack>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCreateFolder}
+                  colorPalette="blue"
+                >
+                  <IconFolderPlus size={18} />
+                  New Folder
+                </Button>
               </HStack>
             </Card.Header>
             <Card.Body>
@@ -346,6 +393,7 @@ export function CollectionDetailWorkArea({
                   console.log('Edit item:', itemId);
                   // TODO: Implement edit modal
                 }}
+                onCreateFolder={handleCreateFolder}
               />
             </Card.Body>
           </Card.Root>

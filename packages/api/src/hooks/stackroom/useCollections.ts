@@ -1,6 +1,7 @@
 // Collection hooks (Curation layer)
 // Separate from Stackroom IR hooks to maintain conceptual boundary
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as collectionApi from '@mixtape/api/clients/stackroom/collectionApi';
 import {
@@ -15,6 +16,8 @@ import {
   LibraryItemUpdateRequest,
   LibraryItemReorderRequest,
   CollectionItemListParams,
+  CollectionTextSearchRequest,
+  CollectionTextSearchResponse,
 } from '@mixtape/core/types/collectionTypes';
 
 // ============================================================================
@@ -32,6 +35,8 @@ export const collectionQueryKeys = {
     [...collectionQueryKeys.items(collectionId), params] as const,
   availableFiles: (collectionId: string) =>
     [...collectionQueryKeys.detail(collectionId), 'available-files'] as const,
+  search: (collectionId: string, query: string) =>
+    [...collectionQueryKeys.detail(collectionId), 'search', query] as const,
 };
 
 // ============================================================================
@@ -243,6 +248,63 @@ export const useLibraryItem = (
     item,
     isLoading,
     error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
+ * Hook to search Collection content (full-text search through Chunks)
+ * Searches ingested document content using PostgreSQL ILIKE
+ * Returns snippets with context around matches
+ *
+ * @example
+ * ```tsx
+ * const { searchResults, isSearching, search } = useCollectionTextSearch(collectionId);
+ *
+ * // Trigger search
+ * search({ query: 'saddle', limit: 20 });
+ * ```
+ */
+export const useCollectionTextSearch = (collectionId: string | null) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchLimit, setSearchLimit] = useState<number>(20);
+
+  const {
+    data: searchResults = null,
+    isLoading: isSearching,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: collectionId && searchQuery
+      ? collectionQueryKeys.search(collectionId, searchQuery)
+      : ['collections', 'empty'],
+    queryFn: () => {
+      if (!collectionId || !searchQuery) return Promise.resolve(null);
+      return collectionApi.searchCollectionText(collectionId, {
+        query: searchQuery,
+        limit: searchLimit,
+      });
+    },
+    enabled: !!collectionId && !!searchQuery,
+    staleTime: 1 * 60 * 1000, // 1 minute (search results change less frequently)
+    refetchOnWindowFocus: false,
+  });
+
+  const search = (params: CollectionTextSearchRequest) => {
+    setSearchQuery(params.query);
+    setSearchLimit(params.limit || 20);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
+  return {
+    searchResults,
+    isSearching,
+    error: error as Error | null,
+    search,
+    clearSearch,
     refetch,
   };
 };

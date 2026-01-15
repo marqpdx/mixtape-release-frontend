@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, HStack, VStack } from '@chakra-ui/react';
 import { useQuery } from '@tanstack/react-query';
 import { EventDraftList } from './EventDraftList';
@@ -19,13 +19,29 @@ interface AlmanacWorkAreaProps {
 }
 
 export function AlmanacWorkArea({ groupSlug }: AlmanacWorkAreaProps) {
-  const [view, setView] = useState<'drafts' | 'published' | 'calendar' | 'event-detail'>('drafts');
+  const storageKey = useMemo(() => `almanac-view:${groupSlug}`, [groupSlug]);
+  const [view, setView] = useState<'drafts' | 'published' | 'calendar' | 'event-detail'>(() => {
+    if (typeof window === 'undefined') return 'drafts';
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored === 'drafts' || stored === 'published' || stored === 'calendar') {
+      return stored;
+    }
+    return 'drafts';
+  });
   const [selectedEventSlug, setSelectedEventSlug] = useState<string | null>(null);
+  const [lastListView, setLastListView] = useState<'drafts' | 'published' | 'calendar'>('drafts');
   const { data: draftEvents } = useQuery({
     queryKey: ['almanac', 'events', 'drafts', groupSlug],
     queryFn: () => fetchGroupEvents(groupSlug, { status: 'draft' }),
   });
   const draftCount = draftEvents?.length ?? 0;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (view === 'event-detail') return;
+    window.localStorage.setItem(storageKey, view);
+    setLastListView(view);
+  }, [storageKey, view]);
 
   // View: Event Detail
   if (view === 'event-detail' && selectedEventSlug) {
@@ -34,7 +50,7 @@ export function AlmanacWorkArea({ groupSlug }: AlmanacWorkAreaProps) {
         groupSlug={groupSlug}
         eventSlug={selectedEventSlug}
         onBack={() => {
-          setView('drafts');
+          setView(lastListView);
           setSelectedEventSlug(null);
         }}
         onEdit={() => {

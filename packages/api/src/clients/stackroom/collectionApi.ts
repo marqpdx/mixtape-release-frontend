@@ -14,6 +14,8 @@ import {
   LibraryItemUpdateRequest,
   LibraryItemReorderRequest,
   CollectionItemListParams,
+  CollectionTextSearchRequest,
+  CollectionTextSearchResponse,
 } from '@mixtape/core/types/collectionTypes';
 import { axiosInstance } from '../../lib/axiosInstance';
 
@@ -195,6 +197,26 @@ export async function reorderLibraryItems(
 ): Promise<{ detail: string }> {
   const response = await axiosInstance.post<{ detail: string }>(
     `/api/collections/${collectionId}/items/reorder/`,
+    data
+  );
+  return response.data;
+}
+
+// ============================================================================
+// TEXT SEARCH (Full-text search through document content)
+// ============================================================================
+
+/**
+ * Search Collection content using PostgreSQL full-text search
+ * Searches through Chunk.text (ingested document content)
+ * Returns snippets with context around matches
+ */
+export async function searchCollectionText(
+  collectionId: string,
+  data: CollectionTextSearchRequest
+): Promise<CollectionTextSearchResponse> {
+  const response = await axiosInstance.post<CollectionTextSearchResponse>(
+    `/api/collections/${collectionId}/search/`,
     data
   );
   return response.data;

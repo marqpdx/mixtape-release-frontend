@@ -308,3 +308,33 @@ export interface CollectionItemListParams {
   featured?: boolean;
   hidden?: boolean;
 }
+
+/**
+ * Text search request
+ * Searches through document content (Chunks) using PostgreSQL full-text
+ */
+export interface CollectionTextSearchRequest {
+  query: string;
+  limit?: number;
+}
+
+/**
+ * Text search result
+ * Single chunk match with context snippet
+ */
+export interface CollectionTextSearchResult {
+  source_file_id: string;
+  filename: string;
+  chunk_id: string;
+  chunk_text: string;  // Snippet with context around match
+  chunk_index: number;
+}
+
+/**
+ * Text search response
+ */
+export interface CollectionTextSearchResponse {
+  query: string;
+  results: CollectionTextSearchResult[];
+  total: number;
+}
