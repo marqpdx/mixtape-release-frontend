@@ -1,4 +1,4 @@
-// src/components/dashboard/admin/adminConfig.ts
+// apps/mixtape/src/components/dashboard/admin/adminConfig.ts
 
 /**
  * ADMIN DASHBOARD MENU CONFIGURATION
@@ -12,7 +12,7 @@
  * 4. Add corresponding section handler in AdminWorkArea.tsx
  */
 
-// src/config/admin-dashboard.config.ts
+// apps/mixtape/src/config/admin-dashboard.config.ts
 
 export const ADMIN_DASHBOARD_CONFIG = {
   title: "System Administration",

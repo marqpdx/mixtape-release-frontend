@@ -32,7 +32,6 @@ import {
   useCollection,
   useUpdateCollection,
   useDeleteCollection,
-  useCreateLibraryItem,
 } from '@mixtape/api/hooks/stackroom/useCollections';
 import { CollectionItemsList } from '@/components/stackroom/CollectionItemsList';
 import { CollectionBrowser } from '@/components/stackroom/CollectionBrowser';
@@ -55,7 +54,6 @@ export function CollectionDetailWorkArea({
   const { collection, isLoading, refetch } = useCollection(collectionId);
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
-  const createItemMutation = useCreateLibraryItem();
 
   // Initialize edit form when entering edit mode
   const handleStartEdit = () => {
@@ -110,37 +108,11 @@ export function CollectionDetailWorkArea({
   };
 
   const handleCreateFolder = async () => {
-    const folderName = prompt('Enter folder name:', 'New Folder');
-
-    if (!folderName || !collection) return;
-
-    try {
-      await createItemMutation.mutateAsync({
-        collectionId,
-        data: {
-          content_type: 'folder',
-          content_id: '',
-          is_folder: true,
-          title: folderName,
-          order_index: collection.item_count,
-        } as any,
-      });
-
-      toaster.create({
-        title: 'Folder created',
-        description: `Folder "${folderName}" has been created`,
-        type: 'success',
-      });
-
-      refetch();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
-      toaster.create({
-        title: 'Error',
-        description: errorMessage,
-        type: 'error',
-      });
-    }
+    toaster.create({
+      title: 'Folders not ready',
+      description: 'Folder creation is coming soon. Use tags or notes for now.',
+      type: 'warning',
+    });
   };
 
   const handleDelete = async () => {
@@ -393,7 +365,6 @@ export function CollectionDetailWorkArea({
                   console.log('Edit item:', itemId);
                   // TODO: Implement edit modal
                 }}
-                onCreateFolder={handleCreateFolder}
               />
             </Card.Body>
           </Card.Root>

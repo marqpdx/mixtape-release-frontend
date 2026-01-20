@@ -31,6 +31,7 @@ import { useMembers } from "@mixtape/api/hooks";
 import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
 import { CollectionsWorkArea, CollectionDetailWorkArea } from "@/components/collections";
 import ThemeWorkArea from "@/components/groups/themes/ThemeWorkArea";
+import AudioWorkArea from "@/components/concord/AudioWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -246,6 +247,18 @@ export default function GroupWorkArea({
         <CollectionDetailWorkArea
           collectionId={collectionId}
           onBack={() => setActiveSection('collections-landing')}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Audio (Concord - Transcription & Interpretation)
+  if (section === "audio-landing") {
+    return (
+      <WorkAreaWrapper>
+        <AudioWorkArea
+          groupSlug={group.slug}
+          groupTitle={group.title}
         />
       </WorkAreaWrapper>
     );

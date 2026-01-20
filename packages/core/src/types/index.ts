@@ -1,6 +1,7 @@
 // Re-export all types
 export * from './auth';
 export * from './collectionTypes';
+export * from './concordTypes';
 export * from './dispatchTypes';
 export * from './groupTypes';
 export * from './lanternmailTypes';

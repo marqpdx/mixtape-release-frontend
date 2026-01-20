@@ -338,3 +338,45 @@ export type PuddlejumpApiEndpoint =
   | '/api/puddlejump/import/'
   | '/api/puddlejump/export/{library_id}/'
   | '/api/puddlejump/status/{library_id}/';
+
+// ============================================================================
+// PERSONAL PUDDLEJUMP TYPES
+// ============================================================================
+
+/**
+ * Item in a Puddlejump library
+ */
+export interface PuddlejumpItem {
+  id: string;
+  is_folder: boolean;
+  title: string;
+  folder_path: string;
+  tags: string[];
+  notes: string;
+  is_featured: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+  // Content info (only for non-folders)
+  content_type?: string;
+  content_id?: string;
+  filename?: string;
+  size_bytes?: number;
+}
+
+/**
+ * Personal Puddlejump library response
+ */
+export interface PersonalPuddlejump {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  body: string;
+  file_count: number;
+  total_size_bytes: number;
+  last_synced_at: string | null;
+  items: PuddlejumpItem[];
+  created_at: string;
+  updated_at: string;
+}

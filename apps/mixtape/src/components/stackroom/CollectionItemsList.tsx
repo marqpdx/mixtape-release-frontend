@@ -18,7 +18,7 @@ import {
   Button,
   Checkbox,
 } from '@chakra-ui/react';
-import { IconFolder, IconFolderPlus } from '@tabler/icons-react';
+import { IconFolder } from '@tabler/icons-react';
 import {
   DndContext,
   closestCenter,
@@ -39,7 +39,6 @@ import {
   useUpdateLibraryItem,
   useDeleteLibraryItem,
   useReorderLibraryItems,
-  useCreateLibraryItem,
   useCollectionTextSearch,
 } from '@mixtape/api/hooks/stackroom/useCollections';
 import { CollectionItemCard } from './CollectionItemCard';
@@ -49,7 +48,6 @@ import { createListCollection } from '@chakra-ui/react';
 interface CollectionItemsListProps {
   collectionId: string;
   onEditItem?: (itemId: string) => void;
-  onCreateFolder?: () => void;
 }
 
 const SORT_OPTIONS = createListCollection({
@@ -64,7 +62,6 @@ const SORT_OPTIONS = createListCollection({
 export function CollectionItemsList({
   collectionId,
   onEditItem,
-  onCreateFolder,
 }: CollectionItemsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchWithinDocs, setSearchWithinDocs] = useState(false);
@@ -76,7 +73,6 @@ export function CollectionItemsList({
   const updateMutation = useUpdateLibraryItem();
   const deleteMutation = useDeleteLibraryItem();
   const reorderMutation = useReorderLibraryItems();
-  const createMutation = useCreateLibraryItem();
 
   // Configure drag-and-drop sensors
   const sensors = useSensors(
@@ -190,13 +186,6 @@ export function CollectionItemsList({
         description: errorMessage,
         type: 'error',
       });
-    }
-  };
-
-  // Folder creation handled by parent component now
-  const handleCreateFolder = () => {
-    if (onCreateFolder) {
-      onCreateFolder();
     }
   };
 

@@ -28,6 +28,10 @@ export interface UseUsersResult {
   refetch: () => void;
 }
 
+export interface UseUsersOptions {
+  enabled?: boolean;
+}
+
 export interface UseUserResult {
   user: UserIdentity | null;
   isLoading: boolean;
@@ -43,7 +47,8 @@ export interface UseUserResult {
  * Hook to fetch all users in the system
  * Includes automatic caching and refetch logic
  */
-export const useUsers = (): UseUsersResult => {
+export const useUsers = (options: UseUsersOptions = {}): UseUsersResult => {
+  const { enabled = true } = options;
   const {
     data: users = [],
     isLoading,
@@ -52,6 +57,7 @@ export const useUsers = (): UseUsersResult => {
   } = useQuery({
     queryKey: userQueryKeys.list(),
     queryFn: apiFetchUsers,
+    enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   });
@@ -92,8 +98,11 @@ export const useUser = (username: string | null): UseUserResult => {
 /**
  * Utility hook to filter users excluding the current user
  */
-export const useUsersExcludingCurrent = (currentUsername?: string): UseUsersResult => {
-  const { users, isLoading, error, refetch } = useUsers();
+export const useUsersExcludingCurrent = (
+  currentUsername?: string,
+  options: UseUsersOptions = {}
+): UseUsersResult => {
+  const { users, isLoading, error, refetch } = useUsers(options);
 
   const filteredUsers = useMemo(() => {
     if (!currentUsername) return users;

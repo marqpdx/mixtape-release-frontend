@@ -1,33 +1,26 @@
-// src/components/dashboard/admin/AdminWorkArea.tsx
+// apps/mixtape/src/components/dashboard/admin/AdminWorkArea.tsx
 
 import { VStack, Text, SimpleGrid, Card, HStack } from "@chakra-ui/react";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
-import { UserIdentity } from "@components/auth/interfaces";
-import { Button } from "@theme/recipes/button.recipe";
+import { UserIdentity } from "@mixtape/core/types/auth";
+// import { Button } from "@theme/recipes/button.recipe";
 import AdminCardWrapper from "@components/admin/AdminCardWrapper";
 import ToDoList from "@components/admin/ToDoList";
-import { useState } from "react";
-import { useColorModeValue } from "@components/ui/color-mode";
-import ProjectAdminWorkArea from "@components/projects/ProjectsAdminWorkArea";
-import { useGroups } from "@hooks/useGroups";
-import { Group } from "content/groupTypes";
 import SystemStatsWorkArea from "@components/admin/system/SystemStatsWorkArea";
 import AuthDebugWorkArea from "@components/admin/auth/AuthDebugWorkArea";
-// import AuthDebugWorkArea from "@components/admin/auth/AuthDebugWorkArea";
-
-interface ToDoItem {
-  id: number;
-  title: string;
-  is_completed: boolean;
-  completed_date: string | null;
-}
+import { useGroups } from "@mixtape/api/hooks/groups/useGroups";
+import { AdminTodoItem } from "@mixtape/api/clients/admin/adminApi";
+import { Button } from "@/theme/recipes/button.recipe";
 
 interface AdminWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
-  todos: ToDoItem[];
+  todos: AdminTodoItem[];
   onCompleteTodo: (id: number) => void;
-  allMembers?: any[];
+  onRefreshTodos: () => void;
+  systemStats?: Record<string, unknown> | null;
+  userMetrics?: Record<string, unknown> | null;
+  allMembers?: UserIdentity[];
 }
 
 export default function AdminWorkArea({
@@ -36,20 +29,26 @@ export default function AdminWorkArea({
   identity,
   todos,
   onCompleteTodo,
+  onRefreshTodos,
+  systemStats = null,
+  userMetrics = null,
   allMembers = [],
 }: AdminWorkAreaProps) {
 
-  const { groups, isLoading, error, refetch } = useGroups({
+  const { groups } = useGroups({
     ordering: '-created_at',
     is_active: true
   });
-
-  const canEditGroup = (group: Group): boolean => {
-    if (identity?.is_superuser || identity?.is_staff) {
-      return true;
-    }
-    return true;
-  };
+  if (!identity?.is_superuser) {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <Text fontSize="xl" fontWeight="bold">Access Denied</Text>
+          <Text>Superuser access is required for this dashboard.</Text>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
 
   if (section === "admin-overview") {
     return (
@@ -133,6 +132,25 @@ export default function AdminWorkArea({
               <Text>Backend request logs</Text>
             </AdminCardWrapper>
           </SimpleGrid>
+
+          <Card.Root>
+            <Card.Header>
+              <Text fontSize="lg" fontWeight="semibold">📊 Snapshot Status</Text>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={2}>
+                <Text fontSize="sm" color="gray.600">
+                  System stats: {systemStats ? "loaded" : "pending"}
+                </Text>
+                <Text fontSize="sm" color="gray.600">
+                  User metrics: {userMetrics ? "loaded" : "pending"}
+                </Text>
+                <Button size="sm" onClick={onRefreshTodos}>
+                  Refresh To-Dos
+                </Button>
+              </VStack>
+            </Card.Body>
+          </Card.Root>
         </VStack>
       </WorkAreaWrapper>
     );
@@ -304,14 +322,15 @@ export default function AdminWorkArea({
   }
 
   if (section === "active-projects") {
-    const [open, setOpen] = useState<any | null>(null);
-    const onOpen = (p: any) => setOpen(p);
-    const onClose = () => setOpen(null);
-
-    const bg = useColorModeValue("gray.50", "gray.900");
     return (
       <WorkAreaWrapper>
-        <ProjectAdminWorkArea bg={bg} open={open} onClose={onClose} />
+        <VStack align="stretch" gap={4}>
+          <Text fontSize="xl" fontWeight="bold">📁 Projects</Text>
+          <Text>Project administration tools are scoped to groups.</Text>
+          <Text fontSize="sm" color="gray.600">
+            Use a group dashboard to manage projects in context.
+          </Text>
+        </VStack>
       </WorkAreaWrapper>
     );
   }

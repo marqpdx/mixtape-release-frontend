@@ -121,6 +121,11 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Edit group settings and details',
   },
 
+  'audio-landing': {
+    requiredRole: 'admin',
+    description: 'Whisper audio recordings management',
+  },
+
   // Themes - stewards and admins
   'theme-library': {
     public: true,

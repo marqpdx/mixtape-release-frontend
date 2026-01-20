@@ -1,11 +1,31 @@
+// packages/api/src/clients/stackroom/puddlejumpApi.ts
+
 // Puddlejump API client
 // Handles Puddlejump bundle import/export operations
 
 import {
   PuddlejumpImportResponse,
   PuddlejumpValidationError,
+  PersonalPuddlejump,
+  PuddlejumpItem,
 } from '@mixtape/core/types/puddlejump';
 import { axiosInstance } from '../../lib/axiosInstance';
+
+// ============================================================================
+// PERSONAL PUDDLEJUMP
+// ============================================================================
+
+/**
+ * Get or create the user's personal Puddlejump library
+ *
+ * @returns Personal Puddlejump library with items
+ */
+export async function getPersonalPuddlejump(): Promise<PersonalPuddlejump> {
+  const response = await axiosInstance.get<PersonalPuddlejump>(
+    '/api/stackroom/puddlejump/personal'
+  );
+  return response.data;
+}
 
 // ============================================================================
 // PUDDLEJUMP IMPORT
@@ -32,7 +52,7 @@ export async function importPuddlejumpBundle(
   formData.append('auto_ingest', String(autoIngest));
 
   const response = await axiosInstance.post<PuddlejumpImportResponse>(
-    '/api/stackroom/puddlejump/import/',
+    '/api/stackroom/puddlejump/import',
     formData,
     {
       headers: {

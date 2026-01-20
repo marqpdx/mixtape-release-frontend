@@ -11,6 +11,7 @@ import {
   IconCalendar,
   IconSchool,
   IconUsers,
+  IconFolder,
   IconFolderOpen,
   IconList,  // ← NEW: for Noticeboard
 } from "@tabler/icons-react";
@@ -21,6 +22,7 @@ import { CoursesTab } from "./CoursesTab";
 import { MembersTab } from "./MembersTab";
 import { FilesTab } from "./FilesTab";
 import { NoticeboardTab } from "./NoticeboardTab";  // ← NEW
+import { CollectionsTab } from "./CollectionsTab";
 import { LandingTab } from "./LandingTab";
 import { JoiningTab } from "./JoiningTab";
 import type { Group } from "@mixtape/core/types/groupTypes";
@@ -39,6 +41,7 @@ const memberTabs = [
   { key: 'threadworks', label: 'Threadworks', icon: IconMessages },
   { key: 'events', label: 'Events', icon: IconCalendar },
   { key: 'courses', label: 'Courses', icon: IconSchool },
+  { key: 'collections', label: 'Collections', icon: IconFolder },
   { key: 'files', label: 'Files/Resources', icon: IconFolderOpen },
 ];
 
@@ -115,6 +118,9 @@ export function GroupTabs({
           </Tabs.Content>
           <Tabs.Content value="courses">
             <CoursesTab group={group} />
+          </Tabs.Content>
+          <Tabs.Content value="collections">
+            <CollectionsTab group={group} />
           </Tabs.Content>
           <Tabs.Content value="members">
             <MembersTab group={group} />

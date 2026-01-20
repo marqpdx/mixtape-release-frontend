@@ -2,11 +2,13 @@
 
 // Subdirectory hooks
 export * from './almanac'
+export * from './admin'
 export * from './appearance'
 export * from './dispatch'
 export * from './editor'
 export * from './groups'
 export * from './lanternmail'
+export * from './ops'
 export * from './projects'
 export * from './stackroom'
 export * from './threadworks'
