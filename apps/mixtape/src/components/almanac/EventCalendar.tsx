@@ -1,4 +1,4 @@
-// src/components/almanac/EventCalendar.tsx
+// apps/mixtape/src/components/almanac/EventCalendar.tsx
 
 'use client';
 
@@ -17,7 +17,8 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { DatesSetArg, DateClickArg, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
+import type { DatesSetArg, EventClickArg, EventHoveringArg } from '@fullcalendar/core';
+import type { DateClickArg } from '@fullcalendar/interaction';
 import { useQuery } from '@tanstack/react-query';
 import { almanacApi } from '@mixtape/api/clients/almanac/almanacApi';
 import type { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
@@ -451,7 +452,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
                       setIsModalOpen(true);
                     }}
                   >
-                    <Text fontWeight="medium" fontSize="sm" mb={1} noOfLines={1}>
+                    <Text fontWeight="medium" fontSize="sm" mb={1} lineClamp={1}>
                       {occurrence.title}
                     </Text>
                     <Text fontSize="xs" color="gray.600">
@@ -473,7 +474,7 @@ export function EventCalendar({ groupSlug, onViewEvent }: EventCalendarProps) {
             flex="1"
             minW={0}
             w="full"
-            sx={{
+            css={{
               "& .fc-daygrid-day-number": {
                 cursor: "pointer",
               },
