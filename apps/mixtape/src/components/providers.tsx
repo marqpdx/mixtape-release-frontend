@@ -1,4 +1,4 @@
-// /src/components/providers.tsx
+// apps/mixtape/src/components/providers.tsx
 
 'use client';
 
