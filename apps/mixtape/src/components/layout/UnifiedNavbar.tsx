@@ -60,7 +60,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "dashboard", label: "Dashboard!!", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
   { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
