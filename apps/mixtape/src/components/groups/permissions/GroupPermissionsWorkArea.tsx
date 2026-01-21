@@ -70,6 +70,18 @@ const AVAILABLE_PERMISSIONS: Permission[] = [
     category: "capability",
   },
   {
+    code: "can__ManageAlmanac",
+    name: "Manage Almanac",
+    description: "Create and manage events and calendar items",
+    category: "capability",
+  },
+  {
+    code: "can__ManageCollections",
+    name: "Manage Collections",
+    description: "Create and manage collections and exhibitions",
+    category: "capability",
+  },
+  {
     code: "can__ManageLanternmail",
     name: "Manage Lanternmail",
     description: "Create, edit, and manage mailing lists",

@@ -348,18 +348,6 @@ export default function GroupWorkArea({
   }
 
   if (section === "coalition-invitations") {
-    if (group.group_type !== "coalition") {
-      return (
-        <WorkAreaWrapper>
-          <Box>
-            <Heading size="md" mb={2}>
-              Coalition invitations
-            </Heading>
-            <Text color="gray.600">This section is only available for coalition groups.</Text>
-          </Box>
-        </WorkAreaWrapper>
-      );
-    }
     return (
       <WorkAreaWrapper>
         <CoalitionInviteWorkArea group={group} />

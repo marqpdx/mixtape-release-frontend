@@ -17,7 +17,8 @@ import {
   IconButton,
   Button,
 } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 // import { IconChevronRight } from "@tabler/icons-react";
 // import { Button } from "@theme/recipes/button.recipe";
 // import { ChevronIcon } from "@components/icons/IconMap";
@@ -70,9 +71,11 @@ export default function DashboardLayout({
   });
 
   const [sectionParams, setSectionParams] = useState<Record<string, string>>({});
+  const searchParams = useSearchParams();
+  const urlSection = searchParams?.get("section");
 
   // Update the handler to accept parameters
-  function handleSetActiveSection(section: string, params?: Record<string, string>) {
+  const handleSetActiveSection = useCallback((section: string, params?: Record<string, string>) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(localStorageKey, section);
       // Optionally store params in localStorage too, or just keep in state
@@ -82,7 +85,13 @@ export default function DashboardLayout({
     }
     setActiveSection(section);
     setSectionParams(params || {});
-  }
+  }, [localStorageKey]);
+
+  useEffect(() => {
+    if (!urlSection) return;
+    if (urlSection === activeSection) return;
+    handleSetActiveSection(urlSection);
+  }, [urlSection, activeSection, handleSetActiveSection]);
 
   // function handleSetActiveSection(section: string) {
   //   if (typeof window !== 'undefined') {
