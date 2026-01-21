@@ -56,6 +56,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredDecorator: 'can__InviteMembers',
     description: 'Send invitations to new members',
   },
+  'coalition-invitations': {
+    requiredDecorator: 'can__InviteMembers',
+    description: 'Manage coalition invitations and requests',
+  },
 
   // Writing - requires writing permission
   'writing': {

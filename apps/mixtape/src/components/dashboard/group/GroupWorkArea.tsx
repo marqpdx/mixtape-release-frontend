@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
 import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
+import CoalitionInviteWorkArea from "@/components/groups/coalitions/CoalitionInviteWorkArea";
 import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
@@ -342,6 +343,14 @@ export default function GroupWorkArea({
           siteMembersLoading={false}
           parentGroupName={isCircle && group.sponsor_group ? group.sponsor_group.title : undefined}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "coalition-invitations") {
+    return (
+      <WorkAreaWrapper>
+        <CoalitionInviteWorkArea group={group} />
       </WorkAreaWrapper>
     );
   }

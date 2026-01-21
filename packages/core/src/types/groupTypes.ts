@@ -113,6 +113,13 @@ export interface GroupMemberSuggestion {
   roles: GroupRole[];
 }
 
+export interface GroupSummary {
+  id: string;
+  slug: string;
+  title: string;
+  group_type?: GroupType;
+}
+
 export interface GroupFormData {
   title: string;
   description: string;
@@ -423,7 +430,9 @@ export interface GroupMemberFilters {
 // Group Invitation interface
 export interface GroupInvitation {
   id: number;
-  invited_email: string;
+  invited_email?: string | null;
+  invited_group?: GroupSummary | null;
+  group_detail?: GroupSummary | null;
   invited_by?: {
     id: number;
     username: string;
@@ -432,6 +441,7 @@ export interface GroupInvitation {
   group: number;
   message: string;
   invitation_status: "pending" | "joined" | "declined" | "expired";
+  invitation_kind?: "invite" | "request";
   created_at: string;
   expires_at?: string | null;
   updated_at: string;

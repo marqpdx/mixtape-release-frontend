@@ -24,6 +24,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "members-roles", label: "Members" },
       { key: "invitations", label: "Invitations" },
+      { key: "coalition-invitations", label: "Coalition Invites" },
       { key: "member-requests", label: "Join Requests", hidden: true },
     ]
   },

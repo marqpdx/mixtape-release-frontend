@@ -1,4 +1,4 @@
-// /src/components/groups/GroupCreateForm.tsx
+// /apps/mixtape/src/components/groups/GroupCreateForm.tsx
 
 // Uses react-hook-form directly (not Refine) and toaster for notifications
 
@@ -27,7 +27,8 @@ import type { GroupCreateFormData, GroupCreateFormValues, GroupType, GroupVisibi
 
 const groupTypeOptions = [
   { id: "community", label: "Community", value: "community" },
-  { id: "circle", label: "Circle", value: "circle" },
+  { id: "persona", label: "Persona", value: "persona" },
+  { id: "coalition", label: "Coalition", value: "coalition" },
 ];
 
 // FIXED: Move FormContent OUTSIDE the component to prevent recreation on every render

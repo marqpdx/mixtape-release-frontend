@@ -1,4 +1,4 @@
-// src/components/groups/GroupInviteWorkArea.tsx
+// apps/mixtape/src/components/groups/GroupInviteWorkArea.tsx
 
 "use client";
 

@@ -87,7 +87,7 @@ export default function GroupInvitations({
 
                 return (
                   <Table.Row key={invite.id}>
-                    <Table.Cell>{invite.invited_email}</Table.Cell>
+                    <Table.Cell>{invite.invited_email || "—"}</Table.Cell>
 
                     <Table.Cell>
                       {iconInfo ? (

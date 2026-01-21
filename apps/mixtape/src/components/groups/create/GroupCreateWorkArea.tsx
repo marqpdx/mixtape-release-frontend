@@ -60,7 +60,6 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
 
     const payload: GroupCreateFormData = {
       ...rest,
-      group_type: "community",
       start_date: toIsoOrNull(start_date),
       end_date: toIsoOrNull(end_date),
     };
@@ -91,7 +90,6 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
       <GroupCreateForm2
         title="Create a Group"
         submitLabel="Create Group"
-        lockedGroupType="community"
         onSubmit={handleSubmit}
         isSubmittingExternal={mutation.status === "pending"}
         showCard={true}

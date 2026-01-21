@@ -24,6 +24,8 @@ interface GroupCreateForm2Props {
 
 const groupTypeOptions = [
   { id: "community", label: "Community", value: "community" },
+  { id: "persona", label: "Persona", value: "persona" },
+  { id: "coalition", label: "Coalition", value: "coalition" },
   { id: "circle", label: "Circle", value: "circle" },
 ];
 
@@ -141,14 +143,19 @@ function FormInner({
               <Text fontSize="sm" fontWeight="medium" mb={3} color="gray.600">
                 Group Type
               </Text>
-              <Stack direction="row" gap={6}>
-                {groupTypeOptions.map((opt) => (
-                  <RadioGroup.Item key={opt.id} value={opt.value} p={3} rounded="md" _hover={{ bg: "green.50" }}>
-                    <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText fontWeight="medium">{opt.label}</RadioGroup.ItemText>
-                  </RadioGroup.Item>
-                ))}
+              <Text fontSize="sm" color="gray.500" mb={3}>
+                Community is a member group, Persona represents an individual, and Coalition links multiple groups.
+              </Text>
+              <Stack direction="row" gap={6} flexWrap="wrap">
+                {groupTypeOptions
+                  .filter((opt) => lockedGroupType ? opt.value === lockedGroupType : opt.value !== "circle")
+                  .map((opt) => (
+                    <RadioGroup.Item key={opt.id} value={opt.value} p={3} rounded="md" _hover={{ bg: "green.50" }}>
+                      <RadioGroup.ItemHiddenInput />
+                      <RadioGroup.ItemIndicator />
+                      <RadioGroup.ItemText fontWeight="medium">{opt.label}</RadioGroup.ItemText>
+                    </RadioGroup.Item>
+                  ))}
               </Stack>
             </RadioGroup.Root>
           </Box>
@@ -183,14 +190,12 @@ function FormInner({
             </Stack>
           )}
 
-          {groupType === "community" && (
-            <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
-                Tagline (Optional)
-              </Text>
-              <Input {...register("tagline")} placeholder="A short tagline" size="md" />
-            </Box>
-          )}
+          <Box>
+            <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+              Tagline (Optional)
+            </Text>
+            <Input {...register("tagline")} placeholder="A short tagline" size="md" />
+          </Box>
         </Stack>
 
         <Stack direction={{ base: "column", md: "row" }} gap={4} pt={4}>

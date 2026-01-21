@@ -20,6 +20,7 @@ export interface FetchGroupsOptions {
   is_active?: boolean;
   search?: string;
   ordering?: string;
+  exclude?: string[];
   limit?: number;
   offset?: number;
 }
@@ -38,6 +39,14 @@ export interface FetchGroupMembersOptions {
 export async function fetchGroups(options: FetchGroupsOptions = {}): Promise<Group[]> {
   const params = new URLSearchParams();
   Object.entries(options).forEach(([key, value]) => {
+    if (key === "exclude" && Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry) {
+          params.append("exclude", entry);
+        }
+      });
+      return;
+    }
     if (value !== undefined) {
       params.append(key, value.toString());
     }
