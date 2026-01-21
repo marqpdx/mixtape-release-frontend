@@ -14,6 +14,14 @@ import { FiMail } from "react-icons/fi";
 import NextLink from "next/link";
 
 export default function Footer() {
+  // Next.js
+  const sha =
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+    "no-sha";
+
+  console.log(`[Footer] Rendered - commit SHA: ${sha}`);
+
   return (
     <Box
       as="footer"

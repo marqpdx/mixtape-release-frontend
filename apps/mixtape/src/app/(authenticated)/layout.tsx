@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
 // import AdminSeedButtonWithModal from "@components/writing/AdminSeedButtonWithModal";
-// import Footer from "@components/layout/Footer";
+import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 // import PageContainer from "@components/layout/PageContainer";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
@@ -145,7 +145,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
         </Box>
       </Box>
 
-      {/* <Footer /> */}
+      <Footer />
 
       {isAdmin && (
         <>
