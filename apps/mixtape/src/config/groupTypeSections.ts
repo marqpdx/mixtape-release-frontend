@@ -19,12 +19,17 @@ export const GROUP_TYPE_EXCLUDED_SECTIONS: Record<string, Set<string>> = {
   circle: new Set([
     'circles-landing',  // Can't view/manage circles
     'circle-create',    // Can't create sub-circles
+    'coalition-invitations',
   ]),
 
   /**
    * Communities have no restrictions - full feature set
    */
-  community: new Set([]),
+  community: new Set(['coalition-invitations']),
+
+  persona: new Set(['coalition-invitations']),
+
+  coalition: new Set([]),
 };
 
 /**
