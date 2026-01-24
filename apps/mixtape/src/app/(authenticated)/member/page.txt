@@ -1,0 +1,24 @@
+// apps/mixtape/src/app/(authenticated)/member/profiles/page.tsx
+
+"use client";
+
+import { Box, Container, Heading, } from "@chakra-ui/react";
+import MemberProfileList from "@components/members/ProfilesList";
+
+
+const MemberProfilesPage = () => {
+  return (
+    <Container maxW="7xl" py={8}>
+      <Box divideX="1px">
+        <Heading as="h2" size="lg" mb={6}>
+          Member Profiles
+        </Heading>
+        <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
+          <MemberProfileList />
+        </Box>
+      </Box>
+    </Container>
+  );
+};
+
+export default MemberProfilesPage;

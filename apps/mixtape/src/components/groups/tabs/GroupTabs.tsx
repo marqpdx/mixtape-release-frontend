@@ -3,25 +3,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, HStack, Text } from "@chakra-ui/react";
+import { HStack, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import {
   IconInfoHexagon,
   IconMessages,
-  IconCalendar,
-  IconSchool,
   IconUsers,
   IconFolder,
-  IconFolderOpen,
-  IconList,  // ← NEW: for Noticeboard
 } from "@tabler/icons-react";
 import { OverviewTab } from "./OverviewTab";
 import { ThreadworksTab } from "./ThreadworksTab";
-// import { EventsTab } from "./EventsTab";
-import { CoursesTab } from "./CoursesTab";
 import { MembersTab } from "./MembersTab";
-import { FilesTab } from "./FilesTab";
-import { NoticeboardTab } from "./NoticeboardTab";  // ← NEW
 import { CollectionsTab } from "./CollectionsTab";
 import { LandingTab } from "./LandingTab";
 import { JoiningTab } from "./JoiningTab";
@@ -36,13 +28,9 @@ interface GroupTabsProps {
 
 const memberTabs = [
   { key: 'overview', label: 'Overview', icon: IconInfoHexagon },
-  { key: 'members', label: 'Members', icon: IconUsers },
-  { key: 'noticeboard', label: 'Noticeboard', icon: IconList },  // ← NEW
+  { key: 'members', label: 'Group Members', icon: IconUsers },
   { key: 'threadworks', label: 'Threadworks', icon: IconMessages },
-  { key: 'events', label: 'Events', icon: IconCalendar },
-  { key: 'courses', label: 'Courses', icon: IconSchool },
   { key: 'collections', label: 'Collections', icon: IconFolder },
-  { key: 'files', label: 'Files/Resources', icon: IconFolderOpen },
 ];
 
 const publicTabs = [
@@ -106,27 +94,14 @@ export function GroupTabs({
           <Tabs.Content value="overview">
             <OverviewTab group={group} />
           </Tabs.Content>
-          <Tabs.Content value="noticeboard">
-            <NoticeboardTab group={group} />
-          </Tabs.Content>
           <Tabs.Content value="threadworks">
             <ThreadworksTab group={group} />
-          </Tabs.Content>
-          <Tabs.Content value="events">
-            {/* <EventsTab group={group} /> */}
-            <Box p={4}>Events tab coming soon!</Box>
-          </Tabs.Content>
-          <Tabs.Content value="courses">
-            <CoursesTab group={group} />
           </Tabs.Content>
           <Tabs.Content value="collections">
             <CollectionsTab group={group} />
           </Tabs.Content>
           <Tabs.Content value="members">
             <MembersTab group={group} />
-          </Tabs.Content>
-          <Tabs.Content value="files">
-            <FilesTab group={group} />
           </Tabs.Content>
         </>
       )}

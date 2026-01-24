@@ -5,6 +5,7 @@ export * from './concordTypes';
 export * from './dispatchTypes';
 export * from './groupTypes';
 export * from './lanternmailTypes';
+export * from './memberTypes';
 export * from './projectsTypes';
 export * from './puddlejump';
 export * from './socketTypes';

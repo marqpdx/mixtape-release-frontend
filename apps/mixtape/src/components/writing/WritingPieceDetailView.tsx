@@ -20,6 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 // Import hooks
 import { useGroup } from '@mixtape/api/hooks/groups/useGroups'
+import { useGroupPermissions } from '@mixtape/api/hooks/groups/useGroupSectionPermissions'
 import { useWritingPiece } from '@hooks/useWriting'
 
 // Import your headers for continuity
@@ -39,11 +40,13 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
 
   // Use hooks instead of direct API calls
   const { group, isLoading: groupLoading } = useGroup(groupSlug)
+  const { isAdmin, hasDecorator } = useGroupPermissions(groupSlug)
   const { piece, isLoading: pieceLoading, error } = useWritingPiece(pieceSlug)
 
   const isLoading = groupLoading || pieceLoading
   const isMember = group?.is_member || false
   const viewingAsMember = isMember
+  const canEdit = isAdmin || hasDecorator('can__ManageWriting')
 
   if (isLoading || !group) {
     return (
@@ -115,6 +118,22 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
               </HStack>
             </Link>
           </Button>
+
+          {canEdit && piece?.id && (
+            <Button
+              variant="outline"
+              size="sm"
+              justifyContent="flex-start"
+              w="fit-content"
+              colorScheme="green"
+            >
+              <Link href={`/groups/${groupSlug}?view=admin&section=write&piece=${piece.id}`}>
+                <HStack>
+                  <Text>Edit</Text>
+                </HStack>
+              </Link>
+            </Button>
+          )}
 
           {/* Article container */}
           <Box bg={cardBg} borderRadius="lg" borderWidth="1px" p={8}>

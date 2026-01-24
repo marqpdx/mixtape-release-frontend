@@ -90,6 +90,9 @@ export default function UnifiedNavbar({
   const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
+  const homeHref =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "/");
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
 
@@ -215,7 +218,7 @@ export default function UnifiedNavbar({
 
             {/* Logo */}
             {showLogo && (
-              <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }}>
+              <Link href={homeHref} _hover={{ textDecoration: "none" }}>
                 <Box transform="translateY(-15px)">
                   <CrossroadsLogo
                     size={extraCompact ? 248 : (compact ? 280 : 320)}

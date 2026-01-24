@@ -1,19 +1,22 @@
 // src/components/groups/tabs/columns/postsColumns.tsx
 
 import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
-import { HStack, VStack, Text, Badge, Box } from '@chakra-ui/react'
+import { HStack, VStack, Text, Badge, Box, IconButton } from '@chakra-ui/react'
 import { formatDistanceToNow } from 'date-fns'
 import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
+import { IconEdit } from '@tabler/icons-react'
 
 const columnHelper = createColumnHelper<FlattenedPlacement>()
 
 // Create a separate component for the cell content so we can use hooks
 function PostCell({
   placement,
-  onRowClick
+  onRowClick,
+  onEdit
 }: {
   placement: FlattenedPlacement;
   onRowClick?: (placement: FlattenedPlacement) => void
+  onEdit?: (placement: FlattenedPlacement) => void
 }) {
   // Now we can use hooks here since this is a proper React component
   // However, for hover colors, we can use Chakra's _dark pseudo-prop instead
@@ -32,15 +35,31 @@ function PostCell({
       transition="all 0.2s"
     >
       <VStack align="start" gap={1} flex={1}>
-        <HStack gap={2}>
-          <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
-            {placement.piece_title}
-          </Text>
-          {placement.is_pinned && (
-            <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
-          )}
-          {placement.is_announcement && (
-            <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+        <HStack gap={2} w="full" justify="space-between">
+          <HStack gap={2} minW={0} flex={1}>
+            <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
+              {placement.piece_title}
+            </Text>
+            {placement.is_pinned && (
+              <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
+            )}
+            {placement.is_announcement && (
+              <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+            )}
+          </HStack>
+          {onEdit && (
+            <IconButton
+              aria-label="Edit"
+              size="sm"
+              variant="ghost"
+              colorScheme="green"
+              onClick={(event) => {
+                event.stopPropagation()
+                onEdit(placement)
+              }}
+            >
+              <IconEdit size={16} />
+            </IconButton>
           )}
         </HStack>
 
@@ -63,12 +82,15 @@ function PostCell({
   )
 }
 
-export const postsColumns = (onRowClick?: (placement: FlattenedPlacement) => void): ColumnDef<FlattenedPlacement>[] => [
+export const postsColumns = (
+  onRowClick?: (placement: FlattenedPlacement) => void,
+  onEdit?: (placement: FlattenedPlacement) => void
+): ColumnDef<FlattenedPlacement>[] => [
   columnHelper.display({
     id: 'post_info',
     header: 'Posts',
     cell: ({ row }) => (
-      <PostCell placement={row.original} onRowClick={onRowClick} />
+      <PostCell placement={row.original} onRowClick={onRowClick} onEdit={onEdit} />
     ),
   }),
 ]

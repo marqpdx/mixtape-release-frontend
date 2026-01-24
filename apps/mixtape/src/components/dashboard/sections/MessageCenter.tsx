@@ -1,4 +1,4 @@
-// src/components/dashboard/sections/MessageCenter.tsx - Enhanced with theme & mobile support
+// apps/mixtape/src/components/dashboard/sections/MessageCenter.tsx
 
 "use client";
 

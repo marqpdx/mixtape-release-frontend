@@ -33,6 +33,23 @@ export interface FetchGroupMembersOptions {
   offset?: number;
 }
 
+export interface GroupWelcomePin {
+  placement_id: string;
+  audience: 'group' | 'community' | 'public';
+  piece: {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt?: string | null;
+    published_at?: string | null;
+    author_name?: string | null;
+  };
+  display?: {
+    title?: string;
+    excerpt?: string;
+  };
+}
+
 /**
  * Fetch all groups (admin/steward view)
  */
@@ -73,6 +90,19 @@ export async function fetchUserGroups(): Promise<Group[]> {
 export async function fetchGroup(slug: string): Promise<Group> {
   const response = await axiosInstance.get<Group>(`/api/groups/${slug}`);
   return response.data;
+}
+
+/**
+ * Fetch the welcome pin placement for a group
+ */
+export async function fetchGroupWelcomePin(groupSlug: string): Promise<GroupWelcomePin | null> {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/welcome`, {
+    validateStatus: (status) => status === 204 || (status >= 200 && status < 300),
+  });
+  if (response.status === 204 || !response.data) {
+    return null;
+  }
+  return response.data as GroupWelcomePin;
 }
 
 /**

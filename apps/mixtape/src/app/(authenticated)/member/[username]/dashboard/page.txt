@@ -1,0 +1,115 @@
+// src/app/(protected)/members/[slug]/admin/page.tsx
+
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Text } from "@chakra-ui/react";
+import { useGetIdentity } from "@refinedev/core";
+import { Socket } from "socket.io-client";
+import { UserIdentity } from "@components/auth/interfaces";
+import { initializeSocket } from "lib/chat/socket";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import AdminLayout from "@components/shared/AdminLayout";
+// import MemberWorkArea from "@components/members/MemberWorkArea";
+// import { MEMBER_MENU_ITEMS } from "@components/members/MemberMenu";
+import { LOCAL_STORAGE_KEYS } from "lib/utils/localStorage";
+import MemberWorkArea from "@components/dashboard/member/MemberWorkArea";
+
+const DEFAULT_SECTION = "overview";
+
+export default function MemberAdminPage() {
+  const { slug } = useParams();
+  const { data: identity } = useGetIdentity<UserIdentity>();
+  const [loading, setLoading] = useState(true);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [allMembers, setAllMembers] = useState<UserIdentity[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  // Initialize socket for chat functionality
+  useEffect(() => {
+    const setupSocket = async () => {
+      if (!identity?.username) return;
+      const s = await initializeSocket();
+      if (!s) return;
+
+      setSocket(s);
+      s.emit("register", identity.username);
+      try {
+        const res = await axiosInstance.get("/api/chat/conversations");
+        res.data.map((conv: any) => s.emit("join_chat", conv.slug));
+      } catch (err) {
+        console.error("Socket join failed", err);
+      }
+    };
+    setupSocket();
+  }, [identity?.username]);
+
+  // Fetch member's groups and other members
+  useEffect(() => {
+    const fetchMemberData = async () => {
+      try {
+        // Fetch member's groups (you may need to adjust this endpoint)
+        const groupsRes = await axiosInstance.get(`/api/members/${slug}/groups`);
+        setGroups(groupsRes.data);
+
+        // Fetch all members for chat functionality
+        const membersRes = await axiosInstance.get("/api/users/");
+        const filtered = membersRes.data.filter((u: any) => u.username !== identity?.username);
+        setAllMembers(filtered);
+      } catch (err) {
+        console.error("❌ Failed to fetch member data:", err);
+        // Don't fail completely - some endpoints might not exist yet
+        setGroups([]);
+        setAllMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug && identity) fetchMemberData();
+  }, [slug, identity]);
+
+  if (!identity) {
+    return <Text>Loading your profile...</Text>;
+  }
+
+  if (loading) {
+    return <Text>Loading member info...</Text>;
+  }
+
+  // Use identity as the member data since we get it from auth
+  const member = {
+    id: identity.id,
+    name: identity.first_name || identity.username,
+    username: identity.username,
+    email: identity.email,
+    slug: identity.profile?.slug,
+    display_name: identity.profile?.display_name,
+    profile_image: identity.profile?.profile_image,
+    created_at: identity.date_joined,
+    roles: identity.roles,
+  };
+
+  return (
+    <AdminLayout
+      title={`${member.name}'s Dashboard`}
+      menuItems={MEMBER_MENU_ITEMS}
+      defaultSection={DEFAULT_SECTION}
+      WorkAreaComponent={MemberWorkArea}
+      workAreaProps={{
+        member,
+        groups,
+        selectedSlug,
+        setSelectedSlug,
+        allMembers,
+        socket,
+        identity,
+      }}
+      loading={false}
+      localStorageKey={LOCAL_STORAGE_KEYS.MEMBER_ADMIN}
+    />
+  );
+}
+

@@ -89,9 +89,15 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!urlSection) return;
-    if (urlSection === activeSection) return;
-    handleSetActiveSection(urlSection);
-  }, [urlSection, activeSection, handleSetActiveSection]);
+    const params: Record<string, string> = {};
+    if (searchParams) {
+      for (const [key, value] of searchParams.entries()) {
+        if (key === "section" || key === "view") continue;
+        params[key] = value;
+      }
+    }
+    handleSetActiveSection(urlSection, Object.keys(params).length ? params : undefined);
+  }, [urlSection, handleSetActiveSection, searchParams]);
 
   // function handleSetActiveSection(section: string) {
   //   if (typeof window !== 'undefined') {

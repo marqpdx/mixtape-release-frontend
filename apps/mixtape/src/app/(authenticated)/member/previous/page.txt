@@ -1,0 +1,234 @@
+
+"use client";
+
+import {
+  Box,
+  Heading,
+  Flex,
+  Icon,
+  Text,
+  VStack,
+  Button,
+} from "@chakra-ui/react";
+import { useRouter } from "next/navigation";
+import { Socket } from "socket.io-client";
+import { useGetIdentity } from "@refinedev/core";
+import { UserIdentity } from "@components/auth/interfaces";
+import {
+  IconUserEdit,
+  IconUsers,
+} from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { initializeSocket } from "lib/chat/socket";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { ConversationList } from "@components/chat/ConversationList";
+import { ConversationDetail } from "@components/chat/ConversationDetail";
+import { newConversationDialog } from "@components/chat/NewConversationDialog";
+import { createOrGetConversation } from "lib/chat/createOrGetConversation";
+import { useConversationStore } from "stores/conversationStore";
+
+type MemberWithDisplayName = UserIdentity & {
+  displayName: string;
+};
+
+const MemberDashboard = () => {
+  const router = useRouter();
+  const { data: identity } = useGetIdentity<UserIdentity>();
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [allMembers, setAllMembers] = useState<UserIdentity[]>([]);
+
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  // const bgRows = useColorModeValue("gray.100", "gray.700");
+  // const fgRows = useColorModeValue("gray.700", "gray.100");
+
+  const memberEditUrl = `/member/profiles/edit/${identity?.profile?.id}`;
+
+  if (!identity) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Text fontSize="xl">Loading your profile...</Text>
+      </Box>
+    );
+  }
+
+  useEffect(() => {
+
+    const setupSocket = async () => {
+      if (!identity?.username) return;
+
+      const s = await initializeSocket();
+      if (!s) return;
+
+      setSocket(s);
+
+      s.emit("register", identity?.username);
+      setIsRegistered(true);
+      try {
+        const res = await axiosInstance.get("/api/chat/conversations");
+        const slugs: string[] = res.data.map((conv: any) => conv.slug);
+        slugs.forEach((slug) => {
+          console.log(`Socket: MD: [Socket] Joining room ${slug}`);
+          s.emit("join_chat", slug);
+        });
+      } catch (err) {
+        console.error("Socket: MD: ❌ Failed to join rooms after login", err);
+      }
+    };
+
+    setupSocket();
+
+  }, [identity?.username]);
+
+  useEffect(() => {
+    axiosInstance
+      .get("/api/users/")
+      .then((res) => {
+        console.log('MD: members', res.data)
+        const everyone = res.data;
+        const filteredMembers = everyone.filter(
+          (member: UserIdentity) => member.username !== identity.username
+        );
+        const membersWithDisplayNames = filteredMembers.map((member:UserIdentity) => ({
+          ...member,
+          displayName: member.profile?.display_name || `${member.first_name} ${member.last_name}`.trim() || member.username,
+        }));
+        membersWithDisplayNames.sort((a: MemberWithDisplayName, b: MemberWithDisplayName) =>
+          a.displayName.localeCompare(b.displayName)
+        );
+        setAllMembers(membersWithDisplayNames);
+      })
+      .catch((err) => {
+        console.error("MD: ❌ Failed to fetch members", err);
+        setAllMembers([]);
+      });
+  }, []);
+
+  console.log('MD: members', allMembers)
+
+  const handleStartConversation = async (usernames: string[]) => {
+    const conversation = await createOrGetConversation(usernames);
+    if (conversation) {
+      const { refetchConversations, setSelectedConversation } =
+        useConversationStore.getState();
+      await refetchConversations(); // ensures it shows up in the list
+      // setSelectedConversation(conversation.slug); // highlights it
+      setSelectedSlug(conversation.slug);
+    }
+  };
+
+  return (
+    <Box x-maxW="800px" mx="auto" p={8} x-color={"fgRows"}>
+      <Heading size="lg" mb={4}>
+        Welcome, {identity.first_name || identity.username}!
+      </Heading>
+
+      <Box borderBottom="1px solid" borderColor="gray.300" mb={6} />
+
+      <VStack gap={6} align="stretch">
+        <Flex
+          p={5}
+          gap={3}
+          x-bg={'bgRows'}
+          borderRadius="md"
+          alignItems="center"
+          cursor="pointer"
+          _hover={{ bg: "gray.200" }}
+          onClick={() => router.push(memberEditUrl)}
+        >
+          <Icon as={IconUserEdit} w={5} h={5} />
+          <Box>
+            <Text> `Edit profile ${memberEditUrl}`</Text>
+            <Text fontSize="sm" x-color={'fgRows'}>
+              Manage your personal info
+            </Text>
+          </Box>
+        </Flex>
+
+        <Flex
+          display={'none'}
+          p={5}
+          gap={3}
+          bg={'bgRows'}
+          borderRadius="md"
+          alignItems="center"
+          cursor="pointer"
+          _hover={{ bg: "gray.200" }}
+          onClick={() => router.push(`/member/profiles`)}
+        >
+          <Icon as={IconUsers} w={5} h={5} />
+          <Box>
+            <Text>View All Member Profiles</Text>
+            <Text fontSize="sm" x-color={'fgRows'}>
+              Browse and search member profiles
+            </Text>
+          </Box>
+        </Flex>
+
+        {/* Conversation Area */}
+        <Button
+          onClick={() =>
+            newConversationDialog.open("new-chat", {
+              title: "Start a New Chat",
+              allMembers,
+              onStart: handleStartConversation,
+            })
+          }
+          mb={4}
+        >
+          Start New Chat
+        </Button>
+
+        <newConversationDialog.Viewport />
+
+        <>
+          <Flex
+            direction={["column", "column", "row"]} // stacks on mobile, horizontal on md+
+            width="100%"
+            height="100%"
+            gap={4}
+            // p={4}
+          >
+            {/* Left: Conversation List */}
+            <Box
+              className="chat-conversation-list"
+              w={["100%", "100%", "45%"]}
+              minW="250px"
+              maxW="350px"
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="md"
+              p={4}
+              overflowY="auto"
+            >
+              <ConversationList onSelect={(slug) => setSelectedSlug(slug)} />
+            </Box>
+            {/* Right: Conversation Detail */}
+            <Box
+              className="chat-conversation-detail"
+              flex={1}
+              w="100%"
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="md"
+              p={4}
+              overflowY="auto"
+            >
+              {selectedSlug ? (
+                <ConversationDetail socket={socket} slug={selectedSlug} />
+              ) : (
+                <Text fontSize="lg" color="gray.500">
+                  Select a conversation to start chatting
+                </Text>
+              )}
+            </Box>
+          </Flex>
+        </>
+
+      </VStack>
+    </Box>
+  );
+};
+
+export default MemberDashboard;

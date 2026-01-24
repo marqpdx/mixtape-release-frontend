@@ -21,6 +21,7 @@ import {
   useMemberPermissions,
   useAvailablePermissions,
   useGrantPermission,
+  useGrantRole,
   useRevokePermission,
 } from "@mixtape/api/hooks/groups/useGroupPermissions";
 
@@ -97,6 +98,7 @@ export default function GroupPermissionsWorkArea({
   void groupId;
   void groupTitle;
   const [saving, setSaving] = useState<string | null>(null); // userId being saved
+  const [roleSaving, setRoleSaving] = useState<string | null>(null);
 
   // Fetch data from API
   const { data: members, isLoading: membersLoading } = useMemberPermissions(groupSlug);
@@ -105,6 +107,7 @@ export default function GroupPermissionsWorkArea({
   // Mutations
   const grantMutation = useGrantPermission(groupSlug);
   const revokeMutation = useRevokePermission(groupSlug);
+  const grantRoleMutation = useGrantRole(groupSlug);
 
   // Use available permissions from API or fall back to default
   const permissions = availablePermissions || AVAILABLE_PERMISSIONS;
@@ -160,6 +163,21 @@ export default function GroupPermissionsWorkArea({
       console.error("Failed to toggle permission:", error);
     } finally {
       setSaving(null);
+    }
+  };
+
+  const grantAdminRole = async (userId: string) => {
+    setRoleSaving(userId);
+    try {
+      await grantRoleMutation.mutateAsync({ userId, role: "admin" });
+      toaster.create({
+        title: "Member promoted to Admin",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Failed to grant admin role:", error);
+    } finally {
+      setRoleSaving(null);
     }
   };
 
@@ -312,7 +330,22 @@ export default function GroupPermissionsWorkArea({
                   </Table.Cell>
 
                   {/* Role Badge */}
-                  <Table.Cell>{getRoleBadge(member.roles)}</Table.Cell>
+                  <Table.Cell>
+                    <Flex align="center" gap={2}>
+                      {getRoleBadge(member.roles)}
+                      {!isAdmin && (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          colorScheme="red"
+                          onClick={() => grantAdminRole(member.user_id)}
+                          disabled={roleSaving === member.user_id}
+                        >
+                          {roleSaving === member.user_id ? "Saving..." : "Make Admin"}
+                        </Button>
+                      )}
+                    </Flex>
+                  </Table.Cell>
 
                   {/* Permission Checkboxes */}
                   {permissions.map((perm) => (

@@ -116,6 +116,15 @@ export default function GroupWorkArea({
       queryKey: ['writing', 'drafts', 'group', group.slug],
     });
 
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(`group-${group.slug}-dashboard`, "writing");
+        window.localStorage.setItem("writing_active_tab", "published");
+      } catch (error) {
+        console.warn("Failed to persist writing section:", error);
+      }
+    }
+
     // Navigate to the published piece
     router.push(`/groups/${group.slug}/writing/${piece.slug}`);
   };
@@ -386,6 +395,16 @@ export default function GroupWorkArea({
           writingKind="post"
           pieceId={pieceId} // If undefined, creates new; if present, loads existing
           onPublished={handlePiecePublished}
+          onUnpublished={() => {
+            if (typeof window !== "undefined") {
+              try {
+                window.localStorage.setItem("writing_active_tab", "drafts");
+              } catch (error) {
+                console.warn("Failed to set writing tab:", error);
+              }
+            }
+            router.replace(`/groups/${group.slug}?view=admin&section=writing`);
+          }}
         />
       </WorkAreaWrapper>
     );

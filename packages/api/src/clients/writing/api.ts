@@ -38,9 +38,18 @@ export async function publishPiece(pieceId: string, payload: {
     visibility?: 'public' | 'private';
     is_excerpt?: boolean;
     follow_updates?: boolean;
+    overrides?: Record<string, unknown>;
   };
 }) {
   const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/publish`, payload);
+  return res.data;
+}
+
+/**
+ * Unpublish a piece (return to draft)
+ */
+export async function unpublishPiece(pieceId: string) {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/unpublish`);
   return res.data;
 }
 

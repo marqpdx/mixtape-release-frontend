@@ -17,4 +17,10 @@ export * from './projects/projectsApi'
 export * from './stackroom/stackroomApi'
 export * from './threadworks/threadworksApi'
 export * from './user/userApi'
+export {
+  fetchMembers as fetchMemberProfiles,
+  fetchMember as fetchMemberProfile,
+  fetchMyProfile,
+  updateMemberProfile,
+} from './member/memberApi'
 export * from './writing/api'

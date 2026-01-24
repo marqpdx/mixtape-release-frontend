@@ -1,0 +1,220 @@
+// /src/app/(protected)/member/profiles/edit/[id]/page.tsx
+
+"use client";
+
+import { useForm } from "@refinedev/react-hook-form";
+import { useRouter } from "next/navigation";
+import {
+  Box,
+  Button,
+  Input,
+  Stack,
+  HStack,
+  Checkbox,
+} from "@chakra-ui/react";
+import { createStandaloneToast } from "@chakra-ui/toast";
+import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { useProfileData } from "@hooks/useProfileData";
+import { useEffect, useState } from "react";
+import { ProfileEditFormData } from "@components/auth/interfaces";
+import { ImageUploadField } from "@components/forms/common/ImageUploadField";
+// import { uploadImageToR2 } from "@utils/file/uploadImageToR2";
+import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
+import { Controller, useWatch } from "react-hook-form";
+
+import { useEntityImageUpload } from "@hooks/useEntityImageUpload";
+// import LayoutStyleRadioGroup from "@components/layout/LayoutStyleRadioGroup";
+import ProfileEditorShell from "@components/profiles/ProfileEditorShell";
+// import { FaDoorClosed } from "react-icons/fa";
+
+const { toast } = createStandaloneToast();
+
+const ProfileEdit = () => {
+  const router = useRouter();
+  const { profileData, loading: profileLoading, error } = useProfileData();
+  // const [profileUploadPending, setProfileUploadPending] = useState(false);
+  // const [backgroundUploadPending, setBackgroundUploadPending] = useState(false);
+
+  const {
+    refineCore: { formLoading },
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    control,
+    formState: { errors },
+  } = useForm();
+
+  useEffect(() => {
+    if (profileData) {
+      reset({
+        profile_image: profileData.profile_image,
+        background_image: profileData.background_image,
+        self_description: profileData.self_description,
+        name: profileData.display_name,
+        email: profileData.user?.email,
+        first_name: profileData.user?.first_name,
+        last_name: profileData.user?.last_name,
+        bio_json: profileData.bio_json || { type: "doc", content: [] },
+      });
+    }
+  }, [profileData, reset]);
+
+
+  const { handleImageChange, pending } = useEntityImageUpload(
+    "user",
+    profileData?.user?.id.toString() ?? "",
+    setValue
+  );
+
+  const onSubmit = async (data: ProfileEditFormData) => {
+
+    console.log("DATA SUBMITTED:", data);
+
+    const newData = {
+      name: data.name,
+      bio_json: data.bio_json,
+      quick_intro: data.quick_intro,
+      avatar: data.avatar,
+      profile_image: data.profile_image,
+      self_description: data.self_description,
+      background_image: data.background_image,
+      regenerate_slug: data.regenerate_slug ? true : false,
+      user: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+      },
+    };
+
+    console.log("New Data to Submit:", newData);
+
+    try {
+      await axiosInstance.patch(
+        `/api/profiles/${profileData?.user?.id}`,
+        newData
+      );
+
+      toast({
+        title: "Profile Updated",
+        description: "The profile has been successfully updated.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // router.replace(`/member/profiles/show/${profileData?.id}`);
+      router.replace(`/dashboard`);
+    } catch (err) {
+      toast({
+        title: "Update Failed",
+        description: `You do not have permission to update this profile: ${err}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      router.replace("/members");
+    }
+  };
+
+  const watchedBioJson = useWatch({
+    control,
+    name: "bio_json",
+    defaultValue: { type: "doc", content: [] },
+  });
+
+
+  const autoSaveChecked = watch("autosave_bio")?.checked ?? false;
+
+  if (profileLoading) return <p>Loading...</p>;
+
+  if (error) return <ErrorAlert title="Error Loading Profile" description={error} />;
+
+  return (
+    <Box as="form" onSubmit={handleSubmit(onSubmit)} maxW="800px" mx="auto" p={8}>
+      <Stack gap={6}>
+        <Input {...register("name")} placeholder="Name" />
+        <Input {...register("email")} placeholder="Email" />
+        <Input {...register("first_name")} placeholder="First Name" />
+        <Input {...register("last_name")} placeholder="Last Name" />
+
+        <Controller
+          name="regenerate_slug"
+          control={control}
+          defaultValue={false}
+          render={({ field }) => {
+            console.log("🐛 bio_json field value:", field.value);
+            return (
+            <Checkbox.Root
+              checked={!!field.value}
+              onCheckedChange={(val) => field.onChange(!!val)}
+            >
+              <Checkbox.HiddenInput {...field} /> {/* Attach field to HiddenInput */}
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>Regenerate slug based on name</Checkbox.Label>
+            </Checkbox.Root>
+          )}
+        }
+        />
+
+        <Input {...register("self_description")} placeholder="Describe yourself in single words (like 'Champion', 'Catalyst'...)" />
+
+
+        <ProfileEditorShell
+          name="Bio"
+          userId={(profileData?.user?.id ?? "").toString()}
+          initialContent={watchedBioJson}
+          onContentChange={(json) => setValue("bio_json", json)}
+          enableAutoSave={autoSaveChecked}
+        />
+        <Controller
+          name="autosave_bio"
+          control={control}
+          defaultValue={false}
+          render={({ field }) => (
+            <Checkbox.Root
+              checked={!!field.value}
+              onCheckedChange={(val) => field.onChange(!!val)}
+            >
+              <Checkbox.HiddenInput {...field} />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>Enable autosave for bio (not yet working)</Checkbox.Label>
+            </Checkbox.Root>
+          )}
+        />
+
+        <HStack>
+          <ImageUploadField
+            imageType="profile"
+            pending={pending.profile}
+            watch={watch}
+            register={register}
+            errors={errors}
+            doHandleImageChange={(e) => handleImageChange(e, "profile")}
+          />
+
+          <ImageUploadField
+            imageType="background"
+            pending={pending.background}
+            watch={watch}
+            register={register}
+            errors={errors}
+            doHandleImageChange={(e) => handleImageChange(e, "background")}
+          />
+        </HStack>
+
+        <Button type="submit" loading={formLoading} >
+          Save Changes
+        </Button>
+      </Stack>
+    </Box>
+  );
+};
+
+export default ProfileEdit;
+

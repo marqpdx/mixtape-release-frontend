@@ -162,6 +162,13 @@ export default function WritingListWrapper({
     onNavigateToDetail(placement.piece_slug);
   };
 
+  const handlePublishedEdit = useCallback(
+    (placement: FlattenedPlacement) => {
+      onNavigateToEditor(placement.piece_id);
+    },
+    [onNavigateToEditor]
+  );
+
   const handleDraftClick = useCallback(
     (draft: WritingWorkingCopy) => {
       onNavigateToEditor(draft.piece.id);
@@ -468,7 +475,10 @@ export default function WritingListWrapper({
             title=""
             isLoading={placementsLoading}
             error={placementsError ? "Failed to load writing" : null}
-            columns={postsColumns(handleRowClick)}
+            columns={postsColumns(
+              handleRowClick,
+              canManagePosts ? handlePublishedEdit : undefined
+            )}
             showAvatar={false}
             emptyStateMessage="No published content found"
             emptyStateSubtitle={

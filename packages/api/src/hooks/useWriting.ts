@@ -196,6 +196,7 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
           visibility?: 'public' | 'private';
           is_excerpt?: boolean;
           follow_updates?: boolean;
+          overrides?: Record<string, unknown>;
         };
       }
     }) => {
@@ -231,9 +232,25 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
     },
   });
 
+  /**
+   * Unpublish piece mutation - return to draft
+   */
+  const unpublishPiece = useMutation({
+    mutationFn: (pieceId: string) => writingApi.unpublishPiece(pieceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],
+      });
+    },
+  });
+
   return {
     deleteDraft,
     publishPiece,
     publishAndPlace,
+    unpublishPiece,
   };
 }

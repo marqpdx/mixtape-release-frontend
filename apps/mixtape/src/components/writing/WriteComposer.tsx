@@ -67,6 +67,7 @@ interface WriteComposerProps {
   showPublishingControls?: boolean;
   onPublished?: (piece: Record<string, unknown>) => void;
   onSaved?: (piece: Record<string, unknown>) => void;
+  onUnpublished?: (piece: Record<string, unknown>) => void;
 }
 
 const EMPTY_DOC: DocumentJSON = { type: "doc", content: [] };
@@ -80,6 +81,7 @@ export default function WriteComposer({
   showPublishingControls = true,
   onPublished,
   onSaved,
+  onUnpublished,
 }: WriteComposerProps) {
   const editorRef = useRef<Editor | null>(null);
 
@@ -94,6 +96,8 @@ export default function WriteComposer({
     docJSON: initialPiece?.body_json || EMPTY_DOC,
     excerpt: initialPiece?.excerpt || "",
   });
+
+  const isPublished = initialPiece?.status === "published";
 
   // Reset when switching pieces
   useEffect(() => {
@@ -114,6 +118,9 @@ export default function WriteComposer({
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
+  const publishedBannerBg = useColorModeValue("orange.50", "orange.900");
+  const publishedBannerBorder = useColorModeValue("orange.200", "orange.700");
+  const publishedBannerText = useColorModeValue("orange.800", "orange.100");
 
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
@@ -308,6 +315,18 @@ export default function WriteComposer({
     }
   }, [saveStatus]);
 
+  // Ensure we persist changes if user navigates away before autosave fires
+  useEffect(() => {
+    return () => {
+      if (wantsCollab || !hasUnsavedChanges) return;
+      void saveNow({
+        title: titleRef.current,
+        body_json: docJSONRef.current ?? EMPTY_DOC,
+        excerpt: excerptRef.current,
+      });
+    };
+  }, [wantsCollab, hasUnsavedChanges, saveNow]);
+
   // Word count init from initial JSON (best-effort; collab will be updated by MainEditor callbacks)
   useEffect(() => {
     if (initialPiece?.body_json && summaryWordCount === 0) {
@@ -442,6 +461,21 @@ export default function WriteComposer({
 
             <TitleInput title={title} setTitle={onTitleChange} placeholder="Enter your title..." />
 
+            {isPublished && (
+              <Box
+                bg={publishedBannerBg}
+                border="1px solid"
+                borderColor={publishedBannerBorder}
+                borderRadius="md"
+                px={4}
+                py={2}
+              >
+                <Text fontSize="sm" color={publishedBannerText}>
+                  Editing published version. Publish updates to replace the live post, or return it to draft.
+                </Text>
+              </Box>
+            )}
+
             <Box position="relative" w="100%">
               <MainEditor
                 key={collabKey}
@@ -519,12 +553,15 @@ export default function WriteComposer({
                       pieceId={pieceId}
                       sponsor={sponsor}
                       piece={{ id: pieceId, title }}
+                      pieceStatus={initialPiece?.status as string | undefined}
                       hasUnsavedChanges={hasUnsavedChanges}
                       saveNow={saveNow}
                       titleRef={titleRef}
                       docJSONRef={docJSONRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                       excerptRef={excerptRef}
                       onPublished={onPublished}
+                      onUnpublished={onUnpublished}
+                      publishLabel={isPublished ? "Publish updates" : "Publish"}
                       onSaved={onSaved}
                     />
                   )}

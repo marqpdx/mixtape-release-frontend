@@ -3,15 +3,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid } from "@chakra-ui/react";
+import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible } from "@chakra-ui/react";
 import type { Group } from "@mixtape/core/types/groupTypes";
-import { useMembers } from "@mixtape/api/hooks";
+import { useGroupWelcomePin, useMembers } from "@mixtape/api/hooks";
 
 interface GroupOverviewTabProps {
   group: Group;
 }
 
 export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
+  const welcomeStorageKey = `group:${group.slug}:welcome-collapsed`;
+  const [welcomeOpen, setWelcomeOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem(welcomeStorageKey) !== "1";
+  });
   const [showFullDescription, setShowFullDescription] = useState(false);
   const description = group.summary?.trim() || group.description?.trim() || "No summary provided yet.";
   const shouldTruncate = description.length > 320;
@@ -20,6 +25,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       ? `${description.slice(0, 320)}...`
       : description;
   const { adminMembers, stewardMembers, isLoading: membersLoading } = useMembers(group.slug);
+  const { pin: welcomePin } = useGroupWelcomePin(group.slug);
 
   const leadership = useMemo(() => {
     const admins = adminMembers;
@@ -70,6 +76,53 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
   return (
     <Stack gap={6}>
+      {welcomePin && (
+        <Card.Root>
+          <Card.Header>
+            <Collapsible.Root
+              open={welcomeOpen}
+              onOpenChange={({ open }) => {
+                setWelcomeOpen(open);
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(welcomeStorageKey, open ? "0" : "1");
+                }
+              }}
+            >
+              <Collapsible.Trigger asChild>
+                <Button variant="outline" size="sm" width="full" justifyContent="space-between">
+                  Welcome
+                  <Collapsible.Indicator />
+                </Button>
+              </Collapsible.Trigger>
+              <Collapsible.Content>
+                <Box pt={4}>
+                  <Heading size="md" mb={2}>
+                    {welcomePin.display?.title || welcomePin.piece.title}
+                  </Heading>
+                  {welcomePin.display?.excerpt || welcomePin.piece.excerpt ? (
+                    <Text color="fg.muted" mb={3}>
+                      {welcomePin.display?.excerpt || welcomePin.piece.excerpt}
+                    </Text>
+                  ) : (
+                    <Text color="fg.muted" mb={3}>
+                      Welcome to {group.title}.
+                    </Text>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      window.location.href = `/groups/${group.slug}/writing/${welcomePin.piece.slug}`;
+                    }}
+                  >
+                    Read more
+                  </Button>
+                </Box>
+              </Collapsible.Content>
+            </Collapsible.Root>
+          </Card.Header>
+        </Card.Root>
+      )}
       <Grid templateColumns={{ base: "1fr", lg: "3fr 2fr" }} gap={6}>
         <Stack gap={6}>
           <Card.Root>

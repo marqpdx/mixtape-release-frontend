@@ -1,0 +1,162 @@
+// /src/app/(protected)/layout.tsx
+
+"use client";
+
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Box, Spinner, Text } from "@chakra-ui/react";
+import { useGetIdentity, useApiUrl } from "@refinedev/core";
+import { getCache, setCache } from "@utils/cache";
+import { UserIdentity } from "@components/auth/interfaces";
+import { getValidAccessToken } from "@providers/auth-provider/utils";
+import { useColorModeValue } from "@components/ui/color-mode";
+import { getRoleBooleans } from "lib/auth/roles";
+import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
+
+export interface AdminDashboardResponse {
+  message: string;
+}
+
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: identity, isLoading: identityLoading } = useGetIdentity<UserIdentity>();
+  const roles = identity?.roles ?? [];
+  const { isAdmin, isMember } = getRoleBooleans(identity);
+
+  const apiUrl = useApiUrl();
+  const permUrl = `${apiUrl}/authz/admin/dashboard`;
+
+  const bgColor = useColorModeValue("background.light", "background.dark");
+  const textColor = useColorModeValue("text.light", "text.dark");
+
+  const TTL = 1000 * 60 * 5; // 5 minutes
+  const ADMIN_CACHE_KEY = "admin_access";
+  const STEWARD_CACHE_KEY = "steward_access";
+
+  const validateAdminAccess = async () => {
+    if (roles.includes("member")) {
+      console.log("[ProtectedLayout] 🚫 Skipping admin check for member");
+      return;
+    }
+
+    // ✅ Check the cache first
+    const adminCache = getCache(ADMIN_CACHE_KEY);
+    const stewardCache = getCache(STEWARD_CACHE_KEY);
+
+    if (adminCache || stewardCache) {
+      console.log("[ProtectedLayout] ✅ Permission fetched from cache.");
+      return;
+    }
+
+    // 🚀 Call backend if not cached
+    console.log("[ProtectedLayout] 🔍 Checking backend permission...");
+
+    try {
+      if (roles.includes("admin") || roles.includes("steward")) {
+
+        // const token = safeGetLocalStorage("access_token");
+        const token = await getValidAccessToken();
+        if (!token) {
+          console.error("[ProtectedLayout] 🔴 No access token found!");
+          router.replace("/login");
+          return;
+        }
+
+        const response = await fetch(permUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          console.log("[ProtectedLayout] ✅ Backend access granted.");
+          if (roles.includes("admin")) {
+            setCache(ADMIN_CACHE_KEY, true, TTL);
+          } else if (roles.includes("steward")) {
+            setCache(STEWARD_CACHE_KEY, true, TTL);
+          }
+        } else {
+          router.replace("/login");
+          throw new Error("Forbidden");
+        }
+      }
+    } catch (error) {
+      console.error("[ProtectedLayout] 🔴 Backend access denied:", error);
+      setCache(ADMIN_CACHE_KEY, false, TTL);
+      setCache(STEWARD_CACHE_KEY, false, TTL);
+    }
+  };
+
+  useEffect(() => {
+    if (identityLoading) return;
+
+    if (!identity) {
+      console.log("[ProtectedLayout] 🔴 No identity found, redirecting...");
+      router.replace("/login");
+      return;
+    }
+
+    // ✅ If member, only allow `/member` paths
+    if (roles.includes("member")) {
+      if (pathname.startsWith("/member")) {
+        console.log("[ProtectedLayout] ✅ Member access granted. No backend call needed.");
+        return;
+      } else {
+        console.log("[ProtectedLayout] 🔴 Member cannot access Admin paths. Redirecting...");
+        router.replace("/member");
+        return;
+      }
+    }
+
+    // ✅ Validate access only if not member
+    validateAdminAccess();
+  }, [identity, identityLoading, pathname]);
+
+  if (identityLoading) {
+    console.log("[ProtectedLayout] ⏳ Loading spinner...");
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <Spinner size="xl" mb={4} />
+        <Text fontSize="lg">Checking authentication status...</Text>
+      </Box>
+    );
+  }
+
+  if (!identity) {
+    // Optional fallback UI — never actually shown unless redirect fails
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <Text fontSize="lg">Redirecting to login...</Text>
+      </Box>
+    );
+  }
+
+  console.log("[ProtectedLayout] 🟢 Rendered successfully.");
+  return (
+    <>
+      <Box textStyle={'body'} my={0} p={0} maxW="100%" mx={'auto'} bg={bgColor} color={textColor} minH={'100vh'}>
+        <Box pt={10} maxW={'7xl'} mx={'auto'}>{children}</Box>
+      </Box>
+      <AdminTodoButtonWithModal isAdmin={isAdmin} />
+    </>
+  );
+}
+
+

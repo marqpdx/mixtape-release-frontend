@@ -95,6 +95,23 @@ export const groupPermsApi = {
   },
 
   /**
+   * POST /api/groups/{slug}/members/{userId}/roles
+   * Grant a role to a member
+   * Body: { role: 'admin' | 'steward' }
+   */
+  grantRole: async (
+    groupSlug: string,
+    userId: string,
+    role: string
+  ): Promise<MemberPermissions> => {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/members/${userId}/roles`,
+      { role }
+    );
+    return res.data;
+  },
+
+  /**
    * GET /api/groups/{slug}/my-permissions
    * Get current user's permissions in the group
    * Used for frontend permission guards

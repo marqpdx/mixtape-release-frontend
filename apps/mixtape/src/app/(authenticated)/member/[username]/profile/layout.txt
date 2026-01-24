@@ -1,0 +1,27 @@
+// src/app/(protected)/members/[slug]/profile/layout.tsx
+
+"use client";
+
+import { Box } from "@chakra-ui/react";
+import { useColorModeValue } from "@components/ui/color-mode";
+
+export default function ProfileLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const bg = useColorModeValue("gray.50", "gray.900");
+  const text = useColorModeValue("gray.800", "gray.100");
+
+  return (
+    <Box
+      className="profile-layout"
+      minH="100vh"
+      bg={bg}
+      color={text}
+      maxW="100%"
+    >
+      {children}
+    </Box>
+  );
+}

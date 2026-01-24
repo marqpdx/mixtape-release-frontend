@@ -15,6 +15,7 @@ import GroupsTable from "@components/groups/GroupsTable";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import MessageCenter from "../sections/MessageCenter";
 import GroupCreateWorkArea from "@/components/groups/create/GroupCreateWorkArea";
+import MemberProfileEdit from "./MemberProfileEdit";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -78,6 +79,15 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <MessageCenter />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Profile section
+  if (section === "profile") {
+    return (
+      <WorkAreaWrapper>
+        <MemberProfileEdit />
       </WorkAreaWrapper>
     );
   }

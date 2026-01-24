@@ -1,4 +1,4 @@
-// src/components/groups/tabs/MembersTab.tsx
+// apps/mixtape/src/components/groups/tabs/MembersTab.tsx
 
 "use client";
 
@@ -13,7 +13,7 @@ export function MembersTab({ group }: { group: Group }) {
   return (
     <Box>
       <Heading size="lg" mb={4}>
-        Members
+        Group Members
       </Heading>
       {error && (
         <Text color="fg.muted" mb={4}>

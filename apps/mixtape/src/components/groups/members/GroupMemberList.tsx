@@ -23,6 +23,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
+import { useRouter } from "next/navigation";
 
 interface GroupMemberListProps {
   group: Group;
@@ -57,6 +58,7 @@ export function GroupMemberList({
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
+  const router = useRouter();
 
   const AVATAR_SIZE = 148;
 
@@ -84,11 +86,20 @@ export function GroupMemberList({
   };
 
   const handleMemberClick = (membership: GroupMembership) => {
-    if (onMemberClick) {
-      onMemberClick(membership);
-    } else {
-      console.log('Navigate to member:', membership.member_id);
+    if (membership.username) {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "memberProfileReturn",
+          JSON.stringify({
+            slug: group.slug,
+            title: group.title,
+          })
+        );
+      }
+      router.push(`/member/${membership.username}`);
+      return;
     }
+    onMemberClick?.(membership);
   };
 
   const GridView = () => (

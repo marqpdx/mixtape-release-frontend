@@ -39,6 +39,13 @@ export interface UseGroupResult {
   refetch: () => void;
 }
 
+export interface UseGroupWelcomePinResult {
+  pin: groupApi.GroupWelcomePin | null;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
 export interface UseGroupMutationsResult {
   updateGroup: (updates: Partial<Group>) => Promise<Group>;
   publishGroup: () => Promise<Group>;
@@ -121,6 +128,31 @@ export const useGroup = (slug: string | null): UseGroupResult => {
     isLoading,
     error: error as Error | null,
     refetch
+  };
+};
+
+/**
+ * Hook to fetch the welcome pin for a group
+ */
+export const useGroupWelcomePin = (slug: string | null): UseGroupWelcomePinResult => {
+  const {
+    data: pin = null,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [...groupsQueryKeys.detail(slug || ''), 'welcome-pin'],
+    queryFn: () => groupApi.fetchGroupWelcomePin(slug!),
+    enabled: !!slug,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    pin,
+    isLoading,
+    error: error as Error | null,
+    refetch,
   };
 };
 

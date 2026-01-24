@@ -28,7 +28,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "overview", label: "Overview", hidden: false },
       { key: "messages", label: "Messages", hidden: false },
-      { key: "profile", label: "Profile", hidden: true },
+      { key: "profile", label: "Edit Profile", hidden: false },
       { key: "preferences", label: "Preferences", hidden: true },
       { key: "activity", label: "Activity Feed", hidden: true },
     ]

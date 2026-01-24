@@ -298,6 +298,8 @@ export interface PlacementOptions {
     excerpt_override?: string;
     cover_override?: string;
     lantern_subject?: string;
+    pin_kind?: string;
+    pin_audience?: 'group' | 'community' | 'public';
   } | null;
   order?: number;
   is_pinned?: boolean;
