@@ -45,7 +45,7 @@ export default function WelcomeStartPage() {
           locale: data.locale.trim(),
         };
         window.localStorage.setItem("onboarding_minimal_profile", JSON.stringify(minimal));
-      } catch (_) {
+      } catch {
         // Ignore storage errors
       }
     }
@@ -63,7 +63,7 @@ export default function WelcomeStartPage() {
             Step 1 of 3
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
-            Welcome — let's get you set up
+            Welcome — let&apos;s get you set up
           </Heading>
           <Text color="theme.textSecondary">
             Just a few basics. You can edit everything later.

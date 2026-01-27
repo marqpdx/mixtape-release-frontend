@@ -16,11 +16,14 @@ import {
   Badge,
   Grid,
   GridItem,
+  Link,
 } from "@chakra-ui/react";
-import { IconMail, IconCalendar, IconUser } from "@tabler/icons-react";
+import { IconMail, IconCalendar, IconUser, IconShoppingBag } from "@tabler/icons-react";
+import NextLink from "next/link";
 import { useMemberProfile } from "@hooks/member/useMemberProfile";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
+import { useStall } from "@mixtape/api/hooks/useBazaar";
 // import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
 
 /**
@@ -34,6 +37,7 @@ export default function MemberProfilePage() {
   const username = params?.username as string;
 
   const { member, isLoading, error } = useMemberProfile(username);
+  const { stall } = useStall(member ? "user" : null, member?.id || null);
 
   const cardBg = useColorModeValue("white", "gray.800");
   const cardBorder = useColorModeValue("gray.200", "gray.700");
@@ -225,6 +229,35 @@ export default function MemberProfilePage() {
                 </HStack>
               </GridItem>
             </Grid>
+
+            {/* Bazaar Stall Link */}
+            {stall && stall.offerings_count > 0 && (
+              <Box
+                w="100%"
+                p={4}
+                borderWidth="1px"
+                borderColor={cardBorder}
+                borderRadius="lg"
+              >
+                <HStack justify="space-between" align="center">
+                  <HStack gap={3}>
+                    <IconShoppingBag size={20} />
+                    <Box>
+                      <Text fontWeight="medium">Bazaar Stall</Text>
+                      <Text fontSize="sm" color={subtextColor}>
+                        {stall.offerings_count} {stall.offerings_count === 1 ? "offering" : "offerings"} available
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <Link as={NextLink} href={`/member/${username}/stall`}>
+                    <Button size="sm" variant="outline">
+                      <IconShoppingBag size={16} />
+                      View Stall
+                    </Button>
+                  </Link>
+                </HStack>
+              </Box>
+            )}
           </VStack>
         </Box>
       </Box>

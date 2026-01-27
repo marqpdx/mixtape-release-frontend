@@ -30,7 +30,7 @@ interface GroupMemberHeaderProps {
   group: {
     title: string;
     group_type?: string;
-    emblem?: { size_96_url?: string; url?: string };
+    emblem?: { size_96_url?: string | null; url?: string | null } | null;
     profile_image_url?: string;
     member_count?: number;
   };

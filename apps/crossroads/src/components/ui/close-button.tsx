@@ -1,12 +1,10 @@
 "use client"
 
+import type { IconButtonProps } from "@chakra-ui/react"
 import { IconButton } from "@chakra-ui/react"
 import { forwardRef } from "react"
 
-interface CloseButtonProps {
-  size?: "sm" | "md" | "lg"
-  [key: string]: any
-}
+type CloseButtonProps = IconButtonProps
 
 export const CloseButton = forwardRef<HTMLButtonElement, CloseButtonProps>(
   function CloseButton(props, ref) {

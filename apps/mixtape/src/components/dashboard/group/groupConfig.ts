@@ -91,6 +91,15 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    key: "bazaar",
+    label: "Bazaar",
+    icon: "🏪",
+    subItems: [
+      { key: "bazaar-products", label: "Products" },
+      { key: "bazaar-offerings", label: "Offerings" },
+    ]
+  },
+  {
     key: "settings",
     label: "Settings",
     icon: "⚙️",

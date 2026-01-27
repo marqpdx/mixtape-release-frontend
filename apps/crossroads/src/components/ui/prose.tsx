@@ -31,12 +31,14 @@ export const Prose = chakra("div", {
     "& h2": {
       fontSize: { base: "xl", md: "2xl", lg: "3xl" },
       lineHeight: 1.3,
+      scrollMarginTop: "120px",
     },
     "& h3": {
       fontSize: { base: "lg", md: "xl", lg: "2xl" },
       lineHeight: 1.35,
+      scrollMarginTop: "120px",
     },
-    "& h4": { fontSize: "lg", lineHeight: 1.4 },
+    "& h4": { fontSize: "lg", lineHeight: 1.4, scrollMarginTop: "120px" },
 
     "& a": {
       color: "fg",

@@ -5,7 +5,9 @@
 // apps/mixtape/src/components/dashboard/member/MemberWorkArea.tsx
 
 import React, { useMemo, useRef } from "react";
-import { VStack, Text } from "@chakra-ui/react";
+import { VStack, Text, Box, Heading, Card, HStack, Button, SimpleGrid, Badge, Link } from "@chakra-ui/react";
+import { IconShoppingBag, IconPackage, IconTag, IconShoppingCart } from "@tabler/icons-react";
+import NextLink from "next/link";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 
@@ -16,6 +18,10 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import MessageCenter from "../sections/MessageCenter";
 import GroupCreateWorkArea from "@/components/groups/create/GroupCreateWorkArea";
 import MemberProfileEdit from "./MemberProfileEdit";
+import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
+import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
+import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
+import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -120,6 +126,51 @@ export default function MemberWorkArea({
     );
   }
 
+  // Bazaar - Products
+  if (section === "bazaar-products") {
+    return (
+      <WorkAreaWrapper>
+        <ProductsWorkArea
+          sponsorType="user"
+          sponsorId={identity.id}
+          sponsorTitle={identity.profile?.display_name || identity.username}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Bazaar - Offerings
+  if (section === "bazaar-offerings") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <OfferingsWorkArea
+          sponsorType="user"
+          sponsorId={identity.id}
+          sponsorTitle={displayName}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Bazaar - Overview
+  if (section === "bazaar-overview") {
+    return (
+      <WorkAreaWrapper>
+        <BazaarOverview identity={identity} setActiveSection={setActiveSection} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Bazaar - My Purchases (Buyer Orders)
+  if (section === "bazaar-orders") {
+    return (
+      <WorkAreaWrapper>
+        <BuyerOrdersSection />
+      </WorkAreaWrapper>
+    );
+  }
+
   // Default fallback
   return (
     <WorkAreaWrapper>
@@ -131,385 +182,263 @@ export default function MemberWorkArea({
   );
 }
 
-// // =====================================================
-// // MEMBER WORK AREA - Community features & content creation
-// // =====================================================
+/**
+ * Bazaar Overview Section
+ * Shows stall preview, quick stats, and navigation to other bazaar sections
+ */
+function BazaarOverview({
+  identity,
+  setActiveSection,
+}: {
+  identity: UserIdentity;
+  setActiveSection: (section: string) => void;
+}) {
+  const { stall, isLoading: stallLoading } = useStall("user", identity.id);
+  const { orders, isLoading: ordersLoading } = useOrders({ view: "buyer" });
 
-// // apps/mixtape/src/components/dashboard/member/MemberWorkArea.tsx
+  return (
+    <VStack align="stretch" gap={6}>
+      <Box>
+        <Heading size="lg" mb={2}>
+          <HStack>
+            <IconShoppingBag size={28} />
+            <Text>Bazaar</Text>
+          </HStack>
+        </Heading>
+        <Text color="gray.600">
+          Manage your products, offerings, and view your purchases
+        </Text>
+      </Box>
 
-// import React, { useCallback, useState, useMemo, useRef } from "react";
-// import { VStack, Text, Box } from "@chakra-ui/react";
-// import { WorkAreaProps } from "@components/dashboard/shared/types";
-// import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
-// // import { UserIdentity } from "@components/auth/interfaces";
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
+        {/* My Stall Card */}
+        <Card.Root>
+          <Card.Header>
+            <HStack>
+              <IconShoppingBag size={20} />
+              <Heading size="sm">My Stall</Heading>
+            </HStack>
+          </Card.Header>
+          <Card.Body>
+            {stallLoading ? (
+              <Text color="gray.500">Loading...</Text>
+            ) : stall && stall.offerings_count > 0 ? (
+              <VStack align="stretch" gap={3}>
+                <Text>
+                  <Text as="span" fontWeight="bold" fontSize="2xl">
+                    {stall.offerings_count}
+                  </Text>{" "}
+                  {stall.offerings_count === 1 ? "offering" : "offerings"} published
+                </Text>
+                <Link as={NextLink} href={`/member/${identity.username}/stall`}>
+                  <Button size="sm" variant="outline" width="full">
+                    View My Stall
+                  </Button>
+                </Link>
+              </VStack>
+            ) : (
+              <VStack align="stretch" gap={3}>
+                <Text color="gray.500">No offerings published yet</Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveSection("bazaar-offerings")}
+                >
+                  Create an Offering
+                </Button>
+              </VStack>
+            )}
+          </Card.Body>
+        </Card.Root>
 
-// // Import member-specific components
-// // import PersonalOverview from "@components/dashboard/sections/PersonalOverview";
-// // import WriteWorkArea from "@components/write/WriteWorkArea";
-// // import DraftsAdmin from "@components/writing/DraftsAdmin";
-// // import ForumAdmin from "@components/threadworks/ForumAdmin";
-// // import { Socket } from "socket.io-client";
-// // import GroupCreateForm from "@components/groups/GroupCreateForm";
-// // import GroupsTableNew from "@components/groups/GroupsTable";
-// import { useGroups, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
-// // import GroupsTable from "@components/groups/GroupsTable";
-// // import { Group } from "@components/groups/interfaces";
-// import router from "next/router";
-// // import MinimalRHFForm from "@components/groups/GroupCreateForm";
-// // import { Group } from "content/groupTypes";
-// import GroupsTable from "@components/groups/GroupsTable";
-// import { Group } from "@mixtape/core/types/groupTypes";
-// import { UserIdentity } from "@mixtape/core/types/auth";
-// import MessageCenter from "../sections/MessageCenter";
-// // import NotificationsList from "@components/activity/NotificationsList";
+        {/* Products Card */}
+        <Card.Root>
+          <Card.Header>
+            <HStack>
+              <IconPackage size={20} />
+              <Heading size="sm">My Products</Heading>
+            </HStack>
+          </Card.Header>
+          <Card.Body>
+            <VStack align="stretch" gap={3}>
+              <Text color="gray.600" fontSize="sm">
+                Create reusable products that can be attached to offerings
+              </Text>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveSection("bazaar-products")}
+              >
+                Manage Products
+              </Button>
+            </VStack>
+          </Card.Body>
+        </Card.Root>
 
-// interface MemberWorkAreaProps extends WorkAreaProps {
-//   identity: UserIdentity;
-//   allMembers?: UserIdentity[];
-//   // socket?: Socket | null;
-//   selectedForumSlug?: string | null;
-//   setSelectedForumSlug?: (slug: string | null) => void;
-// }
+        {/* Offerings Card */}
+        <Card.Root>
+          <Card.Header>
+            <HStack>
+              <IconTag size={20} />
+              <Heading size="sm">My Offerings</Heading>
+            </HStack>
+          </Card.Header>
+          <Card.Body>
+            <VStack align="stretch" gap={3}>
+              <Text color="gray.600" fontSize="sm">
+                Services, events, programs, and products you sell
+              </Text>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveSection("bazaar-offerings")}
+              >
+                Manage Offerings
+              </Button>
+            </VStack>
+          </Card.Body>
+        </Card.Root>
+      </SimpleGrid>
 
-// export default function MemberWorkArea({
-//   section,
-//   setActiveSection,
-//   identity,
-//   allMembers = [],
-//   socket,
-//   selectedForumSlug,
-//   setSelectedForumSlug,
-// }: MemberWorkAreaProps) {
+      {/* Recent Purchases */}
+      <Card.Root>
+        <Card.Header>
+          <HStack justify="space-between">
+            <HStack>
+              <IconShoppingCart size={20} />
+              <Heading size="sm">Recent Purchases</Heading>
+            </HStack>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setActiveSection("bazaar-orders")}
+            >
+              View All
+            </Button>
+          </HStack>
+        </Card.Header>
+        <Card.Body>
+          {ordersLoading ? (
+            <Text color="gray.500">Loading...</Text>
+          ) : orders.length === 0 ? (
+            <VStack py={4}>
+              <Text color="gray.500">No purchases yet</Text>
+              <Link as={NextLink} href="/bazaar">
+                <Button size="sm" variant="outline">
+                  Browse Bazaar
+                </Button>
+              </Link>
+            </VStack>
+          ) : (
+            <VStack align="stretch" gap={3}>
+              {orders.slice(0, 3).map((order: Order) => (
+                <HStack key={order.id} justify="space-between" p={2} borderWidth="1px" borderRadius="md">
+                  <VStack align="start" gap={0}>
+                    <Text fontWeight="medium" fontSize="sm">
+                      {order.offering.title}
+                    </Text>
+                    <Badge size="sm" colorPalette={getOrderStatusColor(order.status)}>
+                      {getOrderStatusLabel(order.status)}
+                    </Badge>
+                  </VStack>
+                  <Text fontWeight="bold" fontSize="sm">
+                    {order.amount === 0 ? "FREE" : formatPrice(order.amount, order.currency)}
+                  </Text>
+                </HStack>
+              ))}
+            </VStack>
+          )}
+        </Card.Body>
+      </Card.Root>
+    </VStack>
+  );
+}
 
-//   // State for editing specific drafts
-//   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+/**
+ * Buyer Orders Section
+ * Shows all purchases made by the user
+ */
+function BuyerOrdersSection() {
+  const { orders, isLoading, error } = useOrders({ view: "buyer" });
 
-//   const { groups, isLoading, error, refetch } = useGroups({
-//     ordering: '-created_at',
-//     is_active: true
-//   });
+  return (
+    <VStack align="stretch" gap={6}>
+      <Box>
+        <Heading size="lg" mb={2}>
+          <HStack>
+            <IconShoppingCart size={28} />
+            <Text>My Purchases</Text>
+          </HStack>
+        </Heading>
+        <Text color="gray.600">
+          View and track your orders
+        </Text>
+      </Box>
 
-//   const {groups: myGroups, isLoading: myGroupsLoading, error: myGroupsError, refetch: myGroupsRefetch } = useUserGroups();
+      {isLoading && <Text color="gray.500">Loading orders...</Text>}
 
-//   console.log('MemberWorkArea props:', { section, identity, selectedForumSlug });
-//   console.log('MemberWorkArea groups:', { groups, isLoading, error });
+      {error && (
+        <Box p={4} bg="red.50" borderRadius="md">
+          <Text color="red.600">Error loading orders: {error.message}</Text>
+        </Box>
+      )}
 
-//   // Define the permission function
-//   const canEditGroup = (group: Group): boolean => {
-//     // Superusers and staff can edit all groups
-//     if (identity?.is_superuser || identity?.is_staff) {
-//       return true;
-//     }
+      {!isLoading && orders.length === 0 && (
+        <Card.Root>
+          <Card.Body>
+            <VStack py={8}>
+              <IconShoppingCart size={48} style={{ opacity: 0.3 }} />
+              <Text color="gray.500" fontSize="lg">No purchases yet</Text>
+              <Text color="gray.400">Your orders will appear here after you make a purchase</Text>
+              <Link as={NextLink} href="/bazaar">
+                <Button mt={4}>Browse Bazaar</Button>
+              </Link>
+            </VStack>
+          </Card.Body>
+        </Card.Root>
+      )}
 
-//     // Check if user is admin/steward of this specific group
-//     // const userMembership = group.memberships?.find(
-//     //   (membership) => membership.member_data?.id === identity?.id
-//     // );
+      {!isLoading && orders.length > 0 && (
+        <VStack align="stretch" gap={3}>
+          {orders.map((order: Order) => (
+            <Card.Root key={order.id} variant="outline">
+              <Card.Body>
+                <HStack justify="space-between" align="start" flexWrap="wrap" gap={4}>
+                  <VStack align="start" gap={1}>
+                    <HStack gap={2}>
+                      <Badge colorPalette={getOrderStatusColor(order.status)}>
+                        {getOrderStatusLabel(order.status)}
+                      </Badge>
+                    </HStack>
+                    <Text fontWeight="medium">{order.offering.title}</Text>
+                    <HStack gap={4} fontSize="sm" color="gray.500">
+                      <Text>Order #{order.id.slice(0, 8)}</Text>
+                      <Text>
+                        {new Date(order.created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </Text>
+                    </HStack>
+                  </VStack>
 
-//     // return userMembership?.role === 'admin' || userMembership?.role === 'steward';
-//     return true;
-//   };
-
-//   // Handle draft selection - switch to edit mode instead of navigating
-//   const handleDraftSelect = (draftId: string) => {
-//     setEditingDraftId(draftId);
-//     setActiveSection('edit-draft');
-//   };
-
-//   // Handle going back to drafts list
-//   const handleBackToDrafts = () => {
-//     setEditingDraftId(null);
-//     setActiveSection('my-drafts');
-//   };
-
-//   // Handle creating new draft
-//   const handleNewDraft = () => {
-//     setEditingDraftId(null);
-//     setActiveSection('new-post');
-//   };
-
-//   // FIXED: Create stable callback functions using useMemo instead of useCallback
-//   // This prevents the GroupCreateForm from re-rendering on every keystroke
-//   const stableCallbacks = useMemo(() => ({
-//     handleGroupSuccess: (slug: string) => {
-//       setActiveSection('my-groups');
-//       myGroupsRefetch();
-//     },
-//     handleGroupSuccessAndEdit: (slug: string) => {
-//       router.replace(`#`);
-//     }
-//   }), [setActiveSection]); // Only recreate when setActiveSection changes
-
-
-
-//     // Add to MemberWorkArea component
-//   const renderRef = useRef(0);
-//   renderRef.current++;
-//   console.log(`🔍 DEBUG: MemberWorkArea render #${renderRef.current}, section: ${section}`);
-
-
-//   // Personal sections
-//   if (section === "overview") {
-//     return (
-//       <></>
-//       // <PersonalOverview
-//       //   identity={identity}
-//       //   groups={groups}
-//       //   todos={[]}
-//       //   isAdmin={false}
-//       //   isSteward={false}
-//       // />
-//     );
-//   }
-
-//   // if (section === "profile") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">👤 Profile Settings</Text>
-//   //         <Text>Profile management coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "preferences") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">⚙️ Preferences</Text>
-//   //         <Text>User preferences coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "activity") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📊 Activity Feed</Text>
-//   //         {/* <NotificationsList /> */}
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//     // Messages section
-//     if (section === "messages") {
-//       return (
-//         <WorkAreaWrapper>
-//           <MessageCenter />
-//         </WorkAreaWrapper>
-//       );
-//     }
-
-//   // **Writing sections**
-//   // if (section === "new-post") {
-//   //   return <WriteWorkArea onBack={handleBackToDrafts} forceNew={true} />;
-//   // }
-
-//   // // New section for editing specific drafts
-//   // if (section === "edit-draft") {
-//   //   return (
-//   //     <WriteWorkArea
-//   //       draftId={editingDraftId || undefined}
-//   //       onBack={handleBackToDrafts}
-//   //     />
-//   //   );
-//   // }
-
-//   // if (section === "my-drafts") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📝 My Drafts</Text>
-//   //         {/* <DraftsAdmin
-//   //           onDraftSelect={handleDraftSelect}
-//   //           onNewDraft={handleNewDraft}
-//   //         /> */}
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "published-posts") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📄 Published Posts</Text>
-//   //         <Text>Published posts management coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "writing-tools") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🔧 Writing Tools</Text>
-//   //         <Text>AI writing tools coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "templates") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📋 Templates</Text>
-//   //         <Text>Content templates coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // Groups sections
-//   if (section === "my-groups") {
-//     return (
-//       <WorkAreaWrapper>
-//         <GroupsTable
-//           groups={myGroups}
-//           isLoading={isLoading}
-//           error={error}
-//           setActiveSection={setActiveSection}
-//           showCreateButton={true}
-//           canEditGroup={(group: Group) => canEditGroup(group)}
-//           emptyStateMessage="You haven't joined any groups yet. Create your first group or join existing ones!"
-//         />
-//       </WorkAreaWrapper>
-//     );
-//   }
-
-//   if (section === "create-group") {
-//     return (
-//       <WorkAreaWrapper>
-//         <></>
-//         {/* <MinimalRHFForm
-//           // showCard={false}
-//           onSuccess={stableCallbacks.handleGroupSuccess}
-//           // onSuccessAndEdit={stableCallbacks.handleGroupSuccessAndEdit}
-//         /> */}
-//       </WorkAreaWrapper>
-//     );
-//   }
-
-//   // if (section === "discover-groups") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🔍 Discover Groups</Text>
-//   //         <Text>Group discovery coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "group-invites") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📨 Group Invitations</Text>
-//   //         <Text>Group invitations coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // // **EarthLab Learning sections**
-//   // if (section === "my-courses") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🎓 My Courses</Text>
-//   //         <Text>Course management coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "browse-courses") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">📚 Browse Courses</Text>
-//   //         <Text>Course catalog coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "achievements") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🏆 Achievements</Text>
-//   //         <Text>Achievement tracking coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "learning-path") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🛤️ Learning Path</Text>
-//   //         <Text>Learning paths coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // **Threadworks Forums sections**
-//   // if (section === "forums") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🧵 All Forums</Text>
-//   //         {/* <ForumAdmin
-//   //           groupId={null}
-//   //           onForumSelect={(slug) => {
-//   //             setSelectedForumSlug?.(slug);
-//   //             setActiveSection('forum-detail');
-//   //           }}
-//   //         /> */}
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "my-forums") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🧵 My Forums</Text>
-//   //         <Text>Your forum memberships coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // if (section === "subscriptions") {
-//   //   return (
-//   //     <WorkAreaWrapper>
-//   //       <VStack align="stretch" gap={4}>
-//   //         <Text fontSize="xl" fontWeight="bold">🔔 Forum Subscriptions</Text>
-//   //         <Text>Forum subscriptions coming soon...</Text>
-//   //       </VStack>
-//   //     </WorkAreaWrapper>
-//   //   );
-//   // }
-
-//   // Default fallback
-//   return (
-//     <WorkAreaWrapper>
-//       <VStack align="stretch" gap={4}>
-//         <Text fontSize="xl" fontWeight="bold">Section: {section}</Text>
-//         <Text>This member section is under development.</Text>
-//       </VStack>
-//     </WorkAreaWrapper>
-//   );
-// }
+                  <VStack align="end" gap={2}>
+                    <Text fontWeight="bold" fontSize="lg">
+                      {order.amount === 0 ? "FREE" : formatPrice(order.amount, order.currency)}
+                    </Text>
+                    <Link as={NextLink} href={`/bazaar/orders/${order.id}`}>
+                      <Button size="sm" variant="outline">
+                        View Details
+                      </Button>
+                    </Link>
+                  </VStack>
+                </HStack>
+              </Card.Body>
+            </Card.Root>
+          ))}
+        </VStack>
+      )}
+    </VStack>
+  );
+}

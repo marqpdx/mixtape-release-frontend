@@ -43,7 +43,7 @@ export const sharedHeadingConfig = {
     },
   },
   defaultVariants: {
-    level: "h2" as "h2",
-    visual: "default" as "default",
+    level: "h2" as const,
+    visual: "default" as const,
   },
 };

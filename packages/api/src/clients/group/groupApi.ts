@@ -7,6 +7,7 @@ import {
   GroupMembersResponse,
   GroupCreateFormData,
   GroupUpdateFormData,
+  GroupOverviewLayout,
 } from '@mixtape/core/types/groupTypes';
 import { axiosInstance } from '../../lib/axiosInstance';
 import { unwrapListResponse } from '../../lib/utils';
@@ -48,6 +49,30 @@ export interface GroupWelcomePin {
     title?: string;
     excerpt?: string;
   };
+}
+
+/**
+ * Fetch group overview layout
+ */
+export async function fetchGroupOverviewLayout(groupSlug: string): Promise<GroupOverviewLayout> {
+  const response = await axiosInstance.get<GroupOverviewLayout>(
+    `/api/groups/${groupSlug}/overview-layout`
+  );
+  return response.data;
+}
+
+/**
+ * Update group overview layout
+ */
+export async function updateGroupOverviewLayout(
+  groupSlug: string,
+  layout: GroupOverviewLayout
+): Promise<GroupOverviewLayout> {
+  const response = await axiosInstance.put<GroupOverviewLayout>(
+    `/api/groups/${groupSlug}/overview-layout`,
+    layout
+  );
+  return response.data;
 }
 
 /**
@@ -277,6 +302,8 @@ export const groupApi = {
   updateGroup,
   deleteGroup,
   publishGroup,
+  fetchGroupOverviewLayout,
+  updateGroupOverviewLayout,
 
   // Members
   fetchGroupMembers,

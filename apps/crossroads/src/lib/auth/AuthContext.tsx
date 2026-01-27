@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const userData = await authApi.checkAuth();
       setUser(userData);
-    } catch (error) {
+    } catch {
       // Silent fail - user just not authenticated
       setUser(null);
     } finally {
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await authApi.fetchUserIdentity();
       setUser(userData);
-    } catch (error) {
+    } catch {
       setUser(null);
     }
   }, []);

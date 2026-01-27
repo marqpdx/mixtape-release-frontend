@@ -24,10 +24,9 @@ import {
   MenuPositioner,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { usePermissions } from "@mixtape/auth/usePermissions";
 import { ThemeSelector } from "@components/common/ThemeSelector";
 import { IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
@@ -87,7 +86,6 @@ export default function UnifiedNavbar({
   extraCompact = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user: identity, logout, isLoading } = useAuth();
   // const { isAdmin, isSteward, isMember } = usePermissions();
   // const { isAdmin, isSteward, isMember } = usePermissions({ user: identity });
@@ -146,7 +144,6 @@ export default function UnifiedNavbar({
     }
   };
 
-  const verticalPadding = extraCompact ? 1 : (compact ? 2 : 3);
   const horizontalPadding = extraCompact ? 2 : (compact ? 3 : 4);
 
   // Loading state - show skeleton while checking auth

@@ -16,7 +16,10 @@ interface GroupCreateForm2Props {
   onSubmit: (values: GroupCreateFormValues) => Promise<void> | void;
   // optional secondary action
   onSubmitAndEdit?: (values: GroupCreateFormValues) => Promise<void> | void;
+  onSubmitAndVisit?: (values: GroupCreateFormValues) => Promise<void> | void;
   submitLabel?: string;
+  submitAndEditLabel?: string;
+  submitAndVisitLabel?: string;
   isSubmittingExternal?: boolean;
   // lock type if you want circle-only create screens
   lockedGroupType?: GroupType;
@@ -34,7 +37,10 @@ function FormInner({
   showCard = true,
   onSubmit,
   onSubmitAndEdit,
+  onSubmitAndVisit,
   submitLabel = "Create",
+  submitAndEditLabel = "Create & Edit",
+  submitAndVisitLabel = "Create & Visit",
   isSubmittingExternal = false,
   lockedGroupType,
 }: GroupCreateForm2Props) {
@@ -212,7 +218,20 @@ function FormInner({
               size="lg"
               flex={1}
             >
-              Create & Edit
+              {submitAndEditLabel}
+            </Button>
+          )}
+
+          {onSubmitAndVisit && (
+            <Button
+              type="button"
+              onClick={handleSubmit(onSubmitAndVisit)}
+              variant="outline"
+              loading={submitting}
+              size="lg"
+              flex={1}
+            >
+              {submitAndVisitLabel}
             </Button>
           )}
         </Stack>

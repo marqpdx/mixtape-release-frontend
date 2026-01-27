@@ -78,6 +78,17 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
       { key: "subscriptions", label: "Subscriptions", hidden: true },
       { key: "forum-detail", label: "Forum Detail", hidden: true }, // Hidden from menu
     ]
+  },
+  {
+    key: "bazaar",
+    label: "Bazaar",
+    icon: "🏪",
+    subItems: [
+      { key: "bazaar-overview", label: "Bazaar Overview" },
+      { key: "bazaar-products", label: "My Products" },
+      { key: "bazaar-offerings", label: "My Offerings" },
+      { key: "bazaar-orders", label: "My Purchases" },
+    ]
   }
 ];
 

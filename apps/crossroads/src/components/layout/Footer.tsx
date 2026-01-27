@@ -13,8 +13,7 @@ import {
 import { FiMail } from "react-icons/fi";
 import NextLink from "next/link";
 
-export default function Footer({}: {
-}) {
+export default function Footer() {
   return (
     <Box
       as="footer"

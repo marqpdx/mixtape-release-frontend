@@ -1,6 +1,7 @@
 // src/content/groupTypes.ts
 
 import { UserIdentity } from "./auth";
+import { EmblemInline } from "./emblemTypes";
 
 // import { EmblemInline } from "./emblemTypes";
 // import { IsoDateString, UserIdentity } from "./userTypes";
@@ -75,7 +76,7 @@ export interface Group {
   member_count?: number;
   submitted_by_username?: string;
 
-  // emblem?: EmblemInline | null;
+  emblem?: EmblemInline | null;
 }
 
 /** GROUP MEMBERSHIP - Flattened polymorphic membership */
@@ -118,6 +119,37 @@ export interface GroupSummary {
   slug: string;
   title: string;
   group_type?: GroupType;
+}
+
+export type GroupOverviewBlockType =
+  | "welcome"
+  | "announcements"
+  | "upcoming_events"
+  | "recent_posts"
+  | "member_highlights"
+  | "stewards"
+  | "pinned_resources"
+  | "pinned_writing"
+  | "quick_links";
+
+export type GroupOverviewBlockWidth = "full" | "two_thirds" | "half" | "one_third";
+
+export type GroupOverviewBlockVisibility = "members" | "public";
+
+export interface GroupOverviewBlock {
+  id: string;
+  type: GroupOverviewBlockType;
+  width: GroupOverviewBlockWidth;
+  visibility: GroupOverviewBlockVisibility;
+  config: Record<string, unknown>;
+}
+
+export interface GroupOverviewLayout {
+  id: string;
+  layout_version: string;
+  blocks: GroupOverviewBlock[];
+  created_at: IsoDateString;
+  updated_at: IsoDateString;
 }
 
 export interface GroupFormData {

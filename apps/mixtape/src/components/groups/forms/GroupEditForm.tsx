@@ -25,11 +25,9 @@ import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
 import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/types/groupTypes";
-// import { EmblemPicker } from "@components/emblems/EmblemPicker";
-// import { useEntityImageUpload } from "@hooks/useEntityImageUpload";
-// import { useEmblemAttachment } from "@hooks/useEmblemAttachment";
-// import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
-// import { EmblemInline } from "@content/emblemTypes";
+import { EmblemPicker } from "@components/emblems/EmblemPicker";
+import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
+import { EmblemInline } from "@mixtape/core/types/emblemTypes";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
@@ -85,25 +83,11 @@ export default function GroupEditForm({
 }: GroupEditFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  const [showEmblemPicker, setShowEmblemPicker] = useState(false);
 
-  // const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
-  //   group?.emblem ?? null
-  // );
-
-  // const { attachEmblem, resetEmblem, attaching } = useEmblemAttachment(
-  //   { groupSlug: group?.slug }
-  // );
-
-
-  // async function handleSelectEmblem(emblemId: string) {
-  //   const emblem = await attachEmblem(emblemId);
-  //   if (emblem) setEmblemPreview(emblem);  // EmblemDisplay can use size_96_url, etc.
-  // }
-
-  // async function handleResetEmblem() {
-  //   const ok = await resetEmblem();
-  //   if (ok) setEmblemPreview(null);
-  // }
+  const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
+    group?.emblem ?? null
+  );
 
   const {
     register,
@@ -144,10 +128,25 @@ export default function GroupEditForm({
     // Image storage paths (what gets saved to DB)
     setValue("profile_image_path", group.profile_image_path);
     setValue("background_image_path", group.background_image_path);
+    setEmblemPreview(group.emblem ?? null);
 
     // Note: profile_image_url and background_image_url are computed properties
     // on the backend. They're read-only and generated on-demand from the paths.
   }, [group, setValue]);
+
+  const handleSelectEmblem = async (emblemId: string) => {
+    if (!group?.slug) return;
+    const response = await axiosInstance.post(`/api/groups/${group.slug}/emblem/attach`, {
+      emblem_id: emblemId,
+    });
+    setEmblemPreview(response.data?.emblem ?? null);
+  };
+
+  const handleResetEmblem = async () => {
+    if (!group?.slug) return;
+    const response = await axiosInstance.post(`/api/groups/${group.slug}/emblem/reset`);
+    setEmblemPreview(response.data?.emblem ?? null);
+  };
 
   // Track form changes for draft mode
   const watchedFields = watch();
@@ -348,33 +347,44 @@ export default function GroupEditForm({
                 {/* Left: Current emblem display (fixed width) */}
                 <Box flex="0 0 auto" minW="fit-content">
                   <Heading size="sm" mb={3}>Group Emblem</Heading>
-                  {/* <Box mb={3} p={4} bg="gray.50" rounded="md" border="1px solid" borderColor="gray.200" minH="120px" display="flex" alignItems="center" justifyContent="center">
+                  <Box
+                    mb={3}
+                    p={4}
+                    bg="gray.50"
+                    rounded="md"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    minH="120px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
                     {emblemPreview ? (
-                      // <EmblemDisplay emblem={emblemPreview} size={96} />
-                      <></>
+                      <EmblemDisplay emblem={emblemPreview} size={96} />
                     ) : (
-                      <Text color="gray.500" fontSize="sm">No emblem selected</Text>
+                      <Text color="gray.500" fontSize="sm">
+                        No emblem selected
+                      </Text>
                     )}
-                  </Box> */}
-                  {/* <Button
+                  </Box>
+                  <Button
                     width="100%"
-                    onClick={emblemDisclosure.onOpen}
-                    loading={attaching}
+                    onClick={() => setShowEmblemPicker((prev) => !prev)}
                     colorScheme="green"
                     size="sm"
                   >
-                    Choose Emblem
-                  </Button> */}
+                    {showEmblemPicker ? "Hide Emblem Picker" : "Choose Emblem"}
+                  </Button>
                 </Box>
 
                 {/* Right: Emblem picker (fills remaining space with internal scroll) */}
                 <Box flex="1" minW="0">
-                  {/* <EmblemPicker
-                    isOpen={emblemDisclosure.open}
-                    onClose={emblemDisclosure.onClose}
+                  <EmblemPicker
+                    isOpen={showEmblemPicker}
+                    onClose={() => setShowEmblemPicker(false)}
                     onSelect={handleSelectEmblem}
                     onReset={handleResetEmblem}
-                  /> */}
+                  />
                 </Box>
               </Flex>
             </VStack>

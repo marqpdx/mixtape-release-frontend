@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@mixtape/core", "@mixtape/api"],
+  transpilePackages: ["@mixtape/core", "@mixtape/api", "@mixtape/content"],
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
   },

@@ -97,7 +97,7 @@ export default function GroupWelcomeInvitePage() {
               Welcome to {groupName}
             </Heading>
             <Text color="theme.textSecondary">
-              You were invited by {inviter}. Let's get you oriented.
+              You were invited by {inviter}. Let&apos;s get you oriented.
             </Text>
           </VStack>
           <Link
@@ -142,7 +142,7 @@ export default function GroupWelcomeInvitePage() {
             </HStack>
 
             <Text mt={4} color="theme.text" lineHeight="1.8">
-              Thanks for joining us. Inside you'll find our group chat, forum,
+              Thanks for joining us. Inside you&apos;ll find our group chat, forum,
               documents, and upcoming gatherings. Please take a moment to review
               the community agreements that help keep this space welcoming.
             </Text>
@@ -185,10 +185,10 @@ export default function GroupWelcomeInvitePage() {
                   A quick orientation
                 </Heading>
                 <Text color="theme.textSecondary">
-                  You're about to enter <b>{groupName}</b>. That gives you full
-                  access to this group's spaces. Mixtape also has a wider
-                  community called <b>Crossroads</b>. You don't need to join
-                  Crossroads to participate here — but if you do, you'll unlock
+                  You&apos;re about to enter <b>{groupName}</b>. That gives you full
+                  access to this group&apos;s spaces. Mixtape also has a wider
+                  community called <b>Crossroads</b>. You don&apos;t need to join
+                  Crossroads to participate here — but if you do, you&apos;ll unlock
                   discovery, personal circles, and platform-wide forums.
                 </Text>
               </Box>

@@ -112,12 +112,12 @@ export default function WelcomeFinishPage() {
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             {groupName
-              ? `You're in — welcome to ${groupName}`
-              : "You're in — welcome to Crossroads"}
+              ? `You&apos;re in — welcome to ${groupName}`
+              : "You&apos;re in — welcome to Crossroads"}
           </Heading>
           <Text color="theme.textSecondary">
             {greetingName ? `Hi ${greetingName}.` : "Hi there."} Choose where
-            you'd like to start.
+            you&apos;d like to start.
           </Text>
         </VStack>
 

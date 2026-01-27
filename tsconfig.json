@@ -20,7 +20,9 @@
       "@mixtape/api": ["./packages/api/src"],
       "@mixtape/api/*": ["./packages/api/src/*"],
       "@mixtape/auth": ["./packages/auth/src"],
-      "@mixtape/auth/*": ["./packages/auth/src/*"]
+      "@mixtape/auth/*": ["./packages/auth/src/*"],
+      "@mixtape/content": ["./packages/content/src"],
+      "@mixtape/content/*": ["./packages/content/src/*"]
     }
   },
   "exclude": [

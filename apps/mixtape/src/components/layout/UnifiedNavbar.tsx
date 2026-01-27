@@ -67,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
   // { key: "threadworks", label: "Threadworks", href: "/app/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
   { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
   { key: "map", label: "Map", href: "/demos/map", section: "authenticated", memberOnly: true },
+  { key: "bazaar", label: "Bazaar", href: "/bazaar", section: "authenticated", memberOnly: true },
   { key: "admin-panel", label: "Admin", href: "/admin", section: "authenticated", adminOnly: true, shortLabel: "Admin" },
 ];
 
@@ -107,6 +108,8 @@ export default function UnifiedNavbar({
                   pathname.startsWith("/loom-and-codex") ||
                   pathname.startsWith("/puddlejump") ||
                   pathname.startsWith("/stackroom") ||
+                  pathname.startsWith("/bazaar") ||
+                  pathname.startsWith("/member") ||
                   pathname.startsWith("/map") ||
                   pathname.startsWith("/admin")) ? "authenticated" :
      "public");
@@ -320,7 +323,7 @@ export default function UnifiedNavbar({
 
             ) : (
               navSection === "public" && (
-                <Link as={NextLink} href="/login">
+                <Link as={NextLink} href="/app/login">
                   <Button
                     size="sm"
                     variant="solid"

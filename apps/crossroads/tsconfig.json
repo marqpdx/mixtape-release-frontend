@@ -24,6 +24,12 @@
       "@mixtape/auth/*": [
         "../../packages/auth/src/*"
       ],
+      "@mixtape/content": [
+        "../../packages/content/src"
+      ],
+      "@mixtape/content/*": [
+        "../../packages/content/src/*"
+      ],
       "@/*": [
         "./src/*"
       ],

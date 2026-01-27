@@ -28,19 +28,9 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
 
   const mutation = useMutation({
     mutationFn: (payload: GroupCreateFormData) => groupApi.createGroup(payload),
-    onSuccess: (group) => {
-      toaster.create({
-        title: "Group created",
-        description: "Your group is ready.",
-        type: "success",
-      });
-
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: groupsQueryKeys.lists() });
       qc.invalidateQueries({ queryKey: groupsQueryKeys.userGroups() });
-
-      if (group?.slug) {
-        onCreated?.(group.slug);
-      }
     },
     onError: (error) => {
       const detail =
@@ -55,7 +45,7 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
     },
   });
 
-  const handleSubmit = async (values: GroupCreateFormValues) => {
+  const createGroup = async (values: GroupCreateFormValues) => {
     const { start_date, end_date, ...rest } = values;
 
     const payload: GroupCreateFormData = {
@@ -64,19 +54,40 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
       end_date: toIsoOrNull(end_date),
     };
 
-    const group = await mutation.mutateAsync(payload);
-    if (group?.slug) {
-      toaster.create({
-        title: "Group created",
-        description: "Ready to start building?",
-        type: "success",
-        action: {
-          label: "View group",
-          onClick: () => router.push(`/groups/${group.slug}?view=member`),
-        },
-      });
-      onCreated?.(group.slug);
-    }
+    return mutation.mutateAsync(payload);
+  };
+
+  const handleSave = async (values: GroupCreateFormValues) => {
+    const group = await createGroup(values);
+    if (!group?.slug) return;
+    toaster.create({
+      title: "Group created",
+      description: "Your group is ready.",
+      type: "success",
+    });
+    onCreated?.(group.slug);
+  };
+
+  const handleSaveAndSetup = async (values: GroupCreateFormValues) => {
+    const group = await createGroup(values);
+    if (!group?.slug) return;
+    toaster.create({
+      title: "Group created",
+      description: "Welcome Mat is ready.",
+      type: "success",
+    });
+    router.push(`/app/groups/${group.slug}/welcome`);
+  };
+
+  const handleSaveAndVisit = async (values: GroupCreateFormValues) => {
+    const group = await createGroup(values);
+    if (!group?.slug) return;
+    toaster.create({
+      title: "Group created",
+      description: "Opening your group.",
+      type: "success",
+    });
+    router.push(`/app/groups/${group.slug}`);
   };
 
   return (
@@ -89,8 +100,12 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
 
       <GroupCreateForm2
         title="Create a Group"
-        submitLabel="Create Group"
-        onSubmit={handleSubmit}
+        submitLabel="Save"
+        submitAndEditLabel="Save & Set Up"
+        onSubmit={handleSave}
+        onSubmitAndEdit={handleSaveAndSetup}
+        submitAndVisitLabel="Save & Visit"
+        onSubmitAndVisit={handleSaveAndVisit}
         isSubmittingExternal={mutation.status === "pending"}
         showCard={true}
       />

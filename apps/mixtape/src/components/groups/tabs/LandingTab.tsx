@@ -18,14 +18,17 @@ import {
   Link,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { IconCalendar, IconPhoto, IconExternalLink } from "@tabler/icons-react";
+import { IconCalendar, IconPhoto, IconExternalLink, IconShoppingBag } from "@tabler/icons-react";
+import NextLink from "next/link";
 import React from "react";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import { useStall } from "@mixtape/api/hooks/useBazaar";
 
 export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isMember: boolean; onJoinGroup?: () => void }) {
   void useColorModeValue('white', 'gray.800');
   const sidebarBg = useColorModeValue('gray.50', 'gray.700');
   const [showFullDescription, setShowFullDescription] = React.useState(false);
+  const { stall } = useStall("group", group.id);
 
   const description = group.description || "No description provided.";
   const shouldTruncate = description.length > 300;
@@ -206,6 +209,29 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isM
               </VStack>
             </Card.Body>
           </Card.Root>
+
+          {/* Bazaar Stall */}
+          {stall && stall.offerings_count > 0 && (
+            <Card.Root bg={sidebarBg}>
+              <Card.Header>
+                <Flex align="center" gap={2}>
+                  <IconShoppingBag size={18} />
+                  <Heading size="sm">Bazaar</Heading>
+                </Flex>
+              </Card.Header>
+              <Card.Body>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  {stall.offerings_count} {stall.offerings_count === 1 ? "offering" : "offerings"} available
+                </Text>
+                <Link as={NextLink} href={`/groups/${group.slug}/stall`}>
+                  <Button size="sm" variant="outline" width="full">
+                    <IconShoppingBag size={16} />
+                    View Stall
+                  </Button>
+                </Link>
+              </Card.Body>
+            </Card.Root>
+          )}
         </VStack>
       </GridItem>
     </Grid>

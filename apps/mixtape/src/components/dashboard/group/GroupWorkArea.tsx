@@ -33,6 +33,8 @@ import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
 import { CollectionsWorkArea, CollectionDetailWorkArea } from "@/components/collections";
 import ThemeWorkArea from "@/components/groups/themes/ThemeWorkArea";
 import AudioWorkArea from "@/components/concord/AudioWorkArea";
+import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
+import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -269,6 +271,32 @@ export default function GroupWorkArea({
         <AudioWorkArea
           groupSlug={group.slug}
           groupTitle={group.title}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Bazaar - Products
+  if (section === "bazaar-products") {
+    return (
+      <WorkAreaWrapper>
+        <ProductsWorkArea
+          sponsorType="group"
+          sponsorId={group.id}
+          sponsorTitle={group.title}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Bazaar - Offerings
+  if (section === "bazaar-offerings") {
+    return (
+      <WorkAreaWrapper>
+        <OfferingsWorkArea
+          sponsorType="group"
+          sponsorId={group.id}
+          sponsorTitle={group.title}
         />
       </WorkAreaWrapper>
     );

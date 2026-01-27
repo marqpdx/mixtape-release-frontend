@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
 import * as groupApi from '@mixtape/api/clients/group/groupApi';
-import { Group, GroupMembership, UseGroupMembersResult } from '@mixtape/core/types/groupTypes';
+import { Group, GroupMembership, UseGroupMembersResult, GroupOverviewLayout } from '@mixtape/core/types/groupTypes';
 
 // Re-export API types for convenience
 export type FetchGroupsOptions = groupApi.FetchGroupsOptions;
@@ -41,6 +41,13 @@ export interface UseGroupResult {
 
 export interface UseGroupWelcomePinResult {
   pin: groupApi.GroupWelcomePin | null;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export interface UseGroupOverviewLayoutResult {
+  layout: GroupOverviewLayout | null;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -150,6 +157,31 @@ export const useGroupWelcomePin = (slug: string | null): UseGroupWelcomePinResul
 
   return {
     pin,
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
+ * Hook to fetch the overview layout for a group
+ */
+export const useGroupOverviewLayout = (slug: string | null): UseGroupOverviewLayoutResult => {
+  const {
+    data: layout = null,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [...groupsQueryKeys.detail(slug || ''), 'overview-layout'],
+    queryFn: () => groupApi.fetchGroupOverviewLayout(slug!),
+    enabled: !!slug,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    layout,
     isLoading,
     error: error as Error | null,
     refetch,

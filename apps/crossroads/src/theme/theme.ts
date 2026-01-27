@@ -123,6 +123,9 @@ export const textStyles = defineTextStyles({
 
 export const config = defineConfig({
   globalCss: {
+    "html": {
+      fontSize: "115%",
+    },
     "*:focus-visible": {
       outline: "3px solid",
       outlineColor: "focus.ring",
@@ -157,10 +160,10 @@ export const config = defineConfig({
         },
 
         text: {
-          light: { value: "#1A202C" },
-          lightSecondary: { value: "#4A5568" },
-          dark: { value: "#FBF9F9" },
-          darkSecondary: { value: "#CBD5E0" },
+          light: { value: "#111827" },
+          lightSecondary: { value: "#1F2937" },
+          dark: { value: "#F8FAFC" },
+          darkSecondary: { value: "#E2E8F0" },
         },
 
         // Fixed brand colors (fallbacks)
@@ -224,8 +227,8 @@ export const config = defineConfig({
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
-          text: { value: "var(--theme-text, #2D3748)" },
-          textSecondary: { value: "var(--theme-text-secondary, #4A5568)" },
+          text: { value: "var(--theme-text, #111827)" },
+          textSecondary: { value: "var(--theme-text-secondary, #1F2937)" },
         },
       },
     },
@@ -259,6 +262,24 @@ export const config = defineConfig({
           },
         },
         "text.secondary": {
+          value: {
+            base: "{colors.text.lightSecondary}",
+            _dark: "{colors.text.darkSecondary}",
+          },
+        },
+        "fg": {
+          value: {
+            base: "{colors.text.light}",
+            _dark: "{colors.text.dark}",
+          },
+        },
+        "fg.muted": {
+          value: {
+            base: "{colors.text.lightSecondary}",
+            _dark: "{colors.text.darkSecondary}",
+          },
+        },
+        "fg.subtle": {
           value: {
             base: "{colors.text.lightSecondary}",
             _dark: "{colors.text.darkSecondary}",
