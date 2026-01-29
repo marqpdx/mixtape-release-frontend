@@ -331,13 +331,13 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href="/profile" display="flex" gap={2}>
+                      <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
                       </Link>
                     </MenuItem>
                     <MenuItem value="settings" asChild>
-                      <Link as={NextLink} href="/settings" display="flex" gap={2}>
+                      <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
                         <IconSettings size={16} />
                         Settings
                       </Link>
@@ -361,7 +361,7 @@ export default function UnifiedNavbar({
 
             ) : (
               navSection === "public" && (
-                <Link as={NextLink} href="/login">
+                <Link as={NextLink} href="/app/login">
                   <Button
                     size="sm"
                     variant="solid"
@@ -455,7 +455,7 @@ export default function UnifiedNavbar({
                 {!identity && navSection === "public" && (
                   <>
                     <Divider borderColor="theme.border" />
-                    <Link as={NextLink} href="/login" onClick={onClose}>
+                    <Link as={NextLink} href="/app/login" onClick={onClose}>
                       <Button variant="solid" w="full">
                         Login
                       </Button>
