@@ -10,7 +10,7 @@ export default function AboutPage() {
   return (
     <>
       <UnifiedNavbar extraCompact />
-      <Box maxW="960px" mx="auto" py={{ base: 10, md: 16 }} px={{ base: 5, md: 8 }}>
+      <Box maxW="1200px" mx="auto" py={{ base: 10, md: 16 }} px={{ base: 5, md: 8 }}>
         <Heading as="h1" size="xl" mb={{ base: 6, md: 8 }}>
           About
         </Heading>

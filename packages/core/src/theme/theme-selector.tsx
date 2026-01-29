@@ -149,7 +149,11 @@ export const ThemeSelector: React.FC = () => {
         {colorMode === "light" ? <MoonIcon /> : <SunIcon />}
       </IconButton>
 
-      <Popover.Root open={isOpen} onOpenChange={({ open }) => setIsOpen(open)}>
+      <Popover.Root
+        open={isOpen}
+        onOpenChange={({ open }) => setIsOpen(open)}
+        positioning={{ placement: "bottom-end" }}
+      >
         <Popover.Trigger asChild>
           <Button
             variant="ghost"
@@ -169,34 +173,13 @@ export const ThemeSelector: React.FC = () => {
           <Popover.Content
             bg="theme.surface"
             borderColor="theme.border"
-            maxW="340px"
+            maxW="520px"
+            w="max-content"
             shadow="xl"
             zIndex={9999}
           >
             <Popover.Body p={4}>
               <VStack gap={4} align="stretch">
-                <Text fontSize="sm" fontWeight="semibold" color="theme.text">
-                  Choose Your Theme
-                </Text>
-                <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                  {availableThemes?.map((theme) => {
-                    const themeColors = theme?.[colorMode];
-                    if (!themeColors) return null;
-
-                    return (
-                      <ColorSwatch
-                        key={theme.id}
-                        colors={themeColors}
-                        name={theme.name}
-                        isActive={theme.id === currentTheme?.id}
-                        onClick={() => handleThemeSelect(theme.id)}
-                      />
-                    );
-                  })}
-                </Grid>
-
-                <Separator />
-
                 <VStack gap={3} align="stretch">
                   <Text fontSize="sm" fontWeight="semibold" color="theme.text">
                     Accessibility
@@ -204,33 +187,9 @@ export const ThemeSelector: React.FC = () => {
 
                   <Box>
                     <Text fontSize="xs" fontWeight="medium" color="theme.text" mb={2}>
-                      Contrast
-                    </Text>
-                    <HStack gap={2}>
-                      <Button
-                        size="sm"
-                        variant={contrastMode === "normal" ? "solid" : "outline"}
-                        onClick={() => setContrastMode("normal")}
-                        flex={1}
-                      >
-                        Normal
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={contrastMode === "high" ? "solid" : "outline"}
-                        onClick={() => setContrastMode("high")}
-                        flex={1}
-                      >
-                        High
-                      </Button>
-                    </HStack>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="xs" fontWeight="medium" color="theme.text" mb={2}>
                       Text Size
                     </Text>
-                    <HStack gap={1}>
+                    <HStack gap={2}>
                       {[0.875, 1, 1.125, 1.25, 1.5].map((scale) => (
                         <Button
                           key={scale}
@@ -255,7 +214,53 @@ export const ThemeSelector: React.FC = () => {
                       ))}
                     </HStack>
                   </Box>
+
+                  <Box>
+                    <Text fontSize="xs" fontWeight="medium" color="theme.text" mb={2}>
+                      Contrast
+                    </Text>
+                    <HStack gap={1}>
+                      <Button
+                        size="sm"
+                        variant={contrastMode === "normal" ? "solid" : "outline"}
+                        onClick={() => setContrastMode("normal")}
+                        flex={1}
+                      >
+                        Normal
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={contrastMode === "high" ? "solid" : "outline"}
+                        onClick={() => setContrastMode("high")}
+                        flex={1}
+                      >
+                        High
+                      </Button>
+                    </HStack>
+                  </Box>
                 </VStack>
+
+                <Separator />
+
+                <Text fontSize="sm" fontWeight="semibold" color="theme.text">
+                  Choose Your Theme
+                </Text>
+                <Grid templateRows="repeat(3, auto)" autoFlow="column" gap={3}>
+                  {availableThemes?.map((theme) => {
+                    const themeColors = theme?.[colorMode];
+                    if (!themeColors) return null;
+
+                    return (
+                      <ColorSwatch
+                        key={theme.id}
+                        colors={themeColors}
+                        name={theme.name}
+                        isActive={theme.id === currentTheme?.id}
+                        onClick={() => handleThemeSelect(theme.id)}
+                      />
+                    );
+                  })}
+                </Grid>
 
                 <Text fontSize="xs" color="theme.textSecondary" textAlign="center">
                   Changes apply instantly and are saved for your next visit

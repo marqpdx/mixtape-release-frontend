@@ -1,5 +1,6 @@
 // Re-export all types
 export * from './auth';
+export * from './activityTypes';
 export * from './bazaarTypes';
 export * from './collectionTypes';
 export * from './concordTypes';

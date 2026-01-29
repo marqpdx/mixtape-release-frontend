@@ -4,14 +4,13 @@ import { VStack, Text, SimpleGrid, Card, HStack } from "@chakra-ui/react";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 import { UserIdentity } from "@mixtape/core/types/auth";
-// import { Button } from "@theme/recipes/button.recipe";
 import AdminCardWrapper from "@components/admin/AdminCardWrapper";
 import ToDoList from "@components/admin/ToDoList";
-import SystemStatsWorkArea from "@components/admin/system/SystemStatsWorkArea";
 import AuthDebugWorkArea from "@components/admin/auth/AuthDebugWorkArea";
 import { useGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { AdminTodoItem } from "@mixtape/api/clients/admin/adminApi";
 import { Button } from "@/theme/recipes/button.recipe";
+import Link from "next/link";
 
 interface AdminWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -54,38 +53,9 @@ export default function AdminWorkArea({
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={6}>
-          <Text fontSize="2xl" fontWeight="bold">🎧 Mixtape Admin Overview</Text>
+          <Text fontSize="2xl" fontWeight="bold">Admin Overview</Text>
 
-          {/* Quick Actions */}
-          <Card.Root>
-            <Card.Header>
-              <Text fontSize="lg" fontWeight="semibold">🚀 Quick Actions</Text>
-            </Card.Header>
-            <Card.Body>
-              <HStack gap={4} wrap="wrap">
-                <Button onClick={() => setActiveSection("user-management")}>
-                  👥 Manage Users
-                </Button>
-                <Button onClick={() => setActiveSection("group-management")}>
-                  🏢 Manage Groups
-                </Button>
-                <Button onClick={() => setActiveSection("content-moderation")}>
-                  📝 Content Moderation
-                </Button>
-                <Button onClick={() => setActiveSection("site-settings")}>
-                  ⚙️ Site Settings
-                </Button>
-                <Button onClick={() => setActiveSection("auth-debug")}>
-                  🔐 Auth Debug
-                </Button>
-                <Button onClick={() => setActiveSection("system-logs")}>
-                  📊 System Logs
-                </Button>
-              </HStack>
-            </Card.Body>
-          </Card.Root>
-
-          {/* Admin Cards */}
+          {/* Platform Snapshot - Working Items Only */}
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
             <AdminCardWrapper
               title="To-Do List"
@@ -96,46 +66,49 @@ export default function AdminWorkArea({
               <Text>{todos.filter(t => !t.is_completed).length} pending tasks</Text>
             </AdminCardWrapper>
 
-            <AdminCardWrapper
-              title="Users"
-              modalTitle="User Management"
-              modalContent={<Text>User management coming soon...</Text>}
-              onClick={() => setActiveSection("user-management")}
-            >
-              <Text>{allMembers.length} total users</Text>
-            </AdminCardWrapper>
+            {/* Platform metrics - read-only for now */}
+            <Card.Root>
+              <Card.Header>
+                <Text fontWeight="semibold">Users</Text>
+              </Card.Header>
+              <Card.Body>
+                <Text fontSize="2xl" fontWeight="bold">{allMembers.length}</Text>
+                <Text fontSize="sm" color="gray.600">total users</Text>
+              </Card.Body>
+            </Card.Root>
 
-            <AdminCardWrapper
-              title="Groups"
-              modalTitle="Group Management"
-              modalContent={<Text>Group management coming soon...</Text>}
-              onClick={() => setActiveSection("group-management")}
-            >
-              <Text>{groups.length} active groups</Text>
-            </AdminCardWrapper>
-
-            <AdminCardWrapper
-              title="Auth Debug"
-              modalTitle="Authentication Debug"
-              modalContent={<Text>Click to open full debug panel</Text>}
-              onClick={() => setActiveSection("auth-debug")}
-            >
-              <Text>Token & session monitoring</Text>
-            </AdminCardWrapper>
-
-            <AdminCardWrapper
-              title="System Logs"
-              modalTitle="System Logs"
-              modalContent={<Text>Click to view system logs</Text>}
-              onClick={() => setActiveSection("system-logs")}
-            >
-              <Text>Backend request logs</Text>
-            </AdminCardWrapper>
+            <Card.Root>
+              <Card.Header>
+                <Text fontWeight="semibold">Groups</Text>
+              </Card.Header>
+              <Card.Body>
+                <Text fontSize="2xl" fontWeight="bold">{groups.length}</Text>
+                <Text fontSize="sm" color="gray.600">active groups</Text>
+              </Card.Body>
+            </Card.Root>
           </SimpleGrid>
 
+          {/* Infrastructure */}
           <Card.Root>
             <Card.Header>
-              <Text fontSize="lg" fontWeight="semibold">📊 Snapshot Status</Text>
+              <Text fontSize="lg" fontWeight="semibold">Infrastructure</Text>
+            </Card.Header>
+            <Card.Body>
+              <HStack gap={4} wrap="wrap">
+                <Link href="/admin/sysadmin">
+                  <Button>Sysadmin Dashboard</Button>
+                </Link>
+                <Button onClick={() => setActiveSection("auth-debug")}>
+                  Auth Debug
+                </Button>
+              </HStack>
+            </Card.Body>
+          </Card.Root>
+
+          {/* Status */}
+          <Card.Root>
+            <Card.Header>
+              <Text fontSize="lg" fontWeight="semibold">Status</Text>
             </Card.Header>
             <Card.Body>
               <VStack align="stretch" gap={2}>
@@ -160,180 +133,63 @@ export default function AdminWorkArea({
     return <AuthDebugWorkArea />;
   }
 
-  if (section === "system-logs") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">📊 System Logs</Text>
-          <Card.Root>
-            <Card.Body>
-              <VStack align="stretch" gap={3}>
-                <Text fontSize="sm" color="gray.600">
-                  Backend logs are visible in your Django console/terminal where you run:
-                </Text>
-                <Text fontFamily="mono" fontSize="sm" bg="gray.100" p={3} borderRadius="md">
-                  python manage.py runserver
-                </Text>
-                <Text fontSize="sm" color="gray.600">
-                  Look for patterns like:
-                </Text>
-                <VStack align="stretch" gap={1} fontFamily="mono" fontSize="xs" pl={4}>
-                  <Text>✅ INFO: "GET /api/endpoint HTTP/1.1" 200</Text>
-                  <Text>❌ WARNING: "POST /api/endpoint HTTP/1.1" 401</Text>
-                  <Text>🔍 Token Request to RefreshToken...</Text>
-                </VStack>
-                <Text fontSize="sm" color="gray.600" mt={2}>
-                  Future enhancement: Real-time log streaming to this panel via WebSocket
-                </Text>
-              </VStack>
-            </Card.Body>
-          </Card.Root>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
-
-
-  if (section === "system-stats") {
-    return <SystemStatsWorkArea />;
-  }
-
-
-
-  if (section === "quick-actions") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={6}>
-          <Text fontSize="xl" fontWeight="bold">🚀 Quick Actions</Text>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("user-management")}
-            >
-              👥 Manage Users
-            </Button>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("group-management")}
-            >
-              🏢 Manage Groups
-            </Button>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("content-moderation")}
-            >
-              📝 Content Moderation
-            </Button>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("site-settings")}
-            >
-              ⚙️ Site Settings
-            </Button>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("auth-debug")}
-            >
-              🔐 Auth Debug
-            </Button>
-            <Button
-              size="lg"
-              p={6}
-              onClick={() => setActiveSection("system-logs")}
-            >
-              📊 System Logs
-            </Button>
-          </SimpleGrid>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
-
-  if (section === "user-management") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">👥 User Management</Text>
-          <Text>Manage {allMembers.length} users across the platform.</Text>
-          <Text>User management interface coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
-
-  if (section === "group-management") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">🏢 Group Management</Text>
-          <Text>Group management interface coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
-
   if (section === "todos") {
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">📝 To-Do Management</Text>
+          <Text fontSize="xl" fontWeight="bold">To-Do Management</Text>
           <ToDoList todos={todos} onComplete={onCompleteTodo} />
         </VStack>
       </WorkAreaWrapper>
     );
   }
 
-  if (section === "content-moderation") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">📝 Content Moderation</Text>
-          <Text>Content moderation tools coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
+  // ==========================================================================
+  // STUB SECTIONS - Commented out until dashboard hierarchy is finalized
+  // See: docs/sysadmin/handbook.md for planned structure
+  // ==========================================================================
 
-  if (section === "site-settings") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">⚙️ Site Settings</Text>
-          <Text>Site configuration options coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "system-logs") {
+  //   // Future: Real-time log streaming via WebSocket
+  //   return (
+  //     <WorkAreaWrapper>
+  //       <VStack align="stretch" gap={4}>
+  //         <Text fontSize="xl" fontWeight="bold">System Logs</Text>
+  //         <Text>Log streaming coming soon...</Text>
+  //       </VStack>
+  //     </WorkAreaWrapper>
+  //   );
+  // }
 
-  if (section === "system-health") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">🏥 System Health</Text>
-          <Text>System monitoring dashboard coming soon...</Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "user-management") {
+  //   // Future: User CRUD, roles, suspension
+  //   return null;
+  // }
 
-  if (section === "active-projects") {
-    return (
-      <WorkAreaWrapper>
-        <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">📁 Projects</Text>
-          <Text>Project administration tools are scoped to groups.</Text>
-          <Text fontSize="sm" color="gray.600">
-            Use a group dashboard to manage projects in context.
-          </Text>
-        </VStack>
-      </WorkAreaWrapper>
-    );
-  }
+  // if (section === "group-management") {
+  //   // Future: Group CRUD, membership management
+  //   return null;
+  // }
+
+  // if (section === "content-moderation") {
+  //   // Future: Flagged content queue, moderation actions
+  //   return null;
+  // }
+
+  // if (section === "site-settings") {
+  //   // Future: Platform configuration
+  //   return null;
+  // }
+
+  // if (section === "system-health") {
+  //   // Future: Wire to /api/ops/summary - see ops/ module
+  //   return null;
+  // }
+
+  // if (section === "active-projects") {
+  //   // Projects are group-scoped, not platform-level
+  //   return null;
+  // }
 
   // Default fallback
   return (

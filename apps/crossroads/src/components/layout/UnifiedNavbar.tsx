@@ -25,16 +25,23 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
+import { IconChevronDown, IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
 
 // Navigation item types
-type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
+type NavSection = "public" | "authenticated" | "admin" | "protected";
+
+interface NavChildItem {
+  key: string;
+  label: string;
+  href: string;
+}
 
 interface NavItem {
   key: string;
@@ -45,20 +52,37 @@ interface NavItem {
   stewardOnly?: boolean;
   memberOnly?: boolean;
   shortLabel?: string;
+  children?: NavChildItem[];
 }
 
 // Define all navigation items
 const NAV_ITEMS: NavItem[] = [
   // Public section
   { key: "home", label: "Home", href: "/", section: "public" },
-  { key: "about", label: "About", href: "/about", section: "public" },
+  {
+    key: "about",
+    label: "About",
+    href: "/about",
+    section: "public",
+    children: [
+      { key: "about-overview", label: "Overview", href: "/about" },
+      { key: "about-crossroads", label: "Crossroads", href: "/about/crossroads" },
+      { key: "about-backstory", label: "Backstory", href: "/about/backstory" },
+    ],
+  },
+  {
+    key: "membership",
+    label: "Membership",
+    href: "/membership",
+    section: "public",
+    children: [
+      { key: "membership-participation", label: "Participation", href: "/membership/levels" },
+      { key: "membership-pricing", label: "Pricing", href: "/membership/pricing" },
+      { key: "membership-joining", label: "Joining", href: "/membership/joining" },
+      { key: "membership-reciprocity", label: "Reciprocity", href: "/membership/reciprocity" },
+    ],
+  },
   { key: "contact", label: "Contact", href: "/contact", section: "public" },
-
-  // About section
-  { key: "about", label: "About", href: "/about", section: "about" },
-  { key: "join", label: "Join", href: "/about/join", section: "about" },
-  { key: "explore", label: "Explore", href: "/about/public", section: "about" },
-  { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
@@ -98,8 +122,7 @@ export default function UnifiedNavbar({
   // Auto-detect section if not provided
   const detectedSection: NavSection =
     section ||
-    (pathname.startsWith("/about") ? "about" :
-     identity && (pathname.startsWith("/dashboard") ||
+    (identity && (pathname.startsWith("/dashboard") ||
                   pathname.startsWith("/groups") ||
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||
@@ -126,7 +149,11 @@ export default function UnifiedNavbar({
   // Determine active item
   const activeItem = visibleItems.find(item =>
     pathname === item.href ||
-    (item.href !== "/" && pathname.startsWith(item.href))
+    (item.href !== "/" && pathname.startsWith(item.href)) ||
+    item.children?.some(child =>
+      pathname === child.href ||
+      (child.href !== "/" && pathname.startsWith(child.href))
+    )
   );
 
   const handleLogout = async () => {
@@ -230,21 +257,36 @@ export default function UnifiedNavbar({
 
           {/* Center: Navigation Items (Desktop) */}
           <HStack
-            gap={extraCompact ? 3 : (compact ? 4 : 6)}
+            gap={extraCompact ? 5 : (compact ? 6 : 8)}
             display={{ base: "none", lg: "flex" }}
             fontSize={extraCompact ? "sm" : (compact ? "sm" : "md")}
           >
-            {visibleItems.map((item) => (
-              <Box key={item.key} position="relative">
-                <NavItem
-                  href={item.href}
-                  isActive={activeItem?.key === item.key}
-                  extraCompact={extraCompact}
-                >
-                  {item.label}
-                </NavItem>
-              </Box>
-            ))}
+            {visibleItems.map((item) => {
+              const isActive = activeItem?.key === item.key;
+              if (item.children?.length) {
+                return (
+                  <DesktopNavDropdown
+                    key={item.key}
+                    item={item}
+                    isActive={isActive}
+                    extraCompact={extraCompact}
+                    compact={compact}
+                  />
+                );
+              }
+
+              return (
+                <Box key={item.key} position="relative">
+                  <NavItem
+                    href={item.href}
+                    isActive={isActive}
+                    extraCompact={extraCompact}
+                  >
+                    {item.label}
+                  </NavItem>
+                </Box>
+              );
+            })}
           </HStack>
 
           {/* Right: Theme Selector + Auth Actions */}
@@ -355,20 +397,45 @@ export default function UnifiedNavbar({
 
             <Drawer.Body>
               <VStack gap={4} align="stretch" pt={4}>
-                {visibleItems.map((item) => (
-                  <Link
-                    key={item.key}
-                    as={NextLink}
-                    href={item.href}
-                    onClick={onClose}
-                    color={activeItem?.key === item.key ? "theme.accent" : "theme.text"}
-                    fontWeight={activeItem?.key === item.key ? "bold" : "medium"}
-                    fontSize="md"
-                    _hover={{ color: "theme.accent" }}
-                  >
-                    {item.shortLabel || item.label}
-                  </Link>
-                ))}
+                {visibleItems.map((item) => {
+                  const isActive = activeItem?.key === item.key;
+                  return (
+                    <Box key={item.key}>
+                      <Link
+                        as={NextLink}
+                        href={item.href}
+                        onClick={onClose}
+                        color={isActive ? "theme.accent" : "theme.text"}
+                        fontWeight={isActive ? "bold" : "medium"}
+                        fontSize="md"
+                        _hover={{ color: "theme.accent" }}
+                      >
+                        {item.shortLabel || item.label}
+                      </Link>
+                      {item.children?.length && (
+                        <VStack align="start" gap={2} pt={2} pl={4}>
+                          {item.children.map((child) => {
+                            const isChildActive = pathname === child.href;
+                            return (
+                            <Link
+                              key={child.key}
+                              as={NextLink}
+                              href={child.href}
+                              onClick={onClose}
+                              color={isChildActive ? "theme.accent" : "theme.textSecondary"}
+                              fontWeight={isChildActive ? "bold" : "medium"}
+                              fontSize="sm"
+                              _hover={{ color: "theme.accent" }}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                          })}
+                        </VStack>
+                      )}
+                    </Box>
+                  );
+                })}
 
                 {identity && (
                   <>
@@ -453,5 +520,91 @@ function NavItem({
         </Box>
       </Box>
     </Link>
+  );
+}
+
+function DesktopNavDropdown({
+  item,
+  isActive,
+  extraCompact,
+  compact,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  extraCompact: boolean;
+  compact: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const openDelayMs = 120;
+  const closeDelayMs = 220;
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = () => {
+    if (openTimer.current) {
+      clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimers();
+    };
+  }, []);
+
+  const scheduleOpen = () => {
+    clearTimers();
+    openTimer.current = setTimeout(() => setOpen(true), openDelayMs);
+  };
+
+  const scheduleClose = () => {
+    clearTimers();
+    closeTimer.current = setTimeout(() => setOpen(false), closeDelayMs);
+  };
+
+  return (
+    <Box onMouseEnter={scheduleOpen} onMouseLeave={scheduleClose}>
+      <MenuRoot
+        open={open}
+        onOpenChange={({ open }) => setOpen(open)}
+        positioning={{ placement: "bottom-start" }}
+      >
+        <MenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size={extraCompact || compact ? "sm" : "md"}
+            px={0}
+            py={1}
+            height="auto"
+            fontWeight={isActive ? "700" : "400"}
+            color={isActive ? "theme.text" : "theme.textSecondary"}
+            _hover={{ color: "theme.accent" }}
+            _active={{ bg: "transparent" }}
+            _focusVisible={{ boxShadow: "none" }}
+          >
+            {item.label}
+            <Box as="span" display="inline-flex" ml={0}>
+              <IconChevronDown size={14} />
+            </Box>
+          </Button>
+        </MenuTrigger>
+        <MenuPositioner zIndex={1100}>
+          <MenuContent>
+            {item.children?.map((child) => (
+              <MenuItem key={child.key} value={child.key} asChild>
+                <Link as={NextLink} href={child.href} display="flex" gap={2}>
+                  {child.label}
+                </Link>
+              </MenuItem>
+            ))}
+          </MenuContent>
+        </MenuPositioner>
+      </MenuRoot>
+    </Box>
   );
 }

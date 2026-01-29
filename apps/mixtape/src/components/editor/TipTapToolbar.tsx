@@ -2,7 +2,16 @@
 
 import { Editor } from "@tiptap/react";
 import { HStack, IconButton } from "@chakra-ui/react";
-import { IconBold, IconItalic, IconLink, IconUnderline, IconShare } from "@tabler/icons-react";
+import {
+  IconBold,
+  IconItalic,
+  IconLink,
+  IconUnderline,
+  IconShare,
+  IconStrikethrough,
+  IconList,
+  IconListNumbers,
+} from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
@@ -34,6 +43,30 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         icon={<IconUnderline size={16} />}
         onClick={() => editor.chain().focus().toggleMark("underline").run()}
         isActive={editor.isActive("underline")}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Strikethrough"
+        icon={<IconStrikethrough size={16} />}
+        onClick={() => editor.chain().focus().toggleMark("strike").run()}
+        isActive={editor.isActive("strike")}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Bullet list"
+        icon={<IconList size={16} />}
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        isActive={editor.isActive("bulletList")}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Numbered list"
+        icon={<IconListNumbers size={16} />}
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        isActive={editor.isActive("orderedList")}
         tabIndex={-1}
         size="xs"
       />

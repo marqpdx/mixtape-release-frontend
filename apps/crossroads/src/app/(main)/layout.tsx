@@ -2,6 +2,7 @@
 
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
+import Footer from "@components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "Crossroads",
@@ -15,9 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>
-          {children}
+          <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: "1 0 auto" }}>{children}</div>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

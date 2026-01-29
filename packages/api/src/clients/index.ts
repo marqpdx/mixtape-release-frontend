@@ -1,5 +1,6 @@
 // API Client exports
 export * from './almanac/almanacApi'
+export * from './activity/activityApi'
 export * from './ops/opsApi'
 export * from './admin/adminApi'
 export * from './assets/assetsApi'

@@ -17,20 +17,37 @@ import Underline from "@tiptap/extension-underline";
 import BulletList from "@tiptap/extension-bullet-list";
 import ListItem from "@tiptap/extension-list-item";
 import Link from "@tiptap/extension-link";
+import Strike from "@tiptap/extension-strike";
+import OrderedList from "@tiptap/extension-ordered-list";
 
 import { Box, Spinner } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
 import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
 import { BlockId } from "./extensions/BlockId";
+import TipTapToolbar from "./TipTapToolbar";
 
 import { useColorModeValue } from "@components/ui/color-mode";
 
-type ToolbarOption = "bold" | "italic" | "heading" | "underline" | "bulletList" | "link";
+type ToolbarOption =
+  | "bold"
+  | "italic"
+  | "heading"
+  | "underline"
+  | "strike"
+  | "bulletList"
+  | "orderedList"
+  | "link";
 
 // Default toolbar options - defined outside component to maintain stable reference
-// Temporarily empty to debug collaboration issues
-const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [];
+const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "bulletList",
+  "orderedList",
+];
 
 interface TipTapEditorProps {
   initialContent?: JSONContent | string;
@@ -170,7 +187,9 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         class: 'underline-text',
       },
     })] : []),
+    ...(toolbarOptions.includes("strike") ? [Strike] : []),
     ...(toolbarOptions.includes("bulletList") ? [BulletList, ListItem] : []),
+    ...(toolbarOptions.includes("orderedList") ? [OrderedList, ListItem] : []),
     ...(toolbarOptions.includes("link") ? [
       Link.configure({
         openOnClick: false,
@@ -368,8 +387,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       }}
     >
       <Box border={'1px solid gray'} pt={1} pl={1}>
-        {/* Toolbar temporarily disabled for debugging */}
-        {/* <TipTapToolbar editor={editor} /> */}
+        <TipTapToolbar editor={editor} />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />

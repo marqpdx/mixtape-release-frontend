@@ -4,7 +4,6 @@
 
 import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import Footer from "@components/layout/Footer";
 import dynamic from "next/dynamic";
 // import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@/components/admin/AdminTodoButtonWithModal";
@@ -23,7 +22,7 @@ export default function SiteLayout({
   // const { isAdmin } = usePermissions();
 
   return (
-    <Box minH="100vh" bg={bgColor}>
+    <Box minH="100%" bg={bgColor}>
       {/* ✅ EXTRA COMPACT: Much smaller navbar for about pages */}
       <UnifiedNavbar extraCompact />
 
@@ -31,9 +30,6 @@ export default function SiteLayout({
       <Box w="full" maxW="none">
         {children}
       </Box>
-
-      {/* Footer - Full Width */}
-      <Footer />
 
       {/* Admin Tools */}
       {/* <AdminTodoButtonWithModal isAdmin={isAdmin} /> */}

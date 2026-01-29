@@ -194,7 +194,9 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    document.documentElement.style.setProperty("--font-scale", fontScale.toString());
+    const root = document.documentElement;
+    root.style.setProperty("--font-scale", fontScale.toString());
+    root.style.fontSize = `${fontScale * 100}%`;
   }, [fontScale]);
 
   React.useEffect(() => {

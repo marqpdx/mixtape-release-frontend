@@ -1,0 +1,418 @@
+"use client";
+
+import React from 'react';
+import {
+  Box,
+  Button,
+  Text,
+  VStack,
+  HStack,
+  Link,
+  SimpleGrid,
+  Container,
+  Heading,
+} from '@chakra-ui/react';
+import {
+  IconArrowRight,
+  IconUsers,
+  IconLogin,
+  IconBook,
+  IconMap,
+  IconMessages,
+  IconSparkles,
+  IconLeaf,
+  IconWorld
+} from '@tabler/icons-react';
+import { useColorModeValue } from '@components/ui/color-mode';
+import { LuExternalLink } from "react-icons/lu";
+import UnifiedNavbar from '@components/layout/UnifiedNavbar';
+
+export default function CrossroadsHomepage() {
+  const overlayBg = useColorModeValue('whiteAlpha.200', 'blackAlpha.300');
+  const cardBg = useColorModeValue('whiteAlpha.300', 'blackAlpha.400');
+  const textColor = useColorModeValue('white', 'white');
+  const subtleTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.800');
+  const watermarkTextColor = useColorModeValue('gray.300', 'gray.400');
+  const buttonColor = useColorModeValue("text.light", "text.light");
+  const backgroundImage = "/homepage/noaa-zdj3p00Rep0-unsplash.jpg";
+
+  const features = [
+    {
+      icon: IconBook,
+      title: "EarthLab",
+      description: "Dive into courses on permaculture, regenerative design, and ecological living."
+    },
+    {
+      icon: IconWorld,
+      title: "Hub",
+      description: "Connect with communities of practice, share resources, and build relationships."
+    },
+    {
+      icon: IconMessages,
+      title: "Threadworks",
+      description: "Engage in meaningful discussions and collaborative knowledge building."
+    },
+    {
+      icon: IconMap,
+      title: "Tapestry",
+      description: "Discover place-based learning and connect with your local ecosystem."
+    }
+  ];
+
+  const stats = [
+    { value: "50+", label: "Learning Paths" },
+    { value: "1,200+", label: "Community Members" },
+    { value: "25+", label: "Active Groups" }
+  ];
+
+  return (
+    <Box
+      position="relative"
+      width="100vw"
+      minH="100vh"
+      backgroundImage={`url(${backgroundImage})`}
+      backgroundSize="cover"
+      backgroundPosition="center"
+      backgroundRepeat="no-repeat"
+      overflow="hidden"
+    >
+      <UnifiedNavbar />
+
+      <Container
+        maxW="1200px"
+        pt={{ base: 20, md: 32 }}
+        pb={16}
+        px={6}
+      >
+        {/* Hero Section */}
+        <VStack gap={8} align="center" mb={16}>
+          <Box
+            bg={overlayBg}
+            backdropFilter="blur(16px)"
+            borderRadius="2xl"
+            p={{ base: 8, md: 12 }}
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            textAlign="center"
+            maxW="800px"
+            _hover={{
+              transform: 'translateY(-4px)',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.3)'
+            }}
+            transition="all 0.4s ease"
+          >
+            <VStack gap={6}>
+              <HStack gap={3} justify="center">
+                <IconLeaf size={32} color="currentColor" style={{ color: '#68D391' }} />
+                <Heading
+                  fontSize={{ base: "3xl", md: "5xl" }}
+                  fontWeight="bold"
+                  color={textColor}
+                  lineHeight="shorter"
+                >
+                  Welcome to Crossroads
+                </Heading>
+              </HStack>
+
+              <Text
+                fontSize={{ base: "lg", md: "xl" }}
+                color={subtleTextColor}
+                lineHeight="tall"
+                maxW="600px"
+              >
+                A regenerative learning platform where communities gather to cultivate knowledge,
+                share practices, and grow together in harmony with the living world.
+              </Text>
+
+              <HStack gap={4} flexWrap="wrap" justify="center" pt={4}>
+                {stats.map((stat, idx) => (
+                  <Box
+                    key={idx}
+                    bg={cardBg}
+                    backdropFilter="blur(8px)"
+                    px={6}
+                    py={3}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.200"
+                  >
+                    <Text fontSize="2xl" fontWeight="bold" color="green.300">
+                      {stat.value}
+                    </Text>
+                    <Text fontSize="sm" color={subtleTextColor}>
+                      {stat.label}
+                    </Text>
+                  </Box>
+                ))}
+              </HStack>
+
+              <Button
+                colorScheme="green"
+                color={buttonColor}
+                size="lg"
+                fontSize="lg"
+                px={8}
+                py={6}
+                _hover={{
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 12px 35px rgba(72, 187, 120, 0.4)'
+                }}
+                transition="all 0.3s ease"
+              >
+                <IconSparkles size={24} style={{ marginRight: '12px' }} />
+                <Link color={buttonColor} href='/about'>
+                  Start Your Journey
+                </Link>
+              </Button>
+            </VStack>
+          </Box>
+        </VStack>
+
+        {/* Feature Preview Section */}
+        <VStack gap={8} mb={16}>
+          <Box
+            bg={overlayBg}
+            backdropFilter="blur(12px)"
+            borderRadius="xl"
+            p={{ base: 6, md: 8 }}
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            width="100%"
+          >
+            <VStack gap={6} align="start">
+              <Heading
+                fontSize={{ base: "2xl", md: "3xl" }}
+                color={textColor}
+              >
+                Explore the Ecosystem
+              </Heading>
+
+              <SimpleGrid
+                columns={{ base: 1, md: 2, lg: 4 }}
+                gap={6}
+                width="100%"
+              >
+                {features.map((feature, idx) => {
+                  const Icon = feature.icon;
+                  return (
+                    <Box
+                      key={idx}
+                      bg={cardBg}
+                      backdropFilter="blur(8px)"
+                      borderRadius="lg"
+                      p={6}
+                      border="1px solid"
+                      borderColor="whiteAlpha.200"
+                      _hover={{
+                        transform: 'translateY(-4px)',
+                        borderColor: 'green.400',
+                        boxShadow: '0 12px 25px rgba(72, 187, 120, 0.2)'
+                      }}
+                      transition="all 0.3s ease"
+                      cursor="pointer"
+                    >
+                      <VStack gap={3} align="start">
+                        <Box
+                          p={3}
+                          bg="green.500"
+                          borderRadius="lg"
+                          color="white"
+                        >
+                          <Icon size={24} />
+                        </Box>
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                          color={textColor}
+                        >
+                          {feature.title}
+                        </Text>
+                        <Text
+                          fontSize="sm"
+                          color={subtleTextColor}
+                          lineHeight="tall"
+                        >
+                          {feature.description}
+                        </Text>
+                      </VStack>
+                    </Box>
+                  );
+                })}
+              </SimpleGrid>
+            </VStack>
+          </Box>
+        </VStack>
+
+        {/* CTA Section */}
+        <HStack
+          gap={8}
+          alignItems="stretch"
+          maxWidth="900px"
+          mx="auto"
+          flexDirection={{ base: 'column', md: 'row' }}
+        >
+          {/* Explore & Join Box */}
+          <Box
+            bg={overlayBg}
+            backdropFilter="blur(12px)"
+            borderRadius="xl"
+            p={8}
+            flex={1}
+            border="2px solid"
+            borderColor="green.400"
+            _hover={{
+              transform: 'translateY(-4px)',
+              boxShadow: '0 20px 40px rgba(72, 187, 120, 0.3)'
+            }}
+            transition="all 0.3s ease"
+            display="flex"
+            flexDirection="column"
+          >
+            <VStack gap={6} align="start" flex={1} mb={8}>
+              <HStack gap={3}>
+                <Box
+                  p={2}
+                  bg="green.500"
+                  borderRadius="md"
+                  color="white"
+                >
+                  <IconUsers size={28} />
+                </Box>
+                <Text
+                  fontSize="2xl"
+                  fontWeight="bold"
+                  color={textColor}
+                  lineHeight="tall"
+                >
+                  Join the Community
+                </Text>
+              </HStack>
+              <Text
+                color={subtleTextColor}
+                lineHeight="tall"
+                fontSize="md"
+              >
+                Create your profile, discover learning paths, connect with local groups,
+                and become part of a thriving regenerative community.
+              </Text>
+            </VStack>
+
+            <Button
+              colorScheme="green"
+              color={buttonColor}
+              size="lg"
+              width="100%"
+              _hover={{
+                transform: 'translateX(4px)',
+                boxShadow: '0 8px 25px rgba(72, 187, 120, 0.4)'
+              }}
+              transition="all 0.3s ease"
+              mt="auto"
+            >
+              <IconArrowRight size={20} style={{ marginRight: '8px' }} />
+              <Link color={buttonColor} href='/about'>
+                Explore & Join
+              </Link>
+            </Button>
+          </Box>
+
+          {/* Login Box */}
+          <Box
+            bg={overlayBg}
+            backdropFilter="blur(12px)"
+            borderRadius="xl"
+            p={8}
+            flex={1}
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            _hover={{
+              transform: 'translateY(-4px)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              borderColor: 'green.400'
+            }}
+            transition="all 0.3s ease"
+            display="flex"
+            flexDirection="column"
+          >
+            <VStack gap={6} align="start" flex={1} mb={8}>
+              <HStack gap={3}>
+                <Box
+                  p={2}
+                  bg={cardBg}
+                  borderRadius="md"
+                  color={textColor}
+                >
+                  <IconLogin size={28} />
+                </Box>
+                <Text
+                  fontSize="2xl"
+                  fontWeight="bold"
+                  color={textColor}
+                  lineHeight="tall"
+                >
+                  Welcome Back
+                </Text>
+              </HStack>
+              <Text
+                color={subtleTextColor}
+                lineHeight="tall"
+                fontSize="md"
+              >
+                Continue your learning journey, check in with your communities,
+                and pick up where you left off.
+              </Text>
+            </VStack>
+
+            <Button
+              variant="outline"
+              colorScheme="green"
+              color={textColor}
+              size="lg"
+              width="100%"
+              borderColor="green.400"
+              borderWidth="2px"
+              _hover={{
+                bg: 'green.500',
+                borderColor: 'green.500',
+                transform: 'translateX(4px)',
+                boxShadow: '0 8px 25px rgba(72, 187, 120, 0.4)'
+              }}
+              transition="all 0.3s ease"
+              mt="auto"
+            >
+              <IconLogin size={20} style={{ marginRight: '8px' }} />
+              <Link color={buttonColor} href='/login'>
+                Sign In
+              </Link>
+            </Button>
+          </Box>
+        </HStack>
+      </Container>
+
+      {/* NOAA Watermark */}
+      <Box
+        position="absolute"
+        bottom={4}
+        left={4}
+        fontSize="sm"
+      >
+        <Link
+          href="https://unsplash.com/@noaa"
+          color={watermarkTextColor}
+          _hover={{
+            color: 'white',
+            textDecoration: 'underline'
+          }}
+          transition="color 0.2s ease"
+          display="flex"
+          alignItems="center"
+          gap={1}
+        >
+          <Text as="span" fontWeight="bold">@noaa</Text>
+          <Text as="span">image courtesy of NOAA</Text>
+          <LuExternalLink size={14} />
+        </Link>
+      </Box>
+    </Box>
+  );
+}

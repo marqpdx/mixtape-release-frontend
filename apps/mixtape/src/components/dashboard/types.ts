@@ -225,63 +225,68 @@ export const GROUP_ADMIN_DASHBOARD_CONFIG: DashboardConfig = {
 // =====================================================
 // 4. SYSADMIN DASHBOARD - Technical monitoring & maintenance
 // =====================================================
+// Menu structure mirrors actual backend data from /api/ops/health-snapshot
+// See: docs/sysadmin/dashboard-hierarchy.md
 
-// src/components/dashboard/sysadmin/sysadminMenuItems.ts
 export const SYSADMIN_MENU_ITEMS: MenuItem[] = [
   {
-    key: "monitoring",
-    label: "Monitoring",
-    icon: "📈",
+    key: "overview",
+    label: "Overview",
+    icon: "📊",
     subItems: [
       { key: "system-overview", label: "System Overview" },
-      { key: "performance-metrics", label: "Performance" },
-      { key: "error-logs", label: "Error Logs" },
-      { key: "uptime-monitoring", label: "Uptime" },
     ]
   },
   {
-    key: "infrastructure",
-    label: "Infrastructure",
-    icon: "🏗️",
-    subItems: [
-      { key: "server-status", label: "Server Status" },
-      { key: "database-health", label: "Database Health" },
-      { key: "storage-usage", label: "Storage Usage" },
-      { key: "cdn-status", label: "CDN Status" },
-    ]
-  },
-  {
-    key: "security",
-    label: "Security",
-    icon: "🔒",
-    subItems: [
-      { key: "security-overview", label: "Security Overview" },
-      { key: "failed-logins", label: "Failed Logins" },
-      { key: "suspicious-activity", label: "Suspicious Activity" },
-      { key: "security-logs", label: "Security Logs" },
-    ]
-  },
-  {
-    key: "maintenance",
-    label: "Maintenance",
-    icon: "🔧",
-    subItems: [
-      { key: "scheduled-tasks", label: "Scheduled Tasks" },
-      { key: "database-maintenance", label: "Database Maintenance" },
-      { key: "backup-status", label: "Backup Status" },
-      { key: "deployment-logs", label: "Deployment Logs" },
-    ]
-  },
-  {
-    key: "alerts",
-    label: "Alerts",
+    key: "mission-critical",
+    label: "Mission Critical",
     icon: "🚨",
     subItems: [
-      { key: "active-alerts", label: "Active Alerts" },
-      { key: "alert-history", label: "Alert History" },
-      { key: "alert-settings", label: "Alert Settings" },
+      { key: "svc-postgres", label: "Database" },
+      { key: "svc-django", label: "API" },
+      { key: "svc-rabbitmq", label: "Message Broker" },
+      { key: "svc-backups", label: "Backups" },
     ]
-  }
+  },
+  {
+    key: "core-services",
+    label: "Core Services",
+    icon: "⚙️",
+    subItems: [
+      { key: "svc-celery", label: "Workers" },
+      { key: "svc-nginx", label: "Proxy" },
+      { key: "svc-seaweedfs", label: "Storage" },
+    ]
+  },
+  {
+    key: "feature-services",
+    label: "Feature Services",
+    icon: "🔌",
+    subItems: [
+      { key: "svc-inkwell", label: "Inkwell (LLM)" },
+      { key: "svc-lanternmail", label: "Lanternmail" },
+      { key: "svc-livewire", label: "Livewire" },
+    ]
+  },
+  {
+    key: "resources",
+    label: "Resources",
+    icon: "📈",
+    subItems: [
+      { key: "res-memory", label: "Memory" },
+      { key: "res-disk", label: "Disk" },
+      { key: "res-network", label: "Network" },
+    ]
+  },
+  {
+    key: "diagnostics",
+    label: "Diagnostics",
+    icon: "🔍",
+    subItems: [
+      { key: "diag-processes", label: "Top Processes" },
+      { key: "diag-snapshot", label: "Raw Snapshot" },
+    ]
+  },
 ];
 
 export const SYSADMIN_DASHBOARD_CONFIG: DashboardConfig = {
@@ -346,9 +351,21 @@ export const DASHBOARD_ROUTES: Record<string, DashboardType> = {
 
   // Sysadmin sections
   'system-overview': 'sysadmin',
-  'performance-metrics': 'sysadmin',
-  'error-logs': 'sysadmin',
-  'server-status': 'sysadmin',
+  'svc-postgres': 'sysadmin',
+  'svc-django': 'sysadmin',
+  'svc-rabbitmq': 'sysadmin',
+  'svc-backups': 'sysadmin',
+  'svc-celery': 'sysadmin',
+  'svc-nginx': 'sysadmin',
+  'svc-seaweedfs': 'sysadmin',
+  'svc-inkwell': 'sysadmin',
+  'svc-lanternmail': 'sysadmin',
+  'svc-livewire': 'sysadmin',
+  'res-memory': 'sysadmin',
+  'res-disk': 'sysadmin',
+  'res-network': 'sysadmin',
+  'diag-processes': 'sysadmin',
+  'diag-snapshot': 'sysadmin',
 };
 
 // Usage example:
