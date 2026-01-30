@@ -1,5 +1,7 @@
 // apps/mixtape/src/components/dashboard/admin/AdminWorkArea.tsx
 
+"use client";
+
 import { VStack, Text, SimpleGrid, Card, HStack } from "@chakra-ui/react";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
@@ -17,8 +19,6 @@ interface AdminWorkAreaProps extends WorkAreaProps {
   todos: AdminTodoItem[];
   onCompleteTodo: (id: number) => void;
   onRefreshTodos: () => void;
-  systemStats?: Record<string, unknown> | null;
-  userMetrics?: Record<string, unknown> | null;
   allMembers?: UserIdentity[];
 }
 
@@ -29,15 +29,13 @@ export default function AdminWorkArea({
   todos,
   onCompleteTodo,
   onRefreshTodos,
-  systemStats = null,
-  userMetrics = null,
   allMembers = [],
 }: AdminWorkAreaProps) {
-
   const { groups } = useGroups({
-    ordering: '-created_at',
-    is_active: true
+    ordering: "-created_at",
+    is_active: true,
   });
+
   if (!identity?.is_superuser) {
     return (
       <WorkAreaWrapper>
@@ -49,24 +47,29 @@ export default function AdminWorkArea({
     );
   }
 
+  // =========================================================================
+  // ADMIN OVERVIEW
+  // =========================================================================
   if (section === "admin-overview") {
+    const pendingTodos = todos.filter((t) => !t.is_completed).length;
+
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={6}>
           <Text fontSize="2xl" fontWeight="bold">Admin Overview</Text>
 
-          {/* Platform Snapshot - Working Items Only */}
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
+          {/* Platform Snapshot */}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
             <AdminCardWrapper
-              title="To-Do List"
+              title="To-Dos"
               modalTitle="Manage To-Dos"
               modalContent={<ToDoList todos={todos} onComplete={onCompleteTodo} />}
               onClick={() => setActiveSection("todos")}
             >
-              <Text>{todos.filter(t => !t.is_completed).length} pending tasks</Text>
+              <Text fontSize="2xl" fontWeight="bold">{pendingTodos}</Text>
+              <Text fontSize="sm" color="gray.600">pending tasks</Text>
             </AdminCardWrapper>
 
-            {/* Platform metrics - read-only for now */}
             <Card.Root>
               <Card.Header>
                 <Text fontWeight="semibold">Users</Text>
@@ -86,42 +89,35 @@ export default function AdminWorkArea({
                 <Text fontSize="sm" color="gray.600">active groups</Text>
               </Card.Body>
             </Card.Root>
+
+            <Card.Root>
+              <Card.Header>
+                <Text fontWeight="semibold">Infrastructure</Text>
+              </Card.Header>
+              <Card.Body>
+                <Link href="/admin/sysadmin">
+                  <Button size="sm" width="full">
+                    Sysadmin Dashboard
+                  </Button>
+                </Link>
+              </Card.Body>
+            </Card.Root>
           </SimpleGrid>
 
-          {/* Infrastructure */}
+          {/* Quick Actions */}
           <Card.Root>
             <Card.Header>
-              <Text fontSize="lg" fontWeight="semibold">Infrastructure</Text>
+              <Text fontSize="lg" fontWeight="semibold">Quick Actions</Text>
             </Card.Header>
             <Card.Body>
               <HStack gap={4} wrap="wrap">
-                <Link href="/admin/sysadmin">
-                  <Button>Sysadmin Dashboard</Button>
-                </Link>
-                <Button onClick={() => setActiveSection("auth-debug")}>
-                  Auth Debug
-                </Button>
-              </HStack>
-            </Card.Body>
-          </Card.Root>
-
-          {/* Status */}
-          <Card.Root>
-            <Card.Header>
-              <Text fontSize="lg" fontWeight="semibold">Status</Text>
-            </Card.Header>
-            <Card.Body>
-              <VStack align="stretch" gap={2}>
-                <Text fontSize="sm" color="gray.600">
-                  System stats: {systemStats ? "loaded" : "pending"}
-                </Text>
-                <Text fontSize="sm" color="gray.600">
-                  User metrics: {userMetrics ? "loaded" : "pending"}
-                </Text>
                 <Button size="sm" onClick={onRefreshTodos}>
                   Refresh To-Dos
                 </Button>
-              </VStack>
+                <Button size="sm" variant="outline" onClick={() => setActiveSection("auth-debug")}>
+                  Auth Debug
+                </Button>
+              </HStack>
             </Card.Body>
           </Card.Root>
         </VStack>
@@ -129,74 +125,43 @@ export default function AdminWorkArea({
     );
   }
 
+  // =========================================================================
+  // AUTH DEBUG
+  // =========================================================================
   if (section === "auth-debug") {
     return <AuthDebugWorkArea />;
   }
 
+  // =========================================================================
+  // TO-DOS
+  // =========================================================================
   if (section === "todos") {
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
-          <Text fontSize="xl" fontWeight="bold">To-Do Management</Text>
+          <HStack justify="space-between">
+            <Text fontSize="xl" fontWeight="bold">To-Do Management</Text>
+            <Button size="sm" onClick={onRefreshTodos}>
+              Refresh
+            </Button>
+          </HStack>
           <ToDoList todos={todos} onComplete={onCompleteTodo} />
         </VStack>
       </WorkAreaWrapper>
     );
   }
 
-  // ==========================================================================
-  // STUB SECTIONS - Commented out until dashboard hierarchy is finalized
-  // See: docs/sysadmin/handbook.md for planned structure
-  // ==========================================================================
-
-  // if (section === "system-logs") {
-  //   // Future: Real-time log streaming via WebSocket
-  //   return (
-  //     <WorkAreaWrapper>
-  //       <VStack align="stretch" gap={4}>
-  //         <Text fontSize="xl" fontWeight="bold">System Logs</Text>
-  //         <Text>Log streaming coming soon...</Text>
-  //       </VStack>
-  //     </WorkAreaWrapper>
-  //   );
-  // }
-
-  // if (section === "user-management") {
-  //   // Future: User CRUD, roles, suspension
-  //   return null;
-  // }
-
-  // if (section === "group-management") {
-  //   // Future: Group CRUD, membership management
-  //   return null;
-  // }
-
-  // if (section === "content-moderation") {
-  //   // Future: Flagged content queue, moderation actions
-  //   return null;
-  // }
-
-  // if (section === "site-settings") {
-  //   // Future: Platform configuration
-  //   return null;
-  // }
-
-  // if (section === "system-health") {
-  //   // Future: Wire to /api/ops/summary - see ops/ module
-  //   return null;
-  // }
-
-  // if (section === "active-projects") {
-  //   // Projects are group-scoped, not platform-level
-  //   return null;
-  // }
-
-  // Default fallback
+  // =========================================================================
+  // DEFAULT FALLBACK
+  // =========================================================================
   return (
     <WorkAreaWrapper>
       <VStack align="stretch" gap={4}>
         <Text fontSize="xl" fontWeight="bold">Section: {section}</Text>
         <Text>This admin section is under development.</Text>
+        <Button size="sm" onClick={() => setActiveSection("admin-overview")}>
+          Back to Overview
+        </Button>
       </VStack>
     </WorkAreaWrapper>
   );

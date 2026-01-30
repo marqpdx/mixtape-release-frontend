@@ -89,66 +89,59 @@ export const MEMBER_DASHBOARD_CONFIG: DashboardConfig = {
 // =====================================================
 // 2. SITE ADMIN DASHBOARD - Site-wide administration
 // =====================================================
+// Simplified to only working items. Infrastructure monitoring moved to /admin/sysadmin.
+// Future items (users, groups, content management) will be added as backend APIs are built.
 
-// src/components/dashboard/admin/adminMenuItems.ts
 export const ADMIN_MENU_ITEMS: MenuItem[] = [
   {
     key: "overview",
     label: "Overview",
     icon: "📊",
     subItems: [
-      { key: "admin-overview", label: "Admin Dashboard" },
-      { key: "metrics", label: "Site Metrics" },
-      { key: "recent-activity", label: "Recent Activity" },
+      { key: "admin-overview", label: "Dashboard" },
+      { key: "todos", label: "To-Dos" },
     ]
   },
   {
-    key: "users",
-    label: "Users",
-    icon: "👥",
+    key: "tools",
+    label: "Tools",
+    icon: "🔧",
     subItems: [
-      { key: "user-management", label: "All Users" },
-      { key: "user-roles", label: "Roles & Permissions" },
-      { key: "user-invites", label: "Invitations" },
-      { key: "banned-users", label: "Banned Users" },
+      { key: "auth-debug", label: "Auth Debug" },
     ]
   },
-  {
-    key: "content",
-    label: "Content",
-    icon: "📝",
-    subItems: [
-      { key: "content-overview", label: "Content Overview" },
-      { key: "content-moderation", label: "Moderation Queue" },
-      { key: "reported-content", label: "Reported Content" },
-      { key: "content-analytics", label: "Analytics" },
-    ]
-  },
-  {
-    key: "groups",
-    label: "Groups",
-    icon: "🏢",
-    subItems: [
-      { key: "group-management", label: "All Groups" },
-      { key: "group-analytics", label: "Group Analytics" },
-      { key: "group-settings", label: "Group Policies" },
-    ]
-  },
-  {
-    key: "system",
-    label: "System",
-    icon: "⚙️",
-    subItems: [
-      { key: "site-settings", label: "Site Settings" },
-      { key: "system-health", label: "System Health" },
-      { key: "email-settings", label: "Email Configuration" },
-      { key: "integrations", label: "Integrations" },
-    ]
-  }
+  // ==========================================================================
+  // FUTURE SECTIONS - Uncomment as backend APIs are implemented
+  // ==========================================================================
+  // {
+  //   key: "users",
+  //   label: "Users",
+  //   icon: "👥",
+  //   subItems: [
+  //     { key: "user-management", label: "All Users" },
+  //     { key: "user-roles", label: "Roles & Permissions" },
+  //   ]
+  // },
+  // {
+  //   key: "groups",
+  //   label: "Groups",
+  //   icon: "🏢",
+  //   subItems: [
+  //     { key: "group-management", label: "All Groups" },
+  //   ]
+  // },
+  // {
+  //   key: "content",
+  //   label: "Content",
+  //   icon: "📝",
+  //   subItems: [
+  //     { key: "content-moderation", label: "Moderation Queue" },
+  //   ]
+  // },
 ];
 
 export const ADMIN_DASHBOARD_CONFIG: DashboardConfig = {
-  title: "🎧 Mixtape Admin Dashboard",
+  title: "Admin Dashboard",
   menuItems: ADMIN_MENU_ITEMS,
   defaultSection: "admin-overview",
   localStorageKey: "adminDashboard"

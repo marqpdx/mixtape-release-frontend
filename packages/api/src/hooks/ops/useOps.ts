@@ -26,6 +26,7 @@ export const useOpsSummary = (options: OpsQueryOptions = {}) => {
     queryFn: fetchOpsSummary,
     enabled,
     refetchOnWindowFocus: false,
+    staleTime: 0, // Always fetch fresh data on refetch
   });
 };
 
@@ -36,6 +37,7 @@ export const useOpsTiles = (options: OpsQueryOptions = {}) => {
     queryFn: fetchOpsTiles,
     enabled,
     refetchOnWindowFocus: false,
+    staleTime: 0,
   });
 };
 
@@ -46,5 +48,6 @@ export const useOpsSnapshot = (options: OpsQueryOptions = {}) => {
     queryFn: fetchOpsSnapshot,
     enabled,
     refetchOnWindowFocus: false,
+    staleTime: 0,
   });
 };

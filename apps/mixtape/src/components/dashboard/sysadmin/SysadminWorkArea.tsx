@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { WorkAreaProps } from "../shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 import {
@@ -76,17 +76,37 @@ function formatUptime(seconds: number | undefined | null): string {
   return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
 }
 
+// Status colors
+function getStatusColor(status: string | undefined): string {
+  if (status === "healthy" || status === "active" || status === "ok") return "green";
+  if (status === "degraded" || status === "concerning" || status === "warn") return "orange";
+  if (status === "critical" || status === "failed" || status === "inactive" || status === "crit") return "red";
+  return "gray";
+}
+
 // Status badge component
 function StatusBadge({ status }: { status: string | undefined }) {
-  const colorScheme = status === "healthy" || status === "active" || status === "ok"
-    ? "green"
-    : status === "degraded" || status === "concerning"
-      ? "orange"
-      : status === "critical" || status === "failed" || status === "inactive"
-        ? "red"
-        : "gray";
+  return <Badge colorScheme={getStatusColor(status)}>{status || "unknown"}</Badge>;
+}
 
-  return <Badge colorScheme={colorScheme}>{status || "unknown"}</Badge>;
+// Emoji map for tiles
+const TILE_EMOJI: Record<string, string> = {
+  "Core services": "⚡",
+  "Storage": "💾",
+  "Background work": "⚙️",
+  "Backups": "🗄️",
+  // Fallbacks
+  "Database": "🗃️",
+  "API": "🌐",
+  "Message Broker": "📨",
+  "Workers": "👷",
+  "Memory": "🧠",
+  "Disk": "💿",
+  "Network": "🌐",
+};
+
+function getTileEmoji(title: string): string {
+  return TILE_EMOJI[title] || "📊";
 }
 
 // Service detail card
@@ -101,7 +121,7 @@ function ServiceCard({
 }) {
   if (!state) {
     return (
-      <Card.Root>
+      <Card.Root borderLeftWidth="4px" borderLeftColor="gray.300">
         <Card.Header>
           <HStack justify="space-between">
             <Text fontWeight="semibold">{name}</Text>
@@ -112,12 +132,14 @@ function ServiceCard({
     );
   }
 
+  const status = state.status || state.active_state;
+
   return (
-    <Card.Root>
+    <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(status)}.500`}>
       <Card.Header>
         <HStack justify="space-between">
           <Text fontWeight="semibold">{name}</Text>
-          <StatusBadge status={state.status || state.active_state} />
+          <StatusBadge status={status} />
         </HStack>
       </Card.Header>
       <Card.Body>
@@ -175,9 +197,14 @@ function MultiUnitServiceCard({
   const units = data?.units || {};
   const unitNames = Object.keys(units);
 
+  // Determine overall status from units or backup summary
+  const overallStatus = backupsSummary?.status ||
+    (unitNames.some(u => units[u]?.active_state === "failed") ? "critical" :
+     unitNames.some(u => units[u]?.active_state === "inactive") ? "degraded" : "healthy");
+
   if (unitNames.length === 0) {
     return (
-      <Card.Root>
+      <Card.Root borderLeftWidth="4px" borderLeftColor="gray.300">
         <Card.Header>
           <HStack justify="space-between">
             <Text fontWeight="semibold">{name}</Text>
@@ -189,7 +216,7 @@ function MultiUnitServiceCard({
   }
 
   return (
-    <Card.Root>
+    <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(overallStatus)}.500`}>
       <Card.Header>
         <HStack justify="space-between">
           <Text fontWeight="semibold">{name}</Text>
@@ -230,7 +257,6 @@ export default function SysadminWorkArea({
   const { data: summary, isLoading, error, refetch: refetchSummary, isFetching } =
     useOpsSummary({ enabled: isSuperuser });
   const { data: snapshot, refetch: refetchSnapshot } = useOpsSnapshot({ enabled: isSuperuser });
-  const [showRawSnapshot, setShowRawSnapshot] = useState(false);
 
   const handleRefresh = useCallback(() => {
     refetchSummary();
@@ -346,19 +372,37 @@ export default function SysadminWorkArea({
                 </Card.Header>
                 <Card.Body>
                   <VStack align="stretch" gap={2}>
-                    {summary.highlights.map((item, idx) => (
-                      <Text key={idx}>• {item}</Text>
-                    ))}
+                    {summary.highlights.map((item, idx) => {
+                      // Color bullets based on content
+                      const isWarning = item.toLowerCase().includes("attention") ||
+                        item.toLowerCase().includes("elevated") ||
+                        item.toLowerCase().includes("building up");
+                      const isOk = item.toLowerCase().includes("no urgent") ||
+                        item.toLowerCase().includes("healthy");
+                      const bulletColor = isWarning ? "orange.500" : isOk ? "green.500" : "gray.600";
+                      const bullet = isWarning ? "⚠️" : isOk ? "✅" : "•";
+                      return (
+                        <Text key={idx} color={bulletColor}>
+                          {bullet} {item}
+                        </Text>
+                      );
+                    })}
                   </VStack>
                 </Card.Body>
               </Card.Root>
 
               <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
                 {summary.tiles.map((tile) => (
-                  <Card.Root key={tile.title}>
+                  <Card.Root
+                    key={tile.title}
+                    borderLeftWidth="4px"
+                    borderLeftColor={`${getStatusColor(tile.status)}.500`}
+                  >
                     <Card.Header>
                       <HStack justify="space-between">
-                        <Text fontSize="md" fontWeight="semibold">{tile.title}</Text>
+                        <Text fontSize="md" fontWeight="semibold">
+                          {getTileEmoji(tile.title)} {tile.title}
+                        </Text>
                         <StatusBadge status={tile.status} />
                       </HStack>
                     </Card.Header>

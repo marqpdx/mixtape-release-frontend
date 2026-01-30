@@ -100,6 +100,7 @@ interface UnifiedNavbarProps {
   showLogo?: boolean;
   compact?: boolean;
   extraCompact?: boolean;
+  shrinkOnScroll?: boolean;
 }
 
 export default function UnifiedNavbar({
@@ -108,6 +109,7 @@ export default function UnifiedNavbar({
   showLogo = true,
   compact = false,
   extraCompact = true,
+  shrinkOnScroll = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
   const { user: identity, logout, isLoading } = useAuth();
@@ -171,7 +173,26 @@ export default function UnifiedNavbar({
     }
   };
 
-  const horizontalPadding = extraCompact ? 2 : (compact ? 3 : 4);
+  const [isShrunk, setIsShrunk] = useState(false);
+
+  useEffect(() => {
+    if (!shrinkOnScroll || typeof window === "undefined") return;
+
+    const onScroll = () => setIsShrunk(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [shrinkOnScroll]);
+
+  const shrink = shrinkOnScroll && isShrunk;
+  const horizontalPadding = shrink ? 1 : (extraCompact ? 2 : (compact ? 3 : 4));
+  const navFontSize = shrink ? "xs" : (extraCompact ? "sm" : (compact ? "sm" : "md"));
+  const navGap = shrink ? 2 : (extraCompact ? 5 : (compact ? 6 : 8));
+  const themeScale = shrink ? "scale(0.75)" : (extraCompact ? "scale(0.85)" : "scale(1)");
+  const logoSize = shrink
+    ? (extraCompact ? 210 : (compact ? 240 : 280))
+    : (extraCompact ? 248 : (compact ? 280 : 320));
+  const logoOffset = shrink ? "translateY(-10px)" : "translateY(-15px)";
 
   // Loading state - show skeleton while checking auth
   if (isLoading) {
@@ -187,7 +208,7 @@ export default function UnifiedNavbar({
         zIndex={1000}
       >
         <Container maxW="7xl">
-          <Flex justify="space-between" align="center" minHeight="40px">
+          <Flex justify="space-between" align="center" minHeight={shrink ? "32px" : "40px"}>
             {/* Logo skeleton */}
             {showLogo && (
               <Box w="200px" h="30px" bg="gray.200" borderRadius="md" />
@@ -224,10 +245,10 @@ export default function UnifiedNavbar({
       transition="all 0.3s ease"
     >
       <Container maxW="7xl">
-        <Flex justify="space-between" align="center" minHeight="40px">
+        <Flex justify="space-between" align="center" minHeight={shrink ? "32px" : "40px"}>
 
           {/* Left: Logo or Menu Button */}
-          <Flex align="center" gap={extraCompact ? 2 : 4}>
+          <Flex align="center" gap={shrink ? 2 : (extraCompact ? 2 : 4)}>
             {/* Mobile Menu Button - Show if there are nav items to display */}
             {visibleItems.length > 0 && (
               <Box display={{ base: "block", lg: "none" }}>
@@ -245,9 +266,9 @@ export default function UnifiedNavbar({
             {/* Logo */}
             {showLogo && (
               <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }}>
-                <Box transform="translateY(-15px)">
+                <Box transform={logoOffset}>
                   <CrossroadsLogo
-                    size={extraCompact ? 248 : (compact ? 280 : 320)}
+                    size={logoSize}
                     color={logoColor}
                   />
                 </Box>
@@ -257,9 +278,9 @@ export default function UnifiedNavbar({
 
           {/* Center: Navigation Items (Desktop) */}
           <HStack
-            gap={extraCompact ? 5 : (compact ? 6 : 8)}
+            gap={navGap}
             display={{ base: "none", lg: "flex" }}
-            fontSize={extraCompact ? "sm" : (compact ? "sm" : "md")}
+            fontSize={navFontSize}
           >
             {visibleItems.map((item) => {
               const isActive = activeItem?.key === item.key;
@@ -269,7 +290,7 @@ export default function UnifiedNavbar({
                     key={item.key}
                     item={item}
                     isActive={isActive}
-                    extraCompact={extraCompact}
+                    extraCompact={extraCompact || shrink}
                     compact={compact}
                   />
                 );
@@ -280,7 +301,7 @@ export default function UnifiedNavbar({
                   <NavItem
                     href={item.href}
                     isActive={isActive}
-                    extraCompact={extraCompact}
+                    extraCompact={extraCompact || shrink}
                   >
                     {item.label}
                   </NavItem>
@@ -290,8 +311,8 @@ export default function UnifiedNavbar({
           </HStack>
 
           {/* Right: Theme Selector + Auth Actions */}
-          <HStack gap={extraCompact ? 1 : 3}>
-            <Box transform={extraCompact ? "scale(0.85)" : "scale(1)"}>
+          <HStack gap={shrink ? 1 : (extraCompact ? 1 : 3)}>
+            <Box transform={themeScale}>
               <ThemeSelector />
             </Box>
 
@@ -322,7 +343,7 @@ export default function UnifiedNavbar({
                         )}
                       </Avatar.Root>
                     </AvatarGroup>
-                    <Text fontSize={extraCompact ? "xs" : "sm"}>
+                    <Text fontSize={shrink ? "xs" : (extraCompact ? "xs" : "sm")}>
                       {identity.username || identity.email}
                     </Text>
                   </Button>
@@ -365,7 +386,7 @@ export default function UnifiedNavbar({
                   <Button
                     size="sm"
                     variant="solid"
-                    fontSize={extraCompact ? "xs" : "sm"}
+                    fontSize={shrink ? "xs" : (extraCompact ? "xs" : "sm")}
                   >
                     Login
                   </Button>

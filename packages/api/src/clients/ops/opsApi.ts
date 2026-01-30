@@ -33,17 +33,22 @@ export interface OpsHealthSnapshotResponse {
   application: Record<string, unknown>;
 }
 
+// Cache-busting parameter to bypass nginx/proxy caching
+function cacheBust(url: string): string {
+  return `${url}?_t=${Date.now()}`;
+}
+
 export async function fetchOpsSummary(): Promise<OpsSummaryResponse> {
-  const res = await axiosInstance.get("/api/ops/summary");
+  const res = await axiosInstance.get(cacheBust("/api/ops/summary"));
   return res.data as OpsSummaryResponse;
 }
 
 export async function fetchOpsTiles(): Promise<OpsTilesResponse> {
-  const res = await axiosInstance.get("/api/ops/tiles");
+  const res = await axiosInstance.get(cacheBust("/api/ops/tiles"));
   return res.data as OpsTilesResponse;
 }
 
 export async function fetchOpsSnapshot(): Promise<OpsHealthSnapshotResponse> {
-  const res = await axiosInstance.get("/api/ops/health-snapshot");
+  const res = await axiosInstance.get(cacheBust("/api/ops/health-snapshot"));
   return res.data as OpsHealthSnapshotResponse;
 }

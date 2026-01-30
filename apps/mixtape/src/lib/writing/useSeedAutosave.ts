@@ -1,4 +1,5 @@
-// src/lib/writing/useSeedAutosave.ts
+// apps/mixtape/src/lib/writing/useSeedAutosave.ts
+
 import { useCallback, useRef, useState } from "react";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -36,6 +37,7 @@ export function useSeedAutosave(initialText = "", debounceMs = 1500) {
       if (!seedId) {
         const res = await axiosInstance.post("/api/writing/seeds", { body_text: data.body_text });
         setSeedId(res.data.id);
+        setSavedTick((t) => t + 1);
         return;
       }
       await axiosInstance.patch(`/api/writing/seeds/${seedId}`, { body_text: data.body_text });
@@ -72,6 +74,11 @@ export function useSeedAutosave(initialText = "", debounceMs = 1500) {
     currentTextRef.current = bodyText;
   }, []);
 
+  const resetSeed = useCallback(() => {
+    setSeedId(null);
+    currentTextRef.current = "";
+  }, []);
+
   /** For safety when switching seeds before a debounce fires. */
   const cancelPending = useCallback(() => {
     // useAutosave doesn't expose timer; do an instant no-op save to cancel status transitions
@@ -87,6 +94,7 @@ export function useSeedAutosave(initialText = "", debounceMs = 1500) {
     saveAndClose,
     promoteToDraft,
     attachExistingSeed,
+    resetSeed,
     cancelPending,
     savedTick, // can be used to trigger re-renders
   };

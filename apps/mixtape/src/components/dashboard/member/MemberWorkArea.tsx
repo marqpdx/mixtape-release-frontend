@@ -20,6 +20,7 @@ import GroupCreateWorkArea from "@/components/groups/create/GroupCreateWorkArea"
 import MemberProfileEdit from "./MemberProfileEdit";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
+import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 
@@ -94,6 +95,15 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <MemberProfileEdit />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Seeds section
+  if (section === "seeds") {
+    return (
+      <WorkAreaWrapper>
+        <SeedsWorkArea />
       </WorkAreaWrapper>
     );
   }

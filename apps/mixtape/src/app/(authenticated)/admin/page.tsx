@@ -2,44 +2,27 @@
 
 "use client";
 
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback } from "react";
 import { Text } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@mixtape/core/types/auth";
-import { ADMIN_DASHBOARD_CONFIG } from "@components/dashboard/admin/adminConfig";
-import { SYSADMIN_DASHBOARD_CONFIG } from "@components/dashboard/types";
+import { ADMIN_DASHBOARD_CONFIG } from "@components/dashboard/types";
 import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayout";
 import AdminWorkArea from "@components/dashboard/admin/AdminWorkArea";
-import SysadminWorkArea from "@components/dashboard/sysadmin/SysadminWorkArea";
 import { useUsers } from "@mixtape/api/hooks/useUsers";
-import {
-  useAdminSystemStats,
-  useAdminUserMetrics,
-  useAdminTodos,
-  useCompleteAdminTodo,
-} from "@mixtape/api/hooks/admin/useAdmin";
+import { useAdminTodos, useCompleteAdminTodo } from "@mixtape/api/hooks/admin/useAdmin";
 
 /**
  * ADMIN DASHBOARD
  *
- * Site-wide administration dashboard for system operators only.
- *
- * This dashboard is ONLY for people who run the entire site.
- * Group administration and content management should be accessed
- * through the member dashboard's expanded functionality.
+ * Platform administration dashboard for superusers.
  *
  * Features:
- * - System health monitoring
- * - Platform-wide user metrics
- * - Revenue and subscription management
- * - Site-wide content moderation
- * - Critical system settings
+ * - Platform snapshot (users, groups, todos)
+ * - Quick actions
+ * - Link to Sysadmin dashboard (/admin/sysadmin)
  *
- * ARCHITECTURE FOLLOWS MEMBER DASHBOARD PATTERN:
- * - Early auth checks to prevent unnecessary API calls
- * - Dynamic page titles
- * - Consistent component structure
- * - No auto-refresh intervals (manual refresh only)
+ * Infrastructure monitoring is at /admin/sysadmin (separate page).
  */
 export default function AdminDashboard() {
   const { user, isLoading: identityLoading } = useAuth();
@@ -51,80 +34,35 @@ export default function AdminDashboard() {
   // Set dynamic title
   useEffect(() => {
     if (identity) {
-      document.title = "System Admin - Mixtape Crossroads";
+      document.title = "Admin - Mixtape Crossroads";
     }
   }, [identity]);
 
-  const { data: systemStats = null } = useAdminSystemStats({
-    enabled: isAdminReady,
-  });
-  const { data: userMetrics = null } = useAdminUserMetrics({
-    enabled: isAdminReady,
-  });
+  // Data hooks
   const { data: todos = [], refetch: refetchTodos } = useAdminTodos({
     enabled: isAdminReady,
   });
   const completeTodo = useCompleteAdminTodo();
   const { users: allMembers = [] } = useUsers({ enabled: isAdminReady });
 
-  const sysadminSectionKeys = useMemo(() => {
-    return new Set(
-      SYSADMIN_DASHBOARD_CONFIG.menuItems.flatMap((item) =>
-        item.subItems?.map((subItem) => subItem.key) ?? []
-      )
-    );
-  }, []);
-
-  const mergedMenuItems = useMemo(() => {
-    if (!isSuperuser) {
-      return ADMIN_DASHBOARD_CONFIG.menuItems;
-    }
-
-    const adminSectionKeys = new Set(
-      ADMIN_DASHBOARD_CONFIG.menuItems.flatMap((item) =>
-        item.subItems?.map((subItem) => subItem.key) ?? []
-      )
-    );
-
-    const sysadminMenuItems = SYSADMIN_DASHBOARD_CONFIG.menuItems
-      .map((item) => ({
-        ...item,
-        subItems: item.subItems?.filter((subItem) => !adminSectionKeys.has(subItem.key)),
-      }))
-      .filter((item) => (item.subItems?.length ?? 0) > 0);
-
-    return [...ADMIN_DASHBOARD_CONFIG.menuItems, ...sysadminMenuItems];
-  }, [isSuperuser]);
-
   // Work area wrapper
-  const WorkAreaWrapper = useCallback((props: WorkAreaProps) => {
-    if (!identity) return null;
-    if (sysadminSectionKeys.has(props.section)) {
-      return <SysadminWorkArea {...props} identity={identity} />;
-    }
+  const WorkAreaWrapper = useCallback(
+    (props: WorkAreaProps) => {
+      if (!identity) return null;
 
-    return (
-      <AdminWorkArea
-        {...props}
-        identity={identity}
-        todos={todos}
-        onCompleteTodo={(id: number) => completeTodo.mutate(id)}
-        onRefreshTodos={() => refetchTodos()}
-        systemStats={systemStats}
-        userMetrics={userMetrics}
-        allMembers={allMembers}
-      />
-    );
-  }, [
-    identity,
-    sysadminSectionKeys,
-    todos,
-    completeTodo,
-    refetchTodos,
-    systemStats,
-    userMetrics,
-    allMembers,
-  ]);
+      return (
+        <AdminWorkArea
+          {...props}
+          identity={identity}
+          todos={todos}
+          onCompleteTodo={(id: number) => completeTodo.mutate(id)}
+          onRefreshTodos={() => refetchTodos()}
+          allMembers={allMembers}
+        />
+      );
+    },
+    [identity, todos, completeTodo, refetchTodos, allMembers]
+  );
 
   // EARLY RETURNS - after hooks
   if (identityLoading) {
@@ -141,8 +79,8 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout
-      title="System Administration"
-      menuItems={mergedMenuItems}
+      title={ADMIN_DASHBOARD_CONFIG.title}
+      menuItems={ADMIN_DASHBOARD_CONFIG.menuItems}
       defaultSection={ADMIN_DASHBOARD_CONFIG.defaultSection}
       localStorageKey={ADMIN_DASHBOARD_CONFIG.localStorageKey}
       WorkAreaComponent={WorkAreaWrapper}

@@ -38,6 +38,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     label: "Writing",
     icon: "📝",
     subItems: [
+      { key: "seeds", label: "Seeds", hidden: false },
       { key: "new-post", label: "New Post", hidden: true },
       { key: "my-drafts", label: "My Drafts", hidden: true },
       { key: "published-posts", label: "Published Posts", hidden: true },
