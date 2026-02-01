@@ -46,8 +46,8 @@ export default function GroupWritingMainWorkArea({
           setActiveSection("write");
         }
       }}
-      onNavigateToDetail={(pieceSlug) => {
-        router.replace(`/groups/${groupSlug}/writing/${pieceSlug}`);
+      onNavigateToDetail={({ slug }) => {
+        router.replace(`/groups/${groupSlug}/writing/${slug}`);
       }}
     />
   );

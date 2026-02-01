@@ -15,7 +15,7 @@ import { GroupMemberList } from "@/components/groups/members/GroupMemberList";
 import GroupDetailWrapper from "@/components/groups/layout/GroupDetailWrapper";
 import GroupInviteWorkArea from "@/components/groups/invitations/GroupInviteWorkArea";
 import CoalitionInviteWorkArea from "@/components/groups/coalitions/CoalitionInviteWorkArea";
-import GroupWritingWrapper from "@/components/groups/writing/GroupWritingWrapper";
+import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import GroupPermissionsWorkArea from "@/components/groups/permissions/GroupPermissionsWorkArea";
 import { Group } from "@mixtape/core/types/groupTypes";
@@ -396,14 +396,13 @@ export default function GroupWorkArea({
   if (section === "writing") {
     return (
       <WorkAreaWrapper>
-        <GroupWritingWrapper
-          groupSlug={group.slug}
-          groupId={group.id}
-          groupTitle={group.title}
-          setActiveSection={setActiveSection}
-          onPublished={() => {
-            // Handle the published piece
+        <SponsorWritingWrapper
+          sponsor={{
+            type: "group",
+            slug: group.slug,
+            displayName: group.title,
           }}
+          setActiveSection={setActiveSection}
         />
       </WorkAreaWrapper>
     );

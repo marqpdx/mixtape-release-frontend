@@ -21,8 +21,11 @@ export default function EditorToolbarButton({
   tabIndex,
   size = "sm"
 }: EditorToolbarButtonProps) {
-  const activeBg = useColorModeValue("gray.200", "gray.600");
-  const hoverBg = useColorModeValue("gray.100", "gray.700");
+  const activeBg = useColorModeValue("gray.200", "gray.700");
+  const hoverBg = useColorModeValue("gray.100", "gray.600");
+  const idleBg = useColorModeValue("gray.50", "gray.800");
+  const idleColor = useColorModeValue("gray.700", "gray.200");
+  const activeColor = useColorModeValue("gray.900", "whiteAlpha.900");
 
   return (
     <Tooltip content={tooltip}>
@@ -31,7 +34,8 @@ export default function EditorToolbarButton({
         variant="ghost"
         onClick={onClick}
         tabIndex={tabIndex}
-        bg={isActive ? activeBg : "gray.500"}
+        bg={isActive ? activeBg : idleBg}
+        color={isActive ? activeColor : idleColor}
         _hover={{ bg: hoverBg }}
         _active={{ bg: activeBg }}
         aria-label={tooltip}

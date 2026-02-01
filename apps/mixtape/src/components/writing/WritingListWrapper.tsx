@@ -74,7 +74,7 @@ interface WritingListWrapperProps {
   canCreatePost?: boolean;
   canManagePosts?: boolean;
   onNavigateToEditor: (pieceSlug?: string) => void;
-  onNavigateToDetail: (pieceSlug: string) => void;
+  onNavigateToDetail: (piece: { id: string; slug: string }) => void;
 }
 
 /**
@@ -87,7 +87,7 @@ interface WritingListWrapperProps {
  *   canCreatePost={true}
  *   canManagePosts={isAdmin}
  *   onNavigateToEditor={(slug) => router.push(`/groups/my-group/writing/edit/${slug || 'new'}`)}
- *   onNavigateToDetail={(slug) => router.push(`/groups/my-group/writing/${slug}`)}
+ *   onNavigateToDetail={({ slug }) => router.push(`/groups/my-group/writing/${slug}`)}
  * />
  *
  * // For a member
@@ -96,7 +96,7 @@ interface WritingListWrapperProps {
  *   canCreatePost={true}
  *   canManagePosts={true}
  *   onNavigateToEditor={(slug) => router.push(`/writing/edit/${slug || 'new'}`)}
- *   onNavigateToDetail={(slug) => router.push(`/writing/${slug}`)}
+ *   onNavigateToDetail={({ slug }) => router.push(`/writing/${slug}`)}
  * />
  */
 export default function WritingListWrapper({
@@ -159,7 +159,7 @@ export default function WritingListWrapper({
   const typedPlacements = (Array.isArray(placements) ? placements : []) as FlattenedPlacement[];
 
   const handleRowClick = (placement: FlattenedPlacement) => {
-    onNavigateToDetail(placement.piece_slug);
+    onNavigateToDetail({ id: placement.piece_id, slug: placement.piece_slug });
   };
 
   const handlePublishedEdit = useCallback(

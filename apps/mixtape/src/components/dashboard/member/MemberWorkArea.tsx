@@ -21,8 +21,12 @@ import MemberProfileEdit from "./MemberProfileEdit";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
+import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
+import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
+import { useRouter } from "next/navigation";
+import PersonalOverview from "../sections/PersonalOverview";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -32,7 +36,9 @@ export default function MemberWorkArea({
   section,
   setActiveSection,
   identity,
+  sectionParams,
 }: MemberWorkAreaProps) {
+  const router = useRouter();
 
   const { groups, isLoading, error } = useGroups({
     ordering: '-created_at',
@@ -70,14 +76,15 @@ export default function MemberWorkArea({
   // Personal sections
   if (section === "overview") {
     return (
-      <></>
-      // <PersonalOverview
-      //   identity={identity}
-      //   groups={groups}
-      //   todos={[]}
-      //   isAdmin={false}
-      //   isSteward={false}
-      // />
+      // <></>
+      <PersonalOverview
+        identity={identity}
+        groups={groups}
+        todos={[]}
+        isAdmin={false}
+        isSteward={false}
+        setActiveSection={setActiveSection}
+      />
     );
   }
 
@@ -104,6 +111,51 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <SeedsWorkArea />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Writing sections
+  if (section === "writing") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <SponsorWritingWrapper
+          sponsor={{ type: "member", slug: identity.username, displayName }}
+          setActiveSection={setActiveSection}
+          canCreatePost
+          canManagePosts
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "write") {
+    const pieceId = sectionParams?.piece;
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <WritingEditorWrapper
+          sponsor={{
+            type: "member",
+            id: identity.id,
+            slug: identity.username,
+            displayName,
+          }}
+          writingKind="post"
+          pieceId={pieceId}
+          onUnpublished={() => {
+            if (typeof window !== "undefined") {
+              try {
+                window.localStorage.setItem("writing_active_tab", "drafts");
+              } catch (error) {
+                console.warn("Failed to set writing tab:", error);
+              }
+            }
+            setActiveSection("writing");
+            router.replace("/app/dashboard");
+          }}
+        />
       </WorkAreaWrapper>
     );
   }

@@ -1,4 +1,4 @@
-// src/components/dashboard/sections/PersonalOverview.tsx
+// apps/mixtape/src/components/dashboard/sections/PersonalOverview.tsx
 
 "use client";
 
@@ -41,6 +41,7 @@ interface PersonalOverviewProps {
   todos?: ToDoItem[];
   isAdmin: boolean;
   isSteward: boolean;
+  setActiveSection?: (section: string, params?: Record<string, string>) => void;
 }
 
 export default function PersonalOverview({
@@ -49,6 +50,7 @@ export default function PersonalOverview({
   todos = [],
   isAdmin,
   isSteward,
+  // setActiveSection,
 }: PersonalOverviewProps) {
   const incompleteTodos = todos.filter(todo => !todo.is_completed);
   const completedTodos = todos.filter(todo => todo.is_completed);
@@ -87,6 +89,14 @@ export default function PersonalOverview({
         <Heading size="xl" mb={2}>
           {getGreeting()}, {identity.first_name || identity.username}! 👋
         </Heading>
+        <HStack>
+          <Link href={`/member/${identity.username}/write`}>
+            <Button size="sm">
+              <IconNote size={16} />
+              Write Now
+            </Button>
+          </Link>
+        </HStack>
       </Box>
 
 

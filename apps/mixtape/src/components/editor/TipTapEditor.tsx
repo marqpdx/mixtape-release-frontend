@@ -90,6 +90,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const localRouteMapRef = useRef<Map<string, RouteMeta>>(new Map())
 
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
+  const textColor = useColorModeValue("gray.900", "gray.100");
 
   // Debug: Track component renders and prop changes
   console.log("🎨 aaaa TipTapEditor rendered");
@@ -376,6 +377,13 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         "& .ProseMirror": {
           paddingX: "1.4em",
           paddingY: "1em",
+          color: textColor,
+          "&.font-serif": {
+            fontFamily: "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif",
+          },
+          "&.font-sans": {
+            fontFamily: "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+          },
           // Reduce margin on first and last children - using :first-of-type for SSR safety
           "& > *:first-of-type": {
             marginTop: "0.5em !important",

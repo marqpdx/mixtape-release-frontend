@@ -1,7 +1,7 @@
 // src/components/editor/TipTapToolbar.tsx
 
 import { Editor } from "@tiptap/react";
-import { HStack, IconButton } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Text } from "@chakra-ui/react";
 import {
   IconBold,
   IconItalic,
@@ -16,12 +16,61 @@ import {
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
+import { useCallback, useEffect, useState } from "react";
 
 export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
+  const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
+  const SerifIcon = (
+    <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+      <Text
+        fontFamily="Georgia, Times New Roman, serif"
+        fontSize="14px"
+        lineHeight="1"
+        transform="translate(15%, -2%)"
+      >
+        A
+      </Text>
+    </Box>
+  );
+  const SansIcon = (
+    <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
+      <Text
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontSize="14px"
+        lineHeight="1"
+        transform="translate(15%, -2%)"
+      >
+        A
+      </Text>
+    </Box>
+  );
+
+  useEffect(() => {
+    const dom = editor?.view?.dom;
+    if (!dom) return;
+    if (dom.classList.contains("font-serif")) {
+      setFontMode("serif");
+    } else {
+      setFontMode("sans");
+    }
+  }, [editor]);
+
+  const applyFontMode = useCallback(
+    (mode: "serif" | "sans") => {
+      const dom = editor?.view?.dom;
+      if (!dom) return;
+      dom.classList.remove("font-serif", "font-sans");
+      dom.classList.add(mode === "serif" ? "font-serif" : "font-sans");
+      setFontMode(mode);
+    },
+    [editor]
+  );
+
   if (!editor) return null;
 
   return (
-    <HStack p={1} gap={0.5}>
+    <HStack p={1} gap={0.5} justify="space-between">
+      <HStack gap={0.5}>
       <EditorToolbarButton
         tooltip="Bold (Ctrl+B)"
         icon={<IconBold size={16} />}
@@ -78,6 +127,25 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         tabIndex={-1}
         size="xs"
       />
+      </HStack>
+      <HStack gap={0.5}>
+      <EditorToolbarButton
+        tooltip="Serif"
+        icon={SerifIcon}
+        onClick={() => applyFontMode("serif")}
+        isActive={fontMode === "serif"}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Sans Serif"
+        icon={SansIcon}
+        onClick={() => applyFontMode("sans")}
+        isActive={fontMode === "sans"}
+        tabIndex={-1}
+        size="xs"
+      />
+      </HStack>
 
       <Tooltip content="Publish as Section">
         <IconButton

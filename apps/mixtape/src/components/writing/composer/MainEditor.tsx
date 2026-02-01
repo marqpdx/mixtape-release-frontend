@@ -80,9 +80,9 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
     },
     ref
   ) => {
-    const bgColor = useColorModeValue("bg.surface", "bg.surface");
+    const bgColor = useColorModeValue("gray.50", "gray.900");
     const focusBorderColor = useColorModeValue("theme.accent", "theme.accent");
-    const editorBorderColor = useColorModeValue("border.emphasis", "border.emphasis");
+    const editorBorderColor = useColorModeValue("gray.200", "gray.700");
 
     const isPending = editorMode === "pending";
     const wantsCollab = editorMode === "collab";
@@ -224,12 +224,12 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
           bg={bgColor}
           overflow="hidden"
           transition="all 0.2s"
-          height="70vh"
+          height="56vh"
           position="relative"
           _focusWithin={{ borderColor: focusBorderColor }}
           css={{
             "& .ProseMirror": {
-              height: "calc(65vh - 4px)",
+              height: "calc(52vh - 4px)",
               padding: "24px",
               outline: "none",
               fontSize: "16px",

@@ -121,6 +121,7 @@ export default function WriteComposer({
   const publishedBannerBg = useColorModeValue("orange.50", "orange.900");
   const publishedBannerBorder = useColorModeValue("orange.200", "orange.700");
   const publishedBannerText = useColorModeValue("orange.800", "orange.100");
+  const allowCollab = sponsor.type === "group";
 
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
@@ -138,8 +139,13 @@ export default function WriteComposer({
     canBeRescinded,
   } = useCollaboration({ pieceId, autoFetch: true });
 
-  const editorMode: "pending" | "solo" | "collab" =
-    !collabStatusReady ? "pending" : isCollaborative ? "collab" : "solo";
+  const editorMode: "pending" | "solo" | "collab" = allowCollab
+    ? !collabStatusReady
+      ? "pending"
+      : isCollaborative
+        ? "collab"
+        : "solo"
+    : "solo";
 
   const wantsCollab = editorMode === "collab";
 
@@ -403,8 +409,8 @@ export default function WriteComposer({
           flex="1"
           w={contentWidth}
           transition="width 0.3s ease"
-          pl={0}
-          pr={{ base: 4, md: 8, lg: 12 }}
+          pr={{ base: 8, md: 12, lg: 20 }}
+          pl={{ base: 8, md: 12, lg: 20 }}
           pt={0}
           maxH="100vh"
           overflowY="auto"
@@ -415,47 +421,71 @@ export default function WriteComposer({
             "&::-webkit-scrollbar-thumb:hover": { background: "rgba(0,0,0,0.3)" },
           }}
         >
-          <VStack gap={4} align="stretch" maxW="none" pl={{ base: 1, md: 2, lg: 3 }} minH="80vh">
+          <VStack gap={4} align="stretch" maxW="none" minH="80vh">
             <Box mb={2}>
               <Flex justify={"space-between"}>
-                <Box fontSize="sm" color="gray.600">
-                  Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
-                </Box>
-
-                <Box>
-                  <HStack gap={2}>
+                <HStack gap={3} align="center">
+                  <Box fontSize="sm" color="gray.600">
+                    Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
+                  </Box>
+                  {sponsor.type === "member" && (
                     <Button
                       size="xs"
-                      variant={isCollaborative ? "solid" : "outline"}
-                      colorScheme={isCollaborative ? "blue" : "gray"}
-                      onClick={() => setCollaborationDialogOpen(true)}
+                      variant="outline"
+                      colorScheme="gray"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          try {
+                            window.localStorage.setItem("writing_active_tab", "drafts");
+                            window.localStorage.setItem("memberDashboard", "writing");
+                          } catch (error) {
+                            console.warn("Failed to set writing tab:", error);
+                          }
+                        }
+                        window.location.href = "/app/dashboard";
+                      }}
                     >
-                      {isCollaborative ? "👥 Collaborative" : "+ Add Collaborators"}
+                      Return to drafts list
                     </Button>
+                  )}
+                </HStack>
 
-                    {isCollaborative && dispatchContent && (
-                      <HStack gap={1} fontSize="xs" color="gray.600">
-                        <Text>{dispatchContent.editor_count} editors</Text>
-                        <Text>•</Text>
-                        <Text>{dispatchContent.commenter_count} reviewers</Text>
-                      </HStack>
-                    )}
-                  </HStack>
+                {allowCollab && (
+                  <Box>
+                    <HStack gap={2}>
+                      <Button
+                        size="xs"
+                        variant={isCollaborative ? "solid" : "outline"}
+                        colorScheme={isCollaborative ? "blue" : "gray"}
+                        onClick={() => setCollaborationDialogOpen(true)}
+                      >
+                        {isCollaborative ? "👥 Collaborative" : "+ Add Collaborators"}
+                      </Button>
 
-                  <CollaborationDialog
-                    open={collaborationDialogOpen}
-                    onOpenChange={setCollaborationDialogOpen}
-                    isCollaborative={isCollaborative}
-                    dispatchContent={dispatchContent}
-                    eligibleCollaborators={eligibleCollaborators}
-                    onEnableCollaboration={enableCollaboration}
-                    onRescindCollaboration={rescindCollaboration}
-                    onAddCollaborators={addCollaborators}
-                    onRemoveCollaborators={removeCollaborators}
-                    loading={collaborationLoading}
-                    canBeRescinded={canBeRescinded}
-                  />
-                </Box>
+                      {isCollaborative && dispatchContent && (
+                        <HStack gap={1} fontSize="xs" color="gray.600">
+                          <Text>{dispatchContent.editor_count} editors</Text>
+                          <Text>•</Text>
+                          <Text>{dispatchContent.commenter_count} reviewers</Text>
+                        </HStack>
+                      )}
+                    </HStack>
+
+                    <CollaborationDialog
+                      open={collaborationDialogOpen}
+                      onOpenChange={setCollaborationDialogOpen}
+                      isCollaborative={isCollaborative}
+                      dispatchContent={dispatchContent}
+                      eligibleCollaborators={eligibleCollaborators}
+                      onEnableCollaboration={enableCollaboration}
+                      onRescindCollaboration={rescindCollaboration}
+                      onAddCollaborators={addCollaborators}
+                      onRemoveCollaborators={removeCollaborators}
+                      loading={collaborationLoading}
+                      canBeRescinded={canBeRescinded}
+                    />
+                  </Box>
+                )}
               </Flex>
             </Box>
 
