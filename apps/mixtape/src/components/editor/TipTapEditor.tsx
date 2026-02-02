@@ -90,6 +90,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const localRouteMapRef = useRef<Map<string, RouteMeta>>(new Map())
 
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
+  const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
   const textColor = useColorModeValue("gray.900", "gray.100");
 
   // Debug: Track component renders and prop changes
@@ -394,7 +395,14 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         }
       }}
     >
-      <Box border={'1px solid gray'} pt={1} pl={1}>
+      <Box
+        borderWidth="1px"
+        borderColor={toolbarBorderColor}
+        borderRadius="lg"
+        overflow="hidden"
+        pt={1}
+        pl={1}
+      >
         <TipTapToolbar editor={editor} />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>

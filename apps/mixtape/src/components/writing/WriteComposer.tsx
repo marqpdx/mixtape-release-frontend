@@ -115,6 +115,18 @@ export default function WriteComposer({
     });
   }, [pieceId, initialPiece?.id, initialPiece?.title, initialPiece?.body_json, initialPiece?.excerpt]);
 
+  // Focus the editor on load so typing can begin immediately
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        editorRef.current?.commands?.focus?.("end");
+      } catch {
+        // ignore
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, [pieceId]);
+
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");

@@ -16,7 +16,9 @@ export function TitleInput({
   setTitle,
   placeholder = "Enter your title..."
 }: TitleInputProps) {
-  const borderColor = useColorModeValue("border.default", "border.default");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const bgColor = useColorModeValue("gray.50", "gray.900");
+  const focusBorderColor = useColorModeValue("theme.accent", "theme.accent");
 
   return (
     <Input
@@ -29,9 +31,11 @@ export function TitleInput({
       fontWeight="semibold"
       paddingInline={"0.75em !important"}
       border={`1px solid ${borderColor}`}
+      borderColor={borderColor}
+      bg={bgColor}
       _focus={{
         boxShadow: "none",
-        borderColor: "transparent"
+        borderColor: focusBorderColor
       }}
       _placeholder={{ color: "text.secondary" }}
     />

@@ -20,13 +20,14 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
+  const fontModeKey = "writing_font_mode";
   const SerifIcon = (
     <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
       <Text
         fontFamily="Georgia, Times New Roman, serif"
         fontSize="14px"
         lineHeight="1"
-        transform="translate(15%, -2%)"
+        transform="translate(11%, -4%)"
       >
         A
       </Text>
@@ -38,7 +39,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         fontFamily="Helvetica, Arial, sans-serif"
         fontSize="14px"
         lineHeight="1"
-        transform="translate(15%, -2%)"
+        transform="translate(13%, 3%)"
       >
         A
       </Text>
@@ -48,11 +49,18 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   useEffect(() => {
     const dom = editor?.view?.dom;
     if (!dom) return;
-    if (dom.classList.contains("font-serif")) {
-      setFontMode("serif");
-    } else {
-      setFontMode("sans");
+
+    let initialMode: "serif" | "sans" = "sans";
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem(fontModeKey);
+      if (stored === "serif" || stored === "sans") {
+        initialMode = stored;
+      }
     }
+
+    dom.classList.remove("font-serif", "font-sans");
+    dom.classList.add(initialMode === "serif" ? "font-serif" : "font-sans");
+    setFontMode(initialMode);
   }, [editor]);
 
   const applyFontMode = useCallback(
@@ -62,6 +70,9 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
       dom.classList.remove("font-serif", "font-sans");
       dom.classList.add(mode === "serif" ? "font-serif" : "font-sans");
       setFontMode(mode);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(fontModeKey, mode);
+      }
     },
     [editor]
   );
@@ -129,22 +140,22 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
       />
       </HStack>
       <HStack gap={0.5}>
-      <EditorToolbarButton
-        tooltip="Serif"
-        icon={SerifIcon}
-        onClick={() => applyFontMode("serif")}
-        isActive={fontMode === "serif"}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Sans Serif"
-        icon={SansIcon}
-        onClick={() => applyFontMode("sans")}
-        isActive={fontMode === "sans"}
-        tabIndex={-1}
-        size="xs"
-      />
+        <EditorToolbarButton
+          tooltip="Serif"
+          icon={SerifIcon}
+          onClick={() => applyFontMode("serif")}
+          isActive={fontMode === "serif"}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Sans Serif"
+          icon={SansIcon}
+          onClick={() => applyFontMode("sans")}
+          isActive={fontMode === "sans"}
+          tabIndex={-1}
+          size="xs"
+        />
       </HStack>
 
       <Tooltip content="Publish as Section">
