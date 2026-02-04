@@ -3,6 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@mixtape/api": ["./src"],
+      "@mixtape/api/*": ["./src/*"],
       "@mixtape/core": ["../core/src"],
       "@mixtape/core/*": ["../core/src/*"],
       "@mixtape/auth": ["../auth/src"],

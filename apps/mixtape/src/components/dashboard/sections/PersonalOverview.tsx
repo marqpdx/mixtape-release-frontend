@@ -16,12 +16,12 @@ import {
   Button,
   Progress,
   GridItem,
+  Link,
 } from "@chakra-ui/react";
 // import { UserIdentity } from "@components/auth/interfaces";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconBell, IconEdit, IconMail, IconNote, IconUsers } from "@tabler/icons-react";
 // import { Button } from "@theme/recipes/button.recipe";
-import Link from "next/link";
 
 interface ToDoItem {
   id: number;
@@ -50,7 +50,7 @@ export default function PersonalOverview({
   todos = [],
   isAdmin,
   isSteward,
-  // setActiveSection,
+  setActiveSection,
 }: PersonalOverviewProps) {
   const incompleteTodos = todos.filter(todo => !todo.is_completed);
   const completedTodos = todos.filter(todo => todo.is_completed);
@@ -90,12 +90,15 @@ export default function PersonalOverview({
           {getGreeting()}, {identity.first_name || identity.username}! 👋
         </Heading>
         <HStack>
-          <Link href={`/member/${identity.username}/write`}>
-            <Button size="sm">
+          <Button
+            size="sm"
+            onClick={() => setActiveSection?.("write")}
+          >
+            <HStack gap={2}>
               <IconNote size={16} />
-              Write Now
-            </Button>
-          </Link>
+              <Text>Write Now</Text>
+            </HStack>
+          </Button>
         </HStack>
       </Box>
 

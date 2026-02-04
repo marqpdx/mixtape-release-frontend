@@ -3,6 +3,7 @@
 // Subdirectory hooks
 export * from './almanac'
 export * from './admin'
+export * from './lists'
 export * from './member'
 export * from './appearance'
 export * from './activity'
@@ -14,6 +15,7 @@ export * from './ops'
 export * from './projects'
 export * from './stackroom'
 export * from './threadworks'
+export * from './spellbook'
 
 // Root-level hooks
 export * from './useAssets'

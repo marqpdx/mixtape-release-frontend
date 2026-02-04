@@ -41,6 +41,8 @@ export default function EditorToolbarButton({
         _hover={{ bg: hoverBg, backgroundColor: hoverBg }}
         _active={{ bg: activeBg }}
         transition="background-color 0.15s ease"
+        pt="1px"
+        pb="3px"
         aria-label={tooltip}
         {...rest}
       >

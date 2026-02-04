@@ -39,7 +39,8 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "📝",
     subItems: [
       { key: "writing", label: "My Writing", hidden: false },
-      { key: "write", label: "Write", hidden: true },
+      { key: "draft-room", label: "Draft Room", hidden: false },
+      { key: "write", label: "Write", hidden: false },
       { key: "seeds", label: "Seeds", hidden: false },
       { key: "new-post", label: "New Post", hidden: true },
       { key: "my-drafts", label: "My Drafts", hidden: true },

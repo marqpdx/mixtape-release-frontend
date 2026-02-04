@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useState, useCallback } from "react";
 import { useEditor, EditorContent, JSONContent, Editor } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 // import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
@@ -26,6 +26,10 @@ import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
 import { BlockId } from "./extensions/BlockId";
 import TipTapToolbar from "./TipTapToolbar";
+import { AutoCapitalize } from "./extensions/AutoCapitalize";
+import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
+import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
+import { useSpellDictionary } from "@/hooks/useSpellDictionary";
 
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -89,9 +93,51 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const isUpdatingContentRef = useRef(false);
   const localRouteMapRef = useRef<Map<string, RouteMeta>>(new Map())
 
+  // Editor ref for spell correction (populated after editor is created)
+  const editorRef = useRef<Editor | null>(null);
+
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
   const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
   const textColor = useColorModeValue("gray.900", "gray.100");
+
+  // Spell correction state and handlers (direct implementation for stable references)
+  const [spellPopupState, setSpellPopupState] = useState<SpellCorrectionState | null>(null);
+  const spellDictionary = useSpellDictionary();
+
+  // Stable callback for opening spell popup (called by extension)
+  const handleSpellOpen = useCallback((state: SpellCorrectionState) => {
+    setSpellPopupState(state);
+  }, []);
+
+  // Stable callback for closing spell popup
+  const handleSpellClose = useCallback(() => {
+    setSpellPopupState(null);
+    editorRef.current?.commands.focus();
+  }, []);
+
+  // Stable extension config - only recreated if callbacks change (they won't)
+  const spellCorrectionConfig = useMemo(() => ({
+    onOpen: handleSpellOpen,
+    onClose: handleSpellClose,
+    modifierKey: 'meta' as const,
+  }), [handleSpellOpen, handleSpellClose]);
+
+  // Apply correction handler (needs editor, called by popup)
+  const handleSpellApply = useCallback((originalWord: string, correction: string) => {
+    const editor = editorRef.current;
+    if (!editor || !spellPopupState) return;
+
+    const { from, to } = spellPopupState;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .insertContent(correction)
+      .run();
+
+    spellDictionary.addCorrection(originalWord, correction);
+    setSpellPopupState(null);
+  }, [spellPopupState, spellDictionary]);
 
   // Debug: Track component renders and prop changes
   console.log("🎨 aaaa TipTapEditor rendered");
@@ -167,7 +213,10 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     }),
     BlockId,
     BlockRouting.configure(routingOpts),
-  ], [routingOpts]);
+    // PocketTools: Mini-tools for writers
+    AutoCapitalize.configure({ enabled: true }),
+    SpellCorrection.configure(spellCorrectionConfig),
+  ], [routingOpts, spellCorrectionConfig]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
@@ -306,6 +355,11 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useImperativeHandle(ref, () => editor as any, [editor]);
 
+  // Keep editorRef in sync for spell correction
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
   // Add this in the TipTapEditor component after creating the editor
   useEffect(() => {
     if (editor && collabConfig?.ydoc) {
@@ -385,6 +439,9 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           "&.font-sans": {
             fontFamily: "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
           },
+          "& .italic-text": {
+            fontStyle: "italic",
+          },
           // Reduce margin on first and last children - using :first-of-type for SSR safety
           "& > *:first-of-type": {
             marginTop: "0.5em !important",
@@ -422,6 +479,13 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       >
         <InkwellControls editor={editor} />
       </Box> */}
+
+      {/* Spell Correction Popup - PocketTools */}
+      <SpellCorrectionPopup
+        state={spellPopupState}
+        onApply={handleSpellApply}
+        onClose={handleSpellClose}
+      />
     </Box>
   );
 });

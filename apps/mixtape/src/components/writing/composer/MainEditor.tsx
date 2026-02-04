@@ -231,6 +231,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             "& .ProseMirror": {
               height: "calc(52vh - 4px)",
               padding: "24px",
+              paddingBottom: "40px",
               outline: "none",
               fontSize: "16px",
               lineHeight: "1.6",

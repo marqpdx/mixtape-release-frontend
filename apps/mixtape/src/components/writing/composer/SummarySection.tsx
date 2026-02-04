@@ -18,6 +18,9 @@ export interface SummarySectionProps {
   summaryIsPending?: boolean;
   summaryIsGenerating?: boolean;
   backgroundSummary?: string;
+  textareaBg?: string;
+  textareaBorderColor?: string;
+  textareaFocusBorderColor?: string;
 }
 
 export function SummarySection({
@@ -27,7 +30,10 @@ export function SummarySection({
   onUndoSummary,
   summaryIsPending,
   summaryIsGenerating,
-  backgroundSummary
+  backgroundSummary,
+  textareaBg,
+  textareaBorderColor,
+  textareaFocusBorderColor,
 }: SummarySectionProps) {
   return (
     <Box className="summary-section">
@@ -99,6 +105,9 @@ export function SummarySection({
         rows={5}
         resize="vertical"
         fontSize="sm"
+        bg={textareaBg}
+        borderColor={textareaBorderColor}
+        _focus={{ borderColor: textareaFocusBorderColor }}
         _placeholder={{ color: "text.secondary" }}
       />
     </Box>

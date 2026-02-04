@@ -1,4 +1,4 @@
-// /src/components/layout/UnifiedNavbar.tsx
+// apps/mixtape/src/components/layout/UnifiedNavbar.tsx
 
 "use client";
 
@@ -64,6 +64,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Authenticated section (members + admins)
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "workbench", label: "Workbench", href: "/member/{username}/workbench", section: "authenticated", memberOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
   // { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
   // { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
@@ -133,6 +134,14 @@ export default function UnifiedNavbar({
   const navSection: NavSection = detectedSection;
 
 
+  // Helper to resolve dynamic hrefs (e.g., {username} placeholder)
+  const resolveHref = (href: string) => {
+    if (identity?.username) {
+      return href.replace('{username}', identity.username);
+    }
+    return href;
+  };
+
   // Filter items based on current section and permissions
   const visibleItems = NAV_ITEMS.filter(item => {
     if (item.section !== navSection) return false;
@@ -140,7 +149,10 @@ export default function UnifiedNavbar({
     if (item.stewardOnly && !isSteward) return false;
     if (item.memberOnly && !identity) return false;
     return true;
-  });
+  }).map(item => ({
+    ...item,
+    href: resolveHref(item.href),
+  }));
 
   // Determine active item
   const activeItem = visibleItems.find(item =>

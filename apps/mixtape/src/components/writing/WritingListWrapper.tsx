@@ -21,7 +21,6 @@ import {
 } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { useCallback, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   IconSearch,
   IconClock,
@@ -107,7 +106,6 @@ export default function WritingListWrapper({
   onNavigateToEditor,
   onNavigateToDetail,
 }: WritingListWrapperProps) {
-  const router = useRouter();
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
 
@@ -179,12 +177,8 @@ export default function WritingListWrapper({
   );
 
   const handleStartWriting = useCallback(() => {
-    if (sponsor.type === "member") {
-      router.replace(`/member/${sponsor.slug}/write`);
-      return;
-    }
     onNavigateToEditor();
-  }, [onNavigateToEditor, router, sponsor.slug, sponsor.type]);
+  }, [onNavigateToEditor]);
 
   // Helper function to extract text from ProseMirror JSON
   const extractTextFromProseMirror = (bodyJson: ProseMirrorDoc | null): string => {

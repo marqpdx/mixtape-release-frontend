@@ -23,6 +23,7 @@ import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
+import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 import { useRouter } from "next/navigation";
@@ -155,6 +156,23 @@ export default function MemberWorkArea({
             setActiveSection("writing");
             router.replace("/app/dashboard");
           }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "draft-room") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <DraftRoomWorkArea
+          sponsor={{
+            type: "member",
+            id: identity.id,
+            slug: identity.username,
+            displayName,
+          }}
+          setActiveSection={setActiveSection}
         />
       </WorkAreaWrapper>
     );

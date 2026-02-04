@@ -29,6 +29,7 @@ import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { useCollaboration } from "@hooks/useCollaboration";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
+import { Divider } from "../common/Divider";
 
 interface SponsorConfig {
   type: "group" | "member";
@@ -133,6 +134,9 @@ export default function WriteComposer({
   const publishedBannerBg = useColorModeValue("orange.50", "orange.900");
   const publishedBannerBorder = useColorModeValue("orange.200", "orange.700");
   const publishedBannerText = useColorModeValue("orange.800", "orange.100");
+  const inputBg = useColorModeValue("gray.50", "gray.900");
+  const inputBorderColor = useColorModeValue("gray.200", "gray.700");
+  const inputFocusBorderColor = useColorModeValue("theme.accent", "theme.accent");
   const allowCollab = sponsor.type === "group";
 
   // Collaboration dialog state
@@ -254,6 +258,7 @@ export default function WriteComposer({
   const [summaryIsPending, setSummaryIsPending] = useState(false);
   const [summaryError, setSummaryError] = useState<Error | null>(null);
   const [summaryWordCount, setSummaryWordCount] = useState(0);
+  const [showSavedMessage, setShowSavedMessage] = useState(false);
   const [summaryForceUpdate, setSummaryForceUpdate] = useState<(() => void) | null>(
     null
   );
@@ -345,22 +350,35 @@ export default function WriteComposer({
     };
   }, [wantsCollab, hasUnsavedChanges, saveNow]);
 
+  const computeWordCountFromDoc = useCallback((doc: DocumentJSON | null | undefined) => {
+    if (!doc) return 0;
+    const extractText = (
+      node: DocumentJSON | { type?: string; text?: string; content?: unknown[] }
+    ): string => {
+      if (node?.type === "text" && "text" in node) return (node.text as string) || "";
+      if ("content" in node && Array.isArray(node.content)) {
+        return node.content.map((child) => extractText(child as DocumentJSON)).join(" ");
+      }
+      return "";
+    };
+    const content = (doc as { content?: unknown[] }).content || [];
+    const fullText = content.map((node) => extractText(node as DocumentJSON)).join(" ").trim();
+    return fullText
+      ? fullText.split(/\s+/).filter((w: string) => w.length > 0).length
+      : 0;
+  }, []);
+
   // Word count init from initial JSON (best-effort; collab will be updated by MainEditor callbacks)
   useEffect(() => {
     if (initialPiece?.body_json && summaryWordCount === 0) {
-      const extractText = (node: DocumentJSON | { type?: string; text?: string; content?: unknown[] }): string => {
-        if (node?.type === "text" && 'text' in node) return (node.text as string) || "";
-        if ('content' in node && Array.isArray(node.content)) {
-          return node.content.map((child) => extractText(child as DocumentJSON)).join(" ");
-        }
-        return "";
-      };
-      const content = initialPiece.body_json.content || [];
-      const fullText = content.map((node) => extractText(node as DocumentJSON)).join(" ").trim();
-      const wc = fullText ? fullText.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
-      setSummaryWordCount(wc);
+      setSummaryWordCount(computeWordCountFromDoc(initialPiece.body_json));
     }
-  }, [initialPiece?.body_json, summaryWordCount]);
+  }, [initialPiece?.body_json, summaryWordCount, computeWordCountFromDoc]);
+
+  useEffect(() => {
+    if (saveStatus !== "saved") return;
+    setSummaryWordCount(computeWordCountFromDoc(docJSONRef.current ?? docJSON));
+  }, [saveStatus, computeWordCountFromDoc, docJSON]);
 
   const handleSelectionChange = useCallback((newSelection: TextSelection | null) => {
     setSelection(newSelection);
@@ -379,7 +397,6 @@ export default function WriteComposer({
     setSummaryIsGenerating(data.isGenerating);
     setSummaryIsPending(data.isPending);
     setSummaryError(data.error as Error | null);
-    setSummaryWordCount(data.wordCount);
     setSummaryForceUpdate(() => data.forceUpdate);
   }, []);
 
@@ -403,8 +420,6 @@ export default function WriteComposer({
   );
 
   const contentWidth = workspaceOpen ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const sidebarBg = useColorModeValue("gray.50", "gray.900");
 
   // ✅ Hard remount key prevents cached editor instances from persisting across open/close
   const collabKey = `${pieceId}:${editorMode}:${dispatchContent?.yjs_document_id ?? "no-yjs"}`;
@@ -537,29 +552,65 @@ export default function WriteComposer({
                 collabReady={collabReady}
                 debugId={collabKey}
               />
+            </Box>
 
-              <Box position="absolute" bottom="20px" right="10px" pointerEvents="none">
-                <WordCountDisplay
-                  wordCount={summaryWordCount}
-                  saveStatus={saveStatus}
-                  hasUnsavedChanges={hasUnsavedChanges}
-                />
+            <HStack align="flex-start" gap={3} w="100%" mt={-8}>
+              <Flex alignItems="flex-start" gap={3} flex="1" mt={2} pl={2} borderLeft={'1px solid lightgray'}>
+                <Box pt={"5px"}>
+                  <Text fontSize="sm" fontWeight="medium" minW="4em">
+                    Tags:
+                  </Text>
+                </Box>
+                <Box flex="1">
+                  <TagInput
+                    selectedTags={tags}
+                    onTagsChange={handleTagsChange}
+                    maxTags={10}
+                    inputSize="sm"
+                    inputFontSize="sm"
+                    inputBg={inputBg}
+                    inputBorderColor={inputBorderColor}
+                    inputFocusBorderColor={inputFocusBorderColor}
+                  />
+                </Box>
+              </Flex>
+
+              <Box
+                className="status-message-container"
+                minH="20px"
+                display="flex"
+                alignItems="center"
+                justifyContent="flex-end"
+                minW="17em"
+                maxW="17em"
+                pr={.5}
+              >
+                <Box position="relative" w="100%" display="flex" justifyContent="flex-end">
+                  <Box position="absolute" right={0}>
+                    <StatusMessage
+                      status={saveStatus}
+                      mode={wantsCollab ? "collab" : "solo"}
+                      onShowSavedChange={setShowSavedMessage}
+                    />
+                  </Box>
+                  <Box
+                    opacity={saveStatus === "idle" && !showSavedMessage ? 1 : 0}
+                    transition="opacity 0.4s ease"
+                  >
+                    <WordCountDisplay
+                      wordCount={summaryWordCount}
+                      saveStatus="idle"
+                      hasUnsavedChanges={false}
+                    />
+                  </Box>
+                </Box>
               </Box>
-            </Box>
+            </HStack>
 
-            <Box
-              className="status-message-container"
-              mt={"-24px"}
-              minH="20px"
-              display="flex"
-              alignItems="center"
-              justifyContent={"end"}
-            >
-              <StatusMessage status={saveStatus} mode={wantsCollab ? 'collab' : 'solo'} />
-            </Box>
+            <Divider />
 
             <HStack align="stretch" gap={6} direction={{ base: "column", lg: "row" }} w="100%">
-              <Box flex={{ base: "1", lg: "0 0 70%" }} w={{ base: "100%", lg: "70%" }}>
+              <Box flex={{ base: "1", lg: "0 0 60%" }} w={{ base: "100%", lg: "60%" }}>
                 <SummarySection
                   summary={excerpt}
                   setSummary={onExcerptChange}
@@ -568,28 +619,17 @@ export default function WriteComposer({
                   summaryIsPending={summaryIsPending}
                   summaryIsGenerating={summaryIsGenerating}
                   backgroundSummary={backgroundSummary}
+                  textareaBg={inputBg}
+                  textareaBorderColor={inputBorderColor}
+                  textareaFocusBorderColor={inputFocusBorderColor}
                 />
               </Box>
 
-              <Box
-                flex={{ base: "1", lg: "0 0 30%" }}
-                w={{ base: "100%", lg: "30%" }}
-                bg={sidebarBg}
-                border={`1px solid ${borderColor}`}
-                borderRadius="lg"
-                p={4}
-                position="sticky"
-                top={4}
-                alignSelf="flex-start"
-                maxH="calc(100vh - 2rem)"
-                overflowY="auto"
-                css={{
-                  "&::-webkit-scrollbar": { width: "4px" },
-                  "&::-webkit-scrollbar-track": { background: "transparent" },
-                  "&::-webkit-scrollbar-thumb": { background: "rgba(0,0,0,0.2)", borderRadius: "2px" },
-                }}
-              >
+              <Box flex={{ base: "1", lg: "0 0 40%" }} w={{ base: "100%", lg: "40%" }}>
                 <VStack gap={4} align="stretch">
+                  <Text fontSize="sm" fontWeight="medium" color="text.primary">
+                    Publishing
+                  </Text>
                   {showPublishingControls && (
                     <PublishingControls
                       pieceId={pieceId}
@@ -608,13 +648,10 @@ export default function WriteComposer({
                     />
                   )}
 
-                  <Box p={4} bg="white" border="1px solid" borderColor="gray.200" borderRadius="md">
-                    <TagInput selectedTags={tags} onTagsChange={handleTagsChange} maxTags={10} />
-                  </Box>
-
                   <StatusBar
                     status={saveStatus}
                     draftId={pieceId}
+                    showDraftId={false}
                     onForceSave={() => {
                       if (wantsCollab) {
                         collabTriggerSave();

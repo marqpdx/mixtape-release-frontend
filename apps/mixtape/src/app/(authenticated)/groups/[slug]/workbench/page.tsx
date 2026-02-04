@@ -63,9 +63,9 @@ export default function WorkbenchPage() {
           }}
         >
           <Tabs.List mb={4}>
-            <Tabs.Trigger value="queue">📥 Review Queue</Tabs.Trigger>
-            <Tabs.Trigger value="compose">✍️ Compose</Tabs.Trigger>
-            <Tabs.Trigger value="my-drafts">📝 My Drafts</Tabs.Trigger>
+            <Tabs.Trigger value="queue">Review Queue</Tabs.Trigger>
+            <Tabs.Trigger value="compose">Compose</Tabs.Trigger>
+            <Tabs.Trigger value="my-drafts">My Drafts</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content value="queue">

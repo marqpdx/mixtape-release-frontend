@@ -2,8 +2,8 @@
 
 'use client';
 
-import { HStack, Button, Text } from '@chakra-ui/react';
-import { IconDeviceFloppy } from '@tabler/icons-react';
+import { HStack, Button, Text, SimpleGrid } from '@chakra-ui/react';
+import { IconDeviceFloppy, IconEraser } from '@tabler/icons-react';
 
 interface StatusBarProps {
   status: 'idle' | 'saving' | 'saved' | 'error';
@@ -11,36 +11,89 @@ interface StatusBarProps {
   onForceSave: () => void;
   onClearDraft: () => void;
   showSaveButton?: boolean;
+  showDraftId?: boolean;
 }
 
-export function StatusBar({ status, draftId, onForceSave, onClearDraft, showSaveButton = true }: StatusBarProps) {
+export function StatusBar({
+  status,
+  draftId,
+  onForceSave,
+  onClearDraft,
+  showSaveButton = true,
+  showDraftId = true,
+}: StatusBarProps) {
   return (
-    <HStack justify="space-between" py={2} fontSize="sm">
-      <Text color="text.secondary">
-        Draft ID: {draftId.slice(0, 8)}...
-      </Text>
-
-      <HStack gap={2}>
-        {showSaveButton && (
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={onForceSave}
-            disabled={status === 'saving'}
+    <HStack
+      justify={showDraftId ? "space-between" : "flex-start"}
+      py={2}
+      fontSize="sm"
+    >
+      {showDraftId ? (
+        <>
+          <Text color="text.secondary">
+            Draft ID: {draftId.slice(0, 8)}...
+          </Text>
+          <SimpleGrid
+            columns={2}
+            gap={3}
+            w="100%"
+            gridTemplateColumns="repeat(2, 43%)"
+            justifyContent="space-between"
           >
-            <IconDeviceFloppy size={14} style={{ marginRight: '4px' }} />
-            {status === 'saving' ? 'Saving...' : 'Save'}
+            {showSaveButton && status !== 'error' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onForceSave}
+                disabled={status === 'saving'}
+                w="100%"
+              >
+                <IconDeviceFloppy size={14} style={{ marginRight: '4px' }} />
+                {status === 'saving' ? 'Saving...' : 'Save'}
+              </Button>
+            )}
+            {status === 'error' && (
+              <Button size="sm" variant="outline" colorScheme="red" onClick={onForceSave} w="100%">
+                Retry Save
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={onClearDraft} w="100%">
+              <IconEraser size={14} style={{ marginRight: '4px' }} />
+              Clear Draft
+            </Button>
+          </SimpleGrid>
+        </>
+      ) : (
+        <SimpleGrid
+          columns={2}
+          gap={3}
+          w="100%"
+          gridTemplateColumns="repeat(2, 43%)"
+          justifyContent="space-between"
+        >
+          {showSaveButton && status !== 'error' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onForceSave}
+              disabled={status === 'saving'}
+              w="100%"
+            >
+              <IconDeviceFloppy size={14} style={{ marginRight: '4px' }} />
+              {status === 'saving' ? 'Saving...' : 'Save'}
+            </Button>
+          )}
+          {status === 'error' && (
+            <Button size="sm" variant="outline" colorScheme="red" onClick={onForceSave} w="100%">
+              Retry Save
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={onClearDraft} w="100%">
+            <IconEraser size={14} style={{ marginRight: '4px' }} />
+            Clear Draft
           </Button>
-        )}
-        {status === 'error' && (
-          <Button size="xs" variant="outline" colorScheme="red" onClick={onForceSave}>
-            Retry Save
-          </Button>
-        )}
-        <Button size="xs" variant="ghost" onClick={onClearDraft}>
-          Clear Draft
-        </Button>
-      </HStack>
+        </SimpleGrid>
+      )}
     </HStack>
   );
 }

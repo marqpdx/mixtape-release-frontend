@@ -36,6 +36,11 @@ interface TagInputProps {
   onTagsChange: (tags: Tag[]) => void;
   maxTags?: number;
   placeholder?: string;
+  inputSize?: "sm" | "md" | "lg";
+  inputFontSize?: string;
+  inputBg?: string;
+  inputBorderColor?: string;
+  inputFocusBorderColor?: string;
 }
 
 export function TagInput({
@@ -43,6 +48,11 @@ export function TagInput({
   onTagsChange,
   maxTags = 10,
   placeholder = 'Type to search or create tags...',
+  inputSize = "md",
+  inputFontSize,
+  inputBg,
+  inputBorderColor,
+  inputFocusBorderColor,
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Tag[]>([]);
@@ -149,7 +159,7 @@ export function TagInput({
       setLoading(true);
       try {
         // Search for existing tags
-        const response = await axiosInstance.get('/api/classifications/tags/', {
+        const response = await axiosInstance.get('/api/classifications/tags', {
           params: { search: inputValue }
         });
 
@@ -255,7 +265,7 @@ export function TagInput({
       setLoading(true);
 
       // Create new tag
-      const response = await axiosInstance.post('/api/classifications/tags/', {
+      const response = await axiosInstance.post('/api/classifications/tags', {
         title: trimmed
       });
 
@@ -385,7 +395,11 @@ export function TagInput({
           onFocus={() => inputValue.length >= 2 && setIsOpen(true)}
           placeholder={placeholder}
           disabled={selectedTags.length >= maxTags}
-          size="md"
+          size={inputSize}
+          fontSize={inputFontSize}
+          bg={inputBg}
+          borderColor={inputBorderColor}
+          _focus={{ borderColor: inputFocusBorderColor }}
         />
 
         {loading && (
@@ -413,14 +427,14 @@ export function TagInput({
             borderColor="gray.200"
             borderRadius="md"
             boxShadow="lg"
-            maxH="300px"
+            maxH="220px"
             overflowY="auto"
             zIndex={1000}
           >
             {/* Similar tag warning */}
             {similarWarning && (
               <Box
-                p={3}
+                p={2}
                 bg="orange.50"
                 borderBottom="1px solid"
                 borderColor="orange.200"
@@ -428,10 +442,10 @@ export function TagInput({
                 onClick={() => handleSelectTag(similarWarning)}
                 _hover={{ bg: 'orange.100' }}
               >
-                <Text fontSize="sm" color="orange.900" fontWeight="medium">
+                <Text fontSize="xs" color="orange.900" fontWeight="medium">
                   ⚠️ Similar tag exists: "{similarWarning.title}"
                 </Text>
-                <Text fontSize="xs" color="orange.700" mt={1}>
+                <Text fontSize="xs" color="orange.700" mt={0.5}>
                   Click to use this instead
                 </Text>
               </Box>
@@ -443,7 +457,7 @@ export function TagInput({
                 {suggestions.map((tag, index) => (
                   <Box
                     key={tag.id}
-                    p={3}
+                    p={2}
                     cursor="pointer"
                     bg={index === highlightedIndex ? 'blue.50' : 'white'}
                     _hover={{ bg: 'gray.50' }}
@@ -474,26 +488,26 @@ export function TagInput({
                 ))}
               </VStack>
             ) : inputValue.trim().length >= 2 && !loading ? (
-              <Box p={4}>
-                <Text fontSize="sm" color="gray.600" mb={3}>
-                  No existing tags found
-                </Text>
+              <HStack p={2} gap={2} align="center">
                 <Button
-                  size="sm"
+                  size="xs"
+                  variant="outline"
                   colorScheme="blue"
                   onClick={handleCreateTag}
-                  width="full"
                 >
                   Create "{inputValue.trim()}"
                 </Button>
-              </Box>
+                <Text fontSize="xs" color="gray.600">
+                  No existing tags found
+                </Text>
+              </HStack>
             ) : null}
           </Box>
         )}
       </Box>
 
       {/* Helper text */}
-      <Text fontSize="xs" color="gray.500">
+      <Text fontSize="xs" color="gray.500" mt={-2}>
         {selectedTags.length} / {maxTags} tags
         {' • '}
         Type to search, Enter to create, Esc to close
