@@ -100,6 +100,18 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
   const textColor = useColorModeValue("gray.900", "gray.100");
 
+  // Writing preferences from localStorage
+  const [autoCapitalizeEnabled, setAutoCapitalizeEnabled] = useState(true);
+  const [spellCorrectionEnabled, setSpellCorrectionEnabled] = useState(true);
+
+  // Load writing preferences from localStorage on mount
+  useEffect(() => {
+    const savedAutoCap = localStorage.getItem('mixtape-pref-auto-capitalize');
+    const savedSpell = localStorage.getItem('mixtape-pref-spell-correction');
+    if (savedAutoCap !== null) setAutoCapitalizeEnabled(savedAutoCap === 'true');
+    if (savedSpell !== null) setSpellCorrectionEnabled(savedSpell === 'true');
+  }, []);
+
   // Spell correction state and handlers (direct implementation for stable references)
   const [spellPopupState, setSpellPopupState] = useState<SpellCorrectionState | null>(null);
   const spellDictionary = useSpellDictionary();
@@ -213,10 +225,10 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     }),
     BlockId,
     BlockRouting.configure(routingOpts),
-    // PocketTools: Mini-tools for writers
-    AutoCapitalize.configure({ enabled: true }),
-    SpellCorrection.configure(spellCorrectionConfig),
-  ], [routingOpts, spellCorrectionConfig]);
+    // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
+    ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
+    ...(spellCorrectionEnabled ? [SpellCorrection.configure(spellCorrectionConfig)] : []),
+  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [

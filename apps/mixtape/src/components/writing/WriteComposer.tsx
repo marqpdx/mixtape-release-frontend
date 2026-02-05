@@ -585,7 +585,7 @@ export default function WriteComposer({
                 maxW="17em"
                 pr={.5}
               >
-                <Box position="relative" w="100%" display="flex" justifyContent="flex-end">
+                <Box position="relative" w="100%" display="flex" justifyContent="flex-end" pt={1}>
                   <Box position="absolute" right={0}>
                     <StatusMessage
                       status={saveStatus}

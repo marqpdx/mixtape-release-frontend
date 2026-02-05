@@ -1,4 +1,4 @@
-// src/components/writing/WritingListWrapper.tsx
+// apps/mixtape/src/components/writing/WritingListWrapper.tsx
 /**
  * Generic list view for writing content (published + drafts)
  * Works with both Group and Member sponsors
@@ -31,12 +31,13 @@ import {
   IconUsers,
   IconUsersGroup,
   IconUser,
+  IconTrash,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
-import { useWriting } from "@hooks/useWriting";
+import { useWriting, useWritingMutations } from "@hooks/useWriting";
 import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
@@ -150,6 +151,7 @@ export default function WritingListWrapper({
     setShowSolo,
     setShowCollab
   } = useWriting(sponsor.type, sponsor.slug);
+  const { deleteDraft } = useWritingMutations(sponsor.type, sponsor.slug);
 
   console.log("WritingListWrapper - placements:", placements);
   console.log("WritingListWrapper - drafts:", drafts);
@@ -174,6 +176,15 @@ export default function WritingListWrapper({
       onNavigateToEditor(draft.piece.id);
     },
     [onNavigateToEditor]
+  );
+
+  const handleDeleteDraft = useCallback(
+    (draft: WritingWorkingCopy) => {
+      const title = draft.title || "Untitled draft";
+      if (!confirm(`Delete "${title}"? This action cannot be undone.`)) return;
+      deleteDraft.mutate(draft.id as string);
+    },
+    [deleteDraft]
   );
 
   const handleStartWriting = useCallback(() => {
@@ -550,6 +561,13 @@ export default function WritingListWrapper({
                 onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
                 variant: "ghost",
                 colorScheme: "green",
+              },
+              {
+                label: "Delete Draft",
+                icon: <IconTrash size={16} />,
+                onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                variant: "ghost",
+                colorScheme: "red",
               },
             ]}
             onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any

@@ -62,6 +62,7 @@ export function ListsTab() {
   // For smart editing
   const [justInsertedPrefix, setJustInsertedPrefix] = useState(false);
   const lastPrefixRef = useRef<string>('');
+  const justSavedRef = useRef(false); // Prevent sync overwriting local state after save
 
   // Parse /list Title from body text
   const parseListCommand = useCallback((text: string): { parsedTitle: string | null; bodyWithoutCommand: string } => {
@@ -108,6 +109,7 @@ export function ListsTab() {
       setSelectedListId(newList.id);
     }
     setIsDirty(false);
+    justSavedRef.current = true; // Prevent sync effect from overwriting local state
     refetch();
   }, [parseListCommand, updateList, createList, refetch]);
 
@@ -126,6 +128,11 @@ export function ListsTab() {
   // Sync form state when selected list loads
   useEffect(() => {
     if (selectedList) {
+      // Skip sync if we just saved - prevents overwriting local state with trimmed server state
+      if (justSavedRef.current) {
+        justSavedRef.current = false;
+        return;
+      }
       setTitle(selectedList.title);
       setBodyText(selectedList.body_text);
       setIsDirty(false);
@@ -246,13 +253,16 @@ export function ListsTab() {
 
           e.preventDefault();
           const after = value.substring(selectionEnd);
-          const newValue = beforeCursor + '\n' + prefix + after;
+          // Convert 'x ' to '- ' for new lines (don't start new line as completed)
+          // Also handle indented versions: '  x ' -> '  - '
+          const newLinePrefix = prefix.replace(/x /, '- ');
+          const newValue = beforeCursor + '\n' + newLinePrefix + after;
           setBodyText(newValue);
           setIsDirty(true);
-          lastPrefixRef.current = prefix;
+          lastPrefixRef.current = newLinePrefix;
           setJustInsertedPrefix(true);
           requestAnimationFrame(() => {
-            const newPos = selectionStart + 1 + prefix.length;
+            const newPos = selectionStart + 1 + newLinePrefix.length;
             textarea.selectionStart = textarea.selectionEnd = newPos;
           });
           return;

@@ -350,7 +350,7 @@ export default function UnifiedNavbar({
                       </Link>
                     </MenuItem>
                     <MenuItem value="settings" asChild>
-                      <Link as={NextLink} href="/settings" display="flex" gap={2}>
+                      <Link as={NextLink} href={resolveHref('/member/{username}/settings')} display="flex" gap={2}>
                         <IconSettings size={16} />
                         Settings
                       </Link>
