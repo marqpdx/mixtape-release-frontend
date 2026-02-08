@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   VStack,
@@ -11,19 +11,21 @@ import {
   Text,
   Heading,
   Checkbox,
-  Select,
-  Portal,
+  RadioGroup,
+  Box,
+  Spinner,
 } from '@chakra-ui/react'
-import { toaster } from "@mixtape/core/lib/toaster"
+import { useQuery } from '@tanstack/react-query'
+import { toaster } from '@mixtape/core/lib/toaster'
 import { useWritingMutations } from '@hooks/useWriting'
-import { createListCollection } from '@chakra-ui/react'
+import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi'
 
 interface SimplePublishDialogProps {
   isOpen: boolean
   onClose: () => void
   piece: { id: string; title: string }
   sponsorId: string
-  sponsorSlug?: string  // For cache invalidation
+  sponsorSlug?: string
   sponsorType: 'group' | 'member'
   titleRef: React.RefObject<string>
   docJSONRef: React.RefObject<DocumentJSON | null>
@@ -33,6 +35,7 @@ interface SimplePublishDialogProps {
 }
 
 type DocumentJSON = Record<string, unknown>
+type AudienceChoice = 'just_me' | 'readers'
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error && typeof error === 'object') {
@@ -56,38 +59,76 @@ export function SimplePublishDialog({
   isUpdate = false,
   onPublished
 }: SimplePublishDialogProps) {
-  const [toNoticeboard, setToNoticeboard] = useState(true)
-  const [noticeboardExcerpt, setNoticeboardExcerpt] = useState(false)
-  const [pinWelcome, setPinWelcome] = useState(false)
-  const [pinAudience, setPinAudience] = useState<'group' | 'community' | 'public'>('group')
+  const [audience, setAudience] = useState<AudienceChoice>('just_me')
+  const [selectedShelves, setSelectedShelves] = useState<string[]>([])
+  const [postToGroup, setPostToGroup] = useState(false)
 
-  const pinAudienceCollection = createListCollection({
-    items: [
-      { label: 'Group (members only)', value: 'group' },
-      { label: 'Community (Crossroads members)', value: 'community' },
-      { label: 'Public (anyone)', value: 'public' },
-    ],
-  })
-
-  // Use mutation hook for automatic cache invalidation
-  // Note: sponsorSlug is optional - if not provided, cache won't be invalidated automatically
   const { publishPiece } = useWritingMutations(sponsorType, sponsorSlug || 'unknown')
 
-  const handlePublish = useCallback(async () => {
-    if (sponsorType === 'group' && !toNoticeboard) {
-      toaster.create({
-        title: 'Select at least one destination',
-        type: 'warning'
+  const isMemberSponsor = sponsorType === 'member'
+  const shouldShowShelves = audience === 'readers' && isMemberSponsor
+  const shouldShowGroup = audience === 'readers' && sponsorType === 'group'
+
+  const {
+    data: shelves = [],
+    isLoading: shelvesLoading,
+    refetch: refetchShelves,
+  } = useQuery({
+    queryKey: ['stackroom', 'libraries', 'writing', sponsorId],
+    queryFn: () => stackroomApi.fetchLibraries({
+      scope: 'writing',
+      sponsor_type: 'user',
+      sponsor_id: sponsorId,
+    }),
+    enabled: isOpen && isMemberSponsor,
+  })
+
+  const toggleShelf = (shelfId: string, checked: boolean) => {
+    setSelectedShelves((prev) => {
+      if (checked) return Array.from(new Set([...prev, shelfId]))
+      return prev.filter((id) => id !== shelfId)
+    })
+  }
+
+  const handleCreateDefaultShelf = async () => {
+    try {
+      const created = await stackroomApi.createLibrary({
+        title: 'My Writing',
+        sponsor_type: 'user',
+        sponsor_id: sponsorId,
+        scope: 'writing',
+        visibility: 'public',
       })
-      return
+      await refetchShelves()
+      if (created?.id) {
+        setSelectedShelves([created.id])
+      }
+    } catch (error: unknown) {
+      toaster.create({
+        title: 'Could not create shelf',
+        description: getErrorMessage(error),
+        type: 'error',
+      })
+    }
+  }
+
+  const handlePublish = async () => {
+    if (audience === 'readers') {
+      const hasDestinations = (isMemberSponsor && selectedShelves.length > 0) || (sponsorType === 'group' && postToGroup)
+      if (!hasDestinations) {
+        toaster.create({
+          title: 'Choose a destination',
+          description: 'Select where readers should find this piece.',
+          type: 'warning',
+        })
+        return
+      }
     }
 
     try {
-      // Use the mutation which automatically invalidates cache on success
-      const destinations =
-        sponsorType === 'group'
-          ? { groups: [sponsorId] }
-          : { members: [sponsorId] }
+      const destinations = isMemberSponsor
+        ? { shelves: selectedShelves }
+        : { groups: postToGroup ? [sponsorId] : [] }
 
       const response = await publishPiece.mutateAsync({
         pieceId: piece.id,
@@ -95,29 +136,21 @@ export function SimplePublishDialog({
           title: titleRef.current,
           body_json: docJSONRef.current,
           excerpt: excerptRef.current,
+          audience,
           destinations,
-          placement_options: sponsorType === 'group'
-            ? {
-                visibility: 'public',
-                is_excerpt: noticeboardExcerpt,
-                follow_updates: true,
-                overrides: pinWelcome ? {
-                  pin_kind: 'welcome',
-                  pin_audience: pinAudience,
-                } : undefined,
-              }
-            : {
-                visibility: 'public',
-                is_excerpt: false,
-                follow_updates: true,
-              },
-        }
+          placement_options: {
+            follow_updates: true,
+          },
+        },
       })
 
       toaster.create({
-        title: 'Published!',
-        description: `Published to ${response.placements_created} destination(s)`,
-        type: 'success'
+        title: 'Published',
+        description:
+          audience === 'just_me'
+            ? 'This piece is published and visible only to you.'
+            : 'This piece is published and placed where you selected.',
+        type: 'success',
       })
 
       onPublished?.(response.piece)
@@ -126,162 +159,160 @@ export function SimplePublishDialog({
       toaster.create({
         title: 'Publish failed',
         description: getErrorMessage(error),
-        type: 'error'
+        type: 'error',
       })
     }
-  }, [toNoticeboard, noticeboardExcerpt, pinWelcome, pinAudience, piece.id, sponsorId, sponsorType, titleRef, docJSONRef, excerptRef, onClose, onPublished, publishPiece])
+  }
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="450px">
+        <Dialog.Content maxW="520px">
           <Dialog.Header>
             <Heading size="md">{isUpdate ? 'Publish updates' : 'Publish'} "{piece.title}"</Heading>
+            <Text fontSize="sm" color="gray.500" mt={2}>
+              Finalize this piece and decide where it belongs.
+            </Text>
           </Dialog.Header>
 
           <Dialog.Body>
-            <VStack gap={4} align="stretch">
-              {sponsorType === 'group' ? (
-                <>
-                  <VStack gap={3} p={4} borderRadius="md" bg="gray.50" borderWidth="1px">
-                    <Checkbox.Root
-                      checked={toNoticeboard}
-                      onCheckedChange={({ checked }: { checked: boolean | string }) => setToNoticeboard(!!checked)}
-                    >
-                      <Checkbox.HiddenInput />
-                      <HStack align="start" gap={0} ml={0}>
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <VStack align="start" gap={0} ml={2}>
-                          <Checkbox.Label fontWeight="semibold" fontSize="sm">
-                            Post to Group Noticeboard
-                          </Checkbox.Label>
-                          <Text fontSize="xs" color="gray.500">
-                            Shows in your group's activity feed
+            <VStack gap={6} align="stretch">
+              <VStack gap={3} align="stretch">
+                <Heading size="sm">Who is this for?</Heading>
+                <RadioGroup.Root
+                  value={audience}
+                  onValueChange={({ value }) => setAudience(value as AudienceChoice)}
+                >
+                  <VStack align="stretch" gap={3}>
+                    <RadioGroup.Item value="just_me">
+                      <RadioGroup.ItemHiddenInput />
+                      <HStack align="start" gap={3}>
+                        <RadioGroup.ItemIndicator />
+                        <VStack align="start" gap={1}>
+                          <RadioGroup.ItemText fontWeight="semibold">Just me</RadioGroup.ItemText>
+                          <Text fontSize="sm" color="gray.500">
+                            Keep this finalized but private for now.
                           </Text>
                         </VStack>
                       </HStack>
-                    </Checkbox.Root>
+                    </RadioGroup.Item>
+                    <RadioGroup.Item value="readers">
+                      <RadioGroup.ItemHiddenInput />
+                      <HStack align="start" gap={3}>
+                        <RadioGroup.ItemIndicator />
+                        <VStack align="start" gap={1}>
+                          <RadioGroup.ItemText fontWeight="semibold">Readers</RadioGroup.ItemText>
+                          <Text fontSize="sm" color="gray.500">
+                            Make this available for others to read.
+                          </Text>
+                        </VStack>
+                      </HStack>
+                    </RadioGroup.Item>
+                  </VStack>
+                </RadioGroup.Root>
+              </VStack>
 
-                    {toNoticeboard && (
-                      <VStack gap={2} pl={6} align="stretch" w="100%">
-                        <HStack gap={4}>
-                          <Checkbox.Root
-                            checked={!noticeboardExcerpt}
-                            onCheckedChange={({ checked }: { checked: boolean | string }) => setNoticeboardExcerpt(!checked)}
-                          >
-                            <Checkbox.HiddenInput />
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                            <Checkbox.Label fontSize="sm">
-                              Show full piece
-                            </Checkbox.Label>
-                          </Checkbox.Root>
+              {audience === 'readers' && (
+                <VStack gap={3} align="stretch">
+                  <Heading size="sm">Where should readers find it?</Heading>
 
-                          <Checkbox.Root
-                            checked={noticeboardExcerpt}
-                            onCheckedChange={({ checked }: { checked: boolean | string }) => setNoticeboardExcerpt(!!checked)}
-                          >
-                            <Checkbox.HiddenInput />
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                            <Checkbox.Label fontSize="sm">
-                              Show excerpt only
-                            </Checkbox.Label>
-                          </Checkbox.Root>
+                  {shouldShowShelves && (
+                    <VStack gap={3} align="stretch">
+                      {shelvesLoading && (
+                        <HStack gap={2} color="gray.500">
+                          <Spinner size="sm" />
+                          <Text fontSize="sm">Loading shelves...</Text>
                         </HStack>
-                      </VStack>
-                    )}
-                  </VStack>
+                      )}
 
-                  <VStack gap={3} p={4} borderRadius="md" bg="gray.50" borderWidth="1px">
+                      {!shelvesLoading && shelves.length === 0 && (
+                        <Box borderWidth="1px" borderRadius="md" p={3}>
+                          <Text fontSize="sm" color="gray.600" mb={3}>
+                            Create your main writing shelf to start sharing with readers.
+                          </Text>
+                          <Button size="sm" onClick={handleCreateDefaultShelf}>
+                            Create “My Writing” shelf
+                          </Button>
+                        </Box>
+                      )}
+
+                      {!shelvesLoading && shelves.length > 0 && (
+                        <VStack gap={2} align="stretch">
+                          {shelves.map((shelf) => {
+                            const checked = selectedShelves.includes(shelf.id)
+                            const label = shelf.title === 'My Writing' ? 'My Library' : shelf.title
+                            const helper = shelf.title === 'My Writing'
+                              ? 'Your main writing shelf — a good default.'
+                              : 'Place this alongside related writing.'
+                            return (
+                              <Checkbox.Root
+                                key={shelf.id}
+                                checked={checked}
+                                onCheckedChange={({ checked: next }: { checked: boolean | string }) =>
+                                  toggleShelf(shelf.id, !!next)
+                                }
+                              >
+                                <Checkbox.HiddenInput />
+                                <HStack align="start" gap={2}>
+                                  <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                  </Checkbox.Control>
+                                  <VStack align="start" gap={0}>
+                                    <Checkbox.Label fontWeight="semibold" fontSize="sm">
+                                      {label}
+                                    </Checkbox.Label>
+                                    <Text fontSize="xs" color="gray.500">
+                                      {helper}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              </Checkbox.Root>
+                            )
+                          })}
+                        </VStack>
+                      )}
+                    </VStack>
+                  )}
+
+                  {shouldShowGroup && (
                     <Checkbox.Root
-                      checked={pinWelcome}
-                      onCheckedChange={({ checked }: { checked: boolean | string }) => setPinWelcome(!!checked)}
+                      checked={postToGroup}
+                      onCheckedChange={({ checked }: { checked: boolean | string }) => setPostToGroup(!!checked)}
                     >
                       <Checkbox.HiddenInput />
-                      <HStack align="start" gap={0} ml={0}>
+                      <HStack align="start" gap={2}>
                         <Checkbox.Control>
                           <Checkbox.Indicator />
                         </Checkbox.Control>
-                        <VStack align="start" gap={0} ml={2}>
+                        <VStack align="start" gap={0}>
                           <Checkbox.Label fontWeight="semibold" fontSize="sm">
-                            Pin as Welcome message
+                            Group noticeboard
                           </Checkbox.Label>
                           <Text fontSize="xs" color="gray.500">
-                            Shows at the top of the Group Overview
+                            Place this on your group’s noticeboard.
                           </Text>
                         </VStack>
                       </HStack>
                     </Checkbox.Root>
+                  )}
 
-                    {pinWelcome && (
-                      <VStack gap={2} pl={6} align="stretch" w="100%">
-                        <Text fontSize="xs" color="gray.500">
-                          Visible to
-                        </Text>
-                        <Select.Root
-                          value={[pinAudience]}
-                          onValueChange={({ value }) => {
-                            const nextValue = value[0] as 'group' | 'community' | 'public';
-                            if (nextValue) {
-                              setPinAudience(nextValue);
-                            }
-                          }}
-                          collection={pinAudienceCollection}
-                        >
-                          <Select.Control>
-                            <Select.Trigger />
-                            <Select.IndicatorGroup>
-                              <Select.Indicator />
-                              <Select.ClearTrigger />
-                            </Select.IndicatorGroup>
-                          </Select.Control>
-                          <Portal>
-                            <Select.Positioner>
-                              <Select.Content>
-                                {pinAudienceCollection.items.map((item) => (
-                                  <Select.Item item={item} key={item.value}>
-                                    {item.label}
-                                    <Select.ItemIndicator />
-                                  </Select.Item>
-                                ))}
-                              </Select.Content>
-                            </Select.Positioner>
-                          </Portal>
-                        </Select.Root>
-                      </VStack>
-                    )}
-                  </VStack>
-                </>
-              ) : (
-                <VStack gap={2} p={4} borderRadius="md" bg="gray.50" borderWidth="1px">
-                  <Text fontSize="sm" color="gray.600">
-                    This will publish to your member page.
+                  <Text fontSize="xs" color="gray.500">
+                    You can always move or reorganize this later.
                   </Text>
                 </VStack>
               )}
             </VStack>
           </Dialog.Body>
 
-          <Dialog.Footer gap={3}>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              colorScheme="green"
-              onClick={handlePublish}
-              loading={publishPiece.isPending}
-            >
-              {isUpdate ? 'Publish updates' : 'Publish'}
-            </Button>
+          <Dialog.Footer>
+            <HStack justify="space-between" w="100%">
+              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button colorScheme="green" onClick={handlePublish}>
+                Publish
+              </Button>
+            </HStack>
           </Dialog.Footer>
-
-          <Dialog.CloseTrigger />
         </Dialog.Content>
       </Dialog.Positioner>
     </Dialog.Root>

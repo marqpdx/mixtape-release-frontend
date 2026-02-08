@@ -74,6 +74,8 @@ export interface Library {
   slug: string; // Auto-generated from title, unique per sponsor
   summary: string; // Short description
   body: string; // Detailed description/purpose
+  scope?: string;
+  visibility?: 'public' | 'members' | 'unlisted' | 'private';
 
   // Sponsor (replaces tenant_type/tenant_id)
   sponsor_type: 'group' | 'user';
@@ -88,6 +90,10 @@ export interface Library {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+
+  // Optional computed fields
+  item_count?: number;
+  last_published_at?: string | null;
 }
 
 /**

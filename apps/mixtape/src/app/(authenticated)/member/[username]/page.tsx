@@ -18,7 +18,7 @@ import {
   GridItem,
   Link,
 } from "@chakra-ui/react";
-import { IconMail, IconCalendar, IconUser, IconShoppingBag } from "@tabler/icons-react";
+import { IconMail, IconCalendar, IconUser, IconShoppingBag, IconBooks } from "@tabler/icons-react";
 import NextLink from "next/link";
 import { useMemberProfile } from "@hooks/member/useMemberProfile";
 import { useColorModeValue } from "@components/ui/color-mode";
@@ -258,6 +258,32 @@ export default function MemberProfilePage() {
                 </HStack>
               </Box>
             )}
+
+            <Box
+              w="100%"
+              p={4}
+              borderWidth="1px"
+              borderColor={cardBorder}
+              borderRadius="lg"
+            >
+              <HStack justify="space-between" align="center">
+                <HStack gap={3}>
+                  <IconBooks size={20} />
+                  <Box>
+                    <Text fontWeight="medium">Library</Text>
+                    <Text fontSize="sm" color={subtextColor}>
+                      Writing shelves and published pieces
+                    </Text>
+                  </Box>
+                </HStack>
+                <Link as={NextLink} href={`/@${username}/library`}>
+                  <Button size="sm" variant="outline">
+                    <IconBooks size={16} />
+                    View Library
+                  </Button>
+                </Link>
+              </HStack>
+            </Box>
           </VStack>
         </Box>
       </Box>

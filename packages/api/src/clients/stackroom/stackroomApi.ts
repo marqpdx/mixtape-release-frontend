@@ -50,8 +50,28 @@ export async function searchLibrary(
 /**
  * Fetch all libraries accessible to the current user
  */
-export async function fetchLibraries(): Promise<Library[]> {
-  const response = await axiosInstance.get<Library[]>('/api/stackroom/libraries');
+export async function fetchLibraries(params?: {
+  scope?: string;
+  sponsor_type?: 'group' | 'user';
+  sponsor_id?: string;
+  sponsor_username?: string;
+}): Promise<Library[]> {
+  const response = await axiosInstance.get<Library[]>('/api/stackroom/libraries', {
+    params,
+  });
+  return response.data;
+}
+
+/**
+ * Fetch public libraries for a user (reader view)
+ */
+export async function fetchPublicLibrariesByUsername(
+  username: string,
+  scope = 'writing'
+): Promise<Library[]> {
+  const response = await axiosInstance.get<Library[]>('/api/stackroom/libraries/public', {
+    params: { username, scope },
+  });
   return response.data;
 }
 
@@ -72,6 +92,8 @@ export async function createLibrary(data: {
   body?: string;
   sponsor_type: 'group' | 'user';
   sponsor_id: string;
+  scope?: string;
+  visibility?: 'public' | 'members' | 'unlisted' | 'private';
 }): Promise<Library> {
   // Map frontend naming to backend naming
   const payload = {
@@ -80,6 +102,8 @@ export async function createLibrary(data: {
     body: data.body,
     tenant_type: data.sponsor_type,
     tenant_id: data.sponsor_id,
+    scope: data.scope,
+    visibility: data.visibility,
   };
   const response = await axiosInstance.post<Library>('/api/stackroom/libraries/', payload);
   return response.data;
@@ -94,10 +118,63 @@ export async function updateLibrary(
     title?: string;
     summary?: string;
     body?: string;
+    visibility?: 'public' | 'members' | 'unlisted' | 'private';
   }
 ): Promise<Library> {
-  const response = await axiosInstance.patch<Library>(`/api/stackroom/libraries/${libraryId}`, data);
+  const payload = {
+    name: data.title,
+    summary: data.summary,
+    body: data.body,
+    visibility: data.visibility,
+  };
+  const response = await axiosInstance.patch<Library>(`/api/stackroom/libraries/${libraryId}`, payload);
   return response.data;
+}
+
+/**
+ * Fetch placements for a library (shelf)
+ */
+export async function fetchLibraryPlacements(libraryId: string) {
+  const response = await axiosInstance.get(`/api/stackroom/libraries/${libraryId}/placements`);
+  return response.data as Array<{
+    id: string;
+    piece_id: string;
+    piece_slug: string;
+    piece_title: string;
+    piece_body_json: any;
+    piece_status: string;
+    published_at: string | null;
+    visibility: string;
+    order_index?: number;
+    created_at: string;
+    updated_at: string;
+    display?: {
+      title?: string;
+      excerpt?: string;
+      is_excerpt?: boolean;
+      body_json?: any;
+    };
+  }>;
+}
+
+export async function addLibraryPlacement(libraryId: string, pieceId: string) {
+  const response = await axiosInstance.post<{ id: string }>(
+    `/api/stackroom/libraries/${libraryId}/placements/manage`,
+    { piece_id: pieceId }
+  );
+  return response.data;
+}
+
+export async function removeLibraryPlacement(libraryId: string, placementId: string) {
+  await axiosInstance.delete(
+    `/api/stackroom/libraries/${libraryId}/placements/${placementId}`
+  );
+}
+
+export async function reorderLibraryPlacements(libraryId: string, order: string[]) {
+  await axiosInstance.post(`/api/stackroom/libraries/${libraryId}/placements/reorder`, {
+    order,
+  });
 }
 
 // ============================================================================

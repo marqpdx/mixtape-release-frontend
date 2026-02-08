@@ -3,11 +3,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, SimpleGrid, VStack } from '@chakra-ui/react'
+import { Button, VStack } from '@chakra-ui/react'
 import { SimplePublishDialog } from './SimplePublishDialog'
 import { useWritingMutations } from '@hooks/useWriting'
 import { toaster } from '@mixtape/core/lib/toaster'
-import { IconChevronDown, IconSend } from '@tabler/icons-react'
+import { IconChevronDown } from '@tabler/icons-react'
 
 interface SponsorConfig {
   type: 'group' | 'member'
@@ -61,13 +61,12 @@ export function PublishingControls({
   void onSaved
   const [dialogOpen, setDialogOpen] = useState(false)
   const isPublished = pieceStatus === 'published'
-  const { unpublishPiece, publishPiece } = useWritingMutations(sponsor.type, sponsor.slug || 'unknown')
+  const { unpublishPiece } = useWritingMutations(sponsor.type, sponsor.slug || 'unknown')
   const canPublish = Boolean(
     titleRef.current?.trim() ||
       excerptRef.current?.trim() ||
       docJSONRef.current
   )
-  const primaryLabel = isPublished ? 'Send updates' : 'Send out'
   const dialogLabel = publishLabel ?? (isPublished ? 'Publish updates' : 'Publish')
 
   const getErrorMessage = (error: unknown): string | undefined => {
@@ -97,60 +96,9 @@ export function PublishingControls({
     }
   }
 
-  const handlePublishNow = async () => {
-    try {
-      await saveNow({
-        title: titleRef.current,
-        body_json: docJSONRef.current,
-        excerpt: excerptRef.current,
-      })
-      const destinations = sponsor.type === 'group'
-        ? { groups: [sponsor.id] }
-        : { members: [sponsor.id] }
-      const response = await publishPiece.mutateAsync({
-        pieceId: piece.id,
-        payload: {
-          title: titleRef.current,
-          body_json: docJSONRef.current,
-          excerpt: excerptRef.current,
-          destinations,
-          placement_options: {
-            visibility: 'public',
-            is_excerpt: false,
-            follow_updates: true,
-          }
-        }
-      })
-      toaster.create({
-        title: 'Published!',
-        description: `Published to ${response.placements_created} destination(s)`,
-        type: 'success'
-      })
-      onPublished?.(response.piece || response)
-    } catch (error: unknown) {
-      toaster.create({
-        title: 'Publish failed',
-        description: getErrorMessage(error),
-        type: 'error'
-      })
-    }
-  }
-
   return (
     <>
       <VStack gap={3} align="stretch">
-        <SimpleGrid columns={2} gap={3} gridTemplateColumns="repeat(2, 43%)" justifyContent="space-between">
-        <Button
-          colorScheme="green"
-          variant="solid"
-          onClick={handlePublishNow}
-          disabled={!canPublish}
-          size="sm"
-          w="100%"
-        >
-          <IconSend size={14} style={{ marginRight: '6px' }} />
-          {primaryLabel}
-        </Button>
         <Button
           colorScheme="green"
           variant="outline"
@@ -162,7 +110,6 @@ export function PublishingControls({
           <IconChevronDown size={14} style={{ marginRight: '6px' }} />
           {`${dialogLabel}...`}
         </Button>
-        </SimpleGrid>
         {isPublished && (
           <Button
             variant="outline"

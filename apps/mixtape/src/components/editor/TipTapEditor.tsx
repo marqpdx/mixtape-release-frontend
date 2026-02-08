@@ -151,16 +151,6 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     setSpellPopupState(null);
   }, [spellPopupState, spellDictionary]);
 
-  // Debug: Track component renders and prop changes
-  console.log("🎨 aaaa TipTapEditor rendered");
-  useEffect(() => {
-    console.log("🔍 aaaa TipTapEditor collab prop changed:", {
-      collabExists: !!collab,
-      collabYdocClientID: collab?.ydoc?.clientID,
-      collabInstance: collab,
-    });
-  }, [collab]);
-
   // Create unified collab object from either new props or legacy collab prop
   const collabConfig = useMemo(() => {
     // If new props are provided, use them

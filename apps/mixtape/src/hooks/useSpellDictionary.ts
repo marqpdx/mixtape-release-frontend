@@ -2,13 +2,17 @@
 /**
  * useSpellDictionary Hook
  *
- * Manages a personal spell correction dictionary.
- * Currently uses localStorage, with future backend sync support.
+ * Manages a shared spell correction dictionary backed by the Spellbook API.
+ * Falls back to localStorage seeds when the API is unavailable.
  *
  * Part of PocketTools - Spelling Helpers
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  useSpellCorrections,
+  useRecordCorrectionUsage,
+} from '@mixtape/api';
 
 const STORAGE_KEY = 'mixtape-spell-dictionary';
 
@@ -29,7 +33,7 @@ const DEFAULT_DICTIONARY: SpellDictionary = {
   corrections: [],
 };
 
-// Common typos to seed the dictionary
+// Common typos to seed the dictionary (used as fallback when API unavailable)
 const SEED_CORRECTIONS: Omit<SpellCorrection, 'addedAt' | 'usageCount'>[] = [
   { wrong: 'teh', correct: 'the' },
   { wrong: 'adn', correct: 'and' },
@@ -64,7 +68,12 @@ const SEED_CORRECTIONS: Omit<SpellCorrection, 'addedAt' | 'usageCount'>[] = [
 ];
 
 export function useSpellDictionary() {
-  const [dictionary, setDictionary] = useState<SpellDictionary>(DEFAULT_DICTIONARY);
+  // ── API data ──────────────────────────────────────────────────────────
+  const { data: apiCorrections, isError: apiFailed } = useSpellCorrections();
+  const recordUsageMutation = useRecordCorrectionUsage();
+
+  // ── Local dictionary (personal corrections + seeds as fallback) ──────
+  const [localDictionary, setLocalDictionary] = useState<SpellDictionary>(DEFAULT_DICTIONARY);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage on mount
@@ -73,7 +82,7 @@ export function useSpellDictionary() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as SpellDictionary;
-        setDictionary(parsed);
+        setLocalDictionary(parsed);
       } else {
         // Seed with common corrections
         const seeded: SpellDictionary = {
@@ -84,7 +93,7 @@ export function useSpellDictionary() {
             usageCount: 0,
           })),
         };
-        setDictionary(seeded);
+        setLocalDictionary(seeded);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       }
     } catch (e) {
@@ -93,42 +102,80 @@ export function useSpellDictionary() {
     setIsLoaded(true);
   }, []);
 
-  // Save to localStorage when dictionary changes
+  // Save to localStorage when local dictionary changes
   useEffect(() => {
     if (isLoaded) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dictionary));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(localDictionary));
       } catch (e) {
         console.error('Failed to save spell dictionary:', e);
       }
     }
-  }, [dictionary, isLoaded]);
+  }, [localDictionary, isLoaded]);
 
-  // Build a lookup map for fast correction lookups (case-insensitive)
-  const correctionMap = useMemo(() => {
+  // ── API correction ID lookup (wrong_word → id) for recordUsage ──────
+  const apiIdMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const c of dictionary.corrections) {
-      map.set(c.wrong.toLowerCase(), c.correct);
+    if (apiCorrections) {
+      for (const c of apiCorrections) {
+        map.set(c.wrong_word.toLowerCase(), c.id);
+      }
     }
     return map;
-  }, [dictionary.corrections]);
+  }, [apiCorrections]);
 
-  // Add a new correction
+  // ── Merged lookup map: API corrections override local/seeds ──────────
+  const correctionMap = useMemo(() => {
+    const map = new Map<string, string>();
+    // Local/seed corrections first
+    for (const c of localDictionary.corrections) {
+      map.set(c.wrong.toLowerCase(), c.correct);
+    }
+    // API corrections take precedence
+    if (apiCorrections) {
+      for (const c of apiCorrections) {
+        map.set(c.wrong_word.toLowerCase(), c.correct_word);
+      }
+    }
+    return map;
+  }, [localDictionary.corrections, apiCorrections]);
+
+  // ── Merged corrections list (for UI display) ──────────────────────────
+  const corrections = useMemo((): SpellCorrection[] => {
+    // Start with local corrections keyed by wrong word
+    const byWord = new Map<string, SpellCorrection>();
+    for (const c of localDictionary.corrections) {
+      byWord.set(c.wrong.toLowerCase(), c);
+    }
+    // API corrections override
+    if (apiCorrections) {
+      for (const c of apiCorrections) {
+        byWord.set(c.wrong_word.toLowerCase(), {
+          wrong: c.wrong_word,
+          correct: c.correct_word,
+          addedAt: c.created_at,
+          usageCount: c.usage_count,
+        });
+      }
+    }
+    return Array.from(byWord.values());
+  }, [localDictionary.corrections, apiCorrections]);
+
+  // ── Add a correction (local state + API recordUsage if exists) ────────
   const addCorrection = useCallback((wrong: string, correct: string) => {
     const wrongLower = wrong.toLowerCase().trim();
     const correctTrimmed = correct.trim();
 
     if (!wrongLower || !correctTrimmed) return;
-    if (wrongLower === correctTrimmed.toLowerCase()) return; // No self-corrections
+    if (wrongLower === correctTrimmed.toLowerCase()) return;
 
-    setDictionary(prev => {
-      // Check if correction already exists
+    // Update local state
+    setLocalDictionary(prev => {
       const existingIndex = prev.corrections.findIndex(
         c => c.wrong.toLowerCase() === wrongLower
       );
 
       if (existingIndex >= 0) {
-        // Update existing
         const updated = [...prev.corrections];
         updated[existingIndex] = {
           ...updated[existingIndex],
@@ -138,7 +185,6 @@ export function useSpellDictionary() {
         return { ...prev, corrections: updated };
       }
 
-      // Add new
       return {
         ...prev,
         corrections: [
@@ -152,12 +198,18 @@ export function useSpellDictionary() {
         ],
       };
     });
-  }, []);
 
-  // Remove a correction
+    // Fire API recordUsage if this correction exists in the shared dictionary
+    const apiId = apiIdMap.get(wrongLower);
+    if (apiId) {
+      recordUsageMutation.mutate(apiId);
+    }
+  }, [apiIdMap, recordUsageMutation]);
+
+  // Remove a correction (local only)
   const removeCorrection = useCallback((wrong: string) => {
     const wrongLower = wrong.toLowerCase().trim();
-    setDictionary(prev => ({
+    setLocalDictionary(prev => ({
       ...prev,
       corrections: prev.corrections.filter(
         c => c.wrong.toLowerCase() !== wrongLower
@@ -183,7 +235,9 @@ export function useSpellDictionary() {
   // Increment usage count when a correction is applied
   const recordUsage = useCallback((wrong: string) => {
     const wrongLower = wrong.toLowerCase().trim();
-    setDictionary(prev => {
+
+    // Update local count
+    setLocalDictionary(prev => {
       const updated = prev.corrections.map(c =>
         c.wrong.toLowerCase() === wrongLower
           ? { ...c, usageCount: c.usageCount + 1 }
@@ -191,19 +245,25 @@ export function useSpellDictionary() {
       );
       return { ...prev, corrections: updated };
     });
-  }, []);
+
+    // Fire API recordUsage
+    const apiId = apiIdMap.get(wrongLower);
+    if (apiId) {
+      recordUsageMutation.mutate(apiId);
+    }
+  }, [apiIdMap, recordUsageMutation]);
 
   // Export dictionary (for backup/sync)
   const exportDictionary = useCallback(() => {
-    return JSON.stringify(dictionary, null, 2);
-  }, [dictionary]);
+    return JSON.stringify({ ...localDictionary, corrections }, null, 2);
+  }, [localDictionary, corrections]);
 
   // Import dictionary
   const importDictionary = useCallback((json: string) => {
     try {
       const parsed = JSON.parse(json) as SpellDictionary;
       if (parsed.corrections && Array.isArray(parsed.corrections)) {
-        setDictionary(parsed);
+        setLocalDictionary(parsed);
         return true;
       }
     } catch (e) {
@@ -213,9 +273,9 @@ export function useSpellDictionary() {
   }, []);
 
   return {
-    dictionary,
-    isLoaded,
-    corrections: dictionary.corrections,
+    dictionary: { ...localDictionary, corrections },
+    isLoaded: isLoaded && !apiFailed,
+    corrections,
     addCorrection,
     removeCorrection,
     getCorrection,

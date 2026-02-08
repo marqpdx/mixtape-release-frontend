@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Tooltip } from "@components/ui/tooltip";
-import { useWritingMutations, useWriting } from "@hooks/useWriting";
+import { useWriting } from "@hooks/useWriting";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { TagInput, Tag } from "@components/writing/composer/TagInput";
 import { CategoryInput, Category } from "@components/writing/composer/CategoryInput";
@@ -62,7 +62,6 @@ export default function DraftRoomWorkArea({
   const [noneOkTags, setNoneOkTags] = useState(false);
   const [noneOkCategories, setNoneOkCategories] = useState(false);
   const [noneOkSeries, setNoneOkSeries] = useState(false);
-  const [noneOkAudience, setNoneOkAudience] = useState(false);
   const [showTitleSaved, setShowTitleSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -100,7 +99,6 @@ export default function DraftRoomWorkArea({
   void showCollab;
   void setShowSolo;
   void setShowCollab;
-  const { publishPiece } = useWritingMutations(sponsor.type, sponsor.slug);
 
   const titleRef = useRef<string>("");
   const docJSONRef = useRef<Record<string, unknown> | null>(null);
@@ -141,7 +139,6 @@ export default function DraftRoomWorkArea({
       setTitle("");
       setAddressedTo(getPersistedAddressedTo());
       setSeries("");
-      setNoneOkAudience(false);
       setNoneOkTags(false);
       setNoneOkCategories(false);
       setNoneOkSeries(false);
@@ -239,29 +236,9 @@ export default function DraftRoomWorkArea({
     }
   };
 
-  const handleSendOut = async () => {
-    if (!pieceDetail?.id) return;
-    await publishPiece.mutateAsync({
-      pieceId: pieceDetail.id,
-      payload: {
-        title: titleRef.current,
-        body_json: docJSONRef.current,
-        excerpt: excerptRef.current,
-        destinations: {
-          members: [sponsor.id],
-        },
-        placement_options: {
-          visibility: "public",
-          follow_updates: false,
-          is_excerpt: false,
-        },
-      },
-    });
-  };
-
   const readinessColor = (isReady: boolean) => (isReady ? "green.400" : "orange.400");
   const isTitleReady = Boolean(title.trim());
-  const isAudienceReady = Boolean(addressedTo.trim()) || noneOkAudience;
+  const isAudienceReady = Boolean(addressedTo.trim());
   const isTagsReady = tags.length > 0 || noneOkTags;
   const isCategoriesReady = categories.length > 0 || noneOkCategories;
   const isSeriesReady = Boolean(series.trim()) || noneOkSeries;
@@ -429,14 +406,9 @@ export default function DraftRoomWorkArea({
                 >
                   Edit content
                 </Button>
-                <HStack>
-                  <Button size="sm" variant="solid" colorScheme="green" onClick={handleSendOut}>
-                    Publish now
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
-                    Publish...
-                  </Button>
-                </HStack>
+                <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
+                  Publish...
+                </Button>
               </HStack>
 
               <Box>
@@ -465,25 +437,73 @@ export default function DraftRoomWorkArea({
 
               <Box>
                 <HStack align="center" gap={3} mb={2}>
+                  <Box
+                    w="8px"
+                    h="8px"
+                    borderRadius="full"
+                    bg={readinessColor(isAudienceReady)}
+                  />
+                  <Text fontSize="sm" fontWeight="medium">
+                    Audience
+                  </Text>
+                </HStack>
+                <Select.Root
+                  collection={selectCollection}
+                  value={addressedTo ? [addressedTo] : []}
+                  onValueChange={({ value }) => {
+                    const nextValue = value[0] ?? "public";
+                    setAddressedTo(nextValue);
+                    persistAddressedTo(nextValue);
+                  }}
+                >
+                  <Select.HiddenSelect />
+                  <Select.Control>
+                    <Select.Trigger>
+                      <Select.ValueText placeholder="Select audience" />
+                    </Select.Trigger>
+                    <Select.IndicatorGroup>
+                      <Select.Indicator />
+                      <Select.ClearTrigger />
+                    </Select.IndicatorGroup>
+                  </Select.Control>
+                  <Portal>
+                    <Select.Positioner>
+                      <Select.Content>
+                        {selectCollection.items.map((item) => (
+                          <Select.Item item={item} key={item.value}>
+                            {item.label}
+                            <Select.ItemIndicator />
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Portal>
+                </Select.Root>
+              </Box>
+
+              <Box>
+                <HStack align="center" gap={3} mb={2}>
                   <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isTagsReady)} />
                   <Text fontSize="sm" fontWeight="medium">
                     Tags
                   </Text>
                   <Box flex="1" />
-                  <Tooltip content="None OK">
-                    <Checkbox.Root
-                      size="sm"
-                      checked={noneOkTags}
-                      onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                        setNoneOkTags(!!checked)
-                      }
-                    >
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                      <Checkbox.Label>🚫✅</Checkbox.Label>
-                    </Checkbox.Root>
+                  <Tooltip content="This piece OK without tags" portalled={false}>
+                    <Box display="inline-flex">
+                      <Checkbox.Root
+                        size="sm"
+                        checked={noneOkTags}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
+                          setNoneOkTags(!!checked)
+                        }
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Label>🚫✅</Checkbox.Label>
+                      </Checkbox.Root>
+                    </Box>
                   </Tooltip>
                 </HStack>
                 <TagInput
@@ -510,20 +530,22 @@ export default function DraftRoomWorkArea({
                     Categories
                   </Text>
                   <Box flex="1" />
-                  <Tooltip content="None OK">
-                    <Checkbox.Root
-                      size="sm"
-                      checked={noneOkCategories}
-                      onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                        setNoneOkCategories(!!checked)
-                      }
-                    >
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                      <Checkbox.Label>🚫✅</Checkbox.Label>
-                    </Checkbox.Root>
+                  <Tooltip content="This piece OK without categories" portalled={false}>
+                    <Box display="inline-flex">
+                      <Checkbox.Root
+                        size="sm"
+                        checked={noneOkCategories}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
+                          setNoneOkCategories(!!checked)
+                        }
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Label>🚫✅</Checkbox.Label>
+                      </Checkbox.Root>
+                    </Box>
                   </Tooltip>
                 </HStack>
                 <CategoryInput
@@ -545,87 +567,28 @@ export default function DraftRoomWorkArea({
                       w="8px"
                       h="8px"
                       borderRadius="full"
-                      bg={readinessColor(isAudienceReady)}
-                    />
-                    <Text fontSize="sm" fontWeight="medium">
-                      Audience
-                    </Text>
-                    <Box flex="1" />
-                    <Tooltip content="None OK">
-                      <Checkbox.Root
-                        size="sm"
-                        checked={noneOkAudience}
-                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                          setNoneOkAudience(!!checked)
-                        }
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label>🚫✅</Checkbox.Label>
-                      </Checkbox.Root>
-                    </Tooltip>
-                  </HStack>
-                  <Select.Root
-                    collection={selectCollection}
-                    value={addressedTo ? [addressedTo] : []}
-                    onValueChange={({ value }) => {
-                      const nextValue = value[0] ?? "public";
-                      setAddressedTo(nextValue);
-                      persistAddressedTo(nextValue);
-                    }}
-                  >
-                    <Select.HiddenSelect />
-                    <Select.Control>
-                      <Select.Trigger>
-                        <Select.ValueText placeholder="Select audience" />
-                      </Select.Trigger>
-                      <Select.IndicatorGroup>
-                        <Select.Indicator />
-                        <Select.ClearTrigger />
-                      </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
-                      <Select.Positioner>
-                        <Select.Content>
-                          {selectCollection.items.map((item) => (
-                            <Select.Item item={item} key={item.value}>
-                              {item.label}
-                              <Select.ItemIndicator />
-                            </Select.Item>
-                          ))}
-                        </Select.Content>
-                      </Select.Positioner>
-                    </Portal>
-                  </Select.Root>
-                </Box>
-                <Box flex="1">
-                  <HStack align="center" gap={3} mb={2}>
-                    <Box
-                      w="8px"
-                      h="8px"
-                      borderRadius="full"
                       bg={readinessColor(isSeriesReady)}
                     />
                     <Text fontSize="sm" fontWeight="medium">
                       Series
                     </Text>
                     <Box flex="1" />
-                    <Tooltip content="None OK">
-                      <Checkbox.Root
-                        size="sm"
-                        checked={noneOkSeries}
-                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                          setNoneOkSeries(!!checked)
-                        }
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label>🚫✅</Checkbox.Label>
-                      </Checkbox.Root>
+                    <Tooltip content="This piece OK not part of a series" portalled={false}>
+                      <Box display="inline-flex">
+                        <Checkbox.Root
+                          size="sm"
+                          checked={noneOkSeries}
+                          onCheckedChange={({ checked }: { checked: boolean | string }) =>
+                            setNoneOkSeries(!!checked)
+                          }
+                        >
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Label>🚫✅</Checkbox.Label>
+                        </Checkbox.Root>
+                      </Box>
                     </Tooltip>
                   </HStack>
                   <Input

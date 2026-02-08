@@ -7,6 +7,8 @@ import {
   ListCreatePayload,
   ListUpdatePayload,
   ListReorderPayload,
+  ListItemPromotePayload,
+  ListItemAnnotation,
 } from '../../clients/lists/listsApi';
 
 // ============================================================================
@@ -208,3 +210,60 @@ export function useReorderItems() {
     },
   });
 }
+
+// ============================================================================
+// PROMOTE TO PROJECT HOOKS
+// ============================================================================
+
+interface UseListAnnotationsOptions {
+  listId: string;
+  enabled?: boolean;
+}
+
+/**
+ * Hook to fetch annotations (promoted items) for a list
+ */
+export function useListAnnotations(options: UseListAnnotationsOptions) {
+  const { listId, enabled = true } = options;
+
+  return useQuery({
+    queryKey: ['list-annotations', listId],
+
+    queryFn: async () => {
+      return await listsApi.getAnnotations(listId);
+    },
+
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+
+    enabled: enabled && !!listId,
+  });
+}
+
+/**
+ * Hook to promote a list item to a Project task
+ */
+export function usePromoteListItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      listId,
+      payload,
+    }: {
+      listId: string;
+      payload: ListItemPromotePayload;
+    }) => {
+      return await listsApi.promoteItem(listId, payload);
+    },
+    onSuccess: (_, { listId }) => {
+      // Invalidate annotations for this list
+      queryClient.invalidateQueries({ queryKey: ['list-annotations', listId] });
+      // Also invalidate projects in case the UI needs to refresh
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+// Re-export types for convenience
+export type { ListItemAnnotation, ListItemPromotePayload };

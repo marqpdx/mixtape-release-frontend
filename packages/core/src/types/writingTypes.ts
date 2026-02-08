@@ -7,9 +7,11 @@ export type WritingKind = 'post' | 'article' | 'dispatch' | 'forum' | 'announcem
 
 export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'archived'
 
-export type PlacementChannel = 'feed' | 'lantern' | 'forum' | 'dispatch' | 'almanac' | 'page'
+export type PlacementChannel = 'feed' | 'shelf' | 'lantern' | 'forum' | 'dispatch' | 'almanac' | 'page'
 
-export type PlacementVisibility = 'public' | 'members' | 'private' | 'scheduled'
+export type PlacementVisibility = 'public' | 'members' | 'unlisted' | 'private' | 'scheduled'
+
+export type AddressedTo = 'public' | 'crossroads' | 'self'
 
 /**
  * Main WritingPiece model
@@ -29,6 +31,7 @@ export interface WritingPiece {
   // Metadata
   canonical_url?: string
   reading_time: number | null
+  addressed_to?: AddressedTo
 
   // Versioning
   current_version_no: number
@@ -308,12 +311,7 @@ export interface PlacementOptions {
 export interface PublishDestinations {
   personal?: boolean;
   groups?: string[]; // slugs or UUIDs
-  lantern?: boolean;
-}
-
-export interface PublishDestinations {
-  personal?: boolean;
-  groups?: string[]; // slugs or UUIDs
+  shelves?: string[]; // library ids
   lantern?: boolean;
 }
 
@@ -329,6 +327,8 @@ export interface PublishAndPlacePayload {
   scheduled_for?: string; // ISO8601
   canonical_url?: string;
   tags?: string[];
+  audience?: 'just_me' | 'readers';
+  addressed_to?: AddressedTo;
   destinations: PublishDestinations;
   placement_options?: PlacementOptions;
   group_overrides?: GroupOverridesMap;

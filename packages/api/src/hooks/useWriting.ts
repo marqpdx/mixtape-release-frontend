@@ -188,12 +188,15 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
         title?: string;
         body_json?: any;
         excerpt?: string;
+        audience?: 'just_me' | 'readers';
+        addressed_to?: 'public' | 'crossroads' | 'self';
         destinations: {
           groups?: string[];
           members?: string[];
+          shelves?: string[];
         };
         placement_options?: {
-          visibility?: 'public' | 'private';
+          visibility?: 'public' | 'members' | 'unlisted' | 'private';
           is_excerpt?: boolean;
           follow_updates?: boolean;
           overrides?: Record<string, unknown>;

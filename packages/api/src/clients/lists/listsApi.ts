@@ -72,6 +72,24 @@ export interface ListReorderPayload {
   to_index: number;
 }
 
+export interface ListItemPromotePayload {
+  project_id: string;
+  column_id?: string | null;
+  item_text: string;
+}
+
+export interface ListItemAnnotation {
+  id: string;
+  item_text_hash: string;
+  item_text_snapshot: string;
+  task_id: string | null;
+  task_title: string | null;
+  project_id: string | null;
+  project_title: string | null;
+  promoted_at: string;
+  promoted_by_username: string | null;
+}
+
 /**
  * Helper to extract error message from Axios error
  */
@@ -226,6 +244,37 @@ class ListsApi {
         `/api/lists/${listId}/reorder`,
         payload
       );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  // =========================================================================
+  // PROMOTE TO PROJECT
+  // =========================================================================
+
+  /**
+   * Promote a list item to a Project task
+   */
+  async promoteItem(listId: string, payload: ListItemPromotePayload): Promise<ListItemAnnotation> {
+    try {
+      const response = await this.client.post(
+        `/api/lists/${listId}/promote/`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  /**
+   * Get all annotations (promoted items) for a list
+   */
+  async getAnnotations(listId: string): Promise<ListItemAnnotation[]> {
+    try {
+      const response = await this.client.get(`/api/lists/${listId}/annotations/`);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));

@@ -17,8 +17,9 @@ import {
   Checkbox,
   IconButton,
 } from '@chakra-ui/react';
-import { IconArrowsExchange } from '@tabler/icons-react';
-import { useLists, useList, useCreateList, useUpdateList, useDeleteList } from '@mixtape/api/hooks/lists';
+import { IconArrowsExchange, IconArrowUpRight } from '@tabler/icons-react';
+import { useLists, useList, useCreateList, useUpdateList, useDeleteList, useListAnnotations } from '@mixtape/api/hooks/lists';
+import { PromoteItemDialog } from './PromoteItemDialog';
 import { useAutosave } from '@mixtape/api/hooks/useAutosave';
 import type { ListDetail } from '@mixtape/api/clients/lists';
 import { MixtapeAlert } from '@/components/ui/alerts/MixtapeAlert';
@@ -41,11 +42,22 @@ export function ListsTab() {
   const [focusedView, setFocusedView] = useState<ViewMode>('code');
   const [leftView, setLeftView] = useState<ViewMode>('code');
 
+  // Promote dialog state
+  const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
+  const [promoteItemText, setPromoteItemText] = useState('');
+  const [promoteItemIndex, setPromoteItemIndex] = useState(0);
+
   // Fetch lists
   const { lists, isLoading, error, refetch } = useLists();
 
   // Fetch selected list details
   const { list: selectedList } = useList({
+    listId: selectedListId || '',
+    enabled: !!selectedListId,
+  });
+
+  // Fetch annotations (promoted items) for selected list
+  const { data: annotations = [] } = useListAnnotations({
     listId: selectedListId || '',
     enabled: !!selectedListId,
   });
@@ -213,10 +225,50 @@ export function ListsTab() {
     textareaRef.current?.focus();
   }, [hasUnsavedContent, isDirty, hasTitle, title, bodyText, selectedListId, saveNow]);
 
+  // Promote item to project
+  const handlePromoteItem = useCallback((itemIndex: number, itemText: string) => {
+    setPromoteItemIndex(itemIndex);
+    setPromoteItemText(itemText);
+    setPromoteDialogOpen(true);
+  }, []);
+
   // Keyboard handler for code view
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget;
     const { value, selectionStart, selectionEnd } = textarea;
+
+    // Cmd+Shift+P to promote current line
+    if (e.key === 'p' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+      e.preventDefault();
+      if (!selectedListId) {
+        toaster.create({ title: 'Save the list first', type: 'warning', duration: 2000 });
+        return;
+      }
+
+      // Find current line
+      const beforeCursor = value.substring(0, selectionStart);
+      const lines = value.split('\n');
+      const lineIndex = beforeCursor.split('\n').length - 1;
+      const currentLine = lines[lineIndex] || '';
+      const trimmed = currentLine.trimStart();
+
+      // Check if it's an action item
+      if (trimmed.startsWith('- ') || trimmed.startsWith('x ')) {
+        const itemText = trimmed.substring(2);
+        // Find the item index (count action items before this line)
+        let itemIndex = 0;
+        for (let i = 0; i < lineIndex; i++) {
+          const lineTrimmed = lines[i].trimStart();
+          if (lineTrimmed.startsWith('- ') || lineTrimmed.startsWith('x ') || lineTrimmed.startsWith('* ')) {
+            itemIndex++;
+          }
+        }
+        handlePromoteItem(itemIndex, itemText);
+      } else {
+        toaster.create({ title: 'Place cursor on an action item (- or x)', type: 'info', duration: 2000 });
+      }
+      return;
+    }
 
     if (e.key === 'Tab' && e.altKey) {
       e.preventDefault();
@@ -294,7 +346,7 @@ export function ListsTab() {
     if (e.key !== 'Backspace') {
       setJustInsertedPrefix(false);
     }
-  }, [justInsertedPrefix]);
+  }, [justInsertedPrefix, selectedListId, handlePromoteItem]);
 
   // Toggle item in rendered view - triggers autosave
   const handleToggleItem = useCallback((itemIndex: number) => {
@@ -515,6 +567,8 @@ export function ListsTab() {
                 <RenderedView
                   items={parsedItems}
                   onToggle={handleToggleItem}
+                  onPromote={selectedListId ? handlePromoteItem : undefined}
+                  promotedItems={annotations}
                   isFocused={focusedView === 'rendered'}
                   isReadOnly={focusedView !== 'rendered'}
                 />
@@ -543,6 +597,8 @@ export function ListsTab() {
                 <RenderedView
                   items={parsedItems}
                   onToggle={handleToggleItem}
+                  onPromote={selectedListId ? handlePromoteItem : undefined}
+                  promotedItems={annotations}
                   isFocused={focusedView === 'rendered'}
                   isReadOnly={focusedView !== 'rendered'}
                 />
@@ -570,6 +626,17 @@ export function ListsTab() {
           </HStack>
         </VStack>
       </GridItem>
+
+      {/* Promote Item Dialog */}
+      {selectedListId && (
+        <PromoteItemDialog
+          isOpen={promoteDialogOpen}
+          onClose={() => setPromoteDialogOpen(false)}
+          listId={selectedListId}
+          itemText={promoteItemText}
+          itemIndex={promoteItemIndex}
+        />
+      )}
     </Grid>
   );
 }
@@ -627,14 +694,23 @@ interface ParsedItem {
   due?: string;
 }
 
+interface PromotedItemInfo {
+  item_text_hash: string;
+  task_id: string | null;
+  task_title: string | null;
+  project_title: string | null;
+}
+
 interface RenderedViewProps {
   items: ParsedItem[];
   onToggle: (index: number) => void;
+  onPromote?: (index: number, text: string) => void;
+  promotedItems?: PromotedItemInfo[];
   isFocused: boolean;
   isReadOnly: boolean;
 }
 
-function RenderedView({ items, onToggle, isFocused, isReadOnly }: RenderedViewProps) {
+function RenderedView({ items, onToggle, onPromote, promotedItems = [], isFocused, isReadOnly }: RenderedViewProps) {
   if (items.length === 0) {
     return (
       <Box h="100%" p={3} bg={isFocused ? 'white' : 'gray.50'} display="flex" alignItems="center" justifyContent="center">
@@ -648,43 +724,73 @@ function RenderedView({ items, onToggle, isFocused, isReadOnly }: RenderedViewPr
   return (
     <Box h="100%" p={2} bg={isFocused ? 'white' : 'gray.50'} overflowY="auto">
       <VStack align="stretch" gap={0}>
-        {items.map((item) => (
-          <HStack
-            key={item.index}
-            py={isFocused ? 1 : 0.5}
-            pl={item.depth * 4}
-            opacity={item.type === 'action_done' ? 0.5 : 1}
-            _hover={isFocused && !isReadOnly ? { bg: 'gray.50' } : undefined}
-          >
-            {item.type !== 'note' ? (
-              <Checkbox.Root
-                checked={item.type === 'action_done'}
-                onCheckedChange={() => !isReadOnly && onToggle(item.index)}
-                disabled={isReadOnly}
-                size="sm"
-              >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control>
-                  <Checkbox.Indicator />
-                </Checkbox.Control>
-              </Checkbox.Root>
-            ) : (
-              <Text color="gray.400" fontSize="xs" w="18px" textAlign="center">*</Text>
-            )}
-            <Text
-              fontSize={isFocused ? 'sm' : 'xs'}
-              color={isFocused ? (item.type === 'action_done' ? 'gray.500' : 'gray.800') : 'gray.400'}
-              textDecoration={item.type === 'action_done' ? 'line-through' : 'none'}
-              flex="1"
-              lineClamp={isFocused ? undefined : 1}
+        {items.map((item) => {
+          const promoted = promotedItems.find(p =>
+            p.task_title?.toLowerCase().trim() === item.text.toLowerCase().trim()
+          );
+          const isAction = item.type === 'action_open' || item.type === 'action_done';
+
+          return (
+            <HStack
+              key={item.index}
+              py={isFocused ? 1 : 0.5}
+              pl={item.depth * 4}
+              opacity={item.type === 'action_done' ? 0.5 : 1}
+              _hover={isFocused && !isReadOnly ? { bg: 'gray.50' } : undefined}
+              role="group"
             >
-              {item.text}
-            </Text>
-            {item.due && isFocused && (
-              <Badge size="xs" colorScheme="purple">{item.due}</Badge>
-            )}
-          </HStack>
-        ))}
+              {item.type !== 'note' ? (
+                <Checkbox.Root
+                  checked={item.type === 'action_done'}
+                  onCheckedChange={() => !isReadOnly && onToggle(item.index)}
+                  disabled={isReadOnly}
+                  size="sm"
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                </Checkbox.Root>
+              ) : (
+                <Text color="gray.400" fontSize="xs" w="18px" textAlign="center">*</Text>
+              )}
+              <Text
+                fontSize={isFocused ? 'sm' : 'xs'}
+                color={isFocused ? (item.type === 'action_done' ? 'gray.500' : 'gray.800') : 'gray.400'}
+                textDecoration={item.type === 'action_done' ? 'line-through' : 'none'}
+                flex="1"
+                lineClamp={isFocused ? undefined : 1}
+              >
+                {item.text}
+              </Text>
+              {item.due && isFocused && (
+                <Badge size="xs" colorScheme="purple">{item.due}</Badge>
+              )}
+              {/* Promoted indicator */}
+              {promoted && isFocused && (
+                <Badge size="xs" colorScheme="green" title={`In: ${promoted.project_title}`}>
+                  task
+                </Badge>
+              )}
+              {/* Promote button - for action items that aren't promoted */}
+              {isAction && !promoted && onPromote && (
+                <IconButton
+                  aria-label="Promote to project"
+                  size="xs"
+                  variant="ghost"
+                  color="gray.400"
+                  _hover={{ color: 'blue.500', bg: 'blue.50' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPromote(item.index, item.text);
+                  }}
+                >
+                  <IconArrowUpRight size={isFocused ? 14 : 12} />
+                </IconButton>
+              )}
+            </HStack>
+          );
+        })}
       </VStack>
     </Box>
   );

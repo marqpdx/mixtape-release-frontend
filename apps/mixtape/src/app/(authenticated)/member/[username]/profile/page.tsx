@@ -9,9 +9,11 @@ import {
   Text,
   Grid,
   VStack,
+  HStack,
   Spinner,
   Button,
   Container,
+  Link,
 } from "@chakra-ui/react";
 import {
   IconUser,
@@ -19,7 +21,9 @@ import {
   IconCalendar,
   IconQuote,
   IconAt,
+  IconBooks,
 } from "@tabler/icons-react";
+import NextLink from "next/link";
 import { useMemberProfile } from "@hooks/member/useMemberProfile";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Divider } from "@components/common/Divider";
@@ -190,6 +194,20 @@ const ProfileShowPage = () => {
                 </Text>
               </Box>
             )}
+
+            <Box>
+              <Text fontWeight="medium" color="gray.600" fontSize="sm" mb={2}>
+                Library
+              </Text>
+              <Button as={NextLink}  variant="outline">
+                <HStack gap={2}>
+                  <IconBooks size={16} />
+                  <Link href={`/@${member.username}/library`}>
+                    <Text>View Library</Text>
+                  </Link>
+                </HStack>
+              </Button>
+            </Box>
 
             {/* Back Button */}
             <Button
