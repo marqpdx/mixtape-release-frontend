@@ -33,7 +33,7 @@ export default function ProfileHeaderWrapper({
 
   return (
     <Box w="100%" borderBottom="1px solid" borderColor={bannerBorder}>
-      <Box
+      <Box className="bobBox"
         w="100%"
         h={{ base: "170px", md: "230px" }}
         bg={bannerImageUrl ? undefined : bannerFallback}
@@ -50,7 +50,7 @@ export default function ProfileHeaderWrapper({
         position="relative"
         pb={{ base: 4, md: 6 }}
       >
-        <Flex
+        <Flex className="bobFlex"
           align="flex-end"
           gap={4}
           direction={{ base: "column", md: "row" }}

@@ -1,4 +1,4 @@
-// src/lib/group/groupApi.ts
+// packages/api/src/lib/group/groupApi.ts
 
 import {
   Group,
@@ -107,6 +107,18 @@ export async function fetchGroups(options: FetchGroupsOptions = {}): Promise<Gro
 export async function fetchUserGroups(): Promise<Group[]> {
   const response = await axiosInstance.get<GroupsListResponse>('/api/groups/my');
   return unwrapListResponse<Group>(response.data);
+}
+
+/**
+ * Fetch the default group (from server settings)
+ */
+export async function fetchDefaultGroup(): Promise<Group | null> {
+  try {
+    const response = await axiosInstance.get<Group>('/api/groups/default');
+    return response.data;
+  } catch (error) {
+    return null;
+  }
 }
 
 /**

@@ -2,11 +2,10 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { Text } from "@chakra-ui/react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { useMemberProfile } from "@hooks/member/useMemberProfile";
 
 import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayout";
@@ -21,17 +20,10 @@ export default function MemberHubPage() {
   const { user: identity, isLoading: identityLoading } = useAuth();
   const username = usernameParam || identity?.username;
   const { member, isLoading: memberLoading } = useMemberProfile(username);
-  const { groups: userGroups = [], isLoading: groupsLoading } = useUserGroups();
+  const groupsLoading = false;
 
   const isOwner = Boolean(identity && member && identity.username === member.username);
-  const defaultGroupName = useMemo(
-    () => (userGroups[0]?.title ? userGroups[0].title : "Crossroads"),
-    [userGroups]
-  );
-
-  const headerTitle = isOwner
-    ? `My ${defaultGroupName}`
-    : member?.display_name || member?.username || "Member";
+  const headerTitle = member?.display_name || member?.username || "Member";
   const headerSubtitle = member?.username ? `@${member.username}` : undefined;
 
   const WorkAreaWrapper = useCallback(

@@ -1,4 +1,4 @@
-// src/hooks/groups/useGroups.ts
+// packages/api/src/hooks/groups/useGroups.ts
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
@@ -107,6 +107,30 @@ export const useUserGroups = (): UseGroupsResult => {
 
   return {
     groups,
+    isLoading,
+    error: error as Error | null,
+    refetch
+  };
+};
+
+/**
+ * Hook to fetch the default group from server settings
+ */
+export const useDefaultGroup = () => {
+  const {
+    data: group = null,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: groupsQueryKeys.detail('default'),
+    queryFn: () => groupApi.fetchDefaultGroup(),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    group,
     isLoading,
     error: error as Error | null,
     refetch

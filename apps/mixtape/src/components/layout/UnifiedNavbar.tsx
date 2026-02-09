@@ -30,6 +30,7 @@ import { usePathname } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
+import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
 import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconBell } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
@@ -96,6 +97,7 @@ export default function UnifiedNavbar({
   const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
   const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
   // const { groups: userGroups = [] } = useUserGroups();
+  const { group: defaultGroup } = useDefaultGroup();
   const { open, onOpen, onClose } = useDisclosure();
   const {
     open: notificationsOpen,
@@ -106,6 +108,9 @@ export default function UnifiedNavbar({
   const homeHref =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (typeof window !== "undefined" ? window.location.origin : "/");
+  const myCrossroadsLabel = defaultGroup?.title
+    ? `My ${defaultGroup.title}`
+    : "My Crossroads";
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
   const { summary } = useNotificationSummary({ enabled: Boolean(identity) });
@@ -154,6 +159,7 @@ export default function UnifiedNavbar({
     return true;
   }).map(item => ({
     ...item,
+    label: item.key === "my-crossroads" ? myCrossroadsLabel : item.label,
     href: resolveHref(item.href),
   }));
 
