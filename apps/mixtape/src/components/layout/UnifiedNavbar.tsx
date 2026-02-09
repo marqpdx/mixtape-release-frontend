@@ -66,7 +66,7 @@ const NAV_ITEMS: NavItem[] = [
   // Authenticated section (members + admins)
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", memberOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Community" },
-  { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "dashboard", label: "_dbrd", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "workbench", label: "Workbench", href: "/member/{username}/workbench", section: "authenticated", memberOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
   // { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
@@ -288,7 +288,7 @@ export default function UnifiedNavbar({
           </HStack>
 
           {/* Right: Theme Selector + Auth Actions */}
-          <HStack gap={extraCompact ? 1 : 3}>
+          <HStack className="zippy" gap={extraCompact ? 1 : 3}>
             {identity && (
               <Button
                 variant="ghost"

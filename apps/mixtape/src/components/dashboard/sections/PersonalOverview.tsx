@@ -16,11 +16,11 @@ import {
   Button,
   Progress,
   GridItem,
-  Link,
 } from "@chakra-ui/react";
 // import { UserIdentity } from "@components/auth/interfaces";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconBell, IconEdit, IconMail, IconNote, IconUsers } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 // import { Button } from "@theme/recipes/button.recipe";
 
 interface ToDoItem {
@@ -52,6 +52,7 @@ export default function PersonalOverview({
   isSteward,
   setActiveSection,
 }: PersonalOverviewProps) {
+  const router = useRouter();
   const incompleteTodos = todos.filter(todo => !todo.is_completed);
   const completedTodos = todos.filter(todo => todo.is_completed);
   const completionRate = todos.length > 0 ? (completedTodos.length / todos.length) * 100 : 0;
@@ -89,20 +90,7 @@ export default function PersonalOverview({
         <Heading size="xl" mb={2}>
           {getGreeting()}, {identity.first_name || identity.username}! 👋
         </Heading>
-        <HStack>
-          <Button
-            size="sm"
-            onClick={() => setActiveSection?.("write")}
-          >
-            <HStack gap={2}>
-              <IconNote size={16} />
-              <Text>Write Now</Text>
-            </HStack>
-          </Button>
-        </HStack>
       </Box>
-
-
 
   {/* Split Profile + Activity - 50/50 */}
   <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
@@ -147,12 +135,13 @@ export default function PersonalOverview({
               position="absolute"
               bottom={0}
               right={0}
+              onClick={() =>
+                setActiveSection?.("edit-profile") || router.push(`/member/${identity.username}`)
+              }
             >
               <HStack>
-                <Link href={`/app/member/${identity.username}/edit`}>
-                  <IconEdit size={16} />
-                  <Text>Edit Profile</Text>
-                </Link>
+                <IconEdit size={16} />
+                <Text>Edit Profile</Text>
               </HStack>
             </Button>
           </Card.Body>
@@ -245,7 +234,12 @@ export default function PersonalOverview({
                   </Badge>
                 </HStack>
               </VStack>
-              <Button size="sm">
+              <Button
+                size="sm"
+                onClick={() =>
+                  setActiveSection?.("edit-profile") || router.push(`/member/${identity.username}`)
+                }
+              >
                 Edit Profile
               </Button>
             </HStack>

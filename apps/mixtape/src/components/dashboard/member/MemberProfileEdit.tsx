@@ -179,7 +179,7 @@ export default function MemberProfileEdit() {
     <Box
       as="form"
       onSubmit={handleSubmit(onSubmit)}
-      maxW="800px"
+      maxW="1000px"
       mx="auto"
     >
       <VStack gap={6} align="stretch">
@@ -314,7 +314,7 @@ export default function MemberProfileEdit() {
               )}
             </Field.Root>
 
-            <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }}>
+            <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
               <ImageUploadField
                 imageType="profile"
                 label="Profile Image"
@@ -322,7 +322,7 @@ export default function MemberProfileEdit() {
                 watch={watch}
                 register={register}
                 errors={errors}
-                imageUrl={previewUrls.profile || member.profile_image_url || undefined}
+                imageUrl={previewUrls.profile || member.profile_image_url || member.avatar_url || undefined}
                 fieldName="profile_image"
                 doHandleImageChange={(event) => handleImageChange(event, "profile")}
               />
@@ -343,7 +343,7 @@ export default function MemberProfileEdit() {
               <Field.Label>
                 Bio
               </Field.Label>
-              <Box border="1px solid" borderColor={cardBorder} borderRadius="md" p={3}>
+              <Box border="1px solid" borderColor={cardBorder} borderRadius="md" p={3} w="100%">
                 <TipTapEditor
                   initialContent={bioJson || { type: "doc", content: [] }}
                   onContentChange={(content) => setValue("bio_json", content)}

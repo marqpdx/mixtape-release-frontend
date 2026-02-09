@@ -17,7 +17,8 @@ import GroupsTable from "@components/groups/GroupsTable";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import MessageCenter from "../sections/MessageCenter";
 import GroupCreateWorkArea from "@/components/groups/create/GroupCreateWorkArea";
-import MemberProfileEdit from "./MemberProfileEdit";
+import MemberProfileEditWorkArea from "./MemberProfileEditWorkArea";
+import MemberProfileViewWorkArea from "./MemberProfileViewWorkArea";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
@@ -103,7 +104,15 @@ export default function MemberWorkArea({
   if (section === "profile") {
     return (
       <WorkAreaWrapper>
-        <MemberProfileEdit />
+        <MemberProfileViewWorkArea />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "edit-profile") {
+    return (
+      <WorkAreaWrapper>
+        <MemberProfileEditWorkArea />
       </WorkAreaWrapper>
     );
   }

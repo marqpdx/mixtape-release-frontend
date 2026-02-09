@@ -30,6 +30,15 @@ export const MEMBER_HUB_MENU_ITEMS: MenuItem[] = [
       { key: "todos", label: "ToDos", hidden: false },
     ],
   },
+  {
+    key: "settings",
+    label: "Setings",
+    icon: "🧰",
+    subItems: [
+      { key: "edit-profile", label: "Edit Profile", hidden: false },
+      // { key: "todos", label: "ToDos", hidden: false },
+    ],
+  },
 ];
 
 export const MEMBER_HUB_CONFIG = {

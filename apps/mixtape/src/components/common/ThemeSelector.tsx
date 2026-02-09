@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { themes as baseThemes } from "@/theme/themes";
 import { useGroupThemeSettings } from "@mixtape/api/hooks/appearance";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Badge, HStack } from "@chakra-ui/react";
+import { HStack } from "@chakra-ui/react";
 
 const LAST_GROUP_SLUG_KEY = "mixtape-last-group-slug";
 
@@ -57,7 +57,7 @@ export function ThemeSelector() {
   const groupSlug = React.useMemo(() => getGroupSlugFromPath(pathname), [pathname]);
   const [storedGroupSlug, setStoredGroupSlug] = React.useState<string | null>(null);
   const themeContext = useTheme();
-  const usingStoredGroup = !groupSlug && !!storedGroupSlug;
+  // const usingStoredGroup = !groupSlug && !!storedGroupSlug;
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -93,11 +93,6 @@ export function ThemeSelector() {
   return (
     <HStack gap={2} align="center">
       <BaseThemeSelector />
-      {usingStoredGroup && (
-        <Badge size="sm" variant="subtle">
-          Last group palette
-        </Badge>
-      )}
     </HStack>
   );
 }

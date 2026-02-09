@@ -11,7 +11,7 @@ interface AuthContextType {
   user: UserIdentity | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<UserIdentity>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -84,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       console.log('[AuthContext] User state updated');
       // Note: Redirect is handled by the calling component
+      return userData;
     } catch (error) {
       console.error('[AuthContext] Login failed:', error);
       throw error;

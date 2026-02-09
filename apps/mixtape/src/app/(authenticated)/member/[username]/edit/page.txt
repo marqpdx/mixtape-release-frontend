@@ -1,0 +1,35 @@
+// apps/mixtape/src/app/(authenticated)/member/[username]/edit/page.tsx
+
+"use client";
+
+import { useEffect } from "react";
+import { Text } from "@chakra-ui/react";
+import { useParams, useRouter } from "next/navigation";
+import { useMyMemberProfile } from "@hooks/member/useMemberProfile";
+import { MEMBER_HUB_CONFIG } from "@components/dashboard/member/memberHubConfig";
+
+export default function MemberEditPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { member, isLoading } = useMyMemberProfile();
+  const usernameParam = params?.username as string | undefined;
+  const username = usernameParam || member?.username;
+
+  useEffect(() => {
+    if (!username) return;
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(MEMBER_HUB_CONFIG.localStorageKey, "edit-profile");
+      } catch (error) {
+        console.warn("Failed to persist member hub section:", error);
+      }
+    }
+    router.replace(`/app/member/${username}`);
+  }, [router, username]);
+
+  if (isLoading || !username) {
+    return <Text>Loading profile...</Text>;
+  }
+
+  return <Text>Redirecting to profile editor...</Text>;
+}

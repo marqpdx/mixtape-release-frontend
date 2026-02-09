@@ -1,4 +1,4 @@
-// src/lib/auth/AuthContext.tsx
+// apps/crossroads/src/lib/auth/AuthContext.tsx
 
 'use client';
 

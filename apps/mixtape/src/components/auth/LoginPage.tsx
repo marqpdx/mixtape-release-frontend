@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login({
+      const userData = await login({
         identifier: formData.identifier,
         password: formData.password,
       });
@@ -55,10 +55,8 @@ const LoginPage: React.FC = () => {
         description: "Welcome back!",
       });
 
-      // Get redirect URL from query params, default to /dashboard
-      // const redirectTo = searchParams.get('redirect') || '/dashboard';
-
-      const redirectTo = safeRedirect(searchParams.get("redirect"));
+      const fallback = `/member/${userData.username}`;
+      const redirectTo = safeRedirect(searchParams.get("redirect"), fallback);
 
       console.log("LoginPage redirecting to:", redirectTo);
 

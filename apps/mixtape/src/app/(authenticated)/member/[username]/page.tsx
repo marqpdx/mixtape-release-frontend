@@ -12,6 +12,7 @@ import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayo
 import MemberWorkArea from "@components/dashboard/member/MemberWorkArea";
 import { MEMBER_HUB_CONFIG } from "@components/dashboard/member/memberHubConfig";
 import ProfileHeaderWrapper from "@components/profiles/ProfileHeaderWrapper";
+import MemberLanding from "@components/members/layout/MemberLanding";
 
 export default function MemberHubPage() {
   const params = useParams();
@@ -52,6 +53,10 @@ export default function MemberHubPage() {
 
   if (!identity) {
     return <Text>Authentication required...</Text>;
+  }
+
+  if (member && !isOwner) {
+    return <MemberLanding member={member} />;
   }
 
   return (
