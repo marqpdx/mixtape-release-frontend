@@ -1,4 +1,4 @@
-// src/components/groups/GroupHeaderWrapper.tsx - Enhanced
+// apps/mixtape/src/components/groups/GroupHeaderWrapper.tsx - Enhanced
 
 "use client";
 

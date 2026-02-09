@@ -1,6 +1,6 @@
 // packages/api/src/clients/admin/adminApi.ts
 
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export interface AdminTodoItem {
   id: number;

@@ -5,7 +5,7 @@
  */
 
 import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
-import { axiosInstance } from "../../lib/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "../../lib/utils";
 
 

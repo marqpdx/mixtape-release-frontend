@@ -9,7 +9,7 @@ import {
   PersonalPuddlejump,
   PuddlejumpItem,
 } from '@mixtape/core/types/puddlejump';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 // ============================================================================
 // PERSONAL PUDDLEJUMP

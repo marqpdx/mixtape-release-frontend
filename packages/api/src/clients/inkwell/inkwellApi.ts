@@ -8,7 +8,7 @@
  * - axiosInstance for regular non-streaming endpoints (summarize, etc.)
  */
 
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type EditStyle = "polish" | "tighten" | "expand";
 export type EditIntensity = "light" | "medium" | "strong";

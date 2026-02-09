@@ -26,7 +26,7 @@ import {
   TranscriptionListItem,
   TranscriptionListResponse,
 } from '@mixtape/core/types/concordTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 // ============================================================================
 // RECORDING API FUNCTIONS

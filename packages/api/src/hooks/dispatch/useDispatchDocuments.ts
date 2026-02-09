@@ -2,7 +2,7 @@
 // React Query hook for fetching dispatch documents
 
 import { useQuery } from '@tanstack/react-query';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { DispatchDocument } from '@mixtape/core/types/dispatchTypes';
 
 interface UseDispatchDocumentsOptions {

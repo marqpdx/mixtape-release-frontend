@@ -12,7 +12,7 @@ import {
   CreateConversationRequest,
   CreateMessageRequest,
 } from '@mixtape/core/types/chatTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from '../../lib/utils';
 
 // ============================================================================

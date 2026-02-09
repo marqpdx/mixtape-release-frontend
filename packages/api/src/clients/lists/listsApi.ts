@@ -5,7 +5,7 @@
  * Handles CRUD operations for Lists (lightweight capture surface)
  */
 
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { AxiosError } from 'axios';
 
 // ============================================================================

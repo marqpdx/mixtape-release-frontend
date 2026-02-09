@@ -11,7 +11,7 @@ import {
   SourceFile,
   EmbeddingModel,
 } from '@mixtape/core/types/stackroomTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
 // ============================================================================
 // RETRIEVAL API FUNCTIONS
@@ -105,7 +105,7 @@ export async function createLibrary(data: {
     scope: data.scope,
     visibility: data.visibility,
   };
-  const response = await axiosInstance.post<Library>('/api/stackroom/libraries/', payload);
+  const response = await axiosInstance.post<Library>('/api/stackroom/libraries', payload);
   return response.data;
 }
 
@@ -316,7 +316,7 @@ export async function uploadToCollection(
 
   try {
     const response = await axiosInstance.post<{ source_file_id: string; filename: string; status: string }>(
-      `/api/collections/${collectionId}/upload/`,
+      `/api/collections/${collectionId}/upload`,
       formData,
       {
         headers: {

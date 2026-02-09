@@ -3,7 +3,7 @@
 // import { axiosInstance } from "src/lib/axiosInstance";
 
 // import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type SponsorType = 'group' | 'member';
 export type ImageRole = 'profile_image' | 'background_image' | 'avatar';

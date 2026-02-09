@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import axios from "axios";
-import { axiosInstance } from "../../lib/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 type InvitationStatusPollOptions = {
   groupId: string | number;

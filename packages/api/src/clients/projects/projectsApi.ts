@@ -1,7 +1,7 @@
 // packages/api/src/clients/projects/projectsApi.ts
 
 import { AxiosError } from 'axios';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type ProjectMode = 'list' | 'project';
 

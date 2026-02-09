@@ -17,7 +17,7 @@ import {
   CollectionTextSearchRequest,
   CollectionTextSearchResponse,
 } from '@mixtape/core/types/collectionTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 // ============================================================================
 // COLLECTION CRUD

@@ -7,7 +7,7 @@
  * Updated for publishing workflow and new model structure
  */
 
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { AxiosError } from 'axios';
 
 export interface DecoratorAssignment {

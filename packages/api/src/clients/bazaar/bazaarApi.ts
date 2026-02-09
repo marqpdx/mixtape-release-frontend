@@ -30,7 +30,7 @@ import {
   PaymentIntentStatus,
   RefundResponse,
 } from '@mixtape/core/types/bazaarTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from '../../lib/utils';
 
 // ============================================================================

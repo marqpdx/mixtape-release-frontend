@@ -9,7 +9,7 @@
 
 // import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { MemberProfile, MemberProfileUpdate } from '@mixtape/core/types/memberTypes';
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 /**
  * Fetch all members (public profiles)

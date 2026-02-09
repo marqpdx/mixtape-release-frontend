@@ -1,6 +1,6 @@
 // src/lib/threadworks/threadworksApi.ts
 
-import { axiosInstance } from '../../lib/axiosInstance';
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import {
   Forum,
   Discussion,

@@ -1,6 +1,6 @@
 // packages/api/src/clients/ops/opsApi.ts
 
-import { axiosInstance } from "../../lib/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export interface OpsSummaryTile {
   title: string;

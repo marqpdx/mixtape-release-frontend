@@ -1,6 +1,6 @@
 // src/clients/appearance/appearanceApi.ts
 
-import { axiosInstance } from "../../lib/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import type { ThemeDefinition } from "@mixtape/core";
 
 export interface GroupThemeSettingsResponse {
