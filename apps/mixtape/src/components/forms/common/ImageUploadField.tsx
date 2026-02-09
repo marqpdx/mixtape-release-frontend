@@ -28,6 +28,7 @@ interface ImageUploadFieldProps<T extends FieldValues = FieldValues> extends Def
   label?: string;
   imageUrl?: string; // Presigned URL for display (computed by backend)
   doHandleImageChange: (event: React.ChangeEvent<HTMLInputElement>, imgType: string) => Promise<void>;
+  fieldName?: Path<T>;
 }
 
 // Make the component generic with more flexible constraints
@@ -39,10 +40,11 @@ export const ImageUploadField = <T extends FieldValues = FieldValues>({
   label,
   imageType,
   imageUrl,
-  doHandleImageChange
+  doHandleImageChange,
+  fieldName
 }: ImageUploadFieldProps<T>) => {
   void watch;
-  const fieldName = `${imageType}_image_path` as Path<T>;
+  const resolvedFieldName = fieldName ?? (`${imageType}_image_path` as Path<T>);
   const capLabel = capitalizeFirstLetter(imageType);
   const [fileName, setFileName] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState(false);
@@ -134,7 +136,7 @@ export const ImageUploadField = <T extends FieldValues = FieldValues>({
             </VStack>
           )}
 
-          <input type="hidden" {...register(fieldName, { required: false })} />
+          <input type="hidden" {...register(resolvedFieldName, { required: false })} />
         </Box>
 
         <VStack align="flex-start" gap={2}>
@@ -187,9 +189,9 @@ export const ImageUploadField = <T extends FieldValues = FieldValues>({
         {fileName || "No file selected."}
       </Text>
 
-      {errors[fieldName] && (
+      {errors[resolvedFieldName] && (
         <Text color="red.500" mt={2}>
-          {`${errors[fieldName]?.message}`}
+          {`${errors[resolvedFieldName]?.message}`}
         </Text>
       )}
     </Box>

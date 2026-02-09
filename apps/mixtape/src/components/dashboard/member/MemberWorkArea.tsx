@@ -24,6 +24,7 @@ import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
+import { ListsTab } from "@/components/workbench/ListsTab";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 import { useRouter } from "next/navigation";
@@ -174,6 +175,28 @@ export default function MemberWorkArea({
           }}
           setActiveSection={setActiveSection}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Tools sections
+  if (section === "lists") {
+    return (
+      <WorkAreaWrapper>
+        <ListsTab />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "todos") {
+    return (
+      <WorkAreaWrapper>
+        <Box>
+          <Heading size="md" mb={2}>
+            ToDos
+          </Heading>
+          <Text color="gray.500">Personal ToDos are coming soon.</Text>
+        </Box>
       </WorkAreaWrapper>
     );
   }

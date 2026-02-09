@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface MenuItem {
   key: string;
   label: string;
@@ -17,6 +19,7 @@ export interface WorkAreaProps {
 
 export interface DashboardLayoutProps {
   title: string;
+  header?: ReactNode;
   menuItems: MenuItem[];
   defaultSection: string;
   defaultOpenParentMap?: Record<string, string>;

@@ -142,13 +142,18 @@ export default function PersonalOverview({
                 </VStack>
               </VStack>
             </HStack>
-            <Button size="xs" position="absolute" bottom={0} right={0}>
-              <Link href={`/member/${identity.id}/profile/edit`}>
-                <HStack>
+            <Button
+              size="xs"
+              position="absolute"
+              bottom={0}
+              right={0}
+            >
+              <HStack>
+                <Link href={`/app/member/${identity.username}/edit`}>
                   <IconEdit size={16} />
                   <Text>Edit Profile</Text>
-                </HStack>
-              </Link>
+                </Link>
+              </HStack>
             </Button>
           </Card.Body>
         </Card.Root>

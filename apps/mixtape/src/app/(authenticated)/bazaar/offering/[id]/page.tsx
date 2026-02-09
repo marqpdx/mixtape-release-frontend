@@ -75,7 +75,7 @@ export default function OfferingDetailPage({ params }: OfferingDetailPageProps) 
       <Container maxW="container.lg" py={8}>
         <Skeleton height="24px" width="200px" mb={8} />
         <Skeleton height="48px" width="70%" mb={4} />
-        <SkeletonText noOfLines={4} gap={4} mb={8} />
+        <SkeletonText lineClamp={4} gap={4} mb={8} />
         <Skeleton height="100px" />
       </Container>
     );

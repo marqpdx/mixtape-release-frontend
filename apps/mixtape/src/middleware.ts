@@ -39,6 +39,18 @@ function sanitizeUrl(url: URL): string {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Strip sensitive query params (never allow them to persist in the URL)
+  const urlWithSensitiveParams = ["password", "identifier", "secret", "access_token"].some(
+    (param) => request.nextUrl.searchParams.has(param)
+  );
+  if (urlWithSensitiveParams) {
+    const cleanedUrl = new URL(request.nextUrl);
+    ["password", "identifier", "secret", "access_token"].forEach((param) =>
+      cleanedUrl.searchParams.delete(param)
+    );
+    return NextResponse.redirect(cleanedUrl);
+  }
+
   // Security: Block requests with sensitive data in query params
   // Credentials should NEVER be in URLs
   if (request.nextUrl.searchParams.has('password') ||

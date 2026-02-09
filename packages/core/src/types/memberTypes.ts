@@ -28,6 +28,12 @@ export interface MemberProfile {
   display_name: string;
   quick_intro: string;
   avatar_url: string;
+  profile_image: string;
+  background_image: string;
+  profile_image_url?: string | null;
+  background_image_url?: string | null;
+  bio_json: Record<string, unknown>;
+  bio_markdown: string;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +46,10 @@ export interface MemberProfileUpdate {
   display_name?: string;
   quick_intro?: string;
   avatar_url?: string;
+  profile_image?: string;
+  background_image?: string;
+  bio_json?: Record<string, unknown>;
+  bio_markdown?: string;
 }
 
 /**

@@ -34,7 +34,7 @@ export default function WritingPublicPage() {
         <Container maxW="3xl">
           <VStack gap={4} align="stretch">
             <Skeleton h="10" />
-            <SkeletonText noOfLines={5} />
+            <SkeletonText lineClamp={5} />
           </VStack>
         </Container>
       </Box>

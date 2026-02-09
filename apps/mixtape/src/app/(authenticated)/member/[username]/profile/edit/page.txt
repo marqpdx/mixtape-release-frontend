@@ -1,4 +1,4 @@
-// /src/app/(protected)/member/profiles/edit/[id]/page.tsx
+// /apps/mixtape/src/app/(protected)/member/profiles/edit/[id]/page.tsx
 
 "use client";
 

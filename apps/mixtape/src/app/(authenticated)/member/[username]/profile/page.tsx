@@ -124,8 +124,8 @@ const ProfileShowPage = () => {
       <Box className="profile-show-page" w="100%" mx="auto">
         {/* Hero Banner with avatar */}
         <HeroImageBanner
-          backgroundImage={undefined} // Could add background_url to MemberProfile later
-          profileImage={member.avatar_url || undefined}
+          backgroundImage={member.background_image_url || undefined}
+          profileImage={member.profile_image_url || member.avatar_url || undefined}
         />
 
         <Box

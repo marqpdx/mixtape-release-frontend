@@ -34,6 +34,7 @@ import { openParentForSection } from "@components/groups/navigationUtils";
 
 export default function DashboardLayout({
   title,
+  header,
   menuItems,
   defaultSection,
   defaultOpenParentMap = {},
@@ -163,6 +164,7 @@ export default function DashboardLayout({
 
   return (
     <Box className="dashboard-layout" bg="theme.bg" minH="100vh">
+      {header && <Box>{header}</Box>}
       {isMobile ? (
         <MobileTabs
           activeSection={activeSection}
@@ -171,6 +173,7 @@ export default function DashboardLayout({
           overflowTabs={overflowTabs}
           WorkAreaComponent={WorkAreaComponent}
           workAreaProps={workAreaProps}
+          header={header}
         />
       ) : (
         <Flex h="100vh">
@@ -334,6 +337,7 @@ function MobileTabs({
   overflowTabs,
   WorkAreaComponent,
   workAreaProps,
+  header,
 }: {
   activeSection: string;
   setActiveSection: (section: string) => void;
@@ -341,6 +345,7 @@ function MobileTabs({
   overflowTabs: MenuItem[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
   workAreaProps: Record<string, unknown>;
+  header?: React.ReactNode;
 }) {
   const { open, onOpen, onClose } = useDisclosure();
 
@@ -366,6 +371,7 @@ function MobileTabs({
 
   return (
     <Box className="dashboard-layout">
+      {header && <Box mb={4}>{header}</Box>}
       <Tabs.Root
         value={activeTopLevelKey || activeSection}
         onValueChange={(details) => {

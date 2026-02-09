@@ -63,6 +63,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
+  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", memberOnly: true, shortLabel: "My" },
+  { key: "our-community", label: "Community", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "workbench", label: "Workbench", href: "/member/{username}/workbench", section: "authenticated", memberOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
@@ -93,6 +95,7 @@ export default function UnifiedNavbar({
   const pathname = usePathname();
   const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
   const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
+  // const { groups: userGroups = [] } = useUserGroups();
   const { open, onOpen, onClose } = useDisclosure();
   const {
     open: notificationsOpen,

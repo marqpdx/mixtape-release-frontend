@@ -201,7 +201,7 @@ export default function BazaarCatalogPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Box key={i} p={4} borderWidth="1px" borderRadius="lg">
               <Skeleton height="150px" mb={4} />
-              <SkeletonText noOfLines={3} gap={2} />
+              <SkeletonText lineClamp={3} gap={2} />
             </Box>
           ))}
         </SimpleGrid>

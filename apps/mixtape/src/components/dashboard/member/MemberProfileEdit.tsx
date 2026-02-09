@@ -25,18 +25,25 @@ import { toaster } from "@mixtape/core/lib/toaster";
 // import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
+import { ImageUploadField } from "@components/forms/common/ImageUploadField";
+import { useImageUpload } from "@hooks/useAssets";
+import TipTapEditor from "@components/editor/TipTapEditor";
+import type { JSONContent } from "@tiptap/react";
 
 interface ProfileFormData {
   display_name: string;
   quick_intro: string;
   avatar_url: string;
+  profile_image: string;
+  background_image: string;
+  bio_json: JSONContent;
 }
 
 /**
  * MemberProfileEdit Component
  *
  * Allows the current user to edit their member profile.
- * Editable fields: display_name, quick_intro, avatar_url
+ * Editable fields: display_name, quick_intro, avatar_url, profile_image, background_image, bio_json
  */
 export default function MemberProfileEdit() {
   const { member, isLoading, error } = useMyMemberProfile();
@@ -57,12 +64,15 @@ export default function MemberProfileEdit() {
       display_name: "",
       quick_intro: "",
       avatar_url: "",
+      profile_image: "",
+      background_image: "",
+      bio_json: { type: "doc", content: [] },
     },
   });
 
-  // Get mutation hook (only when we have a slug)
-  const slug = member?.slug || "";
-  const { update, isUpdating, error: mutationError } = useMemberProfileMutation(slug);
+  // Get mutation hook (only when we have a username)
+  const username = member?.username || "";
+  const { update, isUpdating, error: mutationError } = useMemberProfileMutation(username);
 
   // Initialize form with member data
   useEffect(() => {
@@ -71,11 +81,14 @@ export default function MemberProfileEdit() {
     setValue("display_name", member.display_name || "");
     setValue("quick_intro", member.quick_intro || "");
     setValue("avatar_url", member.avatar_url || "");
+    setValue("profile_image", member.profile_image || "");
+    setValue("background_image", member.background_image || "");
+    setValue("bio_json", (member.bio_json as JSONContent) || { type: "doc", content: [] });
   }, [member, setValue]);
 
   const onSubmit: SubmitHandler<ProfileFormData> = async (values) => {
-    if (!member?.slug) {
-      setSaveError("Unable to update profile: missing profile slug");
+    if (!member?.username) {
+      setSaveError("Unable to update profile: missing username");
       return;
     }
 
@@ -85,6 +98,9 @@ export default function MemberProfileEdit() {
         display_name: values.display_name || undefined,
         quick_intro: values.quick_intro || undefined,
         avatar_url: values.avatar_url || undefined,
+        profile_image: values.profile_image || undefined,
+        background_image: values.background_image || undefined,
+        bio_json: values.bio_json || undefined,
       };
 
       await update(updateData);
@@ -107,9 +123,23 @@ export default function MemberProfileEdit() {
     }
   };
 
-  // Watch avatar URL for preview
+  // Watch avatar URL for preview (legacy)
   const avatarUrl = watch("avatar_url");
   const displayName = watch("display_name");
+  const bioJson = watch("bio_json") as JSONContent | undefined;
+
+  const { handleImageChange, pending, previewUrls } = useImageUpload<ProfileFormData>({
+    sponsorType: "member",
+    sponsorId: member?.id || "",
+    setValue,
+    pathFieldNameMap: {
+      profile: "profile_image",
+      background: "background_image",
+    },
+  });
+
+  const avatarPreview =
+    previewUrls.profile || member?.profile_image_url || avatarUrl || undefined;
 
   // Loading state
   if (isLoading) {
@@ -181,7 +211,7 @@ export default function MemberProfileEdit() {
             {/* Avatar Preview */}
             <VStack gap={3}>
               <Avatar.Root size="2xl">
-                <Avatar.Image src={avatarUrl || undefined} />
+                <Avatar.Image src={avatarPreview} />
                 <Avatar.Fallback>
                   {displayName?.charAt(0) || member.username?.charAt(0) || "?"}
                 </Avatar.Fallback>
@@ -283,6 +313,43 @@ export default function MemberProfileEdit() {
                 <Field.ErrorText>{errors.quick_intro.message}</Field.ErrorText>
               )}
             </Field.Root>
+
+            <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }}>
+              <ImageUploadField
+                imageType="profile"
+                label="Profile Image"
+                pending={pending.profile}
+                watch={watch}
+                register={register}
+                errors={errors}
+                imageUrl={previewUrls.profile || member.profile_image_url || undefined}
+                fieldName="profile_image"
+                doHandleImageChange={(event) => handleImageChange(event, "profile")}
+              />
+              <ImageUploadField
+                imageType="background"
+                label="Background Image"
+                pending={pending.background}
+                watch={watch}
+                register={register}
+                errors={errors}
+                imageUrl={previewUrls.background || member.background_image_url || undefined}
+                fieldName="background_image"
+                doHandleImageChange={(event) => handleImageChange(event, "background")}
+              />
+            </HStack>
+
+            <Field.Root>
+              <Field.Label>
+                Bio
+              </Field.Label>
+              <Box border="1px solid" borderColor={cardBorder} borderRadius="md" p={3}>
+                <TipTapEditor
+                  initialContent={bioJson || { type: "doc", content: [] }}
+                  onContentChange={(content) => setValue("bio_json", content)}
+                />
+              </Box>
+            </Field.Root>
           </VStack>
         </Box>
 
@@ -304,6 +371,9 @@ export default function MemberProfileEdit() {
                 setValue("display_name", member.display_name || "");
                 setValue("quick_intro", member.quick_intro || "");
                 setValue("avatar_url", member.avatar_url || "");
+                setValue("profile_image", member.profile_image || "");
+                setValue("background_image", member.background_image || "");
+                setValue("bio_json", (member.bio_json as JSONContent) || { type: "doc", content: [] });
               }
             }}
           >

@@ -17,6 +17,7 @@ export interface UseImageUploadOptions<TFormData extends FieldValues = FieldValu
   sponsorType: SponsorType;
   sponsorId: string;
   setValue: UseFormSetValue<TFormData>;
+  pathFieldNameMap?: Partial<Record<ImageType, Path<TFormData>>>;
 }
 
 /**
@@ -42,6 +43,7 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
   sponsorType,
   sponsorId,
   setValue,
+  pathFieldNameMap,
 }: UseImageUploadOptions<TFormData>) {
   const [pending, setPending] = useState<Record<ImageType, boolean>>({
     profile: false,
@@ -62,7 +64,9 @@ export function useImageUpload<TFormData extends FieldValues = FieldValues>({
       const imageType = variables.role.replace('_image', '') as ImageType;
 
       // ONLY store the S3 path (key) - URLs are computed on backend
-      const pathFieldName = `${imageType}_image_path` as Path<TFormData>;
+      const pathFieldName =
+        pathFieldNameMap?.[imageType] ??
+        (`${imageType}_image_path` as Path<TFormData>);
       setValue(pathFieldName, data.path as any);
 
       // Note: We used to store data.url in `${imageType}_image` field,
