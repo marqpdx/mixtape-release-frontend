@@ -92,7 +92,7 @@ export default function MemberLibraryPage() {
 
   const primaryShelf = useMemo(() => {
     if (!libraries.length) return null;
-    return libraries.find((lib) => lib.title === "My Writing") ?? libraries[0];
+    return libraries.find((lib) => lib.slug === "my-writing" || lib.title === "My Writing") ?? libraries[0];
   }, [libraries]);
 
   const [editing, setEditing] = useState(false);
@@ -298,7 +298,7 @@ export default function MemberLibraryPage() {
                     </Text>
                     <Link
                       as={NextLink}
-                      href={`/@${member.username}/library/${library.slug}`}
+                      href={`/app/${member.username}/library/${library.slug === "my-writing" ? "writing" : library.slug}`}
                       color="green.600"
                       fontSize="sm"
                     >

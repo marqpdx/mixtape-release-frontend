@@ -86,6 +86,17 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Rewrite /{username}/library/... to /member/{username}/library/...
+  if (normalizedPath.startsWith("/") && normalizedPath.includes("/library")) {
+    const match = normalizedPath.match(/^\/([^/]+)(\/library(?:\/.*)?)$/);
+    if (match) {
+      const username = match[1];
+      const rest = match[2] || "";
+      const rewriteUrl = new URL(`${basePath}/member/${username}${rest}`, request.url);
+      return NextResponse.rewrite(rewriteUrl);
+    }
+  }
+
   // Check if this is a logout redirect (bypass cookie check due to timing)
   const isLogoutRedirect = request.nextUrl.searchParams.get('logout') === 'true';
 

@@ -47,9 +47,14 @@ export default function MemberShelfPage() {
     enabled: !!username,
   });
 
+  const resolvedShelfSlug = useMemo(
+    () => (shelfSlug === "writing" ? "my-writing" : shelfSlug),
+    [shelfSlug]
+  );
+
   const shelf = useMemo(
-    () => libraries.find((lib) => lib.slug === shelfSlug) || null,
-    [libraries, shelfSlug]
+    () => libraries.find((lib) => lib.slug === resolvedShelfSlug) || null,
+    [libraries, resolvedShelfSlug]
   );
 
   const { data: placements = [], isLoading: placementsLoading, refetch: refetchPlacements } = useQuery({
@@ -181,7 +186,7 @@ export default function MemberShelfPage() {
         <VStack align="stretch" gap={6}>
           <Link
             as={NextLink}
-            href={`/@${member.username}/library`}
+            href={`/app/${member.username}/library`}
             color="green.600"
             fontSize="sm"
           >

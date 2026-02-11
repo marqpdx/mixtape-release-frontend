@@ -97,7 +97,8 @@ export async function createLibrary(data: {
 }): Promise<Library> {
   // Map frontend naming to backend naming
   const payload = {
-    title: data.title,  // Backend model uses 'title', not 'name'
+    title: data.title,
+    name: data.title,
     summary: data.summary,
     body: data.body,
     tenant_type: data.sponsor_type,

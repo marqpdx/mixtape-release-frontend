@@ -5,6 +5,7 @@
  */
 
 import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import type { WritingPiece } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "../../lib/utils";
 
@@ -88,6 +89,18 @@ export async function fetchDrafts(
     },
   });
   return unwrapListResponse<WritingWorkingCopy>(response.data);
+}
+
+/**
+ * Fetch published pieces for the current author
+ */
+export async function fetchPublishedPieces(): Promise<WritingPiece[]> {
+  const response = await axiosInstance.get('/api/writing/pieces', {
+    params: {
+      status: 'published',
+    },
+  });
+  return unwrapListResponse<WritingPiece>(response.data);
 }
 
 /**

@@ -1,4 +1,4 @@
-// src/components/editor/TipTapCollabEditor.tsx
+// apps/mixtape/src/components/editor/TipTapCollabEditor.tsx
 //
 // Option A (recommended):
 // - Seed happens ONLY after server-ack sync (ydoc.__serverSynced === true).
@@ -22,6 +22,7 @@ import * as Y from "yjs";
 import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
+import TipTapToolbar from "./TipTapToolbar";
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -71,6 +72,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
     ref
   ) => {
     const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
+    const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
     void initialContent;
     void yjsProvider;
 
@@ -236,7 +238,15 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
           })}
           minH={isBorderless ? "auto" : "300px"}
         >
-          <Box border={"1px solid gray"} pt={1} pl={1}>
+          <Box
+            borderWidth="1px"
+            borderColor={toolbarBorderColor}
+            borderRadius="lg"
+            overflow="hidden"
+            pt={1}
+            pl={1}
+          >
+            <TipTapToolbar editor={editor} />
             <Prose
               className="editor-content-prose"
               bg={bgColorEditor}

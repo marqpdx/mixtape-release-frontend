@@ -29,6 +29,7 @@ interface WritingEditorWrapperProps {
   onPublished?: (piece: WritingPiece) => void;
   onSaved?: (piece: WritingPiece) => void;
   onUnpublished?: (piece: WritingPiece) => void;
+  onBack?: () => void;
 }
 
 /**
@@ -56,6 +57,7 @@ export default function WritingEditorWrapper({
   onPublished,
   onSaved,
   onUnpublished,
+  onBack,
 }: WritingEditorWrapperProps) {
   const [piece, setPiece] = useState<WritingPiece | null>(null);
   const [loading, setLoading] = useState(true);
@@ -202,6 +204,7 @@ export default function WritingEditorWrapper({
       onPublished={onPublished as any} // eslint-disable-line @typescript-eslint/no-explicit-any
       onSaved={onSaved as any} // eslint-disable-line @typescript-eslint/no-explicit-any
       onUnpublished={onUnpublished as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+      onBack={onBack}
     />
   );
 }

@@ -74,6 +74,17 @@ export default function MemberLibraryOverview({ username }: MemberLibraryOvervie
     return summary;
   }, [libraries, placementsByLibrary]);
 
+  const primaryShelf = useMemo(() => {
+    if (!libraries.length) return null;
+    return libraries.find((lib) => lib.slug === "my-writing" || lib.title === "My Writing") ?? libraries[0];
+  }, [libraries]);
+
+  const { data: primaryPlacements = [], isLoading: primaryPlacementsLoading } = useQuery({
+    queryKey: ["library", "placements", "primary", primaryShelf?.id],
+    queryFn: () => stackroomApi.fetchLibraryPlacements(primaryShelf!.id),
+    enabled: !!primaryShelf?.id,
+  });
+
   if (librariesLoading || placementsLoading) {
     return (
       <HStack gap={3} color={muted}>
@@ -89,6 +100,31 @@ export default function MemberLibraryOverview({ username }: MemberLibraryOvervie
 
   return (
     <VStack align="stretch" gap={6}>
+      <Box>
+        <Heading size="sm" mb={3}>
+          Recent Pieces
+        </Heading>
+        {primaryPlacementsLoading ? (
+          <HStack gap={2} color={muted}>
+            <Spinner size="xs" />
+            <Text>Loading pieces...</Text>
+          </HStack>
+        ) : (
+          <VStack align="stretch" gap={2}>
+            {(primaryPlacements || []).slice(0, 10).map((placement) => (
+              <Text key={placement.id} fontSize="sm">
+                {placement.piece_title || placement.display?.title || "Untitled"}
+              </Text>
+            ))}
+            {!primaryPlacements?.length && (
+              <Text fontSize="sm" color={muted}>
+                No published pieces yet.
+              </Text>
+            )}
+          </VStack>
+        )}
+      </Box>
+
       <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
         {libraries.map((library) => {
           const summary = librarySummaries[library.id];
@@ -125,7 +161,7 @@ export default function MemberLibraryOverview({ username }: MemberLibraryOvervie
                 </HStack>
                 <Link
                   as={NextLink}
-                  href={`/@${username}/library/${library.slug}`}
+                  href={`/app/${username}/library/${library.slug === "my-writing" ? "writing" : library.slug}`}
                   color="green.600"
                   fontSize="sm"
                 >

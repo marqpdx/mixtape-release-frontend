@@ -16,7 +16,7 @@ interface MemberTabsProps {
 
 const publicTabs = [
   { key: "profile", label: "Profile", icon: IconInfoHexagon },
-  { key: "library", label: "My Shelf", icon: IconFolder },
+  { key: "library", label: "My Library", icon: IconFolder },
 ];
 
 export default function MemberTabs({ member }: MemberTabsProps) {

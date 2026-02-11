@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FlattenedPlacement, WritingWorkingCopy } from '@mixtape/core/types/writingTypes';
+import { FlattenedPlacement, WritingWorkingCopy, WritingPiece } from '@mixtape/core/types/writingTypes';
 import * as writingApi from '@mixtape/api/clients/writing/api';
 // import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
 
@@ -87,7 +87,7 @@ export function useWriting(
     return 'all'; // Both false - fetch all but filter to empty on frontend
   }, [showSolo, showCollab]);
 
-  // Fetch placements (published content)
+  // Fetch placements (published content) for groups
   const {
     data: placements = [],
     isLoading: placementsLoading,
@@ -96,7 +96,19 @@ export function useWriting(
   } = useQuery<FlattenedPlacement[]>({
     queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
     queryFn: () => writingApi.fetchPlacements(sponsorType, sponsorSlug),
-    enabled: !!sponsorSlug,
+    enabled: !!sponsorSlug && sponsorType === 'group',
+  });
+
+  // Fetch published pieces for members (author view)
+  const {
+    data: publishedPieces = [],
+    isLoading: publishedLoading,
+    error: publishedError,
+    refetch: refetchPublished,
+  } = useQuery<WritingPiece[]>({
+    queryKey: ['writing', 'published', sponsorType, sponsorSlug],
+    queryFn: () => writingApi.fetchPublishedPieces(),
+    enabled: !!sponsorSlug && sponsorType === 'member',
   });
 
   // Fetch drafts (working copies)
@@ -111,18 +123,57 @@ export function useWriting(
     enabled: !!sponsorSlug,
   });
 
+  const mapPieceToPlacement = (piece: WritingPiece): FlattenedPlacement => {
+    const authorName = sponsorSlug || piece.author?.email || 'author';
+    return {
+      id: piece.id,
+      piece_id: piece.id,
+      piece_slug: piece.slug,
+      piece_title: piece.title,
+      piece_body_json: piece.body_json,
+      piece_status: piece.status,
+      published_at: piece.published_at || piece.updated_at,
+      pinned_at: piece.pinned_at,
+      author_name: authorName,
+      visibility: 'public',
+      is_pinned: Boolean(piece.pinned_at),
+      is_announcement: piece.writing_kind === 'announcement',
+      order: 0,
+      created_at: piece.created_at,
+      updated_at: piece.updated_at,
+      display: {
+        title: piece.title,
+        excerpt: piece.excerpt,
+        is_excerpt: false,
+        body_json: piece.body_json,
+      },
+    };
+  };
+
+  const placementsData =
+    sponsorType === 'member'
+      ? (Array.isArray(publishedPieces) ? publishedPieces : []).map(mapPieceToPlacement)
+      : placements;
+
+  const isPlacementsLoading =
+    sponsorType === 'member' ? publishedLoading : placementsLoading;
+  const placementsErr =
+    sponsorType === 'member' ? publishedError : placementsError;
+  const refetchPublishedOrPlacements =
+    sponsorType === 'member' ? refetchPublished : refetchPlacements;
+
   const refetch = () => {
-    refetchPlacements();
+    refetchPublishedOrPlacements();
     refetchDrafts();
   };
 
   return {
-    placements,
+    placements: placementsData,
     drafts,
-    isLoading: placementsLoading || draftsLoading,
-    placementsLoading,
+    isLoading: isPlacementsLoading || draftsLoading,
+    placementsLoading: isPlacementsLoading,
     draftsLoading,
-    error: (placementsError || draftsError) as Error | null,
+    error: (placementsErr || draftsError) as Error | null,
     refetch,
     setShowSolo,
     setShowCollab,
@@ -211,6 +262,9 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
         queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
       });
       queryClient.invalidateQueries({
+        queryKey: ['writing', 'published', sponsorType, sponsorSlug],
+      });
+      queryClient.invalidateQueries({
         queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],
       });
     },
@@ -230,6 +284,9 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
         queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
       });
       queryClient.invalidateQueries({
+        queryKey: ['writing', 'published', sponsorType, sponsorSlug],
+      });
+      queryClient.invalidateQueries({
         queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],
       });
     },
@@ -243,6 +300,9 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['writing', 'placements', sponsorType, sponsorSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['writing', 'published', sponsorType, sponsorSlug],
       });
       queryClient.invalidateQueries({
         queryKey: ['writing', 'drafts', sponsorType, sponsorSlug],

@@ -28,7 +28,6 @@ import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea
 import { ListsTab } from "@/components/workbench/ListsTab";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
-import { useRouter } from "next/navigation";
 import PersonalOverview from "../sections/PersonalOverview";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
@@ -41,8 +40,6 @@ export default function MemberWorkArea({
   identity,
   sectionParams,
 }: MemberWorkAreaProps) {
-  const router = useRouter();
-
   const { groups, isLoading, error } = useGroups({
     ordering: '-created_at',
     is_active: true
@@ -155,6 +152,16 @@ export default function MemberWorkArea({
           }}
           writingKind="post"
           pieceId={pieceId}
+          onBack={() => {
+            if (typeof window !== "undefined") {
+              try {
+                window.localStorage.setItem("writing_active_tab", "drafts");
+              } catch (error) {
+                console.warn("Failed to set writing tab:", error);
+              }
+            }
+            setActiveSection("writing");
+          }}
           onUnpublished={() => {
             if (typeof window !== "undefined") {
               try {
@@ -164,7 +171,6 @@ export default function MemberWorkArea({
               }
             }
             setActiveSection("writing");
-            router.replace("/app/dashboard");
           }}
         />
       </WorkAreaWrapper>

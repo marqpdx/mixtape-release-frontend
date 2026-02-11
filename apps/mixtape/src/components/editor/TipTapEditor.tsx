@@ -1,4 +1,4 @@
-// src/components/editor/TipTapEditor.tsx
+// apps/mixtape/src/components/editor/TipTapEditor.tsx
 
 "use client";
 

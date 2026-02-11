@@ -1,4 +1,4 @@
-// src/components/editor/TipTapToolbar.tsx
+// apps/mixtape/src/components/editor/TipTapToolbar.tsx
 
 import { Editor } from "@tiptap/react";
 import { Box, HStack, IconButton, Text } from "@chakra-ui/react";
@@ -28,6 +28,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         fontSize="14px"
         lineHeight="1"
         transform="translate(11%, -4%)"
+        ml={'-2px'}
       >
         A
       </Text>
@@ -40,6 +41,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         fontSize="14px"
         lineHeight="1"
         transform="translate(13%, 3%)"
+        ml={'-2px'}
       >
         A
       </Text>
