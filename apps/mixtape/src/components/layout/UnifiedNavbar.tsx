@@ -65,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Authenticated section (members + admins)
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", memberOnly: true, shortLabel: "My" },
-  { key: "our-community", label: "Community", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Community" },
+  { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", memberOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "_dbrd", href: "/dashboard", section: "authenticated", adminOnly: true, shortLabel: "Dash" },
   { key: "workbench", label: "_wrkb", href: "/member/{username}/workbench", section: "authenticated", memberOnly: true, shortLabel: "Bench" },
   { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
@@ -112,6 +112,10 @@ export default function UnifiedNavbar({
   const myCrossroadsLabel = defaultGroup?.title
     ? `My ${defaultGroup.title}`
     : "My Crossroads";
+  const defaultGroupSlug =
+    defaultGroup?.slug ||
+    process.env.NEXT_PUBLIC_DEFAULT_GROUP_SLUG ||
+    "crossroads";
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
   const { summary } = useNotificationSummary({ enabled: Boolean(identity) });
@@ -146,9 +150,11 @@ export default function UnifiedNavbar({
   // Helper to resolve dynamic hrefs (e.g., {username} placeholder)
   const resolveHref = (href: string) => {
     if (identity?.username) {
-      return href.replace('{username}', identity.username);
+      return href
+        .replace('{username}', identity.username)
+        .replace('{defaultGroupSlug}', defaultGroupSlug);
     }
-    return href;
+    return href.replace('{defaultGroupSlug}', defaultGroupSlug);
   };
 
   // Filter items based on current section and permissions

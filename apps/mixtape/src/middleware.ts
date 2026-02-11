@@ -76,6 +76,13 @@ export function middleware(request: NextRequest) {
   const normalizedPath = pathname.startsWith(basePath)
     ? pathname.slice(basePath.length) || "/"
     : pathname;
+
+  // Rewrite /{default-group-slug} to Community Hub
+  const defaultGroupSlug = process.env.MIXTAPE_DEFAULT_GROUP_SLUG || "crossroads";
+  if (normalizedPath === `/${defaultGroupSlug}` || normalizedPath === `/${defaultGroupSlug}/`) {
+    const rewriteUrl = new URL(`${basePath}/community-hub`, request.url);
+    return NextResponse.rewrite(rewriteUrl);
+  }
   if (normalizedPath.startsWith("/@")) {
     const match = normalizedPath.match(/^\/@([^/]+)(\/library(?:\/.*)?)$/);
     if (match) {
