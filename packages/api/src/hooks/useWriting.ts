@@ -124,6 +124,13 @@ export function useWriting(
   });
 
   const mapPieceToPlacement = (piece: WritingPiece): FlattenedPlacement => {
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        console.log("[useWriting] piece tags_list", piece.id, piece.tags_list);
+      } catch {
+        // ignore logging errors
+      }
+    }
     const authorName = sponsorSlug || piece.author?.email || 'author';
     return {
       id: piece.id,
@@ -141,6 +148,7 @@ export function useWriting(
       order: 0,
       created_at: piece.created_at,
       updated_at: piece.updated_at,
+      tags: piece.tags_list || [],
       display: {
         title: piece.title,
         excerpt: piece.excerpt,
@@ -154,6 +162,18 @@ export function useWriting(
     sponsorType === 'member'
       ? (Array.isArray(publishedPieces) ? publishedPieces : []).map(mapPieceToPlacement)
       : placements;
+
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      console.log("[useWriting] drafts tags_list", drafts?.map((d) => ({
+        id: d.id,
+        pieceId: d.piece?.id,
+        tags_list: (d as any).tags_list ?? d.piece?.tags_list,
+      })));
+    } catch {
+      // ignore logging errors
+    }
+  }
 
   const isPlacementsLoading =
     sponsorType === 'member' ? publishedLoading : placementsLoading;

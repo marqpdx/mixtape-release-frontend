@@ -1,7 +1,7 @@
 // src/components/groups/tabs/columns/postsColumns.tsx
 
 import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
-import { HStack, VStack, Text, Badge, Box, IconButton } from '@chakra-ui/react'
+import { HStack, VStack, Text, Badge, Box, IconButton, Wrap, WrapItem } from '@chakra-ui/react'
 import { formatDistanceToNow } from 'date-fns'
 import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
 import { IconEdit } from '@tabler/icons-react'
@@ -67,6 +67,18 @@ function PostCell({
           <Text fontSize="sm" color="gray.600" lineClamp={2}>
             {placement.display.excerpt}
           </Text>
+        )}
+
+        {placement.tags && placement.tags.length > 0 && (
+          <Wrap gap={2}>
+            {placement.tags.map((tag) => (
+              <WrapItem key={tag}>
+                <Badge size="sm" variant="subtle" colorScheme="gray">
+                  {tag}
+                </Badge>
+              </WrapItem>
+            ))}
+          </Wrap>
         )}
 
         <VStack gap={1} align="start" fontSize="xs" color="gray.500">

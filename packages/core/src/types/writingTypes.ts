@@ -70,6 +70,7 @@ export interface WritingPiece {
   is_published?: boolean
   is_announcement?: boolean
   is_canonical_kind?: boolean
+  tags_list?: string[]
 }
 
 
@@ -92,6 +93,7 @@ export interface WritingWorkingCopy {
     created_at: string
     updated_at: string
     excerpt?: string
+    tags_list?: string[]
   }
   user: {
     id: string | number
@@ -214,6 +216,7 @@ export interface FlattenedPlacement {
   order: number
   created_at: string
   updated_at: string
+  tags?: string[]
   display?: {
     title: string
     excerpt: string

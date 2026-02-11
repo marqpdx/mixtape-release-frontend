@@ -14,21 +14,21 @@ import {
   HStack,
   VStack,
   Badge,
-  Button,
   Input,
   Tabs,
-  Avatar
+  Avatar,
+  Accordion,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import {
   IconSearch,
   IconClock,
   IconEdit,
-  IconPlus,
   IconArticle,
   IconFileText,
-  IconUsers,
   IconUsersGroup,
   IconUser,
   IconTrash,
@@ -109,6 +109,7 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
+  const [groupByTags, setGroupByTags] = useState(false);
 
   // Load persisted tab from localStorage on mount
   useEffect(() => {
@@ -117,6 +118,10 @@ export default function WritingListWrapper({
       const savedTab = window.localStorage.getItem("writing_active_tab");
       if (savedTab && (savedTab === "published" || savedTab === "drafts")) {
         setActiveTab(savedTab);
+      }
+      const savedGroupByTags = window.localStorage.getItem("writing_group_by_tags");
+      if (savedGroupByTags === "true") {
+        setGroupByTags(true);
       }
     } catch (error) {
       console.warn("Failed to load saved writing tab:", error);
@@ -133,6 +138,20 @@ export default function WritingListWrapper({
         console.warn("Failed to save writing tab:", error);
       }
     }
+  }, []);
+
+  const handleToggleGroupByTags = useCallback(() => {
+    setGroupByTags((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("writing_group_by_tags", String(next));
+        } catch (error) {
+          console.warn("Failed to save tag grouping:", error);
+        }
+      }
+      return next;
+    });
   }, []);
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
@@ -267,6 +286,10 @@ export default function WritingListWrapper({
       // If both filters are off, show nothing
       if (!showSolo && !showCollab) return false;
 
+      const isCollab = draft.is_collaborative;
+      if (showSolo && !showCollab && isCollab) return false;
+      if (!showSolo && showCollab && !isCollab) return false;
+
       // Otherwise, apply search filter
       return searchInDraft(draft, searchFilter);
     })
@@ -296,12 +319,39 @@ export default function WritingListWrapper({
           Draft
         </Badge>
 
-        {/* Only show collaborator count badge for collaborative docs */}
-        {isCollab && draft.collaborator_count > 0 && (
-          <Badge size="sm" colorScheme="purple" px={2} py={1} rounded="full">
-            {draft.collaborator_count} collaborator{draft.collaborator_count !== 1 ? 's' : ''}
-          </Badge>
-        )}
+        {/* Collaborator Avatars (replace count badge) */}
+        {isCollab &&
+          draft.collaborators &&
+          draft.collaborators.length > 0 && (
+            <HStack gap={-2}>
+              {draft.collaborators.slice(0, 4).map((collab) => {
+                const displayName = getCollaboratorDisplayName(collab);
+                const initials = getInitialsFromName(displayName);
+
+                return (
+                  <Tooltip
+                    key={collab.id}
+                    content={`${displayName} (@${collab.user.username}) - ${collab.role}`}
+                    portalled={false}
+                    positioning={{ placement: "top" }}
+                  >
+                    <Avatar.Root
+                      size="xs"
+                      colorPalette={collab.role === "editor" ? "blue" : "purple"}
+                    >
+                      <Avatar.Fallback>{initials}</Avatar.Fallback>
+                    </Avatar.Root>
+                  </Tooltip>
+                );
+              })}
+
+              {draft.collaborators.length > 4 && (
+                <Badge size="xs" variant="subtle" colorScheme="gray">
+                  +{draft.collaborators.length - 4}
+                </Badge>
+              )}
+            </HStack>
+          )}
       </HStack>
     );
   };
@@ -338,6 +388,9 @@ export default function WritingListWrapper({
     const lastSaved = new Date(draft.last_saved_at);
     const autoSaveText =
       draft.auto_save_count > 0 ? `Autosaved ${draft.auto_save_count} times` : "Not yet saved";
+    const draftTags =
+      (draft as { tags_list?: string[] }).tags_list ||
+      ((draft as { piece?: { tags_list?: string[] } }).piece?.tags_list ?? []);
 
     return (
       <VStack align="stretch" gap={2} mt={1}>
@@ -350,45 +403,17 @@ export default function WritingListWrapper({
           <Text>{autoSaveText}</Text>
         </HStack>
 
-        {/* Collaborator Avatars */}
-        {draft.is_collaborative &&
-          draft.collaborators &&
-          draft.collaborators.length > 0 && (
-            <HStack gap={2}>
-              <IconUsers size={14} color="gray" />
-              <HStack gap={-2}>
-                {draft.collaborators.slice(0, 4).map((collab) => {
-                  const displayName = getCollaboratorDisplayName(collab);
-                  const initials = getInitialsFromName(displayName);
-
-                  return (
-                    <Tooltip
-                      key={collab.id}
-                      content={`${displayName} (@${collab.user.username}) - ${collab.role}`}
-                    >
-                      <Avatar.Root
-                        size="xs"
-                        colorPalette={collab.role === "editor" ? "blue" : "purple"}
-                      >
-                        {/* If you later wire up avatar URLs, drop an Avatar.Image here */}
-                        {/* <Avatar.Image src={collab.user.profile?.avatar} alt={displayName} /> */}
-
-                        <Avatar.Fallback>{initials}</Avatar.Fallback>
-                      </Avatar.Root>
-                    </Tooltip>
-                  );
-                })}
-
-                {draft.collaborators.length > 4 && (
-                  <Badge size="xs" variant="subtle" colorScheme="gray">
-                    +{draft.collaborators.length - 4}
-                  </Badge>
-                )}
-              </HStack>
-            </HStack>
-          )}
-
-
+        {draftTags.length > 0 && (
+          <Wrap gap={2}>
+            {draftTags.map((tag) => (
+              <WrapItem key={tag}>
+                <Badge size="xs" variant="subtle" colorScheme="gray">
+                  {tag}
+                </Badge>
+              </WrapItem>
+            ))}
+          </Wrap>
+        )}
 
         {/* {draft.is_collaborative && draft.collaborators && draft.collaborators.length > 0 && (
           <HStack gap={2}>
@@ -418,6 +443,101 @@ export default function WritingListWrapper({
     );
   };
 
+  const matchesPublishedSearch = useCallback(
+    (placement: FlattenedPlacement) => {
+      if (!searchFilter) return true;
+      const needle = searchFilter.toLowerCase();
+      const title = placement.piece_title?.toLowerCase() || "";
+      const excerpt = placement.display?.excerpt?.toLowerCase() || "";
+      return title.includes(needle) || excerpt.includes(needle);
+    },
+    [searchFilter]
+  );
+
+  const filteredPublishedPieces = processedPieces.filter(matchesPublishedSearch);
+
+  const tagGroups = useMemo(() => {
+    const groups = new Map<string, FlattenedPlacement[]>();
+    const untagged: FlattenedPlacement[] = [];
+
+    filteredPublishedPieces.forEach((placement) => {
+      const tags = placement.tags || [];
+      if (tags.length === 0) {
+        untagged.push(placement);
+        return;
+      }
+      tags.forEach((tag) => {
+        if (!groups.has(tag)) groups.set(tag, []);
+        groups.get(tag)!.push(placement);
+      });
+    });
+
+    const entries = Array.from(groups.entries())
+      .map(([tag, items]) => {
+        const onlyCount = items.filter(
+          (item) => (item.tags || []).length === 1 && item.tags?.[0] === tag
+        ).length;
+        return { tag, items, onlyCount, totalCount: items.length };
+      })
+      .sort((a, b) => a.tag.localeCompare(b.tag));
+
+    if (untagged.length) {
+      entries.push({
+        tag: "Untagged",
+        items: untagged,
+        onlyCount: untagged.length,
+        totalCount: untagged.length,
+      });
+    }
+
+    return entries;
+  }, [filteredPublishedPieces]);
+
+  const getDraftTags = useCallback((draft: WritingWorkingCopy) => {
+    return (
+      (draft as { tags_list?: string[] }).tags_list ||
+      ((draft as { piece?: { tags_list?: string[] } }).piece?.tags_list ?? [])
+    );
+  }, []);
+
+  const draftTagGroups = useMemo(() => {
+    const groups = new Map<string, WritingWorkingCopy[]>();
+    const untagged: WritingWorkingCopy[] = [];
+
+    processedDrafts.forEach((draft) => {
+      const tags = getDraftTags(draft);
+      if (!tags || tags.length === 0) {
+        untagged.push(draft);
+        return;
+      }
+      tags.forEach((tag) => {
+        if (!groups.has(tag)) groups.set(tag, []);
+        groups.get(tag)!.push(draft);
+      });
+    });
+
+    const entries = Array.from(groups.entries())
+      .map(([tag, items]) => {
+        const onlyCount = items.filter((item) => {
+          const tags = getDraftTags(item);
+          return tags.length === 1 && tags[0] === tag;
+        }).length;
+        return { tag, items, onlyCount, totalCount: items.length };
+      })
+      .sort((a, b) => a.tag.localeCompare(b.tag));
+
+    if (untagged.length) {
+      entries.push({
+        tag: "Untagged",
+        items: untagged,
+        onlyCount: untagged.length,
+        totalCount: untagged.length,
+      });
+    }
+
+    return entries;
+  }, [processedDrafts, getDraftTags]);
+
   return (
     <Box>
       {/* Header */}
@@ -444,141 +564,275 @@ export default function WritingListWrapper({
           <Tabs.Indicator />
         </Tabs.List>
 
-        {/* Search (only for published tab, drafts have toolbar) */}
-        {activeTab === "published" && (
-          <HStack justify="space-between" mb={6}>
-            <HStack flex={1} maxW="400px">
-              <IconSearch size={16} color="gray" />
-              <Input
-                placeholder={`Search ${activeTab}...`}
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                variant="subtle"
-              />
-            </HStack>
-
-            {canCreatePost && (
-              <Button colorScheme="green" size="sm" onClick={handleStartWriting} gap={2}>
-                <IconPlus size={16} />
-                New Writing
-              </Button>
-            )}
-          </HStack>
-        )}
-
-        {/* Search for drafts tab */}
-        {activeTab === "drafts" && (
-          <HStack flex={1} maxW="400px" mb={4}>
+        {/* Search + toolbar row */}
+        <Box
+          mb={4}
+          w="full"
+          display="grid"
+          gridTemplateColumns="minmax(0, 40%) minmax(0, 60%)"
+          columnGap={6}
+          alignItems="center"
+        >
+          <HStack>
             <IconSearch size={16} color="gray" />
             <Input
-              placeholder="Search drafts..."
+              placeholder={activeTab === "drafts" ? "Search drafts..." : "Search published..."}
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               variant="subtle"
             />
           </HStack>
-        )}
+
+          <Box display="flex" justifyContent="flex-end" minW={0}>
+            <DraftFilterToolbar
+              showSolo={showSolo}
+              showCollab={showCollab}
+              onToggleShowSolo={() => setShowSolo(!showSolo)}
+              onToggleShowCollab={() => setShowCollab(!showCollab)}
+              onShowAll={() => {}}
+              onCreateNew={handleStartWriting}
+              canCreate={canCreatePost}
+              showGroupByTags={groupByTags}
+              onToggleGroupByTags={handleToggleGroupByTags}
+              showSoloCollab={true}
+              showAllButton={false}
+              groupByTagsWidth="140px"
+            />
+          </Box>
+        </Box>
 
         {/* Tab Content */}
         <Tabs.Content value="published">
-          <UniversalDataTable<FlattenedPlacement>
-            data={processedPieces}
-            title=""
-            isLoading={placementsLoading}
-            error={placementsError ? "Failed to load writing" : null}
-            columns={postsColumns(
-              handleRowClick,
-              canManagePosts ? handlePublishedEdit : undefined
-            )}
-            showAvatar={false}
-            emptyStateMessage="No published content found"
-            emptyStateSubtitle={
-              searchFilter ? "Try adjusting your search to see more results" : "Create your first post to get started"
-            }
-            showCreateButton={false}
-            onRowClick={handleRowClick}
-            canView={() => true}
-            canEdit={() => canManagePosts}
-            pageSize={25}
-            defaultSort={{ field: "post_info", order: "desc" }}
-          />
+          {groupByTags ? (
+            <Accordion.Root collapsible multiple>
+              {tagGroups.map((group) => (
+                <Accordion.Item key={group.tag} value={group.tag}>
+                  <Accordion.ItemTrigger>
+                    <HStack justify="space-between" w="full">
+                      <HStack gap={3}>
+                        <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
+                        <HStack gap={1} fontSize="xs" color="gray.500">
+                          <Tooltip
+                            content={
+                              group.tag === "Untagged"
+                                ? "These pieces have no tags"
+                                : `${group.onlyCount} pieces have only this tag`
+                          }
+                        >
+                          <Text>({group.onlyCount}</Text>
+                        </Tooltip>
+                        <Text>/</Text>
+                          <Tooltip
+                            content={
+                              group.tag === "Untagged"
+                                ? "These pieces have no tags"
+                                : `${group.totalCount} pieces include this tag`
+                          }
+                        >
+                          <Text>{group.totalCount})</Text>
+                        </Tooltip>
+                        </HStack>
+                      </HStack>
+                      <Accordion.ItemIndicator />
+                    </HStack>
+                  </Accordion.ItemTrigger>
+                  <Accordion.ItemContent>
+                    <Box pt={4}>
+                      <UniversalDataTable<FlattenedPlacement>
+                        data={group.items}
+                        title=""
+                        isLoading={placementsLoading}
+                        error={placementsError ? "Failed to load writing" : null}
+                        columns={postsColumns(
+                          handleRowClick,
+                          canManagePosts ? handlePublishedEdit : undefined
+                        )}
+                        showAvatar={false}
+                        emptyStateMessage="No published content found"
+                        showCreateButton={false}
+                        onRowClick={handleRowClick}
+                        canView={() => true}
+                        canEdit={() => canManagePosts}
+                        pageSize={25}
+                        defaultSort={{ field: "post_info", order: "desc" }}
+                      />
+                    </Box>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
+          ) : (
+            <UniversalDataTable<FlattenedPlacement>
+              data={filteredPublishedPieces}
+              title=""
+              isLoading={placementsLoading}
+              error={placementsError ? "Failed to load writing" : null}
+              columns={postsColumns(
+                handleRowClick,
+                canManagePosts ? handlePublishedEdit : undefined
+              )}
+              showAvatar={false}
+              emptyStateMessage="No published content found"
+              emptyStateSubtitle={
+                searchFilter ? "Try adjusting your search to see more results" : "Create your first post to get started"
+              }
+              showCreateButton={false}
+              onRowClick={handleRowClick}
+              canView={() => true}
+              canEdit={() => canManagePosts}
+              pageSize={25}
+              defaultSort={{ field: "post_info", order: "desc" }}
+            />
+          )}
         </Tabs.Content>
 
         <Tabs.Content value="drafts">
-          {/* Compact Filter Toolbar */}
-          <DraftFilterToolbar
-            showSolo={showSolo}
-            showCollab={showCollab}
-            onToggleShowSolo={() => setShowSolo(!showSolo)}
-            onToggleShowCollab={() => setShowCollab(!showCollab)}
-            onShowAll={() => {
-              setShowSolo(true);
-              setShowCollab(true);
-            }}
-            onCreateNew={handleStartWriting}
-            canCreate={canCreatePost}
-          />
-
-          <UniversalDataTable<WritingWorkingCopy>
-            data={processedDrafts}
-            title=""
-            isLoading={draftsLoading}
-            error={null}
-            showAvatar={true}
-            renderAvatar={(draft: WritingWorkingCopy) => (
-              <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
-                <Avatar.Fallback>
-                  {draft.is_collaborative ? (
-                    <IconUsersGroup size={20} color="purple" />
-                  ) : (
-                    <IconUser size={20} color="gray" />
-                  )}
-                </Avatar.Fallback>
-              </Avatar.Root>
-            )}
-            emptyStateMessage={
-              !showSolo && !showCollab
-                ? "All documents hidden"
-                : showSolo && !showCollab
-                ? "No solo drafts found"
-                : !showSolo && showCollab
-                ? "No collaborative drafts found"
-                : "No drafts found"
-            }
-            emptyStateSubtitle={
-              !showSolo && !showCollab
-                ? "Click 'All' or select 'Mine' or 'Collab' to view your drafts"
-                : showSolo && !showCollab
-                ? "Start writing to create your first solo draft"
-                : !showSolo && showCollab
-                ? "Enable collaboration on a draft or join a collaborative writing session"
-                : "Create a draft to get started"
-            }
-            actions={[
-              {
-                label: "Edit Draft",
-                icon: <IconEdit size={16} />,
-                onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                variant: "ghost",
-                colorScheme: "green",
-              },
-              {
-                label: "Delete Draft",
-                icon: <IconTrash size={16} />,
-                onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                variant: "ghost",
-                colorScheme: "red",
-              },
-            ]}
-            onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-            showCreateButton={false}
-            canEdit={() => true}
-            canView={() => true}
-            renderTitle={renderDraftTitle}
-            renderDescription={renderDraftDescription}
-            renderMetadata={renderDraftMetadata}
-            defaultSort={{ field: "item_info", order: "desc" }}
-          />
+          {groupByTags ? (
+            <Accordion.Root collapsible multiple>
+              {draftTagGroups.map((group) => (
+                <Accordion.Item key={group.tag} value={group.tag}>
+                  <Accordion.ItemTrigger>
+                    <HStack justify="space-between" w="full">
+                      <HStack gap={3}>
+                        <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
+                        <HStack gap={1} fontSize="xs" color="gray.500">
+                          <Tooltip
+                            content={
+                              group.tag === "Untagged"
+                                ? "These pieces have no tags"
+                                : `${group.onlyCount} pieces have only this tag`
+                            }
+                          >
+                            <Text>({group.onlyCount}</Text>
+                          </Tooltip>
+                          <Text>/</Text>
+                          <Tooltip
+                            content={
+                              group.tag === "Untagged"
+                                ? "These pieces have no tags"
+                                : `${group.totalCount} pieces include this tag`
+                            }
+                          >
+                            <Text>{group.totalCount})</Text>
+                          </Tooltip>
+                        </HStack>
+                      </HStack>
+                      <Accordion.ItemIndicator />
+                    </HStack>
+                  </Accordion.ItemTrigger>
+                  <Accordion.ItemContent>
+                    <Box pt={4}>
+                      <UniversalDataTable<WritingWorkingCopy>
+                        data={group.items}
+                        title=""
+                        isLoading={draftsLoading}
+                        error={null}
+                        showAvatar={true}
+                        renderAvatar={(draft: WritingWorkingCopy) => (
+                          <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                            <Avatar.Fallback>
+                              {draft.is_collaborative ? (
+                                <IconUsersGroup size={20} color="purple" />
+                              ) : (
+                                <IconUser size={20} color="gray" />
+                              )}
+                            </Avatar.Fallback>
+                          </Avatar.Root>
+                        )}
+                        emptyStateMessage="No drafts found"
+                        emptyStateSubtitle="Create a draft to get started"
+                        actions={[
+                          {
+                            label: "Edit Draft",
+                            icon: <IconEdit size={16} />,
+                            onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                            variant: "ghost",
+                            colorScheme: "green",
+                          },
+                          {
+                            label: "Delete Draft",
+                            icon: <IconTrash size={16} />,
+                            onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                            variant: "ghost",
+                            colorScheme: "red",
+                          },
+                        ]}
+                        onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                        showCreateButton={false}
+                        canEdit={() => true}
+                        canView={() => true}
+                        renderTitle={renderDraftTitle}
+                        renderDescription={renderDraftDescription}
+                        renderMetadata={renderDraftMetadata}
+                        defaultSort={{ field: "item_info", order: "desc" }}
+                      />
+                    </Box>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
+          ) : (
+            <UniversalDataTable<WritingWorkingCopy>
+              data={processedDrafts}
+              title=""
+              isLoading={draftsLoading}
+              error={null}
+              showAvatar={true}
+              renderAvatar={(draft: WritingWorkingCopy) => (
+                <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                  <Avatar.Fallback>
+                    {draft.is_collaborative ? (
+                      <IconUsersGroup size={20} color="purple" />
+                    ) : (
+                      <IconUser size={20} color="gray" />
+                    )}
+                  </Avatar.Fallback>
+                </Avatar.Root>
+              )}
+              emptyStateMessage={
+                !showSolo && !showCollab
+                  ? "All documents hidden"
+                  : showSolo && !showCollab
+                  ? "No solo drafts found"
+                  : !showSolo && showCollab
+                  ? "No collaborative drafts found"
+                  : "No drafts found"
+              }
+              emptyStateSubtitle={
+                !showSolo && !showCollab
+                  ? "Click 'All' or select 'Solo' or 'Collab' to view your drafts"
+                  : showSolo && !showCollab
+                  ? "Start writing to create your first solo draft"
+                  : !showSolo && showCollab
+                  ? "Enable collaboration on a draft or join a collaborative writing session"
+                  : "Create a draft to get started"
+              }
+              actions={[
+                {
+                  label: "Edit Draft",
+                  icon: <IconEdit size={16} />,
+                  onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  variant: "ghost",
+                  colorScheme: "green",
+                },
+                {
+                  label: "Delete Draft",
+                  icon: <IconTrash size={16} />,
+                  onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  variant: "ghost",
+                  colorScheme: "red",
+                },
+              ]}
+              onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+              showCreateButton={false}
+              canEdit={() => true}
+              canView={() => true}
+              renderTitle={renderDraftTitle}
+              renderDescription={renderDraftDescription}
+              renderMetadata={renderDraftMetadata}
+              defaultSort={{ field: "item_info", order: "desc" }}
+            />
+          )}
         </Tabs.Content>
       </Tabs.Root>
     </Box>
