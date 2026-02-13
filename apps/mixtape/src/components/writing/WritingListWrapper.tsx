@@ -168,9 +168,17 @@ export default function WritingListWrapper({
     showSolo,
     showCollab,
     setShowSolo,
-    setShowCollab
+    setShowCollab,
+    refetch,
   } = useWriting(sponsor.type, sponsor.slug);
   const { deleteDraft } = useWritingMutations(sponsor.type, sponsor.slug);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.localStorage.getItem("writing_force_refresh") === "true") {
+      window.localStorage.removeItem("writing_force_refresh");
+    }
+    refetch();
+  }, [refetch]);
 
   console.log("WritingListWrapper - placements:", placements);
   console.log("WritingListWrapper - drafts:", drafts);

@@ -426,6 +426,7 @@ export default function GroupWorkArea({
             if (typeof window !== "undefined") {
               try {
                 window.localStorage.setItem("writing_active_tab", "drafts");
+                window.localStorage.setItem("writing_force_refresh", "true");
               } catch (error) {
                 console.warn("Failed to set writing tab:", error);
               }

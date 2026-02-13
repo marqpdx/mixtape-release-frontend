@@ -145,6 +145,7 @@ export async function fetchLibraryPlacements(libraryId: string) {
     piece_body_json: any;
     piece_status: string;
     published_at: string | null;
+    writing_kind?: string;
     visibility: string;
     order_index?: number;
     created_at: string;

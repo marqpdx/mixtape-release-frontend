@@ -1,4 +1,4 @@
-// src/app/groups/[slug]/writing/[pieceSlug]/page.tsx
+// apps/mixtape/src/app/(authenticated)groups/[slug]/writing/[pieceSlug]/page.tsx
 
 'use client'
 
