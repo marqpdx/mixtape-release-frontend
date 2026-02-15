@@ -7,14 +7,22 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 // --- Types ---
 
+export interface PublicGroupAffiliation {
+  title: string;
+  slug: string;
+  group_type: string;
+}
+
 export interface PublicMemberProfile {
   username: string;
   display_name: string;
   quick_intro: string;
   avatar_url: string;
+  bio_json: Record<string, unknown> | null;
   profile_image_url: string | null;
   background_image_url: string | null;
   date_joined: string;
+  groups: PublicGroupAffiliation[];
 }
 
 export interface PublicShelfItem {

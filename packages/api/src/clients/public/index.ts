@@ -5,6 +5,7 @@ export {
 } from "./publicApi";
 
 export type {
+  PublicGroupAffiliation,
   PublicMemberProfile,
   PublicShelf,
   PublicShelfItem,

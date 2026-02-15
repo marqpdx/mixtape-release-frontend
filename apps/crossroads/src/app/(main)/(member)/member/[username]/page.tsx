@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
+  Badge,
   Box,
   Heading,
   Text,
@@ -22,6 +23,7 @@ import type {
   PublicMemberProfile,
   PublicShelf,
 } from "@mixtape/api/clients/public/publicApi";
+import { TipTapRenderer } from "@mixtape/content/TipTapRenderer";
 import NextLink from "next/link";
 
 export default function MemberPublicPage() {
@@ -81,13 +83,12 @@ export default function MemberPublicPage() {
   const allItems = shelves.flatMap((s) => s.items);
 
   return (
-    <Box maxW="3xl" mx="auto">
-      {/* Background image banner */}
+    <Box>
+      {/* Background image banner — full width */}
       {profile.background_image_url && (
         <Box
           w="full"
-          h="180px"
-          borderRadius="lg"
+          h="220px"
           overflow="hidden"
           mb="-40px"
         >
@@ -101,7 +102,7 @@ export default function MemberPublicPage() {
         </Box>
       )}
 
-      <Box px="6" pt={profile.background_image_url ? "0" : "10"} pb="10">
+      <Box maxW="3xl" mx="auto" px="6" pt={profile.background_image_url ? "0" : "10"} pb="10">
         {/* Header Block */}
         <HStack gap="4" align="end" mb="4">
           {/* Avatar */}
@@ -150,7 +151,34 @@ export default function MemberPublicPage() {
         </HStack>
 
         {profile.quick_intro && (
-          <Text mb="4">{profile.quick_intro}</Text>
+          <Text mb="2">{profile.quick_intro}</Text>
+        )}
+
+        {/* Group affiliations */}
+        {profile.groups && profile.groups.length > 0 && (
+          <HStack gap="2" flexWrap="wrap" mb="4">
+            {profile.groups.map((g) => (
+              <Badge
+                key={g.slug}
+                variant="subtle"
+                size="sm"
+                borderRadius="full"
+                px="3"
+                py="1"
+              >
+                {g.title}
+              </Badge>
+            ))}
+          </HStack>
+        )}
+
+        {/* Bio */}
+        {profile.bio_json && Object.keys(profile.bio_json).length > 0 && (
+          <Box mb="6">
+            <TipTapRenderer
+              content={profile.bio_json as unknown as Parameters<typeof TipTapRenderer>[0]["content"]}
+            />
+          </Box>
         )}
 
         {/* Owner link back to workbench */}
