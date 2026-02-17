@@ -44,6 +44,27 @@ export interface PublicShelf {
   items: PublicShelfItem[];
 }
 
+export interface PublicGroupEmblem {
+  fg: string;
+  bg: string;
+  palette: string[];
+  image_url: string | null;
+}
+
+export interface PublicGroup {
+  id: string;
+  slug: string;
+  title: string;
+  quick_intro: string;
+  group_type: "persona" | "circle" | "community" | "coalition";
+  member_count: number;
+  profile_image_url: string | null;
+  background_image_url: string | null;
+  emblem: PublicGroupEmblem | null;
+  parent_slug: string | null;
+  decorators: string[];
+}
+
 export interface PublicWritingPiece {
   id: string;
   slug: string;
@@ -76,6 +97,13 @@ export async function fetchPublicMemberShelves(
 ): Promise<PublicShelf[]> {
   const response = await axiosInstance.get<PublicShelf[]>(
     `/api/public/members/${username}/shelves`
+  );
+  return response.data;
+}
+
+export async function fetchPublicGroups(): Promise<PublicGroup[]> {
+  const response = await axiosInstance.get<PublicGroup[]>(
+    "/api/public/groups"
   );
   return response.data;
 }

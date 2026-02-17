@@ -104,14 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
       setUser(null);
-      // Add logout flag to bypass middleware redirect
-      // This solves the timing issue where cookies aren't deleted yet when middleware runs
-      router.push('/login?logout=true');
+      router.push('/');
     } catch (error) {
       console.error('Logout failed:', error);
       // Still clear user state even if API call fails
       setUser(null);
-      router.push('/login?logout=true');
+      router.push('/');
     }
   }, [router]);
 

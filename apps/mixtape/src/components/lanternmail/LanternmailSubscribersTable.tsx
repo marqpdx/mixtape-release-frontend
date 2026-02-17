@@ -1,14 +1,15 @@
-// src/components/lanternmail/LanternSubscribersTable.tsx
+// apps/mixtape/src/components/lanternmail/LanternSubscribersTable.tsx
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Heading,
   Spinner,
   Text,
   Table,
+  Button,
 } from "@chakra-ui/react";
 import { Avatar } from "@chakra-ui/react";
 import { lanternmailApi } from "@mixtape/api/clients/lanternmail/lanternmailApi";
@@ -35,29 +36,51 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
   // Fetch subscribers on mount and when filters change
-  useEffect(() => {
-    const fetchSubscribers = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await lanternmailApi.getAllGroupSubscribers(
-          groupSlug,
-          { list_id: filterListId }
-        );
-        setSubscribers(response.data || []);
-      } catch (error) {
-        console.error("Failed to fetch subscribers:", error);
-        const message = error instanceof Error ? error.message : "Failed to load subscribers";
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSubscribers();
+  const fetchSubscribers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await lanternmailApi.getAllGroupSubscribers(
+        groupSlug,
+        { list_id: filterListId }
+      );
+      setSubscribers(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch subscribers:", error);
+      const message = error instanceof Error ? error.message : "Failed to load subscribers";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   }, [groupSlug, filterListId]);
+
+  useEffect(() => {
+    fetchSubscribers();
+  }, [fetchSubscribers]);
+
+  const handleRemoveSubscriber = useCallback(async (email: string) => {
+    if (!filterListId) {
+      return;
+    }
+    const confirmed = window.confirm(`Remove ${email} from this list?`);
+    if (!confirmed) {
+      return;
+    }
+    try {
+      setRemovingEmail(email);
+      await lanternmailApi.removeListSubscriber(groupSlug, filterListId, email);
+      await fetchSubscribers();
+    } catch (error) {
+      console.error("Failed to remove subscriber:", error);
+      const message = error instanceof Error ? error.message : "Failed to remove subscriber";
+      setError(message);
+    } finally {
+      setRemovingEmail(null);
+    }
+  }, [fetchSubscribers, filterListId, groupSlug]);
 
   const columns = useMemo<ColumnDef<GroupSubscriberAggregated, unknown>[]>(
     () => [
@@ -112,8 +135,27 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
           return value?.slice(0, 10) || "-";
         },
       },
+      {
+        id: "remove",
+        header: "",
+        cell: (info) => {
+          const email = info.row.original.email;
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!filterListId || removingEmail === email}
+              loading={removingEmail === email}
+              onClick={() => handleRemoveSubscriber(email)}
+            >
+              Remove
+            </Button>
+          );
+        },
+        enableSorting: false,
+      },
     ],
-    []
+    [filterListId, removingEmail, handleRemoveSubscriber]
   );
 
   const table = useReactTable({

@@ -8,6 +8,8 @@ import type {
   ListStatsResponse,
   SendInvitationsResponse,
   AllSubscribersResponse,
+  LanternmailCampaign,
+  CampaignsResponse,
 } from "@mixtape/core/types/lanternmailTypes";
 
 /**
@@ -197,5 +199,87 @@ export const lanternmailApi = {
       { emails }
     );
     return res.data;
+  },
+
+  /**
+   * Remove a subscriber from a specific list
+   *
+   * POST /api/groups/{groupSlug}/lanternmail/mailing-lists/{list_id}/subscribers/remove
+   *
+   * @param groupSlug - URL slug of the group
+   * @param listId - Django list ID
+   * @param email - Email address to remove from list
+   */
+  async removeListSubscriber(
+    groupSlug: string,
+    listId: number,
+    email: string
+  ): Promise<{ message: string }> {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/lanternmail/mailing-lists/${listId}/subscribers/remove`,
+      { email }
+    );
+    return res.data;
+  },
+
+  /**
+   * List campaigns for a group (optionally filtered by list)
+   */
+  async listCampaigns(
+    groupSlug: string,
+    listId?: number | null
+  ): Promise<LanternmailCampaign[]> {
+    const res = await axiosInstance.get(
+      `/api/groups/${groupSlug}/lanternmail/campaigns`,
+      { params: listId ? { list_id: listId } : undefined }
+    );
+    const payload = res.data as CampaignsResponse;
+    return payload.data || [];
+  },
+
+  /**
+   * Create a draft campaign for a list
+   */
+  async createCampaign(
+    groupSlug: string,
+    data: {
+      list_id: number;
+      name: string;
+      subject: string;
+      body: string;
+      content_type?: string;
+    }
+  ): Promise<LanternmailCampaign> {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/lanternmail/campaigns/create`,
+      data
+    );
+    return res.data?.data;
+  },
+
+  /**
+   * Send a test campaign to specific emails
+   */
+  async testCampaign(
+    groupSlug: string,
+    campaignId: number,
+    emails: string[]
+  ): Promise<void> {
+    await axiosInstance.post(
+      `/api/groups/${groupSlug}/lanternmail/campaigns/${campaignId}/test`,
+      { emails }
+    );
+  },
+
+  /**
+   * Send a campaign now (set status to running)
+   */
+  async sendCampaign(
+    groupSlug: string,
+    campaignId: number
+  ): Promise<void> {
+    await axiosInstance.post(
+      `/api/groups/${groupSlug}/lanternmail/campaigns/${campaignId}/send`
+    );
   },
 };

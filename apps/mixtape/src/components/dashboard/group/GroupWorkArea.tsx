@@ -27,6 +27,7 @@ import { GroupCirclesWorkArea } from "@/components/circles/GroupCirclesWorkArea"
 import { GroupCircleCreateWorkArea } from "@/components/groups/circles/GroupCircleCreateWorkArea";
 import LanternmailWorkArea from "@/components/lanternmail/LanternmailWorkArea";
 import LanternmailCreateListWorkArea from "@/components/lanternmail/LanternmailCreateListWorkArea";
+import LanternmailCampaignWorkArea from "@/components/lanternmail/LanternmailCampaignWorkArea";
 import { StackroomWorkArea } from "@/components/stackroom/StackroomWorkArea";
 import { useMembers } from "@mixtape/api/hooks";
 import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
@@ -464,6 +465,14 @@ export default function GroupWorkArea({
     return (
       <WorkAreaWrapper>
         <LanternmailCreateListWorkArea group={group} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "lanternmail-campaigns") {
+    return (
+      <WorkAreaWrapper>
+        <LanternmailCampaignWorkArea group={group} />
       </WorkAreaWrapper>
     );
   }

@@ -1,6 +1,7 @@
 // apps/mixtape/src/app/(authenticated)/community-hub/page.tsx
 
 import { Box, Heading, Text, SimpleGrid, HStack, VStack, Badge, Button } from "@chakra-ui/react";
+import NewsletterSignupCard from "@components/lanternmail/NewsletterSignupCard";
 
 const digestCards = [
   {
@@ -105,6 +106,8 @@ export default function CommunityHubPage() {
             overwhelming me.
           </Text>
         </Box>
+
+        <NewsletterSignupCard />
 
         <Box>
           <Heading size="md" mb={4}>

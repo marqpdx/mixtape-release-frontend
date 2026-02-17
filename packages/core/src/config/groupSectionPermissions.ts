@@ -93,6 +93,11 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create a new Lanternmail list',
   },
 
+  'lanternmail-campaigns': {
+    requiredRole: 'admin',
+    description: 'Create a new Lanternmail campaign',
+  },
+
   // Mill - admin only
   'mill': {
     requiredRole: 'admin',

@@ -21,7 +21,10 @@ export default function AboutLevelsPage() {
             </Heading>
             <Text fontSize="lg" color="theme.textSecondary">
               This is not a pricing page. These patterns exist to reduce confusion, make
-              responsibility legible, and honor different ways of participating.
+              responsibility legible, and honor different ways of participating. We know community to be a nurtured endeavor.
+            </Text>
+            <Text fontSize="lg" color="theme.textSecondary">
+              The following is the proposed initial plan, slated for Spring, 2026.
             </Text>
           </Stack>
 

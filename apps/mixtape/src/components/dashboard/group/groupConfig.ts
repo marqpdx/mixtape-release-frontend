@@ -52,6 +52,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "lanternmail-landing", label: "Lanternmail" },
       { key: "lanternmail-create", label: "Create List" },
+      { key: "lanternmail-campaigns", label: "Create Campaign" },
     ]
   },
 

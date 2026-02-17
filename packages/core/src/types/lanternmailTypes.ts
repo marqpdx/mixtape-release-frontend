@@ -119,3 +119,20 @@ export interface SendInvitationsResponse {
     }>;
   };
 }
+
+/**
+ * Basic campaign representation from ListMonk
+ */
+export interface LanternmailCampaign {
+  id: number;
+  name: string;
+  subject?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  lists?: Array<{ id: number; name: string }>;
+}
+
+export interface CampaignsResponse {
+  data: LanternmailCampaign[];
+}

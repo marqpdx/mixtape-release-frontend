@@ -24,7 +24,7 @@ export default function SiteLayout({
   return (
     <Box minH="100%" bg={bgColor}>
       {/* ✅ EXTRA COMPACT: Much smaller navbar for about pages */}
-      <UnifiedNavbar extraCompact />
+      <UnifiedNavbar extraCompact section="public" />
 
       {/* Main Content - Full Width, No Constraints, No Top Padding */}
       <Box w="full" maxW="none">

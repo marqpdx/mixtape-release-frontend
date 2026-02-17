@@ -5,24 +5,25 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3010",
     "build": "next build",
-    "start": "next start -p 3010",
+    "start": "next start -p 3010 -H 127.0.0.1",
     "lint": "next lint"
   },
   "dependencies": {
     "@chakra-ui/react": "3.30.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
+    "@mixtape/api": "*",
     "@mixtape/content": "*",
+    "@mixtape/core": "*",
+    "@mixtape/ui-tokens": "*",
     "@tanstack/react-query": "5.90.14",
+    "@xyflow/react": "^12.10.0",
     "framer-motion": "^12.0.2",
     "next": "15.5.7",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0",
-    "@mixtape/core": "*",
-    "@mixtape/ui-tokens": "*",
-    "@mixtape/api": "*"
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

@@ -95,24 +95,33 @@ export default function CrossroadsHomepage() {
               py={{ base: 7, md: 10 }}
               boxShadow="0 20px 60px rgba(0,0,0,0.25)"
             >
-              <VStack align="start" gap={4} maxW="760px">
+              <VStack className="main-area" align="start" gap={4} maxW="760px">
                 <Heading
                   as="h1"
-                  fontSize={{ base: "3xl", md: "4xl" }}
+                  fontSize={{ base: "2xl", md: "3xl" }}
                   lineHeight="1.1"
                   color={heroText}
                   fontFamily="heading"
                 >
-                  Crossroads is a co-created community for practical, grounded work.
+                  Crossroads is co-created community for practical, grounded work.
                 </Heading>
 
+
                 <Text fontSize={{ base: "md", md: "lg" }} color={subtleText} lineHeight="tall" fontFamily="body">
+                  Crossroads is also an experiment in our mutual flourishing (thank you RWK). An opportunity to transcend an era rife with torment and lies. We can thrive together. This is yet another offering in that direction.
+                </Text>
+
+                <Text fontSize={{ base: "md", md: "lg" }} color={subtleText} lineHeight="tall" fontFamily="body">
+                  We are in very early stages, and operating by invitation only. If you want to signup to be emailed with updates, <Link href="/contact?tab=newsletter">click here</Link>.
+                </Text>
+
+                <Text display={'none'} fontSize={{ base: "md", md: "lg" }} color={subtleText} lineHeight="tall" fontFamily="body">
                   Join groups, learn with others, and build projects that last — with tools that honor
                   your time, your data, and your people.
                 </Text>
 
                 {/* “In 30 seconds” */}
-                <Box pt={2}>
+                <Box display={'none'} pt={2}>
                   <Text fontWeight="bold" color={heroText} mb={2} fontFamily="body">
                     In 30 seconds:
                   </Text>
@@ -130,10 +139,10 @@ export default function CrossroadsHomepage() {
                     size="lg"
                     asChild
                   >
-                    <Link as={NextLink} href="/about/public">
+                    <Link as={NextLink} href="/about">
                       <HStack gap={2}>
                         <IconArrowRight size={18} />
-                        <Text>Explore Public</Text>
+                        <Text>Learn more</Text>
                       </HStack>
                     </Link>
                   </Button>
@@ -144,10 +153,10 @@ export default function CrossroadsHomepage() {
                     size="lg"
                     asChild
                   >
-                    <Link as={NextLink} href="/about/join">
+                    <Link as={NextLink} href="/contact?tab=newsletter">
                       <HStack gap={2}>
                         <IconUsers size={18} />
-                        <Text>Request to Join</Text>
+                        <Text>Keep me updated</Text>
                       </HStack>
                     </Link>
                   </Button>
@@ -167,7 +176,7 @@ export default function CrossroadsHomepage() {
                   </Button>
                 </HStack>
 
-                <Text fontSize="sm" color={subtleText} pt={2} fontFamily="body">
+                <Text display={'none'} fontSize="sm" color={subtleText} pt={2} fontFamily="body">
                   Want the full walkthrough?{" "}
                   <Link
                     as={NextLink}

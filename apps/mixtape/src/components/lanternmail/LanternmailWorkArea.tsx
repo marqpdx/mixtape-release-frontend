@@ -1,4 +1,4 @@
-// src/components/groups/LanternMailWorkArea.tsx
+// apps/mixtape/src/components/LanternMailWorkArea.tsx
 
 "use client";
 
