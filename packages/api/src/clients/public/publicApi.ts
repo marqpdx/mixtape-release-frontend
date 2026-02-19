@@ -65,6 +65,32 @@ export interface PublicGroup {
   decorators: string[];
 }
 
+export interface PublicMemberPreview {
+  username: string;
+  display_name: string;
+  avatar_url: string;
+}
+
+export interface PublicGroupDetail extends PublicGroup {
+  description: string;
+  parent_title: { title: string; slug: string } | null;
+  child_groups: PublicGroupAffiliation[];
+  member_preview: PublicMemberPreview[];
+  admission_policy: string;
+}
+
+export interface AdmissionStatus {
+  policy: string;
+  can_join: boolean;
+  can_request: boolean;
+  is_member: boolean;
+  is_moderator: boolean;
+  has_pending_request: boolean;
+  parent_group: { title: string; slug: string } | null;
+  requires_parent_membership: boolean;
+  is_parent_member: boolean;
+}
+
 export interface PublicWritingPiece {
   id: string;
   slug: string;
@@ -105,6 +131,41 @@ export async function fetchPublicGroups(): Promise<PublicGroup[]> {
   const response = await axiosInstance.get<PublicGroup[]>(
     "/api/public/groups"
   );
+  return response.data;
+}
+
+export async function fetchPublicGroup(
+  slug: string
+): Promise<PublicGroupDetail> {
+  const response = await axiosInstance.get<PublicGroupDetail>(
+    `/api/public/groups/${slug}`
+  );
+  return response.data;
+}
+
+export async function fetchAdmissionStatus(
+  slug: string
+): Promise<AdmissionStatus> {
+  const response = await axiosInstance.get<AdmissionStatus>(
+    `/api/public/groups/${slug}/admission-status`
+  );
+  return response.data;
+}
+
+export async function joinGroup(
+  slug: string
+): Promise<{ detail: string }> {
+  const response = await axiosInstance.post(`/api/groups/${slug}/join`);
+  return response.data;
+}
+
+export async function requestToJoinGroup(
+  slug: string,
+  message?: string
+): Promise<{ detail: string; invitation_id: number }> {
+  const response = await axiosInstance.post(`/api/groups/${slug}/request-join`, {
+    message: message || "",
+  });
   return response.data;
 }
 

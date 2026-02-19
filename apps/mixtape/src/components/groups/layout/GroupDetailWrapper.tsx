@@ -1,4 +1,4 @@
-// src/components/groups/GroupDetailWrapper.tsx - Simplified to edit-only
+// apps/mixtape/src/components/groups/GroupDetailWrapper.tsx
 
 "use client";
 

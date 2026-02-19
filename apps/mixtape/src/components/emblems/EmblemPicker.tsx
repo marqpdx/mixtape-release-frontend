@@ -12,6 +12,7 @@ import { IconRefresh } from "@tabler/icons-react";
 import { axiosInstance } from "@providers/auth-provider/axiosInstance";
 import { EmblemDisplay } from "./EmblemDisplay";
 import { EmblemInline } from "@mixtape/core/types/emblemTypes";
+import { Beacon } from "@components/feedback/Beacon";
 
 
 type EmblemFull = EmblemInline & {
@@ -189,7 +190,17 @@ export function EmblemPicker({
       overflowX="hidden"
     >
       <HStack justify="space-between" mb={4}>
-        <Text fontSize="lg" fontWeight="semibold">Choose emblem</Text>
+        <HStack gap={2}>
+          <Text fontSize="lg" fontWeight="semibold">Choose emblem</Text>
+          <Beacon
+            beaconKey="emblems_v1"
+            areaLabel="Emblems"
+            position="inline"
+            featureContext={
+              "Emblems are curated from public-domain and permissively licensed sources, chosen for clarity at small sizes. We welcome feedback on missing visual categories, balance between abstract/person styles, and open-source libraries we should consider. Requests for proprietary art or custom logos are out of scope."
+            }
+          />
+        </HStack>
         <HStack gap={2}>
           {onReset && (
             <Button size="sm" variant="outline" onClick={async () => { await onReset(); onClose(); }}>

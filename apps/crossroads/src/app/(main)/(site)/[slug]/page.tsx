@@ -1,5 +1,7 @@
+"use client";
+
 import { Box, Heading, Text, VStack } from "@chakra-ui/react";
-import CrossroadsMap from "./CrossroadsMap";
+import CrossroadsMap from "./CrossroadsMap1a";
 
 export default function Page() {
   return (

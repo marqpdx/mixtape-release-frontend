@@ -273,6 +273,39 @@ export async function fetchGroupInvitations(groupSlug: string): Promise<any[]> {
   return response.data;
 }
 
+// ============================================================================
+// JOIN REQUESTS API FUNCTIONS
+// ============================================================================
+
+export interface JoinRequest {
+  id: number;
+  invited_email: string | null;
+  invited_user: string | null;
+  message: string;
+  token: string;
+}
+
+export async function fetchJoinRequests(groupSlug: string): Promise<JoinRequest[]> {
+  const response = await axiosInstance.get<JoinRequest[]>(
+    `/api/groups/${groupSlug}/join-requests`
+  );
+  return response.data;
+}
+
+export async function respondToJoinRequest(
+  groupSlug: string,
+  invitationId: number,
+  action: "accept" | "decline"
+): Promise<{ detail: string }> {
+  const response = await axiosInstance.post(
+    `/api/groups/${groupSlug}/join-requests/${invitationId}/respond`,
+    { action }
+  );
+  return response.data;
+}
+
+// --- Circles (group-scoped) ---
+
 export async function createGroupCircle(
   sponsorGroupSlug: string,
   data: GroupCreateFormData
@@ -326,4 +359,8 @@ export const groupApi = {
   // Invitations
   inviteToGroup,
   fetchGroupInvitations,
+
+  // Join Requests
+  fetchJoinRequests,
+  respondToJoinRequest,
 };

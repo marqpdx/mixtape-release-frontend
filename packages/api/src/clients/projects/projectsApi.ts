@@ -60,6 +60,11 @@ export interface TaskMovePayload {
   to_index: number;
 }
 
+export interface TaskUpdatePayload {
+  title?: string;
+  summary?: string;
+}
+
 export interface ProjectListParams {
   sponsor_type: string;
   sponsor_object_id: string;
@@ -129,6 +134,34 @@ class ProjectsApi {
   async moveTask(taskId: string, payload: TaskMovePayload): Promise<{ task: Task }> {
     try {
       const response = await axiosInstance.post(`/api/projects/tasks/${taskId}/move`, payload);
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async updateTask(taskId: string, payload: TaskUpdatePayload): Promise<Task> {
+    try {
+      const response = await axiosInstance.patch(`/api/projects/tasks/${taskId}`, payload);
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async archiveTask(taskId: string): Promise<void> {
+    try {
+      await axiosInstance.post(`/api/projects/tasks/${taskId}/archive`);
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async toggleColumnHidden(projectId: string, columnId: string): Promise<ProjectColumn> {
+    try {
+      const response = await axiosInstance.patch(
+        `/api/projects/projects/${projectId}/columns/${columnId}/toggle-hidden`
+      );
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));

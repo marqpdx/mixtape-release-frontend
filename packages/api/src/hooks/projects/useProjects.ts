@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Project,
   ProjectBoard,
+  ProjectColumn,
   ProjectCreatePayload,
   ProjectListParams,
   Task,
   TaskCreatePayload,
   TaskMovePayload,
+  TaskUpdatePayload,
   projectsApi,
 } from '../../clients/projects/projectsApi';
 
@@ -110,6 +112,10 @@ interface UseProjectBoardReturn {
   loadBoard: (overrideId?: string) => Promise<void>;
   createTask: (payload: TaskCreatePayload) => Promise<Task>;
   moveTask: (taskId: string, payload: TaskMovePayload) => Promise<void>;
+  updateTask: (taskId: string, payload: TaskUpdatePayload) => Promise<Task>;
+  archiveTask: (taskId: string) => Promise<void>;
+  toggleColumnHidden: (columnId: string) => Promise<ProjectColumn>;
+  setBoard: React.Dispatch<React.SetStateAction<ProjectBoard | null>>;
   clearError: () => void;
 }
 
@@ -198,6 +204,74 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
     [projectId, loadBoard]
   );
 
+  const updateTask = useCallback(
+    async (taskId: string, payload: TaskUpdatePayload): Promise<Task> => {
+      setError(null);
+      try {
+        const updated = await projectsApi.updateTask(taskId, payload);
+        setBoard(prev => {
+          if (!prev) return prev;
+          const newTasks: Record<string, Task[]> = {};
+          for (const [colId, tasks] of Object.entries(prev.tasks_by_column)) {
+            newTasks[colId] = tasks.map(t => (t.id === taskId ? updated : t));
+          }
+          return { ...prev, tasks_by_column: newTasks };
+        });
+        return updated;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to update task';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const archiveTask = useCallback(
+    async (taskId: string): Promise<void> => {
+      setError(null);
+      try {
+        await projectsApi.archiveTask(taskId);
+        setBoard(prev => {
+          if (!prev) return prev;
+          const newTasks: Record<string, Task[]> = {};
+          for (const [colId, tasks] of Object.entries(prev.tasks_by_column)) {
+            newTasks[colId] = tasks.filter(t => t.id !== taskId);
+          }
+          return { ...prev, tasks_by_column: newTasks };
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to archive task';
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const toggleColumnHidden = useCallback(
+    async (columnId: string): Promise<ProjectColumn> => {
+      if (!projectId) throw new Error('Project id is required.');
+      setError(null);
+      try {
+        const updated = await projectsApi.toggleColumnHidden(projectId, columnId);
+        setBoard(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            columns: prev.columns.map(c => (c.id === columnId ? updated : c)),
+          };
+        });
+        return updated;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to toggle column';
+        setError(message);
+        throw err;
+      }
+    },
+    [projectId]
+  );
+
   const clearError = useCallback(() => setError(null), []);
 
   return {
@@ -207,6 +281,10 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
     loadBoard,
     createTask,
     moveTask,
+    updateTask,
+    archiveTask,
+    toggleColumnHidden,
+    setBoard,
     clearError,
   };
 }

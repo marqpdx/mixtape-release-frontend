@@ -3,6 +3,7 @@
 "use client";
 
 import { VStack, Text, SimpleGrid, Card, HStack } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 import { UserIdentity } from "@mixtape/core/types/auth";
@@ -13,6 +14,7 @@ import { useGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { AdminTodoItem } from "@mixtape/api/clients/admin/adminApi";
 import { Button } from "@/theme/recipes/button.recipe";
 import Link from "next/link";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 interface AdminWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -35,6 +37,21 @@ export default function AdminWorkArea({
     ordering: "-created_at",
     is_active: true,
   });
+  const [newFeedbackCount, setNewFeedbackCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!identity?.is_superuser) return;
+    const fetchSummary = async () => {
+      try {
+        const res = await axiosInstance.get("/api/feedback/items/summary");
+        setNewFeedbackCount(res.data?.data?.new ?? 0);
+      } catch (error) {
+        console.error("Failed to load feedback summary:", error);
+        setNewFeedbackCount(null);
+      }
+    };
+    fetchSummary();
+  }, [identity?.is_superuser]);
 
   if (!identity?.is_superuser) {
     return (
@@ -87,6 +104,23 @@ export default function AdminWorkArea({
               <Card.Body>
                 <Text fontSize="2xl" fontWeight="bold">{groups.length}</Text>
                 <Text fontSize="sm" color="gray.600">active groups</Text>
+              </Card.Body>
+            </Card.Root>
+
+            <Card.Root>
+              <Card.Header>
+                <Text fontWeight="semibold">Feedback</Text>
+              </Card.Header>
+              <Card.Body>
+                <Text fontSize="2xl" fontWeight="bold">
+                  {newFeedbackCount ?? "—"}
+                </Text>
+                <Text fontSize="sm" color="gray.600">new items</Text>
+                <Link href="/admin/feedback/feedbackitem/">
+                  <Button size="sm" mt={3} width="full">
+                    Open in Admin
+                  </Button>
+                </Link>
               </Card.Body>
             </Card.Root>
 

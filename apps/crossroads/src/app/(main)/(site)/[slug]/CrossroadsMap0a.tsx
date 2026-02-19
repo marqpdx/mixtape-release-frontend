@@ -1,3 +1,5 @@
+// apps/crossroads/src/app/(main)/(site)/[slug]/CrossroadsMap0a.tsx
+
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -12,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { Box, HStack, VStack, Text } from "@chakra-ui/react";
+import { Box, HStack, VStack, Text, Image } from "@chakra-ui/react";
 import { Checkbox } from "@chakra-ui/react";
 
 /**
@@ -24,6 +26,9 @@ type Group = {
   id: string;
   name: string;
   kind: "community" | "circle" | "coalition";
+  color?: string; // hex preferred, ex: "#2B6CB0"
+  emblemUrl?: string; // blurred wash (poster/emblem)
+  glyphUrl?: string; // simplified mark (small)
 };
 
 type Member = {
@@ -33,11 +38,18 @@ type Member = {
 };
 
 const DEMO_GROUPS: Group[] = [
-  { id: "g-crossroads", name: "Crossroads", kind: "community" },
-  { id: "g-mindful", name: "Mindful Brilliance", kind: "community" },
-  { id: "g-earthlab", name: "EarthLab", kind: "circle" },
-  { id: "g-threadworks", name: "Threadworks", kind: "circle" },
-  { id: "g-coalition", name: "Local Coalition", kind: "coalition" },
+  {
+    id: "g-crossroads",
+    name: "Crossroads",
+    kind: "community",
+    color: "#2B6CB0",
+    // emblemUrl: "/images/emblems/crossroads.jpg",
+    // glyphUrl: "/images/glyphs/community.svg",
+  },
+  { id: "g-mindful", name: "Mindful Brilliance", kind: "community", color: "#2F855A" },
+  { id: "g-earthlab", name: "EarthLab", kind: "circle", color: "#B7791F" },
+  { id: "g-threadworks", name: "Threadworks", kind: "circle", color: "#6B46C1" },
+  { id: "g-coalition", name: "Local Coalition", kind: "coalition", color: "#C05621" },
 ];
 
 const DEMO_MEMBERS: Member[] = [
@@ -54,41 +66,76 @@ type IconPanelData = {
   label: string;
   entityType: "group" | "member";
   kind?: Group["kind"]; // only for groups
+  color?: string;
+  emblemUrl?: string;
+  glyphUrl?: string;
 };
+
+function withAlpha(hex: string, alphaHex: string) {
+  // expects #RRGGBB, returns #RRGGBBAA
+  const clean = hex.trim();
+  if (!/^#[0-9A-Fa-f]{6}$/.test(clean)) return undefined;
+  return `${clean}${alphaHex}`;
+}
 
 function IconPanelNode({ data }: { data: IconPanelData }) {
   const isGroup = data.entityType === "group";
 
-  // Keep styling calm and “poster-like”
-  // (you can evolve this into your textured emblem panels later)
+  const tint = data.color ? withAlpha(data.color, "22") : "rgba(0,0,0,0.06)";
+  const frameBg = isGroup ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.70)";
+
   return (
     <VStack gap="1" align="center">
       <Box
-        w={isGroup ? "96px" : "84px"}
-        h={isGroup ? "64px" : "56px"}
-        borderRadius="18px"
-        bg={isGroup ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.75)"}
-        boxShadow="sm"
+        w={isGroup ? "108px" : "88px"}
+        h={isGroup ? "72px" : "56px"}
+        borderRadius="20px"
+        position="relative"
+        overflow="hidden"
+        bg={frameBg}
         borderWidth="1px"
         borderColor="rgba(0,0,0,0.08)"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
+        boxShadow="sm"
       >
-        <Box
-          w={isGroup ? "28px" : "20px"}
-          h={isGroup ? "28px" : "20px"}
-          borderRadius={isGroup ? "10px" : "999px"}
-          bg={isGroup ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.10)"}
-        />
+        {/* subtle tint wash */}
+        <Box position="absolute" inset="0" bg={tint as any} />
+
+        {/* blurred emblem wash (optional) */}
+        {isGroup && data.emblemUrl ? (
+          <Image
+            src={data.emblemUrl}
+            alt=""
+            position="absolute"
+            inset="-12px"
+            w="calc(100% + 24px)"
+            h="calc(100% + 24px)"
+            objectFit="cover"
+            filter="blur(10px) saturate(1.05)"
+            opacity={0.55}
+          />
+        ) : null}
+
+        {/* crisp glyph (optional) */}
+        <Box position="absolute" inset="0" display="flex" alignItems="center" justifyContent="center">
+          {isGroup && data.glyphUrl ? (
+            <Image src={data.glyphUrl} alt="" w="28px" h="28px" opacity={0.92} />
+          ) : (
+            <Box
+              w={isGroup ? "26px" : "18px"}
+              h={isGroup ? "26px" : "18px"}
+              borderRadius={isGroup ? "10px" : "999px"}
+              bg="rgba(0,0,0,0.14)"
+            />
+          )}
+        </Box>
       </Box>
 
       <Text
         fontSize="sm"
-        fontWeight={isGroup ? "600" : "500"}
-        color="rgba(0,0,0,0.75)"
+        fontWeight={isGroup ? "650" : "500"}
+        color="rgba(0,0,0,0.78)"
         textAlign="center"
-        maxW="140px"
+        maxW="160px"
         lineHeight="1.1"
       >
         {data.label}
@@ -135,9 +182,10 @@ function stableJitter(id: string, amount: number) {
 // ---- Main component ----
 
 export default function CrossroadsMap() {
+  // Default calm: groups only.
   const [showGroups, setShowGroups] = useState(true);
-  const [showMembers, setShowMembers] = useState(true);
-  const [showStrands, setShowStrands] = useState(true);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showStrands, setShowStrands] = useState(false);
 
   const { nodes, edges } = useMemo(() => {
     const center = { x: 0, y: 0 };
@@ -155,7 +203,14 @@ export default function CrossroadsMap() {
         id: g.id,
         type: "iconPanel",
         position: { x: groupPts[idx].x + jitter.dx, y: groupPts[idx].y + jitter.dy },
-        data: { label: g.name, entityType: "group", kind: g.kind },
+        data: {
+          label: g.name,
+          entityType: "group",
+          kind: g.kind,
+          color: g.color,
+          emblemUrl: g.emblemUrl,
+          glyphUrl: g.glyphUrl,
+        },
       };
     });
 
@@ -179,7 +234,8 @@ export default function CrossroadsMap() {
             target: gid,
             type: "smoothstep",
             style: {
-              stroke: "rgba(0,0,0,0.18)",
+              // softer “strand”
+              stroke: "rgba(25,25,25,0.14)",
               strokeWidth: 2,
             },
           });
@@ -209,6 +265,16 @@ export default function CrossroadsMap() {
         inset="0"
         bg="linear-gradient(180deg, rgba(245,242,235,1) 0%, rgba(240,244,248,1) 100%)"
       />
+      {/* whisper-light texture dots (optional) */}
+      <Box
+        position="absolute"
+        inset="0"
+        pointerEvents="none"
+        opacity={0.10}
+        bgImage="radial-gradient(circle at 20% 30%, rgba(0,0,0,0.10) 0 1px, transparent 2px),
+                 radial-gradient(circle at 80% 60%, rgba(0,0,0,0.08) 0 1px, transparent 2px)"
+        bgSize="220px 220px"
+      />
 
       {/* Controls overlay */}
       <Box position="absolute" top="16px" left="16px" zIndex={10}>
@@ -227,18 +293,12 @@ export default function CrossroadsMap() {
           </Text>
 
           <HStack gap="3">
-            <Checkbox.Root
-              checked={showGroups}
-              onCheckedChange={(e) => setShowGroups(!!e.checked)}
-            >
+            <Checkbox.Root checked={showGroups} onCheckedChange={(e) => setShowGroups(!!e.checked)}>
               <Checkbox.Control />
               <Checkbox.Label>Groups</Checkbox.Label>
             </Checkbox.Root>
 
-            <Checkbox.Root
-              checked={showMembers}
-              onCheckedChange={(e) => setShowMembers(!!e.checked)}
-            >
+            <Checkbox.Root checked={showMembers} onCheckedChange={(e) => setShowMembers(!!e.checked)}>
               <Checkbox.Control />
               <Checkbox.Label>Members</Checkbox.Label>
             </Checkbox.Root>
@@ -254,7 +314,7 @@ export default function CrossroadsMap() {
           </Checkbox.Root>
 
           <Text fontSize="xs" color="rgba(0,0,0,0.55)" maxW="240px">
-            Tip: Start with Groups only for first impression calm, then layer in Members + Strands.
+            Start calm. Add Members + Strands only when you want more detail.
           </Text>
         </VStack>
       </Box>

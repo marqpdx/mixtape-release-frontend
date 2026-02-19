@@ -1,3 +1,5 @@
+// apps/crossroads/src/app/(main)/(member)/member/[username]/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
