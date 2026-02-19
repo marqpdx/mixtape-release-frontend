@@ -1,4 +1,4 @@
-// src/components/emblems/EmblemPicker.tsx
+// apps/mixtape/src/components/emblems/EmblemPicker.tsx
 
 // Supports core library + custom seed generation
 
@@ -110,7 +110,9 @@ export function EmblemPicker({
 
       const form = new FormData();
       form.append("file", file);
-      const up = await axiosInstance.post("/api/identity/emblem-image", form);
+      const up = await axiosInstance.post("/api/identity/emblem-image", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       const image_path = up.data.path || up.data.url;
 
       const uploadType = types.find((t) => t.engine === "upload" && t.style === "image");
