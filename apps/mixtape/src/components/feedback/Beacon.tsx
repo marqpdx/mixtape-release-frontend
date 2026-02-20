@@ -15,7 +15,7 @@ import {
   IconButton,
   RadioGroup,
   Portal,
-  Icon,
+  chakra,
 } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
@@ -206,13 +206,19 @@ export function Beacon({
 }
 
 function BeaconIcon() {
+  const Svg = chakra("svg");
   return (
-    <Icon viewBox="0 0 24 24" boxSize="18px" color="currentColor">
-      <path d="M10 2h4v6h-4z" />
-      <path d="M9 8h6c1.1 0 2 .9 2 2v2H7v-2c0-1.1.9-2 2-2z" />
-      <path d="M11 12h2v3h-2z" />
-      <path d="M12 15c-2.8 0-4 2.4-4 4.5V22h8v-2.5c0-2.1-1.2-4.5-4-4.5z" />
-      <path d="M11 18h2v2h-2z" opacity=".22" />
-    </Icon>
+    <Svg
+      viewBox="0 0 24 24"
+      width="18px"
+      height="18px"
+      color="currentColor"
+    >
+      <path d="M10 2h4v6h-4z" fill="currentColor" />
+      <path d="M9 8h6c1.1 0 2 .9 2 2v2H7v-2c0-1.1.9-2 2-2z" fill="currentColor" />
+      <path d="M11 12h2v3h-2z" fill="currentColor" />
+      <path d="M12 15c-2.8 0-4 2.4-4 4.5V22h8v-2.5c0-2.1-1.2-4.5-4-4.5z" fill="currentColor" />
+      <path d="M11 18h2v2h-2z" opacity=".22" fill="currentColor" />
+    </Svg>
   );
 }

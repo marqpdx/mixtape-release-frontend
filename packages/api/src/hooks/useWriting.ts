@@ -266,6 +266,14 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
           members?: string[];
           shelves?: string[];
         };
+        group_overrides?: Record<string, {
+          visibility?: 'public' | 'members' | 'unlisted' | 'private' | 'scheduled';
+          is_excerpt?: boolean;
+          follow_updates?: boolean;
+          overrides?: Record<string, unknown>;
+          order?: number;
+          is_pinned?: boolean;
+        }>;
         placement_options?: {
           visibility?: 'public' | 'members' | 'unlisted' | 'private';
           is_excerpt?: boolean;

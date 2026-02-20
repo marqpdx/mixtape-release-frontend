@@ -60,11 +60,20 @@ export function Mill({ sponsor }: MillProps) {
         sponsor.type === 'group' ? sponsor.slug : undefined,
         timezone
       );
-      setMessage(`Event created: ${result.event_slug}`);
+      const typeLabel = ast?.type === 'event' ? 'Event' : ast?.type === 'course' ? 'Course' : ast?.type === 'lesson' ? 'Lesson' : 'Content';
+      const slug = result.event_slug || result.course_slug || result.lesson_slug || '';
+      setMessage(`${typeLabel} created: ${slug}`);
       if (sponsor.type === 'group') {
-        queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'drafts', sponsor.slug] });
-        queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'published', sponsor.slug] });
-        queryClient.invalidateQueries({ queryKey: ['almanac', 'calendar', sponsor.slug] });
+        // Invalidate relevant queries based on type
+        if (ast?.type === 'event') {
+          queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'drafts', sponsor.slug] });
+          queryClient.invalidateQueries({ queryKey: ['almanac', 'events', 'published', sponsor.slug] });
+          queryClient.invalidateQueries({ queryKey: ['almanac', 'calendar', sponsor.slug] });
+        } else if (ast?.type === 'course') {
+          queryClient.invalidateQueries({ queryKey: ['earthlab', 'courses', sponsor.slug] });
+        } else if (ast?.type === 'lesson') {
+          queryClient.invalidateQueries({ queryKey: ['earthlab', 'lessons', sponsor.slug] });
+        }
       }
     } catch (error) {
       setMessage(`Promote error: ${error}`);
@@ -102,12 +111,34 @@ export function Mill({ sponsor }: MillProps) {
         {ast && (
           <Box border="1px" borderColor="gray.200" p={4} borderRadius="md" bg="gray.50">
             <Text fontSize="lg" fontWeight="bold">
-              {ast.type === 'event' ? '📅' : '📝'} {ast.title}
+              {ast.type === 'event' ? '📅' : ast.type === 'course' ? '🌎' : ast.type === 'lesson' ? '📖' : '📝'} {ast.title}
             </Text>
 
-            {ast.fields.start && <Text>🕐 {ast.fields.start}</Text>}
-            {ast.fields.location && <Text>📍 {ast.fields.location}</Text>}
-            {ast.fields.format && <Text>🎯 {ast.fields.format}</Text>}
+            {/* Event fields */}
+            {ast.type === 'event' && (
+              <>
+                {ast.fields.start && <Text>🕐 {ast.fields.start}</Text>}
+                {ast.fields.location && <Text>📍 {ast.fields.location}</Text>}
+                {ast.fields.format && <Text>🎯 {ast.fields.format}</Text>}
+              </>
+            )}
+
+            {/* Course fields */}
+            {ast.type === 'course' && (
+              <>
+                {ast.fields.difficulty && <Text>📊 {ast.fields.difficulty}</Text>}
+                {ast.fields.delivery && <Text>🎯 {ast.fields.delivery}</Text>}
+                {ast.fields.duration && <Text>⏱️ {ast.fields.duration} min</Text>}
+              </>
+            )}
+
+            {/* Lesson fields */}
+            {ast.type === 'lesson' && (
+              <>
+                {ast.fields.difficulty && <Text>📊 {ast.fields.difficulty}</Text>}
+                {ast.fields.duration && <Text>⏱️ {ast.fields.duration} min</Text>}
+              </>
+            )}
 
             {ast.errors && ast.errors.length > 0 && (
               <Box mt={2}>
@@ -135,7 +166,7 @@ export function Mill({ sponsor }: MillProps) {
                     w="full"
                     disabled={isLoading}
                   >
-                    Promote to {ast.type === 'event' ? 'Event' : 'Content'}
+                    Promote to {ast.type === 'event' ? 'Event' : ast.type === 'course' ? 'Course' : ast.type === 'lesson' ? 'Lesson' : 'Content'}
                   </Button>
                 )}
               </VStack>

@@ -98,7 +98,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
             </Button>
           </Collapsible.Trigger>
           <Collapsible.Content>
-            <Box pt={4}>
+            <Box pt={4} pb={4}>
               {welcomePin ? (
                 <>
                   <Heading size="md" mb={2}>

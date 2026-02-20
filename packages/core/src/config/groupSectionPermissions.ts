@@ -98,6 +98,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create a new Lanternmail campaign',
   },
 
+  // EarthLab - admin only
+  'earthlab-landing': {
+    requiredRole: 'admin',
+    description: 'EarthLab course and lesson management',
+  },
+
   // Mill - admin only
   'mill': {
     requiredRole: 'admin',

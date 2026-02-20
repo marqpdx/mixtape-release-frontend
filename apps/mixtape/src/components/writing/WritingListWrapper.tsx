@@ -489,16 +489,19 @@ export default function WritingListWrapper({
       })
       .sort((a, b) => a.tag.localeCompare(b.tag));
 
-    if (untagged.length) {
-      entries.push({
-        tag: "Untagged",
-        items: untagged,
-        onlyCount: untagged.length,
-        totalCount: untagged.length,
-      });
-    }
+    const results = untagged.length
+      ? entries.concat({
+          tag: "Untagged",
+          items: untagged,
+          onlyCount: untagged.length,
+          totalCount: untagged.length,
+        })
+      : entries;
 
-    return entries;
+    return {
+      groups: results,
+      defaultOpen: results[0]?.tag ?? null,
+    };
   }, [filteredPublishedPieces]);
 
   const getDraftTags = useCallback((draft: WritingWorkingCopy) => {
@@ -534,16 +537,19 @@ export default function WritingListWrapper({
       })
       .sort((a, b) => a.tag.localeCompare(b.tag));
 
-    if (untagged.length) {
-      entries.push({
-        tag: "Untagged",
-        items: untagged,
-        onlyCount: untagged.length,
-        totalCount: untagged.length,
-      });
-    }
+    const results = untagged.length
+      ? entries.concat({
+          tag: "Untagged",
+          items: untagged,
+          onlyCount: untagged.length,
+          totalCount: untagged.length,
+        })
+      : entries;
 
-    return entries;
+    return {
+      groups: results,
+      defaultOpen: results[0]?.tag ?? null,
+    };
   }, [processedDrafts, getDraftTags]);
 
   return (
@@ -612,8 +618,8 @@ export default function WritingListWrapper({
         {/* Tab Content */}
         <Tabs.Content value="published">
           {groupByTags ? (
-            <Accordion.Root collapsible multiple>
-              {tagGroups.map((group) => (
+            <Accordion.Root collapsible multiple value={tagGroups.defaultOpen ? [tagGroups.defaultOpen] : []}>
+              {tagGroups.groups.map((group) => (
                 <Accordion.Item key={group.tag} value={group.tag}>
                   <Accordion.ItemTrigger>
                     <HStack justify="space-between" w="full">
@@ -696,8 +702,8 @@ export default function WritingListWrapper({
 
         <Tabs.Content value="drafts">
           {groupByTags ? (
-            <Accordion.Root collapsible multiple>
-              {draftTagGroups.map((group) => (
+            <Accordion.Root collapsible multiple value={draftTagGroups.defaultOpen ? [draftTagGroups.defaultOpen] : []}>
+              {draftTagGroups.groups.map((group) => (
                 <Accordion.Item key={group.tag} value={group.tag}>
                   <Accordion.ItemTrigger>
                     <HStack justify="space-between" w="full">

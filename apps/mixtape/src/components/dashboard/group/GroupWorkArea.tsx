@@ -36,6 +36,7 @@ import ThemeWorkArea from "@/components/groups/themes/ThemeWorkArea";
 import AudioWorkArea from "@/components/concord/AudioWorkArea";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
+import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -299,6 +300,15 @@ export default function GroupWorkArea({
           sponsorId={group.id}
           sponsorTitle={group.title}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // EarthLab (Courses & Lessons)
+  if (section === "earthlab-landing") {
+    return (
+      <WorkAreaWrapper>
+        <EarthLabWorkArea groupSlug={group.slug} />
       </WorkAreaWrapper>
     );
   }

@@ -1,4 +1,4 @@
-// src/components/common/UniversalDataTable.tsx
+// apps/mixtape/src/components/common/UniversalDataTable.tsx
 
 "use client";
 
@@ -462,7 +462,7 @@ export default function UniversalDataTable<T extends BaseItem>({
         shadow="sm"
       >
         {/* Header */}
-        <Box
+        <Box display={'none'}
           px={6}
           py={4}
           bg={headerBg}

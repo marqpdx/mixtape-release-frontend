@@ -1,4 +1,4 @@
-// src/components/write/composer/SimplePublishDialog.tsx
+// apps/mixtape/src/components/write/composer/SimplePublishDialog.tsx
 
 'use client'
 
@@ -62,6 +62,7 @@ export function SimplePublishDialog({
   const [audience, setAudience] = useState<AudienceChoice>('just_me')
   const [selectedShelves, setSelectedShelves] = useState<string[]>([])
   const [postToGroup, setPostToGroup] = useState(false)
+  const [pinAsWelcome, setPinAsWelcome] = useState(false)
 
   const { publishPiece } = useWritingMutations(sponsorType, sponsorSlug || 'unknown')
 
@@ -130,6 +131,17 @@ export function SimplePublishDialog({
         ? { shelves: selectedShelves }
         : { groups: postToGroup ? [sponsorId] : [] }
 
+      const groupOverrides = !isMemberSponsor && postToGroup && pinAsWelcome
+        ? {
+            [sponsorId]: {
+              overrides: {
+                pin_kind: "welcome",
+                pin_audience: "group",
+              },
+            },
+          }
+        : undefined
+
       const response = await publishPiece.mutateAsync({
         pieceId: piece.id,
         payload: {
@@ -138,6 +150,7 @@ export function SimplePublishDialog({
           excerpt: excerptRef.current,
           audience,
           destinations,
+          group_overrides: groupOverrides,
           placement_options: {
             follow_updates: true,
           },
@@ -276,25 +289,53 @@ export function SimplePublishDialog({
                   )}
 
                   {shouldShowGroup && (
-                    <Checkbox.Root
-                      checked={postToGroup}
-                      onCheckedChange={({ checked }: { checked: boolean | string }) => setPostToGroup(!!checked)}
-                    >
-                      <Checkbox.HiddenInput />
-                      <HStack align="start" gap={2}>
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <VStack align="start" gap={0}>
-                          <Checkbox.Label fontWeight="semibold" fontSize="sm">
-                            Group noticeboard
-                          </Checkbox.Label>
-                          <Text fontSize="xs" color="gray.500">
-                            Place this on your group’s noticeboard.
-                          </Text>
-                        </VStack>
-                      </HStack>
-                    </Checkbox.Root>
+                    <VStack align="stretch" gap={2}>
+                      <Checkbox.Root
+                        checked={postToGroup}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) => {
+                          const next = !!checked
+                          setPostToGroup(next)
+                          if (!next) setPinAsWelcome(false)
+                        }}
+                      >
+                        <Checkbox.HiddenInput />
+                        <HStack align="start" gap={2}>
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <VStack align="start" gap={0}>
+                            <Checkbox.Label fontWeight="semibold" fontSize="sm">
+                              Group noticeboard
+                            </Checkbox.Label>
+                            <Text fontSize="xs" color="gray.500">
+                              Place this on your group’s noticeboard.
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Checkbox.Root>
+
+                      <Checkbox.Root
+                        checked={pinAsWelcome}
+                        disabled={!postToGroup}
+                        onCheckedChange={({ checked }: { checked: boolean | string }) => setPinAsWelcome(!!checked)}
+                        pl={6}
+                      >
+                        <Checkbox.HiddenInput />
+                        <HStack align="start" gap={2}>
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <VStack align="start" gap={0}>
+                            <Checkbox.Label fontWeight="semibold" fontSize="sm">
+                              Set as welcome pin
+                            </Checkbox.Label>
+                            <Text fontSize="xs" color="gray.500">
+                              Show this as the group’s welcome note.
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Checkbox.Root>
+                    </VStack>
                   )}
 
                   <Text fontSize="xs" color="gray.500">

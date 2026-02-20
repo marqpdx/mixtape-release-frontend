@@ -57,16 +57,14 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
   },
 
 
-  // {
-  //   key: "earthlab",
-  //   label: "EarthLab",
-  //   icon: "🌎",
-  //   subItems: [
-  //     { key: "earthlab", label: "Learning", hidden: true },
-  //     { key: "course-detail", label: "Create/Edit", hidden: true },
-  //     // { key: "create-event", label: "Create Event", hidden: true },
-  //   ]
-  // },
+  {
+    key: "earthlab",
+    label: "EarthLab",
+    icon: "🌎",
+    subItems: [
+      { key: "earthlab-landing", label: "Courses & Lessons" },
+    ]
+  },
   {
     key: "content",
     label: "Content",
