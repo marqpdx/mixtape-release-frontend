@@ -230,8 +230,21 @@ function GroupBlobNode({ data }: NodeProps<Node<GroupNodeData>>) {
   const typeStyle =
     GROUP_TYPE_STYLES[group.group_type] || GROUP_TYPE_STYLES.circle;
   const isCommunity = group.group_type === "community";
-  const baseSize = isCommunity ? 88 : 62;
+  const isCoalition = group.group_type === "coalition";
+
+  // Communities: subtle size boost for active groups (88–104px)
+  const communityBase = isCommunity
+    ? 88 + Math.min(group.member_count * 0.8, 16)
+    : 62;
+  // Coalitions: 78% of community base, rendered as rounded rect
+  const baseSize = isCoalition ? Math.round(88 * 0.78) : communityBase;
   const size = isSelected ? baseSize * 1.35 : baseSize;
+
+  // Coalition aspect ratio: wider than tall
+  const nodeW = isCoalition ? size * 1.3 : size;
+  const nodeH = isCoalition ? size * 0.9 : size;
+  const nodeRadius = isCoalition ? "16px" : "9999px";
+
   const hasImage = !!group.profile_image_url;
   const indicators = getIndicators(group);
 
@@ -243,8 +256,8 @@ function GroupBlobNode({ data }: NodeProps<Node<GroupNodeData>>) {
   return (
     <Box
       position="relative"
-      w={`${size}px`}
-      h={`${size}px`}
+      w={`${nodeW}px`}
+      h={`${nodeH}px`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       cursor="grab"
@@ -254,8 +267,8 @@ function GroupBlobNode({ data }: NodeProps<Node<GroupNodeData>>) {
       <Box
         position="absolute"
         bottom="-5px"
-        left="10%"
-        right="10%"
+        left={isCoalition ? "5%" : "10%"}
+        right={isCoalition ? "5%" : "10%"}
         h="10px"
         borderRadius="full"
         bg="rgba(40,30,15,0.2)"
@@ -265,17 +278,20 @@ function GroupBlobNode({ data }: NodeProps<Node<GroupNodeData>>) {
       {/* Semiotic indicator rings */}
       {indicators.map((key, i) => {
         const ring = INDICATOR_RINGS[key];
-        const ringSize = size + 12 + i * 8;
-        const offset = (ringSize - size) / 2;
+        const pad = 12 + i * 8;
+        const ringW = nodeW + pad;
+        const ringH = nodeH + pad;
+        const offsetX = (ringW - nodeW) / 2;
+        const offsetY = (ringH - nodeH) / 2;
         return (
           <Box
             key={key}
             position="absolute"
-            top={`${-offset}px`}
-            left={`${-offset}px`}
-            w={`${ringSize}px`}
-            h={`${ringSize}px`}
-            borderRadius="full"
+            top={`${-offsetY}px`}
+            left={`${-offsetX}px`}
+            w={`${ringW}px`}
+            h={`${ringH}px`}
+            borderRadius={isCoalition ? "20px" : "full"}
             border="2px solid"
             borderColor={ring.color}
             opacity={hovered || isSelected ? 0.7 : 0.35}
@@ -289,7 +305,7 @@ function GroupBlobNode({ data }: NodeProps<Node<GroupNodeData>>) {
       <Box
         position="absolute"
         inset="0"
-        borderRadius="full"
+        borderRadius={nodeRadius}
         overflow="hidden"
         border="3px solid"
         borderColor={
@@ -684,6 +700,39 @@ function MapControls({
 
 // ---- Layout ----
 
+// Golden angle in radians (~137.508°) — produces natural, non-repeating spacing
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+function organicPositions(
+  count: number,
+  nominalRadius: number,
+  cx: number,
+  cy: number,
+  ids: string[],
+  jitterAmount: number
+) {
+  if (count <= 0) return [];
+  if (count === 1) {
+    const j = stableJitter(ids[0], jitterAmount * 0.5);
+    return [{ x: cx + j.dx, y: cy + j.dy }];
+  }
+
+  const pts: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < count; i++) {
+    const angle = GOLDEN_ANGLE * i - Math.PI / 2;
+    // Vary radius per item using its hash (±30% of nominal)
+    const hash = stableHash(ids[i]);
+    const radiusVariation = 0.7 + ((hash % 600) / 1000); // 0.7–1.3
+    const r = nominalRadius * radiusVariation;
+    const jitter = stableJitter(ids[i], jitterAmount);
+    pts.push({
+      x: cx + r * Math.cos(angle) + jitter.dx,
+      y: cy + r * Math.sin(angle) + jitter.dy,
+    });
+  }
+  return pts;
+}
+
 function layoutGroups(groups: PublicGroup[]): Node<GroupNodeData>[] {
   if (groups.length === 0) return [];
 
@@ -694,37 +743,38 @@ function layoutGroups(groups: PublicGroup[]): Node<GroupNodeData>[] {
   const centerY = 0;
 
   const innerRadius = communities.length <= 1 ? 0 : 180;
-  const communityPts = radialPositions(
+  const communityPts = organicPositions(
     communities.length,
     innerRadius,
     centerX,
-    centerY
+    centerY,
+    communities.map((g) => g.id),
+    60
   );
   communities.forEach((g, i) => {
-    const jitter = stableJitter(g.id, 20);
     nodes.push({
       id: g.id,
       type: "groupBlob",
-      position: {
-        x: communityPts[i].x + jitter.dx,
-        y: communityPts[i].y + jitter.dy,
-      },
+      position: { x: communityPts[i].x, y: communityPts[i].y },
       data: { group: g, label: g.title },
       draggable: true,
     });
   });
 
   const outerRadius = communities.length === 0 ? 160 : 280;
-  const otherPts = radialPositions(others.length, outerRadius, centerX, centerY);
+  const otherPts = organicPositions(
+    others.length,
+    outerRadius,
+    centerX,
+    centerY,
+    others.map((g) => g.id),
+    40
+  );
   others.forEach((g, i) => {
-    const jitter = stableJitter(g.id, 25);
     nodes.push({
       id: g.id,
       type: "groupBlob",
-      position: {
-        x: otherPts[i].x + jitter.dx,
-        y: otherPts[i].y + jitter.dy,
-      },
+      position: { x: otherPts[i].x, y: otherPts[i].y },
       data: { group: g, label: g.title },
       draggable: true,
     });
@@ -1025,17 +1075,3 @@ function stableJitter(id: string, amount: number) {
   return { dx: (r1 - 0.5) * amount, dy: (r2 - 0.5) * amount };
 }
 
-function radialPositions(count: number, radius: number, cx: number, cy: number) {
-  if (count <= 0) return [];
-  if (count === 1) return [{ x: cx, y: cy }];
-
-  const pts: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < count; i++) {
-    const angle = (2 * Math.PI * i) / count - Math.PI / 2;
-    pts.push({
-      x: cx + radius * Math.cos(angle),
-      y: cy + radius * Math.sin(angle),
-    });
-  }
-  return pts;
-}

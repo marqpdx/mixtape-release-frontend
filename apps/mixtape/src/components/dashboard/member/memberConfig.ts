@@ -42,6 +42,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
       { key: "draft-room", label: "Draft Room", hidden: false },
       { key: "write", label: "Write", hidden: false },
       { key: "seeds", label: "Seeds", hidden: false },
+      { key: "import-document", label: "Import Document", hidden: false },
       { key: "new-post", label: "New Post", hidden: true },
       { key: "my-drafts", label: "My Drafts", hidden: true },
       { key: "published-posts", label: "Published Posts", hidden: true },

@@ -74,6 +74,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       // { key: "create-writing", label: "Write", hidden: false },
       // { key: "threadworks-landing", label: "Threadworks", hidden: false },
       { key: "write", label: "Write", hidden: false },
+      { key: "import-document", label: "Import Document", hidden: false },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },

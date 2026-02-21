@@ -37,6 +37,7 @@ import AudioWorkArea from "@/components/concord/AudioWorkArea";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
+import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -444,6 +445,18 @@ export default function GroupWorkArea({
             }
             router.replace(`/groups/${group.slug}?view=admin&section=writing`);
           }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "import-document") {
+    return (
+      <WorkAreaWrapper>
+        <DocxImportWorkArea
+          sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
+          onImported={(piece) => setActiveSection("write", { piece: piece.id })}
+          onBack={() => setActiveSection("writing")}
         />
       </WorkAreaWrapper>
     );

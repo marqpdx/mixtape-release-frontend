@@ -8,6 +8,11 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 export type SeedItem = {
   id: string;
   body_text: string;
+  kind?: "text" | "voice";
+  status?: "ready" | "processing" | "failed";
+  audio_url?: string | null;
+  transcript_text?: string | null;
+  transcript_error?: string | null;
   created_at: string;
   updated_at: string;
   promoted_to?: string | null;

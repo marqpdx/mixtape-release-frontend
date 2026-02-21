@@ -4,7 +4,7 @@
  * Pure API calls for writing operations (working copies, publishing, placement)
  */
 
-import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy, DocxPreviewResult, DocxImportPayload, DocxImportResult } from "@mixtape/core/types/writingTypes";
 import type { WritingPiece } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "../../lib/utils";
@@ -116,4 +116,24 @@ export async function fetchPiece(pieceSlug: string) {
  */
 export async function deleteDraft(draftId: string): Promise<void> {
   await axiosInstance.delete(`/api/writing/drafts/${draftId}`);
+}
+
+/**
+ * Preview a .docx file import (parse without creating records)
+ */
+export async function previewDocxImport(file: File): Promise<DocxPreviewResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await axiosInstance.post("/api/writing/import/preview", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+/**
+ * Confirm a .docx import (create WritingPiece from previewed content)
+ */
+export async function confirmDocxImport(data: DocxImportPayload): Promise<DocxImportResult> {
+  const res = await axiosInstance.post("/api/writing/import/confirm", data);
+  return res.data;
 }

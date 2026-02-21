@@ -30,6 +30,7 @@ import { useCollaboration } from "@hooks/useCollaboration";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
 import { Divider } from "../common/Divider";
+import { OutlineDrawer } from "./outline/OutlineDrawer";
 
 interface SponsorConfig {
   type: "group" | "member";
@@ -133,6 +134,7 @@ export default function WriteComposer({
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
+  const [outlineOpen, setOutlineOpen] = useState(false);
   const publishedBannerBg = useColorModeValue("orange.50", "orange.900");
   const publishedBannerBorder = useColorModeValue("orange.200", "orange.700");
   const publishedBannerText = useColorModeValue("orange.800", "orange.100");
@@ -454,6 +456,14 @@ export default function WriteComposer({
             <Box mb={2}>
               <Flex justify={"space-between"}>
                 <HStack gap={3} align="center">
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setOutlineOpen(true)}
+                    title="Open outline"
+                  >
+                    Outline
+                  </Button>
                   <Box fontSize="sm" color="gray.600">
                     Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
                   </Box>
@@ -706,6 +716,14 @@ export default function WriteComposer({
           summaryWordCount={excerpt.length}
         />
       </HStack>
+
+      <OutlineDrawer
+        isOpen={outlineOpen}
+        onClose={() => setOutlineOpen(false)}
+        editor={editorRef.current}
+        pieceId={pieceId}
+        enableOutline={!!(initialPiece?.enable_outline)}
+      />
     </Box>
   );
 }

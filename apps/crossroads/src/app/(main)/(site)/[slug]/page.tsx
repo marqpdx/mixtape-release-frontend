@@ -1,3 +1,5 @@
+// apps/crossroads/app/(main)/(site)/[slug]/page.tsx
+
 "use client";
 
 import { Box, Heading, Text, VStack } from "@chakra-ui/react";

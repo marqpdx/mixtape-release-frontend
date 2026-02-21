@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Badge,
   Box,
@@ -13,7 +13,8 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
-import { IconSend } from "@tabler/icons-react";
+import { IconMicrophone, IconPlayerStop, IconSend, IconUpload } from "@tabler/icons-react";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useSeedAutosave } from "@/lib/writing/useSeedAutosave";
 import { useSeedList } from "@/lib/writing/useSeedList";
 
@@ -28,7 +29,13 @@ export default function SeedCapturePage() {
     attachExistingSeed,
   } = useSeedAutosave("", 1500);
   const refreshToken = useMemo(() => savedTick + (seedId ? 1 : 0), [savedTick, seedId]);
-  const { seeds, loading } = useSeedList(20, refreshToken);
+  const { seeds, loading, refetch } = useSeedList(20, refreshToken);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleChange = (value: string) => {
     setText(value);
@@ -41,6 +48,24 @@ export default function SeedCapturePage() {
   };
 
   const handleSend = async () => {
+    if (voiceBlob) {
+      const form = new FormData();
+      form.append("audio_file", voiceBlob, "seed-voice.webm");
+      form.append("kind", "voice");
+      form.append("source", "web");
+      await axiosInstance.post("/api/writing/seeds", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (voiceUrl) {
+        URL.revokeObjectURL(voiceUrl);
+      }
+      setVoiceBlob(null);
+      setVoiceUrl(null);
+      setText("");
+      resetSeed();
+      schedule({ body_text: "" });
+      return;
+    }
     const trimmed = text.trim();
     if (!trimmed) return;
     await saveNow(trimmed);
@@ -54,6 +79,62 @@ export default function SeedCapturePage() {
     body.classList.add("seed-page");
     return () => body.classList.remove("seed-page");
   }, []);
+
+  useEffect(() => {
+    const hasProcessing = seeds.some((seed) => seed.status === "processing");
+    if (!hasProcessing) return;
+    const interval = window.setInterval(() => {
+      void refetch();
+    }, 7000);
+    return () => window.clearInterval(interval);
+  }, [seeds, refetch]);
+
+  const startRecording = async () => {
+    if (isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+    chunksRef.current = [];
+
+    recorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        chunksRef.current.push(event.data);
+      }
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+      setVoiceBlob(blob);
+      const url = URL.createObjectURL(blob);
+      setVoiceUrl(url);
+      stream.getTracks().forEach((track) => track.stop());
+    };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch {
+      // Permission denied or no mic available
+    }
+  };
+
+  const stopRecording = () => {
+    if (!isRecording) return;
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  };
+
+  const handleUploadFile = async (file: File) => {
+    const form = new FormData();
+    form.append("audio_file", file);
+    form.append("kind", "voice");
+    form.append("source", "web");
+    await axiosInstance.post("/api/writing/seeds", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    setText("");
+    resetSeed();
+    schedule({ body_text: "" });
+  };
 
   return (
     <Flex direction="column" h="100vh" overflow="hidden" gap={4}>
@@ -88,10 +169,20 @@ export default function SeedCapturePage() {
                     lineClamp={3}
                     className={seed.id === seedId ? "seed-fade-in" : undefined}
                   >
-                    {seed.body_text && seed.body_text.length > 169
-                      ? `${seed.body_text.slice(0, 169)}…`
-                      : seed.body_text || "Untitled"}
+                    {seed.kind === "voice" && seed.status === "processing" && "Transcribing…"}
+                    {seed.kind === "voice" && seed.status === "failed" && seed.transcript_error
+                      ? seed.transcript_error
+                      : null}
+                    {(!seed.kind || seed.kind === "text" || seed.status === "ready") &&
+                      (seed.body_text && seed.body_text.length > 169
+                        ? `${seed.body_text.slice(0, 169)}…`
+                        : seed.body_text || "Untitled")}
                   </Text>
+                  {seed.kind === "voice" && seed.audio_url && (
+                    <Box pt={1}>
+                      <audio controls src={seed.audio_url} />
+                    </Box>
+                  )}
                 </Stack>
               </Box>
             ))}
@@ -106,11 +197,42 @@ export default function SeedCapturePage() {
             placeholder="Capture a quick idea..."
             resize="none"
             flex="1 1 auto"
+            disabled={!!voiceBlob}
           />
+          {voiceUrl && (
+            <Box>
+              <audio controls src={voiceUrl} />
+            </Box>
+          )}
           <HStack justify="space-between" flex="0 0 auto">
-            <IconButton aria-label="Voice note (coming soon)" size="sm" variant="ghost" disabled>
-              Voice note
-            </IconButton>
+            <HStack gap={2}>
+              <IconButton
+                aria-label={isRecording ? "Stop recording" : "Record voice note"}
+                size="sm"
+                variant={isRecording ? "solid" : "ghost"}
+                onClick={isRecording ? stopRecording : startRecording}
+              >
+                {isRecording ? <IconPlayerStop size={16} /> : <IconMicrophone size={16} />}
+              </IconButton>
+              <IconButton
+                aria-label="Upload audio file"
+                size="sm"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <IconUpload size={16} />
+              </IconButton>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                hidden
+                onChange={(event) => {
+                  const f = event.target.files?.[0];
+                  if (f) void handleUploadFile(f);
+                }}
+              />
+            </HStack>
             <Text color="fg.muted" fontSize="xs">
               Autosaves as you type
             </Text>
@@ -119,7 +241,7 @@ export default function SeedCapturePage() {
               size="sm"
               variant="solid"
               onClick={handleSend}
-              disabled={text.trim().length === 0}
+              disabled={text.trim().length === 0 && !voiceBlob}
             >
               <IconSend size={16} />
             </IconButton>

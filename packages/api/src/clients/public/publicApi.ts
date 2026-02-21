@@ -107,6 +107,33 @@ export interface PublicWritingPiece {
   placement_visibility: string;
 }
 
+export interface PublicCourseListItem {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  status: string;
+  difficulty_level: string;
+  delivery_type: string;
+  estimated_duration: number | null;
+  learning_objectives: string[];
+}
+
+export interface PublicCourseOutlineItem {
+  id: string;
+  position: number;
+  section_title: string;
+  content_type: string;
+  content_title: string;
+  estimated_duration: number | null;
+}
+
+export interface PublicCourseDetail extends PublicCourseListItem {
+  body: string;
+  flow_mode: string;
+  items: PublicCourseOutlineItem[];
+}
+
 // --- API Functions ---
 
 export async function fetchPublicMemberProfile(
@@ -174,6 +201,25 @@ export async function fetchPublicWritingPiece(
 ): Promise<PublicWritingPiece> {
   const response = await axiosInstance.get<PublicWritingPiece>(
     `/api/public/writing/${slug}`
+  );
+  return response.data;
+}
+
+export async function fetchPublicGroupCourses(
+  groupSlug: string
+): Promise<PublicCourseListItem[]> {
+  const response = await axiosInstance.get<PublicCourseListItem[]>(
+    `/api/public/groups/${groupSlug}/courses`
+  );
+  return response.data;
+}
+
+export async function fetchPublicCourseDetail(
+  groupSlug: string,
+  courseSlug: string
+): Promise<PublicCourseDetail> {
+  const response = await axiosInstance.get<PublicCourseDetail>(
+    `/api/public/groups/${groupSlug}/courses/${courseSlug}`
   );
   return response.data;
 }

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { VStack, Text, SimpleGrid, Card, HStack } from "@chakra-ui/react";
+import { VStack, Text, SimpleGrid, Card, HStack, Table } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
@@ -37,6 +37,7 @@ export default function AdminWorkArea({
     ordering: "-created_at",
     is_active: true,
   });
+  const [isDeletingGroup, setIsDeletingGroup] = useState<string | null>(null);
   const [newFeedbackCount, setNewFeedbackCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -180,6 +181,76 @@ export default function AdminWorkArea({
             </Button>
           </HStack>
           <ToDoList todos={todos} onComplete={onCompleteTodo} />
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  // =========================================================================
+  // GROUP MANAGEMENT
+  // =========================================================================
+  if (section === "group-management") {
+    const handleDeleteGroup = async (slug: string) => {
+      if (!window.confirm(`Delete group "${slug}"? This cannot be undone.`)) {
+        return;
+      }
+      try {
+        setIsDeletingGroup(slug);
+        await axiosInstance.delete(`/api/groups/${slug}`);
+        window.location.reload();
+      } catch (error) {
+        console.error("Failed to delete group:", error);
+      } finally {
+        setIsDeletingGroup(null);
+      }
+    };
+
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HStack justify="space-between">
+            <Text fontSize="xl" fontWeight="bold">All Groups</Text>
+            <Text color="gray.600">{groups.length} total</Text>
+          </HStack>
+
+          <Card.Root>
+            <Card.Body>
+              {groups.length === 0 ? (
+                <Text color="gray.600">No groups found.</Text>
+              ) : (
+                <Table.Root size="sm">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>Title</Table.ColumnHeader>
+                      <Table.ColumnHeader>Slug</Table.ColumnHeader>
+                      <Table.ColumnHeader>Members</Table.ColumnHeader>
+                      <Table.ColumnHeader textAlign="right">Actions</Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {groups.map((group) => (
+                      <Table.Row key={group.id}>
+                        <Table.Cell>{group.title}</Table.Cell>
+                        <Table.Cell>{group.slug}</Table.Cell>
+                        <Table.Cell>{group.member_count ?? "—"}</Table.Cell>
+                        <Table.Cell textAlign="right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            colorScheme="red"
+                            onClick={() => handleDeleteGroup(group.slug)}
+                            disabled={isDeletingGroup === group.slug}
+                          >
+                            Delete
+                          </Button>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              )}
+            </Card.Body>
+          </Card.Root>
         </VStack>
       </WorkAreaWrapper>
     );

@@ -25,6 +25,7 @@ import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
 import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
 import { BlockId } from "./extensions/BlockId";
+import { OutlineMarker } from "./extensions/OutlineMarker";
 import TipTapToolbar from "./TipTapToolbar";
 import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
@@ -45,6 +46,7 @@ type ToolbarOption =
 
 // Default toolbar options - defined outside component to maintain stable reference
 const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [
+  "heading",
   "bold",
   "italic",
   "underline",
@@ -214,6 +216,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       // listItem: false,
     }),
     BlockId,
+    OutlineMarker,
     BlockRouting.configure(routingOpts),
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),

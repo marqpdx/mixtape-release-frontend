@@ -130,6 +130,14 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   //     { key: "group-management", label: "All Groups" },
   //   ]
   // },
+  {
+    key: "groups",
+    label: "Groups",
+    icon: "🏢",
+    subItems: [
+      { key: "group-management", label: "All Groups" },
+    ]
+  },
   // {
   //   key: "content",
   //   label: "Content",

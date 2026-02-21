@@ -1,7 +1,3 @@
-// =====================================================
-// MEMBER WORK AREA - Community features & content creation
-// =====================================================
-
 // apps/mixtape/src/components/dashboard/member/MemberWorkArea.tsx
 
 import React, { useMemo, useRef } from "react";
@@ -25,6 +21,7 @@ import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
+import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 import { ListsTab } from "@/components/workbench/ListsTab";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
@@ -174,6 +171,19 @@ export default function MemberWorkArea({
             }
             setActiveSection("writing");
           }}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "import-document") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <DocxImportWorkArea
+          sponsor={{ type: "member", id: identity.id, slug: identity.username, displayName }}
+          onImported={(piece) => setActiveSection("write", { piece: piece.id })}
+          onBack={() => setActiveSection("writing")}
         />
       </WorkAreaWrapper>
     );

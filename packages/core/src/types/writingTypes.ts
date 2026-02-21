@@ -43,6 +43,9 @@ export interface WritingPiece {
   pinned_at?: string | null // ISO datetime
   pinned_rank?: number | null
 
+  // Outline
+  enable_outline?: boolean
+
   // Engagement
   allow_comments: boolean
   view_count: number
@@ -320,6 +323,42 @@ export interface PublishDestinations {
 
 export interface GroupOverridesMap {
   [groupIdOrSlug: string]: PlacementOptions;
+}
+
+// DOCX Import types
+
+export interface DocxPreviewResult {
+  body_json: Record<string, any>;
+  title: string | null;
+  stats: { node_counts: Record<string, number>; comment_count: number };
+  comments: Array<{ id: string; author: string; date: string; text: string }>;
+  file_sha256: string;
+  original_filename: string;
+  already_imported: {
+    piece_id: string;
+    receipt_id: string;
+    imported_at: string;
+  } | null;
+}
+
+export interface DocxImportPayload {
+  body_json: Record<string, any>;
+  title: string;
+  writing_kind: string;
+  sponsor_type: string;
+  sponsor_id: string;
+  enable_outline?: boolean;
+  source_url?: string;
+  file_sha256: string;
+  original_filename: string;
+  addressed_to?: string;
+  force?: boolean;
+}
+
+export interface DocxImportResult {
+  piece: WritingPiece;
+  outline_nodes_created: number;
+  message: string;
 }
 
 export interface PublishAndPlacePayload {

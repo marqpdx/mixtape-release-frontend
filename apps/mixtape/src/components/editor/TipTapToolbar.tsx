@@ -11,6 +11,9 @@ import {
   IconStrikethrough,
   IconList,
   IconListNumbers,
+  IconH1,
+  IconH2,
+  IconH3,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -84,6 +87,33 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   return (
     <HStack p={1} gap={0.5} justify="space-between">
       <HStack gap={0.5}>
+      <EditorToolbarButton
+        tooltip="Heading 1"
+        icon={<IconH1 size={16} />}
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        isActive={editor.isActive("heading", { level: 1 })}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Heading 2"
+        icon={<IconH2 size={16} />}
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        isActive={editor.isActive("heading", { level: 2 })}
+        tabIndex={-1}
+        size="xs"
+      />
+      <EditorToolbarButton
+        tooltip="Heading 3"
+        icon={<IconH3 size={16} />}
+        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        isActive={editor.isActive("heading", { level: 3 })}
+        tabIndex={-1}
+        size="xs"
+      />
+
+      <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
+
       <EditorToolbarButton
         tooltip="Bold (Ctrl+B)"
         icon={<IconBold size={16} />}
