@@ -489,18 +489,12 @@ export default function WritingListWrapper({
       })
       .sort((a, b) => a.tag.localeCompare(b.tag));
 
-    const results = untagged.length
-      ? entries.concat({
-          tag: "Untagged",
-          items: untagged,
-          onlyCount: untagged.length,
-          totalCount: untagged.length,
-        })
-      : entries;
-
     return {
-      groups: results,
-      defaultOpen: results[0]?.tag ?? null,
+      groups: entries,
+      untagged: untagged
+        .slice()
+        .sort((a, b) => (a.piece_title || "").localeCompare(b.piece_title || "")),
+      defaultOpen: entries[0]?.tag ?? null,
     };
   }, [filteredPublishedPieces]);
 
@@ -537,18 +531,12 @@ export default function WritingListWrapper({
       })
       .sort((a, b) => a.tag.localeCompare(b.tag));
 
-    const results = untagged.length
-      ? entries.concat({
-          tag: "Untagged",
-          items: untagged,
-          onlyCount: untagged.length,
-          totalCount: untagged.length,
-        })
-      : entries;
-
     return {
-      groups: results,
-      defaultOpen: results[0]?.tag ?? null,
+      groups: entries,
+      untagged: untagged
+        .slice()
+        .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
+      defaultOpen: entries[0]?.tag ?? null,
     };
   }, [processedDrafts, getDraftTags]);
 
@@ -618,63 +606,82 @@ export default function WritingListWrapper({
         {/* Tab Content */}
         <Tabs.Content value="published">
           {groupByTags ? (
-            <Accordion.Root collapsible multiple value={tagGroups.defaultOpen ? [tagGroups.defaultOpen] : []}>
-              {tagGroups.groups.map((group) => (
-                <Accordion.Item key={group.tag} value={group.tag}>
-                  <Accordion.ItemTrigger>
-                    <HStack justify="space-between" w="full">
-                      <HStack gap={3}>
-                        <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
-                        <HStack gap={1} fontSize="xs" color="gray.500">
-                          <Tooltip
-                            content={
-                              group.tag === "Untagged"
-                                ? "These pieces have no tags"
-                                : `${group.onlyCount} pieces have only this tag`
-                          }
-                        >
-                          <Text>({group.onlyCount}</Text>
-                        </Tooltip>
-                        <Text>/</Text>
-                          <Tooltip
-                            content={
-                              group.tag === "Untagged"
-                                ? "These pieces have no tags"
-                                : `${group.totalCount} pieces include this tag`
-                          }
-                        >
-                          <Text>{group.totalCount})</Text>
-                        </Tooltip>
+            <>
+              <Heading size="md" color={textSecondary} mb={3}>
+                By Tag
+              </Heading>
+              <Accordion.Root
+                collapsible
+                multiple
+                defaultValue={tagGroups.defaultOpen ? [tagGroups.defaultOpen] : []}
+              >
+                {tagGroups.groups.map((group) => (
+                  <Accordion.Item key={group.tag} value={group.tag}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={3}>
+                          <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
+                          <HStack gap={1} fontSize="xs" color="gray.500">
+                            <Tooltip content={`${group.onlyCount} pieces have only this tag`}>
+                              <Text>({group.onlyCount}</Text>
+                            </Tooltip>
+                            <Text>/</Text>
+                            <Tooltip content={`${group.totalCount} pieces include this tag`}>
+                              <Text>{group.totalCount})</Text>
+                            </Tooltip>
+                          </HStack>
                         </HStack>
+                        <Accordion.ItemIndicator />
                       </HStack>
-                      <Accordion.ItemIndicator />
-                    </HStack>
-                  </Accordion.ItemTrigger>
-                  <Accordion.ItemContent>
-                    <Box pt={4}>
-                      <UniversalDataTable<FlattenedPlacement>
-                        data={group.items}
-                        title=""
-                        isLoading={placementsLoading}
-                        error={placementsError ? "Failed to load writing" : null}
-                        columns={postsColumns(
-                          handleRowClick,
-                          canManagePosts ? handlePublishedEdit : undefined
-                        )}
-                        showAvatar={false}
-                        emptyStateMessage="No published content found"
-                        showCreateButton={false}
-                        onRowClick={handleRowClick}
-                        canView={() => true}
-                        canEdit={() => canManagePosts}
-                        pageSize={25}
-                        defaultSort={{ field: "post_info", order: "desc" }}
-                      />
-                    </Box>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              ))}
-            </Accordion.Root>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box pt={4}>
+                        <UniversalDataTable<FlattenedPlacement>
+                          data={group.items}
+                          title=""
+                          isLoading={placementsLoading}
+                          error={placementsError ? "Failed to load writing" : null}
+                          columns={postsColumns(
+                            handleRowClick,
+                            canManagePosts ? handlePublishedEdit : undefined
+                          )}
+                          showAvatar={false}
+                          emptyStateMessage="No published content found"
+                          showCreateButton={false}
+                          onRowClick={handleRowClick}
+                          canView={() => true}
+                          canEdit={() => canManagePosts}
+                          pageSize={25}
+                          defaultSort={{ field: "post_info", order: "desc" }}
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+              {tagGroups.untagged.length > 0 && (
+                <Box mt={6}>
+                  <UniversalDataTable<FlattenedPlacement>
+                    data={tagGroups.untagged}
+                    title="Untagged"
+                    isLoading={placementsLoading}
+                    error={placementsError ? "Failed to load writing" : null}
+                    columns={postsColumns(
+                      handleRowClick,
+                      canManagePosts ? handlePublishedEdit : undefined
+                    )}
+                    showAvatar={false}
+                    emptyStateMessage="No untagged content found"
+                    showCreateButton={false}
+                    onRowClick={handleRowClick}
+                    canView={() => true}
+                    canEdit={() => canManagePosts}
+                    pageSize={25}
+                    defaultSort={{ field: "post_info", order: "desc" }}
+                  />
+                </Box>
+              )}
+            </>
           ) : (
             <UniversalDataTable<FlattenedPlacement>
               data={filteredPublishedPieces}
@@ -702,89 +709,134 @@ export default function WritingListWrapper({
 
         <Tabs.Content value="drafts">
           {groupByTags ? (
-            <Accordion.Root collapsible multiple value={draftTagGroups.defaultOpen ? [draftTagGroups.defaultOpen] : []}>
-              {draftTagGroups.groups.map((group) => (
-                <Accordion.Item key={group.tag} value={group.tag}>
-                  <Accordion.ItemTrigger>
-                    <HStack justify="space-between" w="full">
-                      <HStack gap={3}>
-                        <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
-                        <HStack gap={1} fontSize="xs" color="gray.500">
-                          <Tooltip
-                            content={
-                              group.tag === "Untagged"
-                                ? "These pieces have no tags"
-                                : `${group.onlyCount} pieces have only this tag`
-                            }
-                          >
-                            <Text>({group.onlyCount}</Text>
-                          </Tooltip>
-                          <Text>/</Text>
-                          <Tooltip
-                            content={
-                              group.tag === "Untagged"
-                                ? "These pieces have no tags"
-                                : `${group.totalCount} pieces include this tag`
-                            }
-                          >
-                            <Text>{group.totalCount})</Text>
-                          </Tooltip>
+            <>
+              <Heading size="md" color={textSecondary} mb={3}>
+                By Tag
+              </Heading>
+              <Accordion.Root
+                collapsible
+                multiple
+                defaultValue={draftTagGroups.defaultOpen ? [draftTagGroups.defaultOpen] : []}
+              >
+                {draftTagGroups.groups.map((group) => (
+                  <Accordion.Item key={group.tag} value={group.tag}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={3}>
+                          <Text fontWeight="semibold"> 🏷️ {group.tag}</Text>
+                          <HStack gap={1} fontSize="xs" color="gray.500">
+                            <Tooltip content={`${group.onlyCount} pieces have only this tag`}>
+                              <Text>({group.onlyCount}</Text>
+                            </Tooltip>
+                            <Text>/</Text>
+                            <Tooltip content={`${group.totalCount} pieces include this tag`}>
+                              <Text>{group.totalCount})</Text>
+                            </Tooltip>
+                          </HStack>
                         </HStack>
+                        <Accordion.ItemIndicator />
                       </HStack>
-                      <Accordion.ItemIndicator />
-                    </HStack>
-                  </Accordion.ItemTrigger>
-                  <Accordion.ItemContent>
-                    <Box pt={4}>
-                      <UniversalDataTable<WritingWorkingCopy>
-                        data={group.items}
-                        title=""
-                        isLoading={draftsLoading}
-                        error={null}
-                        showAvatar={true}
-                        renderAvatar={(draft: WritingWorkingCopy) => (
-                          <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
-                            <Avatar.Fallback>
-                              {draft.is_collaborative ? (
-                                <IconUsersGroup size={20} color="purple" />
-                              ) : (
-                                <IconUser size={20} color="gray" />
-                              )}
-                            </Avatar.Fallback>
-                          </Avatar.Root>
-                        )}
-                        emptyStateMessage="No drafts found"
-                        emptyStateSubtitle="Create a draft to get started"
-                        actions={[
-                          {
-                            label: "Edit Draft",
-                            icon: <IconEdit size={16} />,
-                            onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                            variant: "ghost",
-                            colorScheme: "green",
-                          },
-                          {
-                            label: "Delete Draft",
-                            icon: <IconTrash size={16} />,
-                            onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                            variant: "ghost",
-                            colorScheme: "red",
-                          },
-                        ]}
-                        onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-                        showCreateButton={false}
-                        canEdit={() => true}
-                        canView={() => true}
-                        renderTitle={renderDraftTitle}
-                        renderDescription={renderDraftDescription}
-                        renderMetadata={renderDraftMetadata}
-                        defaultSort={{ field: "item_info", order: "desc" }}
-                      />
-                    </Box>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              ))}
-            </Accordion.Root>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box pt={4}>
+                        <UniversalDataTable<WritingWorkingCopy>
+                          data={group.items}
+                          title=""
+                          isLoading={draftsLoading}
+                          error={null}
+                          showAvatar={true}
+                          renderAvatar={(draft: WritingWorkingCopy) => (
+                            <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                              <Avatar.Fallback>
+                                {draft.is_collaborative ? (
+                                  <IconUsersGroup size={20} color="purple" />
+                                ) : (
+                                  <IconUser size={20} color="gray" />
+                                )}
+                              </Avatar.Fallback>
+                            </Avatar.Root>
+                          )}
+                          emptyStateMessage="No drafts found"
+                          emptyStateSubtitle="Create a draft to get started"
+                          actions={[
+                            {
+                              label: "Edit Draft",
+                              icon: <IconEdit size={16} />,
+                              onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                              variant: "ghost",
+                              colorScheme: "green",
+                            },
+                            {
+                              label: "Delete Draft",
+                              icon: <IconTrash size={16} />,
+                              onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                              variant: "ghost",
+                              colorScheme: "red",
+                            },
+                          ]}
+                          onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                          showCreateButton={false}
+                          canEdit={() => true}
+                          canView={() => true}
+                          renderTitle={renderDraftTitle}
+                          renderDescription={renderDraftDescription}
+                          renderMetadata={renderDraftMetadata}
+                          defaultSort={{ field: "item_info", order: "desc" }}
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+              {draftTagGroups.untagged.length > 0 && (
+                <Box mt={6}>
+                  <UniversalDataTable<WritingWorkingCopy>
+                    data={draftTagGroups.untagged}
+                    title="Untagged"
+                    isLoading={draftsLoading}
+                    error={null}
+                    showAvatar={true}
+                    renderAvatar={(draft: WritingWorkingCopy) => (
+                      <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                        <Avatar.Fallback>
+                          {draft.is_collaborative ? (
+                            <IconUsersGroup size={20} color="purple" />
+                          ) : (
+                            <IconUser size={20} color="gray" />
+                          )}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
+                    )}
+                    emptyStateMessage="No untagged drafts found"
+                    emptyStateSubtitle="Add tags to organize your drafts"
+                    actions={[
+                      {
+                        label: "Edit Draft",
+                        icon: <IconEdit size={16} />,
+                        onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        variant: "ghost",
+                        colorScheme: "green",
+                      },
+                      {
+                        label: "Delete Draft",
+                        icon: <IconTrash size={16} />,
+                        onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        variant: "ghost",
+                        colorScheme: "red",
+                      },
+                    ]}
+                    onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                    showCreateButton={false}
+                    canEdit={() => true}
+                    canView={() => true}
+                    renderTitle={renderDraftTitle}
+                    renderDescription={renderDraftDescription}
+                    renderMetadata={renderDraftMetadata}
+                    defaultSort={{ field: "item_info", order: "desc" }}
+                  />
+                </Box>
+              )}
+            </>
           ) : (
             <UniversalDataTable<WritingWorkingCopy>
               data={processedDrafts}
