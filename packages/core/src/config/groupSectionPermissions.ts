@@ -70,6 +70,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredDecorator: 'can__ManageWriting',
     description: 'Create or edit writing pieces',
   },
+  'import-document': {
+    requiredDecorator: 'can__ManageWriting',
+    description: 'Import a .docx file as a writing piece',
+  },
 
   // Threadworks - accessible to all stewards
   'threadworks-landing': {
