@@ -522,7 +522,7 @@ export default function GroupsTable({
                       cursor="pointer"
                       onClick={() => handleGroupClick(parentGroup)}
                       _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
-                      p={2}
+                      p={0}
                       borderRadius="md"
                       mr={10}
                     >
