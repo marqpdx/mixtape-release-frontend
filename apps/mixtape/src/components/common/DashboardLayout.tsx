@@ -1,4 +1,4 @@
-// src/components/shared/DashboardLayout.tsx
+// apps/mixtape/src/components/common/DashboardLayout.tsx
 
 "use client";
 
@@ -17,7 +17,7 @@ import {
   IconButton,
   Button,
 } from "@chakra-ui/react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 // import { IconChevronRight } from "@tabler/icons-react";
 // import { Button } from "@theme/recipes/button.recipe";
@@ -51,6 +51,46 @@ export default function DashboardLayout({
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sidebarWidth = sidebarCollapsed ? "50px" : "230px";
+  const [showBubbleNote, setShowBubbleNote] = useState(false);
+  const [bubbleFading, setBubbleFading] = useState(false);
+  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasCollapsedByOutline = useRef(false);
+
+  // Listen for outline panel open/close events from WriteComposer
+  useEffect(() => {
+    const handleOutlineOpened = () => {
+      if (!sidebarCollapsed) {
+        wasCollapsedByOutline.current = true;
+        setSidebarCollapsed(true);
+        // Show bubble note after sidebar finishes collapsing
+        setTimeout(() => {
+          setShowBubbleNote(true);
+          setBubbleFading(false);
+          // Start fade after 3.5s
+          bubbleTimerRef.current = setTimeout(() => {
+            setBubbleFading(true);
+            // Remove from DOM after fade animation
+            setTimeout(() => setShowBubbleNote(false), 400);
+          }, 3500);
+        }, 250);
+      }
+    };
+    const handleOutlineClosed = () => {
+      if (wasCollapsedByOutline.current) {
+        wasCollapsedByOutline.current = false;
+        setSidebarCollapsed(false);
+        setShowBubbleNote(false);
+        if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+      }
+    };
+    window.addEventListener('outline-panel-opened', handleOutlineOpened);
+    window.addEventListener('outline-panel-closed', handleOutlineClosed);
+    return () => {
+      window.removeEventListener('outline-panel-opened', handleOutlineOpened);
+      window.removeEventListener('outline-panel-closed', handleOutlineClosed);
+      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+    };
+  }, [sidebarCollapsed]);
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -189,18 +229,63 @@ export default function DashboardLayout({
             flexDirection="column"
           >
             {/* Sidebar Header */}
-            <Box p={3} borderBottom="1px solid" borderColor={borderColor} minH="60px">
+            <Box p={3} borderBottom="1px solid" borderColor={borderColor} minH="60px" position="relative">
+              {/* Bubble note that appears when sidebar auto-collapses */}
+              {showBubbleNote && (
+                <Box
+                  position="absolute"
+                  top="50%"
+                  left="calc(100% + 8px)"
+                  transform="translateY(-50%)"
+                  bg="gray.700"
+                  color="white"
+                  fontSize="xs"
+                  px={3}
+                  py={1.5}
+                  borderRadius="md"
+                  whiteSpace="nowrap"
+                  zIndex={10}
+                  opacity={bubbleFading ? 0 : 1}
+                  transition="opacity 0.4s ease"
+                  pointerEvents="none"
+                  _after={{
+                    content: '""',
+                    position: "absolute",
+                    top: "50%",
+                    right: "100%",
+                    transform: "translateY(-50%)",
+                    borderWidth: "5px",
+                    borderStyle: "solid",
+                    borderColor: "transparent",
+                    borderRightColor: "gray.700",
+                  }}
+                >
+                  Click here to expand side nav
+                </Box>
+              )}
               <HStack justify="space-between" h="full" align="center">
                 <HStack
                   cursor="pointer"
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  onClick={() => {
+                    const newCollapsed = !sidebarCollapsed;
+                    setSidebarCollapsed(newCollapsed);
+                    // If user manually expands after auto-collapse, clear the flag
+                    if (!newCollapsed && wasCollapsedByOutline.current) {
+                      wasCollapsedByOutline.current = false;
+                    }
+                    // Dismiss bubble on click
+                    if (showBubbleNote) {
+                      setShowBubbleNote(false);
+                      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+                    }
+                  }}
                   _hover={{ opacity: 0.7 }}
                   title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                   h="full"
                   align="center"
                 >
                   <Text fontSize="md" fontWeight="bold" color={textColor} lineHeight="1">
-                    🎧
+                    📒
                   </Text>
                   {!sidebarCollapsed && (
                     <Text fontSize="lg" fontWeight="bold" color={textColor} lineHeight="1">

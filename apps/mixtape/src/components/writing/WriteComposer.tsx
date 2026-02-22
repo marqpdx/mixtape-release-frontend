@@ -135,6 +135,12 @@ export default function WriteComposer({
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
   const [outlineOpen, setOutlineOpen] = useState(false);
+
+  // Dispatch custom events when outline opens/closes so DashboardLayout can react
+  const setOutlineOpenWithEvent = useCallback((open: boolean) => {
+    setOutlineOpen(open);
+    window.dispatchEvent(new CustomEvent(open ? 'outline-panel-opened' : 'outline-panel-closed'));
+  }, []);
   const publishedBannerBg = useColorModeValue("orange.50", "orange.900");
   const publishedBannerBorder = useColorModeValue("orange.200", "orange.700");
   const publishedBannerText = useColorModeValue("orange.800", "orange.100");
@@ -435,6 +441,14 @@ export default function WriteComposer({
   return (
     <Box className="main-writer-composer" position="relative" w="100%" h="100vh" overflow="hidden">
       <HStack gap={0} h="100%" align="stretch">
+        <OutlineDrawer
+          isOpen={outlineOpen}
+          onClose={() => setOutlineOpenWithEvent(false)}
+          editor={editorRef.current}
+          pieceId={pieceId}
+          enableOutline={!!(initialPiece?.enable_outline)}
+        />
+
         <Box
           className="main-content-area"
           flex="1"
@@ -459,8 +473,8 @@ export default function WriteComposer({
                   <Button
                     size="xs"
                     variant="ghost"
-                    onClick={() => setOutlineOpen(true)}
-                    title="Open outline"
+                    onClick={() => setOutlineOpenWithEvent(!outlineOpen)}
+                    title={outlineOpen ? "Close outline" : "Open outline"}
                   >
                     Outline
                   </Button>
@@ -716,14 +730,6 @@ export default function WriteComposer({
           summaryWordCount={excerpt.length}
         />
       </HStack>
-
-      <OutlineDrawer
-        isOpen={outlineOpen}
-        onClose={() => setOutlineOpen(false)}
-        editor={editorRef.current}
-        pieceId={pieceId}
-        enableOutline={!!(initialPiece?.enable_outline)}
-      />
     </Box>
   );
 }

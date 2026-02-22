@@ -1,14 +1,15 @@
 // src/components/writing/outline/OutlineDrawer.tsx
+// Inline sidebar panel (replaces former Chakra Drawer)
 
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Box, Drawer, VStack, HStack, Text, Button, Input, IconButton, Spinner,
+  Box, VStack, HStack, Text, Button, Input, IconButton, Spinner,
 } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IconTrash, IconGripVertical } from '@tabler/icons-react';
+import { IconTrash, IconGripVertical, IconX } from '@tabler/icons-react';
 import {
   fetchOutline,
   createOutlineNode,
@@ -283,7 +284,7 @@ function OutlineNodeItem({
   );
 }
 
-// --- Main Drawer ---
+// --- Main Inline Panel ---
 
 export function OutlineDrawer({
   isOpen,
@@ -304,7 +305,7 @@ export function OutlineDrawer({
   const [headings, setHeadings] = useState<HeadingEntry[]>([]);
   const [activePos, setActivePos] = useState<number | null>(null);
 
-  const drawerBg = useColorModeValue('white', 'gray.800');
+  const panelBg = useColorModeValue('white', 'gray.800');
   const headerBorder = useColorModeValue('gray.200', 'gray.700');
   const emptyColor = useColorModeValue('gray.500', 'gray.400');
 
@@ -419,127 +420,135 @@ export function OutlineDrawer({
   const sectionCount = outlineEnabled ? totalNodes : totalHeadings;
 
   return (
-    <Drawer.Root
-      open={isOpen}
-      onOpenChange={(e) => { if (!e.open) onClose(); }}
-      placement="start"
-      size="xs"
+    <Box
+      w={isOpen ? '260px' : '0px'}
+      minW={isOpen ? '260px' : '0px'}
+      h="100%"
+      overflow="hidden"
+      transition="width 0.3s ease, min-width 0.3s ease"
+      borderRight={isOpen ? '1px solid' : 'none'}
+      borderColor={headerBorder}
+      bg={panelBg}
+      flexShrink={0}
     >
-      <Drawer.Backdrop bg="transparent" />
-      <Drawer.Positioner>
-        <Drawer.Content bg={drawerBg} shadow="lg">
-          <Drawer.Header
-            borderBottom="1px solid"
-            borderColor={headerBorder}
-            py={3}
-            px={4}
-          >
-            <HStack justify="space-between" w="100%">
-              <VStack gap={0} align="start">
-                <Text fontWeight="semibold" fontSize="sm">
-                  Outline
-                </Text>
-                {sectionCount > 0 && (
-                  <Text fontSize="xs" color={emptyColor}>
-                    {sectionCount} {sectionCount === 1 ? 'section' : 'sections'}
-                    {!outlineEnabled && ' (auto-detected)'}
-                  </Text>
-                )}
-              </VStack>
-              <Drawer.CloseTrigger asChild>
-                <Button variant="ghost" size="xs">Close</Button>
-              </Drawer.CloseTrigger>
-            </HStack>
-          </Drawer.Header>
-
-          <Drawer.Body px={2} py={3}>
-            {outlineEnabled ? (
-              // Phase 2: Persistent outline
-              <>
-                {outlineLoading ? (
-                  <Box textAlign="center" py={8}>
-                    <Spinner size="sm" />
-                  </Box>
-                ) : outlineNodes.length === 0 ? (
-                  <VStack gap={3} py={8} px={4}>
-                    <Text fontSize="sm" color={emptyColor} textAlign="center">
-                      No sections yet
-                    </Text>
-                    <Text fontSize="xs" color={emptyColor} textAlign="center">
-                      Add sections to create a navigable outline for your document.
-                    </Text>
-                  </VStack>
-                ) : (
-                  <VStack gap={0.5} align="stretch">
-                    {outlineNodes.map((node) => (
-                      <OutlineNodeItem
-                        key={node.id}
-                        node={node}
-                        depth={0}
-                        editor={editor}
-                        pieceId={pieceId}
-                      />
-                    ))}
-                  </VStack>
-                )}
-
-                <Box px={2} pt={3}>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={handleAddSection}
-                    w="100%"
-                    disabled={createMutation.isPending}
-                  >
-                    {createMutation.isPending ? 'Adding...' : '+ Add Section'}
-                  </Button>
-                </Box>
-              </>
-            ) : (
-              // Phase 1: Auto-detected headings
-              <>
-                {headings.length === 0 ? (
-                  <VStack gap={3} py={8} px={4}>
-                    <Text fontSize="sm" color={emptyColor} textAlign="center">
-                      No headings found
-                    </Text>
-                    <Text fontSize="xs" color={emptyColor} textAlign="center">
-                      Add H1, H2, or H3 headings in your document to see them here.
-                    </Text>
-                  </VStack>
-                ) : (
-                  <VStack gap={0.5} align="stretch">
-                    {headings.map((entry) => (
-                      <HeadingItem
-                        key={entry.id}
-                        entry={entry}
-                        depth={0}
-                        activePos={activePos}
-                        onNavigate={handleHeadingNavigate}
-                      />
-                    ))}
-                  </VStack>
-                )}
-
-                <Box px={2} pt={4}>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => enableMutation.mutate()}
-                    w="100%"
-                    disabled={enableMutation.isPending}
-                  >
-                    {enableMutation.isPending ? 'Enabling...' : 'Enable Persistent Outline'}
-                  </Button>
-                  <Text fontSize="2xs" color={emptyColor} mt={1} textAlign="center">
-                    Switch from auto-detected headings to manually managed sections.
-                  </Text>
-                </Box>
-              </>
+      {/* Header */}
+      <Box
+        borderBottom="1px solid"
+        borderColor={headerBorder}
+        py={3}
+        px={4}
+        minH="52px"
+      >
+        <HStack justify="space-between" w="100%">
+          <VStack gap={0} align="start">
+            <Text fontWeight="semibold" fontSize="sm">
+              Outline
+            </Text>
+            {sectionCount > 0 && (
+              <Text fontSize="xs" color={emptyColor}>
+                {sectionCount} {sectionCount === 1 ? 'section' : 'sections'}
+                {!outlineEnabled && ' (auto-detected)'}
+              </Text>
             )}
-          </Drawer.Body>
-        </Drawer.Content>
-      </Drawer.Positioner>
-    </Drawer.Root>
+          </VStack>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            onClick={onClose}
+            aria-label="Close outline"
+          >
+            <IconX size={14} />
+          </IconButton>
+        </HStack>
+      </Box>
+
+      {/* Body */}
+      <Box px={2} py={3} overflowY="auto" h="calc(100% - 52px)">
+        {outlineEnabled ? (
+          // Phase 2: Persistent outline
+          <>
+            {outlineLoading ? (
+              <Box textAlign="center" py={8}>
+                <Spinner size="sm" />
+              </Box>
+            ) : outlineNodes.length === 0 ? (
+              <VStack gap={3} py={8} px={4}>
+                <Text fontSize="sm" color={emptyColor} textAlign="center">
+                  No sections yet
+                </Text>
+                <Text fontSize="xs" color={emptyColor} textAlign="center">
+                  Add sections to create a navigable outline for your document.
+                </Text>
+              </VStack>
+            ) : (
+              <VStack gap={0.5} align="stretch">
+                {outlineNodes.map((node) => (
+                  <OutlineNodeItem
+                    key={node.id}
+                    node={node}
+                    depth={0}
+                    editor={editor}
+                    pieceId={pieceId}
+                  />
+                ))}
+              </VStack>
+            )}
+
+            <Box px={2} pt={3}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={handleAddSection}
+                w="100%"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? 'Adding...' : '+ Add Section'}
+              </Button>
+            </Box>
+          </>
+        ) : (
+          // Phase 1: Auto-detected headings
+          <>
+            {headings.length === 0 ? (
+              <VStack gap={3} py={8} px={4}>
+                <Text fontSize="sm" color={emptyColor} textAlign="center">
+                  No headings found
+                </Text>
+                <Text fontSize="xs" color={emptyColor} textAlign="center">
+                  Add H1, H2, or H3 headings in your document to see them here.
+                </Text>
+              </VStack>
+            ) : (
+              <VStack gap={0.5} align="stretch">
+                {headings.map((entry) => (
+                  <HeadingItem
+                    key={entry.id}
+                    entry={entry}
+                    depth={0}
+                    activePos={activePos}
+                    onNavigate={handleHeadingNavigate}
+                  />
+                ))}
+              </VStack>
+            )}
+
+            <Box px={2} pt={4}>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => enableMutation.mutate()}
+                w="100%"
+                disabled={enableMutation.isPending}
+              >
+                {enableMutation.isPending ? 'Enabling...' : 'Enable Persistent Outline'}
+              </Button>
+              <Text fontSize="2xs" color={emptyColor} mt={1} textAlign="center">
+                Switch from auto-detected headings to manually managed sections.
+              </Text>
+            </Box>
+          </>
+        )}
+      </Box>
+    </Box>
   );
 }
