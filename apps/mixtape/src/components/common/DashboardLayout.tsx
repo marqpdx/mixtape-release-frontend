@@ -216,7 +216,39 @@ export default function DashboardLayout({
           header={header}
         />
       ) : (
-        <Flex h="100vh">
+        <Flex h="100vh" position="relative">
+          {/* Bubble note — positioned outside sidebar to avoid overflow:hidden clipping */}
+          {showBubbleNote && (
+            <Box
+              position="absolute"
+              top="18px"
+              left="58px"
+              bg="gray.700"
+              color="white"
+              fontSize="xs"
+              px={3}
+              py={1.5}
+              borderRadius="md"
+              whiteSpace="nowrap"
+              zIndex={10}
+              opacity={bubbleFading ? 0 : 1}
+              transition="opacity 0.4s ease"
+              pointerEvents="none"
+              _after={{
+                content: '""',
+                position: "absolute",
+                top: "50%",
+                right: "100%",
+                transform: "translateY(-50%)",
+                borderWidth: "5px",
+                borderStyle: "solid",
+                borderColor: "transparent",
+                borderRightColor: "gray.700",
+              }}
+            >
+              Click here to expand side nav
+            </Box>
+          )}
           {/* SINGLE Left Navigation Sidebar */}
           <Box
             w={sidebarWidth}
@@ -229,40 +261,7 @@ export default function DashboardLayout({
             flexDirection="column"
           >
             {/* Sidebar Header */}
-            <Box p={3} borderBottom="1px solid" borderColor={borderColor} minH="60px" position="relative">
-              {/* Bubble note that appears when sidebar auto-collapses */}
-              {showBubbleNote && (
-                <Box
-                  position="absolute"
-                  top="50%"
-                  left="calc(100% + 8px)"
-                  transform="translateY(-50%)"
-                  bg="gray.700"
-                  color="white"
-                  fontSize="xs"
-                  px={3}
-                  py={1.5}
-                  borderRadius="md"
-                  whiteSpace="nowrap"
-                  zIndex={10}
-                  opacity={bubbleFading ? 0 : 1}
-                  transition="opacity 0.4s ease"
-                  pointerEvents="none"
-                  _after={{
-                    content: '""',
-                    position: "absolute",
-                    top: "50%",
-                    right: "100%",
-                    transform: "translateY(-50%)",
-                    borderWidth: "5px",
-                    borderStyle: "solid",
-                    borderColor: "transparent",
-                    borderRightColor: "gray.700",
-                  }}
-                >
-                  Click here to expand side nav
-                </Box>
-              )}
+            <Box p={3} borderBottom="1px solid" borderColor={borderColor} minH="60px">
               <HStack justify="space-between" h="full" align="center">
                 <HStack
                   cursor="pointer"

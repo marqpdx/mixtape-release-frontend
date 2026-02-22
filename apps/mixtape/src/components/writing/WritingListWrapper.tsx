@@ -368,6 +368,15 @@ export default function WritingListWrapper({
     const excerpt = draft.excerpt;
 
     if (!excerpt) {
+      // Use body_preview (lightweight server-side extract) or fall back to body_json
+      const preview = (draft as unknown as { body_preview?: string }).body_preview;
+      if (preview) {
+        return (
+          <Text fontSize="sm" color={textSecondary} lineClamp={2} wordBreak="break-word">
+            {preview}
+          </Text>
+        );
+      }
       if (draft.body_json?.content) {
         const textContent = extractDisplayTextFromProseMirror(draft.body_json as ProseMirrorDoc);
         if (textContent) {
