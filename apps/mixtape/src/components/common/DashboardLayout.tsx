@@ -223,7 +223,7 @@ export default function DashboardLayout({
               position="absolute"
               top="18px"
               left="58px"
-              bg="gray.700"
+              bg="gray.600"
               color="white"
               fontSize="xs"
               px={3}

@@ -36,7 +36,7 @@ export const Prose = chakra("div", {
       fontSize: { base: "lg", md: "xl", lg: "2xl" },
       lineHeight: 1.35,
     },
-    "& h4": { fontSize: "lg", lineHeight: 1.4 },
+    "& h4": { fontSize: { base: "md", md: "lg", lg: "xl" }, lineHeight: 1.4 },
 
     "& a": {
       color: "fg",

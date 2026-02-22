@@ -226,7 +226,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
     // Configure extensions manually with custom settings
-    ...(toolbarOptions.includes("heading") ? [Heading.configure({ levels: [1, 2, 3] })] : []),
+    ...(toolbarOptions.includes("heading") ? [Heading.configure({ levels: [1, 2, 3, 4] })] : []),
     ...(toolbarOptions.includes("bold") ? [Bold.configure({
       HTMLAttributes: {
         class: 'bold-text',

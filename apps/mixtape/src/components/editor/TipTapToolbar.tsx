@@ -14,6 +14,7 @@ import {
   IconH1,
   IconH2,
   IconH3,
+  IconH4,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -85,91 +86,99 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
 
   return (
-    <HStack p={1} gap={0.5} justify="space-between">
+    <HStack p={1} pt={"12px"} gap={0.5} justify="space-between">
       <HStack gap={0.5}>
-      <EditorToolbarButton
-        tooltip="Heading 1"
-        icon={<IconH1 size={16} />}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive("heading", { level: 1 })}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Heading 2"
-        icon={<IconH2 size={16} />}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive("heading", { level: 2 })}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Heading 3"
-        icon={<IconH3 size={16} />}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive("heading", { level: 3 })}
-        tabIndex={-1}
-        size="xs"
-      />
+        <EditorToolbarButton
+          tooltip="Heading 1"
+          icon={<IconH1 size={16} />}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          isActive={editor.isActive("heading", { level: 1 })}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Heading 2"
+          icon={<IconH2 size={16} />}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          isActive={editor.isActive("heading", { level: 2 })}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Heading 3"
+          icon={<IconH3 size={16} />}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          isActive={editor.isActive("heading", { level: 3 })}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Heading 4"
+          icon={<IconH4 size={16} />}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+          isActive={editor.isActive("heading", { level: 4 })}
+          tabIndex={-1}
+          size="xs"
+        />
 
-      <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
+        <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
 
-      <EditorToolbarButton
-        tooltip="Bold (Ctrl+B)"
-        icon={<IconBold size={16} />}
-        onClick={() => editor.chain().focus().toggleMark("bold").run()}
-        isActive={editor.isActive("bold")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Italic (Ctrl+I)"
-        icon={<IconItalic size={16} />}
-        onClick={() => editor.chain().focus().toggleMark("italic").run()}
-        isActive={editor.isActive("italic")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Underline (Ctrl+U)"
-        icon={<IconUnderline size={16} />}
-        onClick={() => editor.chain().focus().toggleMark("underline").run()}
-        isActive={editor.isActive("underline")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Strikethrough"
-        icon={<IconStrikethrough size={16} />}
-        onClick={() => editor.chain().focus().toggleMark("strike").run()}
-        isActive={editor.isActive("strike")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Bullet list"
-        icon={<IconList size={16} />}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive("bulletList")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Numbered list"
-        icon={<IconListNumbers size={16} />}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive("orderedList")}
-        tabIndex={-1}
-        size="xs"
-      />
-      <EditorToolbarButton
-        tooltip="Link"
-        icon={<IconLink size={16} />}
-        onClick={() => editor.chain().focus().setMark("link", { href: "https://example.com" }).run()}
-        isActive={editor.isActive("link")}
-        tabIndex={-1}
-        size="xs"
-      />
+        <EditorToolbarButton
+          tooltip="Bold (Ctrl+B)"
+          icon={<IconBold size={16} />}
+          onClick={() => editor.chain().focus().toggleMark("bold").run()}
+          isActive={editor.isActive("bold")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Italic (Ctrl+I)"
+          icon={<IconItalic size={16} />}
+          onClick={() => editor.chain().focus().toggleMark("italic").run()}
+          isActive={editor.isActive("italic")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Underline (Ctrl+U)"
+          icon={<IconUnderline size={16} />}
+          onClick={() => editor.chain().focus().toggleMark("underline").run()}
+          isActive={editor.isActive("underline")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Strikethrough"
+          icon={<IconStrikethrough size={16} />}
+          onClick={() => editor.chain().focus().toggleMark("strike").run()}
+          isActive={editor.isActive("strike")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Bullet list"
+          icon={<IconList size={16} />}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          isActive={editor.isActive("bulletList")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Numbered list"
+          icon={<IconListNumbers size={16} />}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          isActive={editor.isActive("orderedList")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Link"
+          icon={<IconLink size={16} />}
+          onClick={() => editor.chain().focus().setMark("link", { href: "https://example.com" }).run()}
+          isActive={editor.isActive("link")}
+          tabIndex={-1}
+          size="xs"
+        />
       </HStack>
       <HStack gap={0.5}>
         <EditorToolbarButton
