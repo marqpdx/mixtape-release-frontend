@@ -2,7 +2,6 @@
 
 "use client";
 
-
   // 1. Interactive nodes:
   // - Draggable — grab any node and reposition it (useNodesState for mutable positions)
   // - Click — toggles selection, node expands to 1.35x with stronger glow and shadow
@@ -20,7 +19,6 @@
   // - Tooltip also lists which signals apply to the hovered group
 
 
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -32,9 +30,9 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
-import { Box, Checkbox, HStack, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Checkbox, HStack, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { fetchPublicGroups } from "@mixtape/api/clients/public/publicApi";
 import type { PublicGroup } from "@mixtape/api/clients/public/publicApi";
@@ -77,6 +75,34 @@ function getIndicators(group: PublicGroup): IndicatorKey[] {
   if (group.decorators?.length > 0) indicators.push("publishing");
 
   return indicators;
+}
+
+// ---- Position Persistence ----
+
+const STORAGE_PREFIX = "crossroads-positions:";
+
+function getSavedPositions(slug: string): Record<string, { x: number; y: number }> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + slug);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePositions(slug: string, nodes: Node<GroupNodeData>[]) {
+  if (typeof window === "undefined") return;
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const n of nodes) {
+    positions[n.id] = { x: n.position.x, y: n.position.y };
+  }
+  localStorage.setItem(STORAGE_PREFIX + slug, JSON.stringify(positions));
+}
+
+function clearSavedPositions(slug: string) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_PREFIX + slug);
 }
 
 // ---- Map Background (Layer 1) ----
@@ -514,6 +540,7 @@ function MapControls({
   setShowMembers,
   showRelationships,
   setShowRelationships,
+  onResetLayout,
   groups,
   panelBg,
   panelBorder,
@@ -526,6 +553,7 @@ function MapControls({
   setShowMembers: (v: boolean) => void;
   showRelationships: boolean;
   setShowRelationships: (v: boolean) => void;
+  onResetLayout: () => void;
   groups: PublicGroup[];
   panelBg: string;
   panelBorder: string;
@@ -693,6 +721,16 @@ function MapControls({
         <Text fontSize="xs" color={textMuted} maxW="150px" lineHeight="1.3">
           Drag nodes to rearrange. Click to focus, double-click to visit.
         </Text>
+
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={onResetLayout}
+          w="full"
+          fontSize="xs"
+        >
+          Reset layout
+        </Button>
       </VStack>
     </Box>
   );
@@ -720,9 +758,9 @@ function organicPositions(
   const pts: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < count; i++) {
     const angle = GOLDEN_ANGLE * i - Math.PI / 2;
-    // Vary radius per item using its hash (±30% of nominal)
+    // Vary radius per item using its hash (±15% of nominal)
     const hash = stableHash(ids[i]);
-    const radiusVariation = 0.7 + ((hash % 600) / 1000); // 0.7–1.3
+    const radiusVariation = 0.85 + ((hash % 300) / 1000); // 0.85–1.15
     const r = nominalRadius * radiusVariation;
     const jitter = stableJitter(ids[i], jitterAmount);
     pts.push({
@@ -742,14 +780,14 @@ function layoutGroups(groups: PublicGroup[]): Node<GroupNodeData>[] {
   const centerX = 0;
   const centerY = 0;
 
-  const innerRadius = communities.length <= 1 ? 0 : 180;
+  const innerRadius = communities.length <= 1 ? 0 : 160;
   const communityPts = organicPositions(
     communities.length,
     innerRadius,
     centerX,
     centerY,
     communities.map((g) => g.id),
-    60
+    25
   );
   communities.forEach((g, i) => {
     nodes.push({
@@ -761,14 +799,14 @@ function layoutGroups(groups: PublicGroup[]): Node<GroupNodeData>[] {
     });
   });
 
-  const outerRadius = communities.length === 0 ? 160 : 280;
+  const outerRadius = communities.length === 0 ? 160 : 260;
   const otherPts = organicPositions(
     others.length,
     outerRadius,
     centerX,
     centerY,
     others.map((g) => g.id),
-    40
+    20
   );
   others.forEach((g, i) => {
     nodes.push({
@@ -813,6 +851,8 @@ function buildEdges(groups: PublicGroup[]): Edge[] {
 
 export default function CrossroadsMap() {
   const router = useRouter();
+  const params = useParams();
+  const slug = (params?.slug as string) || "default";
   const [groups, setGroups] = useState<PublicGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -823,6 +863,7 @@ export default function CrossroadsMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastClickTime = useRef<number>(0);
   const lastClickId = useRef<string | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Color mode
   const bgBase = useColorModeValue("#f2ece0", "#1a1a2e");
@@ -871,13 +912,41 @@ export default function CrossroadsMap() {
       .finally(() => setLoading(false));
   }, []);
 
-  const initialNodes = useMemo(() => layoutGroups(groups), [groups]);
+  // Build initial nodes: merge saved positions with algorithmic layout
+  const initialNodes = useMemo(() => {
+    const algorithmic = layoutGroups(groups);
+    const saved = getSavedPositions(slug);
+    if (!saved) return algorithmic;
+
+    return algorithmic.map((node) => {
+      const savedPos = saved[node.id];
+      if (savedPos) {
+        return { ...node, position: savedPos };
+      }
+      return node;
+    });
+  }, [groups, slug]);
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
-  // Sync initial nodes when groups load
+  // Sync nodes when groups load (with saved positions merged)
   useEffect(() => {
-    setNodes(layoutGroups(groups));
-  }, [groups, setNodes]);
+    const algorithmic = layoutGroups(groups);
+    const saved = getSavedPositions(slug);
+    if (!saved) {
+      setNodes(algorithmic);
+      return;
+    }
+
+    const merged = algorithmic.map((node) => {
+      const savedPos = saved[node.id];
+      if (savedPos) {
+        return { ...node, position: savedPos };
+      }
+      return node; // New group — use algorithmic position
+    });
+    setNodes(merged);
+  }, [groups, slug, setNodes]);
 
   // Update selected state on nodes when selection changes
   useEffect(() => {
@@ -918,6 +987,23 @@ export default function CrossroadsMap() {
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
   }, []);
+
+  // Debounced save on drag stop
+  const onNodeDragStop = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      setNodes((currentNodes) => {
+        savePositions(slug, currentNodes);
+        return currentNodes;
+      });
+    }, 300);
+  }, [slug, setNodes]);
+
+  // Reset layout: clear saved positions and re-run algorithm
+  const handleResetLayout = useCallback(() => {
+    clearSavedPositions(slug);
+    setNodes(layoutGroups(groups));
+  }, [slug, groups, setNodes]);
 
   if (loading) {
     return (
@@ -991,6 +1077,7 @@ export default function CrossroadsMap() {
         setShowMembers={setShowMembers}
         showRelationships={showRelationships}
         setShowRelationships={setShowRelationships}
+        onResetLayout={handleResetLayout}
         groups={groups}
         panelBg={panelBg}
         panelBorder={panelBorder}
@@ -1013,6 +1100,7 @@ export default function CrossroadsMap() {
           zoomOnScroll
           zoomOnPinch
           onNodeClick={onNodeClick}
+          onNodeDragStop={onNodeDragStop}
           onPaneClick={onPaneClick}
           proOptions={{ hideAttribution: true }}
         >

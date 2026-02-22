@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteNotification,
+  fetchGroupPulse,
   fetchNotificationPreferences,
   fetchNotificationSummary,
   fetchNotifications,
@@ -9,6 +10,7 @@ import {
   upsertNotificationPreference,
 } from "@mixtape/api/clients/activity/activityApi";
 import type {
+  GroupPulse,
   NotificationListResponse,
   NotificationPreference,
   NotificationSummary,
@@ -19,6 +21,7 @@ export const activityQueryKeys = {
   notifications: (params: Record<string, unknown>) => [...activityQueryKeys.all, "notifications", params] as const,
   summary: () => [...activityQueryKeys.all, "summary"] as const,
   preferences: () => [...activityQueryKeys.all, "preferences"] as const,
+  groupPulse: () => [...activityQueryKeys.all, "group-pulse"] as const,
 };
 
 export const useNotificationSummary = (options?: { enabled?: boolean }) => {
@@ -113,5 +116,21 @@ export const useNotificationMutations = () => {
     markAllRead,
     dismiss,
     setPreference,
+  };
+};
+
+export const useGroupPulse = (options?: { enabled?: boolean }) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: activityQueryKeys.groupPulse(),
+    queryFn: fetchGroupPulse,
+    staleTime: 60_000, // 1 minute — pulse data changes slowly
+    enabled: options?.enabled ?? true,
+  });
+
+  return {
+    pulseData: (data || {}) as Record<string, GroupPulse>,
+    isLoading,
+    error: error as Error | null,
+    refetch,
   };
 };

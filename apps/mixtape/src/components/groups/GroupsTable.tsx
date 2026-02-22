@@ -2,15 +2,51 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Text, HStack, Box, Avatar, Image, Button, VStack, IconButton } from "@chakra-ui/react";
+import { Text, HStack, Box, Avatar, Image, Button, VStack, IconButton, Menu, Portal } from "@chakra-ui/react";
 import type { ComponentType } from "react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { AvatarGroup, CollapsibleRoot, CollapsibleTrigger, CollapsibleContent } from "@chakra-ui/react";
 import { Group } from "@mixtape/core/types/groupTypes";
+import type { GroupPulse } from "@mixtape/core/types/activityTypes";
+import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
+import { useGroupPulse } from "@mixtape/api/hooks/activity/useActivity";
 import { LuLayoutList, LuFolderTree, LuChevronDown, LuChevronUp } from "react-icons/lu";
+import { IconChevronDown as TablerChevronDown } from "@tabler/icons-react";
+
+/**
+ * PulseIndicators — temporary thin renderer for group activity dots.
+ * Designed to be swapped for <IndicatorRings> when that component is built.
+ */
+const PULSE_INDICATORS = [
+  { key: "livewire", color: "#3b82f6", label: "Chat" },        // blue
+  { key: "threadworks", color: "#8b5cf6", label: "Discussions" }, // purple
+  { key: "writing", color: "#f59e0b", label: "Writing" },       // amber
+  { key: "earthlab", color: "#22c55e", label: "Courses" },      // green
+  { key: "members", color: "#ec4899", label: "Members" },       // pink
+] as const;
+
+function PulseIndicators({ pulse }: { pulse?: GroupPulse }) {
+  if (!pulse) return null;
+  const active = PULSE_INDICATORS.filter(i => pulse[i.key]);
+  if (active.length === 0) return null;
+  return (
+    <HStack gap={1} mt={1}>
+      {active.map(i => (
+        <Box
+          key={i.key}
+          w="6px"
+          h="6px"
+          borderRadius="full"
+          bg={i.color}
+          title={i.label}
+        />
+      ))}
+    </HStack>
+  );
+}
 
 interface GroupsTableProps {
   groups: Group[];
@@ -24,6 +60,7 @@ interface GroupsTableProps {
 }
 
 type ViewMode = 'hierarchical' | 'flat';
+type SortKey = 'name' | 'created' | 'activity';
 
 interface GroupHierarchy {
   parentGroups: Group[];
@@ -43,8 +80,42 @@ export default function GroupsTable({
   emptyStateMessage = "No groups found. Create your first group to get started.",
 }: GroupsTableProps) {
   const router = useRouter();
+  const { pulseData } = useGroupPulse();
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchical');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>('created');
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("groups_sort_key") as SortKey | null;
+    if (saved === "name" || saved === "created" || saved === "activity") {
+      setSortKey(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("groups_sort_key", sortKey);
+  }, [sortKey]);
+
+  const sortGroups = useMemo(
+    () => (items: Group[]) => {
+      const sorted = [...items];
+      sorted.sort((a, b) => {
+        if (sortKey === 'name') {
+          return a.title.localeCompare(b.title);
+        }
+
+        if (sortKey === 'created') {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      });
+      return sorted;
+    },
+    [sortKey]
+  );
 
   // Organize groups into hierarchy
   const hierarchy = useMemo<GroupHierarchy>(() => {
@@ -74,15 +145,25 @@ export default function GroupsTable({
       }
     });
 
-    return { parentGroups, memberCircles, groupCirclesMap, orphanCircles };
-  }, [groups]);
+    const sortedParentGroups = sortGroups(parentGroups);
+    const sortedMemberCircles = sortGroups(memberCircles);
+    const sortedOrphanCircles = sortGroups(orphanCircles);
+    const sortedGroupCirclesMap = new Map<string, Group[]>();
+
+    groupCirclesMap.forEach((circles, parentId) => {
+      sortedGroupCirclesMap.set(parentId, sortGroups(circles));
+    });
+
+    return {
+      parentGroups: sortedParentGroups,
+      memberCircles: sortedMemberCircles,
+      groupCirclesMap: sortedGroupCirclesMap,
+      orphanCircles: sortedOrphanCircles,
+    };
+  }, [groups, sortGroups]);
 
   // Flat view: all groups sorted by created_at
-  const flatGroups = useMemo(() => {
-    return [...groups].sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [groups]);
+  const flatGroups = useMemo(() => sortGroups(groups), [groups, sortGroups]);
 
   const handleGroupClick = (group: Group) => {
     if (onGroupClick) {
@@ -116,17 +197,19 @@ export default function GroupsTable({
   const renderAvatar = (group: Group) => {
     const groupIcons = Icons.group as Record<string, unknown>;
     const GroupIcon = groupIcons[group.group_type] as ComponentType<{ size?: number }> | undefined;
-    const groupProfileImageRaw = group.profile_image ?? null;
+    const emblemUrl = getBestEmblemUrl(group.emblem ?? null, 96);
+    const groupProfileImageRaw = group.profile_image_url ?? group.profile_image ?? null;
     const groupProfileImage =
       groupProfileImageRaw && groupProfileImageRaw.trim() !== ""
         ? groupProfileImageRaw.trim()
         : undefined;
+    const avatarSrc = emblemUrl || groupProfileImage;
     return (
       <Box flexShrink={0}>
         <AvatarGroup>
           <Avatar.Root size="lg">
             <Avatar.Image
-              src={groupProfileImage}
+              src={avatarSrc}
               alt={`${group.title} profile`}
             />
             <Avatar.Fallback bg="green.100" color="green.700">
@@ -195,6 +278,7 @@ export default function GroupsTable({
           {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
         </Text>
       )}
+      <PulseIndicators pulse={pulseData[group.id]} />
     </HStack>
   );
 
@@ -238,6 +322,29 @@ export default function GroupsTable({
         <HStack justify="space-between" mb={4}>
           <Text fontSize="2xl" fontWeight="bold">Groups</Text>
           <HStack gap={2}>
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <Button size="sm" variant="outline">
+                  Sort: {sortKey === 'name' ? 'Name' : sortKey === 'created' ? 'Date Formed' : 'Last Activity'}
+                  <TablerChevronDown size={16} />
+                </Button>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item value="activity" onClick={() => setSortKey('activity')}>
+                      Last Activity
+                    </Menu.Item>
+                    <Menu.Item value="created" onClick={() => setSortKey('created')}>
+                      Date Formed
+                    </Menu.Item>
+                    <Menu.Item value="name" onClick={() => setSortKey('name')}>
+                      Name (A–Z)
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
             <Button
               size="sm"
               variant="solid"
@@ -284,6 +391,29 @@ export default function GroupsTable({
       <HStack justify="space-between" mb={4}>
         <Text fontSize="2xl" fontWeight="bold">Groups</Text>
         <HStack gap={2}>
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <Button size="sm" variant="outline">
+                Sort: {sortKey === 'name' ? 'Name' : sortKey === 'created' ? 'Date Formed' : 'Last Activity'}
+                <TablerChevronDown size={16} />
+              </Button>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Menu.Item value="activity" onClick={() => setSortKey('activity')}>
+                    Last Activity
+                  </Menu.Item>
+                  <Menu.Item value="created" onClick={() => setSortKey('created')}>
+                    Date Formed
+                  </Menu.Item>
+                  <Menu.Item value="name" onClick={() => setSortKey('name')}>
+                    Name (A–Z)
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
           <Button
             size="sm"
             variant="outline"

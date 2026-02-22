@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import {
   Box,
   Container,
@@ -36,7 +36,7 @@ import OfferingCard from "@/components/bazaar/offerings/OfferingCard";
  * - Filter by price (free, paid)
  * - Grid layout of offering cards
  */
-export default function BazaarCatalogPage() {
+function BazaarCatalogPageClient() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [shapeFilter, setShapeFilter] = useState<OfferingShape | "">("");
@@ -228,5 +228,13 @@ export default function BazaarCatalogPage() {
         </SimpleGrid>
       )}
     </Container>
+  );
+}
+
+export default function BazaarCatalogPage() {
+  return (
+    <Suspense fallback={<Text>Loading bazaar...</Text>}>
+      <BazaarCatalogPageClient />
+    </Suspense>
   );
 }

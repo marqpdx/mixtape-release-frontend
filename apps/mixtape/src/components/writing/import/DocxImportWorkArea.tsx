@@ -22,6 +22,9 @@ import {
   IconAlertTriangle,
   IconFileText,
   IconList,
+  IconRefresh,
+  IconCopy,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { previewDocxImport, confirmDocxImport } from "@mixtape/api/clients/writing/api";
 import type { DocxPreviewResult, DocxImportResult, WritingKind } from "@mixtape/core/types/writingTypes";
@@ -113,8 +116,8 @@ export default function DocxImportWorkArea({
     }
   }, [selectedFile]);
 
-  // Phase 2: Confirm Import
-  const handleConfirmImport = useCallback(async () => {
+  // Phase 2: Confirm Import (supports mode: "new" | "replace")
+  const handleConfirmImport = useCallback(async (mode: "new" | "replace") => {
     if (!preview) return;
 
     setImporting(true);
@@ -132,6 +135,8 @@ export default function DocxImportWorkArea({
         file_sha256: preview.file_sha256,
         original_filename: preview.original_filename,
         addressed_to: addressedTo,
+        mode,
+        force: mode === "new" && !!preview.already_imported,
       });
       setImportResult(result);
       setPhase("success");
@@ -264,16 +269,58 @@ export default function DocxImportWorkArea({
       {/* Phase 2: Preview */}
       {phase === "preview" && preview && (
         <VStack align="stretch" gap={4}>
-          {/* Already imported warning */}
+          {/* Previously imported — three-choice card */}
           {preview.already_imported && (
-            <HStack p={3} bg="yellow.50" borderRadius="md" gap={2}>
-              <IconAlertTriangle size={16} color="var(--chakra-colors-yellow-600)" />
-              <Text color="yellow.800" fontSize="sm">
-                This file was previously imported on{" "}
-                {new Date(preview.already_imported.imported_at).toLocaleDateString()}.
-                Importing again will create a new piece.
-              </Text>
-            </HStack>
+            <Card.Root variant="outline" borderColor="yellow.300">
+              <Card.Body>
+                <VStack align="stretch" gap={3}>
+                  <HStack gap={2}>
+                    <IconAlertTriangle size={18} color="var(--chakra-colors-yellow-600)" />
+                    <Text fontWeight="medium" color="yellow.800">
+                      Previously Imported
+                    </Text>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.700">
+                    This file was imported on{" "}
+                    {new Date(preview.already_imported.imported_at).toLocaleDateString()}.
+                    Choose how to proceed:
+                  </Text>
+                  <HStack gap={3} flexWrap="wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onImported?.({
+                        id: preview.already_imported!.piece_id,
+                        slug: "",
+                        title: "",
+                      })}
+                    >
+                      <IconExternalLink size={14} />
+                      <Text ml={1}>Open Existing</Text>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      colorPalette="blue"
+                      disabled={!title.trim() || importing}
+                      onClick={() => handleConfirmImport("replace")}
+                    >
+                      <IconRefresh size={14} />
+                      <Text ml={1}>Replace Content</Text>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!title.trim() || importing}
+                      onClick={() => handleConfirmImport("new")}
+                    >
+                      <IconCopy size={14} />
+                      <Text ml={1}>Import as New</Text>
+                    </Button>
+                  </HStack>
+                </VStack>
+              </Card.Body>
+            </Card.Root>
           )}
 
           {/* Settings row */}
@@ -411,30 +458,51 @@ export default function DocxImportWorkArea({
             </HStack>
           )}
 
-          {/* Action buttons */}
-          <HStack gap={3}>
-            <Button
-              onClick={handleConfirmImport}
-              disabled={!title.trim() || importing}
-              colorPalette="blue"
-            >
-              {importing ? (
-                <>
+          {/* Action buttons — only show for first-time imports (no duplicate) */}
+          {!preview.already_imported && (
+            <HStack gap={3}>
+              <Button
+                onClick={() => handleConfirmImport("new")}
+                disabled={!title.trim() || importing}
+                colorPalette="blue"
+              >
+                {importing ? (
+                  <>
+                    <Spinner size="sm" />
+                    <Text ml={2}>Importing...</Text>
+                  </>
+                ) : (
+                  "Import"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={importing}
+              >
+                Cancel
+              </Button>
+            </HStack>
+          )}
+
+          {/* Cancel button for duplicate case (import actions are in the card above) */}
+          {preview.already_imported && (
+            <HStack gap={3}>
+              {importing && (
+                <HStack>
                   <Spinner size="sm" />
-                  <Text ml={2}>Importing...</Text>
-                </>
-              ) : (
-                "Import"
+                  <Text fontSize="sm" color="gray.600">Importing...</Text>
+                </HStack>
               )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={importing}
-            >
-              Cancel
-            </Button>
-          </HStack>
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={importing}
+              >
+                Cancel
+              </Button>
+            </HStack>
+          )}
         </VStack>
       )}
 

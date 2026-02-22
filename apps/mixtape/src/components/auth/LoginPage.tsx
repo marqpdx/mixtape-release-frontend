@@ -1,4 +1,4 @@
-// src/components/auth/LoginPage.tsx
+// apps/mixtape/src/components/auth/LoginPage.tsx
 
 "use client";
 
@@ -9,11 +9,14 @@ import {
   Container,
   Heading,
   Input,
+  InputGroup,
+  IconButton,
   Link,
   Stack,
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
@@ -26,6 +29,7 @@ const LoginPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState<LoginFormProps>({
     identifier: "",
@@ -107,16 +111,31 @@ const LoginPage: React.FC = () => {
                 data-testid="identifier-input"
                 required
               />
-              <Input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                bg={useColorModeValue("yellow.100", "gray.800")}
-                data-testid="password-input"
-                required
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Password"
+                  bg={useColorModeValue("yellow.100", "gray.800")}
+                  data-testid="password-input"
+                  required
+                  pr="3rem"
+                />
+              </InputGroup>
 
               <Button
                 type="submit"

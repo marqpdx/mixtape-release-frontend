@@ -353,6 +353,7 @@ export interface DocxImportPayload {
   original_filename: string;
   addressed_to?: string;
   force?: boolean;
+  mode?: 'new' | 'replace';
 }
 
 export interface DocxImportResult {

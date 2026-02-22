@@ -1,5 +1,6 @@
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import type {
+  GroupPulse,
   Notification,
   NotificationListResponse,
   NotificationPreference,
@@ -76,5 +77,10 @@ export async function upsertNotificationPreference(
   data: Omit<NotificationPreference, "id">
 ): Promise<NotificationPreference> {
   const response = await axiosInstance.post<NotificationPreference>("/api/activity/preferences", data);
+  return response.data;
+}
+
+export async function fetchGroupPulse(): Promise<Record<string, GroupPulse>> {
+  const response = await axiosInstance.get<Record<string, GroupPulse>>("/api/activity/group-pulse");
   return response.data;
 }

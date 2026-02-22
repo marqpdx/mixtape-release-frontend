@@ -204,7 +204,11 @@ export default function SeedCapturePage() {
               <audio controls src={voiceUrl} />
             </Box>
           )}
-          <HStack justify="space-between" flex="0 0 auto">
+          <HStack
+            justify="space-between"
+            flex="0 0 auto"
+            pb="calc(env(safe-area-inset-bottom) + 8px)"
+          >
             <HStack gap={2}>
               <IconButton
                 aria-label={isRecording ? "Stop recording" : "Record voice note"}

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Text } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@mixtape/core/types/auth";
@@ -25,7 +25,7 @@ import SysadminWorkArea from "@components/dashboard/sysadmin/SysadminWorkArea";
  *
  * Data source: /api/ops/summary and /api/ops/health-snapshot
  */
-export default function SysadminDashboard() {
+function SysadminDashboardClient() {
   const { user, isLoading: identityLoading } = useAuth();
 
   const identity = user as UserIdentity | null;
@@ -67,5 +67,13 @@ export default function SysadminDashboard() {
       workAreaProps={{}}
       loading={identityLoading}
     />
+  );
+}
+
+export default function SysadminDashboard() {
+  return (
+    <Suspense fallback={<Text>Loading sysadmin dashboard...</Text>}>
+      <SysadminDashboardClient />
+    </Suspense>
   );
 }

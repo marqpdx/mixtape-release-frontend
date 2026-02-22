@@ -43,3 +43,15 @@ export interface NotificationListResponse {
   previous: string | null;
   nextCursor: string | null;
 }
+
+/**
+ * Per-group activity pulse — boolean flags for recent activity categories.
+ * Used by GroupsTable (PulseIndicators) and future IndicatorRings component.
+ */
+export interface GroupPulse {
+  livewire: boolean;
+  threadworks: boolean;
+  writing: boolean;
+  earthlab: boolean;
+  members: boolean;
+}

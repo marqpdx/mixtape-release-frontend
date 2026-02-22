@@ -4,8 +4,8 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Box, Spinner, Text } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
@@ -18,9 +18,10 @@ import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
 import { ChatRealtimeWire } from "@/components/chat/ChatRealtimeWire";
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, isLoading: identityLoading, isAuthenticated, can, canInGroup } = useAuth();
   const { isAdmin } = usePermissions({ user, can, canInGroup });
   const [socketInitialized, setSocketInitialized] = useState(false);
@@ -38,9 +39,11 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
     if (!isAuthenticated || !user) {
       console.log('[AuthenticatedLayout] Not authenticated, redirecting to login');
-      router.replace("/login");
+      const query = searchParams?.toString();
+      const redirectTarget = query ? `${pathname}?${query}` : pathname;
+      router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
     }
-  }, [user, isAuthenticated, identityLoading, router]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, isAuthenticated, identityLoading, router, pathname, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ✅ Initialize Socket.IO connection when authenticated
   useEffect(() => {
@@ -154,5 +157,18 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
         </>
       )}
     </ChatUnreadProvider>
+  );
+}
+
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" height="100vh">
+        <Spinner size="xl" mb={4} />
+        <Text fontSize="lg">Loading...</Text>
+      </Box>
+    }>
+      <AuthenticatedLayoutInner>{children}</AuthenticatedLayoutInner>
+    </Suspense>
   );
 }
