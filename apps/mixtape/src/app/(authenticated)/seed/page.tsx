@@ -33,6 +33,7 @@ export default function SeedCapturePage() {
   const refreshToken = useMemo(() => savedTick + (seedId ? 1 : 0), [savedTick, seedId]);
   const { seeds, loading } = useSeedList(20, refreshToken);
   const [seedItems, setSeedItems] = useState(seeds);
+  const [recentSeedId, setRecentSeedId] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -44,6 +45,7 @@ export default function SeedCapturePage() {
   const recordingTimerRef = useRef<number | null>(null);
   const pollingTimerRef = useRef<number | null>(null);
   const [isPreparingMic, setIsPreparingMic] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
 
   const handleChange = (value: string) => {
     setText(value);
@@ -64,7 +66,15 @@ export default function SeedCapturePage() {
       headers: { "Content-Type": "multipart/form-data" },
     });
     const newSeed = res.data;
-    setSeedItems((prev) => [newSeed, ...prev.filter((seed) => seed.id !== newSeed.id)]);
+    setSeedItems((prev) => {
+      const next = prev.filter((seed) => seed.id !== newSeed.id);
+      next.push(newSeed);
+      return next;
+    });
+    setRecentSeedId(newSeed.id);
+    window.setTimeout(() => {
+      setRecentSeedId((current) => (current === newSeed.id ? null : current));
+    }, 600);
   };
 
   const handleSend = async () => {
@@ -103,6 +113,9 @@ export default function SeedCapturePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) return;
     let cancelled = false;
     const prewarmMic = async () => {
       try {
@@ -126,7 +139,10 @@ export default function SeedCapturePage() {
   }, []);
 
   useEffect(() => {
-    setSeedItems(seeds);
+    const sorted = [...seeds].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    setSeedItems(sorted);
   }, [seeds]);
 
   useEffect(() => {
@@ -198,6 +214,7 @@ export default function SeedCapturePage() {
       const stream =
         mediaStreamRef.current || (await navigator.mediaDevices.getUserMedia({ audio: true }));
       mediaStreamRef.current = stream;
+      setMicError(null);
       const mimeCandidates = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -254,6 +271,7 @@ export default function SeedCapturePage() {
       }, 1000);
     } catch {
       setIsPreparingMic(false);
+      setMicError("Microphone permission blocked. Close any screen overlays and try again.");
       toaster.error({
         title: "Microphone unavailable",
         description: "Please allow microphone access and try again.",
@@ -285,13 +303,22 @@ export default function SeedCapturePage() {
   };
 
   return (
-    <Flex direction="column" h="100vh" overflow="hidden" gap={4}>
+    <Flex
+      direction="column"
+      h="100vh"
+      overflow="hidden"
+      gap={4}
+      pb="max(env(safe-area-inset-bottom), 16px)"
+    >
       <Box flex="0 0 60vh" h="60vh" overflowY="auto">
         <Stack gap={3}>
           {loading && <Text color="fg.muted">Loading seeds...</Text>}
           {!loading && seeds.length === 0 && <Text color="fg.muted">No seeds yet.</Text>}
       {!loading &&
-        seedItems.map((seed) => (
+        seedItems
+          .slice()
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .map((seed) => (
               <Box
                 key={seed.id}
                 borderWidth="1px"
@@ -300,6 +327,7 @@ export default function SeedCapturePage() {
                 p={3}
                 cursor="pointer"
                 onClick={() => handleSelectSeed(seed.id, seed.body_text || "")}
+                className={seed.id === recentSeedId ? "seed-fade-in" : undefined}
               >
                 <Stack gap={2}>
                   <HStack gap={2} align="center" flexWrap="wrap">
@@ -323,7 +351,6 @@ export default function SeedCapturePage() {
                     <Text
                       whiteSpace="pre-wrap"
                       lineClamp={3}
-                      className={seed.id === seedId ? "seed-fade-in" : undefined}
                       flex="1 1 auto"
                     >
                       {seed.kind === "voice" && seed.status === "processing" && (seed.body_text || "Transcribing voice note…")}
@@ -403,6 +430,11 @@ export default function SeedCapturePage() {
               Starting microphone…
             </Text>
           )}
+          {micError && (
+            <Text fontSize="xs" color="fg.muted">
+              {micError}
+            </Text>
+          )}
           {isRecording && (
             <Text fontSize="xs" color="fg.muted">
               Recording… {recordingSeconds}s
@@ -411,7 +443,7 @@ export default function SeedCapturePage() {
           <HStack
             justify="space-between"
             flex="0 0 auto"
-            pb="calc(env(safe-area-inset-bottom) + 8px)"
+            pb="max(env(safe-area-inset-bottom), 16px)"
           >
             <HStack gap={2}>
               <IconButton
