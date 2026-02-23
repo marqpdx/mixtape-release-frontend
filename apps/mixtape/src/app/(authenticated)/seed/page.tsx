@@ -126,11 +126,11 @@ export default function SeedCapturePage() {
     const isFirefox = /Firefox/i.test(ua);
     const isChrome = /Chrome|Chromium|CriOS/i.test(ua);
     if (isFirefox) {
-      setBottomPad(13);
+      setBottomPad(29);
     } else if (isChrome) {
       setBottomPad(36);
     } else {
-      setBottomPad(16);
+      setBottomPad(32);
     }
   }, []);
 
