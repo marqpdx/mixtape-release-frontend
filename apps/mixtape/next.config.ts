@@ -37,6 +37,8 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "img-src 'self' https: data: blob: http://127.0.0.1:9000 http://localhost:9000",
+      "media-src 'self' https: data: blob: https://assets.crossroads.place" +
+        (isProd ? "" : " http://127.0.0.1:9000 http://localhost:9000"),
       // Next/Chakra often need these; remove 'unsafe-eval' if/when you can
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
@@ -53,7 +55,7 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Modern syntax (OK as provided)
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
   // HSTS (safe even on Vercel; only effective over HTTPS)
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   // Legacy; harmless

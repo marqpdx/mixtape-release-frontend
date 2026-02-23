@@ -8,6 +8,11 @@ import {
   PuddlejumpValidationError,
   PersonalPuddlejump,
   PuddlejumpItem,
+  SourceFileVersion,
+  CheckoutStatus,
+  CanonDiff,
+  CanonApprovalResponse,
+  VersionSubmitResponse,
 } from '@mixtape/core/types/puddlejump';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
@@ -67,19 +72,117 @@ export async function importPuddlejumpBundle(
 }
 
 /**
- * Export a Library as Puddlejump bundle
- * (Phase 5 - not yet implemented)
+ * Export a Library as Puddlejump Canon bundle (zip download)
  */
 export async function exportPuddlejumpBundle(
-  libraryId: string
+  libraryId: string,
+  includeNonCanonical: boolean = false
 ): Promise<Blob> {
   const response = await axiosInstance.get(
-    `/api/stackroom/puddlejump/export/${libraryId}/`,
+    `/api/stackroom/libraries/${libraryId}/export`,
     {
+      params: { include_non_canonical: includeNonCanonical },
       responseType: 'blob',
     }
   );
+  return response.data;
+}
 
+// ============================================================================
+// CANON GOVERNANCE
+// ============================================================================
+
+/**
+ * Fetch version history for a source file
+ */
+export async function fetchVersions(
+  sourceFileId: string
+): Promise<{ versions: SourceFileVersion[] }> {
+  const response = await axiosInstance.get(
+    `/api/stackroom/source-files/${sourceFileId}/versions`
+  );
+  return response.data;
+}
+
+/**
+ * Submit a new version for a source file
+ */
+export async function submitVersion(
+  sourceFileId: string,
+  data: {
+    content: string;
+    change_summary?: string;
+    ai_assisted?: boolean;
+    ai_agent?: string;
+    ai_summary?: string;
+  }
+): Promise<VersionSubmitResponse> {
+  const response = await axiosInstance.post(
+    `/api/stackroom/source-files/${sourceFileId}/versions`,
+    data
+  );
+  return response.data;
+}
+
+/**
+ * Approve a version as Canon
+ */
+export async function approveCanon(
+  sourceFileId: string,
+  data: { version_id: string; notes?: string }
+): Promise<CanonApprovalResponse> {
+  const response = await axiosInstance.post(
+    `/api/stackroom/source-files/${sourceFileId}/approve`,
+    data
+  );
+  return response.data;
+}
+
+/**
+ * Get diff data for Canon approval UI
+ */
+export async function fetchDiff(
+  sourceFileId: string
+): Promise<CanonDiff> {
+  const response = await axiosInstance.get(
+    `/api/stackroom/source-files/${sourceFileId}/diff`
+  );
+  return response.data;
+}
+
+/**
+ * Get checkout status for a source file
+ */
+export async function fetchCheckoutStatus(
+  sourceFileId: string
+): Promise<{ checkout: CheckoutStatus | null }> {
+  const response = await axiosInstance.get(
+    `/api/stackroom/source-files/${sourceFileId}/checkout`
+  );
+  return response.data;
+}
+
+/**
+ * Check out a source file (soft checkout, advisory only)
+ */
+export async function checkoutFile(
+  sourceFileId: string
+): Promise<{ checked_out_by: string; checked_out_at: string }> {
+  const response = await axiosInstance.post(
+    `/api/stackroom/source-files/${sourceFileId}/checkout`
+  );
+  return response.data;
+}
+
+/**
+ * Release checkout on a source file
+ */
+export async function checkinFile(
+  sourceFileId: string
+): Promise<{ checked_out_by: null; checked_out_at: null }> {
+  const response = await axiosInstance.post(
+    `/api/stackroom/source-files/${sourceFileId}/checkin`
+  );
   return response.data;
 }
 

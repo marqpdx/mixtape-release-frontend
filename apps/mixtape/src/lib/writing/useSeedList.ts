@@ -13,6 +13,7 @@ export type SeedItem = {
   audio_url?: string | null;
   transcript_text?: string | null;
   transcript_error?: string | null;
+  edited_after_transcription?: boolean;
   created_at: string;
   updated_at: string;
   promoted_to?: string | null;

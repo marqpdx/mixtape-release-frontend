@@ -14,6 +14,9 @@ export const puddlejumpQueryKeys = {
   all: ['puddlejump'] as const,
   health: () => [...puddlejumpQueryKeys.all, 'health'] as const,
   personal: () => [...puddlejumpQueryKeys.all, 'personal'] as const,
+  versions: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'versions', sourceFileId] as const,
+  diff: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'diff', sourceFileId] as const,
+  checkout: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'checkout', sourceFileId] as const,
 };
 
 // ============================================================================
@@ -75,28 +78,185 @@ export const usePuddlejumpImport = (options?: {
 };
 
 /**
- * Hook to export a Library as Puddlejump bundle
- * (Phase 5 - not yet implemented)
- *
- * @example
- * ```tsx
- * const exportMutation = usePuddlejumpExport();
- *
- * const handleExport = async (libraryId: string) => {
- *   const blob = await exportMutation.mutateAsync(libraryId);
- *   // Trigger download
- *   const url = URL.createObjectURL(blob);
- *   const a = document.createElement('a');
- *   a.href = url;
- *   a.download = `collection-${Date.now()}.zip`;
- *   a.click();
- * };
- * ```
+ * Hook to export a Library as Puddlejump Canon bundle
  */
 export const usePuddlejumpExport = () => {
   return useMutation({
-    mutationFn: (libraryId: string) => puddlejumpApi.exportPuddlejumpBundle(libraryId),
+    mutationFn: ({
+      libraryId,
+      includeNonCanonical = false,
+    }: {
+      libraryId: string;
+      includeNonCanonical?: boolean;
+    }) => puddlejumpApi.exportPuddlejumpBundle(libraryId, includeNonCanonical),
   });
+};
+
+// ============================================================================
+// CANON GOVERNANCE HOOKS
+// ============================================================================
+
+/**
+ * Hook to fetch version history for a source file
+ */
+export const useVersionHistory = (sourceFileId: string | null) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: puddlejumpQueryKeys.versions(sourceFileId ?? ''),
+    queryFn: () => puddlejumpApi.fetchVersions(sourceFileId!),
+    enabled: !!sourceFileId,
+    staleTime: 10_000,
+  });
+
+  return {
+    versions: data?.versions ?? [],
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
+ * Hook to submit a new version
+ */
+export const useSubmitVersion = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sourceFileId,
+      ...data
+    }: {
+      sourceFileId: string;
+      content: string;
+      change_summary?: string;
+      ai_assisted?: boolean;
+      ai_agent?: string;
+      ai_summary?: string;
+    }) => puddlejumpApi.submitVersion(sourceFileId, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.versions(variables.sourceFileId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.diff(variables.sourceFileId),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => options?.onError?.(error as Error),
+  });
+};
+
+/**
+ * Hook to approve a version as Canon
+ */
+export const useApproveCanon = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sourceFileId,
+      ...data
+    }: {
+      sourceFileId: string;
+      version_id: string;
+      notes?: string;
+    }) => puddlejumpApi.approveCanon(sourceFileId, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.versions(variables.sourceFileId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.diff(variables.sourceFileId),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => options?.onError?.(error as Error),
+  });
+};
+
+/**
+ * Hook to get diff data for Canon approval
+ */
+export const useCanonDiff = (sourceFileId: string | null) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: puddlejumpQueryKeys.diff(sourceFileId ?? ''),
+    queryFn: () => puddlejumpApi.fetchDiff(sourceFileId!),
+    enabled: !!sourceFileId,
+    staleTime: 5_000,
+  });
+
+  return {
+    diff: data ?? null,
+    isLoading,
+    error: error as Error | null,
+  };
+};
+
+/**
+ * Hook to check out a source file (soft checkout)
+ */
+export const useCheckout = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sourceFileId: string) => puddlejumpApi.checkoutFile(sourceFileId),
+    onSuccess: (_result, sourceFileId) => {
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.checkout(sourceFileId),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => options?.onError?.(error as Error),
+  });
+};
+
+/**
+ * Hook to release checkout
+ */
+export const useCheckin = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sourceFileId: string) => puddlejumpApi.checkinFile(sourceFileId),
+    onSuccess: (_result, sourceFileId) => {
+      queryClient.invalidateQueries({
+        queryKey: puddlejumpQueryKeys.checkout(sourceFileId),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error) => options?.onError?.(error as Error),
+  });
+};
+
+/**
+ * Hook to get checkout status
+ */
+export const useCheckoutStatus = (sourceFileId: string | null) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: puddlejumpQueryKeys.checkout(sourceFileId ?? ''),
+    queryFn: () => puddlejumpApi.fetchCheckoutStatus(sourceFileId!),
+    enabled: !!sourceFileId,
+    staleTime: 15_000,
+    refetchInterval: 30_000, // Poll every 30s to show live checkout status
+  });
+
+  return {
+    checkout: data?.checkout ?? null,
+    isLoading,
+    error: error as Error | null,
+  };
 };
 
 // ============================================================================

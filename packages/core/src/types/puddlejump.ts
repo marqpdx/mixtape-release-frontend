@@ -285,6 +285,77 @@ export interface PuddlejumpSyncState {
   library_item_id?: string;
 }
 
+// ============================================================================
+// CANON GOVERNANCE TYPES (Puddlejump v1 §4-6, Appendix A1/A3/A6)
+// ============================================================================
+
+/**
+ * Version history entry for a SourceFile
+ */
+export interface SourceFileVersion {
+  id: string;
+  version_number: number;
+  hash_sha256: string;
+  change_summary: string;
+  actor: {
+    id: string | null;
+    username: string | null;
+    display_name: string | null;
+  };
+  ai_assisted: boolean;
+  ai_agent: string | null;
+  ai_summary: string | null;
+  is_approved: boolean;
+  approved_by?: {
+    username: string;
+    display_name: string;
+  } | null;
+  approved_at?: string | null;
+  created_at: string;
+}
+
+/**
+ * Checkout status for soft checkout (§6, A1)
+ */
+export interface CheckoutStatus {
+  checked_out_by: {
+    username: string;
+    display_name: string;
+  } | null;
+  checked_out_at: string | null;
+}
+
+/**
+ * Diff data for Canon approval UI (A6)
+ */
+export interface CanonDiff {
+  previous_content: string | null;
+  proposed_content: string;
+  previous_version_number: number | null;
+  proposed_version_number: number;
+}
+
+/**
+ * Canon approval response
+ */
+export interface CanonApprovalResponse {
+  id: string;
+  approved_at: string;
+  source_file_id: string;
+  version_id: string;
+  is_canon: boolean;
+}
+
+/**
+ * Version submission response
+ */
+export interface VersionSubmitResponse {
+  id: string;
+  version_number: number;
+  hash_sha256: string;
+  created_at: string;
+}
+
 /**
  * Type guards
  */

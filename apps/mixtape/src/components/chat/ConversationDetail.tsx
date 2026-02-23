@@ -18,11 +18,6 @@ import { useState, useEffect, useRef } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
-// import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "lib/reactions";
-
-// import { setupConversationSocket } from "lib/chat/setupConversationSocket";
-// import { useChatUnread } from "contexts/ChatUnreadContext";
-// import { getSocket } from "lib/socket";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
@@ -106,7 +101,8 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
 
   const { setActiveConversationId, resetUnread } = useChatUnread();
 
-  const lastMessageId = messages.length ? messages[messages.length - 1].id : undefined;
+  const safeMessages = Array.isArray(messages) ? messages : [];
+  const lastMessageId = safeMessages.length ? safeMessages[safeMessages.length - 1].id : undefined;
 
   useEffect(() => {
     // emit only if: we have a slug + (no previous ack OR different slug OR newer messageId)
@@ -455,7 +451,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
           </Text>
         ) : (
           <VStack align="stretch" gap={3}>
-            {messages.map((msg, index) => {
+            {safeMessages.map((msg, index) => {
               const isSelf = msg.sender.username === identity?.username;
               return (
                 <Box key={`${msg.id}-${index}`}>
