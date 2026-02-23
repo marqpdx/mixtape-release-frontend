@@ -84,7 +84,7 @@ export default function PersonalOverview({
   };
 
   return (
-    <VStack align="stretch" gap={6}>
+    <VStack align="stretch" gap={6} display={'none'}>
       {/* Welcome Header - Remove redundant text */}
       <Box>
         <Heading size="xl" mb={2}>

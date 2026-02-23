@@ -1,4 +1,5 @@
-// src/components/writing/outline/OutlineDrawer.tsx
+// apps/mixtape/src/components/writing/outline/OutlineDrawer.tsx
+
 // Inline sidebar panel (replaces former Chakra Drawer)
 
 'use client';
@@ -9,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IconTrash, IconGripVertical, IconX } from '@tabler/icons-react';
+import { IconTrash, IconGripVertical, IconX, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
 import {
   fetchOutline,
   createOutlineNode,
@@ -79,13 +80,19 @@ function HeadingItem({
   depth,
   activePos,
   onNavigate,
+  collapsedIds,
+  onToggleCollapse,
 }: {
   entry: HeadingEntry;
   depth: number;
   activePos: number | null;
   onNavigate: (pos: number) => void;
+  collapsedIds: Set<string>;
+  onToggleCollapse: (id: string) => void;
 }) {
   const isActive = activePos === entry.pos;
+  const hasChildren = entry.children.length > 0;
+  const isCollapsed = collapsedIds.has(entry.id);
   const activeBg = useColorModeValue('blue.50', 'blue.900');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
   const activeColor = useColorModeValue('blue.700', 'blue.200');
@@ -110,6 +117,21 @@ function HeadingItem({
         textAlign="left"
         transition="background 0.15s"
       >
+        {hasChildren ? (
+          <IconButton
+            size="2xs"
+            variant="ghost"
+            aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleCollapse(entry.id);
+            }}
+          >
+            {isCollapsed ? <IconChevronRight size={14} /> : <IconChevronDown size={14} />}
+          </IconButton>
+        ) : (
+          <Box w="22px" />
+        )}
         <Text fontSize="2xs" fontWeight="bold" color={levelColor} minW="24px" flexShrink={0} fontFamily="mono">
           H{entry.level}
         </Text>
@@ -117,9 +139,18 @@ function HeadingItem({
           {entry.text}
         </Text>
       </HStack>
-      {entry.children.map((child) => (
-        <HeadingItem key={child.id} entry={child} depth={depth + 1} activePos={activePos} onNavigate={onNavigate} />
-      ))}
+      {!isCollapsed &&
+        entry.children.map((child) => (
+          <HeadingItem
+            key={child.id}
+            entry={child}
+            depth={depth + 1}
+            activePos={activePos}
+            onNavigate={onNavigate}
+            collapsedIds={collapsedIds}
+            onToggleCollapse={onToggleCollapse}
+          />
+        ))}
     </>
   );
 }
@@ -131,11 +162,15 @@ function OutlineNodeItem({
   depth,
   editor,
   pieceId,
+  collapsedIds,
+  onToggleCollapse,
 }: {
   node: OutlineNode;
   depth: number;
   editor: Editor | null;
   pieceId: string;
+  collapsedIds: Set<string>;
+  onToggleCollapse: (id: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(node.title);
@@ -203,6 +238,8 @@ function OutlineNodeItem({
   }, [isEditing]);
 
   const isLinked = !!node.anchor_target;
+  const hasChildren = !!node.children && node.children.length > 0;
+  const isCollapsed = collapsedIds.has(node.id);
 
   return (
     <>
@@ -216,9 +253,24 @@ function OutlineNodeItem({
         _hover={{ bg: hoverBg }}
         transition="background 0.15s"
       >
-        <Box color="gray.400" cursor="grab" flexShrink={0}>
-          <IconGripVertical size={14} />
-        </Box>
+        <HStack gap={0.5} flexShrink={0}>
+          <Box color="gray.400" cursor="grab">
+            <IconGripVertical size={14} />
+          </Box>
+          {hasChildren ? (
+            <IconButton
+              size="2xs"
+              variant="ghost"
+              aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleCollapse(node.id);
+              }}
+            >
+              {isCollapsed ? <IconChevronRight size={12} /> : <IconChevronDown size={12} />}
+            </IconButton>
+          ) : null}
+        </HStack>
 
         <Box
           w="6px"
@@ -271,15 +323,18 @@ function OutlineNodeItem({
         </IconButton>
       </HStack>
 
-      {node.children?.map((child) => (
-        <OutlineNodeItem
-          key={child.id}
-          node={child}
-          depth={depth + 1}
-          editor={editor}
-          pieceId={pieceId}
-        />
-      ))}
+      {!isCollapsed &&
+        node.children?.map((child) => (
+          <OutlineNodeItem
+            key={child.id}
+            node={child}
+            depth={depth + 1}
+            editor={editor}
+            pieceId={pieceId}
+            collapsedIds={collapsedIds}
+            onToggleCollapse={onToggleCollapse}
+          />
+        ))}
     </>
   );
 }
@@ -304,6 +359,7 @@ export function OutlineDrawer({
   // Phase 1 state (headings fallback)
   const [headings, setHeadings] = useState<HeadingEntry[]>([]);
   const [activePos, setActivePos] = useState<number | null>(null);
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
   const panelBg = useColorModeValue('white', 'gray.800');
   const headerBorder = useColorModeValue('gray.200', 'gray.700');
@@ -378,6 +434,18 @@ export function OutlineDrawer({
     editor.chain().setTextSelection(pos + 1).scrollIntoView().run();
     editor.commands.focus();
   }, [editor]);
+
+  const toggleCollapse = useCallback((id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   const handleAddSection = useCallback(() => {
     if (!editor) return;
@@ -489,6 +557,8 @@ export function OutlineDrawer({
                     depth={0}
                     editor={editor}
                     pieceId={pieceId}
+                    collapsedIds={collapsedIds}
+                    onToggleCollapse={toggleCollapse}
                   />
                 ))}
               </VStack>
@@ -527,6 +597,8 @@ export function OutlineDrawer({
                     depth={0}
                     activePos={activePos}
                     onNavigate={handleHeadingNavigate}
+                    collapsedIds={collapsedIds}
+                    onToggleCollapse={toggleCollapse}
                   />
                 ))}
               </VStack>
