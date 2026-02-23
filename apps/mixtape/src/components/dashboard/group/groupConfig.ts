@@ -70,7 +70,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Content",
     icon: "📝",
     subItems: [
-      { key: "writing", label: "Posts & Announcements", hidden: false },
+      { key: "writing", label: "Writing", hidden: false },
       // { key: "create-writing", label: "Write", hidden: false },
       // { key: "threadworks-landing", label: "Threadworks", hidden: false },
       { key: "write", label: "Write", hidden: false },

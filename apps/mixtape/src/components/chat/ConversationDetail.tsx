@@ -1,4 +1,4 @@
-// src/components/chat/ConversationDetail.tsx
+// apps/mixtape/src/components/chat/ConversationDetail.tsx
 
 "use client";
 
@@ -341,7 +341,8 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
 
       // Reload all messages to get updated reactions
       const messagesResponse = await axiosInstance.get(`/api/chat/conversations/${slug}/messages`);
-      setMessages(messagesResponse.data);
+      const messagesData = messagesResponse.data?.results || messagesResponse.data;
+      setMessages(Array.isArray(messagesData) ? messagesData : []);
       // Don't auto-scroll when adding reactions
       setUserScrolledUp(true);
 

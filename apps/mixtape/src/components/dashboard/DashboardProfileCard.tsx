@@ -1,4 +1,4 @@
-// /src/components/dashboard/DashboardProfileCard.tsx
+// apps/mixtape/src/components/dashboard/DashboardProfileCard.tsx
 
 "use client";
 
