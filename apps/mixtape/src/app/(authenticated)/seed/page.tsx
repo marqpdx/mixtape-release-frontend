@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Badge,
   Box,
@@ -44,8 +44,13 @@ export default function SeedCapturePage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recordingTimerRef = useRef<number | null>(null);
   const pollingTimerRef = useRef<number | null>(null);
+  const micIdleTimerRef = useRef<number | null>(null);
   const [isPreparingMic, setIsPreparingMic] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
+  const [bottomPad, setBottomPad] = useState(16);
+  const [editingSeedId, setEditingSeedId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const editDebounceRef = useRef<number | null>(null);
 
   const handleChange = (value: string) => {
     setText(value);
@@ -105,11 +110,28 @@ export default function SeedCapturePage() {
       if (pollingTimerRef.current) {
         window.clearInterval(pollingTimerRef.current);
       }
+      if (micIdleTimerRef.current) {
+        window.clearTimeout(micIdleTimerRef.current);
+      }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ua = navigator.userAgent;
+    const isFirefox = /Firefox/i.test(ua);
+    const isChrome = /Chrome|Chromium|CriOS/i.test(ua);
+    if (isFirefox) {
+      setBottomPad(13);
+    } else if (isChrome) {
+      setBottomPad(36);
+    } else {
+      setBottomPad(16);
+    }
   }, []);
 
   useEffect(() => {
@@ -137,6 +159,49 @@ export default function SeedCapturePage() {
       cancelled = true;
     };
   }, []);
+
+  const scheduleMicIdleShutdown = useCallback(() => {
+    if (micIdleTimerRef.current) {
+      window.clearTimeout(micIdleTimerRef.current);
+    }
+    micIdleTimerRef.current = window.setTimeout(() => {
+      if (isRecording) return;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+    }, 60000);
+  }, [isRecording]);
+
+  const ensureMicWarm = useCallback(async () => {
+    if (isRecording || isPreparingMic) return;
+    if (mediaStreamRef.current) {
+      scheduleMicIdleShutdown();
+      return;
+    }
+    try {
+      setIsPreparingMic(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+    } catch {
+      // ignore
+    } finally {
+      setIsPreparingMic(false);
+      scheduleMicIdleShutdown();
+    }
+  }, [isRecording, isPreparingMic, scheduleMicIdleShutdown]);
+
+  useEffect(() => {
+    const events = ["pointerdown", "keydown", "touchstart"];
+    const handler = () => {
+      scheduleMicIdleShutdown();
+      void ensureMicWarm();
+    };
+    events.forEach((event) => window.addEventListener(event, handler, { passive: true }));
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, handler));
+    };
+  }, [ensureMicWarm, scheduleMicIdleShutdown]);
 
   useEffect(() => {
     const sorted = [...seeds].sort(
@@ -215,6 +280,7 @@ export default function SeedCapturePage() {
         mediaStreamRef.current || (await navigator.mediaDevices.getUserMedia({ audio: true }));
       mediaStreamRef.current = stream;
       setMicError(null);
+      scheduleMicIdleShutdown();
       const mimeCandidates = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -269,20 +335,77 @@ export default function SeedCapturePage() {
       recordingTimerRef.current = window.setInterval(() => {
         setRecordingSeconds((prev) => prev + 1);
       }, 1000);
-    } catch {
+    } catch (error) {
       setIsPreparingMic(false);
-      setMicError("Microphone permission blocked. Close any screen overlays and try again.");
+      const err = error as { name?: string; message?: string } | undefined;
+      let message = "Microphone permission blocked. Close any screen overlays and try again.";
+      if (err?.name === "NotAllowedError") {
+        message = "Microphone blocked. Check Android Settings → Apps → Chrome → Permissions → Microphone.";
+      } else if (err?.name === "NotFoundError") {
+        message = "No microphone found. Connect or enable a mic and try again.";
+      } else if (err?.message) {
+        message = err.message;
+      }
       toaster.error({
         title: "Microphone unavailable",
         description: "Please allow microphone access and try again.",
       });
+      setMicError(message);
     }
   };
+
+  const saveInlineEdit = useCallback(
+    async (id: string, textValue: string) => {
+      try {
+        await axiosInstance.patch(`/api/writing/seeds/${id}`, {
+          body_text: textValue,
+        });
+        const refreshed = await axiosInstance.get(`/api/writing/seeds/${id}`);
+        const updatedSeed = refreshed.data;
+        setSeedItems((prev) =>
+          prev.map((seed) => (seed.id === updatedSeed.id ? updatedSeed : seed))
+        );
+      } catch {
+        toaster.error({
+          title: "Could not save seed",
+          description: "Please try again.",
+        });
+      }
+    },
+    [setSeedItems]
+  );
+
+  const startInlineEdit = useCallback(
+    (seedId: string, seedText: string) => {
+      if (editingSeedId && editingSeedId !== seedId) {
+        void saveInlineEdit(editingSeedId, editingText);
+      }
+      setEditingSeedId(seedId);
+      setEditingText(seedText);
+    },
+    [editingSeedId, editingText, saveInlineEdit]
+  );
+
+  useEffect(() => {
+    if (!editingSeedId) return;
+    if (editDebounceRef.current) {
+      window.clearTimeout(editDebounceRef.current);
+    }
+    editDebounceRef.current = window.setTimeout(() => {
+      void saveInlineEdit(editingSeedId, editingText);
+    }, 3000);
+    return () => {
+      if (editDebounceRef.current) {
+        window.clearTimeout(editDebounceRef.current);
+      }
+    };
+  }, [editingSeedId, editingText, saveInlineEdit]);
 
   const stopRecording = () => {
     if (!isRecording) return;
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+    scheduleMicIdleShutdown();
     if (recordingTimerRef.current) {
       window.clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
@@ -308,7 +431,7 @@ export default function SeedCapturePage() {
       h="100vh"
       overflow="hidden"
       gap={4}
-      pb="max(env(safe-area-inset-bottom), 16px)"
+      pb={`calc(max(env(safe-area-inset-bottom), ${bottomPad}px))`}
     >
       <Box flex="0 0 60vh" h="60vh" overflowY="auto">
         <Stack gap={3}>
@@ -326,7 +449,7 @@ export default function SeedCapturePage() {
                 borderRadius="md"
                 p={3}
                 cursor="pointer"
-                onClick={() => handleSelectSeed(seed.id, seed.body_text || "")}
+                onClick={() => startInlineEdit(seed.id, seed.body_text || "")}
                 className={seed.id === recentSeedId ? "seed-fade-in" : undefined}
               >
                 <Stack gap={2}>
@@ -348,20 +471,37 @@ export default function SeedCapturePage() {
                     )}
                   </HStack>
                   <HStack align="start" justify="space-between" gap={3}>
-                    <Text
-                      whiteSpace="pre-wrap"
-                      lineClamp={3}
-                      flex="1 1 auto"
-                    >
-                      {seed.kind === "voice" && seed.status === "processing" && (seed.body_text || "Transcribing voice note…")}
-                      {seed.kind === "voice" && seed.status === "failed" && seed.transcript_error
-                        ? seed.transcript_error
-                        : null}
-                      {(!seed.kind || seed.kind === "text" || seed.status === "ready") &&
-                        (seed.body_text && seed.body_text.length > 169
-                          ? `${seed.body_text.slice(0, 169)}…`
-                          : seed.body_text || "Untitled")}
-                    </Text>
+                    {editingSeedId === seed.id ? (
+                      <Textarea
+                        value={editingText}
+                        onChange={(event) => setEditingText(event.target.value)}
+                        onBlur={() => {
+                          void saveInlineEdit(seed.id, editingText);
+                          setEditingSeedId(null);
+                        }}
+                        resize="none"
+                        fontSize="sm"
+                        lineHeight="1.4"
+                        minH="72px"
+                        flex="1 1 auto"
+                        autoFocus
+                      />
+                    ) : (
+                      <Text
+                        whiteSpace="pre-wrap"
+                        lineClamp={3}
+                        flex="1 1 auto"
+                      >
+                        {seed.kind === "voice" && seed.status === "processing" && (seed.body_text || "Transcribing voice note…")}
+                        {seed.kind === "voice" && seed.status === "failed" && seed.transcript_error
+                          ? seed.transcript_error
+                          : null}
+                        {(!seed.kind || seed.kind === "text" || seed.status === "ready") &&
+                          (seed.body_text && seed.body_text.length > 169
+                            ? `${seed.body_text.slice(0, 169)}…`
+                            : seed.body_text || "Untitled")}
+                      </Text>
+                    )}
                     {seed.kind === "voice" && seed.audio_url && (
                       <Box flexShrink={0}>
                         {expandedAudioSeedId === seed.id ? (
@@ -443,7 +583,7 @@ export default function SeedCapturePage() {
           <HStack
             justify="space-between"
             flex="0 0 auto"
-            pb="max(env(safe-area-inset-bottom), 16px)"
+            pb={`calc(max(env(safe-area-inset-bottom), ${bottomPad}px))`}
           >
             <HStack gap={2}>
               <IconButton
