@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Box,
@@ -36,13 +36,7 @@ export default function ProjectsListPage() {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadGroup();
-    }
-  }, [slug, authLoading, isAuthenticated]);
-
-  async function loadGroup() {
+  const loadGroup = useCallback(async () => {
     try {
       const response = await axiosInstance.get(`/api/groups/${slug}`);
       setGroupId(response.data.id);
@@ -52,7 +46,13 @@ export default function ProjectsListPage() {
     } finally {
       setGroupLoading(false);
     }
-  }
+  }, [slug]);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadGroup();
+    }
+  }, [slug, authLoading, isAuthenticated, loadGroup]);
 
   const listParams = useMemo(
     () =>

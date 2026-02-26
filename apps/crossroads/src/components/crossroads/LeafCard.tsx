@@ -46,12 +46,12 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
         >
           <HStack gap={2}>
             <IconLink size={16} />
-            <Text fontSize="sm" fontWeight="medium" noOfLines={1}>
+            <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
               {leaf.link_preview?.title || leaf.link_url}
             </Text>
           </HStack>
           {leaf.link_preview?.description && (
-            <Text fontSize="xs" color={descColor} mt={1} noOfLines={2}>
+            <Text fontSize="xs" color={descColor} mt={1} lineClamp={2}>
               {leaf.link_preview.description}
             </Text>
           )}
@@ -126,18 +126,16 @@ export default function LeafCard({ leaf }: LeafCardProps) {
   const avatarBg = useColorModeValue('gray.200', 'gray.600');
 
   return (
-    <Box
-      as={NextLink}
-      href={`/leaf/${leaf.id}`}
-      display="block"
-      p={5}
-      borderBottomWidth="1px"
-      borderColor={borderColor}
-      bg={cardBg}
-      _hover={{ bg: hoverBg }}
-      transition="background 0.15s"
-      cursor="pointer"
-    >
+    <NextLink href={`/leaf/${leaf.id}`} style={{ display: 'block' }}>
+      <Box
+        p={5}
+        borderBottomWidth="1px"
+        borderColor={borderColor}
+        bg={cardBg}
+        _hover={{ bg: hoverBg }}
+        transition="background 0.15s"
+        cursor="pointer"
+      >
       {/* Author header */}
       <HStack gap={3} mb={3}>
         <Box
@@ -187,6 +185,7 @@ export default function LeafCard({ leaf }: LeafCardProps) {
           </Text>
         </HStack>
       </HStack>
-    </Box>
+      </Box>
+    </NextLink>
   );
 }

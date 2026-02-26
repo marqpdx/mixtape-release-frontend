@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Box,
@@ -44,13 +44,7 @@ export default function GroupSettingsPage() {
   const selectedBg = useColorModeValue("blue.50", "blue.900");
   const selectedBorder = useColorModeValue("blue.300", "blue.600");
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadGroup();
-    }
-  }, [slug, authLoading, isAuthenticated]);
-
-  async function loadGroup() {
+  const loadGroup = useCallback(async () => {
     try {
       const response = await axiosInstance.get(`/api/groups/${slug}`);
       const policy = response.data.admission_policy || "open";
@@ -62,7 +56,13 @@ export default function GroupSettingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [slug]);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadGroup();
+    }
+  }, [slug, authLoading, isAuthenticated, loadGroup]);
 
   async function handleSave() {
     if (!selectedPolicy || selectedPolicy === currentPolicy) return;

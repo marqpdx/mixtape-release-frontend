@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Badge,
@@ -35,7 +35,7 @@ export default function JoinRequestsAdminPage() {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
 
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     try {
       const data = await fetchJoinRequests(slug);
       setRequests(data);
@@ -45,13 +45,13 @@ export default function JoinRequestsAdminPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [slug]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadRequests();
     }
-  }, [slug, authLoading, isAuthenticated]);
+  }, [slug, authLoading, isAuthenticated, loadRequests]);
 
   if (authLoading || loading) {
     return (

@@ -5,6 +5,7 @@
 import { Box, VStack, Text, Spinner } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useStreams } from '@mixtape/api/hooks/useFollow';
+import type { Leaf } from '@mixtape/core/types/leaf';
 import LeafCard from './LeafCard';
 
 export default function StreamsFeed() {
@@ -27,7 +28,7 @@ export default function StreamsFeed() {
     );
   }
 
-  const leaves = data?.results ?? [];
+  const leaves: Leaf[] = data?.results ?? [];
 
   if (leaves.length === 0) {
     return (

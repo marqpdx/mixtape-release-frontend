@@ -41,7 +41,7 @@ export default function SeedCard({ seed }: SeedCardProps) {
       bg={cardBg}
       opacity={isPromoted ? 0.6 : 1}
     >
-      <Text fontSize="sm" noOfLines={3}>
+      <Text fontSize="sm" lineClamp={3}>
         {seed.body_text || (seed.kind === 'voice' ? '(Voice note)' : '(Empty)')}
       </Text>
 
