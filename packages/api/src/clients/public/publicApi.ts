@@ -14,6 +14,7 @@ export interface PublicGroupAffiliation {
 }
 
 export interface PublicMemberProfile {
+  user_id: string;
   username: string;
   display_name: string;
   quick_intro: string;

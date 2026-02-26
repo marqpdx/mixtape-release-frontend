@@ -84,7 +84,7 @@ export default function PersonalOverview({
   };
 
   return (
-    <VStack align="stretch" gap={6} display={'none'}>
+    <VStack align="stretch" gap={6}>
       {/* Welcome Header - Remove redundant text */}
       <Box>
         <Heading size="xl" mb={2}>
@@ -383,6 +383,25 @@ export default function PersonalOverview({
             </Card.Root>
           </Box>
         )}
+
+        {/* Personal Calendar */}
+        <Box bg="bg.surface" borderColor="border.borderBox" borderWidth={1} borderRadius="md" p={1}>
+          <Card.Root bg="transparent" border="none" shadow="none">
+            <Card.Header>
+              <Heading size="md">My Calendar</Heading>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={3}>
+                <Text fontSize="sm" color={subtleTextColor}>
+                  Your personal events will appear here alongside Crossroads gatherings.
+                </Text>
+                <Button size="sm">
+                  Open calendar
+                </Button>
+              </VStack>
+            </Card.Body>
+          </Card.Root>
+        </Box>
 
         {/* Recent Activity */}
         <Box bg="bg.surface" borderColor="border.borderBox" borderWidth={1} borderRadius="md" p={1}>

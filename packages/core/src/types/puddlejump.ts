@@ -129,6 +129,8 @@ export interface PuddlejumpImportResponse {
   ingestion_status?: 'queued' | 'running' | 'completed' | 'failed';
   created_at: string; // ISO 8601 datetime
   error?: string; // Present if status='failed'
+  warning?: 'large_bundle'; // Set when file_count > 100 (A2)
+  file_count?: number; // Total files in bundle
 }
 
 /**
@@ -323,6 +325,7 @@ export interface CheckoutStatus {
     display_name: string;
   } | null;
   checked_out_at: string | null;
+  is_own?: boolean;
 }
 
 /**
@@ -433,6 +436,9 @@ export interface PuddlejumpItem {
   content_id?: string;
   filename?: string;
   size_bytes?: number;
+  // Canon governance (present when content_type is sourcefile)
+  source_file_id?: string;
+  latest_version_id?: string;
 }
 
 /**

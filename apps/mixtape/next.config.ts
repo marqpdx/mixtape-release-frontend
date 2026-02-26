@@ -76,6 +76,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    // basePath: "/app" moves public/ to /app/*, but browsers request /favicon.ico at root.
+    // Next.js requires an absolute URL for rewrites outside basePath.
+    const selfUrl = process.env.NEXT_PUBLIC_SITE_URL || `http://localhost:${process.env.PORT || 3011}`;
+    return [
+      {
+        source: "/favicon.ico",
+        destination: `${selfUrl}/app/favicon.ico`,
+        basePath: false,
+      },
+    ];
+  },
   webpack: (config, { isServer }) => {
     // Suppress the annoying "Serializing big strings" warning
     config.infrastructureLogging = {

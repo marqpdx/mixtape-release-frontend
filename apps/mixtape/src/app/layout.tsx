@@ -24,8 +24,13 @@ const dmSerif = DM_Serif_Display({
 // Note: Joan font - if available from Google Fonts, add here
 // For now using system serif fallback in theme config
 
+const defaultGroupName =
+  process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
+  process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
+  "Crossroads";
+
 export const metadata = {
-  title: 'Mixtape Release',
+  title: defaultGroupName,
   description: 'Mixtape Release Platform',
 };
 

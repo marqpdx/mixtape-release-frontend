@@ -28,7 +28,6 @@ export default function SeedCapturePage() {
     seedId,
     saveNow,
     resetSeed,
-    attachExistingSeed,
   } = useSeedAutosave("", 1500);
   const refreshToken = useMemo(() => savedTick + (seedId ? 1 : 0), [savedTick, seedId]);
   const { seeds, loading } = useSeedList(20, refreshToken);
@@ -57,10 +56,6 @@ export default function SeedCapturePage() {
     schedule({ body_text: value });
   };
 
-  const handleSelectSeed = (id: string, bodyText: string) => {
-    setText(bodyText);
-    attachExistingSeed(id, bodyText);
-  };
 
   const uploadVoiceBlob = async (blob: Blob) => {
     const form = new FormData();
@@ -126,7 +121,7 @@ export default function SeedCapturePage() {
     const isFirefox = /Firefox/i.test(ua);
     const isChrome = /Chrome|Chromium|CriOS/i.test(ua);
     if (isFirefox) {
-      setBottomPad(29);
+      setBottomPad(33);
     } else if (isChrome) {
       setBottomPad(36);
     } else {

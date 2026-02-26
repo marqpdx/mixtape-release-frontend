@@ -1,4 +1,4 @@
-// src/middleware.ts
+// apps/mixtape/src/middleware.ts
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -115,7 +115,8 @@ export function middleware(request: NextRequest) {
   const isProtectedPage = pathname.startsWith('/app/dashboard') ||
                           pathname.startsWith('/app/settings') ||
                           pathname.startsWith('/app/admin') ||
-                          pathname.startsWith('/app/profile');
+                          pathname.startsWith('/app/profile') ||
+                          pathname.startsWith('/app/members');
 
   // Redirect unauthenticated users trying to access protected pages
   if (isProtectedPage && !isAuthenticated) {
@@ -127,7 +128,7 @@ export function middleware(request: NextRequest) {
   // Redirect authenticated users trying to access auth pages
   // UNLESS this is a logout redirect (cookies being deleted, timing issue)
   if (isAuthPage && isAuthenticated && !isLogoutRedirect) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Allow all other requests
@@ -141,7 +142,7 @@ export function middleware(request: NextRequest) {
  * - API routes (/api/*)
  * - Static files (_next/static/*)
  * - Image optimization (_next/image/*)
- * - Favicon and other public assets
+ * - Public assets (icons/images/etc.)
  */
 export const config = {
   matcher: [
@@ -150,9 +151,8 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
      * - public assets (*.png, *.jpg, *.svg, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

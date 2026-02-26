@@ -140,11 +140,23 @@ export const config = defineConfig({
     textStyles,
     tokens: {
       fonts: {
-        body: { value: "var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
+        // body: { value: "var(--font-pacifico), 'Brush Script MT', 'Lucida Handwriting', cursive" },
+        // heading: { value: "var(--font-pacifico), 'Brush Script MT', 'Lucida Handwriting', cursive" },
+        body: { value: "var(--font-alegreya-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
         heading: { value: "var(--font-dm-serif), Georgia, 'Times New Roman', serif" },
         headingAdmin: { value: "'Joan', -apple-system, BlinkMacSystemFont, sans-serif" },
         mono: { value: "Menlo, Monaco, 'Courier New', monospace" },
       },
+
+
+      // - --font-nunito-sans (lighter)
+      // - --font-figtree (similar)
+      // - --font-sora (bigger, darker)
+      // - --font-quicksand (very light)))
+      // - --font-manrope (generic?)
+      // - --font-alegreya-sans
+
+
       colors: {
         // Core 3-color system for light/dark modes
         background: {

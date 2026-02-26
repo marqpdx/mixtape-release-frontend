@@ -66,6 +66,16 @@ export function PuddlejumpImport({
         duration: 5000,
       });
 
+      // Large bundle warning (A2: >100 files)
+      if (result.warning === 'large_bundle') {
+        toaster.create({
+          title: 'Large Bundle',
+          description: `This bundle contains ${result.file_count ?? 'many'} files. Processing may take longer than usual.`,
+          type: 'info',
+          duration: 8000,
+        });
+      }
+
       onImportComplete?.(result);
 
       // Navigate to imported collection after short delay

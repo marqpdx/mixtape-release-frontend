@@ -16,14 +16,21 @@ import {
   Spinner,
   Avatar,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { IconGrid3x3, IconList, IconMessage, IconCalendar } from "@tabler/icons-react";
+import {
+  IconGrid3x3,
+  IconList,
+  IconMessage,
+  IconCalendar,
+  IconUserMinus,
+} from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
 import { useRouter } from "next/navigation";
+import * as groupApi from "@mixtape/api/clients/group/groupApi";
 
 interface GroupMemberListProps {
   group: Group;
@@ -53,14 +60,29 @@ export function GroupMemberList({
   onMemberClick,
   canEditMember = () => false
 }: GroupMemberListProps) {
-  void group;
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
   const router = useRouter();
 
   const AVATAR_SIZE = 148;
+  const viewModeStorageKey = `group_members_view_mode:${group.slug}`;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(viewModeStorageKey);
+    if (saved === "grid" || saved === "table") {
+      setViewMode(saved);
+    }
+  }, [viewModeStorageKey]);
+
+  const updateViewMode = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(viewModeStorageKey, mode);
+    }
+  };
 
   // Helper to get display name (uses utility from groupTypes)
   const getDisplayName = (membership: GroupMembership): string => {
@@ -102,11 +124,24 @@ export function GroupMemberList({
     onMemberClick?.(membership);
   };
 
+  const handleRemoveMember = async (membership: GroupMembership) => {
+    const displayName = getDisplayName(membership);
+    const confirmed = window.confirm(`Remove ${displayName} from ${group.title}?`);
+    if (!confirmed) return;
+
+    try {
+      await groupApi.removeGroupMember(group.slug, membership.member_id);
+    } catch (error) {
+      console.error("Failed to remove member:", error);
+    }
+  };
+
   const GridView = () => (
     <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4}>
       {members.map((membership) => {
         const displayName = getDisplayName(membership);
         const avatar = getAvatar(membership);
+        const canRemove = canEditMember(membership);
 
         return (
           <Card.Root
@@ -122,6 +157,24 @@ export function GroupMemberList({
             position="relative"
             h="300px"
           >
+            {canRemove && (
+              <IconButton
+                aria-label="Remove member"
+                size="sm"
+                variant="solid"
+                colorScheme="red"
+                position="absolute"
+                top={3}
+                right={3}
+                zIndex={3}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleRemoveMember(membership);
+                }}
+              >
+                <IconUserMinus size={16} />
+              </IconButton>
+            )}
             {avatar ? (
               <>
                 {/* Background image */}
@@ -171,7 +224,7 @@ export function GroupMemberList({
                           bg="whiteAlpha.800"
                           color="gray.800"
                         >
-                          {membership.roles.join(", ")}
+                          {(membership.roles || []).join(", ")}
                         </Badge>
 
                         {membership.is_pending && (
@@ -257,21 +310,39 @@ export function GroupMemberList({
   const TableView = () => {
     const tableMembers = members.map(transformMemberForTable);
 
-    return (
-      <UniversalDataTable<MemberTableItem>
-        data={tableMembers}
-        title=""
-        showAvatar={true}
-        onRowClick={(memberItem) => {
-          const membership = members.find(m => m.member_id === memberItem.member_id);
-          if (membership) {
-            handleMemberClick(membership);
-          }
-        }}
-        canEdit={canEditMember}
-        canView={() => true}
-        emptyStateMessage="No members found"
-        emptyStateSubtitle="This group doesn't have any members yet"
+        return (
+          <UniversalDataTable<MemberTableItem>
+            data={tableMembers}
+            title=""
+            showAvatar={true}
+            onRowClick={(memberItem) => {
+              const membership = members.find(m => m.member_id === memberItem.member_id);
+              if (membership) {
+                handleMemberClick(membership);
+              }
+            }}
+            canEdit={canEditMember}
+            canView={() => true}
+            actions={[
+              {
+                label: "Remove member",
+                icon: <IconUserMinus size={16} />,
+                colorScheme: "red",
+                variant: "ghost",
+                showIf: (item) => {
+                  const membership = members.find(m => m.member_id === item.id);
+                  return membership ? canEditMember(membership) : false;
+                },
+                onClick: (item) => {
+                  const membership = members.find(m => m.member_id === item.id);
+                  if (membership) {
+                    handleRemoveMember(membership);
+                  }
+                },
+              },
+            ]}
+            emptyStateMessage="No members found"
+            emptyStateSubtitle="This group doesn't have any members yet"
 
         renderAvatar={(memberItem) => {
           const membership = members.find(m => m.member_id === memberItem.member_id);
@@ -350,7 +421,7 @@ export function GroupMemberList({
                     // colorScheme={getRoleBadgeColor(membership.role)}
                     size="sm"
                   >
-                    {membership.roles}
+                    {(membership.roles || []).join(", ")}
                   </Badge>
 
                   {membership.is_pending && (
@@ -426,7 +497,7 @@ export function GroupMemberList({
             size="sm"
             variant={viewMode === 'grid' ? 'solid' : 'ghost'}
             colorScheme={viewMode === 'grid' ? 'green' : 'gray'}
-            onClick={() => setViewMode('grid')}
+            onClick={() => updateViewMode("grid")}
             disabled={isLoading}
           >
             <IconGrid3x3 size={16} />
@@ -437,7 +508,7 @@ export function GroupMemberList({
             size="sm"
             variant={viewMode === 'table' ? 'solid' : 'ghost'}
             colorScheme={viewMode === 'table' ? 'green' : 'gray'}
-            onClick={() => setViewMode('table')}
+            onClick={() => updateViewMode("table")}
             disabled={isLoading}
           >
             <IconList size={16} />

@@ -23,6 +23,7 @@ import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
 import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 import { ListsTab } from "@/components/workbench/ListsTab";
+import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 import PersonalOverview from "../sections/PersonalOverview";
@@ -202,6 +203,14 @@ export default function MemberWorkArea({
           }}
           setActiveSection={setActiveSection}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "mill") {
+    return (
+      <WorkAreaWrapper>
+        <MillWorkArea sponsor={{ type: "member", slug: identity.username }} />
       </WorkAreaWrapper>
     );
   }

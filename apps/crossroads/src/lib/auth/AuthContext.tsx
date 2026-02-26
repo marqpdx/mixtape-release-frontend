@@ -23,17 +23,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 
-export const safeRedirect = (value: string | null, fallback = "/dashboard") => {
+export const safeRedirect = (value: string | null, fallback?: string) => {
+  // Default fallback is My Crossroads — caller should provide username-based path
+  const effectiveFallback = fallback || "/";
   // allow only same-site paths
-  if (!value) return fallback;
+  if (!value) return effectiveFallback;
   try {
     // absolute URL? reject
     const url = new URL(value, window.location.origin);
-    if (url.origin !== window.location.origin) return fallback;
+    if (url.origin !== window.location.origin) return effectiveFallback;
     return url.pathname + url.search + url.hash;
   } catch {
     // relative path is fine if it starts with /
-    return value.startsWith("/") ? value : fallback;
+    return value.startsWith("/") ? value : effectiveFallback;
   }
 };
 

@@ -86,7 +86,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
 
   return (
-    <HStack p={1} pt={"12px"} gap={0.5} justify="space-between">
+    <HStack p={1} pt={0} gap={0.5} justify="space-between">
       <HStack gap={0.5}>
         <EditorToolbarButton
           tooltip="Heading 1"

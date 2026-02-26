@@ -112,6 +112,10 @@ export default function MemberDashboard() {
   const stableMembersData = useMemo(() => membersData, [membersData]);
   const stableUserGroups = useMemo(() => userGroups, [userGroups]);
   const stableTodos = useMemo(() => todos, [todos]);
+  const defaultGroupName =
+    process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
+    process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
+    "Crossroads";
 
   // Build dashboard title based on role
   const getDashboardTitle = useCallback(() => {
@@ -151,10 +155,10 @@ export default function MemberDashboard() {
   // Set dynamic title
   useEffect(() => {
     if (identity) {
-      const title = "Dashboard - Mixtape Crossroads";
+      const title = `Dashboard - ${defaultGroupName}`;
       document.title = title;
     }
-  }, [identity]);
+  }, [identity, defaultGroupName]);
 
   // ==========================================
   // NOW IT'S SAFE TO HAVE EARLY RETURNS
@@ -182,4 +186,3 @@ export default function MemberDashboard() {
     />
   );
 }
-

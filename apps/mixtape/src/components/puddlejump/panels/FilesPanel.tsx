@@ -1,4 +1,4 @@
-// components/puddlejump/panels/FilesPanel.tsx
+// apps/mixtape/components/puddlejump/panels/FilesPanel.tsx
 
 'use client';
 
@@ -11,6 +11,7 @@ import {
   Text,
   Spinner,
   Badge,
+  Button,
   Collapsible,
 } from '@chakra-ui/react';
 import {
@@ -20,6 +21,14 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { usePersonalPuddlejump } from '@mixtape/api/hooks/stackroom';
+import {
+  useCheckoutStatus,
+  useCheckout,
+  useCheckin,
+} from '@mixtape/api/hooks/stackroom/usePuddlejump';
+import CheckoutBanner from '../CheckoutBanner';
+import CanonApprovalDialog from '../CanonApprovalDialog';
+import VersionHistoryPanel from './VersionHistoryPanel';
 
 interface FilesPanelProps {
   libraryId: string | null;
@@ -33,20 +42,177 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+interface FileItem {
+  id: string;
+  filename: string;
+  title: string;
+  folder_path: string;
+  size_bytes?: number;
+  is_featured: boolean;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  source_file_id?: string;
+  latest_version_id?: string;
+}
+
 interface FolderGroup {
   name: string;
   path: string;
-  files: Array<{
-    id: string;
-    filename: string;
-    title: string;
-    folder_path: string;
-    size_bytes?: number;
-    is_featured: boolean;
-    tags: string[];
-    created_at: string;
-    updated_at: string;
-  }>;
+  files: FileItem[];
+}
+
+function FileDetail({
+  file,
+}: {
+  file: FileItem;
+  onClose: () => void;
+}) {
+  const sourceFileId = file.source_file_id ?? null;
+  const { checkout } = useCheckoutStatus(sourceFileId);
+  const checkoutMutation = useCheckout();
+  const checkinMutation = useCheckin();
+
+  const [showHistory, setShowHistory] = useState(false);
+  const [showApproval, setShowApproval] = useState(false);
+  const [dismissedBanner, setDismissedBanner] = useState(false);
+
+  const isCheckedOutByOther = checkout?.checked_out_by && !checkout?.is_own;
+  const isCheckedOutBySelf = checkout?.is_own;
+
+  return (
+    <Box
+      ml={7}
+      mt={1}
+      mb={2}
+      p={3}
+      borderWidth="1px"
+      borderColor="theme.border"
+      borderRadius="md"
+      bg="theme.surface"
+    >
+      {/* Checkout banner */}
+      {isCheckedOutByOther && !dismissedBanner && (
+        <CheckoutBanner
+          checkedOutBy={checkout?.checked_out_by?.username ?? "Unknown"}
+          onDismiss={() => setDismissedBanner(true)}
+        />
+      )}
+
+      <VStack align="stretch" gap={2}>
+        {file.folder_path && (
+          <HStack>
+            <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
+              Path
+            </Text>
+            <Text fontSize="xs" color="theme.text">
+              {file.folder_path}
+            </Text>
+          </HStack>
+        )}
+        <HStack>
+          <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
+            Canonical
+          </Text>
+          <Text fontSize="xs" color="theme.text">
+            {file.is_featured ? 'Yes' : 'No'}
+          </Text>
+        </HStack>
+        {file.tags.length > 0 && (
+          <HStack>
+            <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
+              Tags
+            </Text>
+            <HStack gap={1} flexWrap="wrap">
+              {file.tags.map((tag) => (
+                <Badge key={tag} size="sm" variant="subtle">
+                  {tag}
+                </Badge>
+              ))}
+            </HStack>
+          </HStack>
+        )}
+        <HStack>
+          <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
+            Updated
+          </Text>
+          <Text fontSize="xs" color="theme.text">
+            {new Date(file.updated_at).toLocaleDateString()}
+          </Text>
+        </HStack>
+
+        {/* Actions */}
+        {sourceFileId && (
+          <HStack gap={2} mt={2} flexWrap="wrap">
+            {/* Checkout / Checkin */}
+            {isCheckedOutBySelf ? (
+              <Button
+                size="xs"
+                variant="outline"
+                colorPalette="yellow"
+                onClick={() => checkinMutation.mutate(sourceFileId)}
+                loading={checkinMutation.isPending}
+              >
+                Check In
+              </Button>
+            ) : (
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => checkoutMutation.mutate(sourceFileId)}
+                loading={checkoutMutation.isPending}
+                disabled={!!isCheckedOutByOther}
+              >
+                Check Out
+              </Button>
+            )}
+
+            {/* Canon Approval */}
+            {!file.is_featured && file.latest_version_id && (
+              <Button
+                size="xs"
+                variant="outline"
+                colorPalette="green"
+                onClick={() => setShowApproval(true)}
+              >
+                Submit for Canon Review
+              </Button>
+            )}
+
+            {/* Version History toggle */}
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => setShowHistory(!showHistory)}
+            >
+              {showHistory ? 'Hide History' : 'View History'}
+            </Button>
+          </HStack>
+        )}
+
+        {/* Inline Version History */}
+        {showHistory && sourceFileId && (
+          <Box mt={2} borderTopWidth="1px" borderColor="theme.border" pt={2}>
+            <VersionHistoryPanel
+              sourceFileId={sourceFileId}
+              filename={file.filename}
+            />
+          </Box>
+        )}
+      </VStack>
+
+      {/* Canon Approval Dialog */}
+      {showApproval && sourceFileId && file.latest_version_id && (
+        <CanonApprovalDialog
+          open={showApproval}
+          onClose={() => setShowApproval(false)}
+          sourceFileId={sourceFileId}
+          versionId={file.latest_version_id}
+          filename={file.filename}
+        />
+      )}
+    </Box>
+  );
 }
 
 export default function FilesPanel({ libraryId }: FilesPanelProps) {
@@ -83,6 +249,8 @@ export default function FilesPanel({ libraryId }: FilesPanelProps) {
         tags: file.tags,
         created_at: file.created_at,
         updated_at: file.updated_at,
+        source_file_id: file.source_file_id,
+        latest_version_id: file.latest_version_id,
       });
     }
 
@@ -217,61 +385,12 @@ export default function FilesPanel({ libraryId }: FilesPanelProps) {
                         </HStack>
                       </Box>
 
-                      {/* Expanded file detail */}
+                      {/* Expanded file detail with checkout, Canon, and history */}
                       {expandedFile === file.id && (
-                        <Box
-                          ml={7}
-                          mt={1}
-                          mb={2}
-                          p={3}
-                          borderWidth="1px"
-                          borderColor="theme.border"
-                          borderRadius="md"
-                          bg="theme.surface"
-                        >
-                          <VStack align="stretch" gap={2}>
-                            {file.folder_path && (
-                              <HStack>
-                                <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
-                                  Path
-                                </Text>
-                                <Text fontSize="xs" color="theme.text">
-                                  {file.folder_path}
-                                </Text>
-                              </HStack>
-                            )}
-                            <HStack>
-                              <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
-                                Canonical
-                              </Text>
-                              <Text fontSize="xs" color="theme.text">
-                                {file.is_featured ? 'Yes' : 'No'}
-                              </Text>
-                            </HStack>
-                            {file.tags.length > 0 && (
-                              <HStack>
-                                <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
-                                  Tags
-                                </Text>
-                                <HStack gap={1} flexWrap="wrap">
-                                  {file.tags.map((tag) => (
-                                    <Badge key={tag} size="sm" variant="subtle">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </HStack>
-                              </HStack>
-                            )}
-                            <HStack>
-                              <Text fontSize="xs" color="theme.textSecondary" fontWeight="medium" minW="60px">
-                                Updated
-                              </Text>
-                              <Text fontSize="xs" color="theme.text">
-                                {new Date(file.updated_at).toLocaleDateString()}
-                              </Text>
-                            </HStack>
-                          </VStack>
-                        </Box>
+                        <FileDetail
+                          file={file}
+                          onClose={() => setExpandedFile(null)}
+                        />
                       )}
                     </Box>
                   ))}

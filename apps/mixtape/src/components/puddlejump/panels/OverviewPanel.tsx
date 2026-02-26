@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import {
   Box,
   VStack,
@@ -10,6 +11,7 @@ import {
   Text,
   Spinner,
   Badge,
+  Button,
   Collapsible,
 } from '@chakra-ui/react';
 import {
@@ -17,8 +19,10 @@ import {
   FolderIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
-import { useLibraryHealth } from '@mixtape/api/hooks/stackroom';
+import { useLibraryHealth, usePersonalPuddlejump } from '@mixtape/api/hooks/stackroom';
+import ExportDialog from '../ExportDialog';
 
 interface OverviewPanelProps {
   libraryId: string | null;
@@ -111,6 +115,10 @@ function StatCard({
 
 export default function OverviewPanel({ libraryId }: OverviewPanelProps) {
   const { health, isLoading, error } = useLibraryHealth(libraryId);
+  const { puddlejump } = usePersonalPuddlejump();
+  const [showExport, setShowExport] = useState(false);
+
+  const libraryTitle = puddlejump?.title || 'Puddlejump Library';
 
   if (!libraryId) {
     return (
@@ -146,14 +154,33 @@ export default function OverviewPanel({ libraryId }: OverviewPanelProps) {
 
   return (
     <VStack gap={6} align="stretch">
-      <Box>
-        <Heading size="lg" color="theme.text" mb={1}>
-          Library Overview
-        </Heading>
-        <Text color="theme.textSecondary" fontSize="sm">
-          Health metrics for your Puddlejump archive
-        </Text>
-      </Box>
+      <HStack justify="space-between" align="start">
+        <Box>
+          <Heading size="lg" color="theme.text" mb={1}>
+            Library Overview
+          </Heading>
+          <Text color="theme.textSecondary" fontSize="sm">
+            Health metrics for your Puddlejump archive
+          </Text>
+        </Box>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowExport(true)}
+        >
+          <ArrowDownTrayIcon style={{ width: 16, height: 16 }} />
+          Export Bundle
+        </Button>
+      </HStack>
+
+      {libraryId && (
+        <ExportDialog
+          open={showExport}
+          onClose={() => setShowExport(false)}
+          libraryId={libraryId}
+          libraryTitle={libraryTitle}
+        />
+      )}
 
       {/* Stat Cards */}
       <HStack gap={4} flexWrap="wrap">

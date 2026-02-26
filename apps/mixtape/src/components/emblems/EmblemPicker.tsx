@@ -9,7 +9,7 @@ import {
   Text, Spinner, Center, Tabs, IconButton
 } from "@chakra-ui/react";
 import { IconRefresh } from "@tabler/icons-react";
-import { axiosInstance } from "@providers/auth-provider/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { EmblemDisplay } from "./EmblemDisplay";
 import { EmblemInline } from "@mixtape/core/types/emblemTypes";
 import { Beacon } from "@components/feedback/Beacon";
