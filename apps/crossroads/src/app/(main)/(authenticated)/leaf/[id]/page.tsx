@@ -142,6 +142,8 @@ export default function LeafDetailPage() {
 
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
+  const avatarBg = useColorModeValue('gray.200', 'gray.600');
+  const refBg = useColorModeValue('blue.50', 'blue.900');
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
@@ -186,7 +188,7 @@ export default function LeafDetailPage() {
             w="44px"
             h="44px"
             borderRadius="full"
-            bg={useColorModeValue('gray.200', 'gray.600')}
+            bg={avatarBg}
             overflow="hidden"
             flexShrink={0}
           >
@@ -232,7 +234,7 @@ export default function LeafDetailPage() {
 
         {/* Reference source */}
         {leaf.is_reference && leaf.source_title && (
-          <Box p={4} borderWidth="1px" borderColor="blue.200" borderRadius="md" bg={useColorModeValue('blue.50', 'blue.900')}>
+          <Box p={4} borderWidth="1px" borderColor="blue.200" borderRadius="md" bg={refBg}>
             <Text fontSize="xs" color="blue.500" fontWeight="semibold" mb={1}>
               {leaf.source_type || 'Source'}
             </Text>
