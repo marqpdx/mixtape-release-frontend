@@ -25,6 +25,11 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 function LeafBody({ leaf }: { leaf: Leaf }) {
+  const linkBorderColor = useColorModeValue('gray.200', 'gray.600');
+  const linkBg = useColorModeValue('gray.50', 'gray.750');
+  const descColor = useColorModeValue('gray.500', 'gray.400');
+  const voiceColor = useColorModeValue('purple.500', 'purple.300');
+
   // Link leaf
   if (leaf.kind === 'link' && leaf.link_url) {
     return (
@@ -35,9 +40,9 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
         <Box
           p={3}
           borderWidth="1px"
-          borderColor={useColorModeValue('gray.200', 'gray.600')}
+          borderColor={linkBorderColor}
           borderRadius="md"
-          bg={useColorModeValue('gray.50', 'gray.750')}
+          bg={linkBg}
         >
           <HStack gap={2}>
             <IconLink size={16} />
@@ -46,7 +51,7 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
             </Text>
           </HStack>
           {leaf.link_preview?.description && (
-            <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1} noOfLines={2}>
+            <Text fontSize="xs" color={descColor} mt={1} noOfLines={2}>
               {leaf.link_preview.description}
             </Text>
           )}
@@ -59,7 +64,7 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
   if (leaf.kind === 'voice') {
     return (
       <VStack align="stretch" gap={2}>
-        <HStack gap={2} color={useColorModeValue('purple.500', 'purple.300')}>
+        <HStack gap={2} color={voiceColor}>
           <IconMicrophone size={16} />
           <Text fontSize="sm" fontStyle="italic">Voice note</Text>
         </HStack>
@@ -92,6 +97,7 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
 function ReferenceCard({ leaf }: { leaf: Leaf }) {
   const borderColor = useColorModeValue('blue.200', 'blue.700');
   const bg = useColorModeValue('blue.50', 'blue.900');
+  const labelColor = useColorModeValue('blue.600', 'blue.300');
 
   return (
     <Box
@@ -102,7 +108,7 @@ function ReferenceCard({ leaf }: { leaf: Leaf }) {
       borderRadius="md"
       bg={bg}
     >
-      <Text fontSize="xs" fontWeight="semibold" color={useColorModeValue('blue.600', 'blue.300')} mb={1}>
+      <Text fontSize="xs" fontWeight="semibold" color={labelColor} mb={1}>
         {leaf.source_type || 'Reference'}
       </Text>
       <Text fontSize="sm" fontWeight="medium">
@@ -114,8 +120,10 @@ function ReferenceCard({ leaf }: { leaf: Leaf }) {
 
 export default function LeafCard({ leaf }: LeafCardProps) {
   const cardBg = useColorModeValue('white', 'gray.800');
+  const hoverBg = useColorModeValue('gray.50', 'gray.750');
   const borderColor = useColorModeValue('gray.100', 'gray.700');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
+  const avatarBg = useColorModeValue('gray.200', 'gray.600');
 
   return (
     <Box
@@ -126,7 +134,7 @@ export default function LeafCard({ leaf }: LeafCardProps) {
       borderBottomWidth="1px"
       borderColor={borderColor}
       bg={cardBg}
-      _hover={{ bg: useColorModeValue('gray.50', 'gray.750') }}
+      _hover={{ bg: hoverBg }}
       transition="background 0.15s"
       cursor="pointer"
     >
@@ -136,7 +144,7 @@ export default function LeafCard({ leaf }: LeafCardProps) {
           w="36px"
           h="36px"
           borderRadius="full"
-          bg={useColorModeValue('gray.200', 'gray.600')}
+          bg={avatarBg}
           overflow="hidden"
           flexShrink={0}
         >

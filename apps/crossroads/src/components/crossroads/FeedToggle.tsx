@@ -17,6 +17,7 @@ export default function FeedToggle({ activeMode, onModeChange }: FeedToggleProps
   const activeColor = useColorModeValue('white', 'gray.900');
   const inactiveBg = useColorModeValue('gray.100', 'gray.800');
   const inactiveColor = useColorModeValue('gray.600', 'gray.400');
+  const hoverBg = useColorModeValue('gray.200', 'gray.700');
   const helpColor = useColorModeValue('gray.400', 'gray.600');
 
   return (
@@ -31,7 +32,7 @@ export default function FeedToggle({ activeMode, onModeChange }: FeedToggleProps
           fontWeight="medium"
           onClick={() => onModeChange('storyline')}
           _hover={{
-            bg: activeMode === 'storyline' ? activeBg : useColorModeValue('gray.200', 'gray.700'),
+            bg: activeMode === 'storyline' ? activeBg : hoverBg,
           }}
         >
           My Storyline
@@ -45,7 +46,7 @@ export default function FeedToggle({ activeMode, onModeChange }: FeedToggleProps
           fontWeight="medium"
           onClick={() => onModeChange('streams')}
           _hover={{
-            bg: activeMode === 'streams' ? activeBg : useColorModeValue('gray.200', 'gray.700'),
+            bg: activeMode === 'streams' ? activeBg : hoverBg,
           }}
         >
           Streams
