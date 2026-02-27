@@ -16,6 +16,7 @@ import {
   type OnEdgesDelete,
   type OnNodeDrag,
   type Viewport,
+  type NodeTypes,
   ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -45,8 +46,7 @@ import ImageNode from './nodes/ImageNode';
 import LeafNode from './nodes/LeafNode';
 import MindMapToolbar from './MindMapToolbar';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const nodeTypes: Record<string, React.ComponentType<any>> = {
+const nodeTypes: NodeTypes = {
   note: NoteNode,
   link: LinkNode,
   image: ImageNode,
