@@ -15,11 +15,11 @@ const nextConfig: NextConfig = {
       // Route /app and anything under it to the Mixtape app zone
       {
         source: "/app",
-        destination: "https://app.crossroads.place/app",
+        destination: "https://app.crossroads.place",
       },
       {
         source: "/app/:path*",
-        destination: "https://app.crossroads.place/app/:path*",
+        destination: "https://app.crossroads.place/:path*",
       },
     ];
   },

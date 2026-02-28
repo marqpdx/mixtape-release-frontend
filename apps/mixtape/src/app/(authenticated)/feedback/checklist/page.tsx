@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, HStack, NativeSelect, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
+import { Box, Button, CloseButton, HStack, NativeSelect, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
 import {
   deleteFeedbackItem,
   listFeedbackChecklist,
+  updateFeedbackItem,
   updateFeedbackStatus,
   type FeedbackChecklistItem,
   type FeedbackKind,
@@ -13,6 +14,18 @@ import {
 import { useAuth } from "@/lib/auth/AuthContext";
 
 const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
+const FEEDBACK_CHECKLIST_FILTERS_STORAGE_KEY = "feedback_checklist_filters_v1";
+
+const FEEDBACK_KIND_OPTIONS: Array<FeedbackKind | "all"> = ["all", "issue", "bug", "request", "idea"];
+const FEEDBACK_STATUS_OPTIONS: Array<FeedbackStatus | "all"> = [
+  "all",
+  "new",
+  "sent_to_agent",
+  "triaged",
+  "planned",
+  "shipped",
+  "wontfix",
+];
 
 export default function FeedbackChecklistPage() {
   const { user } = useAuth();
@@ -24,9 +37,41 @@ export default function FeedbackChecklistPage() {
   const [briefText, setBriefText] = useState("");
   const [copied, setCopied] = useState(false);
   const [items, setItems] = useState<FeedbackChecklistItem[]>([]);
+  const [fadingIds, setFadingIds] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingMessage, setEditingMessage] = useState("");
   const [kind, setKind] = useState<FeedbackKind | "all">("all");
   const [status, setStatus] = useState<FeedbackStatus | "all">("all");
+  const [filtersReady, setFiltersReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(FEEDBACK_CHECKLIST_FILTERS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { kind?: string; status?: string };
+        if (parsed.kind && FEEDBACK_KIND_OPTIONS.includes(parsed.kind as FeedbackKind | "all")) {
+          setKind(parsed.kind as FeedbackKind | "all");
+        }
+        if (parsed.status && FEEDBACK_STATUS_OPTIONS.includes(parsed.status as FeedbackStatus | "all")) {
+          setStatus(parsed.status as FeedbackStatus | "all");
+        }
+      }
+    } catch {
+      // no-op
+    } finally {
+      setFiltersReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!filtersReady || typeof window === "undefined") return;
+    window.localStorage.setItem(
+      FEEDBACK_CHECKLIST_FILTERS_STORAGE_KEY,
+      JSON.stringify({ kind, status })
+    );
+  }, [kind, status, filtersReady]);
 
   const refreshItems = useCallback(async () => {
     setLoading(true);
@@ -42,8 +87,9 @@ export default function FeedbackChecklistPage() {
   }, [kind, status]);
 
   useEffect(() => {
+    if (!filtersReady) return;
     void refreshItems();
-  }, [refreshItems]);
+  }, [refreshItems, filtersReady]);
 
   useEffect(() => {
     const onRefresh = () => {
@@ -64,11 +110,30 @@ export default function FeedbackChecklistPage() {
     return "";
   }, [error, items.length, loading]);
 
+  const removeWithFade = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setFadingIds((prev) => Array.from(new Set([...prev, ...ids])));
+    window.setTimeout(() => {
+      setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+      setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+      setFadingIds((prev) => prev.filter((id) => !ids.includes(id)));
+    }, 420);
+  }, []);
+
+  const shouldFadeRemoveForStatus = useCallback(
+    (nextStatus: FeedbackStatus) => status !== "all" && nextStatus !== status,
+    [status]
+  );
+
   const handleMarkShipped = async (id: string) => {
     setUpdatingId(id);
     try {
       const updated = await updateFeedbackStatus(id, "shipped");
-      setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      if (shouldFadeRemoveForStatus("shipped")) {
+        removeWithFade([id]);
+      } else {
+        setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      }
     } finally {
       setUpdatingId(null);
     }
@@ -78,7 +143,11 @@ export default function FeedbackChecklistPage() {
     setUpdatingId(id);
     try {
       const updated = await updateFeedbackStatus(id, "sent_to_agent");
-      setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      if (shouldFadeRemoveForStatus("sent_to_agent")) {
+        removeWithFade([id]);
+      } else {
+        setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      }
     } finally {
       setUpdatingId(null);
     }
@@ -140,10 +209,14 @@ export default function FeedbackChecklistPage() {
       );
 
       const updates = new Map(results.filter((result) => result.updated).map((result) => [result.id, result.updated]));
-      setItems((prev) => prev.map((item) => updates.get(item.id) ?? item));
-
       const failedIds = results.filter((result) => !result.updated).map((result) => result.id);
       setSelectedIds(failedIds);
+      const successIds = results.filter((result) => result.updated).map((result) => result.id);
+      if (shouldFadeRemoveForStatus(nextStatus)) {
+        removeWithFade(successIds);
+      } else {
+        setItems((prev) => prev.map((item) => updates.get(item.id) ?? item));
+      }
     } finally {
       setBulkUpdating(false);
     }
@@ -221,6 +294,30 @@ Notes:
     await navigator.clipboard.writeText(briefText);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
+  };
+
+  const startEdit = (item: FeedbackChecklistItem) => {
+    setEditingId(item.id);
+    setEditingMessage(item.message);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingMessage("");
+  };
+
+  const saveEdit = async (itemId: string) => {
+    const next = editingMessage.trim();
+    if (!next) return;
+    setUpdatingId(itemId);
+    try {
+      const updated = await updateFeedbackItem(itemId, { message: next });
+      setItems((prev) => prev.map((item) => (item.id === itemId ? updated : item)));
+      setEditingId(null);
+      setEditingMessage("");
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   return (
@@ -320,9 +417,12 @@ Notes:
           <VStack align="stretch" gap={2} p={3} borderWidth="1px" borderColor="border" borderRadius="md" bg="bg.panel">
             <HStack justify="space-between">
               <Text fontSize="sm" fontWeight="semibold">Codex-ready brief (copy/paste)</Text>
-              <Button size="xs" onClick={() => void copyBrief()}>
-                {copied ? "Copied" : "Copy brief"}
-              </Button>
+              <HStack gap={1}>
+                <Button size="xs" onClick={() => void copyBrief()}>
+                  {copied ? "Copied" : "Copy brief"}
+                </Button>
+                <CloseButton size="sm" aria-label="Close brief" onClick={() => setBriefText("")} />
+              </HStack>
             </HStack>
             <Textarea value={briefText} onChange={(event) => setBriefText(event.currentTarget.value)} minH="220px" fontFamily="mono" fontSize="sm" />
           </VStack>
@@ -338,7 +438,18 @@ Notes:
 
         <VStack align="stretch" gap={3}>
           {items.map((item) => (
-            <Box key={item.id} borderWidth="1px" borderColor="border" borderRadius="lg" p={4} bg="bg.panel">
+            <Box
+              key={item.id}
+              borderWidth="1px"
+              borderColor="border"
+              borderRadius="lg"
+              p={4}
+              bg="bg.panel"
+              opacity={fadingIds.includes(item.id) ? 0 : 1}
+              transform={fadingIds.includes(item.id) ? "translateY(-6px)" : "translateY(0px)"}
+              transition="opacity 0.4s ease, transform 0.4s ease"
+              pointerEvents={fadingIds.includes(item.id) ? "none" : "auto"}
+            >
               <HStack justify="space-between" wrap="wrap" gap={2}>
                 <HStack gap={2}>
                   {isSuperuser ? (
@@ -357,7 +468,36 @@ Notes:
                 <Text fontSize="xs" color="fg.muted">{item.beacon_title} ({item.beacon_key})</Text>
               </HStack>
 
-              <Text mt={2} whiteSpace="pre-wrap">{item.message}</Text>
+              {editingId === item.id ? (
+                <VStack mt={2} align="stretch" gap={2}>
+                  <Textarea
+                    value={editingMessage}
+                    onChange={(event) => setEditingMessage(event.currentTarget.value)}
+                    minH="110px"
+                    fontSize="sm"
+                  />
+                  <HStack justify="flex-end" gap={2}>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={cancelEdit}
+                      disabled={updatingId === item.id}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="xs"
+                      colorPalette="blue"
+                      onClick={() => void saveEdit(item.id)}
+                      disabled={updatingId === item.id || !editingMessage.trim()}
+                    >
+                      Save edit
+                    </Button>
+                  </HStack>
+                </VStack>
+              ) : (
+                <Text mt={2} whiteSpace="pre-wrap">{item.message}</Text>
+              )}
 
               {item.page_url ? (
                 <Text mt={2} fontSize="xs" color="fg.muted">Page: {item.page_url}</Text>
@@ -365,6 +505,14 @@ Notes:
 
               {isSuperuser ? (
                 <HStack mt={3} justify="flex-end" gap={2}>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={updatingId === item.id}
+                    onClick={() => startEdit(item)}
+                  >
+                    Edit
+                  </Button>
                   <Button
                     size="xs"
                     colorPalette="blue"

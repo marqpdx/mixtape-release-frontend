@@ -46,6 +46,14 @@ export async function updateFeedbackStatus(
   return response.data?.data as FeedbackChecklistItem;
 }
 
+export async function updateFeedbackItem(
+  id: string,
+  payload: { status?: FeedbackStatus; message?: string }
+): Promise<FeedbackChecklistItem> {
+  const response = await axiosInstance.patch(`/api/feedback/items/${id}`, payload);
+  return response.data?.data as FeedbackChecklistItem;
+}
+
 export async function deleteFeedbackItem(id: string): Promise<void> {
   await axiosInstance.delete(`/api/feedback/items/${id}`);
 }
