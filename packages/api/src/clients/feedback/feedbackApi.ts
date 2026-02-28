@@ -1,7 +1,7 @@
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type FeedbackKind = "bug" | "request" | "idea" | "issue";
-export type FeedbackStatus = "new" | "triaged" | "planned" | "shipped" | "wontfix";
+export type FeedbackStatus = "new" | "sent_to_agent" | "triaged" | "planned" | "shipped" | "wontfix";
 
 export interface FeedbackChecklistItem {
   id: string;
@@ -44,4 +44,8 @@ export async function updateFeedbackStatus(
 ): Promise<FeedbackChecklistItem> {
   const response = await axiosInstance.patch(`/api/feedback/items/${id}`, { status });
   return response.data?.data as FeedbackChecklistItem;
+}
+
+export async function deleteFeedbackItem(id: string): Promise<void> {
+  await axiosInstance.delete(`/api/feedback/items/${id}`);
 }

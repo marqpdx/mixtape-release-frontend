@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Button, HStack, NativeSelect, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
 import {
+  deleteFeedbackItem,
   listFeedbackChecklist,
   updateFeedbackStatus,
   type FeedbackChecklistItem,
@@ -10,6 +11,8 @@ import {
   type FeedbackStatus,
 } from "@mixtape/api/clients/feedback/feedbackApi";
 import { useAuth } from "@/lib/auth/AuthContext";
+
+const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
 
 export default function FeedbackChecklistPage() {
   const { user } = useAuth();
@@ -25,25 +28,30 @@ export default function FeedbackChecklistPage() {
   const [status, setStatus] = useState<FeedbackStatus | "all">("all");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await listFeedbackChecklist({ kind, status, pageSize: 100 });
-        if (!cancelled) setItems(res.results);
-      } catch {
-        if (!cancelled) setError("Failed to load checklist");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
+  const refreshItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await listFeedbackChecklist({ kind, status, pageSize: 100 });
+      setItems(res.results);
+    } catch {
+      setError("Failed to load checklist");
+    } finally {
+      setLoading(false);
+    }
   }, [kind, status]);
+
+  useEffect(() => {
+    void refreshItems();
+  }, [refreshItems]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      void refreshItems();
+    };
+    window.addEventListener(FEEDBACK_CHECKLIST_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(FEEDBACK_CHECKLIST_REFRESH_EVENT, onRefresh);
+  }, [refreshItems]);
 
   useEffect(() => {
     setSelectedIds((prev) => prev.filter((id) => items.some((item) => item.id === id && item.status !== "shipped")));
@@ -61,6 +69,29 @@ export default function FeedbackChecklistPage() {
     try {
       const updated = await updateFeedbackStatus(id, "shipped");
       setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleMarkSentToAgent = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      const updated = await updateFeedbackStatus(id, "sent_to_agent");
+      setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    const confirmed = window.confirm("Delete this checklist item?");
+    if (!confirmed) return;
+    setUpdatingId(id);
+    try {
+      await deleteFeedbackItem(id);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
     } finally {
       setUpdatingId(null);
     }
@@ -91,7 +122,7 @@ export default function FeedbackChecklistPage() {
     });
   };
 
-  const handleBulkMarkShipped = async () => {
+  const handleBulkUpdateStatus = async (nextStatus: FeedbackStatus) => {
     const targets = selectedIds.filter((id) => selectableIds.includes(id));
     if (targets.length === 0) return;
 
@@ -100,7 +131,7 @@ export default function FeedbackChecklistPage() {
       const results = await Promise.all(
         targets.map(async (id) => {
           try {
-            const updated = await updateFeedbackStatus(id, "shipped");
+            const updated = await updateFeedbackStatus(id, nextStatus);
             return { id, updated };
           } catch {
             return { id, updated: null };
@@ -112,6 +143,33 @@ export default function FeedbackChecklistPage() {
       setItems((prev) => prev.map((item) => updates.get(item.id) ?? item));
 
       const failedIds = results.filter((result) => !result.updated).map((result) => result.id);
+      setSelectedIds(failedIds);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const targets = selectedIds.filter((id) => items.some((item) => item.id === id));
+    if (targets.length === 0) return;
+    const confirmed = window.confirm(`Delete ${targets.length} selected item(s)?`);
+    if (!confirmed) return;
+
+    setBulkUpdating(true);
+    try {
+      const results = await Promise.all(
+        targets.map(async (id) => {
+          try {
+            await deleteFeedbackItem(id);
+            return { id, deleted: true };
+          } catch {
+            return { id, deleted: false };
+          }
+        })
+      );
+      const deletedIds = new Set(results.filter((result) => result.deleted).map((result) => result.id));
+      const failedIds = results.filter((result) => !result.deleted).map((result) => result.id);
+      setItems((prev) => prev.filter((item) => !deletedIds.has(item.id)));
       setSelectedIds(failedIds);
     } finally {
       setBulkUpdating(false);
@@ -198,6 +256,7 @@ Notes:
             >
               <option value="all">All statuses</option>
               <option value="new">New</option>
+              <option value="sent_to_agent">Sent to agent</option>
               <option value="triaged">Triaged</option>
               <option value="planned">Planned</option>
               <option value="shipped">Shipped</option>
@@ -207,7 +266,7 @@ Notes:
           </NativeSelect.Root>
 
           {isSuperuser ? (
-            <HStack gap={3}>
+            <HStack gap={3} wrap="wrap">
               <HStack gap={2}>
                 <input
                   type="checkbox"
@@ -222,9 +281,27 @@ Notes:
                 colorPalette="green"
                 variant="outline"
                 disabled={selectedIds.length === 0 || bulkUpdating}
-                onClick={() => void handleBulkMarkShipped()}
+                onClick={() => void handleBulkUpdateStatus("shipped")}
               >
-                {bulkUpdating ? "Checking off..." : `Check off selected (${selectedIds.length})`}
+                {bulkUpdating ? "Updating..." : `Check off selected (${selectedIds.length})`}
+              </Button>
+              <Button
+                size="sm"
+                colorPalette="blue"
+                variant="outline"
+                disabled={selectedIds.length === 0 || bulkUpdating}
+                onClick={() => void handleBulkUpdateStatus("sent_to_agent")}
+              >
+                {bulkUpdating ? "Updating..." : `Mark selected sent to agent (${selectedIds.length})`}
+              </Button>
+              <Button
+                size="sm"
+                colorPalette="red"
+                variant="outline"
+                disabled={selectedIds.length === 0 || bulkUpdating}
+                onClick={() => void handleBulkDelete()}
+              >
+                {bulkUpdating ? "Updating..." : `Delete selected (${selectedIds.length})`}
               </Button>
               <Button
                 size="sm"
@@ -287,7 +364,16 @@ Notes:
               ) : null}
 
               {isSuperuser ? (
-                <HStack mt={3} justify="flex-end">
+                <HStack mt={3} justify="flex-end" gap={2}>
+                  <Button
+                    size="xs"
+                    colorPalette="blue"
+                    variant={item.status === "sent_to_agent" ? "solid" : "outline"}
+                    disabled={item.status === "sent_to_agent" || updatingId === item.id}
+                    onClick={() => void handleMarkSentToAgent(item.id)}
+                  >
+                    {item.status === "sent_to_agent" ? "Sent to agent" : "Mark sent to agent"}
+                  </Button>
                   <Button
                     size="xs"
                     colorPalette="green"
@@ -296,6 +382,15 @@ Notes:
                     onClick={() => void handleMarkShipped(item.id)}
                   >
                     {item.status === "shipped" ? "Checked off" : "Check off"}
+                  </Button>
+                  <Button
+                    size="xs"
+                    colorPalette="red"
+                    variant="outline"
+                    disabled={updatingId === item.id}
+                    onClick={() => void handleDeleteItem(item.id)}
+                  >
+                    Delete
                   </Button>
                 </HStack>
               ) : null}

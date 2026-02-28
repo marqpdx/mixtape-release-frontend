@@ -111,7 +111,8 @@ export default function DraftRoomWorkArea({
   const titleRef = useRef<string>("");
   const docJSONRef = useRef<Record<string, unknown> | null>(null);
   const excerptRef = useRef<string>("");
-  const hasUserEditedRef = useRef(false);
+  const hydratingMetadataRef = useRef(false);
+  const lastSavedSnapshotRef = useRef<MetadataSnapshot | null>(null);
   const autosaveTimeoutRef = useRef<number | null>(null);
 
   const draftItems = useMemo(() => (Array.isArray(drafts) ? drafts : []), [drafts]);
@@ -141,8 +142,17 @@ export default function DraftRoomWorkArea({
     }
   };
 
+  const toIdList = useCallback(
+    (ids: Array<string | number | undefined>) =>
+      ids
+        .filter((id): id is string | number => id !== undefined && id !== null)
+        .map((id) => String(id))
+        .sort(),
+    []
+  );
+
   useEffect(() => {
-    hasUserEditedRef.current = false;
+    hydratingMetadataRef.current = true;
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
       autosaveTimeoutRef.current = null;
@@ -158,6 +168,8 @@ export default function DraftRoomWorkArea({
       setNoneOkCategories(false);
       setNoneOkSeries(false);
       setShowTitleSaved(false);
+      lastSavedSnapshotRef.current = null;
+      hydratingMetadataRef.current = false;
       return;
     }
     let mounted = true;
@@ -176,10 +188,17 @@ export default function DraftRoomWorkArea({
           string,
           unknown
         > | null;
+        lastSavedSnapshotRef.current = {
+          title: (detail.title || "").trim(),
+          addressedTo: (detail as { addressed_to?: string }).addressed_to || persisted,
+          tagIds: [],
+          categoryIds: [],
+        };
       })
       .catch(() => {
         if (!mounted) return;
         setPieceDetail(null);
+        hydratingMetadataRef.current = false;
       });
     return () => {
       mounted = false;
@@ -190,54 +209,45 @@ export default function DraftRoomWorkArea({
     if (!selectedPieceId) {
       setTags([]);
       setCategories([]);
+      hydratingMetadataRef.current = false;
       return;
     }
+    hydratingMetadataRef.current = true;
     let mounted = true;
-    axiosInstance
-      .get(`/api/writing/pieces/${selectedPieceId}/tags`)
-      .then((res) => {
-        if (!mounted) return;
-        setTags(res.data || []);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setTags([]);
-      });
-
-    axiosInstance
-      .get(`/api/writing/pieces/${selectedPieceId}/categories`)
-      .then((res) => {
-        if (!mounted) return;
-        setCategories(res.data || []);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setCategories([]);
-      });
+    Promise.all([
+      axiosInstance
+        .get(`/api/writing/pieces/${selectedPieceId}/tags`)
+        .then((res) => res.data || [])
+        .catch(() => []),
+      axiosInstance
+        .get(`/api/writing/pieces/${selectedPieceId}/categories`)
+        .then((res) => res.data || [])
+        .catch(() => []),
+    ]).then(([nextTags, nextCategories]) => {
+      if (!mounted) return;
+      setTags(nextTags);
+      setCategories(nextCategories);
+      lastSavedSnapshotRef.current = {
+        title: (titleRef.current || "").trim(),
+        addressedTo: addressedTo || getPersistedAddressedTo(),
+        tagIds: toIdList(nextTags.map((tag: Tag) => tag.id)),
+        categoryIds: toIdList(nextCategories.map((category: Category) => category.id)),
+      };
+      hydratingMetadataRef.current = false;
+    });
 
     return () => {
       mounted = false;
     };
-  }, [selectedPieceId]);
+  }, [selectedPieceId, addressedTo, toIdList]);
 
   const handleTagsChange = (newTags: Tag[]) => {
-    hasUserEditedRef.current = true;
     setTags(newTags);
   };
 
-const handleCategoriesChange = (newCategories: Category[]) => {
-    hasUserEditedRef.current = true;
+  const handleCategoriesChange = (newCategories: Category[]) => {
     setCategories(newCategories);
   };
-
-  const toIdList = useCallback(
-    (ids: Array<string | number | undefined>) =>
-      ids
-        .filter((id): id is string | number => id !== undefined && id !== null)
-        .map((id) => String(id))
-        .sort(),
-    []
-  );
 
   const handleSaveMetadata = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}) => {
@@ -263,7 +273,12 @@ const handleCategoriesChange = (newCategories: Category[]) => {
           category_ids: toIdList(categories.map((category) => category.id)),
         });
         persistAddressedTo(addressedTo || "public");
-        hasUserEditedRef.current = false;
+        lastSavedSnapshotRef.current = {
+          title: title.trim(),
+          addressedTo: addressedTo || "public",
+          tagIds: toIdList(tags.map((tag) => tag.id)),
+          categoryIds: toIdList(categories.map((category) => category.id)),
+        };
       } finally {
         setSavingMeta(false);
       }
@@ -281,10 +296,21 @@ const handleCategoriesChange = (newCategories: Category[]) => {
     [title, addressedTo, tags, categories, toIdList]
   );
 
+  const snapshotEquals = useCallback((a: MetadataSnapshot | null, b: MetadataSnapshot) => {
+    if (!a) return false;
+    return (
+      a.title === b.title &&
+      a.addressedTo === b.addressedTo &&
+      a.tagIds.join("|") === b.tagIds.join("|") &&
+      a.categoryIds.join("|") === b.categoryIds.join("|")
+    );
+  }, []);
+
   useEffect(() => {
     if (!selectedPieceId || !pieceDetail?.id) return;
-    if (!hasUserEditedRef.current) return;
     if (savingMeta) return;
+    if (hydratingMetadataRef.current) return;
+    if (snapshotEquals(lastSavedSnapshotRef.current, metadataSnapshot)) return;
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
     }
@@ -297,7 +323,7 @@ const handleCategoriesChange = (newCategories: Category[]) => {
         autosaveTimeoutRef.current = null;
       }
     };
-  }, [metadataSnapshot, selectedPieceId, pieceDetail?.id, savingMeta, handleSaveMetadata]);
+  }, [metadataSnapshot, selectedPieceId, pieceDetail?.id, savingMeta, handleSaveMetadata, snapshotEquals]);
 
   useEffect(() => {
     return () => {
@@ -492,7 +518,6 @@ const handleCategoriesChange = (newCategories: Category[]) => {
                     size="sm"
                     value={title}
                     onChange={(event) => {
-                      hasUserEditedRef.current = true;
                       setTitle(event.target.value);
                     }}
                     placeholder="Untitled"
@@ -531,7 +556,6 @@ const handleCategoriesChange = (newCategories: Category[]) => {
                   value={addressedTo ? [addressedTo] : []}
                   onValueChange={({ value }) => {
                     const nextValue = value[0] ?? "public";
-                    hasUserEditedRef.current = true;
                     setAddressedTo(nextValue);
                     persistAddressedTo(nextValue);
                   }}

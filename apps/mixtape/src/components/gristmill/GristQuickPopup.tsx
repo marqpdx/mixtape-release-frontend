@@ -19,12 +19,17 @@ import { toaster } from "@components/ui/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
+const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
 
 type PersistedDraft = {
   text: string;
   timestamp: number;
   pathname: string;
 };
+
+function normalizeIssueShortcut(input: string): string {
+  return input.replace(/(^|\n)\/is(\s+)/g, "$1/issue$2");
+}
 
 export default function GristQuickPopup() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -121,6 +126,7 @@ export default function GristQuickPopup() {
       setDraftId(saved.id);
       if (saved.warning) setWarning(saved.warning);
       persistLocal(text);
+      window.dispatchEvent(new CustomEvent(FEEDBACK_CHECKLIST_REFRESH_EVENT));
       toaster.create({
         title: "Draft saved",
         description: "Saved to Grist Mill drafts.",
@@ -162,6 +168,7 @@ export default function GristQuickPopup() {
       setText("");
       setDraftId(null);
       setWarning(null);
+      window.dispatchEvent(new CustomEvent(FEEDBACK_CHECKLIST_REFRESH_EVENT));
 
       toaster.create({
         title: "Promoted",
@@ -266,7 +273,7 @@ export default function GristQuickPopup() {
               maxH="40vh"
               resize="vertical"
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => setText(normalizeIssueShortcut(event.target.value))}
               placeholder={`/issue Brief title
 severity: medium
 area: editor
