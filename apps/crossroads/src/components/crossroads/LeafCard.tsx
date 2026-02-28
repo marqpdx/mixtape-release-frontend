@@ -30,6 +30,24 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
   const descColor = useColorModeValue('gray.500', 'gray.400');
   const voiceColor = useColorModeValue('purple.500', 'purple.300');
 
+  // Image leaf — image-first layout (Instagram style)
+  if (leaf.kind === 'image' && leaf.image_file) {
+    return (
+      <VStack align="stretch" gap={2}>
+        <Image
+          src={leaf.image_file}
+          alt=""
+          borderRadius="md"
+          w="full"
+          objectFit="cover"
+        />
+        {leaf.body_text && (
+          <Text fontSize="sm" whiteSpace="pre-wrap">{leaf.body_text}</Text>
+        )}
+      </VStack>
+    );
+  }
+
   // Link leaf
   if (leaf.kind === 'link' && leaf.link_url) {
     return (
@@ -75,20 +93,11 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
     );
   }
 
-  // Text / Image leaf
+  // Text leaf
   return (
     <VStack align="stretch" gap={2}>
       {leaf.body_text && (
         <Text fontSize="sm" whiteSpace="pre-wrap">{leaf.body_text}</Text>
-      )}
-      {leaf.kind === 'image' && leaf.image_file && (
-        <Image
-          src={leaf.image_file}
-          alt=""
-          borderRadius="md"
-          maxH="400px"
-          objectFit="cover"
-        />
       )}
     </VStack>
   );
@@ -129,12 +138,14 @@ export default function LeafCard({ leaf }: LeafCardProps) {
     <NextLink href={`/leaf/${leaf.id}`} style={{ display: 'block' }}>
       <Box
         p={5}
-        borderBottomWidth="1px"
+        borderWidth="1px"
         borderColor={borderColor}
+        borderRadius="lg"
         bg={cardBg}
         _hover={{ bg: hoverBg }}
         transition="background 0.15s"
         cursor="pointer"
+        shadow="sm"
       >
       {/* Author header */}
       <HStack gap={3} mb={3}>

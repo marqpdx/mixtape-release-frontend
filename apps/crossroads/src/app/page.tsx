@@ -1,7 +1,8 @@
 // apps/crossroads/mixtape-release-frontend/src/app/page.tsx
+
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import NextLink from "next/link";
 import {
   Box,
@@ -17,6 +18,11 @@ import {
 import { IconArrowRight, IconUsers, IconLogin } from "@tabler/icons-react";
 import { LuExternalLink } from "react-icons/lu";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
+import {
+  applyCrossroadsFontFamily,
+  CROSSROADS_FONT_OPTIONS,
+  CROSSROADS_FONT_STORAGE_KEY,
+} from "@/contexts/ThemeContext";
 
 export default function CrossroadsHomepage() {
   const backgroundImage = "/homepage/noaa-zdj3p00Rep0-unsplash.jpg";
@@ -37,23 +43,28 @@ export default function CrossroadsHomepage() {
   const watermarkTextColor = "rgba(28, 28, 26, 0.7)";
   const watermarkHoverColor = palette.ink;
 
-  const fontOptions = useMemo(
-    () => [
-      { label: "Nunito Sans", family: "var(--font-nunito-sans)" },
-      { label: "Figtree", family: "var(--font-figtree)" },
-      { label: "Sora", family: "var(--font-sora)" },
-      { label: "Quicksand", family: "var(--font-quicksand)" },
-      { label: "Manrope", family: "var(--font-manrope)" },
-      { label: "Alegreya Sans", family: "var(--font-alegreya-sans)" },
-    ],
-    []
-  );
-
-  const [fontIndex, setFontIndex] = useState(0);
+  const fontOptions = useMemo(() => CROSSROADS_FONT_OPTIONS, []);
+  const [fontIndex, setFontIndex] = useState(() => {
+    const defaultIndex = fontOptions.findIndex((option) => option.family === "var(--font-alegreya-sans)");
+    return defaultIndex >= 0 ? defaultIndex : 0;
+  });
   const activeFont = fontOptions[fontIndex % fontOptions.length];
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(CROSSROADS_FONT_STORAGE_KEY);
+    const foundIndex = fontOptions.findIndex((option) => option.family === stored);
+    if (foundIndex >= 0) {
+      setFontIndex(foundIndex);
+    }
+  }, [fontOptions]);
+
   const rotateFont = () => {
-    setFontIndex((prev) => (prev + 1) % fontOptions.length);
+    setFontIndex((prev) => {
+      const next = (prev + 1) % fontOptions.length;
+      applyCrossroadsFontFamily(fontOptions[next].family);
+      return next;
+    });
   };
 
   const ctaStyles = {
@@ -183,7 +194,6 @@ export default function CrossroadsHomepage() {
               px={{ base: 6, md: 10 }}
               py={{ base: 7, md: 10 }}
               boxShadow="0 0 0 1px rgba(197, 83, 62, 0.25), 0 18px 48px rgba(28, 28, 26, 0.3)"
-              fontFamily={activeFont.family}
             >
               <VStack className="main-area" align="start" gap={4} maxW="760px">
                 <HStack
@@ -309,7 +319,6 @@ export default function CrossroadsHomepage() {
                   boxShadow="0 0 0 1px rgba(197, 83, 62, 0.2), 0 20px 50px rgba(28, 28, 26, 0.22)"
                   _hover={{ transform: "translateY(-2px)" }}
                   transition="all 0.2s ease"
-                  fontFamily={activeFont.family}
                 >
                   <VStack align="start" gap={3}>
                     <Heading as="h2" fontSize="xl" color={heroText}>

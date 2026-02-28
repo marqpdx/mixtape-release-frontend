@@ -46,7 +46,7 @@ export default function StreamsFeed() {
   }
 
   return (
-    <VStack gap={0} align="stretch">
+    <VStack gap={4} align="stretch">
       {leaves.map((leaf) => (
         <LeafCard key={leaf.id} leaf={leaf} />
       ))}

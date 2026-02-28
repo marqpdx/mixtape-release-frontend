@@ -7,6 +7,7 @@ import type { LeafCreateData, LeafCommentCreateData } from '@mixtape/core/types/
 const leafKeys = {
   all: ['leaves'] as const,
   storyline: () => [...leafKeys.all, 'storyline'] as const,
+  drafts: () => [...leafKeys.all, 'drafts'] as const,
   detail: (id: string) => [...leafKeys.all, 'detail', id] as const,
   comments: (leafId: string) => [...leafKeys.all, 'comments', leafId] as const,
 };
@@ -54,6 +55,31 @@ export function useCreateComment(leafId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: leafKeys.comments(leafId) });
       qc.invalidateQueries({ queryKey: leafKeys.storyline() });
+    },
+  });
+}
+
+export function useUploadLeafImage() {
+  return useMutation({
+    mutationFn: (file: File) => leafApi.uploadLeafImage(file),
+  });
+}
+
+export function useDrafts() {
+  return useQuery({
+    queryKey: leafKeys.drafts(),
+    queryFn: () => leafApi.fetchDrafts(),
+    staleTime: 30_000,
+  });
+}
+
+export function usePublishLeaf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => leafApi.publishLeaf(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: leafKeys.storyline() });
+      qc.invalidateQueries({ queryKey: leafKeys.drafts() });
     },
   });
 }

@@ -56,6 +56,8 @@ export interface LeafCreateData {
   body_json?: Record<string, unknown>;
   kind?: 'text' | 'image' | 'link' | 'voice';
   link_url?: string | null;
+  image_file?: string | null;
+  publish?: boolean;
 }
 
 export interface ReferenceLeafCreateData {

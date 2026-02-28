@@ -1,7 +1,7 @@
 // apps/mixtape/src/components/writing/draft-room/DraftRoomWorkArea.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Badge,
   Box,
@@ -46,6 +46,13 @@ type PieceDetail = {
   body_json?: Record<string, unknown> | null;
 };
 
+type MetadataSnapshot = {
+  title: string;
+  addressedTo: string;
+  tagIds: string[];
+  categoryIds: string[];
+};
+
 export default function DraftRoomWorkArea({
   sponsor,
   setActiveSection,
@@ -65,6 +72,7 @@ export default function DraftRoomWorkArea({
   const [showTitleSaved, setShowTitleSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [savingMeta, setSavingMeta] = useState(false);
+  const [showAutoSaved, setShowAutoSaved] = useState(false);
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const panelBg = useColorModeValue("gray.50", "gray.900");
@@ -103,6 +111,8 @@ export default function DraftRoomWorkArea({
   const titleRef = useRef<string>("");
   const docJSONRef = useRef<Record<string, unknown> | null>(null);
   const excerptRef = useRef<string>("");
+  const hasUserEditedRef = useRef(false);
+  const autosaveTimeoutRef = useRef<number | null>(null);
 
   const draftItems = useMemo(() => (Array.isArray(drafts) ? drafts : []), [drafts]);
   const publishedItems = useMemo(
@@ -132,6 +142,11 @@ export default function DraftRoomWorkArea({
   };
 
   useEffect(() => {
+    hasUserEditedRef.current = false;
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
+    }
     if (!selectedPieceSlug) {
       setPieceDetail(null);
       setTags([]);
@@ -206,35 +221,91 @@ export default function DraftRoomWorkArea({
   }, [selectedPieceId]);
 
   const handleTagsChange = (newTags: Tag[]) => {
+    hasUserEditedRef.current = true;
     setTags(newTags);
   };
 
-  const handleCategoriesChange = (newCategories: Category[]) => {
+const handleCategoriesChange = (newCategories: Category[]) => {
+    hasUserEditedRef.current = true;
     setCategories(newCategories);
   };
 
-  const handleSaveMetadata = async () => {
-    if (!pieceDetail?.id) return;
-    setSavingMeta(true);
-    try {
-      await axiosInstance.patch(`/api/writing/pieces/${pieceDetail.slug}`, {
-        title,
-        addressed_to: addressedTo || "public",
-      });
-      titleRef.current = title;
-      setShowTitleSaved(true);
-      setTimeout(() => setShowTitleSaved(false), 2750);
-      await axiosInstance.put(`/api/writing/pieces/${pieceDetail.id}/tags`, {
-        tag_ids: tags.map((tag) => tag.id).filter(Boolean),
-      });
-      await axiosInstance.put(`/api/writing/pieces/${pieceDetail.id}/categories`, {
-        category_ids: categories.map((category) => category.id).filter(Boolean),
-      });
-      persistAddressedTo(addressedTo || "public");
-    } finally {
-      setSavingMeta(false);
+  const toIdList = useCallback(
+    (ids: Array<string | number | undefined>) =>
+      ids
+        .filter((id): id is string | number => id !== undefined && id !== null)
+        .map((id) => String(id))
+        .sort(),
+    []
+  );
+
+  const handleSaveMetadata = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!pieceDetail?.id) return;
+      setSavingMeta(true);
+      try {
+        await axiosInstance.patch(`/api/writing/pieces/${pieceDetail.slug}`, {
+          title,
+          addressed_to: addressedTo || "public",
+        });
+        titleRef.current = title;
+        if (!silent) {
+          setShowTitleSaved(true);
+          setTimeout(() => setShowTitleSaved(false), 2750);
+        } else {
+          setShowAutoSaved(true);
+          setTimeout(() => setShowAutoSaved(false), 2750);
+        }
+        await axiosInstance.put(`/api/writing/pieces/${pieceDetail.id}/tags`, {
+          tag_ids: toIdList(tags.map((tag) => tag.id)),
+        });
+        await axiosInstance.put(`/api/writing/pieces/${pieceDetail.id}/categories`, {
+          category_ids: toIdList(categories.map((category) => category.id)),
+        });
+        persistAddressedTo(addressedTo || "public");
+        hasUserEditedRef.current = false;
+      } finally {
+        setSavingMeta(false);
+      }
+    },
+    [pieceDetail?.id, pieceDetail?.slug, title, addressedTo, tags, categories, toIdList]
+  );
+
+  const metadataSnapshot = useMemo<MetadataSnapshot>(
+    () => ({
+      title: title.trim(),
+      addressedTo: addressedTo || "public",
+      tagIds: toIdList(tags.map((tag) => tag.id)),
+      categoryIds: toIdList(categories.map((category) => category.id)),
+    }),
+    [title, addressedTo, tags, categories, toIdList]
+  );
+
+  useEffect(() => {
+    if (!selectedPieceId || !pieceDetail?.id) return;
+    if (!hasUserEditedRef.current) return;
+    if (savingMeta) return;
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
     }
-  };
+    autosaveTimeoutRef.current = window.setTimeout(() => {
+      void handleSaveMetadata({ silent: true });
+    }, 2500);
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+    };
+  }, [metadataSnapshot, selectedPieceId, pieceDetail?.id, savingMeta, handleSaveMetadata]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const readinessColor = (isReady: boolean) => (isReady ? "green.400" : "orange.400");
   const isTitleReady = Boolean(title.trim());
@@ -420,7 +491,10 @@ export default function DraftRoomWorkArea({
                   <Input
                     size="sm"
                     value={title}
-                    onChange={(event) => setTitle(event.target.value)}
+                    onChange={(event) => {
+                      hasUserEditedRef.current = true;
+                      setTitle(event.target.value);
+                    }}
                     placeholder="Untitled"
                     bg={inputBg}
                     borderColor={inputBorder}
@@ -430,6 +504,11 @@ export default function DraftRoomWorkArea({
                   {showTitleSaved && (
                     <Text fontSize="xs" color={textSecondary}>
                       saved
+                    </Text>
+                  )}
+                  {showAutoSaved && (
+                    <Text fontSize="xs" color={textSecondary}>
+                      autosaved
                     </Text>
                   )}
                 </HStack>
@@ -452,6 +531,7 @@ export default function DraftRoomWorkArea({
                   value={addressedTo ? [addressedTo] : []}
                   onValueChange={({ value }) => {
                     const nextValue = value[0] ?? "public";
+                    hasUserEditedRef.current = true;
                     setAddressedTo(nextValue);
                     persistAddressedTo(nextValue);
                   }}
@@ -610,7 +690,9 @@ export default function DraftRoomWorkArea({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={handleSaveMetadata}
+                  onClick={() => {
+                    void handleSaveMetadata();
+                  }}
                   disabled={savingMeta}
                 >
                   {savingMeta ? "Saving..." : "Save metadata"}

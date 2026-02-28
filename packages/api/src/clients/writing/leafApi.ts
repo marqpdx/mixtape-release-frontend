@@ -48,3 +48,27 @@ export async function createLeafComment(
   const res = await axiosInstance.post(`/api/writing/leaves/${leafId}/comments`, data);
   return res.data;
 }
+
+export async function uploadLeafImage(file: File): Promise<{ id: string; url: string }> {
+  const form = new FormData();
+  form.append('image', file);
+  const res = await axiosInstance.post('/api/writing/leaves/upload-image', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+}
+
+export async function fetchDrafts(): Promise<{ results: Leaf[]; next: string | null }> {
+  const res = await axiosInstance.get('/api/writing/leaves', {
+    params: { drafts: 'true' },
+  });
+  if (Array.isArray(res.data)) {
+    return { results: res.data, next: null };
+  }
+  return { results: res.data.results ?? [], next: res.data.next ?? null };
+}
+
+export async function publishLeaf(id: string): Promise<Leaf> {
+  const res = await axiosInstance.post(`/api/writing/leaves/${id}/publish`);
+  return res.data;
+}

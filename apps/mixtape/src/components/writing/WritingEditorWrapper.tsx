@@ -1,4 +1,4 @@
-// src/components/writing/WritingEditorWrapper.tsx
+// apps/mixtape/src/components/writing/WritingEditorWrapper.tsx
 /**
  * Generic wrapper for writing/editing content
  * Works with both Group and Member sponsors

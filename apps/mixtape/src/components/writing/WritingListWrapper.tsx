@@ -20,6 +20,7 @@ import {
   Accordion,
   Wrap,
   WrapItem,
+  Button,
 } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { useCallback, useState, useEffect, useMemo } from "react";
@@ -40,6 +41,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useWriting, useWritingMutations } from "@hooks/useWriting";
 import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
+import NextLink from "next/link";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
 
 type ProseMirrorNode = {
@@ -282,6 +284,12 @@ export default function WritingListWrapper({
   const processedPieces = typedPlacements
     .filter((p: FlattenedPlacement) => p.piece_status === 'published')
     .sort((a: FlattenedPlacement, b: FlattenedPlacement) => {
+      // Member view: newest updates first.
+      if (sponsor.type === "member") {
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }
+
+      // Group view: preserve pin + announcement prioritization.
       if (a.pinned_at && !b.pinned_at) return -1;
       if (b.pinned_at && !a.pinned_at) return 1;
       if (a.is_announcement && !b.is_announcement) return -1;
@@ -502,7 +510,7 @@ export default function WritingListWrapper({
       groups: entries,
       untagged: untagged
         .slice()
-        .sort((a, b) => (a.piece_title || "").localeCompare(b.piece_title || "")),
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
       defaultOpen: entries[0]?.tag ?? null,
     };
   }, [filteredPublishedPieces]);
@@ -544,7 +552,7 @@ export default function WritingListWrapper({
       groups: entries,
       untagged: untagged
         .slice()
-        .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
+        .sort((a, b) => new Date(b.last_saved_at).getTime() - new Date(a.last_saved_at).getTime()),
       defaultOpen: entries[0]?.tag ?? null,
     };
   }, [processedDrafts, getDraftTags]);
@@ -553,12 +561,19 @@ export default function WritingListWrapper({
     <Box>
       {/* Header */}
       <VStack align="stretch" gap={6} mb={4}>
-        <Box>
-          <Heading size="xl" color="green.600" mb={2}>
-            Writing & Content
-          </Heading>
-          {/* {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>} */}
-        </Box>
+        <HStack justify="space-between" align="center" wrap="wrap" gap={3}>
+          <Box>
+            <Heading size="xl" color="green.600" mb={2}>
+              Writing & Content
+            </Heading>
+            {/* {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>} */}
+          </Box>
+          {sponsor.type === "member" && (
+            <Button asChild size="sm" variant="outline">
+              <NextLink href={`/member/${sponsor.slug}/library`}>View Public Library</NextLink>
+            </Button>
+          )}
+        </HStack>
       </VStack>
 
       {/* Tabs */}

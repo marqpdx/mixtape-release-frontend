@@ -12,31 +12,61 @@ import {
   Textarea,
   Heading,
   Spinner,
+  Image,
+  IconButton,
 } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { IconMicrophone, IconPlayerStop, IconSend, IconArrowRight } from '@tabler/icons-react';
+import {
+  IconMicrophone,
+  IconPlayerStop,
+  IconSend,
+  IconArrowRight,
+  IconPhoto,
+  IconX,
+  IconDeviceFloppy,
+} from '@tabler/icons-react';
 import { useRecentSeeds, useCreateSeed, useUpdateSeed } from '@mixtape/api/hooks/useSeed';
-import { useCreateLeaf } from '@mixtape/api/hooks/useLeaf';
+import { useCreateLeaf, useUploadLeafImage } from '@mixtape/api/hooks/useLeaf';
 import { useVoiceRecorder } from '@mixtape/api/hooks/useVoiceRecorder';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import SeedCard from './SeedCard';
+import { useComposerDraft } from './ComposerContext';
 
 const AUTO_SAVE_DELAY = 1500;
 
-export default function Composer() {
+interface ComposerProps {
+  onPosted?: () => void;
+}
+
+export default function Composer({ onPosted }: ComposerProps) {
   const [text, setText] = useState('');
   const [activeSeedId, setActiveSeedId] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<{ id: string; url: string } | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: recentSeeds, isLoading: seedsLoading, refetch: refetchSeeds } = useRecentSeeds();
   const createSeed = useCreateSeed();
   const updateSeed = useUpdateSeed();
   const createLeaf = useCreateLeaf();
+  const uploadImage = useUploadLeafImage();
+
+  // Live preview context (optional — only present when wrapped in ComposerProvider)
+  const draft = useComposerDraft();
 
   const inputBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
   const recordingColor = useColorModeValue('red.500', 'red.400');
+
+  // Sync text + image to live preview context
+  useEffect(() => {
+    draft?.setDraft({
+      text,
+      imageUrl: uploadedImage?.url ?? null,
+      kind: uploadedImage ? 'image' : 'text',
+    });
+  }, [text, uploadedImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Voice recording — upload blob as a voice seed
   const handleVoiceComplete = useCallback(async (blob: Blob) => {
@@ -106,24 +136,67 @@ export default function Composer() {
     scheduleAutoSave(value);
   };
 
+  // Image upload
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await uploadImage.mutateAsync(file);
+      setUploadedImage(result);
+    } catch {
+      alert('Failed to upload image.');
+    }
+    // Reset input so same file can be re-selected
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const clearImage = () => {
+    setUploadedImage(null);
+  };
+
+  const resetComposer = () => {
+    setText('');
+    setActiveSeedId(null);
+    setUploadedImage(null);
+    draft?.setDraft({ text: '', imageUrl: null, kind: 'text' });
+    onPosted?.();
+  };
+
   // Quick post: Composer → Leaf directly
   const handleQuickPost = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !uploadedImage) return;
 
     // Cancel pending auto-save
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
     await createLeaf.mutateAsync({
       body_text: text.trim(),
-      kind: 'text',
+      kind: uploadedImage ? 'image' : 'text',
+      ...(uploadedImage ? { image_file: uploadedImage.id } : {}),
     });
 
-    // Reset
-    setText('');
-    setActiveSeedId(null);
+    resetComposer();
+  };
+
+  // Save as draft
+  const handleSaveDraft = async () => {
+    if (!text.trim() && !uploadedImage) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    await createLeaf.mutateAsync({
+      body_text: text.trim(),
+      kind: uploadedImage ? 'image' : 'text',
+      ...(uploadedImage ? { image_file: uploadedImage.id } : {}),
+      publish: false,
+    });
+
+    resetComposer();
   };
 
   const isPosting = createLeaf.isPending;
+  const isUploading = uploadImage.isPending;
+  const hasContent = text.trim().length > 0 || !!uploadedImage;
 
   return (
     <VStack gap={5} align="stretch">
@@ -149,9 +222,54 @@ export default function Composer() {
           }}
         />
 
+        {/* Image preview */}
+        {uploadedImage && (
+          <Box mt={2} position="relative" display="inline-block">
+            <Image
+              src={uploadedImage.url}
+              alt="Upload preview"
+              maxH="120px"
+              borderRadius="md"
+              objectFit="cover"
+            />
+            <IconButton
+              aria-label="Remove image"
+              size="xs"
+              variant="solid"
+              colorPalette="red"
+              borderRadius="full"
+              position="absolute"
+              top={-1}
+              right={-1}
+              onClick={clearImage}
+            >
+              <IconX size={12} />
+            </IconButton>
+          </Box>
+        )}
+
+        {/* Hidden file input */}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          style={{ display: 'none' }}
+          onChange={handleImageSelect}
+        />
+
         {/* Action buttons */}
         <HStack mt={3} justify="space-between">
           <HStack gap={2}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isUploading || isPosting || isRecording}
+              loading={isUploading}
+            >
+              <IconPhoto size={18} />
+              <Text fontSize="sm">Image</Text>
+            </Button>
             {isRecording ? (
               <Button
                 size="sm"
@@ -191,13 +309,23 @@ export default function Composer() {
             )}
             <Button
               size="sm"
+              variant="ghost"
+              onClick={handleSaveDraft}
+              disabled={!hasContent || isPosting || isRecording}
+              title="Save as draft"
+            >
+              <IconDeviceFloppy size={16} />
+              Draft
+            </Button>
+            <Button
+              size="sm"
               colorPalette="blue"
               onClick={handleQuickPost}
-              disabled={!text.trim() || isPosting || isRecording}
+              disabled={!hasContent || isPosting || isRecording}
               loading={isPosting}
             >
               <IconSend size={16} />
-              Post to Storyline
+              Post
             </Button>
           </HStack>
         </HStack>

@@ -52,7 +52,7 @@ export default function MyCrossroadsLayout({
             flex={showComposer ? '0 0 60%' : '1'}
             maxW={showComposer ? '60%' : '100%'}
             py={6}
-            pr={showComposer ? 6 : 0}
+            pr={showComposer ? 4 : 0}
             transition="all 0.3s"
           >
             {/* Full mode toggle */}
@@ -77,7 +77,8 @@ export default function MyCrossroadsLayout({
               flex="0 0 40%"
               maxW="40%"
               py={6}
-              pl={6}
+              pl={4}
+              pr={2}
               borderLeftWidth="1px"
               borderColor={borderColor}
               position="sticky"

@@ -142,8 +142,8 @@ export const config = defineConfig({
       fonts: {
         // body: { value: "var(--font-pacifico), 'Brush Script MT', 'Lucida Handwriting', cursive" },
         // heading: { value: "var(--font-pacifico), 'Brush Script MT', 'Lucida Handwriting', cursive" },
-        body: { value: "var(--font-alegreya-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
-        heading: { value: "var(--font-dm-serif), Georgia, 'Times New Roman', serif" },
+        body: { value: "var(--crossroads-font-family, var(--font-alegreya-sans)), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
+        heading: { value: "var(--crossroads-font-family, var(--font-alegreya-sans)), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
         headingAdmin: { value: "'Joan', -apple-system, BlinkMacSystemFont, sans-serif" },
         mono: { value: "Menlo, Monaco, 'Courier New', monospace" },
       },
