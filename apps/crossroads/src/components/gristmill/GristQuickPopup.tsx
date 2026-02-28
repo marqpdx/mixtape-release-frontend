@@ -265,7 +265,10 @@ export default function GristQuickPopup() {
               resize="vertical"
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder="/issue Brief title\nseverity: medium\narea: editor\nsteps: ..."
+              placeholder={`/issue Brief title
+severity: medium
+area: editor
+steps: ...`}
               fontFamily="mono"
               fontSize="sm"
             />

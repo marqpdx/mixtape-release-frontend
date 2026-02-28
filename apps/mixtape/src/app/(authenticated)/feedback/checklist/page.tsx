@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, HStack, NativeSelect, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, NativeSelect, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
 import {
   listFeedbackChecklist,
   updateFeedbackStatus,
@@ -18,6 +18,8 @@ export default function FeedbackChecklistPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [briefText, setBriefText] = useState("");
+  const [copied, setCopied] = useState(false);
   const [items, setItems] = useState<FeedbackChecklistItem[]>([]);
   const [kind, setKind] = useState<FeedbackKind | "all">("all");
   const [status, setStatus] = useState<FeedbackStatus | "all">("all");
@@ -116,6 +118,53 @@ export default function FeedbackChecklistPage() {
     }
   };
 
+  const selectedIssues = useMemo(
+    () => items.filter((item) => selectedIds.includes(item.id) && item.kind === "issue"),
+    [items, selectedIds]
+  );
+
+  const buildCodexBrief = () => {
+    const issueLines = selectedIssues.map((item, idx) => {
+      const title = item.message.split("\n")[0] || "Untitled issue";
+      return `${idx + 1}. [${item.id}] ${title}
+Status: ${item.status}
+Page: ${item.page_url || "(not provided)"}
+Details:
+${item.message}`;
+    });
+
+    const text = `Codex Brief
+
+Goal:
+Resolve the selected feedback issues from the checklist.
+
+Scope:
+- Frontend + backend as needed for the listed issue IDs.
+- Use existing patterns in Mixtape/Crossroads.
+
+Selected Issues (${selectedIssues.length}):
+${issueLines.join("\n\n")}
+
+Acceptance Criteria:
+- Each listed issue is implemented and verifiable.
+- No regressions in existing flows.
+- Include migration/tests only if required by the selected changes.
+
+Notes:
+- Source: /feedback/checklist
+- Generated: ${new Date().toISOString()}`;
+
+    setBriefText(text);
+    setCopied(false);
+  };
+
+  const copyBrief = async () => {
+    if (!briefText.trim()) return;
+    await navigator.clipboard.writeText(briefText);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  };
+
   return (
     <Box p={{ base: 4, md: 6 }}>
       <VStack align="stretch" gap={4} maxW="980px" mx="auto">
@@ -177,9 +226,30 @@ export default function FeedbackChecklistPage() {
               >
                 {bulkUpdating ? "Checking off..." : `Check off selected (${selectedIds.length})`}
               </Button>
+              <Button
+                size="sm"
+                colorPalette="blue"
+                variant="outline"
+                disabled={selectedIssues.length === 0}
+                onClick={buildCodexBrief}
+              >
+                Generate Codex Brief ({selectedIssues.length})
+              </Button>
             </HStack>
           ) : null}
         </HStack>
+
+        {briefText ? (
+          <VStack align="stretch" gap={2} p={3} borderWidth="1px" borderColor="border" borderRadius="md" bg="bg.panel">
+            <HStack justify="space-between">
+              <Text fontSize="sm" fontWeight="semibold">Codex-ready brief (copy/paste)</Text>
+              <Button size="xs" onClick={() => void copyBrief()}>
+                {copied ? "Copied" : "Copy brief"}
+              </Button>
+            </HStack>
+            <Textarea value={briefText} onChange={(event) => setBriefText(event.currentTarget.value)} minH="220px" fontFamily="mono" fontSize="sm" />
+          </VStack>
+        ) : null}
 
         {loading ? (
           <HStack py={8} justify="center"><Spinner /></HStack>
