@@ -13,17 +13,25 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Input, Text, HStack, Kbd } from '@chakra-ui/react';
+import { Box, Input, Text, HStack, Kbd, Button } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import type { SpellCorrectionState } from './extensions/SpellCorrection';
 
 interface SpellCorrectionPopupProps {
   state: SpellCorrectionState | null;
-  onApply: (originalWord: string, correction: string) => void;
+  onApplyOnce: (originalWord: string, correction: string) => void;
+  onAlwaysReplace: (originalWord: string, correction: string) => void;
+  onAddToDictionary: (word: string) => void;
   onClose: () => void;
 }
 
-export function SpellCorrectionPopup({ state, onApply, onClose }: SpellCorrectionPopupProps) {
+export function SpellCorrectionPopup({
+  state,
+  onApplyOnce,
+  onAlwaysReplace,
+  onAddToDictionary,
+  onClose,
+}: SpellCorrectionPopupProps) {
   const [correction, setCorrection] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,12 +61,12 @@ export function SpellCorrectionPopup({ state, onApply, onClose }: SpellCorrectio
     if (e.key === 'Enter') {
       e.preventDefault();
       if (correction.trim() && state?.word) {
-        onApply(state.word, correction.trim());
+        onApplyOnce(state.word, correction.trim());
       }
       onClose();
       return;
     }
-  }, [correction, state?.word, onApply, onClose]);
+  }, [correction, state?.word, onApplyOnce, onClose]);
 
   if (!state?.isOpen) return null;
 
@@ -100,11 +108,40 @@ export function SpellCorrectionPopup({ state, onApply, onClose }: SpellCorrectio
         spellCheck={false}
       />
 
+      <HStack gap={2} mt={2}>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => {
+            if (state?.word) {
+              onAddToDictionary(state.word);
+            }
+            onClose();
+          }}
+        >
+          Add to dictionary
+        </Button>
+        <Button
+          size="xs"
+          colorPalette="green"
+          variant="outline"
+          disabled={!correction.trim()}
+          onClick={() => {
+            if (state?.word && correction.trim()) {
+              onAlwaysReplace(state.word, correction.trim());
+            }
+            onClose();
+          }}
+        >
+          Always replace
+        </Button>
+      </HStack>
+
       {/* Hints */}
       <HStack gap={3} mt={2} fontSize="xs" color={mutedColor}>
         <HStack gap={1}>
           <Kbd size="sm">Enter</Kbd>
-          <Text>apply</Text>
+          <Text>apply once</Text>
         </HStack>
         <HStack gap={1}>
           <Kbd size="sm">Esc</Kbd>

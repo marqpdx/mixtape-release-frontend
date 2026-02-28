@@ -11,6 +11,7 @@ import {
   SpellSuggestion,
   SpellCorrectionCreatePayload,
   SpellSuggestionCreatePayload,
+  UserDictionaryEntryPayload,
 } from '../../clients/spellbook';
 
 // ============================================================================
@@ -22,6 +23,7 @@ export const spellbookKeys = {
   corrections: () => [...spellbookKeys.all, 'corrections'] as const,
   suggestions: () => [...spellbookKeys.all, 'suggestions'] as const,
   suggestionsByStatus: (status: string) => [...spellbookKeys.suggestions(), status] as const,
+  userDictionary: () => [...spellbookKeys.all, 'user-dictionary'] as const,
 };
 
 // ============================================================================
@@ -82,6 +84,25 @@ export function useRecordCorrectionUsage() {
   return useMutation({
     mutationFn: (correctionId: string) => spellbookApi.recordUsage(correctionId),
     // No cache update needed - usage count is informational
+  });
+}
+
+export function useUserDictionary() {
+  return useQuery({
+    queryKey: spellbookKeys.userDictionary(),
+    queryFn: () => spellbookApi.getUserDictionary(),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useUpsertUserDictionaryEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UserDictionaryEntryPayload) =>
+      spellbookApi.upsertUserDictionaryEntry(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: spellbookKeys.userDictionary() });
+    },
   });
 }
 

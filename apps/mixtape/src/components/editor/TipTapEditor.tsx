@@ -134,10 +134,12 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     onOpen: handleSpellOpen,
     onClose: handleSpellClose,
     modifierKey: 'meta' as const,
-  }), [handleSpellOpen, handleSpellClose]);
+    getCorrection: spellDictionary.getCorrection,
+    recordUsage: spellDictionary.recordUsage,
+  }), [handleSpellOpen, handleSpellClose, spellDictionary.getCorrection, spellDictionary.recordUsage]);
 
   // Apply correction handler (needs editor, called by popup)
-  const handleSpellApply = useCallback((originalWord: string, correction: string) => {
+  const handleSpellApplyOnce = useCallback((originalWord: string, correction: string) => {
     const editor = editorRef.current;
     if (!editor || !spellPopupState) return;
 
@@ -149,9 +151,30 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       .insertContent(correction)
       .run();
 
-    spellDictionary.addCorrection(originalWord, correction);
+    spellDictionary.recordUsage(originalWord);
     setSpellPopupState(null);
   }, [spellPopupState, spellDictionary]);
+
+  const handleSpellAlwaysReplace = useCallback((originalWord: string, correction: string) => {
+    const editor = editorRef.current;
+    if (!editor || !spellPopupState) return;
+
+    const { from, to } = spellPopupState;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .insertContent(correction)
+      .run();
+
+    spellDictionary.addReplacement(originalWord, correction);
+    setSpellPopupState(null);
+  }, [spellPopupState, spellDictionary]);
+
+  const handleSpellAddToDictionary = useCallback((word: string) => {
+    spellDictionary.addIgnore(word);
+    setSpellPopupState(null);
+  }, [spellDictionary]);
 
   // Create unified collab object from either new props or legacy collab prop
   const collabConfig = useMemo(() => {
@@ -488,7 +511,9 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       {/* Spell Correction Popup - PocketTools */}
       <SpellCorrectionPopup
         state={spellPopupState}
-        onApply={handleSpellApply}
+        onApplyOnce={handleSpellApplyOnce}
+        onAlwaysReplace={handleSpellAlwaysReplace}
+        onAddToDictionary={handleSpellAddToDictionary}
         onClose={handleSpellClose}
       />
     </Box>

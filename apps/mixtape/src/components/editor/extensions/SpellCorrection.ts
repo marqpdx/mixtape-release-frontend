@@ -37,6 +37,16 @@ export interface SpellCorrectionOptions {
    * @default 'meta' (Cmd on Mac, Ctrl on Windows)
    */
   modifierKey?: 'meta' | 'alt' | 'ctrl';
+
+  /**
+   * Lookup function for automatic replacement on word boundary.
+   */
+  getCorrection?: (word: string) => string | null;
+
+  /**
+   * Optional usage callback when an automatic replacement is applied.
+   */
+  recordUsage?: (wrongWord: string) => void;
 }
 
 export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
@@ -47,11 +57,13 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
       onOpen: undefined,
       onClose: undefined,
       modifierKey: 'meta',
+      getCorrection: undefined,
+      recordUsage: undefined,
     };
   },
 
   addProseMirrorPlugins() {
-    const { onOpen, modifierKey } = this.options;
+    const { onOpen, modifierKey, getCorrection, recordUsage } = this.options;
 
     return [
       new Plugin({
@@ -59,6 +71,44 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
 
         props: {
           handleDOMEvents: {
+            keyup(view, event) {
+              if (!getCorrection) return false;
+              if (event.isComposing) return false;
+
+              const boundaryChars = new Set([
+                ' ', 'Enter', 'Tab', '.', ',', ';', ':', '!', '?', ')', ']', '}', '"', "'",
+              ]);
+              if (!boundaryChars.has(event.key)) return false;
+
+              const { state } = view;
+              const { from } = state.selection;
+              const $pos = state.doc.resolve(from);
+              const text = $pos.parent.textContent;
+              if (!text) return false;
+
+              let end = $pos.parentOffset;
+              while (end > 0 && /[\s.,!?;:)\]}\"']/.test(text[end - 1])) {
+                end--;
+              }
+              let start = end;
+              while (start > 0 && /\w/.test(text[start - 1])) {
+                start--;
+              }
+              const word = text.slice(start, end);
+              if (!word || word.length < 2) return false;
+
+              const correction = getCorrection(word);
+              if (!correction || correction === word) return false;
+
+              const parentStart = $pos.start();
+              const absoluteFrom = parentStart + start;
+              const absoluteTo = parentStart + end;
+
+              const tr = state.tr.insertText(correction, absoluteFrom, absoluteTo);
+              view.dispatch(tr);
+              recordUsage?.(word);
+              return false;
+            },
             dblclick(view, event) {
               // Check for modifier key
               const hasModifier =

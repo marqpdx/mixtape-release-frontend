@@ -48,6 +48,18 @@ export interface ApprovalResult {
   correction: SpellCorrection;
 }
 
+export interface UserDictionaryPayload {
+  ignores: string[];
+  replacements: Record<string, string>;
+}
+
+export interface UserDictionaryEntryPayload {
+  kind: 'ignore' | 'replace';
+  token: string;
+  display?: string;
+  replacement?: string;
+}
+
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
@@ -183,6 +195,23 @@ class SpellbookApi {
         { note }
       );
       return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async getUserDictionary(): Promise<UserDictionaryPayload> {
+    try {
+      const response = await this.client.get<UserDictionaryPayload>('/api/spellbook/dictionary');
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async upsertUserDictionaryEntry(payload: UserDictionaryEntryPayload): Promise<void> {
+    try {
+      await this.client.post('/api/spellbook/dictionary/entries', payload);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
