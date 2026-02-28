@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
 import { ColorModeProvider } from '@components/ui/color-mode';
 import { Toaster } from '@/components/ui/toaster';
+import GristQuickPopup from '@/components/gristmill/GristQuickPopup';
 import { system } from '@/theme/theme';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               {children}
+              <GristQuickPopup />
             </AuthProvider>
           </QueryClientProvider>
           <Toaster />

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Badge,
@@ -47,6 +47,8 @@ export default function MemberPublicPage() {
 
   const isOwner = isAuthenticated && user?.username === username;
 
+  const [kindFilter, setKindFilter] = useState<string | null>(null);
+
   useEffect(() => {
     async function load() {
       try {
@@ -65,6 +67,31 @@ export default function MemberPublicPage() {
     load();
   }, [username]);
 
+  // Flatten all items across shelves for "single piece" detection
+  const allItems = shelves.flatMap((s) => s.items);
+
+  // Unique writing kinds for filter chips
+  const writingKinds = useMemo(() => {
+    const kinds = new Set<string>();
+    for (const item of allItems) {
+      if (item.writing_kind) kinds.add(item.writing_kind);
+    }
+    return Array.from(kinds).sort();
+  }, [allItems]);
+
+  // Filtered shelves — when a filter is active, only show matching items within each shelf
+  const filteredShelves = useMemo(() => {
+    if (!kindFilter) return shelves;
+    return shelves
+      .map((shelf) => ({
+        ...shelf,
+        items: shelf.items.filter((item) => item.writing_kind === kindFilter),
+      }))
+      .filter((shelf) => shelf.items.length > 0);
+  }, [shelves, kindFilter]);
+
+  const filteredAllItems = filteredShelves.flatMap((s) => s.items);
+
   if (loading) {
     return (
       <Box px="6" py="20" textAlign="center">
@@ -80,9 +107,6 @@ export default function MemberPublicPage() {
       </Box>
     );
   }
-
-  // Flatten all items across shelves for "single piece" detection
-  const allItems = shelves.flatMap((s) => s.items);
 
   return (
     <Box>
@@ -202,13 +226,23 @@ export default function MemberPublicPage() {
         ctaBorderColor={ctaBorderColor}
       />
 
+      {/* Filter chips */}
+      {allItems.length > 1 && writingKinds.length > 1 && (
+        <WritingFilterChips
+          kinds={writingKinds}
+          activeKind={kindFilter}
+          onKindChange={setKindFilter}
+          mutedColor={mutedColor}
+        />
+      )}
+
       {/* Writing Section */}
       {allItems.length === 0 ? (
         <Text color={mutedColor} mt="6">
           No published writing yet.
         </Text>
-      ) : shelves.length === 1 && shelves[0].items.length === 1 ? (
-        // Single piece — show it directly
+      ) : !kindFilter && shelves.length === 1 && shelves[0].items.length === 1 ? (
+        // Single piece — show it directly (only when no filter active)
         <SinglePieceCard
           item={allItems[0]}
           username={username}
@@ -216,10 +250,14 @@ export default function MemberPublicPage() {
           mutedColor={mutedColor}
           borderColor={borderColor}
         />
+      ) : filteredAllItems.length === 0 ? (
+        <Text color={mutedColor} mt="6">
+          No pieces match this filter.
+        </Text>
       ) : (
         // Multiple shelves/items
         <VStack gap="6" align="stretch" mt="2">
-          {shelves.map((shelf) => (
+          {filteredShelves.map((shelf) => (
             <ShelfCard
               key={shelf.id}
               shelf={shelf}
@@ -237,6 +275,51 @@ export default function MemberPublicPage() {
 }
 
 // --- Sub-components ---
+
+function WritingFilterChips({
+  kinds,
+  activeKind,
+  onKindChange,
+  mutedColor,
+}: {
+  kinds: string[];
+  activeKind: string | null;
+  onKindChange: (kind: string | null) => void;
+  mutedColor: string;
+}) {
+  return (
+    <HStack gap="2" flexWrap="wrap" mb="4">
+      <Badge
+        size="sm"
+        variant={activeKind === null ? "solid" : "outline"}
+        colorPalette="gray"
+        cursor="pointer"
+        px="3"
+        py="1"
+        borderRadius="full"
+        onClick={() => onKindChange(null)}
+      >
+        All
+      </Badge>
+      {kinds.map((kind) => (
+        <Badge
+          key={kind}
+          size="sm"
+          variant={activeKind === kind ? "solid" : "outline"}
+          colorPalette="gray"
+          cursor="pointer"
+          px="3"
+          py="1"
+          borderRadius="full"
+          textTransform="capitalize"
+          onClick={() => onKindChange(activeKind === kind ? null : kind)}
+        >
+          {kind}
+        </Badge>
+      ))}
+    </HStack>
+  );
+}
 
 function ViewerContextStrip({
   isAuthenticated,

@@ -2,9 +2,9 @@
 
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useCallback } from "react"
 import { Box, Text } from "@chakra-ui/react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useMemberProfile } from "@hooks/member/useMemberProfile"
 import { useMemberLibrary } from "@mixtape/api/hooks/stackroom"
@@ -15,6 +15,7 @@ export default function MemberLibraryPage() {
   const params = useParams()
   const usernameParam = params?.username as string | undefined
 
+  const router = useRouter()
   const { user: identity, isLoading: identityLoading } = useAuth()
   const username = usernameParam || identity?.username
   const { member, isLoading: memberLoading } = useMemberProfile(username)
@@ -30,6 +31,15 @@ export default function MemberLibraryPage() {
     isLoading: libraryLoading,
     error: libraryError,
   } = useMemberLibrary(username, member?.id, isOwner)
+
+  const handleItemClick = useCallback(
+    (item: { url?: string }) => {
+      if (item.url) {
+        router.push(item.url)
+      }
+    },
+    [router]
+  )
 
   useEffect(() => {
     if (member) {
@@ -69,6 +79,7 @@ export default function MemberLibraryPage() {
           shelves={shelves}
           isLoading={libraryLoading}
           error={libraryError ? "Failed to load library" : undefined}
+          onItemClick={handleItemClick}
         />
       </Box>
     </Box>

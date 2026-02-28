@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useMemo, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
 import NextLink from "next/link";
 import {
   Box,
@@ -22,14 +22,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useMemberProfile } from "@hooks/member/useMemberProfile";
 import * as stackroomApi from "@mixtape/api/clients/stackroom/stackroomApi";
-import { format } from "date-fns";
-import { IconGripVertical } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import type { WritingPiece } from "@mixtape/core/types/writingTypes";
+import {
+  ContainerView,
+  useContainerViewMode,
+  type ContainerItem,
+} from "@components/common/ContainerView";
+
+type PlacementContainerItem = ContainerItem & {
+  meta: { placementId: string; pieceSlug: string }
+};
 
 export default function MemberShelfPage() {
   const params = useParams();
+  const router = useRouter();
   const username = params?.username as string | undefined;
   const shelfSlug = params?.shelfSlug as string | undefined;
 
@@ -40,6 +48,8 @@ export default function MemberShelfPage() {
   const { member, isLoading: memberLoading } = useMemberProfile(username);
   const { user } = useAuth();
   const isOwner = Boolean(user && member && user.username === member.username);
+
+  const [viewMode, setViewMode] = useContainerViewMode("shelf-detail-view", "list");
 
   const { data: libraries = [], isLoading: librariesLoading } = useQuery({
     queryKey: ["library", "public", username],
@@ -73,9 +83,20 @@ export default function MemberShelfPage() {
     });
   }, [placements]);
 
+  const containerItems: PlacementContainerItem[] = useMemo(
+    () =>
+      orderedPlacements.map((p) => ({
+        id: p.id,
+        title: p.display?.title || p.piece_title || "Untitled",
+        subtitle: p.display?.excerpt || undefined,
+        date: p.published_at || undefined,
+        meta: { placementId: p.id, pieceSlug: p.piece_slug },
+      })),
+    [orderedPlacements]
+  );
+
   const [search, setSearch] = useState("");
   const [savingOrder, setSavingOrder] = useState(false);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const { data: publishedPieces = [], isLoading: piecesLoading } = useQuery({
     queryKey: ["writing", "published", username],
@@ -105,54 +126,36 @@ export default function MemberShelfPage() {
     await refetchPlacements();
   };
 
-  const handleRemove = async (placementId: string) => {
-    if (!shelf?.id) return;
-    await stackroomApi.removeLibraryPlacement(shelf.id, placementId);
-    await refetchPlacements();
-  };
-
-  const commitReorder = async (nextOrder: typeof orderedPlacements) => {
-    if (!shelf?.id) return;
-    setSavingOrder(true);
-    try {
-      await stackroomApi.reorderLibraryPlacements(
-        shelf.id,
-        nextOrder.map((placement) => placement.id)
-      );
+  const handleRemoveItem = useCallback(
+    async (item: ContainerItem) => {
+      if (!shelf?.id) return;
+      await stackroomApi.removeLibraryPlacement(shelf.id, item.id);
       await refetchPlacements();
-    } finally {
-      setSavingOrder(false);
-    }
-  };
+    },
+    [shelf?.id, refetchPlacements]
+  );
 
-  const handleMove = async (placementId: string, direction: "up" | "down") => {
-    const current = [...orderedPlacements];
-    const index = current.findIndex((placement) => placement.id === placementId);
-    if (index < 0) return;
-    const swapWith = direction === "up" ? index - 1 : index + 1;
-    if (swapWith < 0 || swapWith >= current.length) return;
-    const [moved] = current.splice(index, 1);
-    current.splice(swapWith, 0, moved);
-    await commitReorder(current);
-  };
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      if (!shelf?.id) return;
+      setSavingOrder(true);
+      try {
+        await stackroomApi.reorderLibraryPlacements(shelf.id, orderedIds);
+        await refetchPlacements();
+      } finally {
+        setSavingOrder(false);
+      }
+    },
+    [shelf?.id, refetchPlacements]
+  );
 
-  const handleDrop = async (overId: string) => {
-    if (!draggingId || draggingId === overId) {
-      setDraggingId(null);
-      return;
-    }
-    const current = [...orderedPlacements];
-    const fromIndex = current.findIndex((placement) => placement.id === draggingId);
-    const toIndex = current.findIndex((placement) => placement.id === overId);
-    if (fromIndex < 0 || toIndex < 0) {
-      setDraggingId(null);
-      return;
-    }
-    const [moved] = current.splice(fromIndex, 1);
-    current.splice(toIndex, 0, moved);
-    setDraggingId(null);
-    await commitReorder(current);
-  };
+  const handleItemClick = useCallback(
+    (item: ContainerItem) => {
+      const ci = item as PlacementContainerItem;
+      router.push(`/member/${username}/writing/${ci.meta.pieceSlug}`);
+    },
+    [router, username]
+  );
 
   if (memberLoading || librariesLoading) {
     return (
@@ -173,7 +176,7 @@ export default function MemberShelfPage() {
         <Container maxW="4xl">
           <Heading size="md">Shelf not found</Heading>
           <Text color="gray.500" mt={2}>
-            This shelf doesn’t exist or isn’t available.
+            This shelf doesn't exist or isn't available.
           </Text>
         </Container>
       </Box>
@@ -196,15 +199,15 @@ export default function MemberShelfPage() {
           <VStack align="stretch" gap={2}>
             <HStack justify="space-between" align="start">
               <Heading size="lg">{shelf.title}</Heading>
-              {shelf.visibility && (
-                <Badge variant="outline" textTransform="capitalize">
-                  {shelf.visibility}
-                </Badge>
-              )}
+              <HStack gap={2}>
+                {savingOrder && <Text fontSize="xs" color="gray.500">Saving order…</Text>}
+                {shelf.visibility && (
+                  <Badge variant="outline" textTransform="capitalize">
+                    {shelf.visibility}
+                  </Badge>
+                )}
+              </HStack>
             </HStack>
-            <Text fontSize="xs" color="gray.400">
-              Debug: {shelf.id} · {shelf.visibility ?? "unknown"} · {shelf.scope ?? "n/a"} · {placements.length} placements
-            </Text>
             {shelf.summary && (
               <Text fontSize="md" color="gray.600">
                 {shelf.summary}
@@ -217,95 +220,22 @@ export default function MemberShelfPage() {
             )}
           </VStack>
 
-          {placementsLoading ? (
-            <HStack gap={2} color="gray.500">
-              <Spinner size="sm" />
-              <Text>Loading pieces...</Text>
-            </HStack>
-          ) : (
-            <VStack align="stretch" gap={4}>
-              {orderedPlacements.map((placement) => (
-                <Box
-                  key={placement.id}
-                  bg={cardBg}
-                  borderRadius="lg"
-                  borderWidth="1px"
-                  borderColor={border}
-                  p={5}
-                  draggable={isOwner}
-                  onDragStart={() => setDraggingId(placement.id)}
-                  onDragOver={(event) => {
-                    if (isOwner) {
-                      event.preventDefault();
-                    }
-                  }}
-                  onDrop={() => {
-                    if (isOwner) {
-                      void handleDrop(placement.id);
-                    }
-                  }}
-                  opacity={draggingId === placement.id ? 0.6 : 1}
-                >
-                  <VStack align="stretch" gap={3}>
-                    <HStack justify="space-between" align="start">
-                      <HStack gap={2} align="start">
-                        {isOwner && (
-                          <Box
-                            color="gray.400"
-                            _hover={{ color: "gray.600" }}
-                            cursor="grab"
-                            mt="2px"
-                          >
-                            <IconGripVertical size={16} />
-                          </Box>
-                        )}
-                        <Link
-                          as={NextLink}
-                          href={`/writing/${placement.piece_slug}`}
-                          fontWeight="semibold"
-                          fontSize="lg"
-                        >
-                          {placement.piece_title}
-                        </Link>
-                      </HStack>
-                    </HStack>
-                    {placement.display?.excerpt && (
-                      <Text color="gray.600">{placement.display.excerpt}</Text>
-                    )}
-                      {placement.published_at && (
-                        <Text fontSize="xs" color="gray.500">
-                          Published {format(new Date(placement.published_at), "PPP")}
-                        </Text>
-                      )}
-                      {isOwner && (
-                        <HStack gap={2}>
-                          <Button size="xs" variant="outline" onClick={() => handleMove(placement.id, "up")}>
-                            Up
-                          </Button>
-                          <Button size="xs" variant="outline" onClick={() => handleMove(placement.id, "down")}>
-                            Down
-                          </Button>
-                          <Button size="xs" variant="outline" onClick={() => handleRemove(placement.id)}>
-                            Remove
-                          </Button>
-                        </HStack>
-                      )}
-                    </VStack>
-                  </Box>
-                ))}
-              {!orderedPlacements.length && (
-                <Text color="gray.500">No published pieces here yet.</Text>
-              )}
-            </VStack>
-          )}
+          <ContainerView
+            items={containerItems}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onItemClick={handleItemClick}
+            onRemoveItem={isOwner ? handleRemoveItem : undefined}
+            sortable={isOwner}
+            onReorder={handleReorder}
+            isLoading={placementsLoading}
+            emptyStateMessage="No published pieces here yet."
+          />
 
           {isOwner && (
             <Box mt={10} borderWidth="1px" borderColor={border} borderRadius="lg" p={5} bg={cardBg}>
               <VStack align="stretch" gap={4}>
-                <HStack justify="space-between">
-                  <Heading size="sm">Shelf editor</Heading>
-                  {savingOrder && <Text fontSize="xs" color="gray.500">Saving order…</Text>}
-                </HStack>
+                <Heading size="sm">Shelf editor</Heading>
 
                 <Input
                   placeholder="Search your published writing"

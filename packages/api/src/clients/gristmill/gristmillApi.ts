@@ -11,6 +11,7 @@ export interface GristBlock {
 
 export interface ParseResult {
   blocks: GristBlock[];
+  warning?: string;
 }
 
 export interface MillDraft {
@@ -19,6 +20,19 @@ export interface MillDraft {
   ast: GristBlock;
   status: 'staged' | 'promoted' | 'rejected';
   created_at: string;
+  warning?: string;
+}
+
+export interface PromoteDraftResponse {
+  draft_id: string;
+  event_id?: string;
+  event_slug?: string;
+  course_id?: string;
+  course_slug?: string;
+  lesson_id?: string;
+  lesson_slug?: string;
+  feedback_item_id?: string;
+  kind?: string;
 }
 
 export async function parseGrist(grist: string): Promise<ParseResult> {
@@ -36,10 +50,16 @@ export async function listDrafts(): Promise<MillDraft[]> {
   return response.data;
 }
 
-export async function promoteDraft(draftId: string, groupSlug?: string, timezone?: string) {
+export async function promoteDraft(
+  draftId: string,
+  groupSlug?: string,
+  timezone?: string,
+  pageUrl?: string
+): Promise<PromoteDraftResponse> {
   const params = {
     ...(groupSlug ? { group_slug: groupSlug } : {}),
     ...(timezone ? { timezone } : {}),
+    ...(pageUrl ? { page_url: pageUrl } : {}),
   };
   const response = await axiosInstance.post(`/api/gristmill/drafts/${draftId}/promote`, params);
   return response.data;

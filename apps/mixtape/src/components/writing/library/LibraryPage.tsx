@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react"
 import {
   Box,
   Flex,
@@ -18,9 +18,8 @@ import {
   GridItem,
   Wrap,
   Spinner,
-  Image,
 } from "@chakra-ui/react"
-import { Card, Avatar, Table } from "@chakra-ui/react"
+import { Card, Avatar } from "@chakra-ui/react"
 import {
   MenuRoot,
   MenuTrigger,
@@ -29,6 +28,7 @@ import {
 } from "@chakra-ui/react"
 import { useColorModeValue } from "@components/ui/color-mode"
 import { Divider } from "@components/common/Divider"
+import { ContainerView, type ContainerItem } from "@components/common/ContainerView"
 import {
   IconArrowLeft,
   IconBook2,
@@ -62,6 +62,7 @@ export interface LibraryItem {
   thumbnail?: string
   addedAt: string
   url?: string
+  excerpt?: string
   tags?: string[]
   popular?: boolean
 }
@@ -103,6 +104,7 @@ export interface LibraryPageProps {
   onEditShelf?: (shelfId: string) => void
   onDeleteShelf?: (shelfId: string) => void
   onAddItem?: (shelfId: string) => void
+  onItemClick?: (item: LibraryItem) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +232,36 @@ function groupItemsByMonth(items: FlatLibraryItem[]): MonthGroup[] {
       yearMonth,
       items,
     }))
+}
+
+// ---------------------------------------------------------------------------
+// ContainerView adapter
+// ---------------------------------------------------------------------------
+
+type LibraryContainerItem = ContainerItem & { meta: { type: LibraryItem["type"]; tags?: string[]; popular?: boolean } }
+
+function toContainerItem(item: LibraryItem): LibraryContainerItem {
+  return {
+    id: item.id,
+    title: item.title,
+    subtitle: item.excerpt,
+    thumbnail: item.thumbnail,
+    date: item.addedAt,
+    meta: { type: item.type, tags: item.tags, popular: item.popular },
+  }
+}
+
+function fromContainerItem(items: LibraryItem[], ci: ContainerItem): LibraryItem | undefined {
+  return items.find((i) => i.id === ci.id)
+}
+
+function renderLibraryBadge(item: LibraryContainerItem): ReactNode {
+  const type = item.meta.type
+  return (
+    <Badge size="sm" colorScheme={TYPE_COLORS[type]} variant="subtle">
+      {TYPE_LABELS[type]}
+    </Badge>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -612,170 +644,6 @@ function ShelfViewHeader({
   )
 }
 
-function ItemCard({
-  item,
-  canManage,
-}: {
-  item: LibraryItem
-  canManage: boolean
-}) {
-  const cardBg = useColorModeValue("white", "gray.800")
-  const borderColor = useColorModeValue("gray.200", "gray.700")
-  const iconBg = useColorModeValue("gray.50", "gray.700")
-  const TypeIcon = TYPE_ICONS[item.type]
-
-  return (
-    <Card.Root bg={cardBg} border="1px solid" borderColor={borderColor}>
-      <Card.Body p={3}>
-        <Flex
-          w="100%"
-          h={20}
-          bg={iconBg}
-          borderRadius="md"
-          align="center"
-          justify="center"
-          mb={3}
-        >
-          {item.thumbnail ? (
-            <Box
-              borderRadius="md"
-            >
-              <Image
-                alt={item.title}
-                w="100%"
-                h="100%"
-                objectFit="cover"
-                src={item.thumbnail} >
-              </Image>
-            </Box>
-          ) : (
-            <TypeIcon size={32} color={`var(--chakra-colors-${TYPE_COLORS[item.type]}-400)`} />
-          )}
-        </Flex>
-        <Text fontSize="sm" fontWeight="medium" lineClamp={2} mb={2}>
-          {item.title}
-        </Text>
-        <Flex justify="space-between" align="center">
-          <Badge size="sm" colorScheme={TYPE_COLORS[item.type]} variant="subtle">
-            {item.type}
-          </Badge>
-          {canManage && (
-            <MenuRoot positioning={{ placement: "bottom-end" }}>
-              <MenuTrigger asChild>
-                <IconButton
-                  aria-label="Item actions"
-                  variant="ghost"
-                  size="xs"
-                >
-                  <IconDotsVertical size={14} />
-                </IconButton>
-              </MenuTrigger>
-              <MenuContent>
-                <MenuItem value="edit">
-                  <IconEdit size={14} /> Edit
-                </MenuItem>
-                <MenuItem value="delete">
-                  <IconTrash size={14} /> Remove
-                </MenuItem>
-              </MenuContent>
-            </MenuRoot>
-          )}
-        </Flex>
-      </Card.Body>
-    </Card.Root>
-  )
-}
-
-function ItemGrid({
-  items,
-  canManage,
-}: {
-  items: LibraryItem[]
-  canManage: boolean
-}) {
-  return (
-    <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} gap={3}>
-      {items.map((item) => (
-        <ItemCard key={item.id} item={item} canManage={canManage} />
-      ))}
-    </SimpleGrid>
-  )
-}
-
-function ItemList({
-  items,
-  canManage,
-}: {
-  items: LibraryItem[]
-  canManage: boolean
-}) {
-  const mutedText = useColorModeValue("gray.500", "gray.400")
-
-  return (
-    <Table.Root variant="line">
-      <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeader w={10} />
-          <Table.ColumnHeader>Title</Table.ColumnHeader>
-          <Table.ColumnHeader w={24}>Type</Table.ColumnHeader>
-          <Table.ColumnHeader w={36}>Added</Table.ColumnHeader>
-          {canManage && <Table.ColumnHeader w={10} />}
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {items.map((item) => {
-          const TypeIcon = TYPE_ICONS[item.type]
-          return (
-            <Table.Row key={item.id}>
-              <Table.Cell>
-                <TypeIcon size={18} color={`var(--chakra-colors-${TYPE_COLORS[item.type]}-400)`} />
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="sm" fontWeight="medium">
-                  {item.title}
-                </Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Badge size="sm" colorScheme={TYPE_COLORS[item.type]} variant="subtle">
-                  {item.type}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <Text fontSize="xs" color={mutedText}>
-                  {relativeDate(item.addedAt)}
-                </Text>
-              </Table.Cell>
-              {canManage && (
-                <Table.Cell>
-                  <MenuRoot positioning={{ placement: "bottom-end" }}>
-                    <MenuTrigger asChild>
-                      <IconButton
-                        aria-label="Item actions"
-                        variant="ghost"
-                        size="xs"
-                      >
-                        <IconDotsVertical size={14} />
-                      </IconButton>
-                    </MenuTrigger>
-                    <MenuContent>
-                      <MenuItem value="edit">
-                        <IconEdit size={14} /> Edit
-                      </MenuItem>
-                      <MenuItem value="delete">
-                        <IconTrash size={14} /> Remove
-                      </MenuItem>
-                    </MenuContent>
-                  </MenuRoot>
-                </Table.Cell>
-              )}
-            </Table.Row>
-          )
-        })}
-      </Table.Body>
-    </Table.Root>
-  )
-}
-
 function ShelfView({
   shelf,
   canManage,
@@ -783,6 +651,7 @@ function ShelfView({
   onBack,
   onToggleView,
   onAddItem,
+  onItemClick,
 }: {
   shelf: LibraryShelf
   canManage: boolean
@@ -790,7 +659,21 @@ function ShelfView({
   onBack: () => void
   onToggleView: (view: "grid" | "list") => void
   onAddItem?: () => void
+  onItemClick?: (item: LibraryItem) => void
 }) {
+  const containerItems = useMemo(
+    () => shelf.items.map(toContainerItem),
+    [shelf.items]
+  )
+
+  const handleItemClick = useCallback(
+    (ci: ContainerItem) => {
+      const original = fromContainerItem(shelf.items, ci)
+      if (original) onItemClick?.(original)
+    },
+    [shelf.items, onItemClick]
+  )
+
   return (
     <Box>
       <ShelfViewHeader
@@ -806,11 +689,13 @@ function ShelfView({
           </Button>
         </Flex>
       )}
-      {itemView === "grid" ? (
-        <ItemGrid items={shelf.items} canManage={canManage} />
-      ) : (
-        <ItemList items={shelf.items} canManage={canManage} />
-      )}
+      <ContainerView
+        items={containerItems}
+        viewMode={itemView}
+        onItemClick={handleItemClick}
+        renderBadge={renderLibraryBadge}
+        emptyStateMessage="No items on this shelf yet."
+      />
     </Box>
   )
 }
@@ -822,9 +707,11 @@ function ShelfView({
 function ArchiveItemRow({
   item,
   isLast,
+  onItemClick,
 }: {
   item: FlatLibraryItem
   isLast: boolean
+  onItemClick?: (item: LibraryItem) => void
 }) {
   const mutedText = useColorModeValue("gray.500", "gray.400")
   const rowHoverBg = useColorModeValue("gray.50", "gray.750")
@@ -843,6 +730,7 @@ function ArchiveItemRow({
         _hover={{ bg: rowHoverBg }}
         cursor="pointer"
         borderRadius="md"
+        onClick={() => onItemClick?.(item)}
       >
         <Box mr={3} flexShrink={0}>
           <TypeIcon
@@ -885,9 +773,11 @@ function ArchiveItemRow({
 function ChronologicalArchive({
   items,
   typeFilter,
+  onItemClick,
 }: {
   items: FlatLibraryItem[]
   typeFilter: LibraryItem["type"] | null
+  onItemClick?: (item: LibraryItem) => void
 }) {
   const accentColor = useColorModeValue("green.400", "green.400")
   const mutedText = useColorModeValue("gray.500", "gray.400")
@@ -930,6 +820,7 @@ function ChronologicalArchive({
                 key={item.id}
                 item={item}
                 isLast={idx === group.items.length - 1}
+                onItemClick={onItemClick}
               />
             ))}
           </VStack>
@@ -945,12 +836,14 @@ function ArchiveSidebar({
   typeFilter,
   onSetTypeFilter,
   onNavigateToShelf,
+  onItemClick,
 }: {
   shelves: LibraryShelf[]
   allItems: FlatLibraryItem[]
   typeFilter: LibraryItem["type"] | null
   onSetTypeFilter: (type: LibraryItem["type"] | null) => void
   onNavigateToShelf: (shelf: LibraryShelf) => void
+  onItemClick?: (item: LibraryItem) => void
 }) {
   const mutedText = useColorModeValue("gray.500", "gray.400")
   const labelColor = useColorModeValue("gray.600", "gray.300")
@@ -1058,6 +951,7 @@ function ArchiveSidebar({
                   borderRadius="md"
                   _hover={{ bg: hoverBg }}
                   cursor="pointer"
+                  onClick={() => onItemClick?.(item)}
                 >
                   <TypeIcon
                     size={14}
@@ -1168,12 +1062,14 @@ function ChronologicalView({
   typeFilter,
   onSetTypeFilter,
   onNavigateToShelf,
+  onItemClick,
 }: {
   shelves: LibraryShelf[]
   allItems: FlatLibraryItem[]
   typeFilter: LibraryItem["type"] | null
   onSetTypeFilter: (type: LibraryItem["type"] | null) => void
   onNavigateToShelf: (shelf: LibraryShelf) => void
+  onItemClick?: (item: LibraryItem) => void
 }) {
   // const filterBg = useColorModeValue("blue.50", "blue.900")
 
@@ -1195,7 +1091,7 @@ function ChronologicalView({
       )}
       <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={8}>
         <GridItem>
-          <ChronologicalArchive items={allItems} typeFilter={typeFilter} />
+          <ChronologicalArchive items={allItems} typeFilter={typeFilter} onItemClick={onItemClick} />
         </GridItem>
         <GridItem>
           <ArchiveSidebar
@@ -1204,6 +1100,7 @@ function ChronologicalView({
             typeFilter={typeFilter}
             onSetTypeFilter={onSetTypeFilter}
             onNavigateToShelf={onNavigateToShelf}
+            onItemClick={onItemClick}
           />
         </GridItem>
       </Grid>
@@ -1229,6 +1126,7 @@ export default function LibraryPage({
   onEditShelf,
   onDeleteShelf,
   onAddItem,
+  onItemClick,
 }: LibraryPageProps) {
   const [activeShelf, setActiveShelf] = useState<LibraryShelf | null>(null)
   const [itemView, setItemView] = useState<"grid" | "list">("grid")
@@ -1335,6 +1233,7 @@ export default function LibraryPage({
               onBack={() => setActiveShelf(null)}
               onToggleView={handleToggleView}
               onAddItem={() => onAddItem?.(activeShelf.id)}
+              onItemClick={onItemClick}
             />
           )}
         </Box>
@@ -1354,6 +1253,7 @@ export default function LibraryPage({
             typeFilter={typeFilter}
             onSetTypeFilter={setTypeFilter}
             onNavigateToShelf={handleNavigateToShelf}
+            onItemClick={onItemClick}
           />
         </Box>
       </Box>}

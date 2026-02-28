@@ -18,6 +18,7 @@ interface LibraryItem {
   thumbnail?: string
   addedAt: string
   url?: string
+  excerpt?: string
   tags?: string[]
   popular?: boolean
 }
@@ -114,6 +115,7 @@ export function useMemberLibrary(
         type: (p.writing_kind || "document") as LibraryItem["type"],
         addedAt: p.published_at || p.created_at,
         url: `/member/${username}/writing/${p.piece_slug}`,
+        excerpt: p.display?.excerpt || undefined,
       }))
 
       const lastUpdated = published.reduce<string | null>((latest, p) => {
