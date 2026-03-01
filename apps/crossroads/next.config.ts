@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     return [
-      // Route /app and anything under it to the Mixtape app zone
+      // Route /app and anything under it to the Mixtape app zone.
+      // IMPORTANT: keep `/app` in the destination path.
+      // The Mixtape app is built with `basePath: "/app"` and emits internal
+      // RSC/navigation requests like `/app?_rsc=...`. Removing `/app` here
+      // breaks those requests and causes `_not-found` responses.
       {
         source: "/app",
         destination: "https://app.crossroads.place/app",

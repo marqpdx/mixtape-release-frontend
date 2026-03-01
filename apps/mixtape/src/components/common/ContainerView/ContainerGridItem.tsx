@@ -62,15 +62,15 @@ export function ContainerGridItem<T extends ContainerItem>({
           overflow="hidden"
         >
           {item.thumbnail ? (
-            <Box
+            <Image
+              src={item.thumbnail}
+              alt={item.title}
               w="100%"
               h="100%"
               objectFit="cover"
             />
           ) : (
-            <Image  src={item.thumbnail} alt={item.title}>
-              <IconFileText size={32} color="var(--chakra-colors-gray-400)" />
-            </Image>
+            <IconFileText size={32} color="var(--chakra-colors-gray-400)" />
           )}
         </Flex>
         <Text fontSize="sm" fontWeight="medium" lineClamp={2} mb={1}>
