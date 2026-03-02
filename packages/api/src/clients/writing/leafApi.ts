@@ -72,3 +72,7 @@ export async function publishLeaf(id: string): Promise<Leaf> {
   const res = await axiosInstance.post(`/api/writing/leaves/${id}/publish`);
   return res.data;
 }
+
+export async function deleteLeaf(id: string): Promise<void> {
+  await axiosInstance.delete(`/api/writing/leaves/${id}`);
+}

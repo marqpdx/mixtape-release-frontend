@@ -8,10 +8,10 @@ const seedKeys = {
   recent: () => [...seedKeys.all, 'recent'] as const,
 };
 
-export function useRecentSeeds() {
+export function useRecentSeeds(limit = 4) {
   return useQuery({
-    queryKey: seedKeys.recent(),
-    queryFn: () => seedApi.fetchRecentSeeds(4),
+    queryKey: [...seedKeys.recent(), limit],
+    queryFn: () => seedApi.fetchRecentSeeds(limit),
     staleTime: 30_000,
   });
 }

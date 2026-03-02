@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   VStack,
@@ -45,7 +45,7 @@ export default function Composer({ onPosted }: ComposerProps) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { data: recentSeeds, isLoading: seedsLoading, refetch: refetchSeeds } = useRecentSeeds();
+  const { data: recentSeeds, isLoading: seedsLoading, refetch: refetchSeeds } = useRecentSeeds(20);
   const createSeed = useCreateSeed();
   const updateSeed = useUpdateSeed();
   const createLeaf = useCreateLeaf();
@@ -194,6 +194,18 @@ export default function Composer({ onPosted }: ComposerProps) {
     resetComposer();
   };
 
+  const [showCaptures, setShowCaptures] = useState(true);
+  const [showSeeds, setShowSeeds] = useState(true);
+
+  const filteredSeeds = useMemo(() => {
+    if (!recentSeeds) return [];
+    return recentSeeds.filter((seed) => {
+      const isCapture = seed.source === 'web';
+      if (isCapture) return showCaptures;
+      return showSeeds;
+    });
+  }, [recentSeeds, showCaptures, showSeeds]);
+
   const isPosting = createLeaf.isPending;
   const isUploading = uploadImage.isPending;
   const hasContent = text.trim().length > 0 || !!uploadedImage;
@@ -331,11 +343,11 @@ export default function Composer({ onPosted }: ComposerProps) {
         </HStack>
       </Box>
 
-      {/* Recent Seeds */}
+      {/* Recent Captures & Seeds */}
       <Box>
-        <HStack justify="space-between" mb={3}>
+        <HStack justify="space-between" mb={2}>
           <Text fontSize="sm" fontWeight="medium" color={mutedColor}>
-            Recent Captures
+            Recent
           </Text>
           <Button
             size="xs"
@@ -349,19 +361,40 @@ export default function Composer({ onPosted }: ComposerProps) {
           </Button>
         </HStack>
 
+        <HStack gap={4} mb={3}>
+          <HStack gap={1} as="label" cursor="pointer">
+            <input
+              type="checkbox"
+              checked={showCaptures}
+              onChange={(e) => setShowCaptures(e.target.checked)}
+            />
+            <Text fontSize="xs" color={mutedColor}>Captures</Text>
+          </HStack>
+          <HStack gap={1} as="label" cursor="pointer">
+            <input
+              type="checkbox"
+              checked={showSeeds}
+              onChange={(e) => setShowSeeds(e.target.checked)}
+            />
+            <Text fontSize="xs" color={mutedColor}>Seeds</Text>
+          </HStack>
+        </HStack>
+
         {seedsLoading ? (
           <Box textAlign="center" py={4}>
             <Spinner size="sm" />
           </Box>
-        ) : recentSeeds && recentSeeds.length > 0 ? (
+        ) : filteredSeeds.length > 0 ? (
           <VStack gap={2} align="stretch">
-            {recentSeeds.map((seed) => (
+            {filteredSeeds.map((seed) => (
               <SeedCard key={seed.id} seed={seed} />
             ))}
           </VStack>
         ) : (
           <Text fontSize="sm" color={mutedColor} textAlign="center" py={4}>
-            No recent captures. Start typing above.
+            {!showCaptures && !showSeeds
+              ? 'Select a filter above to see items.'
+              : 'No recent items. Start typing above.'}
           </Text>
         )}
       </Box>

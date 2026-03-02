@@ -4,9 +4,10 @@
 
 import { Box, VStack, Text, Spinner, Badge, HStack, Image } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { useStoryline } from '@mixtape/api/hooks/useLeaf';
+import { useStoryline, useDeleteLeaf } from '@mixtape/api/hooks/useLeaf';
 import { useComposerDraft } from './ComposerContext';
 import LeafCard from './LeafCard';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 function PreviewCard() {
   const ctx = useComposerDraft();
@@ -58,7 +59,15 @@ function PreviewCard() {
 
 export default function StorylineFeed() {
   const { data, isLoading, error } = useStoryline();
+  const { user } = useAuth();
+  const deleteLeaf = useDeleteLeaf();
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
+
+  const handleDelete = (leafId: string) => {
+    if (window.confirm('Delete this entry?')) {
+      deleteLeaf.mutate(leafId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -100,7 +109,11 @@ export default function StorylineFeed() {
     <VStack gap={4} align="stretch">
       <PreviewCard />
       {leaves.map((leaf) => (
-        <LeafCard key={leaf.id} leaf={leaf} />
+        <LeafCard
+          key={leaf.id}
+          leaf={leaf}
+          onDelete={user?.username === leaf.author.username ? handleDelete : undefined}
+        />
       ))}
     </VStack>
   );

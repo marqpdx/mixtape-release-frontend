@@ -20,6 +20,10 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
 const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
+const GRIST_HELP_TEXT = `/issue Brief title
+severity: medium
+area: editor
+steps: ...`;
 
 type PersistedDraft = {
   text: string;
@@ -43,6 +47,7 @@ export default function GristQuickPopup() {
   const [promoting, setPromoting] = useState(false);
   const [autosaveStamp, setAutosaveStamp] = useState<number | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const [routePath, setRoutePath] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -67,7 +72,8 @@ export default function GristQuickPopup() {
       const parsed = JSON.parse(raw) as PersistedDraft;
       if (parsed?.text) {
         setText(parsed.text);
-        setRoutePath(parsed.pathname || currentPath);
+        const livePath = `${window.location.pathname}${window.location.search}`;
+        setRoutePath(parsed.pathname || livePath);
       }
     } catch {
       // no-op
@@ -254,8 +260,29 @@ export default function GristQuickPopup() {
                   Cmd/Ctrl + Enter promotes immediately. Cmd/Ctrl + . toggles this popup.
                 </Text>
               </VStack>
-              <CloseButton onClick={() => setOpen(false)} />
+              <HStack gap={1}>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  minW="24px"
+                  h="24px"
+                  p={0}
+                  onClick={() => setShowHelp((prev) => !prev)}
+                  aria-label="Toggle Grist help"
+                >
+                  ?
+                </Button>
+                <CloseButton onClick={() => setOpen(false)} />
+              </HStack>
             </HStack>
+
+            {showHelp ? (
+              <Box p={2} borderWidth="1px" borderColor="border" borderRadius="md" bg="bg.subtle">
+                <Text fontSize="xs" whiteSpace="pre-wrap" color="fg.muted">
+                  {GRIST_HELP_TEXT}
+                </Text>
+              </Box>
+            ) : null}
 
             <Input
               size="sm"
@@ -272,10 +299,7 @@ export default function GristQuickPopup() {
               resize="vertical"
               value={text}
               onChange={(event) => setText(normalizeIssueShortcut(event.target.value))}
-              placeholder={`/issue Brief title
-severity: medium
-area: editor
-steps: ...`}
+              placeholder={GRIST_HELP_TEXT}
               fontFamily="mono"
               fontSize="sm"
             />

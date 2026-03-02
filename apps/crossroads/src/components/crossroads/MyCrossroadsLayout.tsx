@@ -68,7 +68,9 @@ export default function MyCrossroadsLayout({
                 </IconButton>
               </Box>
             )}
-            {narrativePane}
+            <Box maxW="640px" mx="auto">
+              {narrativePane}
+            </Box>
           </Box>
 
           {/* Composer pane (owner only, not full mode) */}

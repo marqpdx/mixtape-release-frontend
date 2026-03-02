@@ -2,14 +2,15 @@
 
 'use client';
 
-import { Box, VStack, HStack, Text, Badge, Image } from '@chakra-ui/react';
+import { Box, VStack, HStack, Text, Badge, Image, IconButton } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { IconMessageCircle, IconLink, IconMicrophone } from '@tabler/icons-react';
+import { IconMessageCircle, IconLink, IconMicrophone, IconTrash } from '@tabler/icons-react';
 import type { Leaf } from '@mixtape/core/types/leaf';
 import NextLink from 'next/link';
 
 interface LeafCardProps {
   leaf: Leaf;
+  onDelete?: (leafId: string) => void;
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -34,13 +35,15 @@ function LeafBody({ leaf }: { leaf: Leaf }) {
   if (leaf.kind === 'image' && leaf.image_file) {
     return (
       <VStack align="stretch" gap={2}>
-        <Image
-          src={leaf.image_file}
-          alt=""
-          borderRadius="md"
-          w="full"
-          objectFit="cover"
-        />
+        <Box borderRadius="md" overflow="hidden">
+          <Image
+            src={leaf.image_file}
+            alt=""
+            w="full"
+            aspectRatio={1}
+            objectFit="cover"
+          />
+        </Box>
         {leaf.body_text && (
           <Text fontSize="sm" whiteSpace="pre-wrap">{leaf.body_text}</Text>
         )}
@@ -127,7 +130,7 @@ function ReferenceCard({ leaf }: { leaf: Leaf }) {
   );
 }
 
-export default function LeafCard({ leaf }: LeafCardProps) {
+export default function LeafCard({ leaf, onDelete }: LeafCardProps) {
   const cardBg = useColorModeValue('white', 'gray.800');
   const hoverBg = useColorModeValue('gray.50', 'gray.750');
   const borderColor = useColorModeValue('gray.100', 'gray.700');
@@ -188,13 +191,29 @@ export default function LeafCard({ leaf }: LeafCardProps) {
       {leaf.is_reference && <ReferenceCard leaf={leaf} />}
 
       {/* Footer */}
-      <HStack mt={3} gap={4}>
+      <HStack mt={3} gap={4} justify="space-between">
         <HStack gap={1} color={mutedColor}>
           <IconMessageCircle size={16} />
           <Text fontSize="xs">
             {leaf.comment_count > 0 ? leaf.comment_count : 'Reply'}
           </Text>
         </HStack>
+        {onDelete && (
+          <IconButton
+            aria-label="Delete entry"
+            variant="ghost"
+            size="xs"
+            color={mutedColor}
+            _hover={{ color: 'red.500' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(leaf.id);
+            }}
+          >
+            <IconTrash size={14} />
+          </IconButton>
+        )}
       </HStack>
       </Box>
     </NextLink>

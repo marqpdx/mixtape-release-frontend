@@ -16,8 +16,8 @@ import {
   Image,
 } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { IconArrowLeft, IconSend } from '@tabler/icons-react';
-import { useLeafDetail, useLeafComments, useCreateComment } from '@mixtape/api/hooks/useLeaf';
+import { IconArrowLeft, IconSend, IconTrash } from '@tabler/icons-react';
+import { useLeafDetail, useLeafComments, useCreateComment, useDeleteLeaf } from '@mixtape/api/hooks/useLeaf';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { LeafComment } from '@mixtape/core/types/leaf';
 
@@ -137,6 +137,9 @@ export default function LeafDetailPage() {
   const { data: leaf, isLoading, error } = useLeafDetail(leafId);
   const { data: comments } = useLeafComments(leafId);
   const createComment = useCreateComment(leafId);
+  const deleteLeaf = useDeleteLeaf();
+
+  const isOwner = user?.username === leaf?.author.username;
 
   const [commentText, setCommentText] = useState('');
 
@@ -169,16 +172,36 @@ export default function LeafDetailPage() {
 
   return (
     <Box maxW="700px" mx="auto" px={4} py={6}>
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        mb={6}
-        onClick={() => router.back()}
-      >
-        <IconArrowLeft size={16} />
-        Back
-      </Button>
+      {/* Back + Delete */}
+      <HStack justify="space-between" mb={6}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+        >
+          <IconArrowLeft size={16} />
+          Back
+        </Button>
+        {isOwner && (
+          <Button
+            variant="ghost"
+            size="sm"
+            color={mutedColor}
+            _hover={{ color: 'red.500' }}
+            onClick={() => {
+              if (window.confirm('Delete this entry?')) {
+                deleteLeaf.mutate(leafId, {
+                  onSuccess: () => router.back(),
+                });
+              }
+            }}
+            loading={deleteLeaf.isPending}
+          >
+            <IconTrash size={14} />
+            Delete
+          </Button>
+        )}
+      </HStack>
 
       {/* Leaf content */}
       <VStack align="stretch" gap={4}>

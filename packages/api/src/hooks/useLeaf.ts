@@ -83,3 +83,14 @@ export function usePublishLeaf() {
     },
   });
 }
+
+export function useDeleteLeaf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => leafApi.deleteLeaf(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: leafKeys.storyline() });
+      qc.invalidateQueries({ queryKey: leafKeys.drafts() });
+    },
+  });
+}
