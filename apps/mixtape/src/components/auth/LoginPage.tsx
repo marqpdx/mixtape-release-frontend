@@ -59,7 +59,7 @@ const LoginPage: React.FC = () => {
         description: "Welcome back!",
       });
 
-      const fallback = `/member/${userData.username}`;
+      const fallback = `/members/${userData.username}`;
       const redirectTo = safeRedirect(searchParams.get("redirect"), fallback);
 
       console.log("LoginPage redirecting to:", redirectTo);

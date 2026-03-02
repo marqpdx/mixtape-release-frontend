@@ -36,6 +36,24 @@ function sanitizeUrl(url: URL): string {
   return `${sanitized.pathname}${sanitized.search}`;
 }
 
+/**
+ * Server-side safe redirect guard for middleware.
+ * Allows only same-origin absolute paths (e.g. /app/admin), rejects
+ * external origins and protocol-relative URLs.
+ */
+function safeRedirectPath(value: string | null, request: NextRequest, fallback = "/"): string {
+  if (!value) return fallback;
+  // Reject protocol-relative redirect targets like //evil.com
+  if (value.startsWith("//")) return fallback;
+  try {
+    const parsed = new URL(value, request.url);
+    if (parsed.origin !== request.nextUrl.origin) return fallback;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return value.startsWith("/") ? value : fallback;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -128,7 +146,9 @@ export function middleware(request: NextRequest) {
   // Redirect authenticated users trying to access auth pages
   // UNLESS this is a logout redirect (cookies being deleted, timing issue)
   if (isAuthPage && isAuthenticated && !isLogoutRedirect) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const requestedRedirect = request.nextUrl.searchParams.get("redirect");
+    const target = safeRedirectPath(requestedRedirect, request, "/");
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   // Allow all other requests
