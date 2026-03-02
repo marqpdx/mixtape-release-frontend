@@ -64,6 +64,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
+  { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", memberOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", memberOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "_dbrd", href: "/dashboard", section: "authenticated", adminOnly: true, shortLabel: "Dash" },
@@ -106,9 +107,9 @@ export default function UnifiedNavbar({
     onClose: onNotificationsClose,
   } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
-  const homeHref =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "/");
+  const publicSiteBase =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+  const homeHref = publicSiteBase;
   const myCrossroadsLabel = defaultGroup?.title
     ? `My ${defaultGroup.title}`
     : "My Crossroads";
@@ -149,12 +150,28 @@ export default function UnifiedNavbar({
 
   // Helper to resolve dynamic hrefs (e.g., {username} placeholder)
   const resolveHref = (href: string) => {
-    if (identity?.username) {
-      return href
+    const resolved = identity?.username
+      ? href
         .replace('{username}', identity.username)
-        .replace('{defaultGroupSlug}', defaultGroupSlug);
+        .replace('{defaultGroupSlug}', defaultGroupSlug)
+      : href.replace('{defaultGroupSlug}', defaultGroupSlug);
+
+    // Keep public member landing outside /app basePath.
+    if (resolved.startsWith('/members/')) {
+      return `${publicSiteBase}${resolved}`;
     }
-    return href.replace('{defaultGroupSlug}', defaultGroupSlug);
+    return resolved;
+  };
+
+  const navPath = (href: string) => {
+    if (href.startsWith('http')) {
+      try {
+        return new URL(href).pathname;
+      } catch {
+        return href;
+      }
+    }
+    return href;
   };
 
   // Filter items based on current section and permissions
@@ -172,8 +189,8 @@ export default function UnifiedNavbar({
 
   // Determine active item
   const activeItem = visibleItems.find(item =>
-    pathname === item.href ||
-    (item.href !== "/" && pathname.startsWith(item.href))
+    pathname === navPath(item.href) ||
+    (navPath(item.href) !== "/" && pathname.startsWith(navPath(item.href)))
   );
 
   const handleLogout = async () => {
@@ -360,7 +377,7 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href="/profile" display="flex" gap={2}>
+                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
                       </Link>
@@ -429,8 +446,9 @@ export default function UnifiedNavbar({
                 {visibleItems.map((item) => (
                   <Link
                     key={item.key}
-                    as={NextLink}
-                    href={item.href}
+                    {...(item.href.startsWith('http')
+                      ? { href: item.href }
+                      : { as: NextLink, href: item.href })}
                     onClick={onClose}
                     color={activeItem?.key === item.key ? "theme.accent" : "theme.text"}
                     fontWeight={activeItem?.key === item.key ? "bold" : "medium"}

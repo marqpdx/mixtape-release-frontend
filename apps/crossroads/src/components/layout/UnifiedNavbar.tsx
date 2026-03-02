@@ -85,6 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "contact", label: "Contact", href: "/contact", section: "public" },
 
   // Authenticated section (members + admins)
+  { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
   // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
@@ -120,6 +121,7 @@ export default function UnifiedNavbar({
   const navBackground = useColorModeValue("rgba(255, 255, 255, 0.75)", "rgba(17, 24, 39, 0.75)");
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
+  const publicSiteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
 
   // Auto-detect section if not provided
   const detectedSection: NavSection =
@@ -139,6 +141,27 @@ export default function UnifiedNavbar({
 
   const { isAdmin, isSteward } = { isAdmin: false, isSteward: false };
 
+  const resolveHref = (href: string) => {
+    const resolved = identity?.username
+      ? href.replace('{username}', identity.username)
+      : href;
+    if (resolved.startsWith('/members/')) {
+      return `${publicSiteBase}${resolved}`;
+    }
+    return resolved;
+  };
+
+  const navPath = (href: string) => {
+    if (href.startsWith('http')) {
+      try {
+        return new URL(href).pathname;
+      } catch {
+        return href;
+      }
+    }
+    return href;
+  };
+
   // Filter items based on current section and permissions
   const visibleItems = NAV_ITEMS.filter(item => {
     if (item.section !== navSection) return false;
@@ -146,15 +169,22 @@ export default function UnifiedNavbar({
     if (item.stewardOnly && !isSteward) return false;
     if (item.memberOnly && !identity) return false;
     return true;
-  });
+  }).map((item) => ({
+    ...item,
+    href: resolveHref(item.href),
+    children: item.children?.map((child) => ({
+      ...child,
+      href: resolveHref(child.href),
+    })),
+  }));
 
   // Determine active item
   const activeItem = visibleItems.find(item =>
-    pathname === item.href ||
-    (item.href !== "/" && pathname.startsWith(item.href)) ||
+    pathname === navPath(item.href) ||
+    (navPath(item.href) !== "/" && pathname.startsWith(navPath(item.href))) ||
     item.children?.some(child =>
-      pathname === child.href ||
-      (child.href !== "/" && pathname.startsWith(child.href))
+      pathname === navPath(child.href) ||
+      (navPath(child.href) !== "/" && pathname.startsWith(navPath(child.href)))
     )
   );
 
@@ -352,7 +382,7 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
+                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
                       </Link>
@@ -423,8 +453,9 @@ export default function UnifiedNavbar({
                   return (
                     <Box key={item.key}>
                       <Link
-                        as={NextLink}
-                        href={item.href}
+                        {...(item.href.startsWith('http')
+                          ? { href: item.href }
+                          : { as: NextLink, href: item.href })}
                         onClick={onClose}
                         color={isActive ? "theme.accent" : "theme.text"}
                         fontWeight={isActive ? "bold" : "medium"}
@@ -440,8 +471,9 @@ export default function UnifiedNavbar({
                             return (
                             <Link
                               key={child.key}
-                              as={NextLink}
-                              href={child.href}
+                              {...(child.href.startsWith('http')
+                                ? { href: child.href }
+                                : { as: NextLink, href: child.href })}
                               onClick={onClose}
                               color={isChildActive ? "theme.accent" : "theme.textSecondary"}
                               fontWeight={isChildActive ? "bold" : "medium"}
