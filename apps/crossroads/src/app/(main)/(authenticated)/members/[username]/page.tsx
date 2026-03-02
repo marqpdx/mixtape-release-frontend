@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth/AuthContext';
 import MyCrossroadsLayout from '@/components/crossroads/MyCrossroadsLayout';
 import WritingSection from '@/components/crossroads/WritingSection';
-import Composer from '@/components/crossroads/Composer';
+import ComposerPane from '@/components/crossroads/ComposerPane';
 import { ComposerProvider } from '@/components/crossroads/ComposerContext';
 import { fetchPublicMemberProfile } from '@mixtape/api/clients/public/publicApi';
 
@@ -26,14 +26,16 @@ export default function MyCrossroadsPage() {
 
   const narrativePane = (
     <WritingSection
-      showStreams
+      showStreams={isOwner}
       showFollowButton={!isOwner && !!user}
       userId={profile?.user_id}
       beaconKey="my_crossroads_v1"
+      isOwner={isOwner}
+      currentUsername={user?.username}
     />
   );
 
-  const composerPane = <Composer />;
+  const composerPane = <ComposerPane />;
 
   return (
     <ComposerProvider>
