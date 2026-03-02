@@ -106,12 +106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
       setUser(null);
-      router.push('/');
+      router.push('/app/login');
     } catch (error) {
       console.error('Logout failed:', error);
       // Still clear user state even if API call fails
       setUser(null);
-      router.push('/');
+      router.push('/app/login');
     }
   }, [router]);
 

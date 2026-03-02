@@ -24,8 +24,7 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      const currentPath = window.location.pathname;
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      router.push('/app/login');
     }
   }, [isLoading, isAuthenticated, router]);
 
