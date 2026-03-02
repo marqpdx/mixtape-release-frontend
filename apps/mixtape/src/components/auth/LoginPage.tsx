@@ -24,7 +24,7 @@ import { toaster } from "@mixtape/core/lib/toaster";
 
 import { LoginFormProps } from "./interfaces";
 
-const PUBLIC_MEMBER_URL = "https://www.crossroads.place/member";
+const PUBLIC_MEMBER_URL = "https://www.crossroads.place/members";
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
 
       const requestedRedirect = searchParams.get("redirect");
       if (requestedRedirect) {
-        const redirectTo = safeRedirect(requestedRedirect, `/member/${userData.username}`);
+        const redirectTo = safeRedirect(requestedRedirect, `/members/${userData.username}`);
         console.log("LoginPage redirecting to:", redirectTo);
         // Keep SPA navigation for in-app redirects
         router.push(redirectTo);
