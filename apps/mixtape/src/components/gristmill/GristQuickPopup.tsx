@@ -1,3 +1,5 @@
+// apps/mixtape/src/components/gristmill/GristQuickPopup.tsx
+//
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,6 +11,7 @@ import {
   HStack,
   IconButton,
   Input,
+  Link,
   Text,
   Textarea,
   VStack,
@@ -286,13 +289,19 @@ export default function GristQuickPopup() {
               </Box>
             ) : null}
 
-            <Input
-              size="sm"
-              value={routePath || currentPath}
-              readOnly
-              color="fg.muted"
-              borderColor="border.muted"
-            />
+            <HStack gap={2}>
+              <Input
+                size="sm"
+                value={routePath || currentPath}
+                readOnly
+                color="fg.muted"
+                borderColor="border.muted"
+                flex="1"
+              />
+              <Button asChild size="xs" variant="outline">
+                <Link href="/app/feedback/checklist">Checklist</Link>
+              </Button>
+            </HStack>
 
             <Textarea
               ref={textareaRef}
