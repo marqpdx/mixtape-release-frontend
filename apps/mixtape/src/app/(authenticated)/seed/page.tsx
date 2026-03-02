@@ -28,8 +28,13 @@ export default function SeedCapturePage() {
     seedId,
     saveNow,
     resetSeed,
-  } = useSeedAutosave("", 1500);
-  const refreshToken = useMemo(() => savedTick + (seedId ? 1 : 0), [savedTick, seedId]);
+  } = useSeedAutosave("", 2000);
+  const [listRefreshTick, setListRefreshTick] = useState(0);
+  const listRefreshDebounceRef = useRef<number | null>(null);
+  const refreshToken = useMemo(
+    () => listRefreshTick + (seedId ? 1 : 0),
+    [listRefreshTick, seedId]
+  );
   const { seeds, loading } = useSeedList(20, refreshToken);
   const [seedItems, setSeedItems] = useState(seeds);
   const [recentSeedId, setRecentSeedId] = useState<string | null>(null);
@@ -204,6 +209,21 @@ export default function SeedCapturePage() {
     );
     setSeedItems(sorted);
   }, [seeds]);
+
+  useEffect(() => {
+    if (savedTick === 0) return;
+    if (listRefreshDebounceRef.current) {
+      window.clearTimeout(listRefreshDebounceRef.current);
+    }
+    listRefreshDebounceRef.current = window.setTimeout(() => {
+      setListRefreshTick((value) => value + 1);
+    }, 12000);
+    return () => {
+      if (listRefreshDebounceRef.current) {
+        window.clearTimeout(listRefreshDebounceRef.current);
+      }
+    };
+  }, [savedTick]);
 
   useEffect(() => {
     const processingSeeds = seedItems.filter((seed) => seed.status === "processing");

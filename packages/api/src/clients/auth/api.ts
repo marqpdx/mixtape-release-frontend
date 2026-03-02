@@ -30,6 +30,22 @@ const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
 let csrfToken: string | null = null;
 
 /**
+ * Best-effort refresh cookie clear.
+ * Useful when a stale httpOnly refresh cookie keeps auth flow in a bad state.
+ */
+async function clearRefreshCookieBestEffort(): Promise<void> {
+  try {
+    await fetch(LOGOUT_URL, {
+      method: "POST",
+      headers: getHeaders(),
+      credentials: "include",
+    });
+  } catch {
+    // Ignore: this is cleanup-only.
+  }
+}
+
+/**
  * Get current CSRF token
  */
 export function getCsrfToken(): string | null {
@@ -90,6 +106,10 @@ export async function login(credentials: LoginCredentials): Promise<UserIdentity
   if (!rateLimitCheck.isAllowed) {
     throw new Error(rateLimitCheck.message || 'Too many login attempts');
   }
+
+  // Defensive cleanup: if a stale refresh cookie exists, clear it before new login.
+  // This prevents bad-state loops after server restarts/token invalidation.
+  await clearRefreshCookieBestEffort();
 
   const response = await fetch(LOGIN_URL, {
     method: 'POST',
@@ -203,6 +223,7 @@ export async function refreshAccessToken(): Promise<string | null> {
           ].includes(code)
         ) {
           clearAccessToken();
+          await clearRefreshCookieBestEffort();
         }
 
         return null;

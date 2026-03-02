@@ -15,12 +15,13 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@mixtape/core/lib/toaster";
+import * as authApi from "@mixtape/api/clients/auth/api";
 
 import { LoginFormProps } from "./interfaces";
 
@@ -37,6 +38,12 @@ const LoginPage: React.FC = () => {
     identifier: "",
     password: "",
   });
+
+  useEffect(() => {
+    // Entering login should start from a clean auth cookie state.
+    // If refresh_token is stale (e.g., after server restart), clear it first.
+    authApi.logout().catch(() => undefined);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
