@@ -2,10 +2,10 @@
 
 'use client';
 
-import { Box, HStack, Text, Button, Badge } from '@chakra-ui/react';
+import { Box, HStack, Text, Button, Badge, IconButton } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { IconArrowUpRight } from '@tabler/icons-react';
-import { usePromoteSeedToLeaf } from '@mixtape/api/hooks/useSeed';
+import { IconArrowUpRight, IconTrash, IconLeaf, IconSeedlingFilled } from '@tabler/icons-react';
+import { usePromoteSeedToLeaf, useDeleteSeed } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 
 interface SeedCardProps {
@@ -25,12 +25,15 @@ function formatTimeAgo(dateStr: string): string {
 
 export default function SeedCard({ seed }: SeedCardProps) {
   const promote = usePromoteSeedToLeaf();
+  const deleteSeed = useDeleteSeed();
 
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
+  const iconColor = useColorModeValue('gray.300', 'gray.600');
 
   const isPromoted = !!seed.promoted_to;
+  const isSeed = seed.source === 'web';
 
   return (
     <Box
@@ -40,8 +43,18 @@ export default function SeedCard({ seed }: SeedCardProps) {
       borderRadius="md"
       bg={cardBg}
       opacity={isPromoted ? 0.6 : 1}
+      position="relative"
     >
-      <Text fontSize="sm" lineClamp={3}>
+      {/* Type icon — top right */}
+      <Box position="absolute" top={2} right={2} color={iconColor}>
+        {isSeed ? (
+          <IconSeedlingFilled size={14} />
+        ) : (
+          <IconLeaf size={14} />
+        )}
+      </Box>
+
+      <Text fontSize="sm" lineClamp={3} pr={5}>
         {seed.body_text || (seed.kind === 'voice' ? '(Voice note)' : '(Empty)')}
       </Text>
 
@@ -62,17 +75,30 @@ export default function SeedCard({ seed }: SeedCardProps) {
           )}
         </HStack>
 
-        {!isPromoted && (
-          <Button
+        <HStack gap={1}>
+          {!isPromoted && (
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => promote.mutate(seed.id)}
+              loading={promote.isPending}
+            >
+              <IconArrowUpRight size={14} />
+              Add to Storyline
+            </Button>
+          )}
+          <IconButton
+            aria-label="Delete"
             size="xs"
             variant="ghost"
-            onClick={() => promote.mutate(seed.id)}
-            loading={promote.isPending}
+            color={mutedColor}
+            _hover={{ color: 'red.500' }}
+            onClick={() => deleteSeed.mutate(seed.id)}
+            loading={deleteSeed.isPending}
           >
-            <IconArrowUpRight size={14} />
-            Add to Storyline
-          </Button>
-        )}
+            <IconTrash size={12} />
+          </IconButton>
+        </HStack>
       </HStack>
     </Box>
   );

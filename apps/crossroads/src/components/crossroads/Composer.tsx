@@ -200,9 +200,9 @@ export default function Composer({ onPosted }: ComposerProps) {
   const filteredSeeds = useMemo(() => {
     if (!recentSeeds) return [];
     return recentSeeds.filter((seed) => {
-      const isCapture = seed.source === 'web';
-      if (isCapture) return showCaptures;
-      return showSeeds;
+      const isSeed = seed.source === 'web';
+      if (isSeed) return showSeeds;
+      return showCaptures;
     });
   }, [recentSeeds, showCaptures, showSeeds]);
 

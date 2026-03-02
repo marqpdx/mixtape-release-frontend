@@ -41,6 +41,10 @@ export async function updateSeed(
   return res.data;
 }
 
+export async function deleteSeed(id: string): Promise<void> {
+  await axiosInstance.delete(`/api/writing/seeds/${id}`);
+}
+
 export async function promoteSeedToLeaf(seedId: string) {
   const res = await axiosInstance.post(`/api/writing/seeds/${seedId}/promote-to-leaf`);
   return res.data;

@@ -37,6 +37,16 @@ export function useUpdateSeed() {
   });
 }
 
+export function useDeleteSeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: seedApi.deleteSeed,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: seedKeys.recent() });
+    },
+  });
+}
+
 export function usePromoteSeedToLeaf() {
   const qc = useQueryClient();
   return useMutation({
