@@ -25,16 +25,13 @@ export default function SeedCapturePage() {
   const {
     schedule,
     savedTick,
-    seedId,
     saveNow,
     resetSeed,
   } = useSeedAutosave("", 2000);
   const [listRefreshTick, setListRefreshTick] = useState(0);
   const listRefreshDebounceRef = useRef<number | null>(null);
-  const refreshToken = useMemo(
-    () => listRefreshTick + (seedId ? 1 : 0),
-    [listRefreshTick, seedId]
-  );
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const refreshToken = useMemo(() => listRefreshTick, [listRefreshTick]);
   const { seeds, loading } = useSeedList(20, refreshToken);
   const [seedItems, setSeedItems] = useState(seeds);
   const [recentSeedId, setRecentSeedId] = useState<string | null>(null);
@@ -60,6 +57,25 @@ export default function SeedCapturePage() {
     setText(value);
     schedule({ body_text: value });
   };
+
+  const scrollToLatest = useCallback(() => {
+    const container = listContainerRef.current;
+    if (!container) return;
+    window.requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  }, []);
+
+  const triggerListRefreshNow = useCallback(() => {
+    if (listRefreshDebounceRef.current) {
+      window.clearTimeout(listRefreshDebounceRef.current);
+      listRefreshDebounceRef.current = null;
+    }
+    setListRefreshTick((value) => value + 1);
+  }, []);
 
 
   const uploadVoiceBlob = async (blob: Blob) => {
@@ -89,6 +105,7 @@ export default function SeedCapturePage() {
       setText("");
       resetSeed();
       schedule({ body_text: "" });
+      triggerListRefreshNow();
       return;
     }
     const trimmed = text.trim();
@@ -97,6 +114,7 @@ export default function SeedCapturePage() {
     setText("");
     resetSeed();
     schedule({ body_text: "" });
+    triggerListRefreshNow();
   };
 
   useEffect(() => {
@@ -208,7 +226,8 @@ export default function SeedCapturePage() {
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     setSeedItems(sorted);
-  }, [seeds]);
+    scrollToLatest();
+  }, [scrollToLatest, seeds]);
 
   useEffect(() => {
     if (savedTick === 0) return;
@@ -438,6 +457,7 @@ export default function SeedCapturePage() {
     setText("");
     resetSeed();
     schedule({ body_text: "" });
+    triggerListRefreshNow();
   };
 
   return (
@@ -448,7 +468,7 @@ export default function SeedCapturePage() {
       gap={4}
       pb={`calc(max(env(safe-area-inset-bottom), ${bottomPad}px))`}
     >
-      <Box flex="0 0 60vh" h="60vh" overflowY="auto">
+      <Box ref={listContainerRef} flex="0 0 60vh" h="60vh" overflowY="auto">
         <Stack gap={3}>
           {loading && <Text color="fg.muted">Loading seeds...</Text>}
           {!loading && seeds.length === 0 && <Text color="fg.muted">No seeds yet.</Text>}
@@ -637,6 +657,7 @@ export default function SeedCapturePage() {
               variant="solid"
               onClick={handleSend}
               disabled={text.trim().length === 0 && !voiceBlob}
+              cursor="pointer"
             >
               <IconSend size={16} />
             </IconButton>
