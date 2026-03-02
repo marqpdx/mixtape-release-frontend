@@ -1,4 +1,4 @@
-// components/crossroads/MyCrossroadsLayout.tsx
+// apps/crossroads/components/crossroads/MyCrossroadsLayout.tsx
 
 'use client';
 
@@ -47,13 +47,22 @@ export default function MyCrossroadsLayout({
       {/* Desktop layout (md+) */}
       <Box display={{ base: 'none', md: 'block' }} maxW="1400px" mx="auto" px={4}>
         <HStack align="start" gap={0} minH="calc(100vh - 60px)">
+          {/*
+            Layout transition: The composer pane stays mounted at all times
+            (never conditionally rendered) to avoid DOM mount/unmount causing
+            layout thrash. Instead it collapses to 0% width + opacity 0 when
+            hidden. We animate only flex-basis and opacity — NOT "all" — to
+            prevent the narrative content (especially images) from reflowing
+            mid-transition, which caused a visible bounce.
+          */}
+
           {/* Narrative pane */}
           <Box
             flex={showComposer ? '0 0 60%' : '1'}
             maxW={showComposer ? '60%' : '100%'}
             py={6}
             pr={showComposer ? 4 : 0}
-            transition="all 0.3s"
+            transition="flex 0.2s ease, max-width 0.2s ease, padding 0.2s ease"
           >
             {/* Full mode toggle */}
             {isOwner && (
@@ -73,21 +82,24 @@ export default function MyCrossroadsLayout({
             </Box>
           </Box>
 
-          {/* Composer pane (owner only, not full mode) */}
-          {showComposer && (
+          {/* Composer pane (owner only) — always mounted, hidden via width collapse */}
+          {isOwner && (
             <Box
-              flex="0 0 40%"
-              maxW="40%"
-              py={6}
-              pl={4}
-              pr={2}
-              borderLeftWidth="1px"
+              flex={showComposer ? '0 0 40%' : '0 0 0%'}
+              maxW={showComposer ? '40%' : '0%'}
+              overflow="hidden"
+              opacity={showComposer ? 1 : 0}
+              py={showComposer ? 6 : 0}
+              pl={showComposer ? 4 : 0}
+              pr={showComposer ? 2 : 0}
+              borderLeftWidth={showComposer ? '1px' : '0'}
               borderColor={borderColor}
               position="sticky"
               top="60px"
               maxH="calc(100vh - 60px)"
-              overflowY="auto"
+              overflowY={showComposer ? 'auto' : 'hidden'}
               bg={composerBg}
+              transition="flex 0.2s ease, max-width 0.2s ease, opacity 0.15s ease, padding 0.2s ease"
             >
               {composerPane}
             </Box>
