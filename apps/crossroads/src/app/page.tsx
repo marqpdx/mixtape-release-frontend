@@ -107,7 +107,7 @@ export default function CrossroadsHomepage() {
     {
       title: "Return",
       body: "Already part of Crossroads? Head to your dashboard.",
-      href: "/login",
+      href: "/app/login",
       cta: "Login",
       icon: <IconLogin size={18} />,
       variant: "ghost" as const,
@@ -281,7 +281,7 @@ export default function CrossroadsHomepage() {
                     asChild
                     {...ctaStyles.ghost}
                   >
-                    <Link as={NextLink} href="/login">
+                    <Link as={NextLink} href="/app/login">
                       <HStack gap={2}>
                         <IconLogin size={18} />
                         <Text>Login</Text>
