@@ -24,6 +24,8 @@ import { toaster } from "@mixtape/core/lib/toaster";
 
 import { LoginFormProps } from "./interfaces";
 
+const PUBLIC_MEMBER_URL = "https://www.crossroads.place/member";
+
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const router = useRouter();
@@ -59,13 +61,18 @@ const LoginPage: React.FC = () => {
         description: "Welcome back!",
       });
 
-      const fallback = `/members/${userData.username}`;
-      const redirectTo = safeRedirect(searchParams.get("redirect"), fallback);
-
-      console.log("LoginPage redirecting to:", redirectTo);
-
-      // Use router.push to avoid losing in-memory access token
-      router.push(redirectTo);
+      const requestedRedirect = searchParams.get("redirect");
+      if (requestedRedirect) {
+        const redirectTo = safeRedirect(requestedRedirect, `/member/${userData.username}`);
+        console.log("LoginPage redirecting to:", redirectTo);
+        // Keep SPA navigation for in-app redirects
+        router.push(redirectTo);
+      } else {
+        const publicMemberUrl = `${PUBLIC_MEMBER_URL}/${encodeURIComponent(userData.username)}`;
+        console.log("LoginPage redirecting to public member page:", publicMemberUrl);
+        // Full navigation is intentional: this target is on the public site domain.
+        window.location.assign(publicMemberUrl);
+      }
 
       console.log("LoginPage login successful");
 
