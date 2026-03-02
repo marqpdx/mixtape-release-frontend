@@ -9,6 +9,8 @@ import {
   IconArrowsMaximize,
   IconArrowsMinimize,
   IconPencilPlus,
+  IconChevronDown,
+  IconChevronUp,
 } from '@tabler/icons-react';
 
 const FULL_MODE_KEY = 'crossroads-full-mode';
@@ -25,6 +27,7 @@ export default function MyCrossroadsLayout({
   isOwner,
 }: MyCrossroadsLayoutProps) {
   const [fullMode, setFullMode] = useState(false);
+  const [mobileComposerHidden, setMobileComposerHidden] = useState(false);
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const composerBg = useColorModeValue('gray.50', 'gray.800');
 
@@ -127,12 +130,12 @@ export default function MyCrossroadsLayout({
       {/* Mobile layout */}
       <Box display={{ base: 'block', md: 'none' }}>
         {/* Narrative content */}
-        <Box px={4} py={4} pb={isOwner ? '280px' : 4}>
+        <Box px={4} py={4} pb={isOwner && !mobileComposerHidden ? '280px' : 4}>
           {narrativePane}
         </Box>
 
         {/* Bottom composer (owner only) */}
-        {isOwner && (
+        {isOwner && !mobileComposerHidden && (
           <Box
             position="fixed"
             bottom={0}
@@ -141,14 +144,42 @@ export default function MyCrossroadsLayout({
             bg={composerBg}
             borderTopWidth="1px"
             borderColor={borderColor}
-            p={4}
-            maxH="50vh"
-            overflowY="auto"
             zIndex={10}
             shadow="lg"
           >
-            {composerPane}
+            {/* Minimize handle */}
+            <Box textAlign="center" pt={1} pb={0}>
+              <IconButton
+                aria-label="Minimize composer"
+                variant="ghost"
+                size="xs"
+                onClick={() => setMobileComposerHidden(true)}
+              >
+                <IconChevronDown size={16} />
+              </IconButton>
+            </Box>
+            <Box px={4} pb={4} maxH="45vh" overflowY="auto">
+              {composerPane}
+            </Box>
           </Box>
+        )}
+
+        {/* Floating button to restore composer */}
+        {isOwner && mobileComposerHidden && (
+          <IconButton
+            aria-label="Open composer"
+            position="fixed"
+            bottom={4}
+            right={4}
+            size="lg"
+            borderRadius="full"
+            colorPalette="blue"
+            onClick={() => setMobileComposerHidden(false)}
+            shadow="lg"
+            zIndex={10}
+          >
+            <IconPencilPlus size={22} />
+          </IconButton>
         )}
       </Box>
     </>
