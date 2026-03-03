@@ -153,6 +153,20 @@ export default function FeedbackChecklistPage() {
     }
   };
 
+  const handleResetToNew = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      const updated = await updateFeedbackStatus(id, "new");
+      if (shouldFadeRemoveForStatus("new")) {
+        removeWithFade([id]);
+      } else {
+        setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      }
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleDeleteItem = async (id: string) => {
     const confirmed = window.confirm("Delete this checklist item?");
     if (!confirmed) return;
@@ -177,6 +191,9 @@ export default function FeedbackChecklistPage() {
   };
 
   const selectableIds = items.filter((item) => item.status !== "shipped").map((item) => item.id);
+  const resettableSentToAgentIds = selectedIds.filter((id) =>
+    items.some((item) => item.id === id && item.status === "sent_to_agent")
+  );
   const allVisibleSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.includes(id));
 
   const toggleSelectAllVisible = (checked: boolean) => {
@@ -191,8 +208,9 @@ export default function FeedbackChecklistPage() {
     });
   };
 
-  const handleBulkUpdateStatus = async (nextStatus: FeedbackStatus) => {
-    const targets = selectedIds.filter((id) => selectableIds.includes(id));
+  const handleBulkUpdateStatus = async (nextStatus: FeedbackStatus, explicitTargets?: string[]) => {
+    const source = explicitTargets ?? selectedIds;
+    const targets = source.filter((id) => selectableIds.includes(id));
     if (targets.length === 0) return;
 
     setBulkUpdating(true);
@@ -393,6 +411,20 @@ Notes:
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                disabled={resettableSentToAgentIds.length === 0 || bulkUpdating}
+                onClick={() => {
+                  const confirmed = window.confirm(
+                    `Reset ${resettableSentToAgentIds.length} selected sent-to-agent item(s) back to new?`
+                  );
+                  if (!confirmed) return;
+                  void handleBulkUpdateStatus("new", resettableSentToAgentIds);
+                }}
+              >
+                {bulkUpdating ? "Updating..." : `Reset sent-to-agent (${resettableSentToAgentIds.length})`}
+              </Button>
+              <Button
+                size="sm"
                 colorPalette="red"
                 variant="outline"
                 disabled={selectedIds.length === 0 || bulkUpdating}
@@ -517,10 +549,14 @@ Notes:
                     size="xs"
                     colorPalette="blue"
                     variant={item.status === "sent_to_agent" ? "solid" : "outline"}
-                    disabled={item.status === "sent_to_agent" || updatingId === item.id}
-                    onClick={() => void handleMarkSentToAgent(item.id)}
+                    disabled={updatingId === item.id}
+                    onClick={() =>
+                      item.status === "sent_to_agent"
+                        ? void handleResetToNew(item.id)
+                        : void handleMarkSentToAgent(item.id)
+                    }
                   >
-                    {item.status === "sent_to_agent" ? "Sent to agent" : "Mark sent to agent"}
+                    {item.status === "sent_to_agent" ? "Reset to new" : "Mark sent to agent"}
                   </Button>
                   <Button
                     size="xs"
