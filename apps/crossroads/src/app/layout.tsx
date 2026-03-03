@@ -103,7 +103,7 @@ export default function RootLayout({
         alegreyaSans.variable,
       ].join(" ")}
     >
-      <body>
+      <body style={{ overflowX: 'hidden' }}>
         <Providers>
           {children}
         </Providers>

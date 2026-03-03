@@ -128,7 +128,7 @@ export default function MyCrossroadsLayout({
       </Box>
 
       {/* Mobile layout */}
-      <Box display={{ base: 'block', md: 'none' }}>
+      <Box display={{ base: 'block', md: 'none' }} overflowX="hidden">
         {/* Narrative content */}
         <Box px={4} py={4} pb={isOwner && !mobileComposerHidden ? '280px' : 4}>
           {narrativePane}
@@ -140,12 +140,13 @@ export default function MyCrossroadsLayout({
             position="fixed"
             bottom={0}
             left={0}
-            right={0}
+            w="100%"
             bg={composerBg}
             borderTopWidth="1px"
             borderColor={borderColor}
             zIndex={10}
             shadow="lg"
+            overflowX="hidden"
           >
             {/* Minimize handle */}
             <Box textAlign="center" pt={1} pb={0}>
