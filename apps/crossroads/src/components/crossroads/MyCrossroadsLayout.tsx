@@ -65,7 +65,8 @@ export default function MyCrossroadsLayout({
             maxW={showComposer ? '60%' : '100%'}
             py={6}
             pr={showComposer ? 4 : 0}
-            transition="flex 0.2s ease, max-width 0.2s ease, padding 0.2s ease"
+            // transition="flex 0.2s ease, max-width 0.2s ease, padding 0.2s ease"
+            transition="flex 0.2s ease, padding 0.2s ease"
           >
             {/* Full mode toggle */}
             {isOwner && (

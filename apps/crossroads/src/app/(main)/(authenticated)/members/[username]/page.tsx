@@ -24,12 +24,17 @@ export default function MyCrossroadsPage() {
     enabled: !isOwner && !!username,
   });
 
+  const writingBeaconKey =
+    user?.is_superuser
+      ? process.env.NEXT_PUBLIC_MY_CROSSROADS_BEACON_KEY
+      : undefined;
+
   const narrativePane = (
     <WritingSection
       showStreams={isOwner}
       showFollowButton={!isOwner && !!user}
       userId={profile?.user_id}
-      beaconKey="my_crossroads_v1"
+      beaconKey={writingBeaconKey}
       isOwner={isOwner}
       currentUsername={user?.username}
     />
