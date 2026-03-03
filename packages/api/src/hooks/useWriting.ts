@@ -149,6 +149,8 @@ export function useWriting(
       created_at: piece.created_at,
       updated_at: piece.updated_at,
       tags: piece.tags_list || [],
+      sponsor_content_type: piece.sponsor_content_type,
+      sponsor_object_id: piece.sponsor_object_id,
       display: {
         title: piece.title,
         excerpt: piece.excerpt,

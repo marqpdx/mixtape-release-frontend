@@ -164,22 +164,20 @@ export default function MyCrossroadsLayout({
           </Box>
         )}
 
-        {/* Floating button to restore composer */}
+        {/* Bottom-center button to restore composer */}
         {isOwner && mobileComposerHidden && (
-          <IconButton
-            aria-label="Open composer"
-            position="fixed"
-            bottom={4}
-            right={4}
-            size="lg"
-            borderRadius="full"
-            colorPalette="blue"
-            onClick={() => setMobileComposerHidden(false)}
-            shadow="lg"
-            zIndex={10}
-          >
-            <IconPencilPlus size={22} />
-          </IconButton>
+          <Box position="fixed" bottom={4} left="50%" transform="translateX(-50%)" zIndex={10}>
+            <IconButton
+              aria-label="Open composer"
+              size="lg"
+              borderRadius="full"
+              colorPalette="blue"
+              onClick={() => setMobileComposerHidden(false)}
+              shadow="lg"
+            >
+              <IconChevronUp size={20} />
+            </IconButton>
+          </Box>
         )}
       </Box>
     </>

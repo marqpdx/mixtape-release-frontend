@@ -220,6 +220,10 @@ export interface FlattenedPlacement {
   created_at: string
   updated_at: string
   tags?: string[]
+  sponsor_content_type?: string
+  sponsor_object_id?: string
+  sponsor_label?: string
+  sponsor_image_url?: string | null
   display?: {
     title: string
     excerpt: string

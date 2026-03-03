@@ -5,6 +5,7 @@ import { HStack, VStack, Text, Badge, Box, IconButton, Wrap, WrapItem } from '@c
 import { formatDistanceToNow } from 'date-fns'
 import { FlattenedPlacement } from '@mixtape/core/types/writingTypes'
 import { IconEdit } from '@tabler/icons-react'
+import Image from 'next/image'
 
 const columnHelper = createColumnHelper<FlattenedPlacement>()
 
@@ -34,62 +35,85 @@ function PostCell({
       rounded="md"
       transition="all 0.2s"
     >
-      <VStack align="start" gap={1} flex={1}>
-        <HStack gap={2} w="full" justify="space-between">
-          <HStack gap={2} minW={0} flex={1}>
-            <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
-              {placement.piece_title}
-            </Text>
-            {placement.is_pinned && (
-              <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
-            )}
-            {placement.is_announcement && (
-              <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+      <HStack align="start" gap={3}>
+        {placement.sponsor_image_url ? (
+          <Box
+            w="32px"
+            h="32px"
+            borderRadius="sm"
+            overflow="hidden"
+            borderWidth="1px"
+            borderColor="gray.200"
+            bg="gray.100"
+            flexShrink={0}
+          >
+            <Image
+              src={placement.sponsor_image_url}
+              alt={placement.sponsor_label || "Sponsor"}
+              width={32}
+              height={32}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </Box>
+        ) : null}
+
+        <VStack align="start" gap={1} flex={1}>
+          <HStack gap={2} w="full" justify="space-between">
+            <HStack gap={2} minW={0} flex={1}>
+              <Text fontWeight="semibold" fontSize="md" lineClamp={1}>
+                {placement.piece_title}
+              </Text>
+              {placement.is_pinned && (
+                <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
+              )}
+              {placement.is_announcement && (
+                <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
+              )}
+            </HStack>
+            {onEdit && (
+              <IconButton
+                aria-label="Edit"
+                size="sm"
+                variant="ghost"
+                colorScheme="green"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onEdit(placement)
+                }}
+              >
+                <IconEdit size={16} />
+              </IconButton>
             )}
           </HStack>
-          {onEdit && (
-            <IconButton
-              aria-label="Edit"
-              size="sm"
-              variant="ghost"
-              colorScheme="green"
-              onClick={(event) => {
-                event.stopPropagation()
-                onEdit(placement)
-              }}
-            >
-              <IconEdit size={16} />
-            </IconButton>
+
+          {placement.display?.excerpt && (
+            <Text fontSize="sm" color="gray.600" lineClamp={2}>
+              {placement.display.excerpt}
+            </Text>
           )}
-        </HStack>
 
-        {placement.display?.excerpt && (
-          <Text fontSize="sm" color="gray.600" lineClamp={2}>
-            {placement.display.excerpt}
-          </Text>
-        )}
+          {placement.tags && placement.tags.length > 0 && (
+            <Wrap gap={2}>
+              {placement.tags.map((tag) => (
+                <WrapItem key={tag}>
+                  <Badge size="sm" variant="subtle" colorScheme="gray">
+                    {tag}
+                  </Badge>
+                </WrapItem>
+              ))}
+            </Wrap>
+          )}
 
-        {placement.tags && placement.tags.length > 0 && (
-          <Wrap gap={2}>
-            {placement.tags.map((tag) => (
-              <WrapItem key={tag}>
-                <Badge size="sm" variant="subtle" colorScheme="gray">
-                  {tag}
-                </Badge>
-              </WrapItem>
-            ))}
-          </Wrap>
-        )}
-
-        <VStack gap={1} align="start" fontSize="xs" color="gray.500">
-          <Text>
-            By {placement.author_name} • Published {formatDistanceToNow(new Date(placement.published_at), { addSuffix: true })}
-          </Text>
-          <Text>
-            Visibility: {placement.visibility === 'public' ? '🌍 Public' : '👥 Members Only'}
-          </Text>
+          <VStack gap={1} align="start" fontSize="xs" color="gray.500">
+            <Text>
+              By {placement.author_name} • Published {formatDistanceToNow(new Date(placement.published_at), { addSuffix: true })}
+            </Text>
+            <Text>
+              Visibility: {placement.visibility === 'public' ? '🌍 Public' : '👥 Members Only'}
+            </Text>
+          </VStack>
         </VStack>
-      </VStack>
+      </HStack>
     </Box>
   )
 }

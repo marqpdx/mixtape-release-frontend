@@ -33,15 +33,20 @@ import {
   IconUsersGroup,
   IconUser,
   IconTrash,
+  IconMapPin,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
 import { useWriting, useWritingMutations } from "@hooks/useWriting";
+import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
 import NextLink from "next/link";
+import Image from "next/image";
+import { useAuth } from "@/lib/auth/AuthContext";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
 
 type ProseMirrorNode = {
@@ -111,7 +116,8 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-  const [groupByTags, setGroupByTags] = useState(false);
+  const [groupingMode, setGroupingMode] = useState<"by-tag" | "by-where">("by-tag");
+  const { user } = useAuth();
 
   // Load persisted tab from localStorage on mount
   useEffect(() => {
@@ -123,7 +129,11 @@ export default function WritingListWrapper({
       }
       const savedGroupByTags = window.localStorage.getItem("writing_group_by_tags");
       if (savedGroupByTags === "true") {
-        setGroupByTags(true);
+        setGroupingMode("by-tag");
+      }
+      const savedGroupingMode = window.localStorage.getItem("writing_group_mode");
+      if (savedGroupingMode === "by-tag" || savedGroupingMode === "by-where") {
+        setGroupingMode(savedGroupingMode);
       }
     } catch (error) {
       console.warn("Failed to load saved writing tab:", error);
@@ -142,18 +152,15 @@ export default function WritingListWrapper({
     }
   }, []);
 
-  const handleToggleGroupByTags = useCallback(() => {
-    setGroupByTags((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem("writing_group_by_tags", String(next));
-        } catch (error) {
-          console.warn("Failed to save tag grouping:", error);
-        }
+  const handleGroupingModeChange = useCallback((mode: "by-tag" | "by-where") => {
+    setGroupingMode(mode);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("writing_group_mode", mode);
+      } catch (error) {
+        console.warn("Failed to save group mode:", error);
       }
-      return next;
-    });
+    }
   }, []);
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
@@ -174,6 +181,7 @@ export default function WritingListWrapper({
     refetch,
   } = useWriting(sponsor.type, sponsor.slug);
   const { deleteDraft } = useWritingMutations(sponsor.type, sponsor.slug);
+  const { groups: userGroups = [] } = useUserGroups();
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage.getItem("writing_force_refresh") === "true") {
@@ -280,6 +288,129 @@ export default function WritingListWrapper({
       .toUpperCase()
       .slice(0, 2);
 
+  type SponsorMeta = {
+    key: string;
+    label: string;
+    imageUrl?: string;
+  };
+
+  const groupById = useMemo(() => {
+    const map = new Map<string, (typeof userGroups)[number]>();
+    userGroups.forEach((group) => map.set(group.id, group));
+    return map;
+  }, [userGroups]);
+
+  const personalSponsorMeta = useMemo<SponsorMeta>(
+    () => ({
+      key: "member:self",
+      label: "Personal",
+      imageUrl: user?.profile?.avatar_url?.trim() || undefined,
+    }),
+    [user]
+  );
+
+  const getPlacementSponsorMeta = useCallback(
+    (placement: FlattenedPlacement): SponsorMeta => {
+      if (sponsor.type === "group") {
+        return {
+          key: `group:${sponsor.slug}`,
+          label: sponsor.displayName || sponsor.slug,
+        };
+      }
+
+      const sourceType = placement.sponsor_content_type;
+      const sourceId = placement.sponsor_object_id;
+      if (sourceType === "group" && sourceId) {
+        const group = groupById.get(sourceId);
+        const imageUrl =
+          getBestEmblemUrl(group?.emblem, 48) ||
+          group?.profile_image_url ||
+          group?.profile_image ||
+          undefined;
+        return {
+          key: `group:${sourceId}`,
+          label: group?.title || "Group",
+          imageUrl,
+        };
+      }
+      return personalSponsorMeta;
+    },
+    [groupById, personalSponsorMeta, sponsor.displayName, sponsor.slug, sponsor.type]
+  );
+
+  const getDraftSponsorMeta = useCallback(
+    (draft: WritingWorkingCopy): SponsorMeta => {
+      if (sponsor.type === "group") {
+        return {
+          key: `group:${sponsor.slug}`,
+          label: sponsor.displayName || sponsor.slug,
+        };
+      }
+
+      const pieceUnknown = draft.piece as unknown as {
+        sponsor_content_type?: string;
+        sponsor_object_id?: string;
+      };
+      if (pieceUnknown.sponsor_content_type === "group" && pieceUnknown.sponsor_object_id) {
+        const group = groupById.get(pieceUnknown.sponsor_object_id);
+        const imageUrl =
+          getBestEmblemUrl(group?.emblem, 48) ||
+          group?.profile_image_url ||
+          group?.profile_image ||
+          undefined;
+        return {
+          key: `group:${pieceUnknown.sponsor_object_id}`,
+          label: group?.title || "Group",
+          imageUrl,
+        };
+      }
+      return personalSponsorMeta;
+    },
+    [groupById, personalSponsorMeta, sponsor.displayName, sponsor.slug, sponsor.type]
+  );
+
+  const renderSponsorSquare = useCallback((meta: SponsorMeta) => {
+    if (meta.imageUrl) {
+      return (
+        <Box
+          w="24px"
+          h="24px"
+          borderRadius="sm"
+          overflow="hidden"
+          borderWidth="1px"
+          borderColor="gray.200"
+          flexShrink={0}
+        >
+          <Image
+            src={meta.imageUrl}
+            alt={meta.label}
+            width={24}
+            height={24}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        w="24px"
+        h="24px"
+        borderRadius="sm"
+        bg="gray.100"
+        borderWidth="1px"
+        borderColor="gray.200"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        color="gray.500"
+        flexShrink={0}
+      >
+        <IconMapPin size={14} />
+      </Box>
+    );
+  }, []);
+
 
   const processedPieces = typedPlacements
     .filter((p: FlattenedPlacement) => p.piece_status === 'published')
@@ -317,9 +448,11 @@ export default function WritingListWrapper({
   const renderDraftTitle = (draft: WritingWorkingCopy) => {
     const displayTitle = draft.title || "Untitled Draft";
     const isCollab = draft.is_collaborative;
+    const sponsorMeta = getDraftSponsorMeta(draft);
 
     return (
       <HStack gap={2} align="center" wrap="wrap">
+        {(groupingMode === "by-tag" || groupingMode === "by-where") && renderSponsorSquare(sponsorMeta)}
         {/* Icon: Different for solo vs collab */}
         {isCollab ? (
           <IconUsersGroup size={18} color="purple" />
@@ -479,7 +612,16 @@ export default function WritingListWrapper({
     [searchFilter]
   );
 
-  const filteredPublishedPieces = processedPieces.filter(matchesPublishedSearch);
+  const filteredPublishedPieces = processedPieces
+    .filter(matchesPublishedSearch)
+    .map((placement) => {
+      const sponsorMeta = getPlacementSponsorMeta(placement);
+      return {
+        ...placement,
+        sponsor_label: sponsorMeta.label,
+        sponsor_image_url: sponsorMeta.imageUrl || null,
+      };
+    });
 
   const tagGroups = useMemo(() => {
     const groups = new Map<string, FlattenedPlacement[]>();
@@ -557,6 +699,44 @@ export default function WritingListWrapper({
     };
   }, [processedDrafts, getDraftTags]);
 
+  const publishedWhereGroups = useMemo(() => {
+    const groups = new Map<string, { sponsor: SponsorMeta; items: FlattenedPlacement[] }>();
+    filteredPublishedPieces.forEach((item) => {
+      const sponsorMeta = getPlacementSponsorMeta(item);
+      if (!groups.has(sponsorMeta.key)) {
+        groups.set(sponsorMeta.key, { sponsor: sponsorMeta, items: [] });
+      }
+      groups.get(sponsorMeta.key)!.items.push(item);
+    });
+    return Array.from(groups.values())
+      .map((entry) => ({
+        ...entry,
+        items: entry.items.sort(
+          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        ),
+      }))
+      .sort((a, b) => a.sponsor.label.localeCompare(b.sponsor.label));
+  }, [filteredPublishedPieces, getPlacementSponsorMeta]);
+
+  const draftWhereGroups = useMemo(() => {
+    const groups = new Map<string, { sponsor: SponsorMeta; items: WritingWorkingCopy[] }>();
+    processedDrafts.forEach((item) => {
+      const sponsorMeta = getDraftSponsorMeta(item);
+      if (!groups.has(sponsorMeta.key)) {
+        groups.set(sponsorMeta.key, { sponsor: sponsorMeta, items: [] });
+      }
+      groups.get(sponsorMeta.key)!.items.push(item);
+    });
+    return Array.from(groups.values())
+      .map((entry) => ({
+        ...entry,
+        items: entry.items.sort(
+          (a, b) => new Date(b.last_saved_at).getTime() - new Date(a.last_saved_at).getTime()
+        ),
+      }))
+      .sort((a, b) => a.sponsor.label.localeCompare(b.sponsor.label));
+  }, [processedDrafts, getDraftSponsorMeta]);
+
   return (
     <Box>
       {/* Header */}
@@ -610,26 +790,32 @@ export default function WritingListWrapper({
           </HStack>
 
           <Box display="flex" justifyContent="flex-end" minW={0}>
-            <DraftFilterToolbar
-              showSolo={showSolo}
-              showCollab={showCollab}
-              onToggleShowSolo={() => setShowSolo(!showSolo)}
-              onToggleShowCollab={() => setShowCollab(!showCollab)}
-              onShowAll={() => {}}
-              onCreateNew={handleStartWriting}
-              canCreate={canCreatePost}
-              showGroupByTags={groupByTags}
-              onToggleGroupByTags={handleToggleGroupByTags}
-              showSoloCollab={true}
-              showAllButton={false}
-              groupByTagsWidth="140px"
-            />
+            <HStack gap={3} wrap="wrap" justify="flex-end" w="full">
+              <DraftFilterToolbar
+                showSolo={showSolo}
+                showCollab={showCollab}
+                onToggleShowSolo={() => setShowSolo(!showSolo)}
+                onToggleShowCollab={() => setShowCollab(!showCollab)}
+                onShowAll={() => {}}
+                onCreateNew={handleStartWriting}
+                canCreate={canCreatePost}
+                showSoloCollab={true}
+                showAllButton={false}
+              />
+              <Tabs.Root value={groupingMode} onValueChange={(value) => handleGroupingModeChange(value.value as "by-tag" | "by-where")}>
+                <Tabs.List>
+                  <Tabs.Trigger value="by-tag">By Tag</Tabs.Trigger>
+                  <Tabs.Trigger value="by-where">By Where</Tabs.Trigger>
+                  <Tabs.Indicator />
+                </Tabs.List>
+              </Tabs.Root>
+            </HStack>
           </Box>
         </Box>
 
         {/* Tab Content */}
         <Tabs.Content value="published">
-          {groupByTags ? (
+          {groupingMode === "by-tag" ? (
             <>
               <Heading size="md" color={textSecondary} mb={3}>
                 By Tag
@@ -707,32 +893,54 @@ export default function WritingListWrapper({
               )}
             </>
           ) : (
-            <UniversalDataTable<FlattenedPlacement>
-              data={filteredPublishedPieces}
-              title=""
-              isLoading={placementsLoading}
-              error={placementsError ? "Failed to load writing" : null}
-              columns={postsColumns(
-                handleRowClick,
-                canManagePosts ? handlePublishedEdit : undefined
-              )}
-              showAvatar={false}
-              emptyStateMessage="No published content found"
-              emptyStateSubtitle={
-                searchFilter ? "Try adjusting your search to see more results" : "Create your first post to get started"
-              }
-              showCreateButton={false}
-              onRowClick={handleRowClick}
-              canView={() => true}
-              canEdit={() => canManagePosts}
-              pageSize={25}
-              defaultSort={{ field: "post_info", order: "desc" }}
-            />
+            <Box maxH="62vh" overflowY="auto" pr={1}>
+              <Heading size="md" color={textSecondary} mb={3}>
+                By Where
+              </Heading>
+              <Accordion.Root collapsible multiple defaultValue={publishedWhereGroups[0] ? [publishedWhereGroups[0].sponsor.key] : []}>
+                {publishedWhereGroups.map((group) => (
+                  <Accordion.Item key={group.sponsor.key} value={group.sponsor.key}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={3}>
+                          {renderSponsorSquare(group.sponsor)}
+                          <Text fontWeight="semibold">{group.sponsor.label}</Text>
+                          <Badge size="sm" variant="subtle">{group.items.length}</Badge>
+                        </HStack>
+                        <Accordion.ItemIndicator />
+                      </HStack>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box pt={4}>
+                        <UniversalDataTable<FlattenedPlacement>
+                          data={group.items}
+                          title=""
+                          isLoading={placementsLoading}
+                          error={placementsError ? "Failed to load writing" : null}
+                          columns={postsColumns(
+                            handleRowClick,
+                            canManagePosts ? handlePublishedEdit : undefined
+                          )}
+                          showAvatar={false}
+                          emptyStateMessage="No published content found"
+                          showCreateButton={false}
+                          onRowClick={handleRowClick}
+                          canView={() => true}
+                          canEdit={() => canManagePosts}
+                          pageSize={25}
+                          defaultSort={{ field: "post_info", order: "desc" }}
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+            </Box>
           )}
         </Tabs.Content>
 
         <Tabs.Content value="drafts">
-          {groupByTags ? (
+          {groupingMode === "by-tag" ? (
             <>
               <Heading size="md" color={textSecondary} mb={3}>
                 By Tag
@@ -862,66 +1070,75 @@ export default function WritingListWrapper({
               )}
             </>
           ) : (
-            <UniversalDataTable<WritingWorkingCopy>
-              data={processedDrafts}
-              title=""
-              isLoading={draftsLoading}
-              error={null}
-              showAvatar={true}
-              renderAvatar={(draft: WritingWorkingCopy) => (
-                <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
-                  <Avatar.Fallback>
-                    {draft.is_collaborative ? (
-                      <IconUsersGroup size={20} color="purple" />
-                    ) : (
-                      <IconUser size={20} color="gray" />
-                    )}
-                  </Avatar.Fallback>
-                </Avatar.Root>
-              )}
-              emptyStateMessage={
-                !showSolo && !showCollab
-                  ? "All documents hidden"
-                  : showSolo && !showCollab
-                  ? "No solo drafts found"
-                  : !showSolo && showCollab
-                  ? "No collaborative drafts found"
-                  : "No drafts found"
-              }
-              emptyStateSubtitle={
-                !showSolo && !showCollab
-                  ? "Click 'All' or select 'Solo' or 'Collab' to view your drafts"
-                  : showSolo && !showCollab
-                  ? "Start writing to create your first solo draft"
-                  : !showSolo && showCollab
-                  ? "Enable collaboration on a draft or join a collaborative writing session"
-                  : "Create a draft to get started"
-              }
-              actions={[
-                {
-                  label: "Edit Draft",
-                  icon: <IconEdit size={16} />,
-                  onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                  variant: "ghost",
-                  colorScheme: "green",
-                },
-                {
-                  label: "Delete Draft",
-                  icon: <IconTrash size={16} />,
-                  onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                  variant: "ghost",
-                  colorScheme: "red",
-                },
-              ]}
-              onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
-              showCreateButton={false}
-              canEdit={() => true}
-              canView={() => true}
-              renderTitle={renderDraftTitle}
-              renderDescription={renderDraftDescription}
-              renderMetadata={renderDraftMetadata}
-              defaultSort={{ field: "item_info", order: "desc" }}
-            />
+            <Box maxH="62vh" overflowY="auto" pr={1}>
+              <Heading size="md" color={textSecondary} mb={3}>
+                By Where
+              </Heading>
+              <Accordion.Root collapsible multiple defaultValue={draftWhereGroups[0] ? [draftWhereGroups[0].sponsor.key] : []}>
+                {draftWhereGroups.map((group) => (
+                  <Accordion.Item key={group.sponsor.key} value={group.sponsor.key}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={3}>
+                          {renderSponsorSquare(group.sponsor)}
+                          <Text fontWeight="semibold">{group.sponsor.label}</Text>
+                          <Badge size="sm" variant="subtle">{group.items.length}</Badge>
+                        </HStack>
+                        <Accordion.ItemIndicator />
+                      </HStack>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box pt={4}>
+                        <UniversalDataTable<WritingWorkingCopy>
+                          data={group.items}
+                          title=""
+                          isLoading={draftsLoading}
+                          error={null}
+                          showAvatar={true}
+                          renderAvatar={(draft: WritingWorkingCopy) => (
+                            <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                              <Avatar.Fallback>
+                                {draft.is_collaborative ? (
+                                  <IconUsersGroup size={20} color="purple" />
+                                ) : (
+                                  <IconUser size={20} color="gray" />
+                                )}
+                              </Avatar.Fallback>
+                            </Avatar.Root>
+                          )}
+                          emptyStateMessage="No drafts found"
+                          emptyStateSubtitle="Create a draft to get started"
+                          actions={[
+                            {
+                              label: "Edit Draft",
+                              icon: <IconEdit size={16} />,
+                              onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                              variant: "ghost",
+                              colorScheme: "green",
+                            },
+                            {
+                              label: "Delete Draft",
+                              icon: <IconTrash size={16} />,
+                              onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                              variant: "ghost",
+                              colorScheme: "red",
+                            },
+                          ]}
+                          onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                          showCreateButton={false}
+                          canEdit={() => true}
+                          canView={() => true}
+                          renderTitle={renderDraftTitle}
+                          renderDescription={renderDraftDescription}
+                          renderMetadata={renderDraftMetadata}
+                          defaultSort={{ field: "item_info", order: "desc" }}
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+            </Box>
           )}
         </Tabs.Content>
       </Tabs.Root>
