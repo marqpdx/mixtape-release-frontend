@@ -64,11 +64,11 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", memberOnly: true, shortLabel: "My" },
-  { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", memberOnly: true, shortLabel: "Community" },
-  { key: "dashboard", label: "_dbrd", href: "/dashboard", section: "authenticated", adminOnly: true, shortLabel: "Dash" },
-  { key: "workbench", label: "_wrkb", href: "/member/{username}/workbench", section: "authenticated", memberOnly: true, shortLabel: "Bench" },
+  { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", adminOnly: true, shortLabel: "My" },
+  { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
+  { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "workbench", label: "_wrkb", href: "/member/{username}/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
   // { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
