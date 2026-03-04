@@ -351,6 +351,7 @@ export default function GroupWorkArea({
 
   // Members sections
   if (section === "members-roles") {
+    const canModerate = userRole === "admin" || userRole === "member"; // "member" here means steward viewing dashboard
     return (
       <WorkAreaWrapper>
         <GroupMemberList
@@ -360,7 +361,7 @@ export default function GroupWorkArea({
           error={error?.message}
           showPrivateInfo={userRole === "admin"}
           onMemberClick={() => {}}
-          canEditMember={() => userRole === "admin"}
+          canEditMember={() => canModerate}
         />
       </WorkAreaWrapper>
     );

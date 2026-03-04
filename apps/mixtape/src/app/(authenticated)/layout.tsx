@@ -25,6 +25,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, isLoading: identityLoading, isAuthenticated, can, canInGroup, assumeUser, exitAssumeUser } = useAuth();
   const { isAdmin } = usePermissions({ user, can, canInGroup });
   const [socketInitialized, setSocketInitialized] = useState(false);
+  const [assumeHintActive, setAssumeHintActive] = useState(false);
 
   // Auth check - redirect to login if not authenticated
   useEffect(() => {
@@ -101,6 +102,33 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
     };
   }, [isAuthenticated, user, socketInitialized]);
 
+  const impersonation = (
+    user as (typeof user & {
+      impersonation?: {
+        is_impersonating?: boolean;
+        impersonated_by?: { username?: string };
+      };
+    })
+  )?.impersonation;
+  const isImpersonating = !!impersonation?.is_impersonating;
+  const impersonatedBy = impersonation?.impersonated_by;
+  const canStartAssume = !!user?.is_superuser && !isImpersonating;
+  const canExitAssume = isImpersonating || assumeHintActive;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("mixtape_assume_active") === "true";
+    setAssumeHintActive(stored);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isImpersonating) {
+      window.localStorage.setItem("mixtape_assume_active", "true");
+      setAssumeHintActive(true);
+    }
+  }, [isImpersonating]);
+
   // Show loading spinner while checking authentication
   if (identityLoading) {
     return (
@@ -128,23 +156,16 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   // Navbar will auto-detect section, so we don't need to pass it
   // Just let it figure out based on pathname
   const isAdminPath = pathname.startsWith("/admin");
-  const impersonation = (
-    user as (typeof user & {
-      impersonation?: {
-        is_impersonating?: boolean;
-        impersonated_by?: { username?: string };
-      };
-    })
-  )?.impersonation;
-  const isImpersonating = !!impersonation?.is_impersonating;
-  const impersonatedBy = impersonation?.impersonated_by;
-  const canStartAssume = !!user?.is_superuser && !isImpersonating;
 
   const handleAssume = async () => {
     const username = window.prompt("Assume username:");
     if (!username || !username.trim()) return;
     try {
       await assumeUser(username.trim());
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("mixtape_assume_active", "true");
+      }
+      setAssumeHintActive(true);
       router.refresh();
     } catch (error) {
       console.error("Assume user failed", error);
@@ -155,6 +176,10 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const handleExitAssume = async () => {
     try {
       await exitAssumeUser();
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("mixtape_assume_active");
+      }
+      setAssumeHintActive(false);
       router.refresh();
     } catch (error) {
       console.error("Exit assume failed", error);
@@ -168,12 +193,14 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
         <UnifiedNavbar compact={isAdminPath} />
-        {(isImpersonating || canStartAssume) ? (
-          <Box px={4} py={2} bg={isImpersonating ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
+        {(canExitAssume || canStartAssume) ? (
+          <Box px={4} py={2} bg={canExitAssume ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
             <HStack justify="space-between" wrap="wrap" gap={2}>
               <Text fontSize="sm" color="gray.800">
                 {isImpersonating
                   ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
+                  : canExitAssume
+                    ? "Assume session active. Use Exit assume to return."
                   : "Superuser mode"}
               </Text>
               <HStack gap={2}>
@@ -182,7 +209,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
                     Assume user
                   </Button>
                 ) : null}
-                {isImpersonating ? (
+                {canExitAssume ? (
                   <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
                     Exit assume
                   </Button>
