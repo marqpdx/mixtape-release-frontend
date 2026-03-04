@@ -27,6 +27,17 @@ const FEEDBACK_STATUS_OPTIONS: Array<FeedbackStatus | "all"> = [
   "wontfix",
 ];
 
+function splitIssueContext(message: string): { cleanMessage: string; context: string | null } {
+  const match = message.match(/\[ctx:\s*([^\]]+)\]/i);
+  const context = match?.[1]?.trim() || null;
+  const cleanMessage = message
+    .replace(/\s*\[ctx:\s*[^\]]+\]\s*/gi, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return { cleanMessage, context };
+}
+
 export default function FeedbackChecklistPage() {
   const { user } = useAuth();
   const isSuperuser = !!user?.is_superuser;
@@ -274,12 +285,12 @@ export default function FeedbackChecklistPage() {
 
   const buildCodexBrief = () => {
     const issueLines = selectedIssues.map((item, idx) => {
-      const title = item.message.split("\n")[0] || "Untitled issue";
+      const title = splitIssueContext(item.message).cleanMessage.split("\n")[0] || "Untitled issue";
       return `${idx + 1}. [${item.id}] ${title}
 Status: ${item.status}
 Page: ${item.page_url || "(not provided)"}
-Details:
-${item.message}`;
+${splitIssueContext(item.message).context ? `Context: ${splitIssueContext(item.message).context}\n` : ""}Details:
+${splitIssueContext(item.message).cleanMessage}`;
     });
 
     const text = `Agent Brief
@@ -537,11 +548,14 @@ Notes:
                   </HStack>
                 </VStack>
               ) : (
-                <Text mt={2} whiteSpace="pre-wrap">{item.message}</Text>
+                <Text mt={2} whiteSpace="pre-wrap">{splitIssueContext(item.message).cleanMessage}</Text>
               )}
 
               {item.page_url ? (
                 <Text mt={2} fontSize="xs" color="fg.muted">Page: {item.page_url}</Text>
+              ) : null}
+              {splitIssueContext(item.message).context ? (
+                <Text fontSize="xs" color="fg.muted">Context: {splitIssueContext(item.message).context}</Text>
               ) : null}
 
               {isSuperuser ? (

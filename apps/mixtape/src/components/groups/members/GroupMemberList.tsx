@@ -1,4 +1,4 @@
-// src/components/groups/GroupMemberList.tsx
+// apps/mixtape/src/components/groups/GroupMemberList.tsx
 
 "use client";
 
@@ -15,8 +15,9 @@ import {
   IconButton,
   Spinner,
   Avatar,
+  Input,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   IconGrid3x3,
@@ -28,7 +29,7 @@ import {
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
-import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
+import { getMemberDisplayName, Group, GroupMembership, GroupRole } from "@mixtape/core/types/groupTypes";
 import { useRouter } from "next/navigation";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 
@@ -61,9 +62,12 @@ export function GroupMemberList({
   canEditMember = () => false
 }: GroupMemberListProps) {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [nameFilter, setNameFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState<GroupRole | "all">("all");
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
+  const inputBg = useColorModeValue('white', 'gray.700');
   const router = useRouter();
 
   const AVATAR_SIZE = 148;
@@ -83,6 +87,30 @@ export function GroupMemberList({
       window.localStorage.setItem(viewModeStorageKey, mode);
     }
   };
+
+  // Available roles for filter
+  const availableRoles = useMemo(() => {
+    const roles = new Set<GroupRole>();
+    members.forEach((m) => m.roles.forEach((r) => roles.add(r)));
+    return Array.from(roles).sort();
+  }, [members]);
+
+  // Filtered members
+  const filteredMembers = useMemo(() => {
+    let result = members;
+    if (nameFilter.trim()) {
+      const q = nameFilter.trim().toLowerCase();
+      result = result.filter((m) => {
+        const name = getMemberDisplayName(m).toLowerCase();
+        const username = (m.username || "").toLowerCase();
+        return name.includes(q) || username.includes(q);
+      });
+    }
+    if (roleFilter !== "all") {
+      result = result.filter((m) => m.roles.includes(roleFilter));
+    }
+    return result;
+  }, [members, nameFilter, roleFilter]);
 
   // Helper to get display name (uses utility from groupTypes)
   const getDisplayName = (membership: GroupMembership): string => {
@@ -138,7 +166,7 @@ export function GroupMemberList({
 
   const GridView = () => (
     <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={4}>
-      {members.map((membership) => {
+      {filteredMembers.map((membership) => {
         const displayName = getDisplayName(membership);
         const avatar = getAvatar(membership);
         const canRemove = canEditMember(membership);
@@ -256,11 +284,11 @@ export function GroupMemberList({
               </>
             ) : (
               // Avatar-based card (fallback)
-              <Card.Body p={4} h="full" display="flex" flexDirection="column" justifyContent="center">
+              <Card.Body p={4} h="full" display="flex" flexDirection="column" justifyContent="center" bg={cardBg}>
                 <VStack gap={3} align="center">
                   <AvatarGroup>
                     <Avatar.Root size="2xl">
-                      <Avatar.Fallback bg="green.100" color="green.700">
+                      <Avatar.Fallback>
                         {displayName.charAt(0).toUpperCase()}
                       </Avatar.Fallback>
                     </Avatar.Root>
@@ -308,7 +336,7 @@ export function GroupMemberList({
   );
 
   const TableView = () => {
-    const tableMembers = members.map(transformMemberForTable);
+    const tableMembers = filteredMembers.map(transformMemberForTable);
 
         return (
           <UniversalDataTable<MemberTableItem>
@@ -386,7 +414,7 @@ export function GroupMemberList({
               ) : (
                 <AvatarGroup>
                   <Avatar.Root size="2xl">
-                    <Avatar.Fallback bg="green.100" color="green.700" fontSize="2xl">
+                    <Avatar.Fallback fontSize="2xl">
                       {displayName.charAt(0).toUpperCase()}
                     </Avatar.Fallback>
                   </Avatar.Root>
@@ -483,11 +511,11 @@ export function GroupMemberList({
   return (
     <Box>
       {/* Header with view toggle */}
-      <Flex justify="space-between" align="center" mb={6}>
+      <Flex justify="space-between" align="center" mb={4}>
         <VStack align="start" gap={1}>
           <Heading size="md">Group Members</Heading>
           <Text fontSize="sm" color={textSecondary}>
-            {isLoading ? "Loading..." : `${members.length} ${members.length === 1 ? 'member' : 'members'}`}
+            {isLoading ? "Loading..." : `${filteredMembers.length} of ${members.length} ${members.length === 1 ? 'member' : 'members'}`}
           </Text>
         </VStack>
 
@@ -515,6 +543,44 @@ export function GroupMemberList({
           </IconButton>
         </HStack>
       </Flex>
+
+      {/* Filters */}
+      {!isLoading && members.length > 0 && (
+        <HStack mb={4} gap={3}>
+          <Box position="relative" flex={1} maxW="300px">
+            <Input
+              placeholder="Search by name..."
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              size="sm"
+              bg={inputBg}
+            />
+          </Box>
+          {availableRoles.length > 1 && (
+            <select
+              value={roleFilter}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (next === "all" || availableRoles.includes(next as GroupRole)) {
+                  setRoleFilter(next as GroupRole | "all");
+                }
+              }}
+              style={{
+                fontSize: "0.875rem",
+                padding: "4px 12px",
+                borderRadius: "6px",
+                border: "1px solid",
+                borderColor: "inherit",
+              }}
+            >
+              <option value="all">All roles</option>
+              {availableRoles.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
+          )}
+        </HStack>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -550,7 +616,7 @@ export function GroupMemberList({
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && members.length === 0 && (
+      {!isLoading && !error && filteredMembers.length === 0 && (
         <Box
           textAlign="center"
           py={16}
@@ -560,16 +626,16 @@ export function GroupMemberList({
           bg={cardBg}
         >
           <Text fontSize="lg" fontWeight="medium" color={textSecondary} mb={2}>
-            No members found
+            {nameFilter || roleFilter !== "all" ? "No matching members" : "No members found"}
           </Text>
-          <Text color="gray.500">
-            This group doesn't have any members yet
+          <Text color={textSecondary}>
+            {nameFilter || roleFilter !== "all" ? "Try adjusting your filters" : "This group doesn't have any members yet"}
           </Text>
         </Box>
       )}
 
       {/* Content */}
-      {!isLoading && !error && members.length > 0 && (
+      {!isLoading && !error && filteredMembers.length > 0 && (
         <>
           {viewMode === 'grid' ? <GridView /> : <TableView />}
         </>
