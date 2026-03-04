@@ -279,6 +279,7 @@ export const GroupInviteForm = ({
     defaultValues: {
       invitee: "",
       message: "",
+      silent_add: false,
     }
   });
 
@@ -425,7 +426,7 @@ export const GroupInviteForm = ({
     }
   }, [showSuggestions, userSuggestions, selectedIndex, handleUserSelect]); // ← Add handleUserSelect here
 
-  const onSubmit = async (data: { invitee: string; message?: string }) => {
+  const onSubmit = async (data: { invitee: string; message?: string; silent_add?: boolean }) => {
     const inviteeValue = data.invitee.trim();
 
     if (!inviteeValue) {
@@ -442,6 +443,7 @@ export const GroupInviteForm = ({
       const submitData = {
         message: data.message,
         invite_scope: "site_and_public",
+        silent_add: Boolean(data.silent_add),
         invited_emails: [] as string[],
         invited_usernames: [] as string[],
       };
@@ -588,6 +590,27 @@ export const GroupInviteForm = ({
               : "Enter emails, or @usernames for existing members. Separate multiple entries with commas."
             }
           </Text>
+
+          <Box mt={3}>
+            <Controller
+              name="silent_add"
+              control={control}
+              render={({ field }) => (
+                <Checkbox.Root
+                  checked={Boolean(field.value)}
+                  onCheckedChange={(details) => field.onChange(details.checked === true)}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label fontSize="sm" color="gray.700">
+                    Don&apos;t send emails to entered @username users
+                  </Checkbox.Label>
+                </Checkbox.Root>
+              )}
+            />
+          </Box>
         </Box>
 
         {/* Message */}
