@@ -41,7 +41,6 @@ const publicTabs = [
 export function GroupTabs({
   group,
   viewingAsMember,
-  isMember,
   onJoinGroup,
 }: GroupTabsProps) {
   const panelBg = useColorModeValue("gray.50", "gray.900");

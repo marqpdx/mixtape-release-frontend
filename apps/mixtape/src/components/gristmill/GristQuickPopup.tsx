@@ -22,6 +22,7 @@ import { toaster } from "@components/ui/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
+const CONTEXT_STORAGE_KEY = "grist_quick_popup_issue_context_v1";
 const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
 const GRIST_HELP_TEXT = `/issue Brief title
 severity: medium
@@ -44,6 +45,7 @@ export default function GristQuickPopup() {
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [issueContext, setIssueContext] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [promoting, setPromoting] = useState(false);
@@ -81,6 +83,29 @@ export default function GristQuickPopup() {
       // no-op
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = window.localStorage.getItem(CONTEXT_STORAGE_KEY);
+      if (saved) setIssueContext(saved);
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (issueContext.trim()) {
+        window.localStorage.setItem(CONTEXT_STORAGE_KEY, issueContext);
+      } else {
+        window.localStorage.removeItem(CONTEXT_STORAGE_KEY);
+      }
+    } catch {
+      // no-op
+    }
+  }, [issueContext]);
 
   useEffect(() => {
     if (!open) return;
@@ -147,12 +172,34 @@ export default function GristQuickPopup() {
     }
   }, []);
 
+  const applyIssueContext = useCallback(
+    (rawText: string) => {
+      const ctx = issueContext.trim();
+      if (!ctx) return rawText;
+
+      const marker = `[ctx: ${ctx}]`;
+      return rawText
+        .split("\n")
+        .map((line) => {
+          const match = line.match(/^(\s*)\/issue(\s+)(.*)$/i);
+          if (!match) return line;
+          const [, leading, spacing, rest] = match;
+          if (rest.includes(marker)) return line;
+          const tail = rest.trim();
+          return `${leading}/issue${spacing}${marker}${tail ? ` ${tail}` : ""}`;
+        })
+        .join("\n");
+    },
+    [issueContext]
+  );
+
   const handleSaveDraft = useCallback(async () => {
     if (!text.trim()) return;
     setSavingDraft(true);
     try {
-      await parseForWarning(text);
-      const saved = await saveDraft(text);
+      const submitText = applyIssueContext(text);
+      await parseForWarning(submitText);
+      const saved = await saveDraft(submitText);
       setDraftId(saved.id);
       if (saved.warning) setWarning(saved.warning);
       persistLocal(text);
@@ -171,17 +218,18 @@ export default function GristQuickPopup() {
     } finally {
       setSavingDraft(false);
     }
-  }, [parseForWarning, persistLocal, text]);
+  }, [applyIssueContext, parseForWarning, persistLocal, text]);
 
   const handlePromote = useCallback(async () => {
     if (!text.trim()) return;
     setPromoting(true);
     try {
-      await parseForWarning(text);
+      const submitText = applyIssueContext(text);
+      await parseForWarning(submitText);
 
       let nextDraftId = draftId;
       if (!nextDraftId) {
-        const saved = await saveDraft(text);
+        const saved = await saveDraft(submitText);
         nextDraftId = saved.id;
         setDraftId(saved.id);
         if (saved.warning) setWarning(saved.warning);
@@ -214,7 +262,7 @@ export default function GristQuickPopup() {
     } finally {
       setPromoting(false);
     }
-  }, [clearLocal, draftId, parseForWarning, text]);
+  }, [applyIssueContext, clearLocal, draftId, parseForWarning, text]);
 
   useEffect(() => {
     if (!isSuperuser) return;
@@ -342,6 +390,26 @@ export default function GristQuickPopup() {
                 onClick={() => insertCommand("/event ")}
               >
                 ev
+              </Button>
+              <Input
+                size="xs"
+                value={issueContext}
+                onChange={(event) => setIssueContext(event.currentTarget.value)}
+                placeholder="Context (applies to /issue)"
+                maxW={{ base: "full", md: "280px" }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                  }
+                }}
+              />
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => setIssueContext("")}
+                disabled={!issueContext.trim()}
+              >
+                Clear
               </Button>
             </HStack>
 

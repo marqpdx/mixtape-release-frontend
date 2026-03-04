@@ -116,7 +116,8 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-  const [groupingMode, setGroupingMode] = useState<"by-tag" | "by-where">("by-tag");
+  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where">("by-list");
+  const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const { user } = useAuth();
 
   // Load persisted tab from localStorage on mount
@@ -131,8 +132,16 @@ export default function WritingListWrapper({
       if (savedGroupByTags === "true") {
         setGroupingMode("by-tag");
       }
+      const savedDateSortOrder = window.localStorage.getItem("writing_date_sort_order");
+      if (savedDateSortOrder === "asc" || savedDateSortOrder === "desc") {
+        setDateSortOrder(savedDateSortOrder);
+      }
       const savedGroupingMode = window.localStorage.getItem("writing_group_mode");
-      if (savedGroupingMode === "by-tag" || savedGroupingMode === "by-where") {
+      if (
+        savedGroupingMode === "by-list" ||
+        savedGroupingMode === "by-tag" ||
+        savedGroupingMode === "by-where"
+      ) {
         setGroupingMode(savedGroupingMode);
       }
     } catch (error) {
@@ -152,7 +161,7 @@ export default function WritingListWrapper({
     }
   }, []);
 
-  const handleGroupingModeChange = useCallback((mode: "by-tag" | "by-where") => {
+  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where") => {
     setGroupingMode(mode);
     if (typeof window !== "undefined") {
       try {
@@ -162,6 +171,18 @@ export default function WritingListWrapper({
       }
     }
   }, []);
+
+  const handleDateSortOrderToggle = useCallback(() => {
+    const nextOrder = dateSortOrder === "desc" ? "asc" : "desc";
+    setDateSortOrder(nextOrder);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("writing_date_sort_order", nextOrder);
+      } catch (error) {
+        console.warn("Failed to save date sort order:", error);
+      }
+    }
+  }, [dateSortOrder]);
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const badgeBg = useColorModeValue("green.50", "green.900");
@@ -623,6 +644,24 @@ export default function WritingListWrapper({
       };
     });
 
+  const listPublishedPieces = useMemo(() => {
+    const sorted = filteredPublishedPieces.slice().sort((a, b) => {
+      const aTime = new Date(a.updated_at || a.published_at || a.created_at).getTime();
+      const bTime = new Date(b.updated_at || b.published_at || b.created_at).getTime();
+      return dateSortOrder === "desc" ? bTime - aTime : aTime - bTime;
+    });
+    return sorted;
+  }, [filteredPublishedPieces, dateSortOrder]);
+
+  const listDrafts = useMemo(() => {
+    const sorted = processedDrafts.slice().sort((a, b) => {
+      const aTime = new Date(a.last_saved_at || a.piece.updated_at || a.piece.created_at).getTime();
+      const bTime = new Date(b.last_saved_at || b.piece.updated_at || b.piece.created_at).getTime();
+      return dateSortOrder === "desc" ? bTime - aTime : aTime - bTime;
+    });
+    return sorted;
+  }, [processedDrafts, dateSortOrder]);
+
   const tagGroups = useMemo(() => {
     const groups = new Map<string, FlattenedPlacement[]>();
     const untagged: FlattenedPlacement[] = [];
@@ -802,20 +841,50 @@ export default function WritingListWrapper({
                 showSoloCollab={true}
                 showAllButton={false}
               />
-              <Tabs.Root value={groupingMode} onValueChange={(value) => handleGroupingModeChange(value.value as "by-tag" | "by-where")}>
+              <Tabs.Root
+                value={groupingMode}
+                onValueChange={(value) =>
+                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where")
+                }
+              >
                 <Tabs.List>
+                  <Tabs.Trigger value="by-list">List</Tabs.Trigger>
                   <Tabs.Trigger value="by-tag">By Tag</Tabs.Trigger>
                   <Tabs.Trigger value="by-where">By Where</Tabs.Trigger>
                   <Tabs.Indicator />
                 </Tabs.List>
               </Tabs.Root>
+              {groupingMode === "by-list" && (
+                <Button size="sm" variant="outline" onClick={handleDateSortOrderToggle}>
+                  {dateSortOrder === "desc" ? "Newest first" : "Oldest first"}
+                </Button>
+              )}
             </HStack>
           </Box>
         </Box>
 
         {/* Tab Content */}
         <Tabs.Content value="published">
-          {groupingMode === "by-tag" ? (
+          {groupingMode === "by-list" ? (
+            <UniversalDataTable<FlattenedPlacement>
+              data={listPublishedPieces}
+              title=""
+              isLoading={placementsLoading}
+              error={placementsError ? "Failed to load writing" : null}
+              columns={postsColumns(
+                handleRowClick,
+                canManagePosts ? handlePublishedEdit : undefined
+              )}
+              showAvatar={false}
+              emptyStateMessage="No published content found"
+              showCreateButton={false}
+              onRowClick={handleRowClick}
+              canView={() => true}
+              canEdit={() => canManagePosts}
+              pageSize={25}
+              defaultSort={{ field: "post_info", order: "desc" }}
+            />
+          ) : groupingMode === "by-tag" ? (
             <>
               <Heading size="md" color={textSecondary} mb={3}>
                 By Tag
@@ -940,7 +1009,52 @@ export default function WritingListWrapper({
         </Tabs.Content>
 
         <Tabs.Content value="drafts">
-          {groupingMode === "by-tag" ? (
+          {groupingMode === "by-list" ? (
+            <UniversalDataTable<WritingWorkingCopy>
+              data={listDrafts}
+              title=""
+              isLoading={draftsLoading}
+              error={null}
+              showAvatar={true}
+              renderAvatar={(draft: WritingWorkingCopy) => (
+                <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                  <Avatar.Fallback>
+                    {draft.is_collaborative ? (
+                      <IconUsersGroup size={20} color="purple" />
+                    ) : (
+                      <IconUser size={20} color="gray" />
+                    )}
+                  </Avatar.Fallback>
+                </Avatar.Root>
+              )}
+              emptyStateMessage="No drafts found"
+              emptyStateSubtitle="Create a draft to get started"
+              actions={[
+                {
+                  label: "Edit Draft",
+                  icon: <IconEdit size={16} />,
+                  onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  variant: "ghost",
+                  colorScheme: "green",
+                },
+                {
+                  label: "Delete Draft",
+                  icon: <IconTrash size={16} />,
+                  onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                  variant: "ghost",
+                  colorScheme: "red",
+                },
+              ]}
+              onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+              showCreateButton={false}
+              canEdit={() => true}
+              canView={() => true}
+              renderTitle={renderDraftTitle}
+              renderDescription={renderDraftDescription}
+              renderMetadata={renderDraftMetadata}
+              defaultSort={{ field: "item_info", order: "desc" }}
+            />
+          ) : groupingMode === "by-tag" ? (
             <>
               <Heading size="md" color={textSecondary} mb={3}>
                 By Tag
