@@ -13,6 +13,7 @@ export interface FeedbackChecklistItem {
   status: FeedbackStatus;
   created_at: string;
   user_username?: string;
+  user_first_name?: string;
 }
 
 export interface FeedbackChecklistResponse {

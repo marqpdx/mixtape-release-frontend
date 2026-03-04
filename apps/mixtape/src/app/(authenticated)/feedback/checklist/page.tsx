@@ -28,10 +28,9 @@ const FEEDBACK_STATUS_OPTIONS: Array<FeedbackStatus | "all"> = [
 ];
 
 function splitIssueContext(message: string): { cleanMessage: string; context: string | null } {
-  const match = message.match(/\[ctx:\s*([^\]]+)\]/i);
+  const match = message.match(/\[ctx:\s*(.*)\](?=\s|$)/i);
   const context = match?.[1]?.trim() || null;
-  const cleanMessage = message
-    .replace(/\s*\[ctx:\s*[^\]]+\]\s*/gi, " ")
+  const cleanMessage = (match ? message.replace(match[0], " ") : message)
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -516,6 +515,9 @@ Notes:
                   <Text fontSize="sm" fontWeight="semibold" textTransform="capitalize">{item.kind}</Text>
                   <Text fontSize="xs" color="fg.muted">{item.status}</Text>
                   <Text fontSize="xs" color="fg.muted">{new Date(item.created_at).toLocaleString()}</Text>
+                  <Text fontSize="xs" color="fg.muted">
+                    Submitted by: {item.user_first_name?.trim() || item.user_username || "Unknown"}
+                  </Text>
                 </HStack>
                 <Text fontSize="xs" color="fg.muted">{item.beacon_title} ({item.beacon_key})</Text>
               </HStack>
