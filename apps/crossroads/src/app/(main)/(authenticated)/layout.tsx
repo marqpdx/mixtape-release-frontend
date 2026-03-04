@@ -21,8 +21,16 @@ export default function AuthenticatedLayout({
   const { user, isAuthenticated, isLoading, assumeUser, exitAssumeUser } = useAuth();
   const router = useRouter();
   const bgColor = useColorModeValue('white', 'gray.900');
-  const isImpersonating = !!user?.impersonation?.is_impersonating;
-  const impersonatedBy = user?.impersonation?.impersonated_by;
+  const impersonation = (
+    user as (typeof user & {
+      impersonation?: {
+        is_impersonating?: boolean;
+        impersonated_by?: { username?: string };
+      };
+    })
+  )?.impersonation;
+  const isImpersonating = !!impersonation?.is_impersonating;
+  const impersonatedBy = impersonation?.impersonated_by;
   const canStartAssume = !!user?.is_superuser && !isImpersonating;
 
   useEffect(() => {

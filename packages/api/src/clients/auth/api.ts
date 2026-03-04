@@ -20,6 +20,8 @@ const LOGIN_URL = `${API_BASE}/api/auth/token`;
 const REFRESH_URL = `${API_BASE}/api/auth/token/refresh`;
 const LOGOUT_URL = `${API_BASE}/api/auth/logout`;
 const ME_URL = `${API_BASE}/api/auth/me`;
+const ASSUME_URL = `${API_BASE}/api/auth/assume`;
+const ASSUME_EXIT_URL = `${API_BASE}/api/auth/assume/exit`;
 const REGISTER_URL = `${API_BASE}/api/auth/register`;
 const CSRF_URL = `${API_BASE}/api/csrf/`;
 const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
@@ -360,4 +362,58 @@ export async function refreshPermissions(): Promise<PermissionsData> {
   const permissions: PermissionsData = await response.json();
 
   return permissions;
+}
+
+function applyAuthResponseToSession(data: AuthResponse): void {
+  if (!data.access || !data.access_expires) {
+    throw new Error("Invalid token response from server");
+  }
+
+  const expiresAt = data.access_expires * 1000;
+  setAccessToken(data.access, expiresAt);
+}
+
+export async function assumeUser(username: string): Promise<UserIdentity> {
+  const accessToken = getAccessToken();
+  if (!accessToken) throw new Error("No access token available");
+
+  const response = await fetch(ASSUME_URL, {
+    method: "POST",
+    headers: {
+      ...getHeaders(),
+      Authorization: `Bearer ${accessToken}`,
+    },
+    credentials: "include",
+    body: JSON.stringify({ username }),
+  });
+
+  const data = (await response.json()) as AuthResponse & { detail?: string };
+  if (!response.ok || !data.success) {
+    throw new Error(data.detail || "Assume user failed");
+  }
+
+  applyAuthResponseToSession(data);
+  return fetchUserIdentity(data.access);
+}
+
+export async function exitAssumeUser(): Promise<UserIdentity> {
+  const accessToken = getAccessToken();
+  if (!accessToken) throw new Error("No access token available");
+
+  const response = await fetch(ASSUME_EXIT_URL, {
+    method: "POST",
+    headers: {
+      ...getHeaders(),
+      Authorization: `Bearer ${accessToken}`,
+    },
+    credentials: "include",
+  });
+
+  const data = (await response.json()) as AuthResponse & { detail?: string };
+  if (!response.ok || !data.success) {
+    throw new Error(data.detail || "Exit assume failed");
+  }
+
+  applyAuthResponseToSession(data);
+  return fetchUserIdentity(data.access);
 }

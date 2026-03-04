@@ -74,6 +74,16 @@ export interface UserIdentity {
     slug: string;
   }>;
   permissions?: PermissionsData;
+  impersonation?: {
+    is_impersonating: boolean;
+    started_at?: string | null;
+    impersonated_by?: {
+      id: string;
+      username: string;
+      first_name?: string;
+      is_superuser?: boolean;
+    } | null;
+  };
 }
 
 /**

@@ -128,8 +128,16 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   // Navbar will auto-detect section, so we don't need to pass it
   // Just let it figure out based on pathname
   const isAdminPath = pathname.startsWith("/admin");
-  const isImpersonating = !!user?.impersonation?.is_impersonating;
-  const impersonatedBy = user?.impersonation?.impersonated_by;
+  const impersonation = (
+    user as (typeof user & {
+      impersonation?: {
+        is_impersonating?: boolean;
+        impersonated_by?: { username?: string };
+      };
+    })
+  )?.impersonation;
+  const isImpersonating = !!impersonation?.is_impersonating;
+  const impersonatedBy = impersonation?.impersonated_by;
   const canStartAssume = !!user?.is_superuser && !isImpersonating;
 
   const handleAssume = async () => {
