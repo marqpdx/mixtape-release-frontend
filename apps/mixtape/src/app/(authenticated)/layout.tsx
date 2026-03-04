@@ -6,7 +6,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Box, Spinner, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, Spinner, Text } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminTodoButtonWithModal from "@components/admin-apps/AdminTodoButtonWithModal";
@@ -22,7 +22,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, isLoading: identityLoading, isAuthenticated, can, canInGroup } = useAuth();
+  const { user, isLoading: identityLoading, isAuthenticated, can, canInGroup, assumeUser, exitAssumeUser } = useAuth();
   const { isAdmin } = usePermissions({ user, can, canInGroup });
   const [socketInitialized, setSocketInitialized] = useState(false);
 
@@ -128,6 +128,31 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   // Navbar will auto-detect section, so we don't need to pass it
   // Just let it figure out based on pathname
   const isAdminPath = pathname.startsWith("/admin");
+  const isImpersonating = !!user?.impersonation?.is_impersonating;
+  const impersonatedBy = user?.impersonation?.impersonated_by;
+  const canStartAssume = !!user?.is_superuser && !isImpersonating;
+
+  const handleAssume = async () => {
+    const username = window.prompt("Assume username:");
+    if (!username || !username.trim()) return;
+    try {
+      await assumeUser(username.trim());
+      router.refresh();
+    } catch (error) {
+      console.error("Assume user failed", error);
+      window.alert("Failed to assume user.");
+    }
+  };
+
+  const handleExitAssume = async () => {
+    try {
+      await exitAssumeUser();
+      router.refresh();
+    } catch (error) {
+      console.error("Exit assume failed", error);
+      window.alert("Failed to exit assume mode.");
+    }
+  };
 
   return (
     <ChatUnreadProvider>
@@ -135,6 +160,29 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
         <UnifiedNavbar compact={isAdminPath} />
+        {(isImpersonating || canStartAssume) ? (
+          <Box px={4} py={2} bg={isImpersonating ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
+            <HStack justify="space-between" wrap="wrap" gap={2}>
+              <Text fontSize="sm" color="gray.800">
+                {isImpersonating
+                  ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
+                  : "Superuser mode"}
+              </Text>
+              <HStack gap={2}>
+                {canStartAssume ? (
+                  <Button size="xs" variant="outline" onClick={handleAssume}>
+                    Assume user
+                  </Button>
+                ) : null}
+                {isImpersonating ? (
+                  <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
+                    Exit assume
+                  </Button>
+                ) : null}
+              </HStack>
+            </HStack>
+          </Box>
+        ) : null}
 
         <Box
           as="main"

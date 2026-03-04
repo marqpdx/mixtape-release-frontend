@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Spinner } from '@chakra-ui/react';
+import { Box, Button, HStack, Spinner, Text } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useAuth } from '@/lib/auth/AuthContext';
 import dynamic from 'next/dynamic';
@@ -18,9 +18,12 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, assumeUser, exitAssumeUser } = useAuth();
   const router = useRouter();
   const bgColor = useColorModeValue('white', 'gray.900');
+  const isImpersonating = !!user?.impersonation?.is_impersonating;
+  const impersonatedBy = user?.impersonation?.impersonated_by;
+  const canStartAssume = !!user?.is_superuser && !isImpersonating;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -40,9 +43,54 @@ export default function AuthenticatedLayout({
     return null;
   }
 
+  const handleAssume = async () => {
+    const username = window.prompt("Assume username:");
+    if (!username || !username.trim()) return;
+    try {
+      await assumeUser(username.trim());
+      router.refresh();
+    } catch (error) {
+      console.error("Assume user failed", error);
+      window.alert("Failed to assume user.");
+    }
+  };
+
+  const handleExitAssume = async () => {
+    try {
+      await exitAssumeUser();
+      router.refresh();
+    } catch (error) {
+      console.error("Exit assume failed", error);
+      window.alert("Failed to exit assume mode.");
+    }
+  };
+
   return (
     <Box minH="100%" bg={bgColor}>
       <UnifiedNavbar extraCompact />
+      {(isImpersonating || canStartAssume) ? (
+        <Box px={4} py={2} bg={isImpersonating ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
+          <HStack justify="space-between" wrap="wrap" gap={2}>
+            <Text fontSize="sm" color="gray.800">
+              {isImpersonating
+                ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
+                : "Superuser mode"}
+            </Text>
+            <HStack gap={2}>
+              {canStartAssume ? (
+                <Button size="xs" variant="outline" onClick={handleAssume}>
+                  Assume user
+                </Button>
+              ) : null}
+              {isImpersonating ? (
+                <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
+                  Exit assume
+                </Button>
+              ) : null}
+            </HStack>
+          </HStack>
+        </Box>
+      ) : null}
       <Box w="full" maxW="none">
         {children}
       </Box>

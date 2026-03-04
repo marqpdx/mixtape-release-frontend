@@ -16,6 +16,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
+  assumeUser: (username: string) => Promise<void>;
+  exitAssumeUser: () => Promise<void>;
   can: (permission: string) => boolean;
   canInGroup: (permission: string, groupSlug: string) => boolean;
 }
@@ -140,6 +142,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const assumeUser = useCallback(async (username: string) => {
+    const identity = await authApi.assumeUser(username);
+    setUser(identity);
+  }, []);
+
+  const exitAssumeUser = useCallback(async () => {
+    const identity = await authApi.exitAssumeUser();
+    setUser(identity);
+  }, []);
+
   /**
    * Check if user has a permission globally (across all groups)
    */
@@ -167,6 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     refreshUser,
     refreshPermissions,
+    assumeUser,
+    exitAssumeUser,
     can,
     canInGroup,
   };
