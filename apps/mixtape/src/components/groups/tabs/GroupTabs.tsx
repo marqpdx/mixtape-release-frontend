@@ -16,7 +16,7 @@ import { ThreadworksTab } from "./ThreadworksTab";
 import { MembersTab } from "./MembersTab";
 import { CollectionsTab } from "./CollectionsTab";
 import { LandingTab } from "./LandingTab";
-import { JoiningTab } from "./JoiningTab";
+// import { JoiningTab } from "./JoiningTab";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -36,7 +36,6 @@ const memberTabs = [
 
 const publicTabs = [
   { key: 'landing', label: 'Landing Page', icon: IconInfoHexagon },
-  { key: 'joining', label: 'How to Join', icon: IconUsers },
 ];
 
 export function GroupTabs({
@@ -146,10 +145,7 @@ export function GroupTabs({
         {!viewingAsMember && (
           <>
             <Tabs.Content value="landing" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
-              <LandingTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
-            </Tabs.Content>
-            <Tabs.Content value="joining" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
-              <JoiningTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
+              <LandingTab group={group} onJoinGroup={onJoinGroup} />
             </Tabs.Content>
           </>
         )}

@@ -6,7 +6,6 @@ import {
   Box,
   Heading,
   Text,
-  Button,
   HStack,
   AvatarGroup,
   Avatar,
@@ -35,11 +34,7 @@ export function GroupPublicHeader({
   isAdminOrSteward = false,
   testRole,
   onRoleChange,
-  onJoinGroup,
 }: GroupPublicHeaderProps) {
-  const canJoin = group.visibility === 'public' && group.join_policy !== 'closed';
-
-  console.log("aaa GroupPublicHeader render:", { group, isMember, testRole });
 
 
 
@@ -91,26 +86,6 @@ export function GroupPublicHeader({
               <Text color="gray.200" fontSize="lg" mb={3}>
                 {group.tagline || "Building community through shared purpose"}
               </Text>
-              {!isMember && canJoin && (
-                <HStack>
-                  <Button
-                    colorScheme="green"
-                    size="lg"
-                    onClick={onJoinGroup}
-                  >
-                    Join Group
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    color="white"
-                    borderColor="white"
-                    _hover={{ bg: 'whiteAlpha.200' }}
-                  >
-                    Follow
-                  </Button>
-                </HStack>
-              )}
             </Box>
           </HStack>
         </Box>

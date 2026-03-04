@@ -1,6 +1,5 @@
 // src/components/groups/tabs/LandingTab.tsx
 
-// import { GroupNoticeboard } from "../GroupNoticeboard";
 import {
   GridItem,
   Grid,
@@ -9,26 +8,29 @@ import {
   Text,
   Button,
   VStack,
-  Box,
   Flex,
   HStack,
-  SimpleGrid,
   AvatarGroup,
   Avatar,
   Link,
+  Stack,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { IconCalendar, IconPhoto, IconExternalLink, IconShoppingBag } from "@tabler/icons-react";
+import { IconCalendar, IconShoppingBag, IconFolder } from "@tabler/icons-react";
 import NextLink from "next/link";
 import React from "react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
+import { useMembers } from "@mixtape/api/hooks/useMembers";
+import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 
-export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isMember: boolean; onJoinGroup?: () => void }) {
+export function LandingTab({ group }: { group: Group; onJoinGroup?: () => void }) {
   void useColorModeValue('white', 'gray.800');
   const sidebarBg = useColorModeValue('gray.50', 'gray.700');
   const [showFullDescription, setShowFullDescription] = React.useState(false);
   const { stall } = useStall("group", group.id);
+  const { adminMembers, stewardMembers, isLoading: membersLoading } = useMembers(group.slug);
+  const { collections } = useCollections({ sponsor_type: 'group', sponsor_id: group.id });
 
   const description = group.description || "No description provided.";
   const shouldTruncate = description.length > 300;
@@ -36,7 +38,16 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isM
     ? description.substring(0, 300) + "..."
     : description;
 
-  const canJoin = group.visibility === 'public';
+  const leadership = React.useMemo(() => {
+    const stewards = stewardMembers.filter(
+      (member) => !member.roles.includes("admin")
+    );
+    return { admins: adminMembers, stewards };
+  }, [adminMembers, stewardMembers]);
+
+  const allLeaders = [...leadership.admins, ...leadership.stewards];
+
+  const totalItems = collections?.reduce((sum, c) => sum + (c.item_count || 0), 0) ?? 0;
 
   return (
     <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={4}>
@@ -63,63 +74,15 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isM
             </Card.Body>
           </Card.Root>
 
-          {/* <GroupNoticeboard groupSlug={group.slug} /> */}
-
           <Card.Root>
             <Card.Header>
               <Flex justify="space-between" align="center">
                 <Heading size="md">Upcoming Events</Heading>
-                <Button variant="ghost" size="sm">
-                  <IconCalendar size={16} style={{ marginRight: '4px' }} />
-                  View calendar
-                </Button>
+                <IconCalendar size={16} />
               </Flex>
             </Card.Header>
             <Card.Body>
-              <VStack align="stretch" gap={3}>
-                {[1, 2, 3].map((i) => (
-                  <HStack key={i} p={3} borderWidth="1px" borderRadius="md">
-                    <Box textAlign="center" minW="60px">
-                      <Text fontSize="sm" fontWeight="bold">Dec</Text>
-                      <Text fontSize="xl" fontWeight="bold">{15 + i}</Text>
-                    </Box>
-                    <VStack align="start" gap={0} flex="1">
-                      <Text fontWeight="bold">Community Workshop {i}</Text>
-                      <Text fontSize="sm" color="gray.600">2:00 PM - 4:00 PM</Text>
-                      <Text fontSize="sm" color="gray.500">Online Event</Text>
-                    </VStack>
-                  </HStack>
-                ))}
-              </VStack>
-            </Card.Body>
-          </Card.Root>
-
-          <Card.Root>
-            <Card.Header>
-              <Flex justify="space-between" align="center">
-                <Heading size="md">Group Photos</Heading>
-                <Button variant="ghost" size="sm">
-                  <IconPhoto size={16} style={{ marginRight: '4px' }} />
-                  Open gallery
-                </Button>
-              </Flex>
-            </Card.Header>
-            <Card.Body>
-              <SimpleGrid columns={3} gap={2}>
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Box
-                    key={i}
-                    h="100px"
-                    bg="gray.200"
-                    borderRadius="md"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <IconPhoto size={24} color="gray.500" />
-                  </Box>
-                ))}
-              </SimpleGrid>
+              <Text color="fg.muted">No upcoming events yet.</Text>
             </Card.Body>
           </Card.Root>
         </VStack>
@@ -127,86 +90,65 @@ export function LandingTab({ group, isMember, onJoinGroup }: { group: Group; isM
 
       <GridItem>
         <VStack align="stretch" gap={4}>
-          {!isMember && canJoin && (
-            <Card.Root bg={sidebarBg}>
-              <Card.Body>
-                <VStack gap={3}>
-                  <Heading size="sm" textAlign="center">Join this community</Heading>
-                  <Button
-                    colorScheme="green"
-                    size="lg"
-                    w="full"
-                    onClick={onJoinGroup}
-                  >
-                    Join Group
-                  </Button>
-                  <Button variant="outline" size="md" w="full">
-                    Follow
-                  </Button>
-                </VStack>
-              </Card.Body>
-            </Card.Root>
-          )}
-
           <Card.Root bg={sidebarBg}>
             <Card.Header>
               <Heading size="sm">Group Stewards</Heading>
             </Card.Header>
             <Card.Body>
-              <VStack align="stretch" gap={3}>
-                {[1, 2].map((i) => (
-                  <HStack key={i}>
-                    <AvatarGroup>
-                      <Avatar.Root size="sm">
-                        <Avatar.Fallback>S{i}</Avatar.Fallback>
-                      </Avatar.Root>
-                    </AvatarGroup>
-                    <VStack align="start" gap={0}>
-                      <Text fontSize="sm" fontWeight="bold">Steward Name</Text>
-                      <Text fontSize="xs" color="gray.500">Group Admin</Text>
-                    </VStack>
-                  </HStack>
-                ))}
-              </VStack>
+              {membersLoading ? (
+                <Text fontSize="sm" color="fg.muted">Loading...</Text>
+              ) : allLeaders.length === 0 ? (
+                <Text fontSize="sm" color="fg.muted">None yet</Text>
+              ) : (
+                <Stack gap={3}>
+                  {allLeaders.map((member) => {
+                    const displayName = member.display_name || member.username || "Member";
+                    const initial = displayName.charAt(0).toUpperCase();
+                    const role = member.roles.includes("admin") ? "Admin" : "Steward";
+                    return (
+                      <HStack key={member.member_id}>
+                        <AvatarGroup>
+                          <Avatar.Root size="sm">
+                            {member.profile_image ? (
+                              <Avatar.Image src={member.profile_image} alt={displayName} />
+                            ) : (
+                              <Avatar.Fallback>{initial}</Avatar.Fallback>
+                            )}
+                          </Avatar.Root>
+                        </AvatarGroup>
+                        <VStack align="start" gap={0}>
+                          <Text fontSize="sm" fontWeight="bold">{displayName}</Text>
+                          <Text fontSize="xs" color="gray.500">{role}</Text>
+                        </VStack>
+                      </HStack>
+                    );
+                  })}
+                </Stack>
+              )}
             </Card.Body>
           </Card.Root>
 
+          {/* Resources — linked to collections */}
           <Card.Root bg={sidebarBg}>
             <Card.Header>
-              <Heading size="sm">Featured Course</Heading>
+              <Flex align="center" gap={2}>
+                <IconFolder size={18} />
+                <Heading size="sm">Resources</Heading>
+              </Flex>
             </Card.Header>
             <Card.Body>
-              <VStack align="start" gap={2}>
-                <Text fontWeight="bold">Permaculture Basics</Text>
-                <Text fontSize="sm" color="gray.600">
-                  Learn the fundamentals of sustainable design
-                </Text>
-                <Button size="sm" variant="outline" w="full">
-                  Learn More
-                </Button>
-              </VStack>
-            </Card.Body>
-          </Card.Root>
-
-          <Card.Root bg={sidebarBg}>
-            <Card.Header>
-              <Heading size="sm">Connect</Heading>
-            </Card.Header>
-            <Card.Body>
-              <VStack align="stretch" gap={2}>
-                <Link href="#" fontSize="sm">
-                  <HStack>
-                    <IconExternalLink size={14} />
-                    <Text>Website</Text>
-                  </HStack>
-                </Link>
-                <Link href="#" fontSize="sm">
-                  <HStack>
-                    <IconExternalLink size={14} />
-                    <Text>Discord</Text>
-                  </HStack>
-                </Link>
-              </VStack>
+              {!collections || collections.length === 0 ? (
+                <Text fontSize="sm" color="fg.muted">No collections yet.</Text>
+              ) : (
+                <VStack align="stretch" gap={2}>
+                  <Text fontSize="sm" color="fg.muted">
+                    {collections.length} {collections.length === 1 ? "collection" : "collections"} with {totalItems} {totalItems === 1 ? "item" : "items"}
+                  </Text>
+                  {collections.slice(0, 3).map((c) => (
+                    <Text key={c.id} fontSize="sm" fontWeight="medium">{c.title}</Text>
+                  ))}
+                </VStack>
+              )}
             </Card.Body>
           </Card.Root>
 

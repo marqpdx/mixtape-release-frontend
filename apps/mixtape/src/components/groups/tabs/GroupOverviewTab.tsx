@@ -4,11 +4,12 @@
 
 import { useMemo, useState } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem } from "@chakra-ui/react";
-import { IconShoppingBag } from "@tabler/icons-react";
+import { IconShoppingBag, IconFolder } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
+import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 
 interface GroupOverviewTabProps {
   group: Group;
@@ -31,6 +32,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
   const { pin: welcomePin } = useGroupWelcomePin(group.slug);
   const { layout, isLoading: layoutLoading } = useGroupOverviewLayout(group.slug);
   const { stall } = useStall("group", group.id);
+  const { collections } = useCollections({ sponsor_type: 'group', sponsor_id: group.id });
 
   const leadership = useMemo(() => {
     const admins = adminMembers;
@@ -81,7 +83,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
   const renderWelcomeBlock = () => (
     <Card.Root>
-      <Card.Header>
+      <Card.Body>
         <Collapsible.Root
           open={welcomeOpen}
           onOpenChange={({ open }) => {
@@ -98,7 +100,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
             </Button>
           </Collapsible.Trigger>
           <Collapsible.Content>
-            <Box pt={4} pb={4}>
+            <Box pt={4}>
               {welcomePin ? (
                 <>
                   <Heading size="md" mb={2}>
@@ -136,7 +138,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
             </Box>
           </Collapsible.Content>
         </Collapsible.Root>
-      </Card.Header>
+      </Card.Body>
     </Card.Root>
   );
 
@@ -219,13 +221,29 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     </Card.Root>
   );
 
+  const totalCollectionItems = collections?.reduce((sum, c) => sum + (c.item_count || 0), 0) ?? 0;
+
   const renderPinnedResourcesBlock = () => (
     <Card.Root>
       <Card.Header>
-        <Heading size="md">Resources</Heading>
+        <Flex align="center" gap={2}>
+          <IconFolder size={20} />
+          <Heading size="md">Resources</Heading>
+        </Flex>
       </Card.Header>
       <Card.Body>
-        <Text color="fg.muted">Pinned resources will appear here.</Text>
+        {!collections || collections.length === 0 ? (
+          <Text color="fg.muted">No collections yet.</Text>
+        ) : (
+          <Stack gap={3}>
+            <Text color="fg.muted">
+              {collections.length} {collections.length === 1 ? "collection" : "collections"} with {totalCollectionItems} {totalCollectionItems === 1 ? "item" : "items"}
+            </Text>
+            {collections.slice(0, 3).map((c) => (
+              <Text key={c.id} fontWeight="medium">{c.title}</Text>
+            ))}
+          </Stack>
+        )}
       </Card.Body>
     </Card.Root>
   );
@@ -283,6 +301,8 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
   const renderLegacyLayout = () => (
     <Grid templateColumns={{ base: "1fr", lg: "3fr 2fr" }} gap={6}>
       <Stack gap={6}>
+        {renderWelcomeBlock()}
+
         <Card.Root>
           <Card.Header>
             <Heading size="lg">Recent Activity</Heading>
