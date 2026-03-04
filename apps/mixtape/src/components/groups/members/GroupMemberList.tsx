@@ -32,6 +32,7 @@ import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership, GroupRole } from "@mixtape/core/types/groupTypes";
 import { useRouter } from "next/navigation";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface GroupMemberListProps {
   group: Group;
@@ -61,6 +62,7 @@ export function GroupMemberList({
   onMemberClick,
   canEditMember = () => false
 }: GroupMemberListProps) {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState<GroupRole | "all">("all");
@@ -159,6 +161,7 @@ export function GroupMemberList({
 
     try {
       await groupApi.removeGroupMember(group.slug, membership.member_id);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     } catch (error) {
       console.error("Failed to remove member:", error);
     }
