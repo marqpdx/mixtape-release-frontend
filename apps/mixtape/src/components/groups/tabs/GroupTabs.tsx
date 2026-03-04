@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HStack, Text } from "@chakra-ui/react";
+import { Box, HStack, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import {
   IconInfoHexagon,
@@ -18,6 +18,7 @@ import { CollectionsTab } from "./CollectionsTab";
 import { LandingTab } from "./LandingTab";
 import { JoiningTab } from "./JoiningTab";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import { useColorModeValue } from "@components/ui/color-mode";
 
 interface GroupTabsProps {
   group: Group;
@@ -44,6 +45,14 @@ export function GroupTabs({
   isMember,
   onJoinGroup,
 }: GroupTabsProps) {
+  const panelBg = useColorModeValue("gray.50", "gray.900");
+  const tabStripBg = useColorModeValue("gray.100", "gray.800");
+  const tabContentBg = useColorModeValue("white", "gray.900");
+  const tabBorderColor = useColorModeValue("gray.200", "gray.700");
+  const tabTextColor = useColorModeValue("gray.700", "gray.300");
+  const tabActiveTextColor = useColorModeValue("gray.900", "gray.100");
+  const tabActiveBg = useColorModeValue("white", "gray.700");
+
   const tabsToShow = viewingAsMember ? memberTabs : publicTabs;
   const storageKey = `groupTab_${group.slug}_${viewingAsMember ? 'member' : 'public'}`;
 
@@ -68,55 +77,83 @@ export function GroupTabs({
   };
 
   return (
-    <Tabs.Root
-      value={activeTab}
-      onValueChange={(e) => handleTabChange(e.value as string)}
-      variant="enclosed"
+    <Box
+      bg={panelBg}
+      borderWidth="1px"
+      borderColor={tabBorderColor}
+      borderRadius="xl"
+      p={{ base: 2, md: 3 }}
     >
-      <Tabs.List mb={4}>
-        {tabsToShow.map((tab) => {
-          const IconComponent = tab.icon;
-          return (
-            <Tabs.Trigger key={tab.key} value={tab.key}>
-              <HStack>
-                <IconComponent size={16} />
-                <Text>{tab.label}</Text>
-              </HStack>
-            </Tabs.Trigger>
-          );
-        })}
-        <Tabs.Indicator />
-      </Tabs.List>
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(e) => handleTabChange(e.value as string)}
+        variant="enclosed"
+      >
+        <Tabs.List
+          mb={4}
+          bg={tabStripBg}
+          borderRadius="lg"
+          p={1}
+          borderWidth="1px"
+          borderColor={tabBorderColor}
+          gap={1}
+        >
+          {tabsToShow.map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <Tabs.Trigger
+                key={tab.key}
+                value={tab.key}
+                borderRadius="md"
+                px={3}
+                py={2}
+                color={tabTextColor}
+                _selected={{
+                  bg: tabActiveBg,
+                  color: tabActiveTextColor,
+                  borderColor: tabBorderColor,
+                }}
+              >
+                <HStack>
+                  <IconComponent size={16} />
+                  <Text>{tab.label}</Text>
+                </HStack>
+              </Tabs.Trigger>
+            );
+          })}
+          <Tabs.Indicator />
+        </Tabs.List>
 
-      {/* Member Tabs */}
-      {viewingAsMember && (
-        <>
-          <Tabs.Content value="overview">
-            <OverviewTab group={group} />
-          </Tabs.Content>
-          <Tabs.Content value="threadworks">
-            <ThreadworksTab group={group} />
-          </Tabs.Content>
-          <Tabs.Content value="collections">
-            <CollectionsTab group={group} />
-          </Tabs.Content>
-          <Tabs.Content value="members">
-            <MembersTab group={group} />
-          </Tabs.Content>
-        </>
-      )}
+        {/* Member Tabs */}
+        {viewingAsMember && (
+          <>
+            <Tabs.Content value="overview" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <OverviewTab group={group} />
+            </Tabs.Content>
+            <Tabs.Content value="threadworks" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <ThreadworksTab group={group} />
+            </Tabs.Content>
+            <Tabs.Content value="collections" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <CollectionsTab group={group} />
+            </Tabs.Content>
+            <Tabs.Content value="members" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <MembersTab group={group} />
+            </Tabs.Content>
+          </>
+        )}
 
-      {/* Public Tabs */}
-      {!viewingAsMember && (
-        <>
-          <Tabs.Content value="landing">
-            <LandingTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
-          </Tabs.Content>
-          <Tabs.Content value="joining">
-            <JoiningTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
-          </Tabs.Content>
-        </>
-      )}
-    </Tabs.Root>
+        {/* Public Tabs */}
+        {!viewingAsMember && (
+          <>
+            <Tabs.Content value="landing" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <LandingTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
+            </Tabs.Content>
+            <Tabs.Content value="joining" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <JoiningTab group={group} isMember={isMember} onJoinGroup={onJoinGroup} />
+            </Tabs.Content>
+          </>
+        )}
+      </Tabs.Root>
+    </Box>
   );
 }

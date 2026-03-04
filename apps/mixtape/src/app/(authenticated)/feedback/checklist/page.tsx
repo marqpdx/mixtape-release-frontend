@@ -282,7 +282,7 @@ Details:
 ${item.message}`;
     });
 
-    const text = `Codex Brief
+    const text = `Agent Brief
 
 Goal:
 Resolve the selected feedback issues from the checklist.
@@ -380,6 +380,15 @@ Notes:
             <NativeSelect.Indicator />
           </NativeSelect.Root>
 
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void refreshItems()}
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+
           {isSuperuser ? (
             <HStack gap={3} wrap="wrap">
               <HStack gap={2}>
@@ -439,7 +448,7 @@ Notes:
                 disabled={selectedIssues.length === 0}
                 onClick={buildCodexBrief}
               >
-                Generate Codex Brief ({selectedIssues.length})
+                Generate Agent Brief ({selectedIssues.length})
               </Button>
             </HStack>
           ) : null}

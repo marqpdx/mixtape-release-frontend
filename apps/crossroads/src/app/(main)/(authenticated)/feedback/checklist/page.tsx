@@ -264,7 +264,7 @@ Details:
 ${item.message}`;
     });
 
-    const text = `Codex Brief
+    const text = `Agent Brief
 
 Goal:
 Resolve the selected feedback issues from the checklist.
@@ -407,7 +407,7 @@ Notes:
                 disabled={selectedIssues.length === 0}
                 onClick={buildCodexBrief}
               >
-                Generate Codex Brief ({selectedIssues.length})
+                Generate Agent Brief ({selectedIssues.length})
               </Button>
             </HStack>
           ) : null}

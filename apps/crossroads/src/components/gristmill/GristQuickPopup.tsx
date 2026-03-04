@@ -114,6 +114,27 @@ export default function GristQuickPopup() {
     setAutosaveStamp(null);
   }, []);
 
+  const insertCommand = useCallback((command: "/issue " | "/event ") => {
+    const el = textareaRef.current;
+    if (!el) {
+      setText((prev) => `${prev}${prev && !prev.endsWith("\n") ? "\n" : ""}${command}`);
+      return;
+    }
+
+    const start = el.selectionStart ?? text.length;
+    const end = el.selectionEnd ?? text.length;
+    const next = `${text.slice(0, start)}${command}${text.slice(end)}`;
+    setText(next);
+
+    window.setTimeout(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const caret = start + command.length;
+      ta.focus();
+      ta.setSelectionRange(caret, caret);
+    }, 0);
+  }, [text]);
+
   const parseForWarning = useCallback(async (gristText: string) => {
     try {
       const result = await parseGrist(gristText);
@@ -298,6 +319,27 @@ export default function GristQuickPopup() {
               />
               <Button asChild size="xs" variant="outline">
                 <Link href="/app/feedback/checklist">Checklist</Link>
+              </Button>
+            </HStack>
+
+            <HStack gap={2}>
+              <Button
+                size="xs"
+                borderRadius="full"
+                colorPalette="purple"
+                variant="subtle"
+                onClick={() => insertCommand("/issue ")}
+              >
+                is
+              </Button>
+              <Button
+                size="xs"
+                borderRadius="full"
+                colorPalette="blue"
+                variant="subtle"
+                onClick={() => insertCommand("/event ")}
+              >
+                ev
               </Button>
             </HStack>
 
