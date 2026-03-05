@@ -1,4 +1,4 @@
-// src/components/dashboard/member/memberConfig.ts
+// apps/mixtape/src/components/dashboard/member/memberConfig.ts
 
 import { MenuItem } from "@components/dashboard/shared/types";
 
@@ -57,7 +57,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "👥",
     subItems: [
       { key: "my-groups", label: "My Groups" },
-      { key: "create-group", label: "Create Group" },
+      { key: "create-group", label: "Create Group", adminOnly: true },
       { key: "discover-groups", label: "Discover", hidden: true},
       { key: "group-invites", label: "Invitations", hidden: true },
 
@@ -90,10 +90,10 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     label: "Bazaar",
     icon: "🏪",
     subItems: [
-      { key: "bazaar-overview", label: "Bazaar Overview" },
-      { key: "bazaar-products", label: "My Products" },
-      { key: "bazaar-offerings", label: "My Offerings" },
-      { key: "bazaar-orders", label: "My Purchases" },
+      { key: "bazaar-overview", label: "Bazaar Overview", adminOnly: true },
+      { key: "bazaar-products", label: "My Products", hidden: true },
+      { key: "bazaar-offerings", label: "My Offerings", hidden: true },
+      { key: "bazaar-orders", label: "My Purchases", hidden: true },
     ]
   }
 ];

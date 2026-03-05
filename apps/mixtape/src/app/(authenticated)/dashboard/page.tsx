@@ -112,6 +112,11 @@ export default function MemberDashboard() {
   const stableMembersData = useMemo(() => membersData, [membersData]);
   const stableUserGroups = useMemo(() => userGroups, [userGroups]);
   const stableTodos = useMemo(() => todos, [todos]);
+  const userRoles = useMemo(() => {
+    const roles: string[] = ["member"];
+    if (identity?.is_staff || identity?.is_superuser) roles.push("admin");
+    return roles;
+  }, [identity]);
   const defaultGroupName =
     process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
     process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
@@ -180,6 +185,7 @@ export default function MemberDashboard() {
       menuItems={MEMBER_DASHBOARD_CONFIG.menuItems}
       defaultSection={MEMBER_DASHBOARD_CONFIG.defaultSection}
       localStorageKey={MEMBER_DASHBOARD_CONFIG.localStorageKey}
+      userRoles={userRoles}
       WorkAreaComponent={WorkAreaWrapper}
       workAreaProps={{}}
       loading={identityLoading || groupsLoading}

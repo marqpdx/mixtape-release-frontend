@@ -148,10 +148,11 @@ export default function DashboardLayout({
   // }
 
   // Filter menu items based on user roles (if role system is used)
+  const isAdmin = userRoles.includes("admin");
   const getVisibleMenuItems = () => {
-    if (userRoles.length === 0) return menuItems;
     return menuItems.filter((item) => {
       if (item.hidden) return false;
+      if (item.adminOnly && !isAdmin) return false;
       return true;
     });
   };
@@ -312,6 +313,7 @@ export default function DashboardLayout({
               {visibleMenuItems.map((menuItem) => {
                 const filteredSubItems = menuItem.subItems?.filter((sub) => {
                   if (sub.hidden) return false;
+                  if (sub.adminOnly && !isAdmin) return false;
                   return true;
                 });
 

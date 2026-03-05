@@ -246,7 +246,7 @@ export default function MemberWorkArea({
           isLoading={isLoading}
           error={error}
           setActiveSection={setActiveSection}
-          showCreateButton={true}
+          showCreateButton={false}
           canEditGroup={canEditGroup}
           emptyStateMessage="You haven't joined any groups yet. Create your first group or join existing ones!"
         />
