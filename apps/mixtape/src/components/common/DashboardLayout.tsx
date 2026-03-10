@@ -17,19 +17,18 @@ import {
   IconButton,
   Button,
 } from "@chakra-ui/react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-// import { IconChevronRight } from "@tabler/icons-react";
-// import { Button } from "@theme/recipes/button.recipe";
-// import { ChevronIcon } from "@components/icons/IconMap";
-
-// Import shared types
 import {
   MenuItem,
   WorkAreaProps,
-  DashboardLayoutProps
+  DashboardLayoutProps,
 } from "@components/dashboard/shared/types";
-import { IconArrowForward, IconChevronRight, IconFold } from "@tabler/icons-react";
+import {
+  IconArrowForward,
+  IconChevronRight,
+  IconFold,
+} from "@tabler/icons-react";
 import { openParentForSection } from "@components/groups/navigationUtils";
 
 export default function DashboardLayout({
@@ -46,90 +45,161 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   void title;
   void defaultOpenParentMap;
-  const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const [allExpanded, setAllExpanded] = useState(false);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sidebarWidth = sidebarCollapsed ? "50px" : "230px";
+
   const [showBubbleNote, setShowBubbleNote] = useState(false);
   const [bubbleFading, setBubbleFading] = useState(false);
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wasCollapsedByOutline = useRef(false);
 
-  // Listen for outline panel open/close events from WriteComposer
-  useEffect(() => {
-    const handleOutlineOpened = () => {
-      if (!sidebarCollapsed) {
-        wasCollapsedByOutline.current = true;
-        setSidebarCollapsed(true);
-        // Show bubble note after sidebar finishes collapsing
-        setTimeout(() => {
-          setShowBubbleNote(true);
-          setBubbleFading(false);
-          // Start fade after 3.5s
-          bubbleTimerRef.current = setTimeout(() => {
-            setBubbleFading(true);
-            // Remove from DOM after fade animation
-            setTimeout(() => setShowBubbleNote(false), 400);
-          }, 3500);
-        }, 250);
-      }
-    };
-    const handleOutlineClosed = () => {
-      if (wasCollapsedByOutline.current) {
-        wasCollapsedByOutline.current = false;
-        setSidebarCollapsed(false);
-        setShowBubbleNote(false);
-        if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-      }
-    };
-    window.addEventListener('outline-panel-opened', handleOutlineOpened);
-    window.addEventListener('outline-panel-closed', handleOutlineClosed);
-    return () => {
-      window.removeEventListener('outline-panel-opened', handleOutlineOpened);
-      window.removeEventListener('outline-panel-closed', handleOutlineClosed);
-      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-    };
-  }, [sidebarCollapsed]);
-
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [allExpanded, setAllExpanded] = useState(false);
+
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   const textColor = "theme.text";
   const borderColor = "theme.border";
-  const subtleTextColor = "theme.textSecondary";
-  void expandedSections;
-  void subtleTextColor;
   const sidebarBg = "theme.bgSecondary";
 
-  // Load active section from localStorage with custom key
   const [activeSection, setActiveSection] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const stored = localStorage.getItem(localStorageKey);
       return stored || defaultSection;
     }
     return defaultSection;
   });
 
-  const [sectionParams, setSectionParams] = useState<Record<string, string>>({});
+  const [sectionParams, setSectionParams] = useState<Record<string, string>>(
+    () => {
+      if (typeof window !== "undefined") {
+        const storedParams = localStorage.getItem(`${localStorageKey}_params`);
+        if (storedParams) {
+          try {
+            return JSON.parse(storedParams) as Record<string, string>;
+          } catch {
+            return {};
+          }
+        }
+      }
+      return {};
+    }
+  );
+
   const searchParams = useSearchParams();
   const urlSection = searchParams?.get("section");
 
-  // Update the handler to accept parameters
-  const handleSetActiveSection = useCallback((section: string, params?: Record<string, string>) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(localStorageKey, section);
-      // Optionally store params in localStorage too, or just keep in state
-      if (params) {
-        localStorage.setItem(`${localStorageKey}_params`, JSON.stringify(params));
+  const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+
+  const visibleMenuItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      if (item.hidden) return false;
+      if (item.adminOnly && !isAdmin) return false;
+      return true;
+    });
+  }, [menuItems, isAdmin]);
+
+  const primaryTabs = useMemo(
+    () => visibleMenuItems.slice(0, 3),
+    [visibleMenuItems]
+  );
+
+  const overflowTabs = useMemo(
+    () => visibleMenuItems.slice(3),
+    [visibleMenuItems]
+  );
+
+  const findParentKeyForSection = useCallback(
+    (sectionKey: string, items: MenuItem[]): string | null => {
+      for (const item of items) {
+        if (item.subItems?.some((sub) => sub.key === sectionKey)) {
+          return item.key;
+        }
       }
-    }
-    setActiveSection(section);
-    setSectionParams(params || {});
-  }, [localStorageKey]);
+      return null;
+    },
+    []
+  );
+
+  const handleSetActiveSection = useCallback(
+    (section: string, params?: Record<string, string>) => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(localStorageKey, section);
+        if (params && Object.keys(params).length > 0) {
+          localStorage.setItem(
+            `${localStorageKey}_params`,
+            JSON.stringify(params)
+          );
+        } else {
+          localStorage.removeItem(`${localStorageKey}_params`);
+        }
+      }
+
+      setActiveSection((prev) => (prev === section ? prev : section));
+      setSectionParams((prev) => {
+        const next = params || {};
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(next);
+
+        if (
+          prevKeys.length === nextKeys.length &&
+          prevKeys.every((key) => prev[key] === next[key])
+        ) {
+          return prev;
+        }
+
+        return next;
+      });
+    },
+    [localStorageKey]
+  );
+
+  useEffect(() => {
+    const handleOutlineOpened = () => {
+      if (!sidebarCollapsed) {
+        wasCollapsedByOutline.current = true;
+        setSidebarCollapsed(true);
+
+        setTimeout(() => {
+          setShowBubbleNote(true);
+          setBubbleFading(false);
+
+          bubbleTimerRef.current = setTimeout(() => {
+            setBubbleFading(true);
+            setTimeout(() => setShowBubbleNote(false), 400);
+          }, 3500);
+        }, 250);
+      }
+    };
+
+    const handleOutlineClosed = () => {
+      if (wasCollapsedByOutline.current) {
+        wasCollapsedByOutline.current = false;
+        setSidebarCollapsed(false);
+        setShowBubbleNote(false);
+
+        if (bubbleTimerRef.current) {
+          clearTimeout(bubbleTimerRef.current);
+        }
+      }
+    };
+
+    window.addEventListener("outline-panel-opened", handleOutlineOpened);
+    window.addEventListener("outline-panel-closed", handleOutlineClosed);
+
+    return () => {
+      window.removeEventListener("outline-panel-opened", handleOutlineOpened);
+      window.removeEventListener("outline-panel-closed", handleOutlineClosed);
+      if (bubbleTimerRef.current) {
+        clearTimeout(bubbleTimerRef.current);
+      }
+    };
+  }, [sidebarCollapsed]);
 
   useEffect(() => {
     if (!urlSection) return;
+
     const params: Record<string, string> = {};
     if (searchParams) {
       for (const [key, value] of searchParams.entries()) {
@@ -137,75 +207,60 @@ export default function DashboardLayout({
         params[key] = value;
       }
     }
-    handleSetActiveSection(urlSection, Object.keys(params).length ? params : undefined);
+
+    handleSetActiveSection(
+      urlSection,
+      Object.keys(params).length > 0 ? params : undefined
+    );
   }, [urlSection, handleSetActiveSection, searchParams]);
 
-  // function handleSetActiveSection(section: string) {
-  //   if (typeof window !== 'undefined') {
-  //     localStorage.setItem(localStorageKey, section);
-  //   }
-  //   setActiveSection(section);
-  // }
+  useEffect(() => {
+    if (!activeSection) return;
 
-  // Filter menu items based on user roles (if role system is used)
-  const isAdmin = userRoles.includes("admin");
-  const getVisibleMenuItems = () => {
-    return menuItems.filter((item) => {
-      if (item.hidden) return false;
-      if (item.adminOnly && !isAdmin) return false;
-      return true;
+    const parentKey = findParentKeyForSection(activeSection, visibleMenuItems);
+
+    if (!parentKey) return;
+
+    setOpenSections((prev) => {
+      if (prev[parentKey]) return prev;
+      return {
+        ...prev,
+        [parentKey]: true,
+      };
     });
-  };
+  }, [activeSection, visibleMenuItems, findParentKeyForSection]);
 
-  const visibleMenuItems = getVisibleMenuItems();
-
-  const toggleAllAccordions = () => {
-    if (allExpanded) {
-      setExpandedSections([]);
-      setOpenSections({});
-    } else {
-      const allKeys = menuItems.map(item => item.key);
-      setExpandedSections(allKeys);
-      const openAll = allKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-      setOpenSections(openAll);
-    }
-    setAllExpanded(!allExpanded);
-  };
-
-  // Open parent sections on load
   useEffect(() => {
     if (!activeSection) return;
 
     openParentForSection(activeSection, setOpenSections, visibleMenuItems);
-    const parentKey = findParentKeyForSection(activeSection, visibleMenuItems);
-
-    if (parentKey) {
-      setOpenSections(prev => ({
-        ...prev,
-        [parentKey]: true,
-      }));
-    }
   }, [activeSection, visibleMenuItems]);
 
-  const findParentKeyForSection = (sectionKey: string, menuItems: MenuItem[]): string | null => {
-    for (const item of menuItems) {
-      if (item.subItems?.some(sub => sub.key === sectionKey)) {
-        return item.key;
-      }
+  const toggleAllAccordions = useCallback(() => {
+    if (allExpanded) {
+      setOpenSections({});
+      setAllExpanded(false);
+      return;
     }
-    return null;
-  };
+
+    const allKeys = visibleMenuItems.map((item) => item.key);
+    const openAll = allKeys.reduce<Record<string, boolean>>((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+
+    setOpenSections(openAll);
+    setAllExpanded(true);
+  }, [allExpanded, visibleMenuItems]);
 
   if (loading) {
     return <Text>Loading...</Text>;
   }
 
-  const primaryTabs = visibleMenuItems.slice(0, 3);
-  const overflowTabs = visibleMenuItems.slice(3);
-
   return (
     <Box className="dashboard-layout" bg="theme.bg" minH="100vh">
       {header && <Box>{header}</Box>}
+
       {isMobile ? (
         <MobileTabs
           activeSection={activeSection}
@@ -218,7 +273,6 @@ export default function DashboardLayout({
         />
       ) : (
         <Flex h="100vh" position="relative">
-          {/* Bubble note — positioned outside sidebar to avoid overflow:hidden clipping */}
           {showBubbleNote && (
             <Box
               position="absolute"
@@ -250,7 +304,7 @@ export default function DashboardLayout({
               Click here to expand side nav
             </Box>
           )}
-          {/* SINGLE Left Navigation Sidebar */}
+
           <Box
             w={sidebarWidth}
             bg={sidebarBg}
@@ -261,7 +315,6 @@ export default function DashboardLayout({
             display="flex"
             flexDirection="column"
           >
-            {/* Sidebar Header */}
             <Box p={3} borderBottom="1px solid" borderColor={borderColor} minH="60px">
               <HStack justify="space-between" h="full" align="center">
                 <HStack
@@ -269,14 +322,16 @@ export default function DashboardLayout({
                   onClick={() => {
                     const newCollapsed = !sidebarCollapsed;
                     setSidebarCollapsed(newCollapsed);
-                    // If user manually expands after auto-collapse, clear the flag
+
                     if (!newCollapsed && wasCollapsedByOutline.current) {
                       wasCollapsedByOutline.current = false;
                     }
-                    // Dismiss bubble on click
+
                     if (showBubbleNote) {
                       setShowBubbleNote(false);
-                      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+                      if (bubbleTimerRef.current) {
+                        clearTimeout(bubbleTimerRef.current);
+                      }
                     }
                   }}
                   _hover={{ opacity: 0.7 }}
@@ -294,13 +349,13 @@ export default function DashboardLayout({
                   )}
                 </HStack>
 
-                {/* Only show accordion controls when expanded */}
                 {!sidebarCollapsed && (
                   <IconButton
                     size="xs"
                     variant="ghost"
                     onClick={toggleAllAccordions}
                     title={allExpanded ? "Collapse all sections" : "Expand all sections"}
+                    aria-label={allExpanded ? "Collapse all sections" : "Expand all sections"}
                   >
                     {allExpanded ? <IconFold /> : <IconArrowForward />}
                   </IconButton>
@@ -308,8 +363,7 @@ export default function DashboardLayout({
               </HStack>
             </Box>
 
-            {/* Menu Items */}
-            <VStack align="stretch" gap={0} flex="1" overflowY="auto" className="zzyz">
+            <VStack align="stretch" gap={0} flex="1" overflowY="auto">
               {visibleMenuItems.map((menuItem) => {
                 const filteredSubItems = menuItem.subItems?.filter((sub) => {
                   if (sub.hidden) return false;
@@ -324,13 +378,20 @@ export default function DashboardLayout({
                 return (
                   <Collapsible.Root
                     key={menuItem.key}
-                    open={openSections[menuItem.key]}
+                    open={!!openSections[menuItem.key]}
                     onOpenChange={(details: { open: boolean } | boolean) => {
-                      const openValue = typeof details === "boolean" ? details : details.open ?? false;
-                      setOpenSections((prev) => ({
-                        ...prev,
-                        [menuItem.key]: openValue,
-                      }));
+                      const openValue =
+                        typeof details === "boolean"
+                          ? details
+                          : details.open ?? false;
+
+                      setOpenSections((prev) => {
+                        if (prev[menuItem.key] === openValue) return prev;
+                        return {
+                          ...prev,
+                          [menuItem.key]: openValue,
+                        };
+                      });
                     }}
                   >
                     <Collapsible.Trigger
@@ -342,14 +403,16 @@ export default function DashboardLayout({
                       _hover={{ bg: "theme.surface" }}
                       borderRadius="none"
                       onClick={(e: React.MouseEvent) => {
-                        // If sidebar is collapsed, expand it and open this section
                         if (sidebarCollapsed) {
-                          e.stopPropagation(); // Prevent collapsible toggle
+                          e.stopPropagation();
                           setSidebarCollapsed(false);
-                          setOpenSections((prev) => ({
-                            ...prev,
-                            [menuItem.key]: true,
-                          }));
+                          setOpenSections((prev) => {
+                            if (prev[menuItem.key]) return prev;
+                            return {
+                              ...prev,
+                              [menuItem.key]: true,
+                            };
+                          });
                         }
                       }}
                     >
@@ -363,6 +426,7 @@ export default function DashboardLayout({
                             <IconChevronRight />
                           </>
                         )}
+
                         {sidebarCollapsed && menuItem.icon && (
                           <Text
                             title={`${menuItem.label}, click to expand`}
@@ -400,7 +464,6 @@ export default function DashboardLayout({
             </VStack>
           </Box>
 
-          {/* Right Work Area */}
           <Box flex="1" p={0} overflowY="auto">
             <WorkAreaComponent
               section={activeSection}
@@ -415,7 +478,6 @@ export default function DashboardLayout({
   );
 }
 
-
 function MobileTabs({
   activeSection,
   setActiveSection,
@@ -426,7 +488,7 @@ function MobileTabs({
   header,
 }: {
   activeSection: string;
-  setActiveSection: (section: string) => void;
+  setActiveSection: (section: string, params?: Record<string, string>) => void;
   primaryTabs: MenuItem[];
   overflowTabs: MenuItem[];
   WorkAreaComponent: React.ComponentType<WorkAreaProps>;
@@ -435,37 +497,39 @@ function MobileTabs({
 }) {
   const { open, onOpen, onClose } = useDisclosure();
 
-  // Build map to lookup subitems for top-level menu
-  const menuMap: Record<string, MenuItem | undefined> = {};
-  [...primaryTabs, ...overflowTabs].forEach((item) => {
-    menuMap[item.key] = item;
-  });
+  const menuMap = useMemo(() => {
+    const map: Record<string, MenuItem | undefined> = {};
+    [...primaryTabs, ...overflowTabs].forEach((item) => {
+      map[item.key] = item;
+    });
+    return map;
+  }, [primaryTabs, overflowTabs]);
 
-  // Find parent key for activeSection
-  let activeTopLevelKey = null;
-  for (const key in menuMap) {
-    const item = menuMap[key];
-    if (item?.subItems?.some((sub) => sub.key === activeSection)) {
-      activeTopLevelKey = key;
-      break;
+  const activeTopLevelKey = useMemo(() => {
+    for (const key in menuMap) {
+      const item = menuMap[key];
+      if (item?.subItems?.some((sub) => sub.key === activeSection)) {
+        return key;
+      }
     }
-  }
+    return null;
+  }, [menuMap, activeSection]);
 
-  // Find subitems for currently active top-level tab
   const activeTopLevelItem = menuMap[activeTopLevelKey ?? activeSection];
   const subItems = activeTopLevelItem?.subItems || [];
 
   return (
     <Box className="dashboard-layout">
       {header && <Box mb={4}>{header}</Box>}
+
       <Tabs.Root
         value={activeTopLevelKey || activeSection}
         onValueChange={(details) => {
           const selectedKey = details.value;
           const selectedItem = menuMap[selectedKey];
+
           if (selectedItem?.subItems?.length) {
-            const firstSubKey = selectedItem.subItems[0].key;
-            setActiveSection(firstSubKey);
+            setActiveSection(selectedItem.subItems[0].key);
           } else {
             setActiveSection(selectedKey);
           }
@@ -516,9 +580,9 @@ function MobileTabs({
                           key={item.key}
                           justifyContent="flex-start"
                           onClick={() => {
-                            const subItems = item.subItems || [];
-                            if (subItems.length > 0) {
-                              setActiveSection(subItems[0].key);
+                            const itemSubItems = item.subItems || [];
+                            if (itemSubItems.length > 0) {
+                              setActiveSection(itemSubItems[0].key);
                             } else {
                               setActiveSection(item.key);
                             }
@@ -537,7 +601,6 @@ function MobileTabs({
           )}
         </Tabs.List>
 
-        {/* Render subitems if they exist */}
         {subItems.length > 0 && (
           <VStack align="stretch" gap={2} mb={4}>
             {subItems.map((sub) => (
@@ -554,7 +617,6 @@ function MobileTabs({
           </VStack>
         )}
 
-        {/* Show content of current section */}
         <WorkAreaComponent
           section={activeSection}
           setActiveSection={setActiveSection}
@@ -565,5 +627,4 @@ function MobileTabs({
   );
 }
 
-// Re-export types for convenience
 export type { MenuItem, WorkAreaProps, DashboardLayoutProps };

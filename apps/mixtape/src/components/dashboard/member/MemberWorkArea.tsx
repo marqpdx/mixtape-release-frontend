@@ -1,6 +1,6 @@
 // apps/mixtape/src/components/dashboard/member/MemberWorkArea.tsx
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import { VStack, Text, Box, Heading, Card, HStack, Button, SimpleGrid, Badge, Link } from "@chakra-ui/react";
 import { IconShoppingBag, IconPackage, IconTag, IconShoppingCart } from "@tabler/icons-react";
 import NextLink from "next/link";
@@ -29,7 +29,7 @@ import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@m
 import PersonalOverview from "../sections/PersonalOverview";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
-  identity: UserIdentity;
+  identity?: UserIdentity;
 }
 
 export default function MemberWorkArea({
@@ -45,31 +45,24 @@ export default function MemberWorkArea({
 
   const { groups: myGroups } = useUserGroups();
 
-  console.log('MemberWorkArea props:', { section, identity });
-  console.log('MemberWorkArea groups:', { groups, isLoading, error });
-
   // Define the permission function
   const canEditGroup = useMemo(() => {
     return (): boolean => {
-      // Superusers and staff can edit all groups
       if (identity?.is_superuser || identity?.is_staff) {
         return true;
       }
-
-      // Check if user is admin/steward of this specific group
-      // const userMembership = group.memberships?.find(
-      //   (membership) => membership.member_data?.id === identity?.id
-      // );
-
-      // return userMembership?.role === 'admin' || userMembership?.role === 'steward';
       return true;
     };
   }, [identity]);
 
-  // Add to MemberWorkArea component
-  const renderRef = useRef(0);
-  renderRef.current++;
-  console.log(`🔍 DEBUG: MemberWorkArea render #${renderRef.current}, section: ${section}`);
+  // Guard: identity is required for most sections (after all hooks)
+  if (!identity) {
+    return (
+      <WorkAreaWrapper>
+        <Text color="gray.500">Loading...</Text>
+      </WorkAreaWrapper>
+    );
+  }
 
   // Personal sections
   if (section === "overview") {
