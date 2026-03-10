@@ -12,9 +12,6 @@ import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { TextSelection } from '@tiptap/pm/state';
 
-// Sentence-ending punctuation followed by space pattern
-const SENTENCE_END_CHARS = ['.', '!', '?'];
-
 export interface AutoCapitalizeOptions {
   /**
    * Whether auto-capitalize is enabled
@@ -60,31 +57,20 @@ export const AutoCapitalize = Extension.create<AutoCapitalizeOptions>({
           const { $from } = selection;
           const pos = $from.pos;
 
-          // Need at least 3 characters before cursor: [.!?] + space + letter
-          if (pos < 3) return null;
-
-          // Get the text before the cursor
-          const textBefore = newState.doc.textBetween(
-            Math.max(0, pos - 3),
-            pos,
-            '\n'
-          );
-
-          // Check pattern: sentence-end punctuation + space + lowercase letter
-          if (textBefore.length < 3) return null;
-
-          const punctChar = textBefore[textBefore.length - 3];
-          const spaceChar = textBefore[textBefore.length - 2];
-          const letterChar = textBefore[textBefore.length - 1];
-
-          // Verify pattern
-          if (!SENTENCE_END_CHARS.includes(punctChar)) return null;
-          if (spaceChar !== ' ') return null;
+          const charPos = pos - 1;
+          const letterChar = newState.doc.textBetween(charPos, pos, '\n');
           if (!/[a-z]/.test(letterChar)) return null;
+
+          // Decide if this lowercase letter begins a sentence:
+          // 1) start of document
+          // 2) beginning of a new line/paragraph
+          // 3) after punctuation + space
+          const prefix = newState.doc.textBetween(Math.max(0, pos - 4), pos - 1, '\n');
+          const sentenceBoundaryPattern = /(?:^|\n|[.!?]\s)$/;
+          if (!sentenceBoundaryPattern.test(prefix)) return null;
 
           // Capitalize the letter
           const capitalLetter = letterChar.toUpperCase();
-          const charPos = pos - 1;
 
           const tr = newState.tr;
           tr.replaceWith(

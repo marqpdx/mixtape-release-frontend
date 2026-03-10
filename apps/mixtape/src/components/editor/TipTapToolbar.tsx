@@ -15,15 +15,20 @@ import {
   IconH2,
   IconH3,
   IconH4,
+  IconHelpCircle,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
+  const { user } = useAuth();
+  const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
+  const [showHelp, setShowHelp] = useState(false);
   const fontModeKey = "writing_font_mode";
   const SerifIcon = (
     <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
@@ -86,7 +91,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
 
   return (
-    <HStack p={1} pt={0} gap={0.5} justify="space-between">
+    <HStack p={1} pt={2} gap={0.5} justify="space-between" align="start" wrap="wrap">
       <HStack gap={0.5}>
         <EditorToolbarButton
           tooltip="Heading 1"
@@ -199,28 +204,65 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         />
       </HStack>
 
-      <Tooltip content="Publish as Section">
-        <IconButton
-          size="xs"
-          variant="ghost"
-          onClick={() => {
-            const ids = getSelectedBlockIds(editor)
-            ids.forEach((id) => {
-              editor.commands.appendBlockDestination(id, { kind: "post", id: "123" })
-              const blockRouting = editor.extensionManager.extensions.find(e => e.name === "blockRouting") as
-                | { options?: { getRouteMeta?: (blockId: string) => unknown } }
-                | undefined
-              const meta = blockRouting?.options?.getRouteMeta?.(id)
-              console.log("🔎 Route meta for block:", meta)
-            })
-            console.log("✅ Routed blocks:", ids)
-          }}
-          tabIndex={-1}
-          aria-label="Publish as Section"
+      <HStack gap={0.5} align="start">
+        <Tooltip content="Publish as Section">
+          <IconButton
+            size="xs"
+            variant="ghost"
+            onClick={() => {
+              const ids = getSelectedBlockIds(editor)
+              ids.forEach((id) => {
+                editor.commands.appendBlockDestination(id, { kind: "post", id: "123" })
+                const blockRouting = editor.extensionManager.extensions.find(e => e.name === "blockRouting") as
+                  | { options?: { getRouteMeta?: (blockId: string) => unknown } }
+                  | undefined
+                const meta = blockRouting?.options?.getRouteMeta?.(id)
+                console.log("🔎 Route meta for block:", meta)
+              })
+              console.log("✅ Routed blocks:", ids)
+            }}
+            tabIndex={-1}
+            aria-label="Publish as Section"
+          >
+            <IconShare size={16} />
+          </IconButton>
+        </Tooltip>
+        {isSuperuser ? (
+          <Tooltip content="Writing Help">
+            <IconButton
+              size="xs"
+              variant={showHelp ? "subtle" : "ghost"}
+              colorPalette={showHelp ? "blue" : undefined}
+              onClick={() => setShowHelp((prev) => !prev)}
+              tabIndex={-1}
+              aria-label="Toggle writing help"
+            >
+              <IconHelpCircle size={16} />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+      </HStack>
+      {isSuperuser && showHelp ? (
+        <Box
+          w="100%"
+          mt={1}
+          p={2}
+          borderWidth="1px"
+          borderColor="border"
+          borderRadius="md"
+          bg="bg.subtle"
         >
-          <IconShare size={16} />
-        </IconButton>
-      </Tooltip>
+          <Text fontSize="xs" color="fg.muted" whiteSpace="pre-wrap">
+            {`Spelling helpers
+Manual popup: Cmd/Ctrl + double-click a word.
+Auto-replace: typing a known misspelling + boundary key (space, punctuation, Enter) will auto-correct.
+
+@mentions
+Type @ + username letters to open suggestions.
+Use Arrow Up/Down + Enter (or Tab) to insert a mention.`}
+          </Text>
+        </Box>
+      ) : null}
     </HStack>
   );
 }

@@ -16,13 +16,14 @@ import {
   Textarea,
   VStack,
 } from "@chakra-ui/react";
-import { LuSparkles, LuSend, LuSave, LuTriangleAlert } from "react-icons/lu";
+import { LuSparkles, LuSend, LuSave, LuTriangleAlert, LuMic } from "react-icons/lu";
 import { parseGrist, promoteDraft, saveDraft } from "@mixtape/api/clients/gristmill/gristmillApi";
 import { toaster } from "@components/ui/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
 const CONTEXT_STORAGE_KEY = "grist_quick_popup_issue_context_v1";
+const RECENT_TOPICS_STORAGE_KEY = "grist_quick_popup_recent_topics_v1";
 const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
 const GRIST_HELP_TEXT = `/issue Brief title
 severity: medium
@@ -54,6 +55,8 @@ export default function GristQuickPopup() {
   const [warning, setWarning] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [routePath, setRoutePath] = useState("");
+  const [recentTopics, setRecentTopics] = useState<string[]>([]);
+  const [isClosingIdle, setIsClosingIdle] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const currentPath = typeof window === "undefined"
@@ -109,10 +112,36 @@ export default function GristQuickPopup() {
   }, [issueContext]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(RECENT_TOPICS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        setRecentTopics(parsed.filter((topic) => typeof topic === "string" && topic.trim()).slice(0, 3));
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
     const timer = window.setTimeout(() => textareaRef.current?.focus(), 0);
     return () => window.clearTimeout(timer);
   }, [open]);
+
+  useEffect(() => {
+    if (!open || isClosingIdle || savingDraft || promoting) return;
+    const timer = window.setTimeout(() => {
+      setIsClosingIdle(true);
+      window.setTimeout(() => {
+        setOpen(false);
+        setIsClosingIdle(false);
+      }, 180);
+    }, 15000);
+    return () => window.clearTimeout(timer);
+  }, [open, text, issueContext, isClosingIdle, savingDraft, promoting]);
 
   const persistLocal = useCallback((nextText: string) => {
     if (typeof window === "undefined") return;
@@ -137,6 +166,16 @@ export default function GristQuickPopup() {
     if (typeof window === "undefined") return;
     window.localStorage.removeItem(STORAGE_KEY);
     setAutosaveStamp(null);
+  }, []);
+
+  const addRecentTopic = useCallback((topic: string) => {
+    const trimmed = topic.trim();
+    if (!trimmed || typeof window === "undefined") return;
+    setRecentTopics((prev) => {
+      const next = [trimmed, ...prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase())].slice(0, 3);
+      window.localStorage.setItem(RECENT_TOPICS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const insertCommand = useCallback((command: "/issue " | "/event ") => {
@@ -200,6 +239,7 @@ export default function GristQuickPopup() {
       const saved = await saveDraft(submitText);
       setDraftId(saved.id);
       if (saved.warning) setWarning(saved.warning);
+      addRecentTopic(issueContext);
       persistLocal(text);
       window.dispatchEvent(new CustomEvent(FEEDBACK_CHECKLIST_REFRESH_EVENT));
       toaster.create({
@@ -216,7 +256,7 @@ export default function GristQuickPopup() {
     } finally {
       setSavingDraft(false);
     }
-  }, [applyIssueContext, parseForWarning, persistLocal, text]);
+  }, [addRecentTopic, applyIssueContext, issueContext, parseForWarning, persistLocal, text]);
 
   const handlePromote = useCallback(async () => {
     if (!text.trim()) return;
@@ -242,6 +282,7 @@ export default function GristQuickPopup() {
 
       clearLocal();
       setText("");
+      addRecentTopic(issueContext);
       setDraftId(null);
       setWarning(null);
       window.dispatchEvent(new CustomEvent(FEEDBACK_CHECKLIST_REFRESH_EVENT));
@@ -260,7 +301,7 @@ export default function GristQuickPopup() {
     } finally {
       setPromoting(false);
     }
-  }, [applyIssueContext, clearLocal, draftId, parseForWarning, text]);
+  }, [addRecentTopic, applyIssueContext, clearLocal, draftId, issueContext, parseForWarning, text]);
 
   useEffect(() => {
     if (!isSuperuser) return;
@@ -323,6 +364,8 @@ export default function GristQuickPopup() {
           boxShadow="2xl"
           zIndex={1500}
           p={4}
+          opacity={isClosingIdle ? 0 : 1}
+          transition="opacity 0.18s ease"
         >
           <VStack align="stretch" gap={3}>
             <HStack justify="space-between" align="center">
@@ -357,6 +400,12 @@ export default function GristQuickPopup() {
             ) : null}
 
             <HStack gap={2}>
+              <Button asChild size="xs" variant="outline">
+                <Link href="/app/seed">
+                  <LuMic />
+                  Voice
+                </Link>
+              </Button>
               <Input
                 size="sm"
                 value={routePath || currentPath}
@@ -389,6 +438,19 @@ export default function GristQuickPopup() {
               >
                 ev
               </Button>
+              {recentTopics.map((topic) => (
+                <Button
+                  key={topic}
+                  size="xs"
+                  borderRadius="full"
+                  colorPalette="teal"
+                  variant="subtle"
+                  onClick={() => setIssueContext(topic)}
+                  title={`Use topic context: ${topic}`}
+                >
+                  {topic}
+                </Button>
+              ))}
               <Input
                 size="xs"
                 value={issueContext}

@@ -20,7 +20,7 @@ import Link from "@tiptap/extension-link";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
 
-import { Box, Spinner } from "@chakra-ui/react";
+import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
 import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
@@ -31,6 +31,7 @@ import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
 import { useSpellDictionary } from "@/hooks/useSpellDictionary";
+import { useUsers } from "@mixtape/api/hooks";
 
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -78,6 +79,14 @@ interface TipTapEditorProps {
   };
 }
 
+type MentionState = {
+  from: number;
+  to: number;
+  query: string;
+  x: number;
+  y: number;
+};
+
 const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   initialContent = "",
   onContentChange,
@@ -105,6 +114,9 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   // Writing preferences from localStorage
   const [autoCapitalizeEnabled, setAutoCapitalizeEnabled] = useState(true);
   const [spellCorrectionEnabled, setSpellCorrectionEnabled] = useState(true);
+  const [mentionState, setMentionState] = useState<MentionState | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const { users } = useUsers({ enabled: editable });
 
   // Load writing preferences from localStorage on mount
   useEffect(() => {
@@ -175,6 +187,34 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     spellDictionary.addIgnore(word);
     setSpellPopupState(null);
   }, [spellDictionary]);
+
+  const mentionSuggestions = useMemo(() => {
+    const query = mentionState?.query.trim().toLowerCase() || "";
+    if (!query) return [];
+    return users
+      .filter((u) => u.username?.toLowerCase().includes(query))
+      .slice(0, 6);
+  }, [mentionState?.query, users]);
+
+  const closeMention = useCallback(() => {
+    setMentionState(null);
+    setMentionIndex(0);
+  }, []);
+
+  const applyMention = useCallback((username: string) => {
+    const editor = editorRef.current;
+    const state = mentionState;
+    if (!editor || !state) return;
+
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: state.from, to: state.to })
+      .insertContent(`@${username} `)
+      .run();
+
+    closeMention();
+  }, [closeMention, mentionState]);
 
   // Create unified collab object from either new props or legacy collab prop
   const collabConfig = useMemo(() => {
@@ -388,6 +428,93 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     editorRef.current = editor;
   }, [editor]);
 
+  useEffect(() => {
+    if (!editor || !editable) return;
+
+    const updateMentionState = () => {
+      const { state, view } = editor;
+      const { selection } = state;
+      if (!selection.empty) {
+        closeMention();
+        return;
+      }
+
+      const { $from } = selection;
+      const parentTextBefore = $from.parent.textBetween(0, $from.parentOffset, "\n");
+      const match = parentTextBefore.match(/(^|\s)@([a-zA-Z0-9._-]{1,30})$/);
+      if (!match) {
+        closeMention();
+        return;
+      }
+      const matchIndex = match.index;
+      if (typeof matchIndex !== "number") {
+        closeMention();
+        return;
+      }
+
+      const query = match[2] || "";
+      if (!query) {
+        closeMention();
+        return;
+      }
+
+      const mentionStartInParent = matchIndex + match[1].length;
+      const from = $from.start() + mentionStartInParent;
+      const to = $from.pos;
+      const coords = view.coordsAtPos(to);
+
+      setMentionState({
+        from,
+        to,
+        query,
+        x: coords.left,
+        y: coords.bottom + 6,
+      });
+      setMentionIndex(0);
+    };
+
+    editor.on("update", updateMentionState);
+    editor.on("selectionUpdate", updateMentionState);
+    updateMentionState();
+
+    return () => {
+      editor.off("update", updateMentionState);
+      editor.off("selectionUpdate", updateMentionState);
+    };
+  }, [closeMention, editable, editor]);
+
+  useEffect(() => {
+    if (!mentionState || mentionSuggestions.length === 0) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length);
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+        return;
+      }
+      if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        const selected = mentionSuggestions[mentionIndex];
+        if (selected?.username) {
+          applyMention(selected.username);
+        }
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMention();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [applyMention, closeMention, mentionIndex, mentionState, mentionSuggestions]);
+
   // Add this in the TipTapEditor component after creating the editor
   useEffect(() => {
     if (editor && collabConfig?.ydoc) {
@@ -516,6 +643,40 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         onAddToDictionary={handleSpellAddToDictionary}
         onClose={handleSpellClose}
       />
+      {mentionState && mentionSuggestions.length > 0 ? (
+        <Box
+          position="fixed"
+          left={`${mentionState.x}px`}
+          top={`${mentionState.y}px`}
+          zIndex={9998}
+          bg="bg.panel"
+          borderWidth="1px"
+          borderColor="border"
+          borderRadius="md"
+          boxShadow="lg"
+          minW="220px"
+          maxW="320px"
+          p={1}
+        >
+          <VStack align="stretch" gap={1}>
+            {mentionSuggestions.map((candidate, index) => (
+              <Button
+                key={candidate.id}
+                variant={index === mentionIndex ? "subtle" : "ghost"}
+                colorPalette={index === mentionIndex ? "blue" : undefined}
+                justifyContent="flex-start"
+                size="sm"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  applyMention(candidate.username);
+                }}
+              >
+                <Text fontSize="sm">@{candidate.username}</Text>
+              </Button>
+            ))}
+          </VStack>
+        </Box>
+      ) : null}
     </Box>
   );
 });
