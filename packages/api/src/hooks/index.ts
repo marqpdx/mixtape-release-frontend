@@ -16,6 +16,7 @@ export * from './projects'
 export * from './stackroom'
 export * from './threadworks'
 export * from './spellbook'
+export * from './worksessions'
 
 // Root-level hooks
 export * from './useAssets'

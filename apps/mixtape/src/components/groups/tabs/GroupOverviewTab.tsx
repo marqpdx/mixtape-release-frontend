@@ -71,18 +71,39 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
             const displayName =
               member.display_name || member.username || "Member";
             const initial = displayName.charAt(0).toUpperCase();
+            const memberHref = member.username ? `/members/${member.username}` : null;
             return (
               <Flex key={member.member_id} align="center" gap={3}>
-                <AvatarGroup>
-                  <Avatar.Root size="sm">
-                    {member.profile_image ? (
-                      <Avatar.Image src={member.profile_image} alt={displayName} />
-                    ) : (
-                      <Avatar.Fallback>{initial}</Avatar.Fallback>
-                    )}
-                  </Avatar.Root>
-                </AvatarGroup>
-                <Text fontWeight="medium">{displayName}</Text>
+                {memberHref ? (
+                  <Link as={NextLink} href={memberHref}>
+                    <AvatarGroup>
+                      <Avatar.Root size="sm" cursor="pointer">
+                        {member.profile_image ? (
+                          <Avatar.Image src={member.profile_image} alt={displayName} />
+                        ) : (
+                          <Avatar.Fallback>{initial}</Avatar.Fallback>
+                        )}
+                      </Avatar.Root>
+                    </AvatarGroup>
+                  </Link>
+                ) : (
+                  <AvatarGroup>
+                    <Avatar.Root size="sm">
+                      {member.profile_image ? (
+                        <Avatar.Image src={member.profile_image} alt={displayName} />
+                      ) : (
+                        <Avatar.Fallback>{initial}</Avatar.Fallback>
+                      )}
+                    </Avatar.Root>
+                  </AvatarGroup>
+                )}
+                {memberHref ? (
+                  <Link as={NextLink} href={memberHref}>
+                    <Text fontWeight="medium">{displayName}</Text>
+                  </Link>
+                ) : (
+                  <Text fontWeight="medium">{displayName}</Text>
+                )}
               </Flex>
             );
           })}
@@ -141,6 +162,11 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
                   <Text color="fg.muted">
                     Add a pinned welcome note to introduce members to this group.
                   </Text>
+                  <Link as={NextLink} href={`/groups/${group.slug}?view=admin&section=write`} mt={3} display="inline-block">
+                    <Button size="sm" variant="outline">
+                      Add welcome note
+                    </Button>
+                  </Link>
                 </>
               )}
             </Box>
@@ -217,14 +243,27 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
               {activeMembers.slice(0, 12).map((member) => {
                 const displayName = member.display_name || member.username || "Member";
                 const initial = displayName.charAt(0).toUpperCase();
+                const memberHref = member.username ? `/members/${member.username}` : null;
                 return (
-                  <Avatar.Root key={member.member_id} size="sm">
-                    {member.profile_image ? (
-                      <Avatar.Image src={member.profile_image} alt={displayName} />
-                    ) : (
-                      <Avatar.Fallback>{initial}</Avatar.Fallback>
-                    )}
-                  </Avatar.Root>
+                  memberHref ? (
+                    <Link as={NextLink} href={memberHref} key={member.member_id}>
+                      <Avatar.Root size="sm" cursor="pointer">
+                        {member.profile_image ? (
+                          <Avatar.Image src={member.profile_image} alt={displayName} />
+                        ) : (
+                          <Avatar.Fallback>{initial}</Avatar.Fallback>
+                        )}
+                      </Avatar.Root>
+                    </Link>
+                  ) : (
+                    <Avatar.Root key={member.member_id} size="sm">
+                      {member.profile_image ? (
+                        <Avatar.Image src={member.profile_image} alt={displayName} />
+                      ) : (
+                        <Avatar.Fallback>{initial}</Avatar.Fallback>
+                      )}
+                    </Avatar.Root>
+                  )
                 );
               })}
             </AvatarGroup>

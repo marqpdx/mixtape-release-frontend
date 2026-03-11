@@ -13,13 +13,33 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.NEXT_PUBLIC_LIVEWIRE_URL = process.env.EXPO_PUBLIC_LIVEWIRE_URL;
   }
 
+  if (process.env.EXPO_PUBLIC_PUSH_TOKEN_REGISTRATION_PATH) {
+    process.env.NEXT_PUBLIC_PUSH_TOKEN_REGISTRATION_PATH =
+      process.env.EXPO_PUBLIC_PUSH_TOKEN_REGISTRATION_PATH;
+  }
+
+  if (process.env.EXPO_PUBLIC_ENABLE_PUSH_REGISTRATION) {
+    process.env.NEXT_PUBLIC_ENABLE_PUSH_REGISTRATION =
+      process.env.EXPO_PUBLIC_ENABLE_PUSH_REGISTRATION;
+  }
+
+  if (process.env.EXPO_PUBLIC_APP_ENV) {
+    process.env.NEXT_PUBLIC_APP_ENV = process.env.EXPO_PUBLIC_APP_ENV;
+  }
+
   console.log('[env] Mobile environment configured:', {
     apiUrl: process.env.NEXT_PUBLIC_ROOT_API_URL,
     livewireUrl: process.env.NEXT_PUBLIC_LIVEWIRE_URL,
+    appEnv: process.env.NEXT_PUBLIC_APP_ENV,
+    pushRegistrationEnabled: process.env.NEXT_PUBLIC_ENABLE_PUSH_REGISTRATION,
+    pushRegistrationPath: process.env.NEXT_PUBLIC_PUSH_TOKEN_REGISTRATION_PATH,
   });
 }
 
 export const config = {
   apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8010',
   livewireUrl: process.env.EXPO_PUBLIC_LIVEWIRE_URL || 'http://10.0.2.2:5001',
+  appEnv: process.env.EXPO_PUBLIC_APP_ENV || 'development',
+  pushRegistrationPath: process.env.EXPO_PUBLIC_PUSH_TOKEN_REGISTRATION_PATH || '',
+  pushRegistrationEnabled: process.env.EXPO_PUBLIC_ENABLE_PUSH_REGISTRATION === 'true',
 };

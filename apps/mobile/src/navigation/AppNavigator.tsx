@@ -1,7 +1,7 @@
 // apps/mobile/src/navigation/AppNavigator.tsx
 
 import { useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
@@ -12,6 +12,7 @@ import NewGroupChatScreen from '../screens/NewGroupChatScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { ChatStateManager } from '../components/ChatStateManager';
 import LandingScreen from '../screens/LandingScreen';
+import { useNotifications } from '../hooks/useNotifications';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -29,6 +30,7 @@ export type RootStackParamList = {
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // ============================================================================
 // ROOT NAVIGATOR
@@ -36,6 +38,17 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useNotifications((target) => {
+    if (!target.conversationId || !navigationRef.isReady() || !isAuthenticated) {
+      return;
+    }
+
+    navigationRef.navigate('Chat', {
+      conversationId: target.conversationId,
+      title: target.title,
+    });
+  });
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
@@ -46,7 +59,7 @@ export default function AppNavigator() {
   };
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {/* Chat state manager - handles real-time updates when authenticated */}
       {isAuthenticated && <ChatStateManager />}
 

@@ -148,7 +148,7 @@ export function GroupMemberList({
           })
         );
       }
-      router.push(`/member/${membership.username}`);
+      router.push(`/members/${membership.username}`);
       return;
     }
     onMemberClick?.(membership);

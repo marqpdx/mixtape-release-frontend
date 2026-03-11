@@ -6,6 +6,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapEditor from "@components/editor/TipTapEditor";
 import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
+import type { SegmentBoundaryAttrs } from "@components/editor/extensions/SegmentBoundary";
 import { useTextSelection, TextSelection } from "../hooks/useTextSelection";
 import { useBackgroundSummary } from "@hooks/editor/useBackgroundSummary";
 
@@ -61,6 +62,15 @@ export interface MainEditorProps {
 
   /** Optional: used only for dev overlay */
   debugId?: string;
+
+  /** Stream authoring mode (solo only) — enables /new and /renew commands */
+  streamMode?: {
+    anchorArtifactType: string;
+    anchorArtifactId: string;
+    onNewArtifact: (type: string, title?: string) => Promise<void>;
+    onRenew: () => void;
+    onMerge?: (attrs: SegmentBoundaryAttrs) => Promise<void>;
+  } | null;
 }
 
 export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
@@ -77,6 +87,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       editorMode,
       collabReady = false,
       debugId,
+      streamMode,
     },
     ref
   ) => {
@@ -301,6 +312,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
               autoSave={autoSave}
               placeholder={placeholder}
               className="borderless-editor"
+              streamMode={streamMode ?? undefined}
             />
           )}
 

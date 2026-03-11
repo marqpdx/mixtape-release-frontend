@@ -20,6 +20,7 @@ import { WorkspaceToggle } from "@components/writing/composer/WorkspaceToggle";
 import { ScrollToTopButton } from "@components/writing/composer/ScrollToTopButton";
 
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
+import { useStreamAuthoring } from "@/hooks/useStreamAuthoring";
 import { useEmptyFlagDetection } from "@components/writing/hooks/useEmptyFlagDetection";
 import { TextSelection } from "@components/writing/hooks/useTextSelection";
 import { useColorModeValue } from "@components/ui/color-mode";
@@ -217,6 +218,66 @@ export default function WriteComposer({
     autosaveDebounceMs
   );
 
+  // Stream authoring — activates lazily on first /new command
+  const createArtifactForStream = useCallback(
+    async (type: string, title?: string) => {
+      const placeholderTitle = title || "Untitled";
+
+      switch (type) {
+        case "writingpiece": {
+          const res = await axiosInstance.post("/api/workbench/drafts/", {
+            sponsor_type: sponsor.type === "group" ? "group" : "user",
+            sponsor_id: sponsor.id,
+            content_profile: "default",
+            title: placeholderTitle,
+          });
+          return { id: res.data.id, contentTypeModel: "writingpiece" };
+        }
+        case "seed": {
+          const res = await axiosInstance.post("/api/writing/seeds", {
+            body_text: placeholderTitle,
+          });
+          return { id: res.data.id, contentTypeModel: "seed" };
+        }
+        case "event": {
+          const url = sponsor.slug
+            ? `/api/groups/${sponsor.slug}/almanac/`
+            : "/api/almanac/events/";
+          const res = await axiosInstance.post(url, {
+            event_type: "single",
+            title: placeholderTitle,
+            description: "",
+            event_format: "in_person",
+          });
+          return { id: res.data.id, contentTypeModel: "event" };
+        }
+        case "course": {
+          if (!sponsor.slug) throw new Error("Course requires a group context");
+          const res = await axiosInstance.post(
+            `/api/earthlab/${sponsor.slug}/courses`,
+            { title: placeholderTitle }
+          );
+          return { id: res.data.id, contentTypeModel: "course" };
+        }
+        default:
+          throw new Error(`Unsupported artifact type: ${type}`);
+      }
+    },
+    [sponsor]
+  );
+
+  const {
+    streamMode,
+    deactivateStream,
+  } = useStreamAuthoring({
+    anchor: {
+      contentTypeModel: "writingpiece",
+      objectId: pieceId,
+    },
+    createArtifact: createArtifactForStream,
+    editorRef,
+  });
+
   // Track editor instance for collab autosave
   const [collabEditor, setCollabEditor] = useState<Editor | null>(null);
 
@@ -357,8 +418,10 @@ export default function WriteComposer({
         body_json: docJSONRef.current ?? EMPTY_DOC,
         excerpt: excerptRef.current,
       });
+      // End stream authoring session on navigate away
+      void deactivateStream();
     };
-  }, [wantsCollab, hasUnsavedChanges, saveNow]);
+  }, [wantsCollab, hasUnsavedChanges, saveNow, deactivateStream]);
 
   const computeWordCountFromDoc = useCallback((doc: DocumentJSON | null | undefined) => {
     if (!doc) return 0;
@@ -581,6 +644,7 @@ export default function WriteComposer({
                 ydoc={(ydoc ?? undefined) as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 collabReady={collabReady}
                 debugId={collabKey}
+                streamMode={wantsCollab ? undefined : streamMode}
               />
             </Box>
 

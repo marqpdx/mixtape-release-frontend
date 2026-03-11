@@ -55,7 +55,6 @@ export default function GristQuickPopup() {
   const [showHelp, setShowHelp] = useState(false);
   const [routePath, setRoutePath] = useState("");
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
-  const [isClosingIdle, setIsClosingIdle] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const currentPath = typeof window === "undefined"
@@ -129,18 +128,6 @@ export default function GristQuickPopup() {
     const timer = window.setTimeout(() => textareaRef.current?.focus(), 0);
     return () => window.clearTimeout(timer);
   }, [open]);
-
-  useEffect(() => {
-    if (!open || isClosingIdle || savingDraft || promoting) return;
-    const timer = window.setTimeout(() => {
-      setIsClosingIdle(true);
-      window.setTimeout(() => {
-        setOpen(false);
-        setIsClosingIdle(false);
-      }, 180);
-    }, 15000);
-    return () => window.clearTimeout(timer);
-  }, [open, text, issueContext, isClosingIdle, savingDraft, promoting]);
 
   const persistLocal = useCallback(
     (nextText: string) => {
@@ -366,8 +353,6 @@ export default function GristQuickPopup() {
           boxShadow="2xl"
           zIndex={1500}
           p={4}
-          opacity={isClosingIdle ? 0 : 1}
-          transition="opacity 0.18s ease"
         >
           <VStack align="stretch" gap={3}>
             <HStack justify="space-between" align="center">
@@ -421,59 +406,65 @@ export default function GristQuickPopup() {
               </Button>
             </HStack>
 
-            <HStack gap={2}>
-              <Button
-                size="xs"
-                borderRadius="full"
-                colorPalette="purple"
-                variant="subtle"
-                onClick={() => insertCommand("/issue ")}
-              >
-                is
-              </Button>
-              <Button
-                size="xs"
-                borderRadius="full"
-                colorPalette="blue"
-                variant="subtle"
-                onClick={() => insertCommand("/event ")}
-              >
-                ev
-              </Button>
-              {recentTopics.map((topic) => (
+            <VStack align="stretch" gap={2}>
+              <HStack gap={2} wrap="wrap">
                 <Button
-                  key={topic}
                   size="xs"
                   borderRadius="full"
-                  colorPalette="teal"
+                  colorPalette="purple"
                   variant="subtle"
-                  onClick={() => setIssueContext(topic)}
-                  title={`Use topic context: ${topic}`}
+                  onClick={() => insertCommand("/issue ")}
                 >
-                  {topic}
+                  is
                 </Button>
-              ))}
-              <Input
-                size="xs"
-                value={issueContext}
-                onChange={(event) => setIssueContext(event.currentTarget.value)}
-                placeholder="Context (applies to /issue)"
-                maxW={{ base: "full", md: "280px" }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                  }
-                }}
-              />
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => setIssueContext("")}
-                disabled={!issueContext.trim()}
-              >
-                Clear
-              </Button>
-            </HStack>
+                <Button
+                  size="xs"
+                  borderRadius="full"
+                  colorPalette="blue"
+                  variant="subtle"
+                  onClick={() => insertCommand("/event ")}
+                >
+                  ev
+                </Button>
+                {recentTopics.map((topic) => (
+                  <Button
+                    key={topic}
+                    size="xs"
+                    borderRadius="full"
+                    colorPalette="teal"
+                    variant="subtle"
+                    onClick={() => setIssueContext(topic)}
+                    title={`Use topic context: ${topic}`}
+                  >
+                    {topic}
+                  </Button>
+                ))}
+              </HStack>
+              <HStack gap={2} align="center">
+                <Input
+                  size="xs"
+                  value={issueContext}
+                  onChange={(event) => setIssueContext(event.currentTarget.value)}
+                  placeholder="Context (applies to /issue)"
+                  flex="1"
+                  minW={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                    }
+                  }}
+                />
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => setIssueContext("")}
+                  disabled={!issueContext.trim()}
+                  flexShrink={0}
+                >
+                  Clear
+                </Button>
+              </HStack>
+            </VStack>
 
             <Textarea
               ref={textareaRef}

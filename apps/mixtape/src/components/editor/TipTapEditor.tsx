@@ -32,6 +32,12 @@ import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrect
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
 import { useSpellDictionary } from "@/hooks/useSpellDictionary";
 import { useUsers } from "@mixtape/api/hooks";
+import { SegmentBoundary, SegmentBoundaryAttrs } from "./extensions/SegmentBoundary";
+import { StreamCommands } from "./extensions/StreamCommands";
+import { streamCommandsRender } from "./extensions/streamCommandsRender";
+import { CompositionBar, CompositionSegment } from "./extensions/CompositionBar";
+import { CompositionBarPanel } from "./CompositionBarPanel";
+import { MergeConfirmationDialog } from "./MergeConfirmationDialog";
 
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -77,6 +83,14 @@ interface TipTapEditorProps {
     awareness: Awareness;
     user: { name: string; color?: string };
   };
+  // Stream authoring mode (composed work sessions)
+  streamMode?: {
+    anchorArtifactType: string;
+    anchorArtifactId: string;
+    onNewArtifact: (type: string, title?: string) => Promise<void>;
+    onRenew: () => void;
+    onMerge?: (attrs: SegmentBoundaryAttrs) => Promise<void>;
+  };
 }
 
 type MentionState = {
@@ -99,6 +113,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   placeholder = "Type here...",
   toolbarOptions = DEFAULT_TOOLBAR_OPTIONS,
   className = "",
+  streamMode,
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
   const isUpdatingContentRef = useRef(false);
@@ -117,6 +132,36 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const [mentionState, setMentionState] = useState<MentionState | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const { users } = useUsers({ enabled: editable });
+
+  // Stream authoring state
+  const [compositionSegments, setCompositionSegments] = useState<CompositionSegment[]>([]);
+  const [mergeDialogAttrs, setMergeDialogAttrs] = useState<SegmentBoundaryAttrs | null>(null);
+  const mergeResolveRef = useRef<((confirmed: boolean) => void) | null>(null);
+
+  const handleBoundaryDelete = useCallback(async (attrs: SegmentBoundaryAttrs): Promise<boolean> => {
+    return new Promise((resolve) => {
+      mergeResolveRef.current = resolve;
+      setMergeDialogAttrs(attrs);
+    });
+  }, []);
+
+  const handleMergeConfirm = useCallback(() => {
+    mergeResolveRef.current?.(true);
+    mergeResolveRef.current = null;
+    if (mergeDialogAttrs && streamMode?.onMerge) {
+      streamMode.onMerge(mergeDialogAttrs);
+    }
+  }, [mergeDialogAttrs, streamMode]);
+
+  const handleMergeCancel = useCallback(() => {
+    mergeResolveRef.current?.(false);
+    mergeResolveRef.current = null;
+    setMergeDialogAttrs(null);
+  }, []);
+
+  const handleSegmentsChange = useCallback((segments: CompositionSegment[]) => {
+    setCompositionSegments(segments);
+  }, []);
 
   // Load writing preferences from localStorage on mount
   useEffect(() => {
@@ -284,7 +329,21 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
     ...(spellCorrectionEnabled ? [SpellCorrection.configure(spellCorrectionConfig)] : []),
-  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled]);
+    // Stream authoring extensions (only when streamMode is active)
+    ...(streamMode ? [
+      SegmentBoundary.configure({ onDelete: handleBoundaryDelete }),
+      StreamCommands.configure({
+        suggestion: { render: streamCommandsRender },
+        onNewArtifact: streamMode.onNewArtifact,
+        onRenew: streamMode.onRenew,
+      }),
+      CompositionBar.configure({
+        anchorArtifactType: streamMode.anchorArtifactType,
+        anchorArtifactId: streamMode.anchorArtifactId,
+        onSegmentsChange: handleSegmentsChange,
+      }),
+    ] : []),
+  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, handleBoundaryDelete, handleSegmentsChange]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
@@ -614,12 +673,16 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         overflow="hidden"
         pt={1}
         pl={1}
+        position="relative"
       >
         <TipTapToolbar editor={editor} />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />
         </Prose>
+        {streamMode && compositionSegments.length > 0 && (
+          <CompositionBarPanel segments={compositionSegments} editor={editor} />
+        )}
       </Box>
 
       {/* <Box
@@ -677,6 +740,15 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           </VStack>
         </Box>
       ) : null}
+
+      {streamMode && (
+        <MergeConfirmationDialog
+          open={mergeDialogAttrs !== null}
+          onClose={handleMergeCancel}
+          onConfirm={handleMergeConfirm}
+          boundaryAttrs={mergeDialogAttrs}
+        />
+      )}
     </Box>
   );
 });

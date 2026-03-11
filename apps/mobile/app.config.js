@@ -2,6 +2,7 @@ export default {
   expo: {
     name: "Mixtape",
     slug: "mixtape-mobile",
+    scheme: "mixtape",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
