@@ -81,11 +81,17 @@ export async function fetchDrafts(
   sponsorSlug: string,
   filter?: 'all' | 'solo' | 'collab'
 ): Promise<WritingWorkingCopy[]> {
+  // Backend expects: my | shared | all
+  const backendFilter =
+    filter === 'solo' ? 'my' :
+    filter === 'collab' ? 'shared' :
+    'all';
+
   const response = await axiosInstance.get('/api/writing/drafts', {
     params: {
       sponsor_type: sponsorType,
       sponsor_slug: sponsorSlug,
-      filter,
+      filter: backendFilter,
     },
   });
   return unwrapListResponse<WritingWorkingCopy>(response.data);

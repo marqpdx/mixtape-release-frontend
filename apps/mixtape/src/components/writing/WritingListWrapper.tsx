@@ -40,7 +40,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
 import { useWriting, useWritingMutations } from "@hooks/useWriting";
-import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
+import { useGroupWelcomePin, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
@@ -203,6 +203,9 @@ export default function WritingListWrapper({
   } = useWriting(sponsor.type, sponsor.slug);
   const { deleteDraft } = useWritingMutations(sponsor.type, sponsor.slug);
   const { groups: userGroups = [] } = useUserGroups();
+  const groupSlugForWelcomePin = sponsor.type === "group" ? sponsor.slug : null;
+  const { pin: welcomePin } = useGroupWelcomePin(groupSlugForWelcomePin);
+  const welcomePinnedPieceId = welcomePin?.piece?.id || null;
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage.getItem("writing_force_refresh") === "true") {
@@ -488,6 +491,11 @@ export default function WritingListWrapper({
         <Badge size="sm" bg={badgeBg} color={badgeColor} px={2} py={1} rounded="full">
           Draft
         </Badge>
+        {welcomePinnedPieceId && draft.piece.id === welcomePinnedPieceId && (
+          <Badge size="sm" colorScheme="orange" px={2} py={1} rounded="full">
+            Welcome pin
+          </Badge>
+        )}
 
         {/* Collaborator Avatars (replace count badge) */}
         {isCollab &&
@@ -873,7 +881,8 @@ export default function WritingListWrapper({
               error={placementsError ? "Failed to load writing" : null}
               columns={postsColumns(
                 handleRowClick,
-                canManagePosts ? handlePublishedEdit : undefined
+                canManagePosts ? handlePublishedEdit : undefined,
+                welcomePinnedPieceId
               )}
               showAvatar={false}
               emptyStateMessage="No published content found"
@@ -922,7 +931,8 @@ export default function WritingListWrapper({
                           error={placementsError ? "Failed to load writing" : null}
                           columns={postsColumns(
                             handleRowClick,
-                            canManagePosts ? handlePublishedEdit : undefined
+                            canManagePosts ? handlePublishedEdit : undefined,
+                            welcomePinnedPieceId
                           )}
                           showAvatar={false}
                           emptyStateMessage="No published content found"
@@ -947,7 +957,8 @@ export default function WritingListWrapper({
                     error={placementsError ? "Failed to load writing" : null}
                     columns={postsColumns(
                       handleRowClick,
-                      canManagePosts ? handlePublishedEdit : undefined
+                      canManagePosts ? handlePublishedEdit : undefined,
+                      welcomePinnedPieceId
                     )}
                     showAvatar={false}
                     emptyStateMessage="No untagged content found"
@@ -988,7 +999,8 @@ export default function WritingListWrapper({
                           error={placementsError ? "Failed to load writing" : null}
                           columns={postsColumns(
                             handleRowClick,
-                            canManagePosts ? handlePublishedEdit : undefined
+                            canManagePosts ? handlePublishedEdit : undefined,
+                            welcomePinnedPieceId
                           )}
                           showAvatar={false}
                           emptyStateMessage="No published content found"

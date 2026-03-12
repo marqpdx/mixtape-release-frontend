@@ -149,7 +149,7 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
                   color="gray.600"
                 >
                   <HStack gap={1}>
-                    <Text fontWeight="medium">{piece.author_name}</Text>
+                    <Text fontWeight="medium">By {piece.author_name}</Text>
                   </HStack>
                   <Text>•</Text>
                   <Text>
@@ -158,7 +158,7 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
                     })}
                   </Text>
 
-                  {piece.reading_time && (
+                  {piece.reading_time != null && piece.reading_time > 0 && (
                     <>
                       <Text>•</Text>
                       <HStack gap={1}>
@@ -182,35 +182,18 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
 
               {/* Excerpt if available */}
               {piece.excerpt && (
-                <Text fontSize="lg" color="gray.600" fontStyle="italic">
-                  {piece.excerpt}
-                </Text>
+                <>
+                  <Text fontSize="lg" color="gray.600" fontStyle="italic">
+                    {piece.excerpt}
+                  </Text>
+                  <Divider />
+                </>
               )}
-
-              <Divider />
 
               {/* Main content */}
               <Box className="writing-piece-content">
                 <TipTapRenderer content={piece.body_json} />
               </Box>
-
-              <Divider />
-
-              {/* Footer metadata */}
-              <HStack
-                justify="space-between"
-                fontSize="sm"
-                color="gray.500"
-                pt={4}
-              >
-                <Text>
-                  {piece.writing_kind.charAt(0).toUpperCase() +
-                    piece.writing_kind.slice(1)}
-                </Text>
-                {piece.allow_comments && (
-                  <Text>Comments enabled</Text>
-                )}
-              </HStack>
             </VStack>
           </Box>
 

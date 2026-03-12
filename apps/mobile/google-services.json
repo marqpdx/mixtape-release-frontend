@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "96907398732",
+    "project_id": "com-mixtape-mobile",
+    "storage_bucket": "com-mixtape-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96907398732:android:f8c2452f5b5267da50eee9",
+        "android_client_info": {
+          "package_name": "com.mixtape.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2mJZz3BlbsOdBqnlP2JwsLsMF4gygcgI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

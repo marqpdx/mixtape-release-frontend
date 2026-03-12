@@ -40,6 +40,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "writing", label: "My Writing", hidden: false },
       { key: "draft-room", label: "Draft Room", hidden: false },
+      { key: "draft-room-v2", label: "Draft Room V2", hidden: false },
       { key: "write", label: "Write", hidden: false },
       { key: "seeds", label: "Seeds", hidden: false },
       { key: "import-document", label: "Import Document", hidden: false },

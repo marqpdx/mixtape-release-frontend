@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { useEffect, useEffectEvent } from 'react';
+import { useEffect, useRef } from 'react';
 import { registerPushToken } from '@mixtape/api/clients/mobile/pushApi';
 import { useAuthStore } from '../stores/authStore';
 import { config } from '../config/env';
@@ -13,6 +13,7 @@ export function useNotifications(
   onNotificationTarget?: (target: NotificationTarget) => void
 ) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const notificationTargetRef = useRef(onNotificationTarget);
   const permissionStatus = useNotificationStore((state) => state.permissionStatus);
   const pushToken = useNotificationStore((state) => state.pushToken);
   const lastSyncedToken = useNotificationStore((state) => state.lastSyncedToken);
@@ -20,16 +21,17 @@ export function useNotifications(
   const setPushToken = useNotificationStore((state) => state.setPushToken);
   const markTokenSynced = useNotificationStore((state) => state.markTokenSynced);
   const resetNotificationState = useNotificationStore((state) => state.reset);
-  const handleNotificationTarget = useEffectEvent((target: NotificationTarget) => {
-    onNotificationTarget?.(target);
-  });
+
+  useEffect(() => {
+    notificationTargetRef.current = onNotificationTarget;
+  }, [onNotificationTarget]);
 
   useEffect(() => {
     notificationService.configure();
 
     const responseSubscription = notificationService.addNotificationResponseListener(
       (target) => {
-        handleNotificationTarget(target);
+        notificationTargetRef.current?.(target);
       }
     );
 

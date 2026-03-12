@@ -17,6 +17,7 @@ export default {
     },
     android: {
       package: "com.mixtape.mobile",
+      googleServicesFile: "./google-services.json",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
@@ -25,7 +26,16 @@ export default {
     web: {
       favicon: "./assets/favicon.png",
     },
-    plugins: ["expo-dev-client"],
+    plugins: [
+      "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          color: "#001f3f",
+          defaultChannel: "messages",
+        },
+      ],
+    ],
     extra: {
       eas: {
         projectId: "d35d123f-dd50-4020-b6b7-b21c861eb627",

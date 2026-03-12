@@ -17,6 +17,7 @@ import {
 import { Switch } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { PREF_AUTO_LOAD_MIC, getBooleanPreference, setBooleanPreference } from '@/lib/memberSettings';
 import {
   useSpellCorrections,
   useAddSpellCorrection,
@@ -41,11 +42,13 @@ export function WritingSettings() {
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
 
   // Writing preferences (localStorage for now)
+  const [autoLoadMic, setAutoLoadMic] = useState(false);
   const [autoCapitalize, setAutoCapitalize] = useState(true);
   const [spellCorrection, setSpellCorrection] = useState(true);
 
   // Load preferences from localStorage
   useEffect(() => {
+    setAutoLoadMic(getBooleanPreference(PREF_AUTO_LOAD_MIC, false));
     const savedAutoCap = localStorage.getItem(PREF_AUTO_CAPITALIZE);
     const savedSpell = localStorage.getItem(PREF_SPELL_CORRECTION);
     if (savedAutoCap !== null) setAutoCapitalize(savedAutoCap === 'true');
@@ -61,6 +64,11 @@ export function WritingSettings() {
   const handleSpellCorrectionChange = useCallback((checked: boolean) => {
     setSpellCorrection(checked);
     localStorage.setItem(PREF_SPELL_CORRECTION, String(checked));
+  }, []);
+
+  const handleAutoLoadMicChange = useCallback((checked: boolean) => {
+    setAutoLoadMic(checked);
+    setBooleanPreference(PREF_AUTO_LOAD_MIC, checked);
   }, []);
 
   // Spell dictionary data
@@ -130,6 +138,24 @@ export function WritingSettings() {
       <Box p={4} bg={cardBg} border="1px" borderColor={borderColor} borderRadius="md">
         <Heading size="sm" mb={4}>Writing Preferences</Heading>
         <VStack align="stretch" gap={4}>
+          <HStack justify="space-between">
+            <Box>
+              <Text fontWeight="medium">Auto Load Mic</Text>
+              <Text fontSize="xs" color={mutedColor}>
+                Preload microphone on Seed Capture page for faster voice notes.
+              </Text>
+            </Box>
+            <Switch.Root
+              checked={autoLoadMic}
+              onCheckedChange={(e) => handleAutoLoadMicChange(e.checked)}
+            >
+              <Switch.HiddenInput />
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+            </Switch.Root>
+          </HStack>
+
           <HStack justify="space-between">
             <Box>
               <Text fontWeight="medium">Auto-capitalize sentences</Text>

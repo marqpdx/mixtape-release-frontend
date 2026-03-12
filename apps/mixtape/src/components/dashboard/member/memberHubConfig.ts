@@ -32,9 +32,10 @@ export const MEMBER_HUB_MENU_ITEMS: MenuItem[] = [
   },
   {
     key: "settings",
-    label: "Setings",
+    label: "Settings",
     icon: "🧰",
     subItems: [
+      { key: "member-settings", label: "Preferences", hidden: false },
       { key: "edit-profile", label: "Edit Profile", hidden: false },
       // { key: "todos", label: "ToDos", hidden: false },
     ],

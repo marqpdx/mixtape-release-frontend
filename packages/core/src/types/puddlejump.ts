@@ -37,6 +37,7 @@ export interface PuddlejumpBundleMetadata {
  */
 export interface PuddlejumpConstraints {
   max_files: number; // Hard limit: 300
+  max_size_bytes: number; // Hard limit: 52428800 (50MB)
   format: 'markdown'; // Only markdown supported in v1.0
   folder_depth: number; // Max nesting: 5 levels
 }
@@ -170,13 +171,12 @@ export interface PuddlejumpExportRequest {
 
 /**
  * Export API response
+ *
+ * The export endpoint streams a zip file directly (Content-Type: application/zip).
+ * There is no JSON response body — the bundle_id is returned in the X-Bundle-Id header.
+ * Use the Blob returned by the fetch/axios call; do not expect a JSON object.
  */
-export interface PuddlejumpExportResponse {
-  bundle_id: string; // New UUID generated for export
-  download_url: string; // Signed S3 URL (temporary)
-  expires_at: string; // ISO 8601 datetime (typically 24 hours)
-  bundle_info: PuddlejumpBundleInfo;
-}
+export type PuddlejumpExportResponse = Blob;
 
 /**
  * Bundle info summary
@@ -276,7 +276,7 @@ export interface LibraryItemWithPuddlejump {
  */
 
 /**
- * Sync state (for Phase 4 - continuous sync daemon)
+ * Sync state (desktop client — sync API is built, see /api/stackroom/puddlejump/sync/*)
  */
 export interface PuddlejumpSyncState {
   file_path: string;
@@ -409,9 +409,15 @@ export const PUDDLEJUMP_SCHEMA_URL = 'https://puddlejump.mixtape.ai/schema/v1.0.
  */
 
 export type PuddlejumpApiEndpoint =
-  | '/api/puddlejump/import/'
-  | '/api/puddlejump/export/{library_id}/'
-  | '/api/puddlejump/status/{library_id}/';
+  | '/api/stackroom/puddlejump/personal'
+  | '/api/stackroom/puddlejump/import'
+  | '/api/stackroom/puddlejump/health'
+  | '/api/stackroom/puddlejump/sync/status'
+  | '/api/stackroom/puddlejump/sync/upload'
+  | '/api/stackroom/puddlejump/sync/download/{file_id}'
+  | '/api/stackroom/puddlejump/sync/delete/{file_id}'
+  | '/api/stackroom/puddlejump/sync/complete'
+  | '/api/stackroom/libraries/{library_id}/export';
 
 // ============================================================================
 // PERSONAL PUDDLEJUMP TYPES

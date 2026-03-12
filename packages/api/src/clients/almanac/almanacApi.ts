@@ -307,7 +307,7 @@ class AlmanacApi {
     try {
       const url = groupSlug
         ? `/api/groups/${groupSlug}/almanac/`
-        : `/api/almanac/`;
+        : `/api/almanac/events/`;
 
       const response = await this.client.get(url, { params });
       return response.data.results || response.data;
@@ -486,7 +486,7 @@ class AlmanacApi {
    */
   async cancelRsvp(occurrenceId: string): Promise<void> {
     try {
-      await this.client.delete(`/api/almanac/occurrences/${occurrenceId}/cancel_rsvp`);
+      await this.client.post(`/api/almanac/occurrences/${occurrenceId}/cancel-rsvp`);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }

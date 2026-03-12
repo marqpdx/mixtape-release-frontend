@@ -4,16 +4,52 @@
 
 import { useMemo, useState, useRef } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem } from "@chakra-ui/react";
-import { IconShoppingBag, IconFolder, IconCalendar } from "@tabler/icons-react";
+import { IconShoppingBag, IconFolder, IconCalendar, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { useCalendarOccurrences } from "@mixtape/api/hooks/almanac";
+import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
 interface GroupOverviewTabProps {
   group: Group;
+}
+
+const WELCOME_INLINE_WORD_LIMIT = 55;
+const WELCOME_PREVIEW_WORD_LIMIT = 55;
+
+type TipTapLikeNode = {
+  type?: string;
+  text?: string;
+  content?: TipTapLikeNode[];
+};
+
+function collectNodeText(node: TipTapLikeNode | null | undefined): string {
+  if (!node) return "";
+  let out = node.text || "";
+  if (node.content && Array.isArray(node.content)) {
+    for (const child of node.content) {
+      out += ` ${collectNodeText(child)}`;
+    }
+  }
+  return out;
+}
+
+function bodyHasImage(node: TipTapLikeNode | null | undefined): boolean {
+  if (!node) return false;
+  if (node.type === "image") return true;
+  if (node.content && Array.isArray(node.content)) {
+    return node.content.some((child) => bodyHasImage(child));
+  }
+  return false;
+}
+
+function truncateWordsAtBoundary(input: string, limit: number): string {
+  const words = input.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= limit) return input.trim();
+  return `${words.slice(0, limit).join(" ")}...`;
 }
 
 export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
@@ -126,34 +162,57 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
         >
           <Collapsible.Trigger asChild>
             <Button variant="outline" size="sm" width="full" justifyContent="space-between">
-              Welcome
+              <Flex align="center" gap={2}>
+                {welcomeOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                <Text>Welcome</Text>
+              </Flex>
               <Collapsible.Indicator />
             </Button>
           </Collapsible.Trigger>
           <Collapsible.Content>
             <Box pt={4}>
               {welcomePin ? (
-                <>
-                  <Heading size="md" mb={2}>
-                    {welcomePin.display?.title || welcomePin.piece.title}
-                  </Heading>
-                  {welcomePin.display?.excerpt || welcomePin.piece.excerpt ? (
-                    <Text color="fg.muted" mb={3}>
-                      {welcomePin.display?.excerpt || welcomePin.piece.excerpt}
-                    </Text>
-                  ) : (
-                    <Text color="fg.muted" mb={3}>
-                      Welcome to {group.title}.
-                    </Text>
-                  )}
-                  {welcomePin.piece.slug && (
-                    <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
-                      <Button size="sm" variant="outline">
-                        Read more
-                      </Button>
-                    </Link>
-                  )}
-                </>
+                (() => {
+                  const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
+                  const text = collectNodeText(body).replace(/\s+/g, " ").trim();
+                  const wordCount = text ? text.split(/\s+/).length : 0;
+                  const hasImage = bodyHasImage(body);
+                  const shouldShowReadMore = hasImage || wordCount > WELCOME_INLINE_WORD_LIMIT;
+                  const excerptFallback = (welcomePin.display?.excerpt || welcomePin.piece.excerpt || "").trim();
+                  const previewText = excerptFallback || truncateWordsAtBoundary(text, WELCOME_PREVIEW_WORD_LIMIT);
+
+                  return (
+                    <>
+                      <Heading size="md" mb={2}>
+                        {welcomePin.display?.title || welcomePin.piece.title}
+                      </Heading>
+                      {body && !shouldShowReadMore ? (
+                        <Box mb={3}>
+                          <TipTapRenderer content={body as { type: "doc"; [key: string]: unknown }} />
+                        </Box>
+                      ) : previewText ? (
+                        <Text color="fg.muted" mb={3}>
+                          {previewText}
+                        </Text>
+                      ) : hasImage ? (
+                        <Text color="fg.muted" mb={3}>
+                          This welcome note includes rich media.
+                        </Text>
+                      ) : (
+                        <Text color="fg.muted" mb={3}>
+                          Welcome to {group.title}.
+                        </Text>
+                      )}
+                      {shouldShowReadMore && welcomePin.piece.slug ? (
+                        <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
+                          <Button size="xs" variant="outline">
+                            Read more
+                          </Button>
+                        </Link>
+                      ) : null}
+                    </>
+                  );
+                })()
               ) : (
                 <>
                   <Heading size="md" mb={2}>

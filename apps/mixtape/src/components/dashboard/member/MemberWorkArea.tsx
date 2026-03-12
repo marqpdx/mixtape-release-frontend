@@ -21,12 +21,14 @@ import SeedsWorkArea from "@/components/writing/seeds/SeedsWorkArea";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import WritingEditorWrapper from "@/components/writing/WritingEditorWrapper";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
+import DraftRoomV2 from "@/components/writing/draft-room-v2/DraftRoomV2";
 import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 import { ListsTab } from "@/components/workbench/ListsTab";
 import { MillWorkArea } from "@/components/gristmill/MillWorkArea";
 import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 import PersonalOverview from "../sections/PersonalOverview";
+import { MemberSettings } from "@/components/member/settings/MemberSettings";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity?: UserIdentity;
@@ -93,6 +95,14 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <MemberProfileViewWorkArea />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "member-settings") {
+    return (
+      <WorkAreaWrapper>
+        <MemberSettings />
       </WorkAreaWrapper>
     );
   }
@@ -195,6 +205,22 @@ export default function MemberWorkArea({
             displayName,
           }}
           setActiveSection={setActiveSection}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "draft-room-v2") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <WorkAreaWrapper>
+        <DraftRoomV2
+          sponsor={{
+            type: "member",
+            id: identity.id,
+            slug: identity.username,
+            displayName,
+          }}
         />
       </WorkAreaWrapper>
     );

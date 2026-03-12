@@ -13,11 +13,13 @@ const columnHelper = createColumnHelper<FlattenedPlacement>()
 function PostCell({
   placement,
   onRowClick,
-  onEdit
+  onEdit,
+  welcomePinnedPieceId,
 }: {
   placement: FlattenedPlacement;
   onRowClick?: (placement: FlattenedPlacement) => void
   onEdit?: (placement: FlattenedPlacement) => void
+  welcomePinnedPieceId?: string | null
 }) {
   // Now we can use hooks here since this is a proper React component
   // However, for hover colors, we can use Chakra's _dark pseudo-prop instead
@@ -65,6 +67,9 @@ function PostCell({
               </Text>
               {placement.is_pinned && (
                 <Badge colorScheme="green" fontSize="xs">Pinned</Badge>
+              )}
+              {welcomePinnedPieceId && placement.piece_id === welcomePinnedPieceId && (
+                <Badge colorScheme="orange" fontSize="xs">Welcome pin</Badge>
               )}
               {placement.is_announcement && (
                 <Badge colorScheme="blue" fontSize="xs">Announcement</Badge>
@@ -120,13 +125,19 @@ function PostCell({
 
 export const postsColumns = (
   onRowClick?: (placement: FlattenedPlacement) => void,
-  onEdit?: (placement: FlattenedPlacement) => void
+  onEdit?: (placement: FlattenedPlacement) => void,
+  welcomePinnedPieceId?: string | null
 ): ColumnDef<FlattenedPlacement>[] => [
   columnHelper.display({
     id: 'post_info',
     header: 'Posts',
     cell: ({ row }) => (
-      <PostCell placement={row.original} onRowClick={onRowClick} onEdit={onEdit} />
+      <PostCell
+        placement={row.original}
+        onRowClick={onRowClick}
+        onEdit={onEdit}
+        welcomePinnedPieceId={welcomePinnedPieceId}
+      />
     ),
   }),
 ]

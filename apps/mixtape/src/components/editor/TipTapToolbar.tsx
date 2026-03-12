@@ -259,7 +259,17 @@ Auto-replace: typing a known misspelling + boundary key (space, punctuation, Ent
 
 @mentions
 Type @ + username letters to open suggestions.
-Use Arrow Up/Down + Enter (or Tab) to insert a mention.`}
+Use Arrow Up/Down + Enter (or Tab) to insert a mention.
+
+Stream Authoring - Writing Across Artifacts
+When editing a piece, you can create new artifacts inline without leaving the editor.
+
+/new [type] [title] - Creates a new artifact (example: /new event Birthday Party or /new seed) and inserts a boundary marker. Writing below the marker belongs to the new artifact.
+/renew - Returns focus to your original piece. A boundary marker is inserted and subsequent writing flows back into the anchor piece.
+Merging - Delete a boundary marker to merge that segment's content back into the anchor piece.
+
+Supported types: writingpiece, seed, event, course.
+Sessions are created automatically on your first /new command. Autosave keeps the surface document synced. When you navigate away, the session closes with a final checkpoint.`}
           </Text>
         </Box>
       ) : null}

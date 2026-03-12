@@ -42,12 +42,14 @@ export interface GroupWelcomePin {
     slug: string;
     title: string;
     excerpt?: string | null;
+    body_json?: unknown;
     published_at?: string | null;
     author_name?: string | null;
   };
   display?: {
     title?: string;
     excerpt?: string;
+    body_json?: unknown;
   };
 }
 

@@ -1,4 +1,6 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
 
 type PermissionStatus = 'granted' | 'denied' | 'undetermined';
 
@@ -23,48 +25,6 @@ interface NotificationResponseLike {
 
 interface NotificationSubscription {
   remove(): void;
-}
-
-interface NotificationModule {
-  AndroidImportance?: {
-    MAX?: number;
-  };
-  setNotificationHandler(handler: {
-    handleNotification: () => Promise<{
-      shouldShowAlert: boolean;
-      shouldPlaySound: boolean;
-      shouldSetBadge: boolean;
-      shouldShowBanner?: boolean;
-      shouldShowList?: boolean;
-    }>;
-  }): void;
-  getPermissionsAsync(): Promise<{ status: PermissionStatus }>;
-  requestPermissionsAsync(): Promise<{ status: PermissionStatus }>;
-  getExpoPushTokenAsync(input: {
-    projectId?: string;
-  }): Promise<{ data: string }>;
-  setNotificationChannelAsync?(
-    channelId: string,
-    channel: {
-      name: string;
-      importance?: number;
-    }
-  ): Promise<void>;
-  addNotificationReceivedListener(
-    listener: (notification: unknown) => void
-  ): NotificationSubscription;
-  addNotificationResponseReceivedListener(
-    listener: (response: NotificationResponseLike) => void
-  ): NotificationSubscription;
-}
-
-function tryRequire<T>(moduleName: string): T | null {
-  try {
-    return require(moduleName) as T;
-  } catch (error) {
-    console.warn(`[Notifications] Optional module unavailable: ${moduleName}`);
-    return null;
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -92,17 +52,13 @@ function toTarget(data: Record<string, unknown> | undefined): NotificationTarget
 
 class NotificationService {
   private configured = false;
-  private notifications = tryRequire<NotificationModule>('expo-notifications');
-  private constants = tryRequire<{ expoConfig?: { extra?: { eas?: { projectId?: string } } } }>(
-    'expo-constants'
-  );
 
   configure(): void {
-    if (!this.notifications || this.configured) {
+    if (this.configured) {
       return;
     }
 
-    this.notifications.setNotificationHandler({
+    Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
         shouldPlaySound: true,
@@ -112,10 +68,10 @@ class NotificationService {
       }),
     });
 
-    if (Platform.OS === 'android' && this.notifications.setNotificationChannelAsync) {
-      void this.notifications.setNotificationChannelAsync('messages', {
+    if (Platform.OS === 'android') {
+      void Notifications.setNotificationChannelAsync('messages', {
         name: 'Messages',
-        importance: this.notifications.AndroidImportance?.MAX,
+        importance: Notifications.AndroidImportance.MAX,
       });
     }
 
@@ -126,18 +82,11 @@ class NotificationService {
     permissionStatus: PermissionStatus;
     pushToken: string | null;
   }> {
-    if (!this.notifications) {
-      return {
-        permissionStatus: 'undetermined',
-        pushToken: null,
-      };
-    }
-
     this.configure();
 
-    let { status } = await this.notifications.getPermissionsAsync();
+    let { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') {
-      const requestResult = await this.notifications.requestPermissionsAsync();
+      const requestResult = await Notifications.requestPermissionsAsync();
       status = requestResult.status;
     }
 
@@ -148,8 +97,8 @@ class NotificationService {
       };
     }
 
-    const projectId = this.constants?.expoConfig?.extra?.eas?.projectId;
-    const token = await this.notifications.getExpoPushTokenAsync({ projectId });
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const token = await Notifications.getExpoPushTokenAsync({ projectId });
 
     return {
       permissionStatus: status,
@@ -160,24 +109,16 @@ class NotificationService {
   addNotificationReceivedListener(
     listener: (notification: unknown) => void
   ): NotificationSubscription | null {
-    if (!this.notifications) {
-      return null;
-    }
-
     this.configure();
-    return this.notifications.addNotificationReceivedListener(listener);
+    return Notifications.addNotificationReceivedListener(listener);
   }
 
   addNotificationResponseListener(
     listener: (target: NotificationTarget) => void
   ): NotificationSubscription | null {
-    if (!this.notifications) {
-      return null;
-    }
-
     this.configure();
 
-    return this.notifications.addNotificationResponseReceivedListener((response) => {
+    return Notifications.addNotificationResponseReceivedListener((response) => {
       const rawData = response.notification?.request?.content?.data;
       const data = isRecord(rawData) ? rawData : undefined;
       const target = toTarget(data);

@@ -16,7 +16,6 @@ import {
   useSaveSurfaceDocument,
   useCheckpoint,
   useEndWorkSession,
-  useRemoveSessionItem,
 } from "@mixtape/api/hooks/worksessions/useWorkSession";
 import type { SegmentBoundaryAttrs } from "@/components/editor/extensions/SegmentBoundary";
 
@@ -88,7 +87,6 @@ export function useStreamAuthoring({
   const addItem = useAddSessionItem(sessionId ?? "");
   const saveSurface = useSaveSurfaceDocument(sessionId ?? "");
   const checkpoint = useCheckpoint(sessionId ?? "");
-  const removeItem = useRemoveSessionItem(sessionId ?? "");
 
   // Ensure session exists, creating lazily on first /new
   const ensureSession = useCallback(async (): Promise<string> => {
@@ -103,6 +101,29 @@ export function useStreamAuthoring({
     setIsActive(true);
     return session.id;
   }, [sessionId, createSession, anchor]);
+
+  // Save surface document
+  const doSaveSurface = useCallback(
+    (sid: string) => {
+      const editor = editorRef.current;
+      if (!editor || !sid) return;
+
+      const bodyJson = editor.getJSON();
+      saveSurface.mutate({
+        body_json: bodyJson as Record<string, unknown>,
+        client_session_id: clientSessionId.current,
+      });
+
+      saveCountRef.current += 1;
+      setSaveCount(saveCountRef.current);
+
+      // Periodic checkpoint
+      if (saveCountRef.current % checkpointInterval === 0) {
+        checkpoint.mutate();
+      }
+    },
+    [editorRef, saveSurface, checkpoint, checkpointInterval]
+  );
 
   // Handle /new command
   const handleNewArtifact = useCallback(
@@ -136,7 +157,7 @@ export function useStreamAuthoring({
       // Save surface after inserting boundary
       void doSaveSurface(sid);
     },
-    [ensureSession, createArtifact, addItem, editorRef]
+    [ensureSession, createArtifact, addItem, editorRef, doSaveSurface]
   );
 
   // Handle /renew command
@@ -158,7 +179,7 @@ export function useStreamAuthoring({
       void doSaveSurface(sessionId);
       void checkpoint.mutateAsync();
     }
-  }, [editorRef, anchor, sessionId, checkpoint]);
+  }, [editorRef, anchor, sessionId, checkpoint, doSaveSurface]);
 
   // Handle merge (boundary deletion confirmed)
   const handleMerge = useCallback(
@@ -177,30 +198,7 @@ export function useStreamAuthoring({
       void doSaveSurface(sessionId);
       void checkpoint.mutateAsync();
     },
-    [sessionId, onMergeArtifact, anchor, checkpoint]
-  );
-
-  // Save surface document
-  const doSaveSurface = useCallback(
-    (sid: string) => {
-      const editor = editorRef.current;
-      if (!editor || !sid) return;
-
-      const bodyJson = editor.getJSON();
-      saveSurface.mutate({
-        body_json: bodyJson as Record<string, unknown>,
-        client_session_id: clientSessionId.current,
-      });
-
-      saveCountRef.current += 1;
-      setSaveCount(saveCountRef.current);
-
-      // Periodic checkpoint
-      if (saveCountRef.current % checkpointInterval === 0) {
-        checkpoint.mutate();
-      }
-    },
-    [editorRef, saveSurface, checkpoint, checkpointInterval]
+    [sessionId, onMergeArtifact, anchor, checkpoint, doSaveSurface]
   );
 
   // Public save trigger (called by autosave)

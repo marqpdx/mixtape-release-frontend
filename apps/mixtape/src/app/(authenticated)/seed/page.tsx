@@ -19,6 +19,7 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useSeedAutosave } from "@/lib/writing/useSeedAutosave";
 import { useSeedList } from "@/lib/writing/useSeedList";
 import { toaster } from "@mixtape/core/lib/toaster";
+import { PREF_AUTO_LOAD_MIC, getBooleanPreference } from "@/lib/memberSettings";
 
 export default function SeedCapturePage() {
   const [text, setText] = useState("");
@@ -52,6 +53,7 @@ export default function SeedCapturePage() {
   const [editingSeedId, setEditingSeedId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const editDebounceRef = useRef<number | null>(null);
+  const [autoLoadMic, setAutoLoadMic] = useState(false);
 
   const handleChange = (value: string) => {
     setText(value);
@@ -153,9 +155,14 @@ export default function SeedCapturePage() {
   }, []);
 
   useEffect(() => {
+    setAutoLoadMic(getBooleanPreference(PREF_AUTO_LOAD_MIC, false));
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) return;
+    if (!autoLoadMic) return;
     let cancelled = false;
     const prewarmMic = async () => {
       try {
@@ -176,7 +183,7 @@ export default function SeedCapturePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [autoLoadMic]);
 
   const scheduleMicIdleShutdown = useCallback(() => {
     if (micIdleTimerRef.current) {
@@ -210,6 +217,7 @@ export default function SeedCapturePage() {
   }, [isRecording, isPreparingMic, scheduleMicIdleShutdown]);
 
   useEffect(() => {
+    if (!autoLoadMic) return;
     const events = ["pointerdown", "keydown", "touchstart"];
     const handler = () => {
       scheduleMicIdleShutdown();
@@ -219,7 +227,15 @@ export default function SeedCapturePage() {
     return () => {
       events.forEach((event) => window.removeEventListener(event, handler));
     };
-  }, [ensureMicWarm, scheduleMicIdleShutdown]);
+  }, [autoLoadMic, ensureMicWarm, scheduleMicIdleShutdown]);
+
+  useEffect(() => {
+    if (autoLoadMic || isRecording) return;
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+  }, [autoLoadMic, isRecording]);
 
   useEffect(() => {
     const sorted = [...seeds].sort(
