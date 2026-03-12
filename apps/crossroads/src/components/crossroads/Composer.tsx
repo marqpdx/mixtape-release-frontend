@@ -33,6 +33,7 @@ import SeedCard from './SeedCard';
 import { useComposerDraft } from './ComposerContext';
 
 const AUTO_SAVE_DELAY = 1500;
+const PREF_AUTO_LOAD_MIC = "mixtape-pref-auto-load-mic";
 
 interface ComposerProps {
   onPosted?: () => void;
@@ -42,6 +43,7 @@ export default function Composer({ onPosted }: ComposerProps) {
   const [text, setText] = useState('');
   const [activeSeedId, setActiveSeedId] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<{ id: string; url: string } | null>(null);
+  const [autoLoadMic, setAutoLoadMic] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -91,7 +93,13 @@ export default function Composer({ onPosted }: ComposerProps) {
     micError,
     startRecording,
     stopRecording,
-  } = useVoiceRecorder(handleVoiceComplete);
+  } = useVoiceRecorder(handleVoiceComplete, { prewarm: autoLoadMic });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem(PREF_AUTO_LOAD_MIC);
+    setAutoLoadMic(saved === 'true');
+  }, []);
 
   // Format recording timer
   const formatTime = (seconds: number) => {
@@ -311,6 +319,9 @@ export default function Composer({ onPosted }: ComposerProps) {
                 {micError}
               </Text>
             )}
+            <Text fontSize="xs" color={mutedColor}>
+              Mic preload is controlled in /app Settings → Preferences (Auto Load Mic).
+            </Text>
           </HStack>
 
           <HStack gap={2}>

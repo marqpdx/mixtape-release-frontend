@@ -1,13 +1,15 @@
 // components/writing/draft-room-v2/DraftRoomV2.tsx
 //
 // Three-pane writing workspace:
-//   Left (250px)  — Draft Queue
-//   Center (flex)  — Embedded Editor
-//   Right (320px)  — Inspector / Back Room
+//   Left (250px, collapsible)  — Draft Queue
+//   Center (flex)              — Embedded Editor (full height)
+//   Right (360px, collapsible) — Tabbed: Copy Desk | Inspector
 
 "use client";
 
-import { Box, Flex, Spinner, Text, VStack } from "@chakra-ui/react";
+import { useCallback, useState } from "react";
+import { Box, Flex, IconButton, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
+import { IconSparkles } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useDraftRoom } from "./useDraftRoom";
 import { DraftQueue } from "./DraftQueue";
@@ -43,13 +45,39 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
     refetchDrafts,
   } = useDraftRoom(sponsor);
 
+  // Panel visibility
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
+  const [sidePanelOpen, setSidePanelOpen] = useState(false);
+  const [sidePanelTab, setSidePanelTab] = useState("inspector");
+
+  // Fade-in tracking for optimistic draft insert
+  const [freshPieceId, setFreshPieceId] = useState<string | null>(null);
+
   const bg = useColorModeValue("white", "gray.950");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const sparklesBg = useColorModeValue("green.50", "green.900");
+  const sparklesBorder = useColorModeValue("green.200", "green.700");
+  const sidePanelBg = useColorModeValue("gray.50", "gray.800");
 
   const hasBody = Boolean(
     docJSON &&
     Array.isArray(docJSON.content) &&
     (docJSON.content as Record<string, unknown>[]).length > 0
   );
+
+  // Called by DraftEditor after first autosave succeeds
+  const handleFirstSave = useCallback(() => {
+    if (selectedPieceId) {
+      setFreshPieceId(selectedPieceId);
+      refetchDrafts();
+      // Clear the animation marker after it plays
+      setTimeout(() => setFreshPieceId(null), 1000);
+    }
+  }, [selectedPieceId, refetchDrafts]);
+
+  const toggleSidePanel = useCallback(() => {
+    setSidePanelOpen((prev) => !prev);
+  }, []);
 
   return (
     <Flex
@@ -58,20 +86,27 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
       borderRadius="lg"
       overflow="hidden"
       borderWidth="1px"
-      borderColor={useColorModeValue("gray.200", "gray.700")}
+      borderColor={borderColor}
     >
-      {/* Left: Draft Queue */}
-      <Box w="250px" flexShrink={0}>
+      {/* Left: Draft Queue (collapsible) */}
+      <Box
+        w={queueCollapsed ? "48px" : "250px"}
+        flexShrink={0}
+        transition="width 0.25s ease"
+      >
         <DraftQueue
           drafts={drafts}
           isLoading={draftsLoading}
           selectedPieceId={selectedPieceId}
           onSelect={selectPiece}
           onNewDraft={createDraft}
+          freshPieceId={freshPieceId}
+          isCollapsed={queueCollapsed}
+          onToggleCollapse={() => setQueueCollapsed((p) => !p)}
         />
       </Box>
 
-      {/* Center: Editor */}
+      {/* Center: Editor (full height) */}
       <Box flex="1" minW={0}>
         {pieceLoading ? (
           <VStack h="100%" justify="center">
@@ -88,27 +123,115 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
             onTitleChange={setTitle}
             onDocChange={setDocJSON}
             onExcerptChange={setExcerpt}
+            onFirstSave={handleFirstSave}
           />
         ) : (
           <DraftEditorEmpty />
         )}
       </Box>
 
-      {/* Right: Inspector */}
-      {piece && selectedPieceId && (
-        <Box w="320px" flexShrink={0}>
-          <DraftInspector
-            key={selectedPieceId}
-            piece={piece}
-            title={title}
-            excerpt={excerpt}
-            docJSON={docJSON as Record<string, unknown> | null}
-            hasBody={hasBody}
-            sponsor={sponsor}
-            onPublished={refetchDrafts}
-          />
-        </Box>
-      )}
+      {/* Right: Side panel toggle strip + expandable panel */}
+      {piece && selectedPieceId ? (
+        sidePanelOpen ? (
+          /* Expanded side panel with tabs */
+          <Box
+            w="360px"
+            flexShrink={0}
+            borderLeft="1px solid"
+            borderColor={borderColor}
+            bg={sidePanelBg}
+            display="flex"
+            flexDirection="column"
+            transition="width 0.3s ease"
+            overflow="hidden"
+          >
+            <Tabs.Root
+              value={sidePanelTab}
+              onValueChange={(details) => setSidePanelTab(details.value)}
+              size="sm"
+              variant="line"
+            >
+              <Box
+                display="flex"
+                alignItems="center"
+                borderBottom="1px solid"
+                borderColor={borderColor}
+                px={1}
+              >
+                <Tabs.List flex="1">
+                  <Tabs.Trigger value="copydesk">Copy Desk</Tabs.Trigger>
+                  <Tabs.Trigger value="inspector">Inspector</Tabs.Trigger>
+                </Tabs.List>
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  onClick={toggleSidePanel}
+                  title="Close panel"
+                >
+                  <IconSparkles size={14} color="green" />
+                </IconButton>
+              </Box>
+
+              <Box flex="1" overflow="hidden">
+                <Tabs.Content value="copydesk" p={0} h="100%">
+                  <Box p={4} overflowY="auto" h="100%">
+                    <VStack align="stretch" gap={3}>
+                      <Text fontSize="sm" fontWeight="semibold">Copy Desk</Text>
+                      <Text fontSize="xs" color="gray.500">
+                        AI summary, research, word tools, and statistics will appear here.
+                      </Text>
+                      <Text fontSize="xs" color="gray.400">
+                        (CopyDesk agents integration coming next)
+                      </Text>
+                    </VStack>
+                  </Box>
+                </Tabs.Content>
+
+                <Tabs.Content value="inspector" p={0} h="100%">
+                  <DraftInspector
+                    key={selectedPieceId}
+                    piece={piece}
+                    title={title}
+                    excerpt={excerpt}
+                    docJSON={docJSON as Record<string, unknown> | null}
+                    hasBody={hasBody}
+                    sponsor={sponsor}
+                    onPublished={refetchDrafts}
+                    embedded
+                  />
+                </Tabs.Content>
+              </Box>
+            </Tabs.Root>
+          </Box>
+        ) : (
+          /* Collapsed: sparkles strip */
+          <Box
+            w="48px"
+            flexShrink={0}
+            borderLeft="1px solid"
+            borderColor={borderColor}
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            pt={3}
+          >
+            <IconButton
+              size="sm"
+              variant="ghost"
+              bg={sparklesBg}
+              border="1px solid"
+              borderColor={sparklesBorder}
+              borderRadius="full"
+              shadow="sm"
+              onClick={toggleSidePanel}
+              title="Open workspace"
+              _hover={{ shadow: "md" }}
+            >
+              <IconSparkles size={16} color="green" />
+            </IconButton>
+          </Box>
+        )
+      ) : null}
     </Flex>
   );
 }

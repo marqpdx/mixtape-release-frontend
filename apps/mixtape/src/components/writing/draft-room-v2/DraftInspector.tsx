@@ -50,6 +50,8 @@ interface DraftInspectorProps {
   hasBody: boolean;
   sponsor: SponsorConfig;
   onPublished?: () => void;
+  /** When true, skip outer border/header (used inside tabbed panel) */
+  embedded?: boolean;
 }
 
 type MetadataSnapshot = {
@@ -75,6 +77,7 @@ export function DraftInspector({
   hasBody,
   sponsor,
   onPublished,
+  embedded = false,
 }: DraftInspectorProps) {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const headerBg = useColorModeValue("gray.50", "gray.900");
@@ -202,25 +205,27 @@ export function DraftInspector({
   return (
     <Box
       h="100%"
-      borderLeft="1px solid"
+      borderLeft={embedded ? "none" : "1px solid"}
       borderColor={borderColor}
       display="flex"
       flexDirection="column"
       overflow="hidden"
     >
-      {/* Header */}
-      <Box
-        px={3}
-        py={2}
-        borderBottom="1px solid"
-        borderColor={borderColor}
-        bg={headerBg}
-        flexShrink={0}
-      >
-        <Text fontSize="sm" fontWeight="semibold">
-          Inspector
-        </Text>
-      </Box>
+      {/* Header — hidden when embedded in tabbed panel */}
+      {!embedded && (
+        <Box
+          px={3}
+          py={2}
+          borderBottom="1px solid"
+          borderColor={borderColor}
+          bg={headerBg}
+          flexShrink={0}
+        >
+          <Text fontSize="sm" fontWeight="semibold">
+            Inspector
+          </Text>
+        </Box>
+      )}
 
       {/* Scrollable content */}
       <Box flex="1" overflowY="auto" px={3} py={3}>

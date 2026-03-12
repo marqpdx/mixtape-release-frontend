@@ -25,7 +25,7 @@ import * as authApi from "@mixtape/api/clients/auth/api";
 
 import { LoginFormProps } from "./interfaces";
 
-const PUBLIC_MEMBER_URL = "https://www.crossroads.place/members";
+const PUBLIC_MEMBER_URL = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place"}/members`;
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();

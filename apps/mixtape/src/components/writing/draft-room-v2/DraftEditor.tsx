@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Box, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -23,6 +23,7 @@ interface DraftEditorProps {
   onTitleChange: (t: string) => void;
   onDocChange: (d: Record<string, unknown> | null) => void;
   onExcerptChange?: (e: string) => void;
+  onFirstSave?: () => void;
 }
 
 const EMPTY_DOC: Record<string, unknown> = { type: "doc", content: [] };
@@ -34,10 +35,17 @@ export function DraftEditor({
   excerpt,
   onTitleChange,
   onDocChange,
+  onFirstSave,
 }: DraftEditorProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>(null);
   const borderColor = useColorModeValue("gray.200", "gray.700");
+  const hasSavedOnceRef = useRef(false);
+
+  // Reset first-save tracking on piece switch
+  useEffect(() => {
+    hasSavedOnceRef.current = false;
+  }, [pieceId]);
 
   // Autosave
   const { schedule, saveStatus } = useWorkingCopyAutosave(pieceId, 2500);
@@ -62,16 +70,24 @@ export function DraftEditor({
     [schedule]
   );
 
+  // Fire onFirstSave callback when status transitions to "saved" for the first time
+  useEffect(() => {
+    if (saveStatus === "saved" && !hasSavedOnceRef.current) {
+      hasSavedOnceRef.current = true;
+      onFirstSave?.();
+    }
+  }, [saveStatus, onFirstSave]);
+
   // Schedule save on content changes
-  const handleTitleChange = (t: string) => {
+  const handleTitleChange = useCallback((t: string) => {
     onTitleChange(t);
     triggerSave();
-  };
+  }, [onTitleChange, triggerSave]);
 
-  const handleDocChange = (d: Record<string, unknown>) => {
+  const handleDocChange = useCallback((d: Record<string, unknown>) => {
     onDocChange(d);
     triggerSave();
-  };
+  }, [onDocChange, triggerSave]);
 
   // Focus editor on piece switch
   useEffect(() => {
@@ -94,14 +110,25 @@ export function DraftEditor({
   );
 
   return (
-    <Box h="100%" display="flex" flexDirection="column" overflow="hidden">
+    <Box
+      h="100%"
+      display="flex"
+      flexDirection="column"
+      overflow="hidden"
+      // Override MainEditor's hardcoded 56vh to fill available space
+      css={{
+        "& .main-editor-prose": { flex: 1, display: "flex", flexDirection: "column" },
+        "& .reggie": { height: "100% !important", flex: 1 },
+        "& .reggie .ProseMirror": { height: "100% !important" },
+      }}
+    >
       {/* Title */}
       <Box px={4} pt={3} pb={1} flexShrink={0}>
         <TitleInput title={title} setTitle={handleTitleChange} />
       </Box>
 
-      {/* Editor */}
-      <Box flex="1" px={4} overflow="hidden">
+      {/* Editor — fills remaining space */}
+      <Box flex="1" px={4} pb={1} overflow="hidden" display="flex" flexDirection="column">
         <MainEditor
           key={pieceId}
           ref={editorRef}

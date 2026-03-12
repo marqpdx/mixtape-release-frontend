@@ -2,9 +2,10 @@
 
 "use client";
 
-import { Box, Button, Text, VStack } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { Box, Button, IconButton, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconSparkles } from "@tabler/icons-react";
 import { DraftQueueItem } from "./DraftQueueItem";
 import type { WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 
@@ -14,6 +15,11 @@ interface DraftQueueProps {
   selectedPieceId: string | null;
   onSelect: (id: string) => void;
   onNewDraft: () => void;
+  /** ID of a piece that just appeared (for fade-in animation) */
+  freshPieceId?: string | null;
+  /** Toggle to collapse the queue and show only the sparkles strip */
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 export function DraftQueue({
@@ -22,9 +28,45 @@ export function DraftQueue({
   selectedPieceId,
   onSelect,
   onNewDraft,
+  freshPieceId,
+  isCollapsed,
+  onToggleCollapse,
 }: DraftQueueProps) {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const headerBg = useColorModeValue("gray.50", "gray.900");
+  const sparklesBg = useColorModeValue("green.50", "green.900");
+  const sparklesBorder = useColorModeValue("green.200", "green.700");
+
+  // Collapsed: show only the sparkles strip
+  if (isCollapsed) {
+    return (
+      <Box
+        w="48px"
+        h="100%"
+        borderRight="1px solid"
+        borderColor={borderColor}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        pt={3}
+      >
+        <IconButton
+          size="sm"
+          variant="ghost"
+          bg={sparklesBg}
+          border="1px solid"
+          borderColor={sparklesBorder}
+          borderRadius="full"
+          shadow="sm"
+          onClick={onToggleCollapse}
+          title="Show drafts"
+          _hover={{ shadow: "md" }}
+        >
+          <IconSparkles size={16} color="green" />
+        </IconButton>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -42,16 +84,27 @@ export function DraftQueue({
         borderColor={borderColor}
         bg={headerBg}
         flexShrink={0}
+        display="flex"
+        alignItems="center"
+        gap={1}
       >
         <Button
           size="sm"
           variant="ghost"
-          width="100%"
+          flex="1"
           onClick={onNewDraft}
         >
           <IconPlus size={14} />
           New draft
         </Button>
+        <IconButton
+          size="xs"
+          variant="ghost"
+          onClick={onToggleCollapse}
+          title="Hide drafts"
+        >
+          <IconSparkles size={14} />
+        </IconButton>
       </Box>
 
       {/* Draft list */}
@@ -74,20 +127,55 @@ export function DraftQueue({
         ) : (
           <VStack gap={0} align="stretch">
             {drafts.map((draft) => (
-              <DraftQueueItem
+              <FadeInWrapper
                 key={draft.piece.id}
-                id={draft.piece.id}
-                title={draft.piece.title || draft.title}
-                lastEdited={draft.last_saved_at || draft.piece.updated_at}
-                writingKind={draft.piece.writing_kind}
-                isSelected={selectedPieceId === draft.piece.id}
-                isEmpty={!draft.title && !draft.piece.title}
-                onClick={() => onSelect(draft.piece.id)}
-              />
+                animate={draft.piece.id === freshPieceId}
+              >
+                <DraftQueueItem
+                  id={draft.piece.id}
+                  title={draft.piece.title || draft.title}
+                  lastEdited={draft.last_saved_at || draft.piece.updated_at}
+                  writingKind={draft.piece.writing_kind}
+                  isSelected={selectedPieceId === draft.piece.id}
+                  isEmpty={!draft.title && !draft.piece.title}
+                  onClick={() => onSelect(draft.piece.id)}
+                />
+              </FadeInWrapper>
             ))}
           </VStack>
         )}
       </Box>
+    </Box>
+  );
+}
+
+/** Fade-in wrapper for newly inserted drafts */
+function FadeInWrapper({
+  animate,
+  children,
+}: {
+  animate: boolean;
+  children: React.ReactNode;
+}) {
+  const [visible, setVisible] = useState(!animate);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    if (animate && !mounted.current) {
+      mounted.current = true;
+      // Trigger fade-in on next frame
+      requestAnimationFrame(() => setVisible(true));
+    }
+  }, [animate]);
+
+  if (!animate) return <>{children}</>;
+
+  return (
+    <Box
+      opacity={visible ? 1 : 0}
+      transition="opacity 0.4s ease-in"
+    >
+      {children}
     </Box>
   );
 }
