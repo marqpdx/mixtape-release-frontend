@@ -338,23 +338,29 @@ export function DraftInspector({
                   Session
                 </Text>
                 <VStack align="stretch" gap={1}>
-                  {sessionItems.map((item) => (
-                    <HStack key={item.id} gap={2} px={1} py={0.5}>
-                      <Box
-                        w="6px"
-                        h="6px"
-                        borderRadius="full"
-                        bg="orange.400"
-                        flexShrink={0}
-                      />
-                      <Text fontSize="xs" color={labelColor} flexShrink={0}>
-                        {(item as Record<string, unknown>).artifact_type as string || "artifact"}
-                      </Text>
-                      <Text fontSize="xs" lineClamp={1}>
-                        {(item as Record<string, unknown>).artifact_title as string || "Untitled"}
-                      </Text>
-                    </HStack>
-                  ))}
+                  {sessionItems.map((item) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const raw = item as any;
+                    const artType: string = raw.artifact_type || "artifact";
+                    const artTitle: string = raw.artifact_title || "Untitled";
+                    return (
+                      <HStack key={item.id} gap={2} px={1} py={0.5}>
+                        <Box
+                          w="6px"
+                          h="6px"
+                          borderRadius="full"
+                          bg="orange.400"
+                          flexShrink={0}
+                        />
+                        <Text fontSize="xs" color={labelColor} flexShrink={0}>
+                          {artType}
+                        </Text>
+                        <Text fontSize="xs" lineClamp={1}>
+                          {artTitle}
+                        </Text>
+                      </HStack>
+                    );
+                  })}
                 </VStack>
               </Box>
             </>
