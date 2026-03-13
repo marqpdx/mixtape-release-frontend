@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -103,7 +104,8 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
     };
   }, []);
 
-  const chromeHidden = editorFocused || keyboardVisible;
+  const chromeHidden =
+    Platform.OS === 'android' ? keyboardVisible : editorFocused || keyboardVisible;
 
   return (
     <View style={styles.container}>

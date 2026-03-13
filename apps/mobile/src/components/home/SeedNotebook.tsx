@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +15,7 @@ import {
 } from 'react-native';
 import {
   useCreateSeed,
+  useDeleteSeed,
   useRecentSeeds,
   useUpdateSeed,
 } from '@mixtape/api/hooks/useSeed';
@@ -58,6 +60,7 @@ export function SeedNotebook({
 }: SeedNotebookProps) {
   const recentSeedsQuery = useRecentSeeds(20);
   const createSeed = useCreateSeed();
+  const deleteSeed = useDeleteSeed();
   const updateSeed = useUpdateSeed();
   const [captureText, setCaptureText] = useState('');
   const [editingSeedId, setEditingSeedId] = useState<string | null>(null);
@@ -65,6 +68,7 @@ export function SeedNotebook({
   const [savedSeed, setSavedSeed] = useState<Seed | null>(null);
   const [captureFocused, setCaptureFocused] = useState(false);
   const captureInputRef = useRef<TextInput | null>(null);
+  const editInputRef = useRef<TextInput | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
   const retainCaptureFocusRef = useRef(false);
 
@@ -75,7 +79,7 @@ export function SeedNotebook({
 
   const handleCapture = async () => {
     const bodyText = captureText.trim();
-    if (!bodyText) {
+    if (!bodyText || createSeed.isPending) {
       return;
     }
 
@@ -101,6 +105,10 @@ export function SeedNotebook({
   const startEditingSeed = (seed: Seed) => {
     setEditingSeedId(seed.id);
     setEditingText(seed.body_text);
+    setSavedSeed(null);
+    requestAnimationFrame(() => {
+      editInputRef.current?.focus();
+    });
   };
 
   const handleSaveSeedEdit = async () => {
@@ -115,6 +123,38 @@ export function SeedNotebook({
 
     setEditingSeedId(null);
     setEditingText('');
+  };
+
+  const cancelEditingSeed = () => {
+    setEditingSeedId(null);
+    setEditingText('');
+    setCaptureFocused(false);
+    onFocusChange?.(false);
+  };
+
+  const handleDeleteSeed = (seed: Seed) => {
+    Alert.alert(
+      'Delete Seed?',
+      'This removes the Seed from your notebook.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void deleteSeed.mutateAsync(seed.id).then(() => {
+              if (savedSeed?.id === seed.id) {
+                setSavedSeed(null);
+              }
+              if (editingSeedId === seed.id) {
+                setEditingSeedId(null);
+                setEditingText('');
+              }
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -172,22 +212,13 @@ export function SeedNotebook({
 
               {isEditing ? (
                 <>
-                  <TextInput
-                    style={styles.seedEditor}
-                    multiline
-                    value={editingText}
-                    onChangeText={setEditingText}
-                    textAlignVertical="top"
-                    autoFocus
-                    onFocus={() => onFocusChange?.(true)}
-                    onBlur={() => onFocusChange?.(false)}
-                  />
+                  <View style={styles.seedEditingCard}>
+                    <Text style={styles.seedEditingLabel}>Editing below</Text>
+                    <Text style={styles.seedBody}>{editingText || item.body_text || 'Empty Seed'}</Text>
+                  </View>
                   <View style={styles.seedActions}>
                     <TouchableOpacity
-                      onPress={() => {
-                        setEditingSeedId(null);
-                        setEditingText('');
-                      }}
+                      onPress={cancelEditingSeed}
                       activeOpacity={0.8}
                     >
                       <Text style={styles.seedSecondaryAction}>Done later</Text>
@@ -200,10 +231,17 @@ export function SeedNotebook({
                         <Text style={styles.seedSecondaryAction}>Develop</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
+                        onPress={() => handleDeleteSeed(item)}
+                        activeOpacity={0.8}
+                        style={styles.seedIconButton}
+                      >
+                        <Text style={styles.seedIconText}>🗑</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         onPress={handleSaveSeedEdit}
                         activeOpacity={0.8}
                       >
-                        <Text style={styles.seedPrimaryAction}>Save edit</Text>
+                        <Text style={styles.seedPrimaryAction}>Save</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -213,12 +251,21 @@ export function SeedNotebook({
                   <Text style={styles.seedBody}>{item.body_text || 'Empty Seed'}</Text>
                   <View style={styles.seedActions}>
                     <Text style={styles.seedTapHint}>Tap to edit inline</Text>
-                    <TouchableOpacity
-                      onPress={() => onDevelopSeed(item)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.seedPrimaryAction}>Develop</Text>
-                    </TouchableOpacity>
+                    <View style={styles.seedPrimaryActions}>
+                      <TouchableOpacity
+                        onPress={() => onDevelopSeed(item)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.seedPrimaryAction}>Develop</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteSeed(item)}
+                        activeOpacity={0.8}
+                        style={styles.seedIconButton}
+                      >
+                        <Text style={styles.seedIconText}>🗑</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </>
               )}
@@ -229,86 +276,150 @@ export function SeedNotebook({
 
       <View style={styles.captureDock}>
         <View style={styles.captureCard}>
-          <Text style={styles.kicker}>Pocket Notebook</Text>
-          {!captureFocused ? (
+          <Text style={styles.kicker}>
+            {editingSeedId ? 'Editing Seed' : 'Pocket Notebook'}
+          </Text>
+          {!captureFocused && !editingSeedId ? (
             <Text style={styles.title}>What&apos;s on your mind?</Text>
           ) : null}
+          {editingSeedId ? (
+            <>
+              <Text style={styles.editingTitle}>Refine this Seed</Text>
+              <TextInput
+                ref={editInputRef}
+                style={styles.captureInput}
+                multiline
+                placeholder="Revise this Seed..."
+                placeholderTextColor="#738292"
+                value={editingText}
+                onChangeText={setEditingText}
+                textAlignVertical="top"
+                onFocus={() => {
+                  setCaptureFocused(true);
+                  onFocusChange?.(true);
+                }}
+                onBlur={() => {
+                  setCaptureFocused(false);
+                  onFocusChange?.(false);
+                }}
+              />
+              <View style={styles.captureFooter}>
+                <TouchableOpacity onPress={cancelEditingSeed} activeOpacity={0.8}>
+                  <Text style={styles.seedSecondaryAction}>Done later</Text>
+                </TouchableOpacity>
+                <View style={styles.editorActions}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      const activeSeed = visibleSeeds.find((seed) => seed.id === editingSeedId);
+                      if (activeSeed) {
+                        handleDeleteSeed(activeSeed);
+                      }
+                    }}
+                    activeOpacity={0.8}
+                    style={styles.seedIconButton}
+                    disabled={!editingSeedId}
+                  >
+                    <Text style={styles.seedIconText}>🗑</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleSaveSeedEdit}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.iconSendButton,
+                      (!editingText.trim() || updateSeed.isPending) && styles.buttonDisabled,
+                    ]}
+                    disabled={!editingText.trim() || updateSeed.isPending}
+                  >
+                    {updateSeed.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.iconSendText}>➤</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          ) : (
+            <>
+              <TextInput
+                ref={captureInputRef}
+                style={styles.captureInput}
+                autoFocus={false}
+                multiline
+                placeholder="Type here..."
+                placeholderTextColor="#738292"
+                value={captureText}
+                onChangeText={(value) => {
+                  setCaptureText(value);
+                  if (savedSeed) {
+                    setSavedSeed(null);
+                  }
+                }}
+                textAlignVertical="top"
+                onFocus={() => {
+                  setCaptureFocused(true);
+                  onFocusChange?.(true);
+                }}
+                onBlur={() => {
+                  if (retainCaptureFocusRef.current) {
+                    requestAnimationFrame(() => {
+                      captureInputRef.current?.focus();
+                    });
+                    return;
+                  }
 
-          <TextInput
-            ref={captureInputRef}
-            style={styles.captureInput}
-            multiline
-            placeholder="Type here..."
-            placeholderTextColor="#738292"
-            value={captureText}
-            onChangeText={(value) => {
-              setCaptureText(value);
-              if (savedSeed) {
-                setSavedSeed(null);
-              }
-            }}
-            blurOnSubmit={false}
-            enablesReturnKeyAutomatically
-            returnKeyType="send"
-            submitBehavior="submit"
-            onSubmitEditing={() => {
-              void handleCapture();
-            }}
-            textAlignVertical="top"
-            editable={!createSeed.isPending}
-            onFocus={() => {
-              setCaptureFocused(true);
-              onFocusChange?.(true);
-            }}
-            onBlur={() => {
-              if (retainCaptureFocusRef.current) {
-                requestAnimationFrame(() => {
-                  captureInputRef.current?.focus();
-                });
-                return;
-              }
+                  setCaptureFocused(false);
+                  onFocusChange?.(false);
+                }}
+              />
 
-              setCaptureFocused(false);
-              onFocusChange?.(false);
-            }}
-          />
+              <View style={styles.captureFooter}>
+                <Text style={styles.helper}>
+                  Private Seed capture. New lines stay available; send from the button when ready.
+                </Text>
+                <Pressable
+                  style={[
+                    styles.sendButton,
+                    (!captureText.trim() || createSeed.isPending) && styles.buttonDisabled,
+                  ]}
+                  focusable={false}
+                  onPressIn={() => {
+                    retainCaptureFocusRef.current = true;
+                    captureInputRef.current?.focus();
+                  }}
+                  onPress={handleCapture}
+                  disabled={!captureText.trim() || createSeed.isPending}
+                >
+                  {createSeed.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.sendButtonText}>Send</Text>
+                  )}
+                </Pressable>
+              </View>
+            </>
+          )}
 
-          <View style={styles.captureFooter}>
-            <Text style={styles.helper}>
-              Private Seed capture. Use the keyboard&apos;s send action for the smoothest loop.
-            </Text>
-            <Pressable
-              style={[
-                styles.sendButton,
-                (!captureText.trim() || createSeed.isPending) && styles.buttonDisabled,
-              ]}
-              focusable={false}
-              onPressIn={() => {
-                retainCaptureFocusRef.current = true;
-                captureInputRef.current?.focus();
+          <View
+            style={[
+              styles.savedPrompt,
+              !savedSeed && styles.savedPromptHidden,
+            ]}
+            pointerEvents={savedSeed ? 'auto' : 'none'}
+          >
+            <Text style={styles.savedTitle}>Saved</Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (savedSeed) {
+                  onDevelopSeed(savedSeed);
+                }
               }}
-              onPress={handleCapture}
-              disabled={!captureText.trim() || createSeed.isPending}
+              activeOpacity={0.8}
+              disabled={!savedSeed}
             >
-              {createSeed.isPending ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.sendButtonText}>Send</Text>
-              )}
-            </Pressable>
+              <Text style={styles.savedLink}>Develop this?</Text>
+            </TouchableOpacity>
           </View>
-
-          {savedSeed ? (
-            <View style={styles.savedPrompt}>
-              <Text style={styles.savedTitle}>Saved</Text>
-              <TouchableOpacity
-                onPress={() => onDevelopSeed(savedSeed)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.savedLink}>Develop this?</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -341,6 +452,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
+    fontWeight: '800',
+    color: '#0D2235',
+  },
+  editingTitle: {
+    fontSize: 22,
     fontWeight: '800',
     color: '#0D2235',
   },
@@ -387,6 +503,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  iconSendButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#0E5AA7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconSendText: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '700',
+  },
   buttonDisabled: {
     opacity: 0.55,
   },
@@ -394,6 +523,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
+    minHeight: 18,
+  },
+  savedPromptHidden: {
+    opacity: 0,
   },
   savedTitle: {
     fontSize: 13,
@@ -490,6 +623,7 @@ const styles = StyleSheet.create({
   seedPrimaryActions: {
     flexDirection: 'row',
     gap: 16,
+    alignItems: 'center',
   },
   seedPrimaryAction: {
     fontSize: 13,
@@ -501,6 +635,14 @@ const styles = StyleSheet.create({
     color: '#526170',
     fontWeight: '600',
   },
+  seedIconButton: {
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seedIconText: {
+    fontSize: 15,
+  },
   seedEditor: {
     minHeight: 104,
     borderRadius: 14,
@@ -511,5 +653,23 @@ const styles = StyleSheet.create({
     color: '#13293D',
     fontSize: 15,
     lineHeight: 22,
+  },
+  seedEditingCard: {
+    borderRadius: 14,
+    padding: 14,
+    backgroundColor: '#F7FAFC',
+    borderWidth: 1,
+    borderColor: '#C9D4DE',
+    gap: 8,
+  },
+  seedEditingLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#315E87',
+  },
+  editorActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
 });

@@ -28,7 +28,10 @@ const FEEDBACK_CHECKLIST_REFRESH_EVENT = "feedback-checklist-refresh";
 const GRIST_HELP_TEXT = `/issue Brief title
 severity: medium
 area: editor
-steps: ...`;
+steps: ...
+
+/commons https://example.org
+why: One of the most thoughtful gatherings...`;
 
 type PersistedDraft = {
   text: string;
@@ -36,8 +39,10 @@ type PersistedDraft = {
   pathname: string;
 };
 
-function normalizeIssueShortcut(input: string): string {
-  return input.replace(/(^|\n)\/is(\s+)/g, "$1/issue$2");
+function normalizeShortcuts(input: string): string {
+  return input
+    .replace(/(^|\n)\/is(\s+)/g, "$1/issue$2")
+    .replace(/(^|\n)\/co(\s+)/g, "$1/commons$2");
 }
 
 export default function GristQuickPopup() {
@@ -165,7 +170,7 @@ export default function GristQuickPopup() {
     });
   }, []);
 
-  const insertCommand = useCallback((command: "/issue " | "/event ") => {
+  const insertCommand = useCallback((command: "/issue " | "/event " | "/commons ") => {
     const el = textareaRef.current;
     if (!el) {
       setText((prev) => `${prev}${prev && !prev.endsWith("\n") ? "\n" : ""}${command}`);
@@ -424,6 +429,15 @@ export default function GristQuickPopup() {
                 >
                   ev
                 </Button>
+                <Button
+                  size="xs"
+                  borderRadius="full"
+                  colorPalette="green"
+                  variant="subtle"
+                  onClick={() => insertCommand("/commons ")}
+                >
+                  co
+                </Button>
                 {recentTopics.map((topic) => (
                   <Button
                     key={topic}
@@ -470,7 +484,7 @@ export default function GristQuickPopup() {
               maxH="40vh"
               resize="vertical"
               value={text}
-              onChange={(event) => setText(normalizeIssueShortcut(event.target.value))}
+              onChange={(event) => setText(normalizeShortcuts(event.target.value))}
               placeholder={GRIST_HELP_TEXT}
               fontFamily="mono"
               fontSize="sm"
