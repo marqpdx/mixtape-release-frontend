@@ -25,6 +25,8 @@ export interface WorkSessionItem {
   content_type: number;
   object_id: string;
   sequence: number;
+  artifact_type?: string;
+  artifact_title?: string;
   created_at: string;
 }
 

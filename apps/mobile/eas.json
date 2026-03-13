@@ -8,6 +8,11 @@
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
+        "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -18,6 +23,11 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
+        "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -27,6 +37,11 @@
     },
     "production": {
       "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
+        "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -40,7 +55,12 @@
       "ios": {
         "simulator": true
       },
-      "environment": "development"
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
+        "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
+        "EXPO_PUBLIC_APP_ENV": "production"
+      }
     }
   },
   "submit": {

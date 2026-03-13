@@ -26,6 +26,48 @@ const REGISTER_URL = `${API_BASE}/api/auth/register`;
 const CSRF_URL = `${API_BASE}/api/csrf/`;
 const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
 
+function logAuthDebug(message: string, extra?: Record<string, unknown>): void {
+  console.log('[AuthApi]', message, extra || {});
+}
+
+function normalizeError(error: unknown): Record<string, unknown> {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+
+  return {
+    value: String(error),
+  };
+}
+
+async function probeAuthNetwork(label: string): Promise<void> {
+  try {
+    logAuthDebug(`Probe start: ${label}`, {
+      url: CSRF_URL,
+    });
+
+    const response = await fetch(CSRF_URL, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    logAuthDebug(`Probe response: ${label}`, {
+      ok: response.ok,
+      status: response.status,
+      url: CSRF_URL,
+    });
+  } catch (error) {
+    logAuthDebug(`Probe failed: ${label}`, {
+      url: CSRF_URL,
+      error: normalizeError(error),
+    });
+  }
+}
+
 /**
  * CSRF Token Management
  */
@@ -37,12 +79,24 @@ let csrfToken: string | null = null;
  */
 async function clearRefreshCookieBestEffort(): Promise<void> {
   try {
+    logAuthDebug('Clearing refresh cookie before login', {
+      url: LOGOUT_URL,
+      hasCsrfToken: !!csrfToken,
+      apiBase: API_BASE,
+    });
     await fetch(LOGOUT_URL, {
       method: "POST",
       headers: getHeaders(),
       credentials: "include",
     });
-  } catch {
+    logAuthDebug('Refresh cookie clear completed', {
+      url: LOGOUT_URL,
+    });
+  } catch (error) {
+    logAuthDebug('Refresh cookie clear failed (ignored)', {
+      url: LOGOUT_URL,
+      error: normalizeError(error),
+    });
     // Ignore: this is cleanup-only.
   }
 }
@@ -61,6 +115,10 @@ export function getCsrfToken(): string | null {
  */
 export async function initializeCsrf(): Promise<void> {
   try {
+    logAuthDebug('Initializing CSRF token', {
+      url: CSRF_URL,
+      apiBase: API_BASE,
+    });
     const response = await fetch(CSRF_URL, {
       method: 'GET',
       credentials: 'include',
@@ -75,6 +133,9 @@ export async function initializeCsrf(): Promise<void> {
 
     if (data.csrfToken) {
       csrfToken = data.csrfToken;
+      logAuthDebug('CSRF token initialized', {
+        hasCsrfToken: true,
+      });
     }
   } catch (error) {
     console.error('Error initializing CSRF protection:', error);
@@ -103,6 +164,16 @@ function getHeaders(additionalHeaders: Record<string, string> = {}): Record<stri
  * Stores access token in memory, refresh token managed by httpOnly cookie
  */
 export async function login(credentials: LoginCredentials): Promise<UserIdentity> {
+  logAuthDebug('Login start', {
+    apiBase: API_BASE,
+    loginUrl: LOGIN_URL,
+    logoutUrl: LOGOUT_URL,
+    identifier: credentials.identifier,
+    hasCsrfToken: !!csrfToken,
+  });
+
+  await probeAuthNetwork('before-login');
+
   // Check rate limit
   const rateLimitCheck = checkRateLimit('login');
   if (!rateLimitCheck.isAllowed) {
@@ -113,19 +184,44 @@ export async function login(credentials: LoginCredentials): Promise<UserIdentity
   // This prevents bad-state loops after server restarts/token invalidation.
   await clearRefreshCookieBestEffort();
 
-  const response = await fetch(LOGIN_URL, {
-    method: 'POST',
-    headers: getHeaders(), // Includes CSRF token if available
-    credentials: 'include', // Critical: enables httpOnly cookie
-    body: JSON.stringify({
-      identifier: credentials.identifier,
-      password: credentials.password,
-    }),
+  logAuthDebug('Submitting login request', {
+    url: LOGIN_URL,
+    hasCsrfToken: !!csrfToken,
   });
+  let response: Response;
 
+  try {
+    response = await fetch(LOGIN_URL, {
+      method: 'POST',
+      headers: getHeaders(), // Includes CSRF token if available
+      credentials: 'include', // Critical: enables httpOnly cookie
+      body: JSON.stringify({
+        identifier: credentials.identifier,
+        password: credentials.password,
+      }),
+    });
+  } catch (error) {
+    logAuthDebug('Login request threw before response', {
+      url: LOGIN_URL,
+      error: normalizeError(error),
+    });
+    throw error;
+  }
+
+  logAuthDebug('Login response received', {
+    ok: response.ok,
+    status: response.status,
+    url: LOGIN_URL,
+  });
   const data: AuthResponse = await response.json();
 
   if (!response.ok || !data.success) {
+    logAuthDebug('Login response rejected', {
+      ok: response.ok,
+      status: response.status,
+      success: data.success,
+      detail: data.detail,
+    });
     throw new Error(data.detail || 'Login failed');
   }
 
@@ -136,11 +232,17 @@ export async function login(credentials: LoginCredentials): Promise<UserIdentity
   // Store access token in memory (NOT localStorage)
   const expiresAt = data.access_expires * 1000; // Convert to milliseconds
   setAccessToken(data.access, expiresAt);
+  logAuthDebug('Access token stored', {
+    expiresAt,
+  });
 
   // Record successful login (resets rate limit)
   recordSuccess('login');
 
   // Fetch and return full user identity
+  logAuthDebug('Fetching user identity after login', {
+    url: ME_URL,
+  });
   return await fetchUserIdentity(data.access);
 }
 
@@ -264,6 +366,10 @@ export async function fetchUserIdentity(token?: string): Promise<UserIdentity> {
     throw new Error('No access token available');
   }
 
+  logAuthDebug('Fetching user identity', {
+    url: ME_URL,
+    usedProvidedToken: !!token,
+  });
   const response = await fetch(ME_URL, {
     method: 'GET',
     headers: {
@@ -271,6 +377,11 @@ export async function fetchUserIdentity(token?: string): Promise<UserIdentity> {
     },
   });
 
+  logAuthDebug('User identity response received', {
+    ok: response.ok,
+    status: response.status,
+    url: ME_URL,
+  });
   if (!response.ok) {
     if (response.status === 401) {
       clearAccessToken();

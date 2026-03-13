@@ -348,10 +348,10 @@ export function DraftInspector({
                         flexShrink={0}
                       />
                       <Text fontSize="xs" color={labelColor} flexShrink={0}>
-                        {item.artifact_type || "artifact"}
+                        {(item as Record<string, unknown>).artifact_type as string || "artifact"}
                       </Text>
                       <Text fontSize="xs" lineClamp={1}>
-                        {item.artifact_title || "Untitled"}
+                        {(item as Record<string, unknown>).artifact_title as string || "Untitled"}
                       </Text>
                     </HStack>
                   ))}
