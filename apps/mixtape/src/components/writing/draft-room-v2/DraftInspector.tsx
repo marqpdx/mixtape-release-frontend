@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import type { WorkSessionItem } from "@mixtape/api/clients/worksessions/workSessionApi";
 import { TagInput, Tag } from "@components/writing/composer/TagInput";
 import { CategoryInput, Category } from "@components/writing/composer/CategoryInput";
 import { SimplePublishDialog } from "@components/writing/composer/SimplePublishDialog";
@@ -50,6 +51,8 @@ interface DraftInspectorProps {
   hasBody: boolean;
   sponsor: SponsorConfig;
   onPublished?: () => void;
+  /** Work session items for the current draft (if any active session) */
+  sessionItems?: WorkSessionItem[];
   /** When true, skip outer border/header (used inside tabbed panel) */
   embedded?: boolean;
 }
@@ -77,6 +80,7 @@ export function DraftInspector({
   hasBody,
   sponsor,
   onPublished,
+  sessionItems,
   embedded = false,
 }: DraftInspectorProps) {
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -324,6 +328,37 @@ export function DraftInspector({
               Coming soon
             </Text>
           </Box>
+
+          {/* Session artifacts — shown only when a stream session is active */}
+          {sessionItems && sessionItems.length > 0 && (
+            <>
+              <Divider />
+              <Box>
+                <Text fontSize="xs" color={labelColor} mb={1}>
+                  Session
+                </Text>
+                <VStack align="stretch" gap={1}>
+                  {sessionItems.map((item) => (
+                    <HStack key={item.id} gap={2} px={1} py={0.5}>
+                      <Box
+                        w="6px"
+                        h="6px"
+                        borderRadius="full"
+                        bg="orange.400"
+                        flexShrink={0}
+                      />
+                      <Text fontSize="xs" color={labelColor} flexShrink={0}>
+                        {item.artifact_type || "artifact"}
+                      </Text>
+                      <Text fontSize="xs" lineClamp={1}>
+                        {item.artifact_title || "Untitled"}
+                      </Text>
+                    </HStack>
+                  ))}
+                </VStack>
+              </Box>
+            </>
+          )}
 
           <Divider />
 

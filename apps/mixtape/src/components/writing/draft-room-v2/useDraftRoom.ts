@@ -6,9 +6,11 @@
 
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting, useWritingMutations } from "@mixtape/api/hooks/useWriting";
+import { useWorkSessions } from "@mixtape/api/hooks/worksessions/useWorkSession";
+import type { WorkSession } from "@mixtape/api/clients/worksessions/workSessionApi";
 import type { WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
 
 // ── Types ──
@@ -57,6 +59,9 @@ interface UseDraftRoomReturn {
   createDraft: () => Promise<void>;
   deleteDraft: (id: string) => Promise<void>;
 
+  // Work sessions
+  openSessions: Map<string, WorkSession>;
+
   // Mutations hook
   mutations: ReturnType<typeof useWritingMutations>;
 }
@@ -68,6 +73,19 @@ const EMPTY_DOC: DocumentJSON = { type: "doc", content: [] };
 export function useDraftRoom(sponsor: SponsorConfig): UseDraftRoomReturn {
   const { drafts, draftsLoading, refetch } = useWriting(sponsor.type, sponsor.slug);
   const mutations = useWritingMutations(sponsor.type, sponsor.slug);
+
+  // Fetch open work sessions to detect resumable streams
+  const { data: sessions } = useWorkSessions();
+  const openSessions = useMemo(() => {
+    const map = new Map<string, WorkSession>();
+    if (!sessions) return map;
+    for (const s of sessions) {
+      if (!s.ended_at) {
+        map.set(s.anchor_object_id, s);
+      }
+    }
+    return map;
+  }, [sessions]);
 
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [piece, setPiece] = useState<PieceState | null>(null);
@@ -199,6 +217,7 @@ export function useDraftRoom(sponsor: SponsorConfig): UseDraftRoomReturn {
     setExcerpt,
     createDraft,
     deleteDraft,
+    openSessions,
     mutations,
   };
 }

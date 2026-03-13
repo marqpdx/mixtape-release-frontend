@@ -17,6 +17,8 @@ interface DraftQueueProps {
   onNewDraft: () => void;
   /** ID of a piece that just appeared (for fade-in animation) */
   freshPieceId?: string | null;
+  /** Draft IDs that have active stream sessions */
+  sessionDraftIds?: Set<string>;
   /** Toggle to collapse the queue and show only the sparkles strip */
   isCollapsed: boolean;
   onToggleCollapse: () => void;
@@ -29,6 +31,7 @@ export function DraftQueue({
   onSelect,
   onNewDraft,
   freshPieceId,
+  sessionDraftIds,
   isCollapsed,
   onToggleCollapse,
 }: DraftQueueProps) {
@@ -138,6 +141,7 @@ export function DraftQueue({
                   writingKind={draft.piece.writing_kind}
                   isSelected={selectedPieceId === draft.piece.id}
                   isEmpty={!draft.title && !draft.piece.title}
+                  hasActiveSession={sessionDraftIds?.has(draft.piece.id)}
                   onClick={() => onSelect(draft.piece.id)}
                 />
               </FadeInWrapper>

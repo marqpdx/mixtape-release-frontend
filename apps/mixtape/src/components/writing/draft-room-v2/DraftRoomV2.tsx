@@ -4,17 +4,22 @@
 //   Left (250px, collapsible)  — Draft Queue
 //   Center (flex)              — Embedded Editor (full height)
 //   Right (360px, collapsible) — Tabbed: Copy Desk | Inspector
+//
+// When a side panel is collapsed, the editor gains 12% padding
+// on that side for a narrower, more focused writing surface.
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Flex, IconButton, Spinner, Tabs, Text, VStack } from "@chakra-ui/react";
 import { IconSparkles } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useDraftRoom } from "./useDraftRoom";
 import { DraftQueue } from "./DraftQueue";
 import { DraftEditor, DraftEditorEmpty } from "./DraftEditor";
+import type { CopyDeskState } from "./DraftEditor";
 import { DraftInspector } from "./DraftInspector";
+import { CopyDesk } from "@components/writing/copydesk/CopyDesk";
 
 interface SponsorConfig {
   type: "member";
@@ -43,15 +48,62 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
     setExcerpt,
     createDraft,
     refetchDrafts,
+    openSessions,
   } = useDraftRoom(sponsor);
+
+  // Build a set of draft IDs with active sessions for queue indicators
+  const sessionDraftIds = useMemo(
+    () => new Set(openSessions.keys()),
+    [openSessions]
+  );
+
+  // Get session items for the currently selected draft
+  const currentSession = selectedPieceId ? openSessions.get(selectedPieceId) : undefined;
 
   // Panel visibility
   const [queueCollapsed, setQueueCollapsed] = useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState("inspector");
+  const [focusMode, setFocusMode] = useState(false);
+
+  // Focus mode: collapse both panels for distraction-free writing
+  const toggleFocusMode = useCallback(() => {
+    setFocusMode((prev) => {
+      const next = !prev;
+      if (next) {
+        setQueueCollapsed(true);
+        setSidePanelOpen(false);
+      }
+      return next;
+    });
+  }, []);
+
+  // Escape exits focus mode
+  useEffect(() => {
+    if (!focusMode) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setFocusMode(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [focusMode]);
 
   // Fade-in tracking for optimistic draft insert
   const [freshPieceId, setFreshPieceId] = useState<string | null>(null);
+
+  // CopyDesk state from editor
+  const [copyDeskState, setCopyDeskState] = useState<CopyDeskState>({
+    selection: null,
+    hasSelection: false,
+    backgroundSummary: "",
+    summaryIsGenerating: false,
+    summaryIsPending: false,
+    summaryError: null,
+    summaryForceUpdate: null,
+    documentWordCount: 0,
+  });
 
   const bg = useColorModeValue("white", "gray.950");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -65,18 +117,37 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
     (docJSON.content as Record<string, unknown>[]).length > 0
   );
 
+  // Extra padding when panels are collapsed — narrows the writing surface
+  const leftPad = queueCollapsed ? "12%" : "0px";
+  const rightPad = !sidePanelOpen ? "12%" : "0px";
+  const sidePadding = useMemo(() => {
+    // Use the larger of the two as uniform padding, or combine
+    if (queueCollapsed && !sidePanelOpen) return "8%"; // both collapsed
+    if (queueCollapsed) return leftPad;
+    if (!sidePanelOpen) return rightPad;
+    return "0px";
+  }, [queueCollapsed, sidePanelOpen, leftPad, rightPad]);
+
   // Called by DraftEditor after first autosave succeeds
   const handleFirstSave = useCallback(() => {
     if (selectedPieceId) {
       setFreshPieceId(selectedPieceId);
       refetchDrafts();
-      // Clear the animation marker after it plays
       setTimeout(() => setFreshPieceId(null), 1000);
     }
   }, [selectedPieceId, refetchDrafts]);
 
   const toggleSidePanel = useCallback(() => {
     setSidePanelOpen((prev) => !prev);
+  }, []);
+
+  const { summaryForceUpdate } = copyDeskState;
+  const handleGenerateNewSummary = useCallback(() => {
+    summaryForceUpdate?.();
+  }, [summaryForceUpdate]);
+
+  const handleCopyDeskStateChange = useCallback((state: CopyDeskState) => {
+    setCopyDeskState(state);
   }, []);
 
   return (
@@ -101,6 +172,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
           onSelect={selectPiece}
           onNewDraft={createDraft}
           freshPieceId={freshPieceId}
+          sessionDraftIds={sessionDraftIds}
           isCollapsed={queueCollapsed}
           onToggleCollapse={() => setQueueCollapsed((p) => !p)}
         />
@@ -117,6 +189,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
           <DraftEditor
             key={selectedPieceId}
             pieceId={selectedPieceId}
+            sponsor={sponsor}
             title={title}
             docJSON={docJSON}
             excerpt={excerpt}
@@ -124,6 +197,10 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
             onDocChange={setDocJSON}
             onExcerptChange={setExcerpt}
             onFirstSave={handleFirstSave}
+            onCopyDeskStateChange={handleCopyDeskStateChange}
+            sidePadding={sidePadding}
+            focusMode={focusMode}
+            onToggleFocusMode={toggleFocusMode}
           />
         ) : (
           <DraftEditorEmpty />
@@ -174,17 +251,24 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
 
               <Box flex="1" overflow="hidden">
                 <Tabs.Content value="copydesk" p={0} h="100%">
-                  <Box p={4} overflowY="auto" h="100%">
-                    <VStack align="stretch" gap={3}>
-                      <Text fontSize="sm" fontWeight="semibold">Copy Desk</Text>
-                      <Text fontSize="xs" color="gray.500">
-                        AI summary, research, word tools, and statistics will appear here.
-                      </Text>
-                      <Text fontSize="xs" color="gray.400">
-                        (CopyDesk agents integration coming next)
-                      </Text>
-                    </VStack>
-                  </Box>
+                  <CopyDesk
+                    isOpen={true}
+                    onToggle={toggleSidePanel}
+                    width="100%"
+                    draftId={selectedPieceId}
+                    selection={copyDeskState.selection}
+                    hasSelection={copyDeskState.hasSelection}
+                    backgroundSummary={copyDeskState.backgroundSummary}
+                    summaryIsGenerating={copyDeskState.summaryIsGenerating}
+                    summaryIsPending={copyDeskState.summaryIsPending}
+                    summaryError={copyDeskState.summaryError}
+                    onGenerateNewSummary={handleGenerateNewSummary}
+                    summary={excerpt}
+                    setSummary={setExcerpt}
+                    titleWordCount={title.length}
+                    documentWordCount={copyDeskState.documentWordCount}
+                    summaryWordCount={excerpt.length}
+                  />
                 </Tabs.Content>
 
                 <Tabs.Content value="inspector" p={0} h="100%">
@@ -197,6 +281,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
                     hasBody={hasBody}
                     sponsor={sponsor}
                     onPublished={refetchDrafts}
+                    sessionItems={currentSession?.items}
                     embedded
                   />
                 </Tabs.Content>

@@ -13,6 +13,7 @@ interface DraftQueueItemProps {
   writingKind?: string;
   isSelected: boolean;
   isEmpty?: boolean;
+  hasActiveSession?: boolean;
   onClick: () => void;
 }
 
@@ -22,6 +23,7 @@ export function DraftQueueItem({
   writingKind,
   isSelected,
   isEmpty,
+  hasActiveSession,
   onClick,
 }: DraftQueueItemProps) {
   const selectedBg = useColorModeValue("blue.50", "blue.900");
@@ -51,14 +53,26 @@ export function DraftQueueItem({
       transition="background 0.15s"
       onClick={onClick}
     >
-      <Text
-        fontSize="sm"
-        fontWeight={isSelected ? "semibold" : "normal"}
-        lineClamp={1}
-        opacity={isEmpty && !title ? 0.6 : 1}
-      >
-        {displayTitle}
-      </Text>
+      <HStack gap={1}>
+        {hasActiveSession && (
+          <Box
+            w="6px"
+            h="6px"
+            borderRadius="full"
+            bg="orange.400"
+            flexShrink={0}
+            title="Active stream session"
+          />
+        )}
+        <Text
+          fontSize="sm"
+          fontWeight={isSelected ? "semibold" : "normal"}
+          lineClamp={1}
+          opacity={isEmpty && !title ? 0.6 : 1}
+        >
+          {displayTitle}
+        </Text>
+      </HStack>
       <HStack gap={2} mt={0.5}>
         {writingKind && writingKind !== "post" && (
           <Text fontSize="xs" color={kindColor}>
