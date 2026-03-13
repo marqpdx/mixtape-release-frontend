@@ -5,7 +5,7 @@ export default {
     scheme: "mixtape",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/crossroads2.png",
     userInterfaceStyle: "light",
     assetBundlePatterns: ["**/*"],
     ios: {
@@ -19,7 +19,7 @@ export default {
       package: "com.mixtape.mobile",
       googleServicesFile: "./google-services.json",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/crossroads2-adaptive.png",
         backgroundColor: "#ffffff",
       },
     },

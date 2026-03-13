@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -50,6 +51,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
   const [seedToDevelop, setSeedToDevelop] = useState<Seed | null>(null);
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [editorFocused, setEditorFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     void AsyncStorage.getItem(HOME_TAB_KEY)
@@ -87,14 +89,28 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
     void AsyncStorage.setItem(GUIDE_COLLAPSED_KEY, heroCollapsed ? 'true' : 'false');
   }, [heroCollapsed]);
 
-  const chromeHidden = editorFocused;
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const chromeHidden = editorFocused || keyboardVisible;
 
   return (
     <View style={styles.container}>
       <View
         style={[
           styles.chromeWrap,
-          chromeHidden && styles.chromeWrapHidden,
+          chromeHidden ? styles.chromeWrapHidden : styles.chromeWrapVisible,
         ]}
         pointerEvents={chromeHidden ? 'none' : 'auto'}
       >
@@ -188,13 +204,13 @@ const styles = StyleSheet.create({
   },
   chromeWrap: {
     overflow: 'hidden',
-    maxHeight: 240,
+  },
+  chromeWrapVisible: {
     opacity: 1,
   },
   chromeWrapHidden: {
-    maxHeight: 0,
     opacity: 0,
-    marginBottom: 0,
+    maxHeight: 0,
   },
   hero: {
     backgroundColor: '#0D2235',
