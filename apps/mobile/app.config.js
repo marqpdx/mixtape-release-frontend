@@ -13,11 +13,14 @@ export default {
       bundleIdentifier: "com.mixtape.mobile",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSMicrophoneUsageDescription:
+          "Mixtape uses your microphone so you can capture voice Seeds.",
       },
     },
     android: {
       package: "com.mixtape.mobile",
       googleServicesFile: "./google-services.json",
+      permissions: ["RECORD_AUDIO"],
       adaptiveIcon: {
         foregroundImage: "./assets/crossroads2-adaptive.png",
         backgroundColor: "#ffffff",

@@ -50,7 +50,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
   const [activeTab, setActiveTab] = useState<HomeTab>('notebook');
   const [hasLoadedSavedTab, setHasLoadedSavedTab] = useState(false);
   const [seedToDevelop, setSeedToDevelop] = useState<Seed | null>(null);
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
+  const [heroCollapsed, setHeroCollapsed] = useState(true);
   const [editorFocused, setEditorFocused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -139,7 +139,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
                 Pocket notebook, idea studio, and community window.
               </Text>
               <Text style={styles.heroGuide}>
-                Capture first. Curate later. Share intentionally. The notebook stays fast, the studio is for shaping, and community stays secondary.
+                Capture first. Curate later. Share intentionally. The notebook stays fast, the studio is for shaping, and community stays secondary. Recent Seeds show the last 90 minutes, or your latest 8 if things are quiet. New Seeds autosave locally while you type; multiline stays available and sending stays explicit.
               </Text>
             </View>
           ) : null}
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    minHeight: 46,
+    minHeight: 40,
     borderRadius: 14,
     backgroundColor: '#DCE6EE',
     alignItems: 'center',
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: '#34516B',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   tabTextActive: {

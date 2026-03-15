@@ -224,3 +224,60 @@ export async function fetchPublicCourseDetail(
   );
   return response.data;
 }
+
+// --- Commons ---
+
+export interface PublicCommonsItem {
+  id: string;
+  title: string;
+  slug: string;
+  item_type: string;
+  summary: string;
+  location_name: string;
+  latitude: number | null;
+  longitude: number | null;
+  website: string;
+  why_recommended: string;
+  recommended_by_name: string | null;
+  published_at: string;
+}
+
+export interface PublicCommonsFilament {
+  direction: "in" | "out";
+  relation_type: string;
+  related_id: string;
+  related_title: string;
+  related_slug: string;
+  note: string;
+}
+
+export interface PublicCommonsDetail extends PublicCommonsItem {
+  body: string;
+  contact_email: string;
+  contact_links: Record<string, string>;
+  instagram: string;
+  youtube: string;
+  rss: string;
+  founder: string;
+  filaments: PublicCommonsFilament[];
+}
+
+export async function fetchPublicCommons(params?: {
+  type?: string;
+  search?: string;
+}): Promise<PublicCommonsItem[]> {
+  const response = await axiosInstance.get<PublicCommonsItem[]>(
+    "/api/public/commons",
+    { params }
+  );
+  return response.data;
+}
+
+export async function fetchPublicCommonsDetail(
+  slug: string
+): Promise<PublicCommonsDetail> {
+  const response = await axiosInstance.get<PublicCommonsDetail>(
+    `/api/public/commons/${slug}`
+  );
+  return response.data;
+}

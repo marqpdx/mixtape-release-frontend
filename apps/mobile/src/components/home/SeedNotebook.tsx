@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   RefreshControl,
@@ -13,13 +14,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useCreateSeed,
+  useCreateVoiceSeed,
   useDeleteSeed,
   useRecentSeeds,
   useUpdateSeed,
 } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
+import { useAuthStore } from '../../stores/authStore';
+import { useNativeVoiceRecorder } from '../../hooks/useNativeVoiceRecorder';
 
 interface SeedNotebookProps {
   keyboardVerticalOffset?: number;
@@ -40,26 +45,26 @@ function formatSeedTime(value: string): string {
 }
 
 function selectVisibleSeeds(seeds: Seed[]): Seed[] {
-  const ninetyMinutesAgo = Date.now() - 90 * 60 * 1000;
-  const recentSeeds = seeds.filter((seed) => {
-    const createdAt = new Date(seed.created_at).getTime();
-    return !Number.isNaN(createdAt) && createdAt >= ninetyMinutesAgo;
-  });
-
-  if (recentSeeds.length > 0) {
-    return recentSeeds;
-  }
-
-  return seeds.slice(0, 8);
+  return seeds;
 }
+
+function formatDuration(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+const CAPTURE_DRAFT_KEY_PREFIX = 'mixtape.mobile.seedDraft';
 
 export function SeedNotebook({
   keyboardVerticalOffset = 0,
   onFocusChange,
   onDevelopSeed,
 }: SeedNotebookProps) {
+  const currentUser = useAuthStore((state) => state.user);
   const recentSeedsQuery = useRecentSeeds(20);
   const createSeed = useCreateSeed();
+  const createVoiceSeed = useCreateVoiceSeed();
   const deleteSeed = useDeleteSeed();
   const updateSeed = useUpdateSeed();
   const [captureText, setCaptureText] = useState('');
@@ -67,15 +72,110 @@ export function SeedNotebook({
   const [editingText, setEditingText] = useState('');
   const [savedSeed, setSavedSeed] = useState<Seed | null>(null);
   const [captureFocused, setCaptureFocused] = useState(false);
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const captureInputRef = useRef<TextInput | null>(null);
   const editInputRef = useRef<TextInput | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
   const retainCaptureFocusRef = useRef(false);
+  const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const voiceRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const voiceRefreshPhaseRef = useRef<'initial' | 'extended'>('initial');
+  const {
+    isPreparing,
+    isRecording,
+    recordingSeconds,
+    meterLevel,
+    micError,
+    canOpenSettings,
+    recordedClip,
+    startRecording,
+    stopRecording,
+    clearRecording,
+  } = useNativeVoiceRecorder();
 
   const visibleSeeds = useMemo(
     () => selectVisibleSeeds(recentSeedsQuery.data ?? []),
     [recentSeedsQuery.data]
   );
+  const showVoiceStatus = isRecording || Boolean(recordedClip);
+  const draftStorageKey = currentUser?.username
+    ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
+    : CAPTURE_DRAFT_KEY_PREFIX;
+
+  useEffect(() => {
+    let active = true;
+
+    void AsyncStorage.getItem(draftStorageKey).then((value) => {
+      if (!active || !value) {
+        return;
+      }
+
+      setCaptureText(value);
+      setDraftStatus('saved');
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [draftStorageKey]);
+
+  useEffect(() => {
+    if (editingSeedId) {
+      return;
+    }
+
+    if (draftSaveTimeoutRef.current) {
+      clearTimeout(draftSaveTimeoutRef.current);
+    }
+
+    setDraftStatus(captureText.trim() ? 'saving' : 'idle');
+
+    draftSaveTimeoutRef.current = setTimeout(() => {
+      const nextValue = captureText;
+      const request = nextValue.trim()
+        ? AsyncStorage.setItem(draftStorageKey, nextValue)
+        : AsyncStorage.removeItem(draftStorageKey);
+
+      void request.then(() => {
+        setDraftStatus(nextValue.trim() ? 'saved' : 'idle');
+      });
+    }, 600);
+
+    return () => {
+      if (draftSaveTimeoutRef.current) {
+        clearTimeout(draftSaveTimeoutRef.current);
+        draftSaveTimeoutRef.current = null;
+      }
+    };
+  }, [captureText, draftStorageKey, editingSeedId]);
+
+  useEffect(() => {
+    const hasProcessingVoiceSeed = visibleSeeds.some(
+      (seed) => seed.kind === 'voice' && seed.status === 'processing'
+    );
+
+    if (!hasProcessingVoiceSeed) {
+      if (voiceRefreshTimeoutRef.current) {
+        clearTimeout(voiceRefreshTimeoutRef.current);
+        voiceRefreshTimeoutRef.current = null;
+      }
+      voiceRefreshPhaseRef.current = 'initial';
+      return;
+    }
+
+    const delay = voiceRefreshPhaseRef.current === 'initial' ? 5000 : 24000;
+    voiceRefreshTimeoutRef.current = setTimeout(() => {
+      voiceRefreshPhaseRef.current = 'extended';
+      void recentSeedsQuery.refetch();
+    }, delay);
+
+    return () => {
+      if (voiceRefreshTimeoutRef.current) {
+        clearTimeout(voiceRefreshTimeoutRef.current);
+        voiceRefreshTimeoutRef.current = null;
+      }
+    };
+  }, [recentSeedsQuery, visibleSeeds]);
 
   const handleCapture = async () => {
     const bodyText = captureText.trim();
@@ -92,7 +192,9 @@ export function SeedNotebook({
     });
 
     setCaptureText('');
+    setDraftStatus('idle');
     setSavedSeed(seed);
+    void AsyncStorage.removeItem(draftStorageKey);
     requestAnimationFrame(() => {
       seedListRef.current?.scrollToOffset({ offset: 0, animated: false });
     });
@@ -100,6 +202,25 @@ export function SeedNotebook({
       captureInputRef.current?.focus();
       retainCaptureFocusRef.current = false;
     }, 10);
+  };
+
+  const handleSendVoiceSeed = async () => {
+    if (!recordedClip || createVoiceSeed.isPending) {
+      return;
+    }
+
+    const seed = await createVoiceSeed.mutateAsync({
+      uri: recordedClip.uri,
+      mimeType: recordedClip.mimeType,
+      fileName: recordedClip.fileName,
+      source: 'mobile',
+    });
+
+    clearRecording();
+    setSavedSeed(seed);
+    requestAnimationFrame(() => {
+      seedListRef.current?.scrollToOffset({ offset: 0, animated: false });
+    });
   };
 
   const startEditingSeed = (seed: Seed) => {
@@ -165,7 +286,6 @@ export function SeedNotebook({
     >
       <View style={styles.recentHeader}>
         <Text style={styles.recentTitle}>Recent Seeds</Text>
-        <Text style={styles.recentHint}>Showing the last 90 minutes, or your latest 8 if things are quiet.</Text>
       </View>
 
       <FlatList
@@ -173,6 +293,7 @@ export function SeedNotebook({
         data={visibleSeeds}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.seedList}
+        ItemSeparatorComponent={() => <View style={styles.seedDivider} />}
         keyboardShouldPersistTaps="handled"
         inverted
         refreshControl={
@@ -201,7 +322,7 @@ export function SeedNotebook({
 
           return (
             <TouchableOpacity
-              style={styles.seedCard}
+              style={styles.seedRow}
               activeOpacity={0.88}
               onPress={() => startEditingSeed(item)}
             >
@@ -374,29 +495,118 @@ export function SeedNotebook({
               />
 
               <View style={styles.captureFooter}>
-                <Text style={styles.helper}>
-                  Private Seed capture. New lines stay available; send from the button when ready.
-                </Text>
-                <Pressable
-                  style={[
-                    styles.sendButton,
-                    (!captureText.trim() || createSeed.isPending) && styles.buttonDisabled,
-                  ]}
-                  focusable={false}
-                  onPressIn={() => {
-                    retainCaptureFocusRef.current = true;
-                    captureInputRef.current?.focus();
+                <TouchableOpacity
+                  onPress={() => {
+                    if (recordedClip) {
+                      clearRecording();
+                      return;
+                    }
+                    if (isRecording) {
+                      void stopRecording();
+                      return;
+                    }
+                    void startRecording();
                   }}
-                  onPress={handleCapture}
-                  disabled={!captureText.trim() || createSeed.isPending}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.voiceSecondaryButton,
+                    isPreparing && styles.buttonDisabled,
+                  ]}
+                  disabled={isPreparing}
                 >
-                  {createSeed.isPending ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.sendButtonText}>Send</Text>
-                  )}
-                </Pressable>
+                  <Text style={styles.voiceSecondaryButtonText}>
+                    {recordedClip ? 'Discard voice' : isPreparing ? 'Preparing' : isRecording ? 'Stop' : 'Record'}
+                  </Text>
+                </TouchableOpacity>
+                {showVoiceStatus ? (
+                  <View style={styles.voiceInlineStatus}>
+                    <Text style={styles.voiceStatus}>
+                      {recordedClip
+                        ? formatDuration(recordedClip.durationSeconds)
+                        : formatDuration(recordingSeconds)}
+                    </Text>
+                    {isRecording ? (
+                      <View style={styles.voiceMeter}>
+                        {[0.2, 0.4, 0.6, 0.8].map((threshold, index) => (
+                          <View
+                            key={threshold}
+                            style={[
+                              styles.voiceMeterBar,
+                              meterLevel >= threshold && styles.voiceMeterBarActive,
+                              meterLevel >= threshold && {
+                                height: 8 + index * 4 + meterLevel * 8,
+                              },
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                ) : (
+                  <View style={styles.captureFooterSpacer} />
+                )}
+                {recordedClip ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      void handleSendVoiceSeed();
+                    }}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.sendButton,
+                      createVoiceSeed.isPending && styles.buttonDisabled,
+                    ]}
+                    disabled={createVoiceSeed.isPending}
+                  >
+                    {createVoiceSeed.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.sendButtonText}>Send voice</Text>
+                    )}
+                  </TouchableOpacity>
+                ) : (
+                  <Pressable
+                    style={[
+                      styles.sendButton,
+                      (!captureText.trim() || createSeed.isPending || isRecording) && styles.buttonDisabled,
+                    ]}
+                    focusable={false}
+                    onPressIn={() => {
+                      retainCaptureFocusRef.current = true;
+                      captureInputRef.current?.focus();
+                    }}
+                    onPress={handleCapture}
+                    disabled={!captureText.trim() || createSeed.isPending || isRecording}
+                  >
+                    {createSeed.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.sendButtonText}>Send</Text>
+                    )}
+                  </Pressable>
+                )}
               </View>
+              {micError ? (
+                <View style={styles.voiceErrorRow}>
+                  <Text style={styles.voiceError}>{micError}</Text>
+                  {canOpenSettings ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        void Linking.openSettings();
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.voiceSettingsLink}>Open settings</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              ) : null}
+              <Text style={styles.draftStatus}>
+                {draftStatus === 'saving'
+                  ? 'Saving draft...'
+                  : draftStatus === 'saved'
+                    ? 'Draft saved'
+                    : ' '}
+              </Text>
             </>
           )}
 
@@ -432,16 +642,18 @@ const styles = StyleSheet.create({
   },
   captureDock: {
     paddingTop: 10,
-    paddingBottom: 4,
+    paddingBottom: 38,
   },
   captureCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 18,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
     borderWidth: 1,
     borderColor: '#D7E0EA',
-    gap: 12,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 4,
   },
   kicker: {
     color: '#315E87',
@@ -481,22 +693,81 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
+    marginTop: 6,
   },
-  helper: {
+  captureFooterSpacer: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+  },
+  voiceInlineStatus: {
+    flex: 1,
+    minHeight: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  draftStatus: {
+    minHeight: 12,
+    fontSize: 12,
     color: '#6A7785',
+    marginTop: -2,
+  },
+  voiceStatus: {
+    fontSize: 12,
+    color: '#34516B',
+    fontWeight: '600',
+  },
+  voiceMeter: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 3,
+    minHeight: 22,
+    paddingTop: 4,
+  },
+  voiceMeterBar: {
+    width: 5,
+    height: 8,
+    borderRadius: 3,
+    backgroundColor: '#B7C7D6',
+    maxHeight: 22,
+  },
+  voiceMeterBarActive: {
+    backgroundColor: '#0E5AA7',
+  },
+  voiceSecondaryButton: {
+    minWidth: 116,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#F1F6FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  voiceSecondaryButtonText: {
+    color: '#244867',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  voiceError: {
+    fontSize: 12,
+    color: '#8F3341',
+  },
+  voiceErrorRow: {
+    gap: 4,
+  },
+  voiceSettingsLink: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0E5AA7',
   },
   sendButton: {
-    minWidth: 88,
-    height: 46,
+    minWidth: 108,
+    height: 42,
     borderRadius: 14,
     backgroundColor: '#0E5AA7',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
   },
   sendButtonText: {
     color: '#FFFFFF',
@@ -539,7 +810,6 @@ const styles = StyleSheet.create({
     color: '#0E5AA7',
   },
   recentHeader: {
-    gap: 4,
     marginBottom: 10,
   },
   recentTitle: {
@@ -547,15 +817,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#13293D',
   },
-  recentHint: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#6A7785',
-  },
   seedList: {
-    paddingBottom: 24,
-    gap: 12,
+    paddingBottom: 20,
     flexGrow: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#D7E0EA',
+    overflow: 'hidden',
+  },
+  seedDivider: {
+    height: 1,
+    backgroundColor: '#E6EDF3',
+    marginHorizontal: 16,
   },
   centerState: {
     paddingVertical: 36,
@@ -582,12 +856,8 @@ const styles = StyleSheet.create({
     color: '#627181',
     textAlign: 'center',
   },
-  seedCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+  seedRow: {
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#D7E0EA',
     gap: 10,
   },
   seedHeader: {

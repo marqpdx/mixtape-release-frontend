@@ -17,11 +17,15 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mixtape.mobile",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Mixtape uses your microphone so you can capture voice Seeds."
       }
     },
     "android": {
       "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/crossroads2-adaptive.png",
         "backgroundColor": "#ffffff"

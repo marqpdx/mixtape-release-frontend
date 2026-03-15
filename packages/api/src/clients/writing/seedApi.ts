@@ -33,6 +33,33 @@ export async function createSeed(data: {
   return res.data;
 }
 
+export async function createVoiceSeed(data: {
+  uri: string;
+  fileName?: string;
+  mimeType?: string;
+  source?: string;
+}): Promise<Seed> {
+  const form = new FormData();
+  form.append(
+    'audio_file',
+    {
+      uri: data.uri,
+      name: data.fileName || 'seed-voice.m4a',
+      type: data.mimeType || 'audio/m4a',
+    } as any
+  );
+  form.append('kind', 'voice');
+  form.append('source', data.source || 'mobile');
+
+  const res = await axiosInstance.post('/api/writing/seeds', form, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return res.data;
+}
+
 export async function updateSeed(
   id: string,
   data: { body_text?: string }

@@ -26,6 +26,16 @@ export function useCreateSeed() {
   });
 }
 
+export function useCreateVoiceSeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: seedApi.createVoiceSeed,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: seedKeys.recent() });
+    },
+  });
+}
+
 export function useUpdateSeed() {
   const qc = useQueryClient();
   return useMutation({
