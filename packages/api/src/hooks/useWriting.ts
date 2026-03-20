@@ -7,7 +7,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FlattenedPlacement, WritingWorkingCopy, WritingPiece } from '@mixtape/core/types/writingTypes';
-import * as writingApi from '@mixtape/api/clients/writing/api';
+import * as writingApi from '@mixtape/api/clients/writing/writingApi';
 // import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
 
 interface SponsorConfig {

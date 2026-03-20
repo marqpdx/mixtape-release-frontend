@@ -1,7 +1,7 @@
 // src/components/workbench/ReviewQueueDrawer.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Drawer,
   VStack,
@@ -12,12 +12,14 @@ import {
   Button,
   Skeleton,
   Code,
+  Link,
 } from '@chakra-ui/react';
-import { useMillDraft } from '@mixtape/api/hooks/workbench';
+import { useMillDraft, useMillDraftAction } from '@mixtape/api/hooks/workbench';
 import type { MillDraftListItem, MillDraftDetail } from '@mixtape/api/clients/workbench';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { Divider } from '@components/common/Divider';
 import { formatDateTime } from '@/lib/utils/dateFormatters';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface ValidationMessage {
   field?: string;
@@ -39,6 +41,9 @@ export const ReviewQueueDrawer: React.FC<ReviewQueueDrawerProps> = ({
   onDiscard,
 }) => {
   const { draft, isLoading, error } = useMillDraft({ draftId });
+  const { user } = useAuth();
+  const promoteAction = useMillDraftAction();
+  const [promotedPieceId, setPromotedPieceId] = useState<string | null>(null);
 
   // Color mode values
   const drawerBg = useColorModeValue('white', 'gray.800');
@@ -262,35 +267,81 @@ export const ReviewQueueDrawer: React.FC<ReviewQueueDrawerProps> = ({
           </Drawer.Body>
 
           <Drawer.Footer>
-            <HStack gap={2} w="full">
-              {draft && onOpen && draft.status === 'candidate' && (
-                <Button
-                  colorScheme="blue"
-                  flex={1}
-                  onClick={() => {
-                    onOpen(draft);
-                    onClose();
-                  }}
+            <VStack gap={2} w="full" align="stretch">
+              {/* Post-promote link */}
+              {promotedPieceId && user?.username && (
+                <Box
+                  bg="green.50"
+                  border="1px solid"
+                  borderColor="green.200"
+                  borderRadius="md"
+                  p={3}
+                  textAlign="center"
                 >
-                  Open for Editing
-                </Button>
+                  <Text fontSize="sm" color="green.700" mb={1}>
+                    Draft promoted successfully.
+                  </Text>
+                  <Link
+                    href={`/member/${user.username}?section=write&piece=${promotedPieceId}`}
+                    color="green.600"
+                    fontWeight="semibold"
+                    fontSize="sm"
+                  >
+                    Open in Draft Room →
+                  </Link>
+                </Box>
               )}
-              {draft && onDiscard && draft.status === 'candidate' && (
-                <Button
-                  variant="ghost"
-                  colorScheme="red"
-                  onClick={() => {
-                    onDiscard(draft);
-                    onClose();
-                  }}
-                >
-                  Discard
+
+              <HStack gap={2} w="full">
+                {draft && onOpen && draft.status === 'candidate' && (
+                  <Button
+                    colorPalette="blue"
+                    flex={1}
+                    onClick={() => {
+                      onOpen(draft);
+                      onClose();
+                    }}
+                  >
+                    Open for Editing
+                  </Button>
+                )}
+                {draft && (draft.status === 'active' || draft.status === 'ready_to_promote') && !promotedPieceId && (
+                  <Button
+                    colorPalette="green"
+                    flex={1}
+                    loading={promoteAction.isPending}
+                    onClick={() => {
+                      promoteAction.mutate(
+                        { draftId: draft.id, payload: { action: 'promote' } },
+                        {
+                          onSuccess: (res) => {
+                            const pieceId = res.draft.canonical_object_id;
+                            if (pieceId) setPromotedPieceId(pieceId);
+                          },
+                        }
+                      );
+                    }}
+                  >
+                    Promote
+                  </Button>
+                )}
+                {draft && onDiscard && draft.status === 'candidate' && (
+                  <Button
+                    variant="ghost"
+                    colorPalette="red"
+                    onClick={() => {
+                      onDiscard(draft);
+                      onClose();
+                    }}
+                  >
+                    Discard
+                  </Button>
+                )}
+                <Button variant="outline" onClick={onClose}>
+                  Close
                 </Button>
-              )}
-              <Button variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            </HStack>
+              </HStack>
+            </VStack>
           </Drawer.Footer>
         </Drawer.Content>
       </Drawer.Positioner>

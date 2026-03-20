@@ -32,11 +32,12 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconBell } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconBell, IconMessageCircle } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useNotificationMutations, useNotificationSummary, useNotificationsPage } from "@mixtape/api/hooks/activity";
+import { useChatUnread } from "@/contexts/ChatUnreadContext";
 
 // Navigation item types
 type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
@@ -68,7 +69,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", adminOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "workbench", label: "_wrkb", href: "/member/{username}/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
+  { key: "help", label: "Help", href: "/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
+  { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
   // { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
@@ -127,6 +129,9 @@ export default function UnifiedNavbar({
   const unreadCount = summary?.notifications_unread_count ?? 0;
   const notificationsPreview = notificationsPage?.results?.slice(0, 6) ?? [];
 
+  const { unreads: messageUnreads } = useChatUnread();
+  const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
+
   // Auto-detect section if not provided
   const detectedSection: NavSection =
     section ||
@@ -141,6 +146,7 @@ export default function UnifiedNavbar({
                   pathname.startsWith("/bazaar") ||
                   pathname.startsWith("/member") ||
                   pathname.startsWith("/map") ||
+                  pathname.startsWith("/workbench") ||
                   pathname.startsWith("/admin")) ? "authenticated" :
      "public");
 
@@ -313,6 +319,32 @@ export default function UnifiedNavbar({
 
           {/* Right: Theme Selector + Auth Actions */}
           <HStack className="zippy" gap={extraCompact ? 1 : 3}>
+            {identity && (
+              <Button
+                variant="ghost"
+                size="sm"
+                position="relative"
+                aria-label="Messages"
+                asChild
+              >
+                <NextLink href={`/member/${identity.username}?section=messages`}>
+                  <IconMessageCircle size={18} />
+                  {messageUnreadCount > 0 && (
+                    <Badge
+                      position="absolute"
+                      top="-4px"
+                      right="-4px"
+                      colorPalette="blue"
+                      borderRadius="full"
+                      px={1.5}
+                      fontSize="10px"
+                    >
+                      {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+                    </Badge>
+                  )}
+                </NextLink>
+              </Button>
+            )}
             {identity && (
               <Button
                 variant="ghost"

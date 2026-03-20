@@ -98,6 +98,8 @@ export interface MillDraftUpdatePayload {
 
 export interface MillDraftActionPayload {
   action: 'discard' | 'approve' | 'open' | 'promote' | 'archive' | 'reactivate';
+  /** For 'promote' action only: if true, attempt immediate publish (subject to PSC rules). */
+  publish?: boolean;
 }
 
 export interface MillDraftActionResponse {

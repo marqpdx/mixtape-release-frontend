@@ -43,6 +43,53 @@ yarn start
 
 Then scan the QR code with your custom dev client app.
 
+### Android Local Build Paths
+
+There are three Android commands that serve different purposes:
+
+1. Regenerate native Android after config/native-module changes:
+```bash
+cd apps/mobile
+npx expo prebuild --clean --platform android
+```
+
+Use this when native config changes have accumulated or when you add/remove native modules. It recreates `android/`, so any generated native state is reset.
+
+2. Install a local dev build directly to a connected device:
+```bash
+cd apps/mobile
+npx expo run:android --device
+```
+
+Use this for normal interactive development on a USB-connected Android device. This is a development build, so it is best for iterating with Metro and native debugging.
+
+3. Build and install a portable local APK for QA:
+```bash
+cd apps/mobile
+bash android_release_install.sh
+```
+
+Optional flags:
+```bash
+# Recreate android/ first
+bash android_release_install.sh --clean
+
+# Build/install a debug APK instead of release
+bash android_release_install.sh --debug
+
+# Target a specific physical device
+bash android_release_install.sh --device <DEVICE_ID>
+```
+
+This script:
+- restores `ANDROID_HOME` / `ANDROID_SDK_ROOT`
+- recreates `android/local.properties`
+- optionally runs Android prebuild clean
+- builds a local APK
+- installs it with `adb`
+
+Use this when you want a more portable on-device APK for QA instead of a Metro-dependent dev build.
+
 ### API Base URLs (Local vs Staging/Prod)
 
 Set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_LIVEWIRE_URL` based on where you run:

@@ -26,7 +26,7 @@ export {
   fetchMyProfile,
   updateMemberProfile,
 } from './member/memberApi'
-export * from './writing/api'
+export * from './writing/writingApi'
 export * from './spellbook/spellbookApi'
 export * from './public/publicApi'
 export * from './worksessions/workSessionApi'

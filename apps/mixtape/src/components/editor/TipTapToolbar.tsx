@@ -1,7 +1,8 @@
 // apps/mixtape/src/components/editor/TipTapToolbar.tsx
 
 import { Editor } from "@tiptap/react";
-import { Box, HStack, IconButton, Text } from "@chakra-ui/react";
+import NextLink from "next/link";
+import { Box, HStack, IconButton, Link, Text } from "@chakra-ui/react";
 import {
   IconBold,
   IconItalic,
@@ -271,6 +272,9 @@ Merging - Delete a boundary marker to merge that segment's content back into the
 Supported types: writingpiece, seed, event, course.
 Sessions are created automatically on your first /new command. Autosave keeps the surface document synced. When you navigate away, the session closes with a final checkpoint.`}
           </Text>
+          <Link asChild mt={2} fontSize="xs" color="fg" textDecoration="underline" textUnderlineOffset="3px">
+            <NextLink href="/help/tech/writing">Open technical writing reference</NextLink>
+          </Link>
         </Box>
       ) : null}
     </HStack>

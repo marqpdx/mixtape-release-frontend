@@ -27,6 +27,12 @@ interface NotificationSubscription {
   remove(): void;
 }
 
+interface LocalMessageNotificationInput {
+  conversationId: string;
+  title: string;
+  body: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -126,6 +132,32 @@ class NotificationService {
       if (target) {
         listener(target);
       }
+    });
+  }
+
+  async presentLocalMessageNotification({
+    conversationId,
+    title,
+    body,
+  }: LocalMessageNotificationInput): Promise<void> {
+    this.configure();
+
+    const permissions = await Notifications.getPermissionsAsync();
+    if (permissions.status !== 'granted') {
+      return;
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        data: {
+          conversationId,
+          title,
+        },
+      },
+      trigger: null,
     });
   }
 }

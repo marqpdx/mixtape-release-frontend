@@ -25,7 +25,8 @@ import * as authApi from "@mixtape/api/clients/auth/api";
 
 import { LoginFormProps } from "./interfaces";
 
-const PUBLIC_MEMBER_URL = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place"}/members`;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+const PUBLIC_MEMBER_URL = `${SITE_URL}/members`;
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -67,6 +68,13 @@ const LoginPage: React.FC = () => {
         title: "Login successful",
         description: "Welcome back!",
       });
+
+      // Post-invite flow: redirect to the member group page.
+      const postInviteGroup = searchParams.get("post_invite_group");
+      if (postInviteGroup) {
+        router.push(`/groups/${encodeURIComponent(postInviteGroup)}`);
+        return;
+      }
 
       const requestedRedirect = searchParams.get("redirect");
       if (requestedRedirect) {

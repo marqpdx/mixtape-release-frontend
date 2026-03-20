@@ -1,3 +1,5 @@
+// packages/api/src/clients/feedback/feedbackApi.ts
+
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type FeedbackKind = "bug" | "request" | "idea" | "issue";
@@ -21,6 +23,15 @@ export interface FeedbackChecklistResponse {
   page: number;
   page_size: number;
   results: FeedbackChecklistItem[];
+}
+
+export async function createFeedbackItem(payload: {
+  beacon_key: string;
+  kind: FeedbackKind;
+  message: string;
+  page_url?: string;
+}): Promise<void> {
+  await axiosInstance.post("/api/feedback/items", payload);
 }
 
 export async function listFeedbackChecklist(params?: {

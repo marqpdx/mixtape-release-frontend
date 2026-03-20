@@ -65,6 +65,7 @@ export interface UserIdentity {
   is_active: boolean;
   is_staff: boolean;
   is_superuser: boolean;
+  can_use_lighthouse?: boolean;
   date_joined: string;
   roles: Role[];
   profile: UserProfile | null;

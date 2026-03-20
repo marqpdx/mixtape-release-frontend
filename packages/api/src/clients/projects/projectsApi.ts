@@ -131,7 +131,7 @@ class ProjectsApi {
     }
   }
 
-  async moveTask(taskId: string, payload: TaskMovePayload): Promise<{ task: Task }> {
+  async moveTask(taskId: string, payload: TaskMovePayload): Promise<{ task: Task; columns: Record<string, { id: string; position: number }[]> }> {
     try {
       const response = await axiosInstance.post(`/api/projects/tasks/${taskId}/move`, payload);
       return response.data;

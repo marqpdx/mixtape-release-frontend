@@ -11,10 +11,12 @@ import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
 import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConfig";
 import DashboardLayout from "@components/common/DashboardLayout";
 import { canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
+import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
+import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -117,6 +119,8 @@ export default function GroupPage() {
   // Circle parent context bar (shown for all views)
   const circleBar = <CircleParentBar group={group} />;
 
+  const emblemUrl = getBestEmblemUrl(group.emblem) || undefined;
+
   if (showAdminDashboard) {
     const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
 
@@ -130,6 +134,12 @@ export default function GroupPage() {
 
     return (
       <Box className="sixty-box" pt={0} px={2}>
+        <GroupOnboardingTour
+          groupSlug={slugStr}
+          groupTitle={group.title}
+          groupEmblemUrl={emblemUrl}
+          isMember={isMember}
+        />
         <GroupAdminHeader
           group={group}
           currentGroupSlug={slugStr}
@@ -153,6 +163,12 @@ export default function GroupPage() {
   // Member or Public landing
   return (
     <Box className="sixty-box" pt={0} px={2}>
+      <GroupOnboardingTour
+        groupSlug={slugStr}
+        groupTitle={group.title}
+        groupEmblemUrl={emblemUrl}
+        isMember={isMember}
+      />
       {circleBar}
       <GroupLanding
         group={group}

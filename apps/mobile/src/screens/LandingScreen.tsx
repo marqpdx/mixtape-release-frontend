@@ -12,10 +12,12 @@ import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { MobileBeacon } from '../components/feedback/MobileBeacon';
 import { SeedNotebook } from '../components/home/SeedNotebook';
 import { IdeaStudio } from '../components/home/IdeaStudio';
 import { CommunityWindow } from '../components/home/CommunityWindow';
 import { useAuthStore } from '../stores/authStore';
+import { useChatStore } from '../stores/chatStore';
 
 type LandingScreenProps = NativeStackScreenProps<RootStackParamList, 'Landing'>;
 type HomeTab = 'notebook' | 'studio' | 'community';
@@ -28,10 +30,12 @@ function HomeTabButton({
   label,
   isActive,
   onPress,
+  badgeCount = 0,
 }: {
   label: string;
   isActive: boolean;
   onPress: () => void;
+  badgeCount?: number;
 }) {
   return (
     <TouchableOpacity
@@ -39,7 +43,14 @@ function HomeTabButton({
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+      <View style={styles.tabButtonInner}>
+        <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+        {badgeCount > 0 ? (
+          <View style={styles.tabBadge}>
+            <Text style={styles.tabBadgeText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+          </View>
+        ) : null}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -47,6 +58,7 @@ function HomeTabButton({
 export default function LandingScreen({ navigation }: LandingScreenProps) {
   const headerHeight = useHeaderHeight();
   const currentUser = useAuthStore((state) => state.user);
+  const unreadCounts = useChatStore((state) => state.unreadCounts);
   const [activeTab, setActiveTab] = useState<HomeTab>('notebook');
   const [hasLoadedSavedTab, setHasLoadedSavedTab] = useState(false);
   const [seedToDevelop, setSeedToDevelop] = useState<Seed | null>(null);
@@ -106,6 +118,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
 
   const chromeHidden =
     Platform.OS === 'android' ? keyboardVisible : editorFocused || keyboardVisible;
+  const totalUnreadMessages = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
 
   return (
     <View style={styles.container}>
@@ -159,6 +172,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
           <HomeTabButton
             label="Community"
             isActive={activeTab === 'community'}
+            badgeCount={totalUnreadMessages}
             onPress={() => setActiveTab('community')}
           />
         </View>
@@ -187,11 +201,25 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
 
         {activeTab === 'community' ? (
           <CommunityWindow
-            onOpenMessages={() => navigation.navigate('Messages')}
             onOpenGroups={() => navigation.navigate('Groups')}
+            onOpenNewChat={() => navigation.navigate('NewPersonalChat')}
           />
         ) : null}
       </View>
+
+      {currentUser?.can_use_lighthouse ? (
+        <MobileBeacon
+          canUseLighthouse={Boolean(currentUser?.can_use_lighthouse)}
+          isSuperuser={Boolean(currentUser?.is_superuser)}
+          routeLabel={
+            activeTab === 'notebook'
+              ? 'notebook'
+              : activeTab === 'studio'
+                ? 'studio'
+                : 'community'
+          }
+        />
+      ) : null}
     </View>
   );
 }
@@ -279,6 +307,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
+  tabButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   tabButtonActive: {
     backgroundColor: '#0E5AA7',
   },
@@ -288,6 +322,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   tabTextActive: {
+    color: '#FFFFFF',
+  },
+  tabBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D2235',
+  },
+  tabBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
   content: {

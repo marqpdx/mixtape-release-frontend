@@ -41,13 +41,10 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setIsLoading(true);
       setError(null);
       try {
-        console.log('🔄 Loading events for group:', groupSlug, 'params:', params);
         const data = await almanacApi.fetchGroupEvents(groupSlug, params);
-        console.log('✅ Parsed events:', data);
         setEvents(data);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load events';
-        console.error('❌ Failed to load events:', errorMessage);
         setError(errorMessage);
       } finally {
         setIsLoading(false);
@@ -66,23 +63,19 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setIsLoading(true);
       setError(null);
       try {
-        console.log('🎯 useGroupEvents mounted/changed, loading for:', groupSlug);
         const data = await almanacApi.fetchGroupEvents(groupSlug);
 
         if (!cancelled) {
-          console.log('✅ Parsed events:', data);
           setEvents(data);
         }
       } catch (err: any) {
         // Don't set error if request was aborted
         if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-          console.log('🚫 Request cancelled for:', groupSlug);
           return;
         }
 
         if (!cancelled) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load events';
-          console.error('❌ Failed to load events:', errorMessage);
           setError(errorMessage);
         }
       } finally {
@@ -110,12 +103,10 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         const newEvent = await almanacApi.createGroupEvent(groupSlug, payload);
-        console.log('✅ Event created:', newEvent);
         setEvents(prev => [newEvent, ...prev]);
         return newEvent;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to create event';
-        console.error('❌ Failed to create event:', errorMessage);
         setError(errorMessage);
         throw err;
       }
@@ -132,14 +123,12 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
       setError(null);
       try {
         const updatedEvent = await almanacApi.updateGroupEvent(groupSlug, eventId, payload);
-        console.log('✅ Event updated:', updatedEvent);
         setEvents(prev =>
           prev.map(event => (event.id === eventId ? updatedEvent : event))
         );
         return updatedEvent;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to update event';
-        console.error('❌ Failed to update event:', errorMessage);
         setError(errorMessage);
         throw err;
       }
@@ -155,13 +144,10 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (eventId: string): Promise<void> => {
       setError(null);
       try {
-        console.log('🗑️ Deleting event:', eventId);
         await almanacApi.deleteGroupEvent(groupSlug, eventId);
         setEvents(prev => prev.filter(e => e.id !== eventId));
-        console.log('✅ Event deleted');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to delete event';
-        console.error('❌ Failed to delete event:', errorMessage);
         setError(errorMessage);
         throw err;
       }
@@ -180,7 +166,6 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
         return await almanacApi.fetchGroupEvent(groupSlug, eventId);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch event';
-        console.error('❌ Failed to fetch event:', errorMessage);
         setError(errorMessage);
         throw err;
       }
@@ -196,18 +181,13 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (eventId: string): Promise<EventResponse> => {
       setError(null);
       try {
-        console.log('🚀 Publishing event:', eventId);
         const updatedEvent = await almanacApi.publishGroupEvent(groupSlug, eventId);
-        console.log('✅ Event published, response:', updatedEvent);
-        console.log('   Status:', updatedEvent.status);
-        console.log('   Published at:', updatedEvent.published_at);
         setEvents(prev =>
           prev.map(event => (event.id === eventId ? updatedEvent : event))
         );
         return updatedEvent;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to publish event';
-        console.error('❌ Failed to publish event:', errorMessage);
         setError(errorMessage);
         throw err;
       }
@@ -223,17 +203,13 @@ export function useGroupEvents(groupSlug: string): UseGroupEventsReturn {
     async (eventId: string): Promise<EventResponse> => {
       setError(null);
       try {
-        console.log('🔄 Unpublishing event:', eventId);
         const updatedEvent = await almanacApi.unpublishGroupEvent(groupSlug, eventId);
-        console.log('✅ Event unpublished, response:', updatedEvent);
-        console.log('   Status:', updatedEvent.status);
         setEvents(prev =>
           prev.map(event => (event.id === eventId ? updatedEvent : event))
         );
         return updatedEvent;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to unpublish event';
-        console.error('❌ Failed to unpublish event:', errorMessage);
         setError(errorMessage);
         throw err;
       }

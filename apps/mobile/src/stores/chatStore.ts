@@ -16,6 +16,9 @@ interface ChatStore {
   // Last message previews by conversation slug
   conversationPreviews: Record<string, ConversationPreview>;
 
+  // Active conversation suppresses false unread counts and notifications
+  activeConversationId: string | null;
+
   // Actions
   setUnreadCount: (slug: string, count: number) => void;
   incrementUnread: (slug: string) => void;
@@ -23,12 +26,14 @@ interface ChatStore {
   setUnreadCounts: (counts: Record<string, number>) => void;
 
   updatePreview: (slug: string, text: string, timestamp: string, senderUsername: string) => void;
+  setActiveConversation: (conversationId: string | null) => void;
   clearAllUnreads: () => void;
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
   unreadCounts: {},
   conversationPreviews: {},
+  activeConversationId: null,
 
   // Set specific unread count
   setUnreadCount: (slug, count) =>
@@ -64,7 +69,9 @@ export const useChatStore = create<ChatStore>((set) => ({
       },
     })),
 
+  setActiveConversation: (activeConversationId) => set({ activeConversationId }),
+
   // Clear all unreads (useful for logout)
   clearAllUnreads: () =>
-    set({ unreadCounts: {}, conversationPreviews: {} }),
+    set({ unreadCounts: {}, conversationPreviews: {}, activeConversationId: null }),
 }));

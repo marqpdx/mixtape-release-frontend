@@ -13,6 +13,7 @@ import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminSeedButtonWithModal from "@components/writing/AdminSeedButtonWithModal";
 import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
+import { ContextualHelpLink } from "@/components/help/ContextualHelpLink";
 // import PageContainer from "@components/layout/PageContainer";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
@@ -193,6 +194,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
         <UnifiedNavbar compact={isAdminPath} />
+        <ContextualHelpLink />
         {(canExitAssume || canStartAssume) ? (
           <Box px={4} py={2} bg={canExitAssume ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
             <HStack justify="space-between" wrap="wrap" gap={2}>

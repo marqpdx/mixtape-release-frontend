@@ -10,33 +10,31 @@ interface RecordedClip {
 
 interface UseNativeVoiceRecorderReturn {
   isRecording: boolean;
+  isPaused: boolean;
   isPreparing: boolean;
   recordingSeconds: number;
   meterLevel: number;
   micError: string | null;
   canOpenSettings: boolean;
-  recordedClip: RecordedClip | null;
   startRecording: () => Promise<void>;
-  stopRecording: () => Promise<void>;
-  clearRecording: () => void;
+  pauseRecording: () => Promise<void>;
+  resumeRecording: () => Promise<void>;
+  finalizeRecording: () => Promise<RecordedClip | null>;
+  clearRecording: () => Promise<void>;
 }
 
 export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [meterLevel, setMeterLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
   const [canOpenSettings, setCanOpenSettings] = useState(false);
-  const [recordedClip, setRecordedClip] = useState<RecordedClip | null>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
       if (recordingRef.current) {
         void recordingRef.current.stopAndUnloadAsync().catch(() => undefined);
         recordingRef.current = null;
@@ -48,7 +46,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
   }, []);
 
   const startRecording = useCallback(async () => {
-    if (isRecording || isPreparing) {
+    if (isRecording || isPaused || isPreparing) {
       return;
     }
 
@@ -87,6 +85,16 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
         },
       };
       recording.setOnRecordingStatusUpdate((status) => {
+        setRecordingSeconds(Math.max(0, Math.round((status.durationMillis || 0) / 1000)));
+
+        if (status.isRecording) {
+          setIsRecording(true);
+          setIsPaused(false);
+        } else if (status.canRecord) {
+          setIsRecording(false);
+          setIsPaused(true);
+        }
+
         if (!status.isRecording || typeof status.metering !== 'number') {
           setMeterLevel(0);
           return;
@@ -101,17 +109,10 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
       await recording.startAsync();
 
       recordingRef.current = recording;
-      setRecordedClip(null);
       setRecordingSeconds(0);
       setMeterLevel(0);
       setIsRecording(true);
-
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      timerRef.current = setInterval(() => {
-        setRecordingSeconds((value) => value + 1);
-      }, 1000);
+      setIsPaused(false);
     } catch (error) {
       const err = error as Error | undefined;
       setMicError(err?.message || 'Unable to start recording.');
@@ -119,62 +120,108 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
     } finally {
       setIsPreparing(false);
     }
-  }, [isPreparing, isRecording]);
+  }, [isPaused, isPreparing, isRecording]);
 
-  const stopRecording = useCallback(async () => {
+  const pauseRecording = useCallback(async () => {
     const recording = recordingRef.current;
     if (!recording || !isRecording) {
       return;
     }
 
     try {
-      await recording.stopAndUnloadAsync();
-      const status = await recording.getStatusAsync();
-      const uri = recording.getURI();
-
-      if (uri) {
-        setRecordedClip({
-          uri,
-          durationSeconds: Math.max(1, Math.round((status.durationMillis || 0) / 1000)),
-          mimeType: 'audio/m4a',
-          fileName: 'seed-voice.m4a',
-        });
-      }
+      await recording.pauseAsync();
+      setIsRecording(false);
+      setIsPaused(true);
+      setMeterLevel(0);
     } catch (error) {
       const err = error as Error | undefined;
-      setMicError(err?.message || 'Unable to stop recording.');
+      setMicError(err?.message || 'Unable to pause recording.');
+    }
+  }, [isRecording]);
+
+  const resumeRecording = useCallback(async () => {
+    const recording = recordingRef.current;
+    if (!recording || !isPaused || isPreparing) {
+      return;
+    }
+
+    try {
+      setMicError(null);
+      await recording.startAsync();
+      setIsRecording(true);
+      setIsPaused(false);
+    } catch (error) {
+      const err = error as Error | undefined;
+      setMicError(err?.message || 'Unable to resume recording.');
+      setIsRecording(false);
+      setIsPaused(true);
+    }
+  }, [isPaused, isPreparing]);
+
+  const finalizeRecording = useCallback(async () => {
+    const recording = recordingRef.current;
+    if (!recording || (!isRecording && !isPaused)) {
+      return null;
+    }
+
+    try {
+      const status = await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+
+      if (!uri) {
+        return null;
+      }
+
+      return {
+        uri,
+        durationSeconds: Math.max(1, Math.round((status.durationMillis || 0) / 1000)),
+        mimeType: 'audio/m4a',
+        fileName: 'seed-voice.m4a',
+      };
+    } catch (error) {
+      const err = error as Error | undefined;
+      setMicError(err?.message || 'Unable to finalize recording.');
+      return null;
     } finally {
       recordingRef.current = null;
       setIsRecording(false);
+      setIsPaused(false);
       setMeterLevel(0);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
       void Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
       }).catch(() => undefined);
     }
-  }, [isRecording]);
+  }, [isPaused, isRecording]);
 
-  const clearRecording = useCallback(() => {
-    setRecordedClip(null);
+  const clearRecording = useCallback(async () => {
+    if (recordingRef.current) {
+      await recordingRef.current.stopAndUnloadAsync().catch(() => undefined);
+      recordingRef.current = null;
+    }
+
     setRecordingSeconds(0);
     setMeterLevel(0);
     setMicError(null);
     setCanOpenSettings(false);
+    setIsRecording(false);
+    setIsPaused(false);
+    void Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+    }).catch(() => undefined);
   }, []);
 
   return {
     isRecording,
+    isPaused,
     isPreparing,
     recordingSeconds,
     meterLevel,
     micError,
     canOpenSettings,
-    recordedClip,
     startRecording,
-    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    finalizeRecording,
     clearRecording,
   };
 }

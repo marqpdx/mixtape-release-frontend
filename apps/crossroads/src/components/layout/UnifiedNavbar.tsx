@@ -87,6 +87,7 @@ const NAV_ITEMS: NavItem[] = [
   // Authenticated section (members + admins)
   { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "help", label: "Help", href: "/app/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
   // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
   { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
@@ -122,6 +123,10 @@ export default function UnifiedNavbar({
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
   const publicSiteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+  const loginHref =
+    process.env.NODE_ENV === "development"
+      ? "http://127.0.0.1:3011/app/login"
+      : "/app/login";
 
   // Auto-detect section if not provided
   const detectedSection: NavSection =
@@ -412,7 +417,7 @@ export default function UnifiedNavbar({
 
             ) : (
               navSection === "public" && (
-                <Link as={NextLink} href="/app/login">
+                <Link as={NextLink} href={loginHref}>
                   <Button
                     size="sm"
                     variant="solid"
@@ -508,7 +513,7 @@ export default function UnifiedNavbar({
                 {!identity && navSection === "public" && (
                   <>
                     <Divider borderColor="theme.border" />
-                    <Link as={NextLink} href="/app/login" onClick={onClose}>
+                    <Link as={NextLink} href={loginHref} onClick={onClose}>
                       <Button variant="solid" w="full">
                         Login
                       </Button>

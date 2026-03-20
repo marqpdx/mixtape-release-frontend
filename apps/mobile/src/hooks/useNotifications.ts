@@ -2,7 +2,6 @@ import { Platform } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { registerPushToken } from '@mixtape/api/clients/mobile/pushApi';
 import { useAuthStore } from '../stores/authStore';
-import { config } from '../config/env';
 import { useNotificationStore } from '../stores/notificationStore';
 import {
   notificationService,
@@ -92,7 +91,7 @@ export function useNotifications(
     void registerPushToken({
       token: pushToken,
       platform: Platform.OS === 'ios' ? 'ios' : 'android',
-      appEnvironment: config.appEnv,
+      environment: __DEV__ ? 'development' : 'production',
     })
       .then((result) => {
         if (result.synced) {

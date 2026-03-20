@@ -1,4 +1,4 @@
-// src/components/invitations/AcceptInviteForm.tsx
+// apps/mixtape/src/components/invitations/AcceptInviteForm.tsx
 
 "use client";
 
@@ -88,11 +88,14 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       });
 
       // Redirect based on user type
+      const groupSlug = res.data.group?.slug;
       if (isNewUser) {
-        router.push("/login");
+        // Pass group slug through login so the user lands on the group page (and tour) after auth.
+        const loginUrl = groupSlug
+          ? `/login?post_invite_group=${encodeURIComponent(groupSlug)}`
+          : "/login";
+        router.push(loginUrl);
       } else {
-        // Redirect to the group page
-        const groupSlug = res.data.group?.slug;
         router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }
     } catch (error) {

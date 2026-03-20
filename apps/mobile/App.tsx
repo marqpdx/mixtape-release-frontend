@@ -7,8 +7,6 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { QueryProvider } from './src/providers/QueryProvider';
 
 export default function App() {
-  console.log('App.tsx rendering...');
-
   try {
     return (
       <QueryProvider>

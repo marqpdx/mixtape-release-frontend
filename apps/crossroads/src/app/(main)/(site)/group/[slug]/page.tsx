@@ -27,6 +27,7 @@ import type {
   AdmissionStatus,
 } from "@mixtape/api/clients/public/publicApi";
 import NextLink from "next/link";
+import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 
 export default function GroupPublicPage() {
   const params = useParams();
@@ -64,6 +65,19 @@ export default function GroupPublicPage() {
     load();
   }, [slug]);
 
+  // Re-fetch admission status once auth finishes loading.
+  // Needed when navigating from a different app (e.g. after invite acceptance):
+  // the in-memory JWT is lost on full-page load and is only restored after
+  // useAuth() runs checkAuth() via the httpOnly refresh cookie. The initial
+  // fetchAdmissionStatus() above races against this and often loses, returning
+  // an anonymous (is_member: false) result. This effect corrects it.
+  useEffect(() => {
+    if (authLoading) return;
+    fetchAdmissionStatus(slug)
+      .then(setAdmissionStatus)
+      .catch(() => {});
+  }, [slug, authLoading]);
+
   if (loading) {
     return (
       <Box px="6" py="20" textAlign="center">
@@ -84,8 +98,17 @@ export default function GroupPublicPage() {
   const emblemBg = group.emblem?.bg || "#5b8a6f";
   const emblemFg = group.emblem?.fg || "#ffffff";
 
+  const emblemUrl =
+    group.emblem?.image_url || group.profile_image_url || undefined;
+
   return (
     <Box>
+      <GroupOnboardingTour
+        groupSlug={slug}
+        groupTitle={group.title}
+        groupEmblemUrl={emblemUrl}
+        isMember={admissionStatus?.is_member ?? false}
+      />
       {/* Background image banner */}
       {group.background_image_url ? (
         <Box w="full" h="220px" overflow="hidden" mb="-40px">
@@ -197,7 +220,7 @@ export default function GroupPublicPage() {
 
         {/* Member preview strip */}
         {group.member_preview && group.member_preview.length > 0 && (
-          <Box mb="6">
+          <Box mb="6" data-tour="group-members">
             <Text
               fontSize="xs"
               fontWeight="600"
@@ -277,7 +300,7 @@ export default function GroupPublicPage() {
 
         {/* Child groups */}
         {group.child_groups && group.child_groups.length > 0 && (
-          <Box mb="6">
+          <Box mb="6" data-tour="group-feed">
             <Text
               fontSize="xs"
               fontWeight="600"

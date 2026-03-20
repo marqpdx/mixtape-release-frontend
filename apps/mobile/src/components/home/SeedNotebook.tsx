@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useCreateSeed,
@@ -73,6 +74,7 @@ export function SeedNotebook({
   const [savedSeed, setSavedSeed] = useState<Seed | null>(null);
   const [captureFocused, setCaptureFocused] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [copiedSeedId, setCopiedSeedId] = useState<string | null>(null);
   const captureInputRef = useRef<TextInput | null>(null);
   const editInputRef = useRef<TextInput | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
@@ -83,13 +85,15 @@ export function SeedNotebook({
   const {
     isPreparing,
     isRecording,
+    isPaused,
     recordingSeconds,
     meterLevel,
     micError,
     canOpenSettings,
-    recordedClip,
     startRecording,
-    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    finalizeRecording,
     clearRecording,
   } = useNativeVoiceRecorder();
 
@@ -97,7 +101,7 @@ export function SeedNotebook({
     () => selectVisibleSeeds(recentSeedsQuery.data ?? []),
     [recentSeedsQuery.data]
   );
-  const showVoiceStatus = isRecording || Boolean(recordedClip);
+  const showVoiceStatus = isRecording || isPaused;
   const draftStorageKey = currentUser?.username
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
@@ -205,7 +209,12 @@ export function SeedNotebook({
   };
 
   const handleSendVoiceSeed = async () => {
-    if (!recordedClip || createVoiceSeed.isPending) {
+    if ((!isRecording && !isPaused) || createVoiceSeed.isPending) {
+      return;
+    }
+
+    const recordedClip = await finalizeRecording();
+    if (!recordedClip) {
       return;
     }
 
@@ -216,7 +225,6 @@ export function SeedNotebook({
       source: 'mobile',
     });
 
-    clearRecording();
     setSavedSeed(seed);
     requestAnimationFrame(() => {
       seedListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -276,6 +284,19 @@ export function SeedNotebook({
         },
       ]
     );
+  };
+
+  const handleCopySeed = async (seed: Seed) => {
+    const content = seed.body_text?.trim();
+    if (!content) {
+      return;
+    }
+
+    Clipboard.setString(content);
+    setCopiedSeedId(seed.id);
+    setTimeout(() => {
+      setCopiedSeedId((current) => (current === seed.id ? null : current));
+    }, 1800);
   };
 
   return (
@@ -346,6 +367,17 @@ export function SeedNotebook({
                     </TouchableOpacity>
                     <View style={styles.seedPrimaryActions}>
                       <TouchableOpacity
+                        onPress={() => {
+                          void handleCopySeed(item);
+                        }}
+                        activeOpacity={0.8}
+                        style={styles.seedIconButton}
+                      >
+                        <Text style={styles.seedIconText}>
+                          {copiedSeedId === item.id ? '✓' : '⧉'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         onPress={() => onDevelopSeed(item)}
                         activeOpacity={0.8}
                       >
@@ -373,6 +405,17 @@ export function SeedNotebook({
                   <View style={styles.seedActions}>
                     <Text style={styles.seedTapHint}>Tap to edit inline</Text>
                     <View style={styles.seedPrimaryActions}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          void handleCopySeed(item);
+                        }}
+                        activeOpacity={0.8}
+                        style={styles.seedIconButton}
+                      >
+                        <Text style={styles.seedIconText}>
+                          {copiedSeedId === item.id ? '✓' : '⧉'}
+                        </Text>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => onDevelopSeed(item)}
                         activeOpacity={0.8}
@@ -495,36 +538,55 @@ export function SeedNotebook({
               />
 
               <View style={styles.captureFooter}>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (recordedClip) {
-                      clearRecording();
-                      return;
-                    }
-                    if (isRecording) {
-                      void stopRecording();
-                      return;
-                    }
-                    void startRecording();
-                  }}
-                  activeOpacity={0.85}
-                  style={[
-                    styles.voiceSecondaryButton,
-                    isPreparing && styles.buttonDisabled,
-                  ]}
-                  disabled={isPreparing}
-                >
-                  <Text style={styles.voiceSecondaryButtonText}>
-                    {recordedClip ? 'Discard voice' : isPreparing ? 'Preparing' : isRecording ? 'Stop' : 'Record'}
-                  </Text>
-                </TouchableOpacity>
+                {isPaused ? (
+                  <View style={styles.voiceControlCluster}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        void clearRecording();
+                      }}
+                      activeOpacity={0.85}
+                      style={styles.voiceTrashButton}
+                    >
+                      <Text style={styles.voiceTrashIcon}>🗑</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        void resumeRecording();
+                      }}
+                      activeOpacity={0.85}
+                      style={[
+                        styles.voiceSecondaryButton,
+                        isPreparing && styles.buttonDisabled,
+                      ]}
+                      disabled={isPreparing}
+                    >
+                      <Text style={styles.voiceSecondaryButtonText}>Resume</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (isRecording) {
+                        void pauseRecording();
+                        return;
+                      }
+                      void startRecording();
+                    }}
+                    activeOpacity={0.85}
+                    style={[
+                      styles.voiceSecondaryButton,
+                      isPreparing && styles.buttonDisabled,
+                    ]}
+                    disabled={isPreparing}
+                  >
+                    <Text style={styles.voiceSecondaryButtonText}>
+                      {isPreparing ? 'Preparing' : isRecording ? 'Pause' : 'Record'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 {showVoiceStatus ? (
                   <View style={styles.voiceInlineStatus}>
-                    <Text style={styles.voiceStatus}>
-                      {recordedClip
-                        ? formatDuration(recordedClip.durationSeconds)
-                        : formatDuration(recordingSeconds)}
-                    </Text>
+                    <Text style={styles.voiceStatus}>{formatDuration(recordingSeconds)}</Text>
                     {isRecording ? (
                       <View style={styles.voiceMeter}>
                         {[0.2, 0.4, 0.6, 0.8].map((threshold, index) => (
@@ -534,7 +596,7 @@ export function SeedNotebook({
                               styles.voiceMeterBar,
                               meterLevel >= threshold && styles.voiceMeterBarActive,
                               meterLevel >= threshold && {
-                                height: 8 + index * 4 + meterLevel * 8,
+                                height: 8 + index * 2 + meterLevel * 4,
                               },
                             ]}
                           />
@@ -545,7 +607,7 @@ export function SeedNotebook({
                 ) : (
                   <View style={styles.captureFooterSpacer} />
                 )}
-                {recordedClip ? (
+                {isRecording || isPaused ? (
                   <TouchableOpacity
                     onPress={() => {
                       void handleSendVoiceSeed();
@@ -560,7 +622,7 @@ export function SeedNotebook({
                     {createVoiceSeed.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.sendButtonText}>Send voice</Text>
+                      <Text style={styles.sendButtonText}>➤ Voice</Text>
                     )}
                   </TouchableOpacity>
                 ) : (
@@ -580,7 +642,7 @@ export function SeedNotebook({
                     {createSeed.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.sendButtonText}>Send</Text>
+                      <Text style={styles.sendButtonText}>➤</Text>
                     )}
                   </Pressable>
                 )}
@@ -695,6 +757,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     marginTop: 6,
+    minHeight: 42,
+  },
+  voiceControlCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   captureFooterSpacer: {
     flex: 1,
@@ -721,15 +789,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 3,
-    minHeight: 22,
-    paddingTop: 4,
+    height: 18,
+    paddingTop: 0,
   },
   voiceMeterBar: {
     width: 5,
     height: 8,
     borderRadius: 3,
     backgroundColor: '#B7C7D6',
-    maxHeight: 22,
+    maxHeight: 18,
   },
   voiceMeterBarActive: {
     backgroundColor: '#0E5AA7',
@@ -742,6 +810,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
+  },
+  voiceTrashButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#F1F6FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceTrashIcon: {
+    fontSize: 16,
   },
   voiceSecondaryButtonText: {
     color: '#244867',
@@ -771,7 +850,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   iconSendButton: {

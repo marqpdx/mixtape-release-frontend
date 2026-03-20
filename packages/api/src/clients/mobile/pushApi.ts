@@ -3,7 +3,7 @@ import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 export interface RegisterPushTokenInput {
   token: string;
   platform: 'android' | 'ios';
-  appEnvironment: string;
+  environment: string;
 }
 
 export interface RegisterPushTokenResult {
@@ -46,7 +46,7 @@ export async function registerPushToken(
     provider: 'expo',
     token: input.token,
     platform: input.platform,
-    app_environment: input.appEnvironment,
+    environment: input.environment,
   });
 
   return {

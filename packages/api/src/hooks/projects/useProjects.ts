@@ -193,15 +193,31 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
       }
       setError(null);
       try {
-        await projectsApi.moveTask(taskId, payload);
-        await loadBoard(projectId);
+        const result = await projectsApi.moveTask(taskId, payload);
+        setBoard(prev => {
+          if (!prev) return prev;
+          const updatedTasks = { ...prev.tasks_by_column };
+          const movedTask = result.task;
+          for (const [colId, positions] of Object.entries(result.columns)) {
+            const posMap = new Map(positions.map(p => [p.id, p.position]));
+            let colTasks = updatedTasks[colId] ?? [];
+            if (posMap.has(movedTask.id) && !colTasks.some(t => t.id === movedTask.id)) {
+              colTasks = [...colTasks, movedTask];
+            }
+            updatedTasks[colId] = colTasks
+              .map(t => (t.id === movedTask.id ? movedTask : t))
+              .filter(t => posMap.has(t.id))
+              .sort((a, b) => (posMap.get(a.id) ?? 0) - (posMap.get(b.id) ?? 0));
+          }
+          return { ...prev, tasks_by_column: updatedTasks };
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to move task';
         setError(message);
         throw err;
       }
     },
-    [projectId, loadBoard]
+    [projectId]
   );
 
   const updateTask = useCallback(

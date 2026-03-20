@@ -26,7 +26,7 @@ import {
   IconCopy,
   IconExternalLink,
 } from "@tabler/icons-react";
-import { previewDocxImport, confirmDocxImport } from "@mixtape/api/clients/writing/api";
+import { previewDocxImport, confirmDocxImport } from "@mixtape/api/clients/writing/writingApi";
 import type { DocxPreviewResult, DocxImportResult, WritingKind } from "@mixtape/core/types/writingTypes";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 

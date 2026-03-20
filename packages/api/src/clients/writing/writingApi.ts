@@ -1,4 +1,4 @@
-// src/lib/writing/api.ts
+// packages/api/src/lib/writing/writingApi.ts
 /**
  * Writing API functions
  * Pure API calls for writing operations (working copies, publishing, placement)

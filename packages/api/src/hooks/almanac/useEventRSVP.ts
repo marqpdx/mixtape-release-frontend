@@ -44,8 +44,6 @@ export function useEventRSVP(): UseEventRSVPReturn {
       eventId: string;
       payload: RSVPPayload;
     }) => {
-      console.log('📝 Submitting RSVP:', { groupSlug, eventId, payload });
-
       return await almanacApi.rsvpToGroupEvent(groupSlug, eventId, payload);
     },
 
@@ -56,10 +54,6 @@ export function useEventRSVP(): UseEventRSVPReturn {
 
       // Snapshot the previous value
       const previousCalendar = queryClient.getQueryData(['calendar', groupSlug]);
-
-      // Optimistically update the attendee count (simplified)
-      // In a real implementation, you'd update the specific occurrence's attendee count
-      console.log('⚡ Optimistic update applied for:', payload.status);
 
       // Return context with previous data for rollback
       return { previousCalendar };
@@ -87,7 +81,6 @@ export function useEventRSVP(): UseEventRSVPReturn {
       }
 
       const errorMessage = err instanceof Error ? err.message : 'Failed to submit RSVP';
-      console.error('❌ RSVP failed:', errorMessage);
 
       toaster.create({
         title: 'RSVP Failed',

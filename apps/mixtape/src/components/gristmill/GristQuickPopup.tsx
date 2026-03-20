@@ -1,5 +1,5 @@
 // apps/mixtape/src/components/gristmill/GristQuickPopup.tsx
-//
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,9 +17,11 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { LuSparkles, LuSend, LuSave, LuTriangleAlert, LuMic } from "react-icons/lu";
+import { IconLifebuoy } from "@tabler/icons-react";
 import { parseGrist, promoteDraft, saveDraft } from "@mixtape/api/clients/gristmill/gristmillApi";
 import { toaster } from "@components/ui/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
 const CONTEXT_STORAGE_KEY = "grist_quick_popup_issue_context_v1";
@@ -48,6 +50,7 @@ function normalizeShortcuts(input: string): string {
 export default function GristQuickPopup() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const isSuperuser = !!user?.is_superuser;
+  const canUseLighthouse = !!user?.can_use_lighthouse;
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -61,6 +64,15 @@ export default function GristQuickPopup() {
   const [routePath, setRoutePath] = useState("");
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const lighthouseTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Lighthouse (simple mode) state
+  const [lighthouseText, setLighthouseText] = useState("");
+  const [lighthouseSubmitting, setLighthouseSubmitting] = useState(false);
+  const [lighthouseError, setLighthouseError] = useState<string | null>(null);
+
+  // Superuser tab: "power" | "lighthouse"
+  const [activeTab, setActiveTab] = useState<"power" | "lighthouse">("power");
 
   const currentPath = typeof window === "undefined"
     ? ""
@@ -298,6 +310,35 @@ export default function GristQuickPopup() {
   }, [addRecentTopic, applyIssueContext, clearLocal, draftId, issueContext, parseForWarning, text]);
 
   useEffect(() => {
+    if (!open) return;
+    const isLighthouseActive = !isSuperuser || activeTab === "lighthouse";
+    if (!isLighthouseActive) return;
+    const timer = window.setTimeout(() => lighthouseTextareaRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
+  }, [open, isSuperuser, activeTab]);
+
+  const handleLighthouseSubmit = useCallback(async () => {
+    if (!lighthouseText.trim()) return;
+    setLighthouseSubmitting(true);
+    setLighthouseError(null);
+    try {
+      await axiosInstance.post("/api/feedback/items", {
+        beacon_key: "lighthouse",
+        kind: "idea",
+        message: lighthouseText.trim(),
+        page_url: typeof window !== "undefined" ? window.location.href : "",
+      });
+      setLighthouseText("");
+      setOpen(false);
+      toaster.create({ title: "Got it. Thank you.", type: "success" });
+    } catch {
+      setLighthouseError("Something went wrong — please try again.");
+    } finally {
+      setLighthouseSubmitting(false);
+    }
+  }, [lighthouseText]);
+
+  useEffect(() => {
     if (!isSuperuser) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -323,7 +364,7 @@ export default function GristQuickPopup() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handlePromote, isSuperuser, open, promoting, savingDraft]);
 
-  if (isLoading || !isAuthenticated || !isSuperuser) {
+  if (isLoading || !isAuthenticated || !canUseLighthouse) {
     return null;
   }
 
@@ -331,25 +372,25 @@ export default function GristQuickPopup() {
     <>
       <Box position="fixed" right="18px" bottom="18px" zIndex={1500}>
         <IconButton
-          aria-label="Open Grist quick popup"
+          aria-label={isSuperuser ? "Open Grist quick popup" : "Share feedback"}
           onClick={() => setOpen((prev) => !prev)}
           borderRadius="full"
           size="md"
           boxShadow="lg"
-          colorPalette="teal"
+          colorPalette={isSuperuser ? "teal" : "green"}
         >
-          <LuSparkles />
+          {isSuperuser ? <LuSparkles /> : <IconLifebuoy size={20} />}
         </IconButton>
       </Box>
 
       {open ? (
         <Box
           role="dialog"
-          aria-label="Grist quick capture"
+          aria-label={isSuperuser ? "Grist quick capture" : "Share feedback"}
           position="fixed"
           right={{ base: "10px", md: "18px" }}
           bottom={{ base: "68px", md: "78px" }}
-          w={{ base: "calc(100vw - 20px)", md: "560px" }}
+          w={{ base: "calc(100vw - 20px)", md: isSuperuser ? "560px" : "400px" }}
           maxW="96vw"
           borderWidth="1px"
           borderColor="border"
@@ -359,171 +400,268 @@ export default function GristQuickPopup() {
           zIndex={1500}
           p={4}
         >
-          <VStack align="stretch" gap={3}>
-            <HStack justify="space-between" align="center">
-              <VStack align="start" gap={0}>
-                <Text fontWeight="semibold">Quick Grist Capture</Text>
-                <Text fontSize="xs" color="fg.muted">
-                  Cmd/Ctrl + Enter promotes immediately. Cmd/Ctrl + . toggles this popup.
-                </Text>
-              </VStack>
-              <HStack gap={1}>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  minW="24px"
-                  h="24px"
-                  p={0}
-                  onClick={() => setShowHelp((prev) => !prev)}
-                  aria-label="Toggle Grist help"
-                >
-                  ?
-                </Button>
+          {isSuperuser ? (
+            <VStack align="stretch" gap={3}>
+              <HStack justify="space-between" align="center">
+                <HStack gap={0} borderWidth="1px" borderColor="border" borderRadius="md" overflow="hidden">
+                  <Button
+                    size="xs"
+                    variant={activeTab === "power" ? "solid" : "ghost"}
+                    colorPalette={activeTab === "power" ? "teal" : undefined}
+                    borderRadius="0"
+                    onClick={() => setActiveTab("power")}
+                  >
+                    <LuSparkles />
+                    Grist
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant={activeTab === "lighthouse" ? "solid" : "ghost"}
+                    colorPalette={activeTab === "lighthouse" ? "green" : undefined}
+                    borderRadius="0"
+                    onClick={() => setActiveTab("lighthouse")}
+                  >
+                    <IconLifebuoy size={14} />
+                    Lighthouse
+                  </Button>
+                </HStack>
+                <HStack gap={1}>
+                  {activeTab === "power" && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      minW="24px"
+                      h="24px"
+                      p={0}
+                      onClick={() => setShowHelp((prev) => !prev)}
+                      aria-label="Toggle Grist help"
+                    >
+                      ?
+                    </Button>
+                  )}
+                  <CloseButton onClick={() => setOpen(false)} />
+                </HStack>
+              </HStack>
+
+              {activeTab === "power" ? (
+                <>
+                  {showHelp ? (
+                    <Box p={2} borderWidth="1px" borderColor="border" borderRadius="md" bg="bg.subtle">
+                      <Text fontSize="xs" whiteSpace="pre-wrap" color="fg.muted">
+                        {GRIST_HELP_TEXT}
+                      </Text>
+                    </Box>
+                  ) : null}
+
+                  <HStack gap={2}>
+                    <Button asChild size="xs" variant="outline">
+                      <Link href="/app/seed">
+                        <LuMic />
+                        Voice
+                      </Link>
+                    </Button>
+                    <Input
+                      size="sm"
+                      value={routePath || currentPath}
+                      readOnly
+                      color="fg.muted"
+                      borderColor="border.muted"
+                      flex="1"
+                    />
+                    <Button asChild size="xs" variant="outline">
+                      <Link href="/app/feedback/checklist">Checklist</Link>
+                    </Button>
+                  </HStack>
+
+                  <VStack align="stretch" gap={2}>
+                    <HStack gap={2} wrap="wrap">
+                      <Button
+                        size="xs"
+                        borderRadius="full"
+                        colorPalette="purple"
+                        variant="subtle"
+                        onClick={() => insertCommand("/issue ")}
+                      >
+                        is
+                      </Button>
+                      <Button
+                        size="xs"
+                        borderRadius="full"
+                        colorPalette="blue"
+                        variant="subtle"
+                        onClick={() => insertCommand("/event ")}
+                      >
+                        ev
+                      </Button>
+                      <Button
+                        size="xs"
+                        borderRadius="full"
+                        colorPalette="green"
+                        variant="subtle"
+                        onClick={() => insertCommand("/commons ")}
+                      >
+                        co
+                      </Button>
+                      {recentTopics.map((topic) => (
+                        <Button
+                          key={topic}
+                          size="xs"
+                          borderRadius="full"
+                          colorPalette="teal"
+                          variant="subtle"
+                          onClick={() => setIssueContext(topic)}
+                          title={`Use topic context: ${topic}`}
+                        >
+                          {topic}
+                        </Button>
+                      ))}
+                    </HStack>
+                    <HStack gap={2} align="center">
+                      <Input
+                        size="xs"
+                        value={issueContext}
+                        onChange={(event) => setIssueContext(event.currentTarget.value)}
+                        placeholder="Context (applies to /issue)"
+                        flex="1"
+                        minW={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                          }
+                        }}
+                      />
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => setIssueContext("")}
+                        disabled={!issueContext.trim()}
+                        flexShrink={0}
+                      >
+                        Clear
+                      </Button>
+                    </HStack>
+                  </VStack>
+
+                  <Textarea
+                    ref={textareaRef}
+                    minH="180px"
+                    maxH="40vh"
+                    resize="vertical"
+                    value={text}
+                    onChange={(event) => setText(normalizeShortcuts(event.target.value))}
+                    placeholder={GRIST_HELP_TEXT}
+                    fontFamily="mono"
+                    fontSize="sm"
+                  />
+
+                  {warning ? (
+                    <HStack gap={2} align="start" color="orange.500">
+                      <LuTriangleAlert />
+                      <Text fontSize="xs">{warning}</Text>
+                    </HStack>
+                  ) : null}
+
+                  <HStack justify="space-between" align="center" wrap="wrap" gap={2}>
+                    <HStack gap={2}>
+                      <Badge variant="subtle" colorPalette="blue">{draftId ? "Draft linked" : "No draft yet"}</Badge>
+                      <Text fontSize="xs" color="fg.muted">
+                        {autosaveStamp ? `Autosaved locally ${new Date(autosaveStamp).toLocaleTimeString()}` : "Autosave pending..."}
+                      </Text>
+                    </HStack>
+
+                    <HStack gap={2}>
+                      <Button size="sm" variant="outline" onClick={handleSaveDraft} disabled={savingDraft || promoting || !text.trim()}>
+                        <LuSave />
+                        Save Draft
+                      </Button>
+                      <Button size="sm" colorPalette="teal" onClick={() => void handlePromote()} disabled={savingDraft || promoting || !text.trim()}>
+                        <LuSend />
+                        Promote
+                      </Button>
+                      {draftId ? (
+                        <Button asChild size="sm" variant="ghost">
+                          <a href="/dashboard?section=mill">Open in Grist Mill</a>
+                        </Button>
+                      ) : null}
+                    </HStack>
+                  </HStack>
+                </>
+              ) : (
+                <>
+                  <Textarea
+                    ref={lighthouseTextareaRef}
+                    minH="120px"
+                    maxH="40vh"
+                    resize="vertical"
+                    value={lighthouseText}
+                    onChange={(event) => setLighthouseText(event.target.value)}
+                    placeholder="What's on your mind?"
+                    fontSize="sm"
+                  />
+
+                  {lighthouseError ? (
+                    <Text fontSize="xs" color="red.500">{lighthouseError}</Text>
+                  ) : null}
+
+                  <HStack justify="flex-end" gap={2}>
+                    <Button
+                      size="sm"
+                      colorPalette="green"
+                      onClick={() => void handleLighthouseSubmit()}
+                      disabled={lighthouseSubmitting || !lighthouseText.trim()}
+                      loading={lighthouseSubmitting}
+                    >
+                      <LuSend />
+                      Send
+                    </Button>
+                  </HStack>
+                </>
+              )}
+            </VStack>
+          ) : (
+            <VStack align="stretch" gap={3}>
+              <HStack justify="space-between" align="center">
+                <VStack align="start" gap={0}>
+                  <Text fontWeight="semibold">Share feedback</Text>
+                  <Text fontSize="xs" color="fg.muted">
+                    Bugs, ideas, reactions — anything that would make Mixtape better.
+                  </Text>
+                </VStack>
                 <CloseButton onClick={() => setOpen(false)} />
               </HStack>
-            </HStack>
 
-            {showHelp ? (
-              <Box p={2} borderWidth="1px" borderColor="border" borderRadius="md" bg="bg.subtle">
-                <Text fontSize="xs" whiteSpace="pre-wrap" color="fg.muted">
-                  {GRIST_HELP_TEXT}
-                </Text>
-              </Box>
-            ) : null}
-
-            <HStack gap={2}>
-              <Button asChild size="xs" variant="outline">
-                <Link href="/app/seed">
-                  <LuMic />
-                  Voice
-                </Link>
-              </Button>
-              <Input
-                size="sm"
-                value={routePath || currentPath}
-                readOnly
-                color="fg.muted"
-                borderColor="border.muted"
-                flex="1"
+              <Textarea
+                ref={lighthouseTextareaRef}
+                minH="120px"
+                maxH="40vh"
+                resize="vertical"
+                value={lighthouseText}
+                onChange={(event) => setLighthouseText(event.target.value)}
+                placeholder="What's on your mind?"
+                fontSize="sm"
               />
-              <Button asChild size="xs" variant="outline">
-                <Link href="/app/feedback/checklist">Checklist</Link>
-              </Button>
-            </HStack>
 
-            <VStack align="stretch" gap={2}>
-              <HStack gap={2} wrap="wrap">
-                <Button
-                  size="xs"
-                  borderRadius="full"
-                  colorPalette="purple"
-                  variant="subtle"
-                  onClick={() => insertCommand("/issue ")}
-                >
-                  is
+              {lighthouseError ? (
+                <Text fontSize="xs" color="red.500">{lighthouseError}</Text>
+              ) : null}
+
+              <HStack justify="flex-end" gap={2}>
+                <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
+                  Cancel
                 </Button>
                 <Button
-                  size="xs"
-                  borderRadius="full"
-                  colorPalette="blue"
-                  variant="subtle"
-                  onClick={() => insertCommand("/event ")}
-                >
-                  ev
-                </Button>
-                <Button
-                  size="xs"
-                  borderRadius="full"
+                  size="sm"
                   colorPalette="green"
-                  variant="subtle"
-                  onClick={() => insertCommand("/commons ")}
+                  onClick={() => void handleLighthouseSubmit()}
+                  disabled={lighthouseSubmitting || !lighthouseText.trim()}
+                  loading={lighthouseSubmitting}
                 >
-                  co
-                </Button>
-                {recentTopics.map((topic) => (
-                  <Button
-                    key={topic}
-                    size="xs"
-                    borderRadius="full"
-                    colorPalette="teal"
-                    variant="subtle"
-                    onClick={() => setIssueContext(topic)}
-                    title={`Use topic context: ${topic}`}
-                  >
-                    {topic}
-                  </Button>
-                ))}
-              </HStack>
-              <HStack gap={2} align="center">
-                <Input
-                  size="xs"
-                  value={issueContext}
-                  onChange={(event) => setIssueContext(event.currentTarget.value)}
-                  placeholder="Context (applies to /issue)"
-                  flex="1"
-                  minW={0}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                    }
-                  }}
-                />
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={() => setIssueContext("")}
-                  disabled={!issueContext.trim()}
-                  flexShrink={0}
-                >
-                  Clear
+                  <LuSend />
+                  Send
                 </Button>
               </HStack>
             </VStack>
-
-            <Textarea
-              ref={textareaRef}
-              minH="180px"
-              maxH="40vh"
-              resize="vertical"
-              value={text}
-              onChange={(event) => setText(normalizeShortcuts(event.target.value))}
-              placeholder={GRIST_HELP_TEXT}
-              fontFamily="mono"
-              fontSize="sm"
-            />
-
-            {warning ? (
-              <HStack gap={2} align="start" color="orange.500">
-                <LuTriangleAlert />
-                <Text fontSize="xs">{warning}</Text>
-              </HStack>
-            ) : null}
-
-            <HStack justify="space-between" align="center" wrap="wrap" gap={2}>
-              <HStack gap={2}>
-                <Badge variant="subtle" colorPalette="blue">{draftId ? "Draft linked" : "No draft yet"}</Badge>
-                <Text fontSize="xs" color="fg.muted">
-                  {autosaveStamp ? `Autosaved locally ${new Date(autosaveStamp).toLocaleTimeString()}` : "Autosave pending..."}
-                </Text>
-              </HStack>
-
-              <HStack gap={2}>
-                <Button size="sm" variant="outline" onClick={handleSaveDraft} disabled={savingDraft || promoting || !text.trim()}>
-                  <LuSave />
-                  Save Draft
-                </Button>
-                <Button size="sm" colorPalette="teal" onClick={() => void handlePromote()} disabled={savingDraft || promoting || !text.trim()}>
-                  <LuSend />
-                  Promote
-                </Button>
-                {draftId ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <a href="/dashboard?section=mill">Open in Grist Mill</a>
-                  </Button>
-                ) : null}
-              </HStack>
-            </HStack>
-          </VStack>
+          )}
         </Box>
       ) : null}
     </>

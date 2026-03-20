@@ -1,4 +1,4 @@
-// components/writing/draft-room-v2/DraftRoomV2.tsx
+// apps/mixtape/components/writing/draft-room-v2/DraftRoomV2.tsx
 //
 // Three-pane writing workspace:
 //   Left (250px, collapsible)  — Draft Queue
