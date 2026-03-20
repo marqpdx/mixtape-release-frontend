@@ -232,7 +232,6 @@ export default function MemberPublicPage() {
           kinds={writingKinds}
           activeKind={kindFilter}
           onKindChange={setKindFilter}
-          mutedColor={mutedColor}
         />
       )}
 
@@ -280,12 +279,10 @@ function WritingFilterChips({
   kinds,
   activeKind,
   onKindChange,
-  mutedColor,
 }: {
   kinds: string[];
   activeKind: string | null;
   onKindChange: (kind: string | null) => void;
-  mutedColor: string;
 }) {
   return (
     <HStack gap="2" flexWrap="wrap" mb="4">

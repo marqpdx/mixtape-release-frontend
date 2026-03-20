@@ -1,5 +1,5 @@
 import NextLink from "next/link";
-import { Box, Heading, HStack, Link, Stack, Text, VStack, } from "@chakra-ui/react";
+import { Box, Heading, HStack, Link, Stack, Text } from "@chakra-ui/react";
 
 export function ParticipationPricingCallout() {
   return (

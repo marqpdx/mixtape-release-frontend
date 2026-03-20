@@ -15,7 +15,6 @@ import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core"
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
   ProjectBoard,
-  ProjectColumn,
   Task,
   TaskMovePayload,
 } from "@mixtape/api/clients/projects/projectsApi";
@@ -84,7 +83,7 @@ export function KanbanBoard({
 
     const sourceCol = findColumnForTask(activeId);
     // Over could be a column ID or a task ID
-    let destCol = visibleColumns.find((c) => c.id === overId)
+    const destCol = visibleColumns.find((c) => c.id === overId)
       ? overId
       : findColumnForTask(overId);
 

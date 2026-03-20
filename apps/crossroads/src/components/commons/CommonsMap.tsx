@@ -9,12 +9,13 @@ import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, ZoomControl } from "react-leaflet";
 import L from "leaflet";
-import NextLink from "next/link";
 import type { PublicCommonsItem } from "@mixtape/api/clients/public/publicApi";
 
 function fixLeafletIcons() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  const iconDefaultProto = L.Icon.Default.prototype as {
+    _getIconUrl?: unknown;
+  };
+  delete iconDefaultProto._getIconUrl;
   L.Icon.Default.mergeOptions({
     iconRetinaUrl:
       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",

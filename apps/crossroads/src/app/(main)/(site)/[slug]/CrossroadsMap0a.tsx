@@ -98,7 +98,7 @@ function IconPanelNode({ data }: { data: IconPanelData }) {
         boxShadow="sm"
       >
         {/* subtle tint wash */}
-        <Box position="absolute" inset="0" bg={tint as any} />
+        <Box position="absolute" inset="0" bg={tint} />
 
         {/* blurred emblem wash (optional) */}
         {isGroup && data.emblemUrl ? (
