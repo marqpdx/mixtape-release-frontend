@@ -52,8 +52,6 @@ function resolveHelpRoot(): string {
   );
 }
 
-const HELP_ROOT = resolveHelpRoot();
-
 function shouldIgnoreFile(filePath: string): boolean {
   return filePath.includes(`${path.sep}_template${path.sep}`) || filePath.includes(`${path.sep}_deprecated${path.sep}`);
 }
@@ -187,7 +185,14 @@ function collectHelpFiles(rootDir: string, variant: HelpDocVariant): string[] {
 }
 
 export async function listHelpDocs(variant: HelpDocVariant = "users"): Promise<HelpDocSummary[]> {
-  const files = collectHelpFiles(HELP_ROOT, variant);
+  let helpRoot: string;
+  try {
+    helpRoot = resolveHelpRoot();
+  } catch {
+    return [];
+  }
+
+  const files = collectHelpFiles(helpRoot, variant);
   const docs = await Promise.all(files.map((filePath) => loadHelpDocFromFile(filePath, variant)));
 
   return docs
@@ -204,7 +209,14 @@ export async function getHelpDocBySlug(
   slug: string,
   variant: HelpDocVariant = "users"
 ): Promise<HelpDoc | null> {
-  const filePath = path.join(HELP_ROOT, slug, `${slug}${DOC_SUFFIX_BY_VARIANT[variant]}`);
+  let helpRoot: string;
+  try {
+    helpRoot = resolveHelpRoot();
+  } catch {
+    return null;
+  }
+
+  const filePath = path.join(helpRoot, slug, `${slug}${DOC_SUFFIX_BY_VARIANT[variant]}`);
   if (!fs.existsSync(filePath) || shouldIgnoreFile(filePath)) {
     return null;
   }
