@@ -102,6 +102,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create a new Lanternmail campaign',
   },
 
+  // Broadcasts - stewards can compose and send group broadcasts
+  'broadcasts': {
+    requiredRole: 'steward',
+    description: 'Compose and send group broadcasts to members',
+  },
+
   // EarthLab - admin only
   'earthlab-landing': {
     requiredRole: 'admin',

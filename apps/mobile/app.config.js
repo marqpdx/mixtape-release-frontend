@@ -20,7 +20,7 @@ export default {
     android: {
       package: "com.mixtape.mobile",
       googleServicesFile: "./google-services.json",
-      permissions: ["RECORD_AUDIO"],
+      permissions: ["RECORD_AUDIO", "POST_NOTIFICATIONS"],
       adaptiveIcon: {
         foregroundImage: "./assets/crossroads2-adaptive.png",
         backgroundColor: "#ffffff",

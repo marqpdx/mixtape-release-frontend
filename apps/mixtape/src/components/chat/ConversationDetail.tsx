@@ -21,7 +21,7 @@ import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
-import { getSocket } from "@mixtape/api/lib/socket";
+import { getSocket, initializeSocket } from "@mixtape/api/lib/socket";
 
 type MessageReaction = {
   id: string;
@@ -159,33 +159,46 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
       });
   }, [slug]);
 
-  // Setup socket for real-time updates
+  // Setup socket for real-time updates.
+  // Uses initializeSocket() so that an expired session triggers the full token-refresh
+  // chain (axiosInstance 401 → refreshAccessToken → new WS token → reconnect)
+  // without requiring a page reload.
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket || !slug) {
-      console.log('[ConversationDetail] Skipping socket setup:', { hasSocket: !!socket, slug });
-      return;
-    }
+    if (!slug) return;
 
-    if (!socket.connected) {
-      console.warn('[ConversationDetail] Socket exists but not connected yet, waiting...');
-      // Wait for connection and retry
-      const onConnect = () => {
-        console.log('[ConversationDetail] Socket connected, setting up conversation socket');
-        const cleanup = setupConversationSocket(socket, slug, setMessages, setTypingUsers);
-        // Store cleanup function
-        socket.once('disconnect', cleanup);
-      };
+    let isMounted = true;
+    let cleanup: (() => void) | null = null;
 
-      socket.once('connect', onConnect);
-      return () => {
-        socket.off('connect', onConnect);
-      };
-    }
+    const setup = async () => {
+      // Prefer the already-connected socket; only call initializeSocket if
+      // the socket is missing or disconnected (handles expired-token teardown).
+      let socket = getSocket();
+      if (!socket?.connected) {
+        socket = await initializeSocket();
+      }
 
-    console.log('[ConversationDetail] Setting up socket for conversation:', slug);
-    const cleanup = setupConversationSocket(socket, slug, setMessages, setTypingUsers);
-    return cleanup;
+      if (!socket || !isMounted) return;
+
+      if (!socket.connected) {
+        // Socket is initializing — wait for the connect event
+        const onConnect = () => {
+          if (!isMounted) return;
+          cleanup = setupConversationSocket(socket!, slug, setMessages, setTypingUsers);
+        };
+        socket.once('connect', onConnect);
+        // Pre-cleanup: remove the pending listener if the component unmounts first
+        cleanup = () => { socket!.off('connect', onConnect); };
+      } else {
+        cleanup = setupConversationSocket(socket, slug, setMessages, setTypingUsers);
+      }
+    };
+
+    setup();
+
+    return () => {
+      isMounted = false;
+      cleanup?.();
+    };
   }, [slug]);
 
   // Scroll to bottom when messages change (but only if user hasn't scrolled up)

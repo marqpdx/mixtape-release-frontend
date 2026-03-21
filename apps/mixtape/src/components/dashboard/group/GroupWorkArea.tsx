@@ -38,6 +38,7 @@ import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
 import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
+import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -482,6 +483,14 @@ export default function GroupWorkArea({
     return (
       <WorkAreaWrapper>
         <LanternmailCampaignWorkArea group={group} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "broadcasts") {
+    return (
+      <WorkAreaWrapper>
+        <BroadcastWorkArea groupSlug={group.slug} />
       </WorkAreaWrapper>
     );
   }

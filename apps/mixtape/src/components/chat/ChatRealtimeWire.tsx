@@ -85,32 +85,13 @@ export function ChatRealtimeWire() {
         }
       };
 
-      // Handle new message notifications
+      // Handle new message notifications — always refetch so the list stays current
       const handleNewMessage = (payload: NewMessagePayload) => {
-        console.log('[ChatRealtimeWire] 🔔 ========== NEW MESSAGE EVENT ==========');
-        console.log('[ChatRealtimeWire] 🔔 Full payload:', JSON.stringify(payload, null, 2));
-
-        const { conversations } = useConversationStore.getState();
         const conversationSlug = payload.conversationSlug || payload.conversationId;
-
-        console.log('[ChatRealtimeWire] 🔍 Extracted conversationSlug:', conversationSlug);
-        console.log('[ChatRealtimeWire] 🔍 Current conversations:', conversations.map(c => c.slug));
-
         if (conversationSlug) {
-          const convExists = conversations.some(c => c.slug === conversationSlug);
-          console.log('[ChatRealtimeWire] 🔍 Does conversation exist locally?', convExists);
-
-          if (!convExists) {
-            console.log('[ChatRealtimeWire] 🔄 ✨ TRIGGERING REFETCH - Message for unknown conversation');
-            refetchConversations();
-          } else {
-            console.log('[ChatRealtimeWire] ⏭️  Conversation already exists, skipping refetch');
-          }
-        } else {
-          console.log('[ChatRealtimeWire] ⚠️  No conversationSlug found in payload!');
+          // Always refetch: updates last_message preview and sort order for all recipients
+          refetchConversations();
         }
-
-        console.log('[ChatRealtimeWire] 🔔 ========================================');
       };
 
       // Register listeners

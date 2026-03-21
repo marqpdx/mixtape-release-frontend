@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  markConversationAsRead,
+} from '@mixtape/api/clients/chat/chatApi';
+import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
@@ -40,6 +43,7 @@ export function ConversationThreadPanel({
   const [inputText, setInputText] = useState('');
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const lastMarkedReadMessageIdRef = useRef<string | null>(null);
 
   const { sendMessage, startTyping, stopTyping, onMessage, typingUsers, isConnected } =
     useMessaging(conversationId);
@@ -85,6 +89,10 @@ export function ConversationThreadPanel({
   }, [conversationId, setActiveConversation]);
 
   useEffect(() => {
+    if (!isConnected) {
+      return;
+    }
+
     const cleanup = onMessage((message: SocketMessage) => {
       if (message.conversationSlug === conversationId || message.conversationId === conversationId) {
         setRealtimeMessages((prev) => {
@@ -103,7 +111,24 @@ export function ConversationThreadPanel({
     });
 
     return cleanup;
-  }, [clearUnread, conversationId, onMessage]);
+  }, [clearUnread, conversationId, isConnected, onMessage]);
+
+  useEffect(() => {
+    const lastMessage = allMessages[allMessages.length - 1] as any;
+    const lastMessageId = lastMessage?.id || lastMessage?.messageId;
+
+    if (!lastMessageId || lastMarkedReadMessageIdRef.current === lastMessageId) {
+      return;
+    }
+
+    lastMarkedReadMessageIdRef.current = lastMessageId;
+
+    void markConversationAsRead(conversationId, new Date().toISOString(), lastMessageId).catch(
+      (error) => {
+        console.error('[ConversationThreadPanel] Failed to mark conversation read', error);
+      }
+    );
+  }, [allMessages, conversationId]);
 
   const handleTextChange = (text: string) => {
     setInputText(text);

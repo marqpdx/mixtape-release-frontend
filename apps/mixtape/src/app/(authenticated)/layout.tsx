@@ -18,6 +18,7 @@ import { ContextualHelpLink } from "@/components/help/ContextualHelpLink";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
 import { ChatRealtimeWire } from "@/components/chat/ChatRealtimeWire";
+import { ActivityRealtimeWire } from "@/components/activity/ActivityRealtimeWire";
 
 function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -191,6 +192,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <ChatUnreadProvider>
       <ChatRealtimeWire />
+      <ActivityRealtimeWire />
 
       <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
         <UnifiedNavbar compact={isAdminPath} />

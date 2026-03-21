@@ -55,6 +55,14 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "lanternmail-campaigns", label: "Create Campaign" },
     ]
   },
+  {
+    key: "broadcasts",
+    label: "Broadcasts",
+    icon: "📣",
+    subItems: [
+      { key: "broadcasts", label: "Group Broadcasts" },
+    ]
+  },
 
 
   {

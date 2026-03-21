@@ -6,13 +6,32 @@ import { useChatStore } from '../stores/chatStore';
 import { socketService } from '../services/socket/socketService';
 import type { Message } from '../services/messaging/messagingService';
 import { useAuthStore } from '../stores/authStore';
-import { notificationService } from '../services/notifications/notificationService';
+import { useSocket } from './useSocket';
+
+interface UnreadCountPayload {
+  conversationSlug?: string;
+  count?: number;
+  countDelta?: number;
+}
 
 export function useUnreadCounts() {
   const currentUsername = useAuthStore((state) => state.user?.username);
-  const { incrementUnread, updatePreview, clearUnread, activeConversationId } = useChatStore();
+  const { isConnected } = useSocket();
+  const {
+    unreadCounts,
+    incrementUnread,
+    updatePreview,
+    clearUnread,
+    activeConversationId,
+    setUnreadCounts,
+    setUnreadCount,
+  } = useChatStore();
 
   useEffect(() => {
+    if (!isConnected) {
+      return;
+    }
+
     // Subscribe to socket events for new messages
     const handleMessage = (message: Message) => {
       const conversationSlug = message.conversationSlug || message.conversationId;
@@ -37,13 +56,34 @@ export function useUnreadCounts() {
 
         incrementUnread(conversationSlug);
 
-        void notificationService.presentLocalMessageNotification({
-          conversationId: conversationSlug,
-          title: message.conversationTitle || message.sender.username,
-          body: message.text,
-        });
-
         console.log('[useUnreadCounts] Updated counts for:', conversationSlug);
+      }
+    };
+
+    const handleUnreadBootstrap = (counts: Record<string, number>) => {
+      setUnreadCounts(counts);
+    };
+
+    const handleUnreadCount = ({
+      conversationSlug,
+      count,
+      countDelta,
+    }: UnreadCountPayload) => {
+      if (!conversationSlug) {
+        return;
+      }
+
+      if (count !== undefined) {
+        setUnreadCount(conversationSlug, count);
+        return;
+      }
+
+      if (countDelta !== undefined) {
+        if (countDelta <= 0) {
+          clearUnread(conversationSlug);
+        } else {
+          incrementUnread(conversationSlug);
+        }
       }
     };
 
@@ -51,15 +91,35 @@ export function useUnreadCounts() {
     const socket = socketService.getRawSocket();
     if (socket) {
       socket.on('receive_message', handleMessage);
+      socket.on('conversation:unread_bootstrap', handleUnreadBootstrap);
+      socket.on('conversation:unread_count', handleUnreadCount);
 
       console.log('[useUnreadCounts] Subscribed to receive_message events');
 
       return () => {
         socket.off('receive_message', handleMessage);
+        socket.off('conversation:unread_bootstrap', handleUnreadBootstrap);
+        socket.off('conversation:unread_count', handleUnreadCount);
         console.log('[useUnreadCounts] Unsubscribed from receive_message events');
       };
     }
-  }, [activeConversationId, clearUnread, currentUsername, incrementUnread, updatePreview]);
+  }, [
+    activeConversationId,
+    clearUnread,
+    currentUsername,
+    incrementUnread,
+    isConnected,
+    setUnreadCount,
+    setUnreadCounts,
+    updatePreview,
+  ]);
+
+  useEffect(() => {
+    const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+    void import('../services/notifications/notificationService').then(({ notificationService }) => {
+      void notificationService.syncBadgeCount(totalUnread);
+    });
+  }, [unreadCounts]);
 
   return {
     // Could return methods to manually refresh counts if needed

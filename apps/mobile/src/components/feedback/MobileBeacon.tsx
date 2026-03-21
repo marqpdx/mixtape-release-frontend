@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createFeedbackItem } from '@mixtape/api/clients/feedback/feedbackApi';
 
 interface MobileBeaconProps {
@@ -58,7 +59,6 @@ export function MobileBeacon({
   };
 
   const accentColor = isSuperuser ? '#0E8C92' : '#2E7D32';
-  const buttonIcon = isSuperuser ? '✦' : '🛟';
   const buttonLabel = isSuperuser ? 'Lighthouse' : 'Help';
 
   return (
@@ -69,7 +69,11 @@ export function MobileBeacon({
           onPress={() => setOpen(true)}
           activeOpacity={0.88}
         >
-          <Text style={styles.triggerIcon}>{buttonIcon}</Text>
+          {isSuperuser ? (
+            <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
+          ) : (
+            <Ionicons name="lifebuoy-outline" size={16} color="#FFFFFF" />
+          )}
           <Text style={styles.triggerText}>{buttonLabel}</Text>
         </TouchableOpacity>
       </View>
@@ -140,8 +144,8 @@ export function MobileBeacon({
 const styles = StyleSheet.create({
   triggerWrap: {
     position: 'absolute',
-    right: 18,
-    bottom: 18,
+    left: 18,
+    bottom: 28,
     zIndex: 50,
   },
   trigger: {
@@ -156,11 +160,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
     elevation: 5,
-  },
-  triggerIcon: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
   triggerText: {
     color: '#FFFFFF',

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { fetchMessages } from '@mixtape/api/clients/chat/chatApi';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
@@ -27,7 +28,88 @@ export function ConversationListPanel({
 }: ConversationListPanelProps) {
   const { conversations, loading, error, refresh } = useConversations();
   const currentUser = useAuthStore((state) => state.user);
-  const { unreadCounts, conversationPreviews } = useChatStore();
+  const { unreadCounts, conversationPreviews, updatePreview } = useChatStore();
+  const totalUnreadCount = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+
+  const sortedConversations = useMemo(() => {
+    return [...conversations].sort((left, right) => {
+      const leftSlug = left.slug || (left as any).conversation_slug || left.id || '';
+      const rightSlug = right.slug || (right as any).conversation_slug || right.id || '';
+
+      const leftPreviewTimestamp =
+        conversationPreviews[leftSlug]?.timestamp ||
+        (typeof (left as any).last_message === 'string'
+          ? left.updated_at || left.created_at
+          : (left as any).last_message?.created_at) ||
+        left.updated_at ||
+        left.created_at;
+      const rightPreviewTimestamp =
+        conversationPreviews[rightSlug]?.timestamp ||
+        (typeof (right as any).last_message === 'string'
+          ? right.updated_at || right.created_at
+          : (right as any).last_message?.created_at) ||
+        right.updated_at ||
+        right.created_at;
+
+      return (
+        new Date(rightPreviewTimestamp || 0).getTime() -
+        new Date(leftPreviewTimestamp || 0).getTime()
+      );
+    });
+  }, [conversationPreviews, conversations]);
+
+  useEffect(() => {
+    const missingPreviewConversations = conversations.filter((conversation) => {
+      const conversationSlug =
+        conversation.slug || (conversation as any).conversation_slug || conversation.id || '';
+      const preview = conversationPreviews[conversationSlug];
+      const lastMessage = (conversation as any).last_message;
+      const hasConversationPreview =
+        typeof lastMessage === 'string'
+          ? Boolean(lastMessage.trim())
+          : Boolean(lastMessage?.text);
+
+      return conversationSlug && !preview && !hasConversationPreview;
+    });
+
+    if (missingPreviewConversations.length === 0) {
+      return;
+    }
+
+    let active = true;
+
+    void Promise.all(
+      missingPreviewConversations.map(async (conversation) => {
+        const conversationSlug =
+          conversation.slug || (conversation as any).conversation_slug || conversation.id || '';
+
+        try {
+          const messages = await fetchMessages(conversationSlug, 1, 0);
+          if (!active || messages.length === 0) {
+            return;
+          }
+
+          const latestMessage = messages[messages.length - 1];
+          updatePreview(
+            conversationSlug,
+            latestMessage.text,
+            latestMessage.created_at,
+            latestMessage.sender.username
+          );
+        } catch (fetchError) {
+          console.warn(
+            '[ConversationListPanel] Failed to backfill preview for conversation:',
+            conversationSlug,
+            fetchError
+          );
+        }
+      })
+    );
+
+    return () => {
+      active = false;
+    };
+  }, [conversationPreviews, conversations, updatePreview]);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,7 +154,24 @@ export function ConversationListPanel({
         </View>
       ) : (
         <FlatList
-          data={conversations}
+          data={sortedConversations}
+          ListHeaderComponent={
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTitle}>Conversations</Text>
+              <View style={[styles.summaryPill, totalUnreadCount === 0 && styles.summaryPillQuiet]}>
+                <Text
+                  style={[
+                    styles.summaryPillText,
+                    totalUnreadCount === 0 && styles.summaryPillTextQuiet,
+                  ]}
+                >
+                  {totalUnreadCount === 0
+                    ? 'No unread'
+                    : `${totalUnreadCount} pending`}
+                </Text>
+              </View>
+            </View>
+          }
           keyExtractor={(item, index) => item.slug || (item as any).conversation_slug || item.id || `conv-${index}`}
           renderItem={({ item }) => {
             const conversationSlug =
@@ -92,6 +191,7 @@ export function ConversationListPanel({
                 }}
                 unreadCount={unreadCounts[conversationSlug] || 0}
                 preview={conversationPreviews[conversationSlug]}
+                currentUsername={currentUser?.username}
                 onPress={() => onOpenConversation(conversationSlug, displayTitle)}
               />
             );
@@ -103,7 +203,7 @@ export function ConversationListPanel({
               tintColor="#0E5AA7"
             />
           }
-          contentContainerStyle={conversations.length === 0 ? styles.emptyList : undefined}
+          contentContainerStyle={sortedConversations.length === 0 ? styles.emptyList : undefined}
         />
       )}
 
@@ -131,6 +231,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5EAF0',
+  },
+  summaryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#34516B',
+  },
+  summaryPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#0E5AA7',
+  },
+  summaryPillQuiet: {
+    backgroundColor: '#E4EBF2',
+  },
+  summaryPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  summaryPillTextQuiet: {
+    color: '#627181',
   },
   loadingText: {
     marginTop: 12,

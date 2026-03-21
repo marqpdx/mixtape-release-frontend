@@ -8,6 +8,7 @@ interface ConversationListItemProps {
   conversation: Conversation;
   unreadCount?: number;
   preview?: { text: string; timestamp: string; senderUsername: string };
+  currentUsername?: string;
   onPress: () => void;
 }
 
@@ -15,8 +16,14 @@ export function ConversationListItem({
   conversation,
   unreadCount = 0,
   preview,
+  currentUsername,
   onPress,
 }: ConversationListItemProps) {
+  const lastMessage = conversation.last_message as
+    | { text?: string; created_at?: string; sender?: string | { username?: string } }
+    | string
+    | undefined;
+
   // Format timestamp
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -33,27 +40,56 @@ export function ConversationListItem({
     return date.toLocaleDateString();
   };
 
+  const lastMessageText =
+    typeof lastMessage === 'string'
+      ? lastMessage
+      : lastMessage?.text || conversation.summary || '';
+  const lastMessageTimestamp =
+    typeof lastMessage === 'string'
+      ? conversation.updated_at || conversation.created_at
+      : lastMessage?.created_at || conversation.updated_at || conversation.created_at;
+  const lastMessageSenderUsername =
+    typeof lastMessage === 'string'
+      ? ''
+      : typeof lastMessage?.sender === 'string'
+        ? lastMessage.sender
+        : lastMessage?.sender?.username || '';
+
   // Get preview text from conversation or prop
   const previewText =
     preview?.text ||
-    conversation.last_message?.text ||
+    lastMessageText ||
     'No messages yet';
 
   const previewTimestamp =
     preview?.timestamp ||
-    conversation.last_message?.created_at ||
+    lastMessageTimestamp ||
     conversation.created_at;
+  const previewSenderUsername =
+    preview?.senderUsername || lastMessageSenderUsername;
+  const isIncomingPreview =
+    Boolean(previewText) &&
+    Boolean(previewSenderUsername) &&
+    previewSenderUsername !== currentUsername;
+  const isUnread = unreadCount > 0;
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.container, isUnread && styles.containerUnread]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.content}>
         {/* Conversation Title */}
         <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={1}>
-            {conversation.title}
-          </Text>
+          <View style={styles.titleWrap}>
+            {isUnread ? <View style={styles.unreadDot} /> : null}
+            <Text style={[styles.title, isUnread && styles.titleUnread]} numberOfLines={1}>
+              {conversation.title}
+            </Text>
+          </View>
           {previewTimestamp && (
-            <Text style={styles.timestamp}>
+            <Text style={[styles.timestamp, isUnread && styles.timestampUnread]}>
               {formatTime(previewTimestamp)}
             </Text>
           )}
@@ -64,7 +100,8 @@ export function ConversationListItem({
           <Text
             style={[
               styles.preview,
-              unreadCount > 0 && styles.previewUnread,
+              isUnread && styles.previewUnread,
+              isIncomingPreview ? styles.previewIncoming : styles.previewOutgoing,
             ]}
             numberOfLines={2}
           >
@@ -91,6 +128,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
+  containerUnread: {
+    backgroundColor: '#F5FAFF',
+  },
   content: {
     padding: 16,
   },
@@ -100,16 +140,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  title: {
+  titleWrap: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+    gap: 8,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#007AFF',
+  },
+  title: {
     fontSize: 17,
     fontWeight: '600',
     color: '#000',
-    marginRight: 8,
+    flex: 1,
+  },
+  titleUnread: {
+    fontWeight: '700',
   },
   timestamp: {
     fontSize: 14,
     color: '#8E8E93',
+  },
+  timestampUnread: {
+    color: '#0E5AA7',
+    fontWeight: '700',
   },
   previewContainer: {
     flexDirection: 'row',
@@ -125,6 +184,12 @@ const styles = StyleSheet.create({
   previewUnread: {
     fontWeight: '500',
     color: '#000',
+  },
+  previewIncoming: {
+    fontStyle: 'italic',
+  },
+  previewOutgoing: {
+    fontStyle: 'normal',
   },
   unreadBadge: {
     backgroundColor: '#007AFF',

@@ -1,6 +1,7 @@
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import { useChatStore } from '../../stores/chatStore';
 
 type PermissionStatus = 'granted' | 'denied' | 'undetermined';
 
@@ -25,12 +26,6 @@ interface NotificationResponseLike {
 
 interface NotificationSubscription {
   remove(): void;
-}
-
-interface LocalMessageNotificationInput {
-  conversationId: string;
-  title: string;
-  body: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -65,13 +60,34 @@ class NotificationService {
     }
 
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-      }),
+      handleNotification: async (notification) => {
+        const rawData = notification.request.content.data;
+        const data = isRecord(rawData) ? rawData : undefined;
+        const target = toTarget(data);
+        const activeConversationId = useChatStore.getState().activeConversationId;
+        const suppressForActiveConversation =
+          AppState.currentState === 'active' &&
+          Boolean(target?.conversationId) &&
+          target?.conversationId === activeConversationId;
+
+        if (suppressForActiveConversation) {
+          return {
+            shouldShowAlert: false,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
+            shouldShowBanner: false,
+            shouldShowList: false,
+          };
+        }
+
+        return {
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        };
+      },
     });
 
     if (Platform.OS === 'android') {
@@ -135,30 +151,14 @@ class NotificationService {
     });
   }
 
-  async presentLocalMessageNotification({
-    conversationId,
-    title,
-    body,
-  }: LocalMessageNotificationInput): Promise<void> {
+  async syncBadgeCount(count: number): Promise<void> {
     this.configure();
 
-    const permissions = await Notifications.getPermissionsAsync();
-    if (permissions.status !== 'granted') {
-      return;
+    try {
+      await Notifications.setBadgeCountAsync(Math.max(0, count));
+    } catch (error) {
+      console.warn('[Notifications] Failed to sync badge count', error);
     }
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        sound: true,
-        data: {
-          conversationId,
-          title,
-        },
-      },
-      trigger: null,
-    });
   }
 }
 

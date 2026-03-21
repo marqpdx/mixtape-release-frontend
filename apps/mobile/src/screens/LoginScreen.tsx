@@ -24,8 +24,8 @@ const LAST_IDENTIFIER_KEY = 'mixtape.mobile.lastIdentifier';
 export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const setUser = useAuthStore((state) => state.setUser);
   const passwordInputRef = useRef<TextInput | null>(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin');
+  const [password, setPassword] = useState('boston99');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
