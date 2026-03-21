@@ -29,12 +29,30 @@ export type HelpDoc = HelpDocSummary & {
 
 export type HelpDocVariant = "users" | "tech";
 
-const HELP_ROOT = path.resolve(process.cwd(), "..", "..", "..", "puddlejump", "help");
-
 const DOC_SUFFIX_BY_VARIANT: Record<HelpDocVariant, string> = {
   users: "-help-users.md",
   tech: "-help-tech.md",
 };
+
+function resolveHelpRoot(): string {
+  const candidates = [
+    path.resolve(process.cwd(), "..", "..", "puddlejump", "help"),
+    path.resolve(process.cwd(), "..", "..", "..", "puddlejump", "help"),
+    path.resolve(process.cwd(), "..", "puddlejump", "help"),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Unable to locate puddlejump help directory. Tried: ${candidates.join(", ")}`
+  );
+}
+
+const HELP_ROOT = resolveHelpRoot();
 
 function shouldIgnoreFile(filePath: string): boolean {
   return filePath.includes(`${path.sep}_template${path.sep}`) || filePath.includes(`${path.sep}_deprecated${path.sep}`);
