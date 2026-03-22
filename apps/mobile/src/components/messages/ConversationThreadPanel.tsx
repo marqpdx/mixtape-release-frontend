@@ -6,8 +6,10 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  NativeSyntheticEvent,
   Platform,
   RefreshControl,
+  NativeScrollEvent,
   StyleSheet,
   Text,
   TextInput,
@@ -44,6 +46,7 @@ export function ConversationThreadPanel({
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const lastMarkedReadMessageIdRef = useRef<string | null>(null);
+  const isNearBottomRef = useRef(true);
 
   const { sendMessage, startTyping, stopTyping, onMessage, typingUsers, isConnected } =
     useMessaging(conversationId);
@@ -104,9 +107,11 @@ export function ConversationThreadPanel({
         });
 
         clearUnread(conversationId);
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+        if (isNearBottomRef.current) {
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
       }
     });
 
@@ -158,14 +163,25 @@ export function ConversationThreadPanel({
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
+  };
 
-    setTimeout(() => {
-      void refresh();
-    }, 500);
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - (contentOffset.y + layoutMeasurement.height);
 
-    setTimeout(() => {
-      void refresh();
-    }, 1800);
+    isNearBottomRef.current = distanceFromBottom <= 120;
+
+    // Older messages are prepended to the top of the list, so only fetch more
+    // when the user actually scrolls near the top.
+    if (
+      contentOffset.y <= 80 &&
+      contentSize.height > layoutMeasurement.height &&
+      hasMore &&
+      !loadingMore
+    ) {
+      void loadMore();
+    }
   };
 
   return (
@@ -199,6 +215,7 @@ export function ConversationThreadPanel({
           <FlatList
             ref={flatListRef}
             data={allMessages}
+            maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
             keyExtractor={(item, index) => {
               const msg = item as any;
               return msg.id || msg.messageId || `msg-${index}`;
@@ -246,12 +263,8 @@ export function ConversationThreadPanel({
               );
             }}
             contentContainerStyle={styles.messageList}
-            onEndReached={() => {
-              if (hasMore && !loadingMore) {
-                loadMore();
-              }
-            }}
-            onEndReachedThreshold={0.1}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             ListHeaderComponent={
               loadingMore ? (
                 <View style={styles.loadingMoreContainer}>

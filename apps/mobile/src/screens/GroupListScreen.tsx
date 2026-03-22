@@ -10,14 +10,15 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import { useUserGroups } from '@mixtape/api/hooks/groups/useGroups';
 import type { Group } from '@mixtape/core/types/groupTypes';
+import { CrossroadsHeader } from '../components/CrossroadsHeader';
 
-type GroupListScreenProps = NativeStackScreenProps<RootStackParamList, 'Groups'>;
-
-export default function GroupListScreen({ navigation }: GroupListScreenProps) {
+export default function GroupListScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     groups,
     isLoading: loading,
@@ -100,6 +101,9 @@ export default function GroupListScreen({ navigation }: GroupListScreenProps) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerWrap}>
+        <CrossroadsHeader routeLabel="groups" />
+      </View>
       <FlatList
         data={groups}
         keyExtractor={(item) => item.slug}
@@ -120,7 +124,11 @@ export default function GroupListScreen({ navigation }: GroupListScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#EEF4F8',
+  },
+  headerWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
   },
   loadingContainer: {
     flex: 1,

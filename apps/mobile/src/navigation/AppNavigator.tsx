@@ -1,28 +1,41 @@
 // apps/mobile/src/navigation/AppNavigator.tsx
 
-import { useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../stores/authStore';
+import { useChatStore } from '../stores/chatStore';
+import { useNotifications } from '../hooks/useNotifications';
+import { ChatStateManager } from '../components/ChatStateManager';
 import LoginScreen from '../screens/LoginScreen';
+import NotebookScreen from '../screens/NotebookScreen';
+import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
 import NewPersonalChatScreen from '../screens/NewPersonalChatScreen';
 import NewGroupChatScreen from '../screens/NewGroupChatScreen';
 import { ChatScreen } from '../screens/ChatScreen';
-import { ChatStateManager } from '../components/ChatStateManager';
-import LandingScreen from '../screens/LandingScreen';
-import { useNotifications } from '../hooks/useNotifications';
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-export type RootStackParamList = {
-  Login: undefined;
-  Landing: undefined;
+export type MainTabParamList = {
+  Notebook: undefined;
+  Studio: undefined;
   Messages: undefined;
   Groups: undefined;
+  Profile: undefined;
+};
+
+export type RootStackParamList = {
+  Login: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
@@ -30,17 +43,79 @@ export type RootStackParamList = {
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
-const navigationRef = createNavigationContainerRef<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+// ============================================================================
+// BOTTOM TAB NAVIGATOR
+// ============================================================================
+
+function MainTabs() {
+  const unreadCounts = useChatStore((state) => state.unreadCounts);
+  const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: '#0E5AA7',
+        tabBarInactiveTintColor: '#6B8499',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E0E8F0',
+          borderTopWidth: 1,
+          paddingBottom: 4,
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons: Record<string, [string, string]> = {
+            Notebook: ['book', 'book-outline'],
+            Studio: ['color-palette', 'color-palette-outline'],
+            Messages: ['chatbubble', 'chatbubble-outline'],
+            Groups: ['people', 'people-outline'],
+            Profile: ['person-circle', 'person-circle-outline'],
+          };
+          const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
+          const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Notebook" component={NotebookScreen} />
+      <Tab.Screen name="Studio" component={StudioScreen} />
+      <Tab.Screen
+        name="Messages"
+        component={MyChatsScreen}
+        options={{
+          tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? '99+' : totalUnread) : undefined,
+        }}
+      />
+      <Tab.Screen name="Groups" component={GroupListScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 // ============================================================================
 // ROOT NAVIGATOR
 // ============================================================================
 
 export default function AppNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Read auth state from the store — LoginScreen calls authStore.setUser() on success,
+  // ProfileScreen calls authStore.logout(), and the navigator responds automatically.
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Buffer notification targets that arrive before auth is confirmed (e.g. cold-start tap).
+  const pendingNavigationRef = useRef<{ conversationId: string; title?: string } | null>(null);
 
   useNotifications((target) => {
-    if (!target.conversationId || !navigationRef.isReady() || !isAuthenticated) {
+    if (!target.conversationId) return;
+
+    if (!navigationRef.isReady() || !isAuthenticated) {
+      pendingNavigationRef.current = { conversationId: target.conversationId, title: target.title };
       return;
     }
 
@@ -50,51 +125,36 @@ export default function AppNavigator() {
     });
   });
 
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
+  // Drain buffered navigation target once auth is confirmed.
+  useEffect(() => {
+    if (!isAuthenticated || !pendingNavigationRef.current) return;
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
+    const target = pendingNavigationRef.current;
+    pendingNavigationRef.current = null;
+
+    // Defer one tick to ensure NavigationContainer is ready.
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        navigationRef.navigate('Chat', {
+          conversationId: target.conversationId,
+          title: target.title,
+        });
+      }
+    }, 0);
+  }, [isAuthenticated]);
 
   return (
     <NavigationContainer ref={navigationRef}>
-      {/* Chat state manager - handles real-time updates when authenticated */}
       {isAuthenticated && <ChatStateManager />}
 
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
           <RootStack.Screen name="Login">
-            {() => <LoginScreen onLoginSuccess={handleLoginSuccess} />}
+            {() => <LoginScreen onLoginSuccess={() => {}} />}
           </RootStack.Screen>
         ) : (
           <>
-            <RootStack.Screen
-              name="Landing"
-              component={LandingScreen}
-              options={{ headerShown: false }}
-            />
-            <RootStack.Screen
-              name="Messages"
-              component={MyChatsScreen}
-              options={{
-                headerShown: true,
-                title: 'Messages',
-              }}
-            />
-            <RootStack.Screen
-              name="Groups"
-              component={GroupListScreen}
-              options={{
-                headerShown: true,
-                title: 'Groups',
-              }}
-            />
+            <RootStack.Screen name="MainTabs" component={MainTabs} />
             <RootStack.Screen
               name="Chat"
               component={ChatScreen}
@@ -107,10 +167,7 @@ export default function AppNavigator() {
             <RootStack.Screen
               name="NewPersonalChat"
               component={NewPersonalChatScreen}
-              options={{
-                headerShown: false,
-                presentation: 'modal',
-              }}
+              options={{ headerShown: false, presentation: 'modal' }}
             />
             <RootStack.Screen
               name="GroupConversations"
@@ -124,10 +181,7 @@ export default function AppNavigator() {
             <RootStack.Screen
               name="NewGroupChat"
               component={NewGroupChatScreen}
-              options={{
-                headerShown: false,
-                presentation: 'modal',
-              }}
+              options={{ headerShown: false, presentation: 'modal' }}
             />
           </>
         )}

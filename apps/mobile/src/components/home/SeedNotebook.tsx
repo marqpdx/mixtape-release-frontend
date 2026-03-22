@@ -440,12 +440,14 @@ export function SeedNotebook({
 
       <View style={styles.captureDock}>
         <View style={styles.captureCard}>
-          <Text style={styles.kicker}>
-            {editingSeedId ? 'Editing Seed' : 'Pocket Notebook'}
-          </Text>
-          {!captureFocused && !editingSeedId ? (
-            <Text style={styles.title}>What&apos;s on your mind?</Text>
-          ) : null}
+          <View style={styles.kickerRow}>
+            <Text style={styles.kicker}>
+              {editingSeedId ? 'Editing Seed' : 'Pocket Notebook'}
+            </Text>
+            {!editingSeedId ? (
+              <Text style={styles.kickerSub}> · What's on your mind?</Text>
+            ) : null}
+          </View>
           {editingSeedId ? (
             <>
               <Text style={styles.editingTitle}>Refine this Seed</Text>
@@ -704,7 +706,7 @@ const styles = StyleSheet.create({
   },
   captureDock: {
     paddingTop: 10,
-    paddingBottom: 38,
+    paddingBottom: 0,
   },
   captureCard: {
     backgroundColor: '#FFFFFF',
@@ -717,6 +719,11 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 4,
   },
+  kickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   kicker: {
     color: '#315E87',
     fontSize: 12,
@@ -724,10 +731,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#0D2235',
+  kickerSub: {
+    color: '#6A8DA8',
+    fontSize: 12,
+    fontWeight: '500',
   },
   editingTitle: {
     fontSize: 22,
@@ -876,7 +883,7 @@ const styles = StyleSheet.create({
     minHeight: 18,
   },
   savedPromptHidden: {
-    opacity: 0,
+    display: 'none',
   },
   savedTitle: {
     fontSize: 13,

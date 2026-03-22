@@ -119,13 +119,30 @@ class NotificationService {
       };
     }
 
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
+    if (!projectId) {
+      console.warn('[Notifications] EAS projectId is missing from app config — push token may not route correctly');
+    }
+
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
 
     return {
       permissionStatus: status,
       pushToken: token.data,
     };
+  }
+
+  async getLastNotificationTarget(): Promise<NotificationTarget | null> {
+    this.configure();
+    try {
+      const response = await Notifications.getLastNotificationResponseAsync();
+      if (!response) return null;
+      const rawData = response.notification?.request?.content?.data;
+      const data = isRecord(rawData) ? rawData : undefined;
+      return toTarget(data);
+    } catch {
+      return null;
+    }
   }
 
   addNotificationReceivedListener(

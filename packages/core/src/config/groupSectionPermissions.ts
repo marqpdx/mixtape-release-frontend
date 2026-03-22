@@ -167,6 +167,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Collection Detail',
   },
 
+  // Initiatives - admin/steward (manage_initiatives permission maps to steward+)
+  'initiatives-landing': {
+    requiredRole: 'steward',
+    description: 'Group AI-assisted inquiry initiatives',
+  },
+
 
 
       //   { key: "collections-landing", label: "Browse Collections" },

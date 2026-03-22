@@ -49,6 +49,8 @@ export default function ProductsWorkArea({
   sponsorId,
   sponsorTitle,
 }: ProductsWorkAreaProps) {
+  const bazaarSponsorType = sponsorType === "user" ? "customuser" : sponsorType;
+
   // State
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -63,7 +65,7 @@ export default function ProductsWorkArea({
 
   // Fetch products
   const { products, isLoading, error, refetch } = useProducts({
-    sponsor_type: sponsorType,
+    sponsor_type: bazaarSponsorType,
     sponsor_id: sponsorId,
   });
 
@@ -130,7 +132,7 @@ export default function ProductsWorkArea({
         description: description.trim() || undefined,
         product_type: productType,
         requires_shipping: requiresShipping,
-        sponsor_type: sponsorType,
+        sponsor_type: bazaarSponsorType,
         sponsor_id: sponsorId,
       };
 

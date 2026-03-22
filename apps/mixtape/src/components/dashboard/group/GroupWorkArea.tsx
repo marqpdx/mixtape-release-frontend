@@ -39,6 +39,7 @@ import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
 import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
+import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -334,6 +335,15 @@ export default function GroupWorkArea({
     );
   }
 
+
+  // Initiatives
+  if (section === "initiatives-landing") {
+    return (
+      <WorkAreaWrapper>
+        <InitiativesWorkArea groupSlug={group.slug} />
+      </WorkAreaWrapper>
+    );
+  }
 
   // Members sections
   if (section === "members-roles") {

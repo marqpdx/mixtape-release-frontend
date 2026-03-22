@@ -28,6 +28,15 @@ export function useNotifications(
   useEffect(() => {
     notificationService.configure();
 
+    // Cold-start: app was fully killed and user tapped a notification to launch it.
+    // addNotificationResponseReceivedListener won't fire for this case — must poll explicitly.
+    void notificationService.getLastNotificationTarget().then((target) => {
+      if (target) {
+        console.log('[Notifications] Cold-start notification target', target);
+        notificationTargetRef.current?.(target);
+      }
+    });
+
     const responseSubscription = notificationService.addNotificationResponseListener(
       (target) => {
         notificationTargetRef.current?.(target);

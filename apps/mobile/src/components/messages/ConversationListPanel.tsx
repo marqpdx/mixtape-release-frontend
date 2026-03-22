@@ -124,7 +124,7 @@ export function ConversationListPanel({
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyTitle}>Error loading conversations</Text>
         <Text style={styles.emptySubtitle}>{error.message}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={refresh}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => void refresh()}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>

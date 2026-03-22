@@ -10,8 +10,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { useNavigation } from '@react-navigation/native';
 import { MobileBeacon } from '../components/feedback/MobileBeacon';
 import { SeedNotebook } from '../components/home/SeedNotebook';
 import { IdeaStudio } from '../components/home/IdeaStudio';
@@ -19,7 +18,7 @@ import { CommunityWindow } from '../components/home/CommunityWindow';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 
-type LandingScreenProps = NativeStackScreenProps<RootStackParamList, 'Landing'>;
+// LandingScreen is superseded by the bottom tab navigator but kept for reference.
 type HomeTab = 'notebook' | 'studio' | 'community';
 
 const HOME_TAB_KEY = 'mixtape.mobile.homeTab';
@@ -55,7 +54,8 @@ function HomeTabButton({
   );
 }
 
-export default function LandingScreen({ navigation }: LandingScreenProps) {
+export default function LandingScreen() {
+  const navigation = useNavigation<any>();
   const headerHeight = useHeaderHeight();
   const currentUser = useAuthStore((state) => state.user);
   const unreadCounts = useChatStore((state) => state.unreadCounts);
@@ -138,7 +138,7 @@ export default function LandingScreen({ navigation }: LandingScreenProps) {
             <View style={styles.heroTitleWrap}>
               <Text style={styles.eyebrow}>Mixtape Mobile</Text>
               <Text style={styles.title}>
-                {currentUser?.display_name || currentUser?.username || 'Mixtape'}
+                {(currentUser as any)?.display_name || currentUser?.username || 'Mixtape'}
               </Text>
             </View>
             <Text style={styles.heroToggle}>

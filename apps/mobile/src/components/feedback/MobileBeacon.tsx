@@ -16,14 +16,29 @@ interface MobileBeaconProps {
   canUseLighthouse: boolean;
   isSuperuser: boolean;
   routeLabel: string;
+  // When provided, the internal floating trigger is hidden and the modal is
+  // driven externally (e.g. from a header button).
+  open?: boolean;
+  onClose?: () => void;
 }
 
 export function MobileBeacon({
   canUseLighthouse,
   isSuperuser,
   routeLabel,
+  open,
+  onClose,
 }: MobileBeaconProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const visible = isControlled ? open : internalOpen;
+  const handleClose = () => {
+    if (isControlled) {
+      onClose?.();
+    } else {
+      setInternalOpen(false);
+    }
+  };
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +62,7 @@ export function MobileBeacon({
         message: message.trim(),
         page_url: routeLabel,
       });
-      setOpen(false);
+      handleClose();
       setMessage('');
       Alert.alert('Got it. Thank you.');
     } catch (submitError) {
@@ -63,28 +78,29 @@ export function MobileBeacon({
 
   return (
     <>
-      <View style={styles.triggerWrap} pointerEvents="box-none">
-        <TouchableOpacity
-          style={[styles.trigger, { backgroundColor: accentColor }]}
-          onPress={() => setOpen(true)}
-          activeOpacity={0.88}
-        >
-          {isSuperuser ? (
-            <Ionicons name="sparkles-outline" size={16} color="#FFFFFF" />
-          ) : (
-            <Ionicons name="lifebuoy-outline" size={16} color="#FFFFFF" />
-          )}
-          <Text style={styles.triggerText}>{buttonLabel}</Text>
-        </TouchableOpacity>
-      </View>
+      {!isControlled ? (
+        <View style={styles.triggerWrap} pointerEvents="box-none">
+          <TouchableOpacity
+            style={[styles.trigger, { backgroundColor: accentColor }]}
+            onPress={() => setInternalOpen(true)}
+            activeOpacity={0.88}
+          >
+            <Ionicons
+              name={isSuperuser ? 'sparkles' : 'help-buoy-outline'}
+              size={18}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <Modal
-        visible={open}
+        visible={visible}
         transparent
         animationType="slide"
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={handleClose}
       >
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={handleClose}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
             <View style={styles.header}>
               <View style={styles.headerCopy}>
@@ -93,7 +109,7 @@ export function MobileBeacon({
                   Bugs, ideas, reactions - anything that would make Mixtape better.
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setOpen(false)} activeOpacity={0.8}>
+              <TouchableOpacity onPress={handleClose} activeOpacity={0.8}>
                 <Text style={styles.cancelTop}>Close</Text>
               </TouchableOpacity>
             </View>
@@ -116,7 +132,7 @@ export function MobileBeacon({
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <View style={styles.actions}>
-              <TouchableOpacity onPress={() => setOpen(false)} activeOpacity={0.8}>
+              <TouchableOpacity onPress={handleClose} activeOpacity={0.8}>
                 <Text style={styles.cancel}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -145,26 +161,20 @@ const styles = StyleSheet.create({
   triggerWrap: {
     position: 'absolute',
     left: 18,
-    bottom: 28,
+    bottom: 10,
     zIndex: 50,
   },
   trigger: {
-    flexDirection: 'row',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderRadius: 999,
+    justifyContent: 'center',
     shadowColor: '#0B1F30',
     shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 5,
-  },
-  triggerText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   backdrop: {
     flex: 1,

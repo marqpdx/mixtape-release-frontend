@@ -108,6 +108,14 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    key: "initiatives",
+    label: "Initiatives",
+    icon: "🧠",
+    subItems: [
+      { key: "initiatives-landing", label: "Initiatives" },
+    ]
+  },
+  {
     key: "settings",
     label: "Settings",
     icon: "⚙️",

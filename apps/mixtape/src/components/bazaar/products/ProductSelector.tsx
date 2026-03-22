@@ -44,9 +44,11 @@ export default function ProductSelector({
   placeholder = "Select a product...",
   isRequired = false,
 }: ProductSelectorProps) {
+  const bazaarSponsorType = sponsorType === "user" ? "customuser" : sponsorType;
+
   // Fetch products for this sponsor
   const { products, isLoading, error } = useProducts({
-    sponsor_type: sponsorType,
+    sponsor_type: bazaarSponsorType,
     sponsor_id: sponsorId,
   });
 

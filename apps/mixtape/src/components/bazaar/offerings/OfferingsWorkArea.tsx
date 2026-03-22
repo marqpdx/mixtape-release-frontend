@@ -61,6 +61,8 @@ export default function OfferingsWorkArea({
   sponsorId,
   sponsorTitle,
 }: OfferingsWorkAreaProps) {
+  const bazaarSponsorType = sponsorType === "user" ? "customuser" : sponsorType;
+
   // State
   const [selectedOfferingId, setSelectedOfferingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -78,7 +80,7 @@ export default function OfferingsWorkArea({
 
   // Fetch offerings
   const { offerings, isLoading, error, refetch } = useOfferings({
-    sponsor_type: sponsorType,
+    sponsor_type: bazaarSponsorType,
     sponsor_id: sponsorId,
   });
 
@@ -190,7 +192,7 @@ export default function OfferingsWorkArea({
         price_amount: priceInCents,
         currency,
         asset_id: selectedProduct?.id,
-        sponsor_type: sponsorType,
+        sponsor_type: bazaarSponsorType,
         sponsor_id: sponsorId,
         status: isPublished ? "published" : "draft",
       };
@@ -549,7 +551,7 @@ export default function OfferingsWorkArea({
 
               {/* Product Selector */}
               <ProductSelector
-                sponsorType={sponsorType}
+                sponsorType={bazaarSponsorType}
                 sponsorId={sponsorId}
                 selectedProductId={selectedProduct?.id || null}
                 onSelect={setSelectedProduct}
