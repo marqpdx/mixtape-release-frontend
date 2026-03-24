@@ -29,6 +29,8 @@ import {
   IconChevronRight,
   IconClipboardText,
   IconDeviceFloppy,
+  IconLayoutGrid,
+  IconList,
   IconMoodSpark,
   IconNote,
   IconPlus,
@@ -57,7 +59,11 @@ const STATUS_COLORS: Record<string, string> = {
   simmering: "orange",
   paused: "gray",
   resolved: "blue",
+  archived: "purple",
 };
+
+const VIEW_MODE_KEY = "initiatives_view_mode";
+type ViewMode = "list" | "landscape";
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
   document: "Document",
@@ -146,8 +152,23 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: "", direction: "" });
   const [formError, setFormError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem(VIEW_MODE_KEY) as ViewMode) || "list";
+    }
+    return "list";
+  });
 
   const mutedText = useColorModeValue("gray.600", "gray.400");
+
+  const toggleViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_MODE_KEY, mode);
+  };
+
+  const sorted = [...initiatives].sort(
+    (a, b) => b.momentum_score - a.momentum_score
+  );
 
   const handleCreate = async () => {
     if (!form.title.trim()) {
@@ -204,14 +225,38 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
             AI-assisted inquiry sessions for structured group thinking
           </Text>
         </VStack>
-        <Button
-          size="sm"
-          colorPalette="green"
-          onClick={() => setShowCreate(!showCreate)}
-        >
-          <IconPlus size={16} />
-          New Initiative
-        </Button>
+        <HStack gap={2}>
+          <HStack gap={0} borderWidth="1px" borderRadius="md" overflow="hidden">
+            <Button
+              size="sm"
+              variant={viewMode === "list" ? "solid" : "ghost"}
+              colorPalette={viewMode === "list" ? "blue" : "gray"}
+              borderRadius={0}
+              onClick={() => toggleViewMode("list")}
+              title="List view"
+            >
+              <IconList size={16} />
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === "landscape" ? "solid" : "ghost"}
+              colorPalette={viewMode === "landscape" ? "blue" : "gray"}
+              borderRadius={0}
+              onClick={() => toggleViewMode("landscape")}
+              title="Landscape view"
+            >
+              <IconLayoutGrid size={16} />
+            </Button>
+          </HStack>
+          <Button
+            size="sm"
+            colorPalette="green"
+            onClick={() => setShowCreate(!showCreate)}
+          >
+            <IconPlus size={16} />
+            New Initiative
+          </Button>
+        </HStack>
       </HStack>
 
       {/* Create form */}
@@ -282,7 +327,7 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
       )}
 
       {/* Empty state / grid */}
-      {initiatives.length === 0 ? (
+      {sorted.length === 0 ? (
         <Box textAlign="center" py={16}>
           <IconBrain size={48} style={{ margin: "0 auto", opacity: 0.3 }} />
           <Heading size="md" mt={4} color="gray.500">
@@ -292,9 +337,11 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
             Start an initiative to begin structured AI-assisted inquiry.
           </Text>
         </Box>
+      ) : viewMode === "landscape" ? (
+        <InitiativeLandscapeView initiatives={sorted} onOpen={onOpen} />
       ) : (
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-          {initiatives.map((ini) => (
+          {sorted.map((ini) => (
             <InitiativeCard key={ini.id} initiative={ini} onOpen={onOpen} />
           ))}
         </SimpleGrid>
@@ -306,6 +353,23 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
 // ============================================================================
 // InitiativeCard
 // ============================================================================
+
+function MomentumBar({ score }: { score: number }) {
+  // Cap display at 200; bar width is proportional (clamped 0–100%)
+  const pct = Math.min(100, (score / 200) * 100);
+  const color = score === 0 ? "gray.200" : score < 20 ? "blue.200" : score < 80 ? "blue.400" : "blue.600";
+  return (
+    <Box w="100%">
+      <HStack justify="space-between" mb={1}>
+        <Text fontSize="xs" color="gray.500">Momentum</Text>
+        <Text fontSize="xs" fontWeight="medium" color="gray.500">{score.toFixed(0)}</Text>
+      </HStack>
+      <Box w="100%" h="4px" bg="gray.100" borderRadius="full" overflow="hidden">
+        <Box w={`${pct}%`} h="100%" bg={color} borderRadius="full" />
+      </Box>
+    </Box>
+  );
+}
 
 function InitiativeCard({
   initiative,
@@ -351,6 +415,7 @@ function InitiativeCard({
               "{initiative.rolling_summary.where_we_are_now}"
             </Text>
           )}
+          <MomentumBar score={initiative.momentum_score} />
           <Text fontSize="xs" color={mutedText}>
             {initiative.last_session_at
               ? `Last session: ${new Date(initiative.last_session_at).toLocaleDateString()}`
@@ -359,6 +424,57 @@ function InitiativeCard({
         </VStack>
       </Card.Body>
     </Card.Root>
+  );
+}
+
+// ============================================================================
+// InitiativeLandscapeView (v0 — simplified visual mode)
+// ============================================================================
+
+function InitiativeLandscapeView({
+  initiatives,
+  onOpen,
+}: {
+  initiatives: InitiativeResponse[];
+  onOpen: (id: string) => void;
+}) {
+  const mutedText = useColorModeValue("gray.600", "gray.400");
+  const maxScore = Math.max(...initiatives.map((i) => i.momentum_score), 1);
+
+  return (
+    <VStack align="stretch" gap={2}>
+      {initiatives.map((ini) => {
+        const pct = Math.max(4, (ini.momentum_score / maxScore) * 100);
+        const color = STATUS_COLORS[ini.status] || "gray";
+        return (
+          <Box
+            key={ini.id}
+            cursor="pointer"
+            onClick={() => onOpen(ini.id)}
+            _hover={{ opacity: 0.85 }}
+          >
+            <HStack gap={3} mb={1}>
+              <Badge colorPalette={color} size="sm" minW="80px" textAlign="center">
+                {ini.status}
+              </Badge>
+              <Text fontSize="sm" fontWeight="medium" flex={1} lineClamp={1}>
+                {ini.title}
+              </Text>
+              <Text fontSize="xs" color={mutedText}>
+                {ini.momentum_score.toFixed(0)}
+              </Text>
+            </HStack>
+            <Box
+              w={`${pct}%`}
+              h="6px"
+              bg={`${color}.400`}
+              borderRadius="full"
+              transition="width 0.3s ease"
+            />
+          </Box>
+        );
+      })}
+    </VStack>
   );
 }
 

@@ -21,19 +21,32 @@ export interface SessionDistillation {
   [key: string]: unknown;
 }
 
+export interface ThreadSummary {
+  label: string;
+  current_direction: string;
+  key_findings: string[];
+  open_questions: string[];
+  last_updated: string;
+}
+
 export interface InitiativeResponse {
   id: string;
   title: string;
   direction: string;
-  status: 'active' | 'simmering' | 'paused' | 'resolved';
+  status: 'active' | 'simmering' | 'paused' | 'resolved' | 'archived';
+  status_note: string;
   rolling_summary: RollingSummary | null;
   rolling_summary_updated_at: string | null;
   rolling_summary_updated_by: string | null;
-  last_session_at: string | null;
-  thread_label: string | null;
+  thread_summaries: Record<string, ThreadSummary>;
+  seeded_from: string | null;
+  parent: string | null;
+  thread_label: string;
   created_by: string | null;
   created_by_username: string | null;
   thread_count: number;
+  momentum_score: number;
+  last_session_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +55,7 @@ export interface InitiativeCreatePayload {
   title: string;
   direction?: string;
   status?: InitiativeResponse['status'];
+  status_note?: string;
 }
 
 export interface RawTranscriptTurn {

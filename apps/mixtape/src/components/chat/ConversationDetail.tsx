@@ -146,7 +146,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         if (process.env.NODE_ENV === 'development') {
           console.log(`ConversationDetail: Got ${Array.isArray(messagesData) ? messagesData.length : 0} messages for ${slug}`);
         }
-        setMessages(Array.isArray(messagesData) ? messagesData : []);
+        setMessages(Array.isArray(messagesData) ? [...messagesData].reverse() : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -351,7 +351,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
       // Reload all messages to get updated reactions
       const messagesResponse = await axiosInstance.get(`/api/chat/conversations/${slug}/messages`);
       const messagesData = messagesResponse.data?.results || messagesResponse.data;
-      setMessages(Array.isArray(messagesData) ? messagesData : []);
+      setMessages(Array.isArray(messagesData) ? [...messagesData].reverse() : []);
       // Don't auto-scroll when adding reactions
       setUserScrolledUp(true);
 

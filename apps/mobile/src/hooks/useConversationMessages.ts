@@ -28,7 +28,8 @@ export function useConversationMessages({
       setError(null);
 
       const data = await fetchMessages(conversationId, limit, 0);
-      setMessages(data);
+      // API returns newest-first; reverse so oldest appears at top, newest at bottom
+      setMessages(data.slice().reverse());
       setOffset(data.length);
       setHasMore(data.length >= limit);
     } catch (err) {
@@ -52,8 +53,8 @@ export function useConversationMessages({
       if (data.length === 0) {
         setHasMore(false);
       } else {
-        // Prepend older messages to the list
-        setMessages((prev) => [...data, ...prev]);
+        // API returns newest-first within each page; reverse before prepending older messages
+        setMessages((prev) => [...data.slice().reverse(), ...prev]);
         setOffset((prev) => prev + data.length);
         setHasMore(data.length >= limit);
       }
