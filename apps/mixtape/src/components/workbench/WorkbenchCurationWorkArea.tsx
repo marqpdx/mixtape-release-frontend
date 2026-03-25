@@ -66,6 +66,40 @@ import type {
 } from "@mixtape/api/hooks/workbench/useCurationWorkbench";
 
 // ============================================================================
+// ProseMirror ↔ plain-text helpers
+// ============================================================================
+
+/** ProseMirror doc (or legacy { text } blob) → plain text for the L2 textarea */
+function docToPlainText(doc: unknown): string {
+  if (!doc || typeof doc !== "object") return "";
+  const obj = doc as Record<string, unknown>;
+  // Legacy format written before ProseMirror conversion
+  if (typeof obj.text === "string" && !("type" in obj)) return obj.text;
+  if (obj.type === "text") return (obj.text as string) ?? "";
+  if (obj.type === "hardBreak") return "\n";
+  const children = ((obj.content as unknown[]) ?? []).map(docToPlainText);
+  if (!children.length) return "";
+  return obj.type === "doc" ? children.filter(Boolean).join("\n\n") : children.join("");
+}
+
+/** Plain text (paragraphs split by \n\n, lines by \n) → ProseMirror doc */
+function textToProseMirrorDoc(text: string): Record<string, unknown> {
+  const paras = text.split(/\n\n+/);
+  const content = paras.map(para => {
+    const trimmed = para.trim();
+    if (!trimmed) return { type: "paragraph" };
+    const lines = trimmed.split("\n");
+    const nodes: unknown[] = [];
+    lines.forEach((line, i) => {
+      if (line) nodes.push({ type: "text", text: line });
+      if (i < lines.length - 1) nodes.push({ type: "hardBreak" });
+    });
+    return { type: "paragraph", content: nodes };
+  });
+  return { type: "doc", content };
+}
+
+// ============================================================================
 // Lane layout logic
 // ============================================================================
 
@@ -390,8 +424,7 @@ export default function WorkbenchCurationWorkArea({
   // Sync editable fields when the active item changes
   useEffect(() => {
     setTitleDraft(wb.activeItem?.title ?? "");
-    const rawBody = wb.activeItem?.body_json as { text?: string } | undefined;
-    setBodyText(rawBody?.text ?? "");
+    setBodyText(docToPlainText(wb.activeItem?.body_json));
     setMergeWarning(false);
     setMergeError(null);
     setOrderedMemberships(wb.activeItem?.memberships ?? []);
@@ -421,7 +454,7 @@ export default function WorkbenchCurationWorkArea({
       setSourcePiecesOpen(false);
       setLastMergedMembershipSignature(membershipSignature);
       await wb.autosave(wb.activeItem.id, {
-        body_json: { text: merged },
+        body_json: textToProseMirrorDoc(merged),
         mark_body_editing_started: false,
       });
     } catch (err) {
@@ -430,12 +463,12 @@ export default function WorkbenchCurationWorkArea({
   }, [orderedMemberships, wb]);
 
   const handleMerge = useCallback(() => {
-    if (wb.activeItem?.body_editing_started) {
+    if (wb.activeItem?.body_editing_started && bodyText.trim()) {
       setMergeWarning(true);
     } else {
       void executeMerge();
     }
-  }, [executeMerge, wb.activeItem?.body_editing_started]);
+  }, [bodyText, executeMerge, wb.activeItem?.body_editing_started]);
 
   const handleMembershipDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -869,9 +902,11 @@ export default function WorkbenchCurationWorkArea({
                       onChange={e => setBodyText(e.target.value)}
                       onBlur={() => {
                         if (wb.activeItem) {
-                          const current = (wb.activeItem.body_json as { text?: string } | undefined)?.text ?? "";
+                          const current = docToPlainText(wb.activeItem.body_json);
                           if (bodyText !== current) {
-                            wb.autosave(wb.activeItem.id, { body_json: { text: bodyText } });
+                            wb.autosave(wb.activeItem.id, {
+                              body_json: textToProseMirrorDoc(bodyText),
+                            });
                           }
                         }
                       }}
