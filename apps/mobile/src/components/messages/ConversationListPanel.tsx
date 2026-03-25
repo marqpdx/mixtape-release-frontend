@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -31,8 +32,22 @@ export function ConversationListPanel({
   const { unreadCounts, conversationPreviews, updatePreview } = useChatStore();
   const totalUnreadCount = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
 
+  const [filterInput, setFilterInput] = useState('');
+  const [filterQuery, setFilterQuery] = useState('');
+  const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleFilterChange = (text: string) => {
+    setFilterInput(text);
+    if (filterDebounceRef.current) {
+      clearTimeout(filterDebounceRef.current);
+    }
+    filterDebounceRef.current = setTimeout(() => {
+      setFilterQuery(text.trim().toLowerCase());
+    }, 250);
+  };
+
   const sortedConversations = useMemo(() => {
-    return [...conversations].sort((left, right) => {
+    const sorted = [...conversations].sort((left, right) => {
       const leftSlug = left.slug || (left as any).conversation_slug || left.id || '';
       const rightSlug = right.slug || (right as any).conversation_slug || right.id || '';
 
@@ -56,7 +71,17 @@ export function ConversationListPanel({
         new Date(leftPreviewTimestamp || 0).getTime()
       );
     });
-  }, [conversationPreviews, conversations]);
+
+    if (!filterQuery) return sorted;
+
+    return sorted.filter((conv) => {
+      const slug = conv.slug || (conv as any).conversation_slug || conv.id || '';
+      const title = (conv.title || '').toLowerCase();
+      const participants = (conv.participants || []).join(' ').toLowerCase();
+      const preview = (conversationPreviews[slug]?.text || '').toLowerCase();
+      return title.includes(filterQuery) || participants.includes(filterQuery) || preview.includes(filterQuery);
+    });
+  }, [conversationPreviews, conversations, filterQuery]);
 
   useEffect(() => {
     const missingPreviewConversations = conversations.filter((conversation) => {
@@ -147,6 +172,20 @@ export function ConversationListPanel({
           <Text style={styles.loadingText}>Loading conversations...</Text>
         </View>
       ) : (
+        <>
+        <View style={styles.searchRow}>
+          <Text style={styles.searchIcon}>&#128269;</Text>
+          <TextInput
+            style={styles.searchInput}
+            value={filterInput}
+            onChangeText={handleFilterChange}
+            placeholder="Filter conversations..."
+            placeholderTextColor="#9AABBA"
+            clearButtonMode="while-editing"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
         <FlatList
           data={sortedConversations}
           ListHeaderComponent={
@@ -202,6 +241,7 @@ export function ConversationListPanel({
             sortedConversations.length === 0 ? styles.emptyList : undefined,
           ]}
         />
+        </>
       )}
 
       {onOpenNewChat ? (
@@ -228,6 +268,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5EAF0',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  searchIcon: {
+    fontSize: 16,
+    color: '#6A7785',
+  },
+  searchInput: {
+    flex: 1,
+    height: 36,
+    backgroundColor: '#F0F4F8',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: '#13293D',
   },
   summaryRow: {
     flexDirection: 'row',

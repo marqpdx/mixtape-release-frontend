@@ -8,13 +8,23 @@ import type {
   Piece,
   PieceTypeLabel,
   WorkingItem,
+  WorkingItemMembership,
   WorkingItemSummary,
   WorkingItemStatus,
   GateFailure,
   PromoteResult,
 } from "../../clients/workbench/curationApi";
 
-export type { Piece, PieceTypeLabel, WorkingItem, WorkingItemSummary, WorkingItemStatus, GateFailure, PromoteResult };
+export type {
+  Piece,
+  PieceTypeLabel,
+  WorkingItem,
+  WorkingItemMembership,
+  WorkingItemSummary,
+  WorkingItemStatus,
+  GateFailure,
+  PromoteResult,
+};
 
 interface UseCurationWorkbenchReturn {
   // Pieces (Lane 1)
@@ -39,9 +49,14 @@ interface UseCurationWorkbenchReturn {
   createWorkingItem: (title: string, pieces?: Piece[]) => Promise<WorkingItem>;
   updateWorkingItem: (itemId: string, data: Partial<{ title: string; status: WorkingItemStatus; target_writing_kind: string }>) => Promise<void>;
   deleteWorkingItem: (itemId: string) => Promise<void>;
-  autosave: (itemId: string, data: { body_json?: Record<string, unknown>; title?: string }) => Promise<void>;
+  autosave: (itemId: string, data: {
+    body_json?: Record<string, unknown>;
+    title?: string;
+    mark_body_editing_started?: boolean;
+  }) => Promise<void>;
   addPieceToItem: (itemId: string, piece: Piece) => Promise<void>;
   removePieceFromItem: (itemId: string, membershipId: string) => Promise<void>;
+  reorderMemberships: (itemId: string, membershipIds: string[]) => Promise<void>;
   promoteWorkingItem: (itemId: string, overrideSoftGates?: boolean) => Promise<PromoteResult>;
 
   error: string | null;
@@ -173,12 +188,28 @@ export function useCurationWorkbench(groupSlug: string): UseCurationWorkbenchRet
     if (activeItem?.id === itemId) setActiveItem(null);
   }, [groupSlug, activeItem]);
 
-  const autosave = useCallback(async (itemId: string, data: { body_json?: Record<string, unknown>; title?: string }) => {
-    await curationApi.autosave(groupSlug, itemId, data);
-    if (data.title && activeItem?.id === itemId) {
-      setActiveItem(prev => prev ? { ...prev, title: data.title! } : prev);
-      setWorkingItems(prev => prev.map(w => w.id === itemId ? { ...w, title: data.title! } : w));
+  const autosave = useCallback(async (itemId: string, data: {
+    body_json?: Record<string, unknown>;
+    title?: string;
+    mark_body_editing_started?: boolean;
+  }) => {
+    const res = await curationApi.autosave(groupSlug, itemId, data);
+    if (activeItem?.id === itemId) {
+      setActiveItem(prev => prev ? {
+        ...prev,
+        ...(data.title ? { title: data.title } : {}),
+        ...(data.body_json ? { body_json: data.body_json } : {}),
+        last_saved_at: res.data.last_saved_at,
+        auto_save_count: res.data.auto_save_count,
+        body_editing_started: res.data.body_editing_started,
+        spellcheck_passed: res.data.spellcheck_passed,
+      } : prev);
     }
+    setWorkingItems(prev => prev.map(w => w.id === itemId ? {
+      ...w,
+      ...(data.title ? { title: data.title } : {}),
+      last_saved_at: res.data.last_saved_at,
+    } : w));
   }, [groupSlug, activeItem]);
 
   const addPieceToItem = useCallback(async (itemId: string, piece: Piece) => {
@@ -206,6 +237,14 @@ export function useCurationWorkbench(groupSlug: string): UseCurationWorkbenchRet
     }
   }, [groupSlug, activeItem]);
 
+  const reorderMemberships = useCallback(async (itemId: string, membershipIds: string[]) => {
+    setError(null);
+    const res = await curationApi.reorderPieces(groupSlug, itemId, membershipIds);
+    if (activeItem?.id === itemId) {
+      setActiveItem(prev => prev ? { ...prev, memberships: res.data.memberships } : prev);
+    }
+  }, [groupSlug, activeItem]);
+
   const promoteWorkingItem = useCallback(async (itemId: string, overrideSoftGates = false): Promise<PromoteResult> => {
     setError(null);
     const res = await curationApi.promote(groupSlug, itemId, overrideSoftGates);
@@ -221,7 +260,7 @@ export function useCurationWorkbench(groupSlug: string): UseCurationWorkbenchRet
     workingItems, workingItemsLoading, workingItemsError, loadWorkingItems,
     activeItem, activeItemLoading, openWorkingItem, closeWorkingItem,
     createWorkingItem, updateWorkingItem, deleteWorkingItem,
-    autosave, addPieceToItem, removePieceFromItem, promoteWorkingItem,
+    autosave, addPieceToItem, removePieceFromItem, reorderMemberships, promoteWorkingItem,
     error, clearError,
   };
 }

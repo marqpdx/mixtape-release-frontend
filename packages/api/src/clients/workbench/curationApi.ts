@@ -87,6 +87,14 @@ export interface GateFailure {
   hard: boolean;
 }
 
+export interface WorkingItemAutosaveResponse {
+  id: string;
+  last_saved_at: string;
+  auto_save_count: number;
+  body_editing_started: boolean;
+  spellcheck_passed: boolean;
+}
+
 // ============================================================================
 // API calls
 // ============================================================================
@@ -131,8 +139,9 @@ export const curationApi = {
   autosave: (groupSlug: string, itemId: string, data: {
     body_json?: Record<string, unknown>;
     title?: string;
+    mark_body_editing_started?: boolean;
   }) =>
-    axiosInstance.patch(`${base(groupSlug)}/working-items/${itemId}/autosave`, data),
+    axiosInstance.patch<WorkingItemAutosaveResponse>(`${base(groupSlug)}/working-items/${itemId}/autosave`, data),
 
   // -- Membership --
   addPiece: (groupSlug: string, itemId: string, data: {
@@ -146,6 +155,12 @@ export const curationApi = {
   removePiece: (groupSlug: string, itemId: string, membershipId: string) =>
     axiosInstance.delete(
       `${base(groupSlug)}/working-items/${itemId}/pieces/${membershipId}`
+    ),
+
+  reorderPieces: (groupSlug: string, itemId: string, membershipIds: string[]) =>
+    axiosInstance.post<{ memberships: WorkingItemMembership[] }>(
+      `${base(groupSlug)}/working-items/${itemId}/pieces/reorder`,
+      { membership_ids: membershipIds }
     ),
 
   // -- Promotion --

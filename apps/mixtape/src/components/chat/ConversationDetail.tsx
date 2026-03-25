@@ -14,10 +14,10 @@ import {
   Menu
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { IconMoodSmile, IconArrowDown } from "@tabler/icons-react";
+import { IconMoodSmile, IconArrowDown, IconSearch } from "@tabler/icons-react";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
@@ -93,6 +93,8 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionSuggestion[]>([]);
   void typingUsers;
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAckRef = useRef<{ slug: string; lastMessageId?: string } | null>(null);
 
@@ -101,8 +103,28 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
 
   const { setActiveConversationId, resetUnread } = useChatUnread();
 
-  const safeMessages = Array.isArray(messages) ? messages : [];
+  const safeMessages = useMemo(() => (
+    Array.isArray(messages) ? messages : []
+  ), [messages]);
   const lastMessageId = safeMessages.length ? safeMessages[safeMessages.length - 1].id : undefined;
+  const filteredMessages = useMemo(() => {
+    if (!searchQuery.trim()) return safeMessages;
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return safeMessages.filter((message) => {
+      const sender = message.sender.username.toLowerCase();
+      const text = message.text.toLowerCase();
+      return sender.includes(normalizedQuery) || text.includes(normalizedQuery);
+    });
+  }, [safeMessages, searchQuery]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
 
   useEffect(() => {
     // emit only if: we have a slug + (no previous ack OR different slug OR newer messageId)
@@ -440,6 +462,26 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         </Button>
       </Flex>
 
+      {safeMessages.length > 0 && (
+        <HStack
+          gap={2}
+          px={3}
+          py={2}
+          border="1px solid"
+          borderColor="border.default"
+          borderRadius="md"
+          bg="bg.surface"
+        >
+          <IconSearch size={16} />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search this conversation..."
+            variant="subtle"
+          />
+        </HStack>
+      )}
+
       {/* Messages Container */}
       <Box
         ref={messagesContainerRef}
@@ -458,13 +500,17 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
           setUserScrolledUp(!isAtBottom);
         }}
       >
-        {messages.length === 0 ? (
+        {safeMessages.length === 0 ? (
           <Text color="text.secondary" textAlign="center" py={8}>
             No messages yet
           </Text>
+        ) : filteredMessages.length === 0 ? (
+          <Text color="text.secondary" textAlign="center" py={8}>
+            No messages match your search.
+          </Text>
         ) : (
           <VStack align="stretch" gap={3}>
-            {safeMessages.map((msg, index) => {
+            {filteredMessages.map((msg, index) => {
               const isSelf = msg.sender.username === identity?.username;
               return (
                 <Box key={`${msg.id}-${index}`}>

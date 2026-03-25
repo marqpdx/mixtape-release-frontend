@@ -91,8 +91,11 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // basePath: "/app" moves public/ to /app/*, but browsers request /favicon.ico at root.
-    // Next.js requires an absolute URL for rewrites outside basePath.
-    const selfUrl = process.env.NEXT_PUBLIC_SITE_URL || `http://localhost:${process.env.PORT || 3011}`;
+    // Next requires an absolute destination when rewriting outside basePath.
+    // Pin local dev to the Mixtape app port so it doesn't accidentally proxy to another app.
+    const selfUrl = process.env.NEXT_PUBLIC_SITE_URL || (isProd
+      ? "https://www.crossroads.place"
+      : "http://127.0.0.1:3011");
     return [
       {
         source: "/favicon.ico",

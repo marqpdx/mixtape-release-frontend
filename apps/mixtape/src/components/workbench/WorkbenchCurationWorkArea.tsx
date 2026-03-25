@@ -8,20 +8,38 @@
 // Click a lane header to focus it (85% width). Click again or click another lane to refocus.
 // Default layout: 25/25/25/25.
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Alert,
   Badge,
   Box,
   Button,
   Card,
-  Heading,
+  Collapsible,
   HStack,
   Input,
   Separator,
   Spinner,
   Text,
+  Textarea,
   VStack,
 } from "@chakra-ui/react";
 import * as writingApi from "@mixtape/api/clients/writing/writingApi";
@@ -31,6 +49,7 @@ import {
   IconCheck,
   IconCirclePlus,
   IconEdit,
+  IconGripVertical,
   IconInbox,
   IconPlus,
   IconSend,
@@ -39,7 +58,12 @@ import {
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useCurationWorkbench } from "@mixtape/api/hooks/workbench/useCurationWorkbench";
-import type { Piece, WorkingItemSummary, GateFailure } from "@mixtape/api/hooks/workbench/useCurationWorkbench";
+import type {
+  Piece,
+  WorkingItemSummary,
+  GateFailure,
+  WorkingItemMembership,
+} from "@mixtape/api/hooks/workbench/useCurationWorkbench";
 
 // ============================================================================
 // Lane layout logic
@@ -125,15 +149,23 @@ function PieceCard({
   onSelect,
   onAddToItem,
   hasActiveItem,
+  isInActiveItem,
 }: {
   piece: Piece;
   selected: boolean;
   onSelect: () => void;
   onAddToItem: () => void;
   hasActiveItem: boolean;
+  isInActiveItem: boolean;
 }) {
-  const borderColor = useColorModeValue(selected ? "blue.400" : "gray.200", selected ? "blue.400" : "gray.600");
-  const bg = useColorModeValue(selected ? "blue.50" : "white", selected ? "blue.900" : "gray.800");
+  const borderColor = useColorModeValue(
+    isInActiveItem ? "green.300" : selected ? "blue.400" : "gray.200",
+    isInActiveItem ? "green.600" : selected ? "blue.400" : "gray.600",
+  );
+  const bg = useColorModeValue(
+    isInActiveItem ? "green.50" : selected ? "blue.50" : "white",
+    isInActiveItem ? "green.950" : selected ? "blue.900" : "gray.800",
+  );
 
   return (
     <Card.Root
@@ -149,7 +181,11 @@ function PieceCard({
           <Badge colorPalette={TYPE_COLOURS[piece.type_label] || "gray"} size="xs">
             {TYPE_LABELS[piece.type_label] || piece.type_label}
           </Badge>
-          {piece.working_item_references.length > 0 && (
+          {isInActiveItem ? (
+            <Badge colorPalette="green" size="xs" variant="subtle">
+              <IconCheck size={10} /> In WI
+            </Badge>
+          ) : piece.working_item_references.length > 0 && (
             <Badge colorPalette="gray" size="xs" variant="outline">
               in {piece.working_item_references.length} item{piece.working_item_references.length > 1 ? "s" : ""}
             </Badge>
@@ -161,7 +197,7 @@ function PieceCard({
         <Text fontSize="xs" color="gray.500" lineClamp={2}>
           {piece.excerpt || "(no content)"}
         </Text>
-        {hasActiveItem && (
+        {hasActiveItem && !isInActiveItem && (
           <Button
             size="xs"
             variant="ghost"
@@ -178,14 +214,82 @@ function PieceCard({
   );
 }
 
+function SortableMembershipRow({
+  membership,
+  borderColor,
+  onRemove,
+}: {
+  membership: WorkingItemMembership;
+  borderColor: string;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: membership.id,
+    disabled: false,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.65 : 1,
+  };
+
+  return (
+    <HStack
+      ref={setNodeRef}
+      style={style}
+      gap={2}
+      p={1}
+      borderRadius="sm"
+      borderWidth="1px"
+      borderColor={isDragging ? "blue.300" : borderColor}
+      bg={isDragging ? "blue.50" : undefined}
+    >
+      <Box
+        {...attributes}
+        {...listeners}
+        cursor="grab"
+        color="gray.400"
+        _hover={{ color: "gray.600" }}
+        _active={{ cursor: "grabbing" }}
+      >
+        <IconGripVertical size={14} />
+      </Box>
+      <Badge colorPalette={TYPE_COLOURS[membership.type_label] || "gray"} size="xs">
+        {TYPE_LABELS[membership.type_label] || membership.type_label}
+      </Badge>
+      <Text fontSize="xs" flex={1} lineClamp={1} color="gray.600">
+        {membership.content_snapshot.slice(0, 60) || "(empty)"}
+      </Text>
+      <Button
+        size="xs"
+        variant="ghost"
+        colorPalette="red"
+        onClick={onRemove}
+      >
+        <IconX size={12} />
+      </Button>
+    </HStack>
+  );
+}
+
 function WorkingItemCard({
   item,
   active,
   onClick,
+  onDoubleClick,
 }: {
   item: WorkingItemSummary;
   active: boolean;
   onClick: () => void;
+  onDoubleClick: () => void;
 }) {
   const bg = useColorModeValue(active ? "blue.50" : "white", active ? "blue.900" : "gray.800");
   const borderColor = useColorModeValue(active ? "blue.400" : "gray.200", active ? "blue.400" : "gray.600");
@@ -206,6 +310,7 @@ function WorkingItemCard({
       bg={bg}
       cursor="pointer"
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
     >
       <Card.Body p={3} gap={1}>
         <HStack justify="space-between">
@@ -266,6 +371,105 @@ export default function WorkbenchCurationWorkArea({
   const [gateFailures, setGateFailures] = useState<GateFailure[]>([]);
   const [promoteSuccess, setPromoteSuccess] = useState<string | null>(null);
   const [activeDraftPieceId, setActiveDraftPieceId] = useState<string | null>(null);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [bodyText, setBodyText] = useState("");
+  const [mergeWarning, setMergeWarning] = useState(false);
+  const [mergeError, setMergeError] = useState<string | null>(null);
+  const [orderedMemberships, setOrderedMemberships] = useState<WorkingItemMembership[]>([]);
+  const [lastMergedMembershipSignature, setLastMergedMembershipSignature] = useState<string | null>(null);
+  const [sourcePiecesOpen, setSourcePiecesOpen] = useState(true);
+  const membershipSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  // Sync editable fields when the active item changes
+  useEffect(() => {
+    setTitleDraft(wb.activeItem?.title ?? "");
+    const rawBody = wb.activeItem?.body_json as { text?: string } | undefined;
+    setBodyText(rawBody?.text ?? "");
+    setMergeWarning(false);
+    setMergeError(null);
+    setOrderedMemberships(wb.activeItem?.memberships ?? []);
+    setLastMergedMembershipSignature(null);
+    setSourcePiecesOpen(true);
+  }, [wb.activeItem?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setOrderedMemberships(wb.activeItem?.memberships ?? []);
+  }, [wb.activeItem?.memberships]);
+
+  const executeMerge = useCallback(async () => {
+    if (!wb.activeItem) return;
+    setMergeError(null);
+    const membershipSignature = orderedMemberships.map((membership) => membership.id).join(",");
+    try {
+      await wb.reorderMemberships(
+        wb.activeItem.id,
+        orderedMemberships.map((membership) => membership.id),
+      );
+      const merged = orderedMemberships
+        .map(m => m.content_snapshot.trim())
+        .filter(Boolean)
+        .join("\n\n");
+      setBodyText(merged);
+      setMergeWarning(false);
+      setSourcePiecesOpen(false);
+      setLastMergedMembershipSignature(membershipSignature);
+      await wb.autosave(wb.activeItem.id, {
+        body_json: { text: merged },
+        mark_body_editing_started: false,
+      });
+    } catch (err) {
+      setMergeError(err instanceof Error ? err.message : "Failed to merge pieces into body.");
+    }
+  }, [orderedMemberships, wb]);
+
+  const handleMerge = useCallback(() => {
+    if (wb.activeItem?.body_editing_started) {
+      setMergeWarning(true);
+    } else {
+      void executeMerge();
+    }
+  }, [executeMerge, wb.activeItem?.body_editing_started]);
+
+  const handleMembershipDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setOrderedMemberships((prev) => {
+      const oldIndex = prev.findIndex((membership) => membership.id === String(active.id));
+      const newIndex = prev.findIndex((membership) => membership.id === String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  }, []);
+
+  // Set of piece IDs already in the active working item (for L1 indicator)
+  const activeItemPieceIds = useMemo(
+    () => new Set(orderedMemberships.map(m => m.piece_object_id)),
+    [orderedMemberships],
+  );
+
+  const hasReorderedMemberships = useMemo(() => {
+    const sourceMemberships = wb.activeItem?.memberships ?? [];
+    if (sourceMemberships.length !== orderedMemberships.length) return false;
+    return sourceMemberships.some((membership, index) => membership.id !== orderedMemberships[index]?.id);
+  }, [orderedMemberships, wb.activeItem?.memberships]);
+
+  const membershipOrderSignature = useMemo(
+    () => orderedMemberships.map((membership) => membership.id).join(","),
+    [orderedMemberships],
+  );
+
+  const alreadyMergedCurrentOrder = Boolean(
+    lastMergedMembershipSignature &&
+      membershipOrderSignature === lastMergedMembershipSignature,
+  );
 
   // Lane 4 — published placements
   const {
@@ -338,6 +542,7 @@ export default function WorkbenchCurationWorkArea({
 
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const laneBg = useColorModeValue("gray.50", "gray.900");
+  const mergeWarningBg = useColorModeValue("orange.50", "orange.900");
 
   return (
     <Box w="full" h="full" overflow="hidden">
@@ -446,6 +651,7 @@ export default function WorkbenchCurationWorkArea({
                     onSelect={() => togglePieceSelect(piece.id)}
                     onAddToItem={() => wb.activeItem && wb.addPieceToItem(wb.activeItem.id, piece)}
                     hasActiveItem={!!wb.activeItem}
+                    isInActiveItem={activeItemPieceIds.has(piece.id)}
                   />
                 ))}
               </VStack>
@@ -510,6 +716,7 @@ export default function WorkbenchCurationWorkArea({
                     item={item}
                     active={wb.activeItem?.id === item.id}
                     onClick={() => wb.openWorkingItem(item.id)}
+                    onDoubleClick={() => setFocusedLane(2)}
                   />
                 ))}
               </VStack>
@@ -522,9 +729,22 @@ export default function WorkbenchCurationWorkArea({
               )}
               {wb.activeItem && !wb.activeItemLoading && (
                 <VStack flex={1} overflow="hidden" p={3} gap={3} align="stretch">
-                  <HStack justify="space-between">
-                    <Heading size="sm" lineClamp={1}>{wb.activeItem.title || "(untitled)"}</Heading>
-                    <Button size="xs" variant="ghost" onClick={wb.closeWorkingItem}>
+                  <HStack justify="space-between" gap={2}>
+                    <Input
+                      size="sm"
+                      fontWeight="semibold"
+                      placeholder="Working item title…"
+                      value={titleDraft}
+                      onChange={e => setTitleDraft(e.target.value)}
+                      onBlur={() => {
+                        if (wb.activeItem && titleDraft !== wb.activeItem.title) {
+                          wb.autosave(wb.activeItem.id, { title: titleDraft });
+                        }
+                      }}
+                      disabled={wb.activeItem.status === "promoted"}
+                      flex={1}
+                    />
+                    <Button size="xs" variant="ghost" flexShrink={0} onClick={wb.closeWorkingItem}>
                       <IconX size={14} />
                     </Button>
                   </HStack>
@@ -547,31 +767,116 @@ export default function WorkbenchCurationWorkArea({
 
                   {/* Source pieces */}
                   <Box>
-                    <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={1}>
-                      SOURCE PIECES ({wb.activeItem.memberships.length})
-                    </Text>
-                    <VStack gap={1} align="stretch">
-                      {wb.activeItem.memberships.map(m => (
-                        <HStack key={m.id} gap={2} p={1} borderRadius="sm" borderWidth="1px" borderColor={borderColor}>
-                          <Badge colorPalette={TYPE_COLOURS[m.type_label] || "gray"} size="xs">
-                            {TYPE_LABELS[m.type_label] || m.type_label}
-                          </Badge>
-                          <Text fontSize="xs" flex={1} lineClamp={1} color="gray.600">
-                            {m.content_snapshot.slice(0, 60) || "(empty)"}
+                    <Collapsible.Root
+                      open={sourcePiecesOpen}
+                      onOpenChange={({ open }) => setSourcePiecesOpen(open)}
+                    >
+                      <Collapsible.Trigger asChild>
+                        <Button variant="outline" size="xs" width="full" justifyContent="space-between" mb={1}>
+                          <Text fontSize="xs" fontWeight="semibold" color="gray.500">
+                            SOURCE PIECES ({orderedMemberships.length})
                           </Text>
-                          {!wb.activeItem!.body_editing_started && (
-                            <Button
-                              size="xs"
-                              variant="ghost"
-                              colorPalette="red"
-                              onClick={() => wb.removePieceFromItem(wb.activeItem!.id, m.id)}
-                            >
-                              <IconX size={12} />
-                            </Button>
+                          <Collapsible.Indicator />
+                        </Button>
+                      </Collapsible.Trigger>
+                      <Collapsible.Content>
+                        <Box pt={1}>
+                          {mergeError && (
+                            <Alert.Root status="error" mb={2}>
+                              <Alert.Indicator />
+                              <Alert.Title>{mergeError}</Alert.Title>
+                            </Alert.Root>
                           )}
-                        </HStack>
-                      ))}
-                    </VStack>
+                          <DndContext
+                            sensors={membershipSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleMembershipDragEnd}
+                          >
+                            <SortableContext
+                              items={orderedMemberships.map((membership) => membership.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <VStack gap={1} align="stretch">
+                                {orderedMemberships.map((membership) => (
+                                  <SortableMembershipRow
+                                    key={membership.id}
+                                    membership={membership}
+                                    borderColor={borderColor}
+                                    onRemove={() => wb.removePieceFromItem(wb.activeItem!.id, membership.id)}
+                                  />
+                                ))}
+                              </VStack>
+                            </SortableContext>
+                          </DndContext>
+                        </Box>
+                      </Collapsible.Content>
+                    </Collapsible.Root>
+                  </Box>
+
+                  {/* Merge action */}
+                  {orderedMemberships.length > 0 && wb.activeItem.status !== "promoted" && (
+                    <Box>
+                      {mergeWarning ? (
+                        <Box
+                          p={2}
+                          borderRadius="sm"
+                          borderWidth="1px"
+                          borderColor="orange.300"
+                          bg={mergeWarningBg}
+                        >
+                          <Text fontSize="xs" color="orange.700" mb={2}>
+                            This will overwrite your current body copy. Continue?
+                          </Text>
+                          <HStack gap={2}>
+                            <Button size="xs" colorPalette="orange" onClick={() => void executeMerge()}>
+                              Yes, overwrite
+                            </Button>
+                            <Button size="xs" variant="ghost" onClick={() => setMergeWarning(false)}>
+                              Cancel
+                            </Button>
+                          </HStack>
+                        </Box>
+                      ) : (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          colorPalette="gray"
+                          w="full"
+                          onClick={handleMerge}
+                          disabled={alreadyMergedCurrentOrder}
+                        >
+                          {alreadyMergedCurrentOrder
+                            ? "Already merged"
+                            : hasReorderedMemberships
+                            ? "For new order to take effect, Merge pieces into body."
+                            : "Merge pieces into body"}
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Body editor */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={1}>
+                      BODY
+                    </Text>
+                    <Textarea
+                      size="sm"
+                      placeholder="Assemble your working copy here…"
+                      value={bodyText}
+                      rows={6}
+                      resize="vertical"
+                      onChange={e => setBodyText(e.target.value)}
+                      onBlur={() => {
+                        if (wb.activeItem) {
+                          const current = (wb.activeItem.body_json as { text?: string } | undefined)?.text ?? "";
+                          if (bodyText !== current) {
+                            wb.autosave(wb.activeItem.id, { body_json: { text: bodyText } });
+                          }
+                        }
+                      }}
+                      disabled={wb.activeItem.status === "promoted"}
+                    />
                   </Box>
 
                   <Separator />
