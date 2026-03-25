@@ -9,3 +9,4 @@ export {
   useValidateMillDraft,
 } from './useMillDraftMutations';
 export { useContentProfiles, useContentProfile } from './useContentProfiles';
+export { useCurationWorkbench } from './useCurationWorkbench';

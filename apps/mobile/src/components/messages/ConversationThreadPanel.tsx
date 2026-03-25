@@ -60,6 +60,15 @@ export function ConversationThreadPanel({
     refresh,
   } = useConversationMessages({ conversationId });
 
+  // Scroll to bottom after initial history loads
+  useEffect(() => {
+    if (!loading && historyMessages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      }, 50);
+    }
+  }, [loading]);
+
   const allMessages = useMemo(() => {
     const messageMap = new Map<string, UnifiedMessage>();
     historyMessages.forEach((msg) => {

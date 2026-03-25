@@ -62,14 +62,7 @@ export function ConversationListPanel({
     const missingPreviewConversations = conversations.filter((conversation) => {
       const conversationSlug =
         conversation.slug || (conversation as any).conversation_slug || conversation.id || '';
-      const preview = conversationPreviews[conversationSlug];
-      const lastMessage = (conversation as any).last_message;
-      const hasConversationPreview =
-        typeof lastMessage === 'string'
-          ? Boolean(lastMessage.trim())
-          : Boolean(lastMessage?.text);
-
-      return conversationSlug && !preview && !hasConversationPreview;
+      return conversationSlug && !conversationPreviews[conversationSlug];
     });
 
     if (missingPreviewConversations.length === 0) {
@@ -89,7 +82,8 @@ export function ConversationListPanel({
             return;
           }
 
-          const latestMessage = messages[messages.length - 1];
+          // API returns newest-first; index 0 is the most recent message
+          const latestMessage = messages[0];
           updatePreview(
             conversationSlug,
             latestMessage.text,
@@ -203,7 +197,10 @@ export function ConversationListPanel({
               tintColor="#0E5AA7"
             />
           }
-          contentContainerStyle={sortedConversations.length === 0 ? styles.emptyList : undefined}
+          contentContainerStyle={[
+            styles.listContent,
+            sortedConversations.length === 0 ? styles.emptyList : undefined,
+          ]}
         />
       )}
 
@@ -236,11 +233,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5EAF0',
+  },
+  listContent: {
+    paddingHorizontal: 18,
+    paddingBottom: 16,
   },
   summaryTitle: {
     fontSize: 14,

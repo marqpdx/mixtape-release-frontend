@@ -70,7 +70,10 @@ export default function GroupConversationsScreen({ route, navigation }: GroupCon
               tintColor="#007AFF"
             />
           }
-          contentContainerStyle={conversations.length === 0 ? styles.emptyList : undefined}
+          contentContainerStyle={[
+            styles.listContent,
+            conversations.length === 0 ? styles.emptyList : undefined,
+          ]}
         />
       )}
 
@@ -134,6 +137,10 @@ const styles = StyleSheet.create({
   },
   emptyList: {
     flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
   fab: {
     position: 'absolute',

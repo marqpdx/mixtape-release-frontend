@@ -172,7 +172,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
   groupCard: {
     backgroundColor: '#fff',

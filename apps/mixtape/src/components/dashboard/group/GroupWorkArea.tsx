@@ -40,6 +40,7 @@ import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
 import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
 import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
+import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -341,6 +342,19 @@ export default function GroupWorkArea({
     return (
       <WorkAreaWrapper>
         <InitiativesWorkArea groupSlug={group.slug} />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Curation Workbench
+  if (section === "workbench-curation") {
+    return (
+      <WorkAreaWrapper>
+        <WorkbenchCurationWorkArea
+          groupSlug={group.slug}
+          groupId={group.id}
+          groupTitle={group.title}
+        />
       </WorkAreaWrapper>
     );
   }

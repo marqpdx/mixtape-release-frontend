@@ -173,6 +173,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Group AI-assisted inquiry initiatives',
   },
 
+  // Curation Workbench — admin only for v0
+  'workbench-curation': {
+    requiredRole: 'admin',
+    description: 'Curation workbench — assemble raw pieces into working items and promote to drafts',
+  },
+
 
 
       //   { key: "collections-landing", label: "Browse Collections" },

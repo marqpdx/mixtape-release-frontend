@@ -127,12 +127,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 10,
   },
   containerUnread: {
     backgroundColor: '#F5FAFF',
   },
   content: {
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
   },
   header: {
     flexDirection: 'row',

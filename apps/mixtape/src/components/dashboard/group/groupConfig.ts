@@ -116,6 +116,14 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    key: "workbench",
+    label: "Workbench",
+    icon: "✂️",
+    subItems: [
+      { key: "workbench-curation", label: "Curation" },
+    ]
+  },
+  {
     key: "settings",
     label: "Settings",
     icon: "⚙️",
