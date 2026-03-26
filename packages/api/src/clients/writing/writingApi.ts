@@ -4,7 +4,7 @@
  * Pure API calls for writing operations (working copies, publishing, placement)
  */
 
-import { PublishAndPlacePayload, FlattenedPlacement, WritingWorkingCopy, DocxPreviewResult, DocxImportPayload, DocxImportResult } from "@mixtape/core/types/writingTypes";
+import { PublishAndPlacePayload, FlattenedPlacement, WorkingDocument, DocxPreviewResult, DocxImportPayload, DocxImportResult } from "@mixtape/core/types/writingTypes";
 import type { WritingPiece } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "../../lib/utils";
@@ -80,7 +80,7 @@ export async function fetchDrafts(
   sponsorType: 'group' | 'member',
   sponsorSlug: string,
   filter?: 'all' | 'solo' | 'collab'
-): Promise<WritingWorkingCopy[]> {
+): Promise<WorkingDocument[]> {
   // Backend expects: my | shared | all
   const backendFilter =
     filter === 'solo' ? 'my' :
@@ -94,7 +94,7 @@ export async function fetchDrafts(
       filter: backendFilter,
     },
   });
-  return unwrapListResponse<WritingWorkingCopy>(response.data);
+  return unwrapListResponse<WorkingDocument>(response.data);
 }
 
 /**

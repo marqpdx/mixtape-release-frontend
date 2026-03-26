@@ -14,11 +14,20 @@ import {
   RadioGroup,
   Box,
   Spinner,
+  Textarea,
+  Separator,
+  Link,
 } from '@chakra-ui/react'
 import { useQuery } from '@tanstack/react-query'
 import { toaster } from '@mixtape/core/lib/toaster'
 import { useWritingMutations } from '@hooks/useWriting'
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi'
+import {
+  fetchDistributionSources,
+  distributePiece,
+  type DistributionSource,
+  type ShareRecordResult,
+} from '@mixtape/api/clients/distribution/distributionApi'
 
 interface SimplePublishDialogProps {
   isOpen: boolean
@@ -64,6 +73,12 @@ export function SimplePublishDialog({
   const [postToGroup, setPostToGroup] = useState(false)
   const [pinAsWelcome, setPinAsWelcome] = useState(false)
 
+  // Distribution state
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
+  const [linkedinCopy, setLinkedinCopy] = useState('')
+  const [shareResults, setShareResults] = useState<ShareRecordResult[] | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+
   const { publishPiece } = useWritingMutations(sponsorType, sponsorSlug || 'unknown')
 
   const isMemberSponsor = sponsorType === 'member'
@@ -84,10 +99,28 @@ export function SimplePublishDialog({
     enabled: isOpen && isMemberSponsor,
   })
 
+  const {
+    data: sources = [],
+    isLoading: sourcesLoading,
+  } = useQuery<DistributionSource[]>({
+    queryKey: ['distribution', 'sources', sponsorSlug],
+    queryFn: () => fetchDistributionSources(sponsorType === 'group' ? sponsorSlug : undefined),
+    enabled: isOpen && audience === 'readers',
+  })
+
+  const linkedinShareUrl = shareResults?.find((r) => r.source_kind === 'linkedin')?.channel_response?.linkedin_share_url as string | undefined
+
   const toggleShelf = (shelfId: string, checked: boolean) => {
     setSelectedShelves((prev) => {
       if (checked) return Array.from(new Set([...prev, shelfId]))
       return prev.filter((id) => id !== shelfId)
+    })
+  }
+
+  const toggleSource = (sourceId: string, checked: boolean) => {
+    setSelectedSourceIds((prev) => {
+      if (checked) return Array.from(new Set([...prev, sourceId]))
+      return prev.filter((id) => id !== sourceId)
     })
   }
 
@@ -126,6 +159,7 @@ export function SimplePublishDialog({
       }
     }
 
+    setIsPublishing(true)
     try {
       const destinations = isMemberSponsor
         ? { shelves: selectedShelves }
@@ -157,6 +191,44 @@ export function SimplePublishDialog({
         },
       })
 
+      // Fire distribution channels if any selected
+      if (audience === 'readers' && selectedSourceIds.length > 0) {
+        try {
+          const sourcesConfig = selectedSourceIds.map((sourceId) => {
+            const source = sources.find((s) => s.id === sourceId)
+            const config: Record<string, unknown> = {}
+            if (source?.kind === 'linkedin' && linkedinCopy) {
+              config.post_copy = linkedinCopy
+            }
+            if (source?.kind === 'activity_stream' && sponsorSlug) {
+              const group = sources.find((s) => s.id === sourceId)
+              // group_id comes from the source's own group association on the backend
+              void group
+            }
+            return { source_id: sourceId, config }
+          })
+
+          const distributeResult = await distributePiece(piece.id, sourcesConfig)
+          setShareResults(distributeResult.results)
+
+          const failed = distributeResult.results.filter((r) => r.status === 'failed')
+          if (failed.length > 0) {
+            toaster.create({
+              title: 'Some channels failed',
+              description: failed.map((r) => `${r.source_label}: ${r.failure_reason}`).join('; '),
+              type: 'warning',
+            })
+          }
+        } catch (distError: unknown) {
+          // Distribution failure is non-fatal — piece is already published
+          toaster.create({
+            title: 'Distribution partially failed',
+            description: getErrorMessage(distError) ?? 'Piece published but some channels could not be reached.',
+            type: 'warning',
+          })
+        }
+      }
+
       toaster.create({
         title: 'Published',
         description:
@@ -167,14 +239,63 @@ export function SimplePublishDialog({
       })
 
       onPublished?.(response.piece)
-      onClose()
+
+      // If LinkedIn share URL is available, show it before closing
+      if (!linkedinShareUrl) {
+        onClose()
+      }
     } catch (error: unknown) {
       toaster.create({
         title: 'Publish failed',
         description: getErrorMessage(error),
         type: 'error',
       })
+    } finally {
+      setIsPublishing(false)
     }
+  }
+
+  // Post-publish state: show LinkedIn share link
+  if (shareResults && linkedinShareUrl) {
+    return (
+      <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content maxW="520px">
+            <Dialog.Header>
+              <Heading size="md">Published</Heading>
+              <Text fontSize="sm" color="gray.500" mt={2}>
+                Your piece is live. Share it now.
+              </Text>
+            </Dialog.Header>
+            <Dialog.Body>
+              <VStack gap={4} align="stretch">
+                <Box borderWidth="1px" borderRadius="md" p={4} bg="green.50">
+                  <Text fontWeight="semibold" fontSize="sm" mb={1}>LinkedIn</Text>
+                  <Text fontSize="sm" color="gray.600" mb={3}>
+                    Your post copy is ready. Click to open LinkedIn and share.
+                  </Text>
+                  <Link
+                    href={linkedinShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button size="sm" colorPalette="blue">
+                      Open LinkedIn →
+                    </Button>
+                  </Link>
+                </Box>
+              </VStack>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <HStack justify="flex-end" w="100%">
+                <Button onClick={onClose}>Done</Button>
+              </HStack>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+    )
   }
 
   return (
@@ -245,7 +366,7 @@ export function SimplePublishDialog({
                             Create your main writing shelf to start sharing with readers.
                           </Text>
                           <Button size="sm" onClick={handleCreateDefaultShelf}>
-                            Create “My Writing” shelf
+                            Create "My Writing" shelf
                           </Button>
                         </Box>
                       )}
@@ -308,7 +429,7 @@ export function SimplePublishDialog({
                               Group noticeboard
                             </Checkbox.Label>
                             <Text fontSize="xs" color="gray.500">
-                              Place this on your group’s noticeboard.
+                              Place this on your group's noticeboard.
                             </Text>
                           </VStack>
                         </HStack>
@@ -330,7 +451,7 @@ export function SimplePublishDialog({
                               Set as welcome pin
                             </Checkbox.Label>
                             <Text fontSize="xs" color="gray.500">
-                              Show this as the group’s welcome note.
+                              Show this as the group's welcome note.
                             </Text>
                           </VStack>
                         </HStack>
@@ -343,13 +464,87 @@ export function SimplePublishDialog({
                   </Text>
                 </VStack>
               )}
+
+              {/* External channels */}
+              {audience === 'readers' && (
+                <>
+                  <Separator />
+                  <VStack gap={3} align="stretch">
+                    <Heading size="sm">Share externally</Heading>
+
+                    {sourcesLoading && (
+                      <HStack gap={2} color="gray.500">
+                        <Spinner size="sm" />
+                        <Text fontSize="sm">Loading channels...</Text>
+                      </HStack>
+                    )}
+
+                    {!sourcesLoading && sources.length === 0 && (
+                      <Text fontSize="sm" color="gray.500">
+                        No external channels configured.
+                      </Text>
+                    )}
+
+                    {!sourcesLoading && sources.length > 0 && (
+                      <VStack gap={3} align="stretch">
+                        {sources.map((source) => {
+                          const checked = selectedSourceIds.includes(source.id)
+                          return (
+                            <VStack key={source.id} align="stretch" gap={2}>
+                              <Checkbox.Root
+                                checked={checked}
+                                onCheckedChange={({ checked: next }: { checked: boolean | string }) =>
+                                  toggleSource(source.id, !!next)
+                                }
+                              >
+                                <Checkbox.HiddenInput />
+                                <HStack align="start" gap={2}>
+                                  <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                  </Checkbox.Control>
+                                  <VStack align="start" gap={0}>
+                                    <Checkbox.Label fontWeight="semibold" fontSize="sm">
+                                      {source.label}
+                                    </Checkbox.Label>
+                                    <Text fontSize="xs" color="gray.500">
+                                      {source.kind === 'activity_stream' && 'Post to the group activity stream.'}
+                                      {source.kind === 'linkedin' && 'Share a link post on LinkedIn.'}
+                                      {source.kind === 'email' && 'Send as a newsletter email.'}
+                                      {source.kind === 'rss' && 'Include in RSS feed.'}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              </Checkbox.Root>
+
+                              {source.kind === 'linkedin' && checked && (
+                                <Box pl={6}>
+                                  <Text fontSize="xs" color="gray.600" mb={1}>
+                                    Post copy (optional)
+                                  </Text>
+                                  <Textarea
+                                    size="sm"
+                                    placeholder="Add a note to accompany the link…"
+                                    value={linkedinCopy}
+                                    onChange={(e) => setLinkedinCopy(e.target.value)}
+                                    rows={3}
+                                  />
+                                </Box>
+                              )}
+                            </VStack>
+                          )
+                        })}
+                      </VStack>
+                    )}
+                  </VStack>
+                </>
+              )}
             </VStack>
           </Dialog.Body>
 
           <Dialog.Footer>
             <HStack justify="space-between" w="100%">
-              <Button variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button colorScheme="green" onClick={handlePublish}>
+              <Button variant="ghost" onClick={onClose} disabled={isPublishing}>Cancel</Button>
+              <Button colorScheme="green" onClick={handlePublish} loading={isPublishing}>
                 Publish
               </Button>
             </HStack>

@@ -41,7 +41,7 @@ import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
 import { useWriting, useWritingMutations } from "@hooks/useWriting";
 import { useGroupWelcomePin, useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
-import { FlattenedPlacement, WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import { FlattenedPlacement, WorkingDocument } from "@mixtape/core/types/writingTypes";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
 import NextLink from "next/link";
@@ -233,14 +233,14 @@ export default function WritingListWrapper({
   );
 
   const handleDraftClick = useCallback(
-    (draft: WritingWorkingCopy) => {
+    (draft: WorkingDocument) => {
       onNavigateToEditor(draft.piece.id);
     },
     [onNavigateToEditor]
   );
 
   const handleDeleteDraft = useCallback(
-    (draft: WritingWorkingCopy) => {
+    (draft: WorkingDocument) => {
       const title = draft.title || "Untitled draft";
       if (!confirm(`Delete "${title}"? This action cannot be undone.`)) return;
       deleteDraft.mutate(draft.id as string);
@@ -279,7 +279,7 @@ export default function WritingListWrapper({
   };
 
   // Enhanced search function for drafts
-  const searchInDraft = (draft: WritingWorkingCopy, searchTerm: string): boolean => {
+  const searchInDraft = (draft: WorkingDocument, searchTerm: string): boolean => {
     if (!searchTerm) return true;
 
     const term = searchTerm.toLowerCase();
@@ -363,7 +363,7 @@ export default function WritingListWrapper({
   );
 
   const getDraftSponsorMeta = useCallback(
-    (draft: WritingWorkingCopy): SponsorMeta => {
+    (draft: WorkingDocument): SponsorMeta => {
       if (sponsor.type === "group") {
         return {
           key: `group:${sponsor.slug}`,
@@ -453,7 +453,7 @@ export default function WritingListWrapper({
     });
 
   const processedDrafts = (Array.isArray(drafts) ? drafts : [])
-    .filter((draft: WritingWorkingCopy) => {
+    .filter((draft: WorkingDocument) => {
       // If both filters are off, show nothing
       if (!showSolo && !showCollab) return false;
 
@@ -464,12 +464,12 @@ export default function WritingListWrapper({
       // Otherwise, apply search filter
       return searchInDraft(draft, searchFilter);
     })
-    .sort((a: WritingWorkingCopy, b: WritingWorkingCopy) => {
+    .sort((a: WorkingDocument, b: WorkingDocument) => {
       return new Date(b.last_saved_at).getTime() - new Date(a.last_saved_at).getTime();
     });
 
   // Custom renderers for drafts
-  const renderDraftTitle = (draft: WritingWorkingCopy) => {
+  const renderDraftTitle = (draft: WorkingDocument) => {
     const displayTitle = draft.title || "Untitled Draft";
     const isCollab = draft.is_collaborative;
     const sponsorMeta = getDraftSponsorMeta(draft);
@@ -534,7 +534,7 @@ export default function WritingListWrapper({
     );
   };
 
-  const renderDraftDescription = (draft: WritingWorkingCopy) => {
+  const renderDraftDescription = (draft: WorkingDocument) => {
     const excerpt = draft.excerpt;
 
     if (!excerpt) {
@@ -571,7 +571,7 @@ export default function WritingListWrapper({
     );
   };
 
-  const renderDraftMetadata = (draft: WritingWorkingCopy) => {
+  const renderDraftMetadata = (draft: WorkingDocument) => {
     const lastSaved = new Date(draft.last_saved_at);
     const autoSaveText =
       draft.auto_save_count > 0 ? `Autosaved ${draft.auto_save_count} times` : "Not yet saved";
@@ -704,7 +704,7 @@ export default function WritingListWrapper({
     };
   }, [filteredPublishedPieces]);
 
-  const getDraftTags = useCallback((draft: WritingWorkingCopy) => {
+  const getDraftTags = useCallback((draft: WorkingDocument) => {
     return (
       (draft as { tags_list?: string[] }).tags_list ||
       ((draft as { piece?: { tags_list?: string[] } }).piece?.tags_list ?? [])
@@ -712,8 +712,8 @@ export default function WritingListWrapper({
   }, []);
 
   const draftTagGroups = useMemo(() => {
-    const groups = new Map<string, WritingWorkingCopy[]>();
-    const untagged: WritingWorkingCopy[] = [];
+    const groups = new Map<string, WorkingDocument[]>();
+    const untagged: WorkingDocument[] = [];
 
     processedDrafts.forEach((draft) => {
       const tags = getDraftTags(draft);
@@ -766,7 +766,7 @@ export default function WritingListWrapper({
   }, [filteredPublishedPieces, getPlacementSponsorMeta]);
 
   const draftWhereGroups = useMemo(() => {
-    const groups = new Map<string, { sponsor: SponsorMeta; items: WritingWorkingCopy[] }>();
+    const groups = new Map<string, { sponsor: SponsorMeta; items: WorkingDocument[] }>();
     processedDrafts.forEach((item) => {
       const sponsorMeta = getDraftSponsorMeta(item);
       if (!groups.has(sponsorMeta.key)) {
@@ -1022,13 +1022,13 @@ export default function WritingListWrapper({
 
         <Tabs.Content value="drafts">
           {groupingMode === "by-list" ? (
-            <UniversalDataTable<WritingWorkingCopy>
+            <UniversalDataTable<WorkingDocument>
               data={listDrafts}
               title=""
               isLoading={draftsLoading}
               error={null}
               showAvatar={true}
-              renderAvatar={(draft: WritingWorkingCopy) => (
+              renderAvatar={(draft: WorkingDocument) => (
                 <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
                   <Avatar.Fallback>
                     {draft.is_collaborative ? (
@@ -1097,13 +1097,13 @@ export default function WritingListWrapper({
                     </Accordion.ItemTrigger>
                     <Accordion.ItemContent>
                       <Box pt={4}>
-                        <UniversalDataTable<WritingWorkingCopy>
+                        <UniversalDataTable<WorkingDocument>
                           data={group.items}
                           title=""
                           isLoading={draftsLoading}
                           error={null}
                           showAvatar={true}
-                          renderAvatar={(draft: WritingWorkingCopy) => (
+                          renderAvatar={(draft: WorkingDocument) => (
                             <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
                               <Avatar.Fallback>
                                 {draft.is_collaborative ? (
@@ -1148,13 +1148,13 @@ export default function WritingListWrapper({
               </Accordion.Root>
               {draftTagGroups.untagged.length > 0 && (
                 <Box mt={6}>
-                  <UniversalDataTable<WritingWorkingCopy>
+                  <UniversalDataTable<WorkingDocument>
                     data={draftTagGroups.untagged}
                     title="Untagged"
                     isLoading={draftsLoading}
                     error={null}
                     showAvatar={true}
-                    renderAvatar={(draft: WritingWorkingCopy) => (
+                    renderAvatar={(draft: WorkingDocument) => (
                       <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
                         <Avatar.Fallback>
                           {draft.is_collaborative ? (
@@ -1215,13 +1215,13 @@ export default function WritingListWrapper({
                     </Accordion.ItemTrigger>
                     <Accordion.ItemContent>
                       <Box pt={4}>
-                        <UniversalDataTable<WritingWorkingCopy>
+                        <UniversalDataTable<WorkingDocument>
                           data={group.items}
                           title=""
                           isLoading={draftsLoading}
                           error={null}
                           showAvatar={true}
-                          renderAvatar={(draft: WritingWorkingCopy) => (
+                          renderAvatar={(draft: WorkingDocument) => (
                             <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
                               <Avatar.Fallback>
                                 {draft.is_collaborative ? (

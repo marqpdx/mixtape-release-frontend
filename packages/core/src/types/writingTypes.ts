@@ -1,6 +1,6 @@
 /**
  * Writing content types for Mixtape
- * Corresponds to WritingPiece, WritingWorkingCopy, WritingVersion, WritingPlacement, WritingComment models
+ * Corresponds to WritingPiece, WorkingDocument, WritingVersion, WritingPlacement, WritingComment models
  */
 
 export type WritingKind = 'post' | 'article' | 'dispatch' | 'forum' | 'announcement' | 'almanac' | 'page' | 'other'
@@ -83,9 +83,9 @@ export interface WritingPiece {
 
 
 /**
- * WritingWorkingCopy - per-user autosave buffer (full version from list endpoint)
+ * WorkingDocument - per-user autosave buffer (full version from list endpoint)
  */
-export interface WritingWorkingCopy {
+export interface WorkingDocument {
   id: string | number
   piece: {
     id: string
@@ -131,9 +131,9 @@ export interface WritingWorkingCopy {
 }
 
 /**
- * WritingWorkingCopyLight - lightweight response from GET /working-copy endpoint
+ * WorkingDocumentLight - lightweight response from GET /working-copy endpoint
  */
-export interface WritingWorkingCopyLight {
+export interface WorkingDocumentLight {
   id: number
   piece: {
     id: string // UUID

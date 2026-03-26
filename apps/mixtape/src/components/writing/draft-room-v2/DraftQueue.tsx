@@ -7,10 +7,10 @@ import { Box, Button, IconButton, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconPlus, IconSparkles } from "@tabler/icons-react";
 import { DraftQueueItem } from "./DraftQueueItem";
-import type { WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import type { WorkingDocument } from "@mixtape/core/types/writingTypes";
 
 interface DraftQueueProps {
-  drafts: WritingWorkingCopy[];
+  drafts: WorkingDocument[];
   isLoading: boolean;
   selectedPieceId: string | null;
   onSelect: (id: string) => void;

@@ -11,7 +11,7 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting, useWritingMutations } from "@mixtape/api/hooks/useWriting";
 import { useWorkSessions } from "@mixtape/api/hooks/worksessions/useWorkSession";
 import type { WorkSession } from "@mixtape/api/clients/worksessions/workSessionApi";
-import type { WritingWorkingCopy } from "@mixtape/core/types/writingTypes";
+import type { WorkingDocument } from "@mixtape/core/types/writingTypes";
 
 // ── Types ──
 
@@ -37,7 +37,7 @@ interface PieceState {
 
 interface UseDraftRoomReturn {
   // Draft list
-  drafts: WritingWorkingCopy[];
+  drafts: WorkingDocument[];
   draftsLoading: boolean;
   refetchDrafts: () => void;
 

@@ -1,6 +1,6 @@
 "use client";
 
-// components/workbench/WorkbenchCurationWorkArea.tsx
+// apps/mixtape/components/workbench/WorkbenchCurationWorkArea.tsx
 //
 // Four-lane curation workbench.
 // Lane 1 — Raw (Pieces)        Lane 2 — Working Set       Lane 3 — Craft      Lane 4 — Published

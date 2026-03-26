@@ -6,9 +6,9 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FlattenedPlacement, WritingWorkingCopy, WritingPiece } from '@mixtape/core/types/writingTypes';
+import { FlattenedPlacement, WorkingDocument, WritingPiece } from '@mixtape/core/types/writingTypes';
 import * as writingApi from '@mixtape/api/clients/writing/writingApi';
-// import type { FlattenedPlacement, WritingWorkingCopy } from '@content/writingTypes';
+// import type { FlattenedPlacement, WorkingDocument } from '@content/writingTypes';
 
 interface SponsorConfig {
   type: 'group' | 'member';
@@ -17,7 +17,7 @@ interface SponsorConfig {
 
 interface UseWritingReturn {
   placements: FlattenedPlacement[];
-  drafts: WritingWorkingCopy[];
+  drafts: WorkingDocument[];
   isLoading: boolean;
   placementsLoading: boolean;
   draftsLoading: boolean;
@@ -117,7 +117,7 @@ export function useWriting(
     isLoading: draftsLoading,
     error: draftsError,
     refetch: refetchDrafts,
-  } = useQuery<WritingWorkingCopy[]>({
+  } = useQuery<WorkingDocument[]>({
     queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter],
     queryFn: () => writingApi.fetchDrafts(sponsorType, sponsorSlug, draftFilter),
     enabled: !!sponsorSlug,

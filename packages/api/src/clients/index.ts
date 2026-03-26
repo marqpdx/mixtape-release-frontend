@@ -27,6 +27,7 @@ export {
   updateMemberProfile,
 } from './member/memberApi'
 export * from './writing/writingApi'
+export * from './distribution/distributionApi'
 export * from './spellbook/spellbookApi'
 export * from './public/publicApi'
 export * from './worksessions/workSessionApi'

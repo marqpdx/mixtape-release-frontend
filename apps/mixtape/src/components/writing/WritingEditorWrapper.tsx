@@ -12,7 +12,7 @@ import { Box, VStack, Text, Spinner } from '@chakra-ui/react';
 import { toaster } from "@mixtape/core/lib/toaster";
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import WriteComposer from '@components/writing/WriteComposer';
-import { WritingKind, WritingPiece, WritingWorkingCopyLight } from '@mixtape/core/types/writingTypes';
+import { WritingKind, WritingPiece, WorkingDocumentLight } from '@mixtape/core/types/writingTypes';
 // import type { WritingPiece, WritingKind } from '@content/writingTypes';
 
 interface SponsorConfig {
@@ -86,7 +86,7 @@ export default function WritingEditorWrapper({
           console.log('📝 Loading existing piece:', pieceId);
 
           const url = `/api/writing/pieces/${pieceId}/working-copy`;
-          const res = await axiosInstance.get<WritingWorkingCopyLight>(url);
+          const res = await axiosInstance.get<WorkingDocumentLight>(url);
           const workingCopy = res.data;
 
           console.log('✅ Working copy loaded:', workingCopy);
