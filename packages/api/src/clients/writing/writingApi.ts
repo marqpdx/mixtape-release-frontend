@@ -4,7 +4,17 @@
  * Pure API calls for writing operations (working copies, publishing, placement)
  */
 
-import { PublishAndPlacePayload, FlattenedPlacement, WorkingDocument, DocxPreviewResult, DocxImportPayload, DocxImportResult } from "@mixtape/core/types/writingTypes";
+import {
+  PublishAndPlacePayload,
+  FlattenedPlacement,
+  WorkingDocument,
+  DocxPreviewResult,
+  DocxImportPayload,
+  DocxImportResult,
+  DocumentImportPreviewResult,
+  DocumentImportConfirmPayload,
+  DocumentImportConfirmResult,
+} from "@mixtape/core/types/writingTypes";
 import type { WritingPiece } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "../../lib/utils";
@@ -33,11 +43,20 @@ export async function publishPiece(pieceId: string, payload: {
   excerpt?: string;
   audience?: 'just_me' | 'readers';
   addressed_to?: 'public' | 'crossroads' | 'self';
+  scheduled_for?: string | null;
   destinations: {
     groups?: string[];
     members?: string[];
     shelves?: string[];
   };
+  group_overrides?: Record<string, {
+    visibility?: string;
+    is_excerpt?: boolean;
+    follow_updates?: boolean;
+    overrides?: Record<string, unknown>;
+    order?: number;
+    is_pinned?: boolean;
+  }>;
   placement_options?: {
     visibility?: 'public' | 'members' | 'unlisted' | 'private';
     is_excerpt?: boolean;
@@ -46,6 +65,14 @@ export async function publishPiece(pieceId: string, payload: {
   };
 }) {
   const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/publish`, payload);
+  return res.data;
+}
+
+/**
+ * Fetch the AI-generated synopsis for a piece
+ */
+export async function fetchPieceSynopsis(pieceId: string): Promise<{ synopsis: string | null }> {
+  const res = await axiosInstance.get(`/api/writing/pieces/${pieceId}/synopsis`);
   return res.data;
 }
 
@@ -110,11 +137,32 @@ export async function fetchPublishedPieces(): Promise<WritingPiece[]> {
 }
 
 /**
- * Fetch a single published piece by slug
+ * Fetch a single published piece by slug (returns WritingPieceDetail with nested series)
  */
 export async function fetchPiece(pieceSlug: string) {
   const response = await axiosInstance.get(`/api/writing/pieces/view/${pieceSlug}`);
   return response.data;
+}
+
+/**
+ * Fetch all published pieces for a group, ordered by series + series_order.
+ * Returns WritingPieceCatalogItem[] (no body_json).
+ */
+export async function fetchGroupWritingCatalog(groupSlug: string) {
+  const response = await axiosInstance.get(`/api/writing/catalog`, {
+    params: { group: groupSlug },
+  });
+  return response.data as import('@mixtape/core/types/writingTypes').WritingPieceCatalogItem[];
+}
+
+/**
+ * Fetch all WritingSeries for a group (for catalog section headers).
+ */
+export async function fetchWritingSeries(groupSlug: string) {
+  const response = await axiosInstance.get(`/api/writing/series`, {
+    params: { group: groupSlug },
+  });
+  return response.data as import('@mixtape/core/types/writingTypes').WritingSeries[];
 }
 
 /**
@@ -141,5 +189,28 @@ export async function previewDocxImport(file: File): Promise<DocxPreviewResult> 
  */
 export async function confirmDocxImport(data: DocxImportPayload): Promise<DocxImportResult> {
   const res = await axiosInstance.post("/api/writing/import/confirm", data);
+  return res.data;
+}
+
+export async function previewDocumentImportBatch(
+  files: File[],
+  data?: { sponsor_type?: string; sponsor_slug?: string; default_writing_kind?: string; default_addressed_to?: string }
+): Promise<DocumentImportPreviewResult> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("files", file));
+  if (data?.sponsor_type) formData.append("sponsor_type", data.sponsor_type);
+  if (data?.sponsor_slug) formData.append("sponsor_slug", data.sponsor_slug);
+  if (data?.default_writing_kind) formData.append("default_writing_kind", data.default_writing_kind);
+  if (data?.default_addressed_to) formData.append("default_addressed_to", data.default_addressed_to);
+  const res = await axiosInstance.post("/api/writing/import/preview-batch", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+export async function confirmDocumentImportBatch(
+  data: DocumentImportConfirmPayload
+): Promise<DocumentImportConfirmResult> {
+  const res = await axiosInstance.post("/api/writing/import/confirm-batch", data);
   return res.data;
 }

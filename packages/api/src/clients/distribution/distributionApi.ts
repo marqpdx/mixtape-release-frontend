@@ -40,9 +40,11 @@ export async function fetchDistributionSources(groupSlug?: string): Promise<Dist
 export async function distributePiece(
   pieceId: string,
   sources_config: SourceConfig[],
+  scheduled_at?: string | null,
 ): Promise<DistributeResponse> {
   const res = await axiosInstance.post(`/api/distribution/pieces/${pieceId}/distribute`, {
     sources_config,
+    ...(scheduled_at ? { scheduled_at } : {}),
   })
   return res.data
 }

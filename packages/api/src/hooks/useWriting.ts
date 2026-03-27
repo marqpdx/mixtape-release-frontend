@@ -235,6 +235,20 @@ export function useWritingPiece(pieceSlug: string | null) {
 }
 
 /**
+ * Fetch all published pieces + series for a group catalog.
+ * Returns pieces already sorted by series.phase_num → series_order.
+ */
+export function useGroupWritingCatalog(groupSlug: string | null) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['writing', 'catalog', groupSlug],
+    queryFn: () => writingApi.fetchGroupWritingCatalog(groupSlug!),
+    enabled: !!groupSlug,
+    staleTime: 2 * 60 * 1000,
+  });
+  return { pieces: data || [], isLoading, error: error as Error | null };
+}
+
+/**
  * Mutations for writing operations
  */
 export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug: string) {
@@ -257,32 +271,7 @@ export function useWritingMutations(sponsorType: 'group' | 'member', sponsorSlug
   const publishPiece = useMutation({
     mutationFn: async ({ pieceId, payload }: {
       pieceId: string;
-      payload: {
-        title?: string;
-        body_json?: any;
-        excerpt?: string;
-        audience?: 'just_me' | 'readers';
-        addressed_to?: 'public' | 'crossroads' | 'self';
-        destinations: {
-          groups?: string[];
-          members?: string[];
-          shelves?: string[];
-        };
-        group_overrides?: Record<string, {
-          visibility?: 'public' | 'members' | 'unlisted' | 'private' | 'scheduled';
-          is_excerpt?: boolean;
-          follow_updates?: boolean;
-          overrides?: Record<string, unknown>;
-          order?: number;
-          is_pinned?: boolean;
-        }>;
-        placement_options?: {
-          visibility?: 'public' | 'members' | 'unlisted' | 'private';
-          is_excerpt?: boolean;
-          follow_updates?: boolean;
-          overrides?: Record<string, unknown>;
-        };
-      }
+      payload: Parameters<typeof writingApi.publishPiece>[1];
     }) => {
       return writingApi.publishPiece(pieceId, payload);
     },

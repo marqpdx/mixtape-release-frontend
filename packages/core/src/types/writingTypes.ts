@@ -16,6 +16,15 @@ export type AddressedTo = 'public' | 'crossroads' | 'self'
 /**
  * Main WritingPiece model
  */
+export interface WritingSeries {
+  id: string
+  title: string
+  slug: string
+  phase_num: number | null
+  subtitle: string | null
+  group: string | null // group UUID
+}
+
 export interface WritingPiece {
   id: string // UUID
   slug: string
@@ -74,6 +83,41 @@ export interface WritingPiece {
   is_announcement?: boolean
   is_canonical_kind?: boolean
   tags_list?: string[]
+}
+
+/** Returned by the detail endpoint (WritingPieceDetailSerializer) */
+export interface WritingPieceDetail {
+  id: string
+  title: string
+  slug: string
+  body_json: Record<string, any>
+  excerpt: string
+  writing_kind: WritingKind
+  enable_outline: boolean
+  author_name: string
+  author_avatar: string | null
+  sponsor_name: string | null
+  published_at: string | null
+  reading_time: number | null
+  view_count: number
+  allow_comments: boolean
+  canonical_url: string | null
+  series: WritingSeries | null
+  series_order: number | null
+}
+
+/** Returned by the catalog endpoint (WritingPieceCatalogSerializer) — no body_json */
+export interface WritingPieceCatalogItem {
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  writing_kind: WritingKind
+  author_name: string
+  published_at: string | null
+  reading_time: number | null
+  series: WritingSeries | null
+  series_order: number | null
 }
 
 
@@ -364,6 +408,86 @@ export interface DocxImportResult {
   piece: WritingPiece;
   outline_nodes_created: number;
   message: string;
+}
+
+export interface DocumentImportPreviewItem {
+  temp_id: string;
+  original_filename: string;
+  file_type: "docx" | "md" | "unknown";
+  file_sha256?: string;
+  title?: string;
+  excerpt?: string;
+  body_json?: Record<string, any>;
+  writing_kind?: string;
+  addressed_to?: string;
+  enable_outline?: boolean;
+  source_url?: string;
+  phase_num?: number | null;
+  series_order?: number | null;
+  frontmatter?: Record<string, unknown>;
+  metadata_notes?: Record<string, unknown>;
+  already_imported?: boolean;
+  existing_import?: {
+    piece_id: string;
+    receipt_id?: string;
+    imported_at: string;
+  } | null;
+  warnings?: string[];
+  error?: string;
+  stats?: {
+    word_count?: number;
+    heading_count?: number;
+    node_counts?: Record<string, number>;
+    comment_count?: number;
+  };
+}
+
+export interface DocumentImportPreviewResult {
+  items: DocumentImportPreviewItem[];
+}
+
+export interface DocumentImportConfirmItem {
+  temp_id: string;
+  file_type: "docx" | "md";
+  file_sha256: string;
+  original_filename: string;
+  title: string;
+  excerpt?: string;
+  body_json: Record<string, any>;
+  writing_kind: string;
+  addressed_to?: string;
+  enable_outline?: boolean;
+  source_url?: string;
+  replace_existing?: boolean;
+  import_notes?: Record<string, unknown>;
+  phase_num?: number | null;
+  series_order?: number | null;
+}
+
+export interface DocumentImportConfirmPayload {
+  sponsor_type: string;
+  sponsor_id?: string;
+  sponsor_slug?: string;
+  series_id?: string;
+  items: DocumentImportConfirmItem[];
+}
+
+export interface DocumentImportConfirmResult {
+  results: Array<{
+    temp_id: string;
+    status: "created" | "replaced" | "skipped_duplicate" | "error";
+    piece?: {
+      id: string;
+      slug: string;
+      status: string;
+      title: string;
+    };
+    working_document?: {
+      id: string;
+    };
+    outline_nodes_created?: number;
+    error?: string;
+  }>;
 }
 
 export interface PublishAndPlacePayload {

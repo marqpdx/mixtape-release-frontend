@@ -238,8 +238,8 @@ export function SimplePublishDialog({
         },
       })
 
-      // Fire distribution channels if any selected (only on immediate publish)
-      if (!isScheduling && audience === 'readers' && selectedSourceIds.length > 0) {
+      // Fire or schedule distribution channels
+      if (audience === 'readers' && selectedSourceIds.length > 0) {
         try {
           const sourcesConfig = selectedSourceIds.map((sourceId) => {
             const source = sources.find((s) => s.id === sourceId)
@@ -250,16 +250,23 @@ export function SimplePublishDialog({
             return { source_id: sourceId, config }
           })
 
-          const distributeResult = await distributePiece(piece.id, sourcesConfig)
-          setShareResults(distributeResult.results)
+          if (isScheduling && scheduledFor) {
+            // Schedule distribution 5 minutes after the piece goes live
+            const distributeAt = new Date(new Date(scheduledFor).getTime() + 5 * 60 * 1000).toISOString()
+            await distributePiece(piece.id, sourcesConfig, distributeAt)
+            // Notification arrives via email when distribution fires
+          } else {
+            const distributeResult = await distributePiece(piece.id, sourcesConfig)
+            setShareResults(distributeResult.results)
 
-          const failed = distributeResult.results.filter((r) => r.status === 'failed')
-          if (failed.length > 0) {
-            toaster.create({
-              title: 'Some channels failed',
-              description: failed.map((r) => `${r.source_label}: ${r.failure_reason}`).join('; '),
-              type: 'warning',
-            })
+            const failed = distributeResult.results.filter((r) => r.status === 'failed')
+            if (failed.length > 0) {
+              toaster.create({
+                title: 'Some channels failed',
+                description: failed.map((r) => `${r.source_label}: ${r.failure_reason}`).join('; '),
+                type: 'warning',
+              })
+            }
           }
         } catch (distError: unknown) {
           toaster.create({
@@ -562,8 +569,8 @@ export function SimplePublishDialog({
                 </VStack>
               )}
 
-              {/* External channels — only shown for immediate publish */}
-              {audience === 'readers' && !isScheduling && (
+              {/* External channels */}
+              {audience === 'readers' && (
                 <>
                   <Separator />
                   <VStack gap={3} align="stretch">
@@ -650,10 +657,10 @@ export function SimplePublishDialog({
                 </>
               )}
 
-              {/* Scheduling note: remind that distribution fires at publish time */}
-              {audience === 'readers' && isScheduling && (
+              {/* Scheduling note */}
+              {audience === 'readers' && isScheduling && selectedSourceIds.length > 0 && (
                 <Text fontSize="xs" color="gray.500">
-                  External sharing (LinkedIn, email) will be available after the piece goes live.
+                  LinkedIn will fire automatically when the piece goes live. You'll get an email with the share link.
                 </Text>
               )}
 
