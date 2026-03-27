@@ -17,11 +17,14 @@ import {
   Textarea,
   Separator,
   Link,
+  Input,
 } from '@chakra-ui/react'
+import { format } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { toaster } from '@mixtape/core/lib/toaster'
 import { useWritingMutations } from '@hooks/useWriting'
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi'
+import * as writingApi from '@mixtape/api/clients/writing/writingApi'
 import {
   fetchDistributionSources,
   distributePiece,
@@ -45,6 +48,7 @@ interface SimplePublishDialogProps {
 
 type DocumentJSON = Record<string, unknown>
 type AudienceChoice = 'just_me' | 'readers'
+type PublishTiming = 'now' | 'later'
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error && typeof error === 'object') {
@@ -53,6 +57,11 @@ const getErrorMessage = (error: unknown): string | undefined => {
   }
   if (error instanceof Error) return error.message
   return undefined
+}
+
+// Returns "YYYY-MM-DDTHH:mm" for the datetime-local input minimum
+function toDatetimeLocalMin(): string {
+  return new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)
 }
 
 export function SimplePublishDialog({
@@ -69,6 +78,8 @@ export function SimplePublishDialog({
   onPublished
 }: SimplePublishDialogProps) {
   const [audience, setAudience] = useState<AudienceChoice>('just_me')
+  const [publishTiming, setPublishTiming] = useState<PublishTiming>('now')
+  const [scheduledFor, setScheduledFor] = useState('')
   const [selectedShelves, setSelectedShelves] = useState<string[]>([])
   const [postToGroup, setPostToGroup] = useState(false)
   const [pinAsWelcome, setPinAsWelcome] = useState(false)
@@ -76,6 +87,7 @@ export function SimplePublishDialog({
   // Distribution state
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
   const [linkedinCopy, setLinkedinCopy] = useState('')
+  const [synopsisLoading, setSynopsisLoading] = useState(false)
   const [shareResults, setShareResults] = useState<ShareRecordResult[] | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
 
@@ -84,6 +96,7 @@ export function SimplePublishDialog({
   const isMemberSponsor = sponsorType === 'member'
   const shouldShowShelves = audience === 'readers' && isMemberSponsor
   const shouldShowGroup = audience === 'readers' && sponsorType === 'group'
+  const isScheduling = publishTiming === 'later'
 
   const {
     data: shelves = [],
@@ -146,7 +159,36 @@ export function SimplePublishDialog({
     }
   }
 
+  const handleLoadSynopsis = async () => {
+    setSynopsisLoading(true)
+    try {
+      const result = await writingApi.fetchPieceSynopsis(piece.id)
+      if (result?.synopsis) {
+        setLinkedinCopy(result.synopsis)
+      } else {
+        toaster.create({
+          title: 'No synopsis available',
+          description: 'Generate a synopsis from the editor first.',
+          type: 'info',
+        })
+      }
+    } catch {
+      toaster.create({ title: 'Could not load synopsis', type: 'error' })
+    } finally {
+      setSynopsisLoading(false)
+    }
+  }
+
   const handlePublish = async () => {
+    if (isScheduling && !scheduledFor) {
+      toaster.create({
+        title: 'Choose a publish date',
+        description: 'Set when this piece should go live.',
+        type: 'warning',
+      })
+      return
+    }
+
     if (audience === 'readers') {
       const hasDestinations = (isMemberSponsor && selectedShelves.length > 0) || (sponsorType === 'group' && postToGroup)
       if (!hasDestinations) {
@@ -176,6 +218,10 @@ export function SimplePublishDialog({
           }
         : undefined
 
+      const scheduledForISO = isScheduling && scheduledFor
+        ? new Date(scheduledFor).toISOString()
+        : undefined
+
       const response = await publishPiece.mutateAsync({
         pieceId: piece.id,
         payload: {
@@ -183,6 +229,7 @@ export function SimplePublishDialog({
           body_json: docJSONRef.current,
           excerpt: excerptRef.current,
           audience,
+          scheduled_for: scheduledForISO ?? null,
           destinations,
           group_overrides: groupOverrides,
           placement_options: {
@@ -191,19 +238,14 @@ export function SimplePublishDialog({
         },
       })
 
-      // Fire distribution channels if any selected
-      if (audience === 'readers' && selectedSourceIds.length > 0) {
+      // Fire distribution channels if any selected (only on immediate publish)
+      if (!isScheduling && audience === 'readers' && selectedSourceIds.length > 0) {
         try {
           const sourcesConfig = selectedSourceIds.map((sourceId) => {
             const source = sources.find((s) => s.id === sourceId)
             const config: Record<string, unknown> = {}
             if (source?.kind === 'linkedin' && linkedinCopy) {
               config.post_copy = linkedinCopy
-            }
-            if (source?.kind === 'activity_stream' && sponsorSlug) {
-              const group = sources.find((s) => s.id === sourceId)
-              // group_id comes from the source's own group association on the backend
-              void group
             }
             return { source_id: sourceId, config }
           })
@@ -220,7 +262,6 @@ export function SimplePublishDialog({
             })
           }
         } catch (distError: unknown) {
-          // Distribution failure is non-fatal — piece is already published
           toaster.create({
             title: 'Distribution partially failed',
             description: getErrorMessage(distError) ?? 'Piece published but some channels could not be reached.',
@@ -229,24 +270,31 @@ export function SimplePublishDialog({
         }
       }
 
-      toaster.create({
-        title: 'Published',
-        description:
-          audience === 'just_me'
-            ? 'This piece is published and visible only to you.'
-            : 'This piece is published and placed where you selected.',
-        type: 'success',
-      })
-
-      onPublished?.(response.piece)
-
-      // If LinkedIn share URL is available, show it before closing
-      if (!linkedinShareUrl) {
+      if (isScheduling && scheduledFor) {
+        toaster.create({
+          title: 'Scheduled',
+          description: `Will publish on ${format(new Date(scheduledFor), "MMM d, yyyy 'at' h:mm a")}.`,
+          type: 'success',
+        })
+        onPublished?.(response.piece)
         onClose()
+      } else {
+        toaster.create({
+          title: 'Published',
+          description:
+            audience === 'just_me'
+              ? 'This piece is published and visible only to you.'
+              : 'This piece is published and placed where you selected.',
+          type: 'success',
+        })
+        onPublished?.(response.piece)
+        if (!linkedinShareUrl) {
+          onClose()
+        }
       }
     } catch (error: unknown) {
       toaster.create({
-        title: 'Publish failed',
+        title: isScheduling ? 'Schedule failed' : 'Publish failed',
         description: getErrorMessage(error),
         type: 'error',
       })
@@ -312,6 +360,8 @@ export function SimplePublishDialog({
 
           <Dialog.Body>
             <VStack gap={6} align="stretch">
+
+              {/* Who is this for? */}
               <VStack gap={3} align="stretch">
                 <Heading size="sm">Who is this for?</Heading>
                 <RadioGroup.Root
@@ -347,6 +397,53 @@ export function SimplePublishDialog({
                 </RadioGroup.Root>
               </VStack>
 
+              {/* When? */}
+              <VStack gap={3} align="stretch">
+                <Heading size="sm">When?</Heading>
+                <RadioGroup.Root
+                  value={publishTiming}
+                  onValueChange={({ value }) => {
+                    setPublishTiming(value as PublishTiming)
+                    if (value === 'now') setScheduledFor('')
+                  }}
+                >
+                  <VStack align="stretch" gap={3}>
+                    <RadioGroup.Item value="now">
+                      <RadioGroup.ItemHiddenInput />
+                      <HStack align="start" gap={3}>
+                        <RadioGroup.ItemIndicator />
+                        <RadioGroup.ItemText fontWeight="semibold">Publish now</RadioGroup.ItemText>
+                      </HStack>
+                    </RadioGroup.Item>
+                    <RadioGroup.Item value="later">
+                      <RadioGroup.ItemHiddenInput />
+                      <HStack align="start" gap={3}>
+                        <RadioGroup.ItemIndicator />
+                        <RadioGroup.ItemText fontWeight="semibold">Schedule for later</RadioGroup.ItemText>
+                      </HStack>
+                    </RadioGroup.Item>
+                  </VStack>
+                </RadioGroup.Root>
+
+                {isScheduling && (
+                  <Box pl={6}>
+                    <Input
+                      type="datetime-local"
+                      size="sm"
+                      value={scheduledFor}
+                      min={toDatetimeLocalMin()}
+                      onChange={(e) => setScheduledFor(e.target.value)}
+                    />
+                    {scheduledFor && (
+                      <Text fontSize="xs" color="gray.500" mt={1}>
+                        {format(new Date(scheduledFor), "EEEE, MMMM d 'at' h:mm a")}
+                      </Text>
+                    )}
+                  </Box>
+                )}
+              </VStack>
+
+              {/* Where? */}
               {audience === 'readers' && (
                 <VStack gap={3} align="stretch">
                   <Heading size="sm">Where should readers find it?</Heading>
@@ -465,8 +562,8 @@ export function SimplePublishDialog({
                 </VStack>
               )}
 
-              {/* External channels */}
-              {audience === 'readers' && (
+              {/* External channels — only shown for immediate publish */}
+              {audience === 'readers' && !isScheduling && (
                 <>
                   <Separator />
                   <VStack gap={3} align="stretch">
@@ -518,16 +615,30 @@ export function SimplePublishDialog({
 
                               {source.kind === 'linkedin' && checked && (
                                 <Box pl={6}>
-                                  <Text fontSize="xs" color="gray.600" mb={1}>
-                                    Post copy (optional)
-                                  </Text>
+                                  <HStack justify="space-between" mb={1}>
+                                    <Text fontSize="xs" color="gray.600">
+                                      Post copy (optional)
+                                    </Text>
+                                    <Button
+                                      size="xs"
+                                      variant="ghost"
+                                      colorPalette="blue"
+                                      loading={synopsisLoading}
+                                      onClick={handleLoadSynopsis}
+                                    >
+                                      Use synopsis →
+                                    </Button>
+                                  </HStack>
                                   <Textarea
                                     size="sm"
                                     placeholder="Add a note to accompany the link…"
                                     value={linkedinCopy}
                                     onChange={(e) => setLinkedinCopy(e.target.value)}
-                                    rows={3}
+                                    rows={4}
                                   />
+                                  <Text fontSize="xs" color="gray.400" mt={1}>
+                                    LinkedIn will attach a link preview automatically.
+                                  </Text>
                                 </Box>
                               )}
                             </VStack>
@@ -538,14 +649,22 @@ export function SimplePublishDialog({
                   </VStack>
                 </>
               )}
+
+              {/* Scheduling note: remind that distribution fires at publish time */}
+              {audience === 'readers' && isScheduling && (
+                <Text fontSize="xs" color="gray.500">
+                  External sharing (LinkedIn, email) will be available after the piece goes live.
+                </Text>
+              )}
+
             </VStack>
           </Dialog.Body>
 
           <Dialog.Footer>
             <HStack justify="space-between" w="100%">
               <Button variant="ghost" onClick={onClose} disabled={isPublishing}>Cancel</Button>
-              <Button colorScheme="green" onClick={handlePublish} loading={isPublishing}>
-                Publish
+              <Button colorPalette="green" onClick={handlePublish} loading={isPublishing}>
+                {isScheduling ? 'Schedule' : 'Publish'}
               </Button>
             </HStack>
           </Dialog.Footer>

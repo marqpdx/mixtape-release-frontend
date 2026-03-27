@@ -169,7 +169,7 @@ export function CollaborationDialog({
     // Show enable collaboration screen
     return (
       <Dialog.Root open={open} onOpenChange={(e: { open: boolean } | boolean) => onOpenChange(typeof e === "boolean" ? e : e.open)}>
-        <Dialog.Content>
+        <Dialog.Content maxW="600px">
           <Dialog.Header>
             <Dialog.Title>Enable Collaboration</Dialog.Title>
             <Dialog.CloseTrigger />
@@ -230,7 +230,7 @@ export function CollaborationDialog({
   // Show collaboration management screen
   return (
     <Dialog.Root open={open} onOpenChange={(e: { open: boolean } | boolean) => onOpenChange(typeof e === "boolean" ? e : e.open)} size="lg">
-      <Dialog.Content>
+      <Dialog.Content maxW="600px">
         <Dialog.Header>
           <Dialog.Title>Manage Collaboration</Dialog.Title>
           <Dialog.CloseTrigger />

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { HStack, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { IconInfoHexagon, IconFolder } from "@tabler/icons-react";
 import type { MemberProfile } from "@mixtape/core/types/memberTypes";
 import MemberProfileSummary from "../MemberProfileSummary";
@@ -19,24 +20,29 @@ const publicTabs = [
   { key: "library", label: "My Library", icon: IconFolder },
 ];
 
+const validTabKeys = publicTabs.map((t) => t.key);
+
 export default function MemberTabs({ member }: MemberTabsProps) {
-  const storageKey = `memberTab_${member.username}`;
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(storageKey);
-      setActiveTab(saved || publicTabs[0].key);
+    const urlTab = searchParams?.get("tab");
+    if (urlTab && validTabKeys.includes(urlTab)) {
+      setActiveTab(urlTab);
+    } else {
+      setActiveTab(publicTabs[0].key);
     }
-  }, [storageKey]);
+  }, [searchParams]);
 
   if (!activeTab) return null;
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, value);
-    }
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("tab", value);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   return (

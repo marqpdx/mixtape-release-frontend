@@ -207,7 +207,7 @@ export function ConversationThreadPanel({
             </TouchableOpacity>
           ) : <View />}
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {title || 'Conversation'}
+            Conversing with {title || '…'}
           </Text>
           <View />
         </View>
@@ -232,7 +232,11 @@ export function ConversationThreadPanel({
             renderItem={({ item }) => {
               const msg = item as any;
               const isOwnMessage = msg.sender?.username === currentUser?.username;
-              const senderName = msg.sender?.username || 'Unknown';
+
+              const timeLabel = new Date(msg.createdAt || msg.created_at || Date.now()).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
 
               return (
                 <View
@@ -241,33 +245,31 @@ export function ConversationThreadPanel({
                     isOwnMessage ? styles.messageContainerSent : styles.messageContainerReceived,
                   ]}
                 >
-                  {!isOwnMessage ? <Text style={styles.messageSender}>{senderName}</Text> : null}
                   <View
                     style={[
                       styles.messageBubble,
                       isOwnMessage ? styles.messageBubbleSent : styles.messageBubbleReceived,
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.messageContent,
-                        isOwnMessage ? styles.messageContentSent : styles.messageContentReceived,
-                      ]}
-                    >
-                      {msg.text || msg.content}
-                    </Text>
+                    <View style={styles.messageRow}>
+                      <Text
+                        style={[
+                          styles.messageContent,
+                          isOwnMessage ? styles.messageContentSent : styles.messageContentReceived,
+                        ]}
+                      >
+                        {msg.text || msg.content}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.messageTime,
+                          isOwnMessage ? styles.messageTimeSent : styles.messageTimeReceived,
+                        ]}
+                      >
+                        {timeLabel}
+                      </Text>
+                    </View>
                   </View>
-                  <Text
-                    style={[
-                      styles.messageTime,
-                      isOwnMessage ? styles.messageTimeSent : styles.messageTimeReceived,
-                    ]}
-                  >
-                    {new Date(msg.createdAt || msg.created_at || Date.now()).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
                 </View>
               );
             }}
@@ -399,17 +401,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     alignItems: 'flex-start',
   },
-  messageSender: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#0E5AA7',
-    marginBottom: 4,
-    paddingHorizontal: 4,
-  },
   messageBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 18,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   messageBubbleSent: {
     backgroundColor: '#0E5AA7',
@@ -430,16 +431,16 @@ const styles = StyleSheet.create({
     color: '#13293D',
   },
   messageTime: {
-    fontSize: 11,
-    marginTop: 4,
-    paddingHorizontal: 4,
-    color: '#6A7785',
+    fontSize: 10,
+    color: '#9AABBA',
+    alignSelf: 'flex-end',
+    flexShrink: 0,
   },
   messageTimeSent: {
-    textAlign: 'right',
+    color: 'rgba(255,255,255,0.65)',
   },
   messageTimeReceived: {
-    textAlign: 'left',
+    color: '#9AABBA',
   },
   typingIndicator: {
     padding: 8,

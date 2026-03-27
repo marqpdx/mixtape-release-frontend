@@ -345,7 +345,8 @@ export default function UnifiedNavbar({
                 </NextLink>
               </Button>
             )}
-            {identity && (
+            {/* TODO: re-enable activity bell */}
+            {false && identity && (
               <Button
                 variant="ghost"
                 size="sm"

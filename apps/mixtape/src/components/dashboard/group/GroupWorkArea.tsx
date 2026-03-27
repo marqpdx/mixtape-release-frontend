@@ -37,7 +37,7 @@ import AudioWorkArea from "@/components/concord/AudioWorkArea";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
 import OfferingsWorkArea from "@/components/bazaar/offerings/OfferingsWorkArea";
 import { EarthLabWorkArea } from "@/components/earthlab/EarthLabWorkArea";
-import DocxImportWorkArea from "@/components/writing/import/DocxImportWorkArea";
+import DocumentImportWorkArea from "@/components/writing/import/DocumentImportWorkArea";
 import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
@@ -464,7 +464,7 @@ export default function GroupWorkArea({
   if (section === "import-document") {
     return (
       <WorkAreaWrapper>
-        <DocxImportWorkArea
+        <DocumentImportWorkArea
           sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
           onImported={(piece) => setActiveSection("write", { piece: piece.id })}
           onBack={() => setActiveSection("writing")}

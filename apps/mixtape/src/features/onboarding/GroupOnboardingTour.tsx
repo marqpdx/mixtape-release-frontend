@@ -1,7 +1,8 @@
 "use client";
 
 // Kill switch — set to false to disable the onboarding tour everywhere.
-const TOUR_ENABLED = true;
+// TODO: re-enable tour
+const TOUR_ENABLED = false;
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";

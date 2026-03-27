@@ -34,7 +34,8 @@ export default {
       [
         "expo-notifications",
         {
-          color: "#001f3f",
+          icon: "./assets/crossroads2-grayscale.png",
+          color: "#6B7280",
           defaultChannel: "messages",
         },
       ],
