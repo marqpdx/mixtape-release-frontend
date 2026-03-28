@@ -156,6 +156,20 @@ export async function fetchGroupWritingCatalog(groupSlug: string) {
 }
 
 /**
+ * Create a WritingSeries for a group
+ */
+export async function createWritingSeries(payload: {
+  title: string
+  slug: string
+  phase_num: number | null
+  subtitle?: string
+  group: string // group UUID
+}): Promise<import('@mixtape/core/types/writingTypes').WritingSeries> {
+  const res = await axiosInstance.post('/api/writing/series', payload)
+  return res.data
+}
+
+/**
  * Fetch all WritingSeries for a group (for catalog section headers).
  */
 export async function fetchWritingSeries(groupSlug: string) {

@@ -24,6 +24,8 @@ import {
 } from "@tabler/icons-react";
 import {
   confirmDocumentImportBatch,
+  createWritingSeries,
+  fetchWritingSeries,
   previewDocumentImportBatch,
 } from "@mixtape/api/clients/writing/writingApi";
 import type {
@@ -119,6 +121,14 @@ export default function DocumentImportWorkArea({
   // Tracks render issues per file (temp_id → issues) detected during preview
   const [renderIssues, setRenderIssues] = useState<Record<string, TipTapRenderIssue[]>>({});
 
+  // Series creation state
+  const [missingPhaseNums, setMissingPhaseNums] = useState<number[]>([]);
+  const [seriesTitle, setSeriesTitle] = useState('');
+  const [seriesSubtitle, setSeriesSubtitle] = useState('');
+  const [seriesFormOpen, setSeriesFormOpen] = useState(false);
+  const [seriesCreating, setSeriesCreating] = useState(false);
+  const [seriesCreateError, setSeriesCreateError] = useState<string | null>(null);
+
   const activeRow = useMemo(
     () => rows.find((row) => row.temp_id === activeTempId) || rows[0] || null,
     [rows, activeTempId]
@@ -153,6 +163,26 @@ export default function DocumentImportWorkArea({
       setRows(nextRows);
       setActiveTempId(nextRows[0]?.temp_id || null);
       setPhase("preview");
+
+      // Check if any items reference a phase_num that doesn't have a series yet
+      if (sponsor.type === 'group') {
+        const phaseNumsInBatch = [
+          ...new Set(nextRows.map(r => r.phase_num).filter((n): n is number => n != null))
+        ];
+        if (phaseNumsInBatch.length > 0) {
+          try {
+            const existing = await fetchWritingSeries(sponsor.slug);
+            const existingPhases = new Set(existing.map(s => s.phase_num).filter((n): n is number => n != null));
+            const missing = phaseNumsInBatch.filter(n => !existingPhases.has(n)).sort((a, b) => a - b);
+            if (missing.length > 0) {
+              setMissingPhaseNums(missing);
+              setSeriesTitle(`Phase ${missing[0]}`);
+            }
+          } catch {
+            // Non-fatal — import will surface the error if series is missing
+          }
+        }
+      }
     } catch (err: unknown) {
       setUploadError(getErrorMessage(err, "Failed to parse selected files"));
     } finally {
@@ -206,6 +236,45 @@ export default function DocumentImportWorkArea({
     }
   }, [includedRows, sponsor.id, sponsor.slug, sponsor.type]);
 
+  const handleTreatAsStandalone = useCallback(() => {
+    setRows(prev => prev.map(row => ({ ...row, phase_num: null, series_order: null })));
+    setMissingPhaseNums([]);
+    setSeriesFormOpen(false);
+  }, []);
+
+  const handleCreateSeries = useCallback(async () => {
+    const phaseNum = missingPhaseNums[0];
+    if (phaseNum == null) return;
+
+    const title = seriesTitle.trim() || `Phase ${phaseNum}`;
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    setSeriesCreating(true);
+    setSeriesCreateError(null);
+    try {
+      await createWritingSeries({
+        title,
+        slug,
+        phase_num: phaseNum,
+        subtitle: seriesSubtitle.trim() || undefined,
+        group: sponsor.id,
+      });
+      // Move to next missing phase, or clear if done
+      const remaining = missingPhaseNums.slice(1);
+      setMissingPhaseNums(remaining);
+      if (remaining.length > 0) {
+        setSeriesTitle(`Phase ${remaining[0]}`);
+        setSeriesSubtitle('');
+      } else {
+        setSeriesFormOpen(false);
+      }
+    } catch (err: unknown) {
+      setSeriesCreateError(getErrorMessage(err, 'Failed to create series'));
+    } finally {
+      setSeriesCreating(false);
+    }
+  }, [missingPhaseNums, seriesTitle, seriesSubtitle, sponsor.id]);
+
   const handleReset = useCallback(() => {
     setPhase("select");
     setSelectedFiles([]);
@@ -215,6 +284,12 @@ export default function DocumentImportWorkArea({
     setImportError(null);
     setImportResult(null);
     setRenderIssues({});
+    setMissingPhaseNums([]);
+    setSeriesTitle('');
+    setSeriesSubtitle('');
+    setSeriesFormOpen(false);
+    setSeriesCreating(false);
+    setSeriesCreateError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -311,6 +386,68 @@ export default function DocumentImportWorkArea({
       {phase === "preview" && (
         <HStack align="start" gap={6}>
           <VStack align="stretch" gap={3} flex="0 0 420px">
+
+            {/* Missing series banner */}
+            {missingPhaseNums.length > 0 && (
+              <Box p={4} bg="yellow.50" borderWidth="1px" borderColor="yellow.300" borderRadius="md">
+                <Text fontWeight="semibold" fontSize="sm" mb={1}>
+                  Phase {missingPhaseNums[0]} series not found in {sponsor.displayName}
+                </Text>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  Would you like to create a series for {missingPhaseNums.length > 1 ? `these ${missingPhaseNums.length} phases` : 'these articles'}?
+                </Text>
+
+                {!seriesFormOpen ? (
+                  <HStack gap={2}>
+                    <Button
+                      size="sm"
+                      colorPalette="blue"
+                      onClick={() => setSeriesFormOpen(true)}
+                    >
+                      Yes, create series
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleTreatAsStandalone}>
+                      No, import as standalone
+                    </Button>
+                  </HStack>
+                ) : (
+                  <VStack align="stretch" gap={2}>
+                    <Input
+                      size="sm"
+                      value={seriesTitle}
+                      onChange={e => setSeriesTitle(e.target.value)}
+                      placeholder={`Phase ${missingPhaseNums[0]}`}
+                    />
+                    <Input
+                      size="sm"
+                      value={seriesSubtitle}
+                      onChange={e => setSeriesSubtitle(e.target.value)}
+                      placeholder="Subtitle (optional)"
+                    />
+                    {seriesCreateError && (
+                      <Text fontSize="xs" color="red.600">{seriesCreateError}</Text>
+                    )}
+                    <HStack gap={2}>
+                      <Button
+                        size="sm"
+                        colorPalette="green"
+                        onClick={handleCreateSeries}
+                        disabled={seriesCreating}
+                      >
+                        {seriesCreating ? <Spinner size="xs" /> : 'Create'}
+                        {missingPhaseNums.length > 1 && !seriesCreating
+                          ? ` (${missingPhaseNums.length} remaining)`
+                          : ''}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setSeriesFormOpen(false)}>
+                        Back
+                      </Button>
+                    </HStack>
+                  </VStack>
+                )}
+              </Box>
+            )}
+
             <Text fontWeight="medium">
               Files ready: {includedRows.length} / {rows.length}
             </Text>
