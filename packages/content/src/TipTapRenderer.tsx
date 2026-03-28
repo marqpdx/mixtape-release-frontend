@@ -6,7 +6,6 @@ import {
   Box,
   Text,
   Heading,
-  ListItem,
   Code,
   Image,
   Blockquote,
@@ -203,9 +202,9 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
           return (
             <Box key={index} as="ul" mb={4} ml={5} listStyleType="disc">
               {node.content?.map((item, i) => (
-                <ListItem key={i} mb={1}>
+                <Box key={i} as="li" mb={1}>
                   {renderListItemContent(item as TipTapNode)}
-                </ListItem>
+                </Box>
               ))}
             </Box>
           )
@@ -214,9 +213,9 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
           return (
             <Box key={index} as="ol" mb={4} ml={5} listStyleType="decimal">
               {node.content?.map((item, i) => (
-                <ListItem key={i} mb={1}>
+                <Box key={i} as="li" mb={1}>
                   {renderListItemContent(item as TipTapNode)}
-                </ListItem>
+                </Box>
               ))}
             </Box>
           )
@@ -228,7 +227,7 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
                 const taskNode = item as TipTapNode
                 const checked = Boolean(taskNode.attrs?.checked)
                 return (
-                  <ListItem key={i} mb={1} display="flex" alignItems="flex-start" gap={2}>
+                  <Box key={i} as="li" mb={1} display="flex" alignItems="flex-start" gap={2}>
                     <input
                       type="checkbox"
                       checked={checked}
@@ -238,7 +237,7 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
                     <Box opacity={checked ? 0.5 : 1} textDecoration={checked ? 'line-through' : 'none'}>
                       {renderListItemContent(taskNode)}
                     </Box>
-                  </ListItem>
+                  </Box>
                 )
               })}
             </Box>
