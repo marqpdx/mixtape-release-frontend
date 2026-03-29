@@ -36,6 +36,7 @@ import {
   IconMapPin,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
+import { SeriesGroupView } from "./SeriesGroupView";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
@@ -116,7 +117,7 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where">("by-list");
+  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const { user } = useAuth();
 
@@ -140,7 +141,8 @@ export default function WritingListWrapper({
       if (
         savedGroupingMode === "by-list" ||
         savedGroupingMode === "by-tag" ||
-        savedGroupingMode === "by-where"
+        savedGroupingMode === "by-where" ||
+        savedGroupingMode === "by-series"
       ) {
         setGroupingMode(savedGroupingMode);
       }
@@ -161,7 +163,7 @@ export default function WritingListWrapper({
     }
   }, []);
 
-  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where") => {
+  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where" | "by-series") => {
     setGroupingMode(mode);
     if (typeof window !== "undefined") {
       try {
@@ -852,13 +854,16 @@ export default function WritingListWrapper({
               <Tabs.Root
                 value={groupingMode}
                 onValueChange={(value) =>
-                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where")
+                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where" | "by-series")
                 }
               >
                 <Tabs.List>
                   <Tabs.Trigger value="by-list">List</Tabs.Trigger>
                   <Tabs.Trigger value="by-tag">By Tag</Tabs.Trigger>
                   <Tabs.Trigger value="by-where">By Where</Tabs.Trigger>
+                  {sponsor.type === "group" && (
+                    <Tabs.Trigger value="by-series">By Series</Tabs.Trigger>
+                  )}
                   <Tabs.Indicator />
                 </Tabs.List>
               </Tabs.Root>
@@ -972,7 +977,7 @@ export default function WritingListWrapper({
                 </Box>
               )}
             </>
-          ) : (
+          ) : groupingMode === "by-where" ? (
             <Box maxH="62vh" overflowY="auto" pr={1}>
               <Heading size="md" color={textSecondary} mb={3}>
                 By Where
@@ -1017,7 +1022,14 @@ export default function WritingListWrapper({
                 ))}
               </Accordion.Root>
             </Box>
-          )}
+          ) : groupingMode === "by-series" ? (
+            <SeriesGroupView
+              placements={typedPlacements}
+              drafts={Array.isArray(drafts) ? drafts : []}
+              onEdit={onNavigateToEditor}
+              onDetail={(slug: string) => onNavigateToDetail({ id: '', slug })}
+            />
+          ) : null}
         </Tabs.Content>
 
         <Tabs.Content value="drafts">

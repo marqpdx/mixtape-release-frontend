@@ -137,6 +137,17 @@ export async function fetchPublishedPieces(): Promise<WritingPiece[]> {
 }
 
 /**
+ * PATCH a piece — use for series_order / series reassignment
+ */
+export async function updatePiece(pieceId: string, data: {
+  series_order?: number | null
+  series?: string | null // series UUID or null to unset
+}) {
+  const res = await axiosInstance.patch(`/api/writing/pieces/${pieceId}`, data)
+  return res.data
+}
+
+/**
  * Fetch a single published piece by slug (returns WritingPieceDetail with nested series)
  */
 export async function fetchPiece(pieceSlug: string) {

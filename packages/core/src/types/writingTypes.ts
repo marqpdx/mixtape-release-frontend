@@ -141,6 +141,10 @@ export interface WorkingDocument {
     updated_at: string
     excerpt?: string
     tags_list?: string[]
+    series_id?: string | null
+    series_title?: string | null
+    series_phase_num?: number | null
+    series_order?: number | null
   }
   user: {
     id: string | number
@@ -268,6 +272,10 @@ export interface FlattenedPlacement {
   sponsor_object_id?: string
   sponsor_label?: string
   sponsor_image_url?: string | null
+  series_id?: string | null
+  series_title?: string | null
+  series_phase_num?: number | null
+  series_order?: number | null
   display?: {
     title: string
     excerpt: string

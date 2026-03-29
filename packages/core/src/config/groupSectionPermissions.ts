@@ -29,7 +29,8 @@ export interface SectionPermissionRequirement {
 export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> = {
   // Overview - accessible to all stewards
   'admin-dashboard': {
-    public: true,
+    // public: true,
+    requiredRole: 'admin',
     description: 'Group overview and dashboard',
   },
   'dashboard': {
@@ -50,14 +51,17 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   // Members - requires invite permission
   'members-roles': {
     requiredDecorator: 'can__InviteMembers',
+    // requiredRole: 'admin',
     description: 'View and manage group members',
   },
   'invitations': {
-    requiredDecorator: 'can__InviteMembers',
+    // requiredDecorator: 'can__InviteMembers',
+    requiredRole: 'admin',
     description: 'Send invitations to new members',
   },
   'coalition-invitations': {
-    requiredDecorator: 'can__InviteMembers',
+    // requiredDecorator: 'can__InviteMembers',
+    requiredRole: 'admin',
     description: 'Manage coalition invitations and requests',
   },
 
@@ -104,7 +108,8 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
   // Broadcasts - stewards can compose and send group broadcasts
   'broadcasts': {
-    requiredRole: 'steward',
+    // requiredRole: 'steward',
+    requiredRole: 'admin',
     description: 'Compose and send group broadcasts to members',
   },
 
@@ -154,6 +159,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   // Themes - stewards and admins
   'theme-library': {
     public: true,
+    requiredRole: 'admin',
     description: 'Manage visible theme palettes for the group',
   },
 
@@ -169,7 +175,8 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
   // Initiatives - admin/steward (manage_initiatives permission maps to steward+)
   'initiatives-landing': {
-    requiredRole: 'steward',
+    // requiredRole: 'steward',
+    requiredRole: 'admin',
     description: 'Group AI-assisted inquiry initiatives',
   },
 
