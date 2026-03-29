@@ -30,6 +30,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
   const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
   const [showHelp, setShowHelp] = useState(false);
+  const [, setEditorTick] = useState(0);
   const fontModeKey = "writing_font_mode";
   const SerifIcon = (
     <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
@@ -73,6 +74,21 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
     dom.classList.remove("font-serif", "font-sans");
     dom.classList.add(initialMode === "serif" ? "font-serif" : "font-sans");
     setFontMode(initialMode);
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const notify = () => setEditorTick((tick) => tick + 1);
+    editor.on("selectionUpdate", notify);
+    editor.on("transaction", notify);
+    editor.on("focus", notify);
+    editor.on("blur", notify);
+    return () => {
+      editor.off("selectionUpdate", notify);
+      editor.off("transaction", notify);
+      editor.off("focus", notify);
+      editor.off("blur", notify);
+    };
   }, [editor]);
 
   const applyFontMode = useCallback(
@@ -132,7 +148,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         <EditorToolbarButton
           tooltip="Bold (Ctrl+B)"
           icon={<IconBold size={16} />}
-          onClick={() => editor.chain().focus().toggleMark("bold").run()}
+          onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
           tabIndex={-1}
           size="xs"
@@ -140,7 +156,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         <EditorToolbarButton
           tooltip="Italic (Ctrl+I)"
           icon={<IconItalic size={16} />}
-          onClick={() => editor.chain().focus().toggleMark("italic").run()}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive("italic")}
           tabIndex={-1}
           size="xs"
@@ -148,7 +164,7 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
         <EditorToolbarButton
           tooltip="Underline (Ctrl+U)"
           icon={<IconUnderline size={16} />}
-          onClick={() => editor.chain().focus().toggleMark("underline").run()}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
           isActive={editor.isActive("underline")}
           tabIndex={-1}
           size="xs"

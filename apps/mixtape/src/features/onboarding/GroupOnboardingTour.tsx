@@ -1,7 +1,6 @@
 "use client";
 
-// Kill switch — set to false to disable the onboarding tour everywhere.
-// TODO: re-enable tour
+// Temporary kill switch — onboarding tour intentionally disabled for now.
 const TOUR_ENABLED = false;
 
 import { useEffect, useState } from "react";

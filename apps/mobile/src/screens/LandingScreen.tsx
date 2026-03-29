@@ -207,9 +207,9 @@ export default function LandingScreen() {
         ) : null}
       </View>
 
-      {currentUser?.can_use_lighthouse ? (
+      {(currentUser?.can_use_beacon ?? currentUser?.can_use_lighthouse) ? (
         <MobileBeacon
-          canUseLighthouse={Boolean(currentUser?.can_use_lighthouse)}
+          canUseLighthouse={Boolean(currentUser?.can_use_beacon ?? currentUser?.can_use_lighthouse)}
           isSuperuser={Boolean(currentUser?.is_superuser)}
           routeLabel={
             activeTab === 'notebook'

@@ -19,7 +19,7 @@ export function CrossroadsHeader({
   guideContent,
 }: CrossroadsHeaderProps) {
   const currentUser = useAuthStore((state) => state.user);
-  const canUseLighthouse = Boolean(currentUser?.can_use_lighthouse);
+  const canUseBeacon = Boolean(currentUser?.can_use_beacon ?? currentUser?.can_use_lighthouse);
   const isSuperuser = Boolean(currentUser?.is_superuser);
   const [beaconOpen, setBeaconOpen] = useState(false);
 
@@ -45,7 +45,7 @@ export function CrossroadsHeader({
           </TouchableOpacity>
         ) : null}
 
-        {canUseLighthouse ? (
+        {canUseBeacon ? (
           <TouchableOpacity
             onPress={() => setBeaconOpen(true)}
             activeOpacity={0.8}
@@ -64,9 +64,9 @@ export function CrossroadsHeader({
         <View style={styles.guide}>{guideContent}</View>
       ) : null}
 
-      {canUseLighthouse ? (
+      {canUseBeacon ? (
         <MobileBeacon
-          canUseLighthouse={canUseLighthouse}
+          canUseBeacon={canUseBeacon}
           isSuperuser={isSuperuser}
           routeLabel={routeLabel}
           open={beaconOpen}

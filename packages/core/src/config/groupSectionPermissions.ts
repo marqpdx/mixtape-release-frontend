@@ -75,7 +75,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create or edit writing pieces',
   },
   'import-document': {
-    requiredDecorator: 'can__ManageWriting',
+    requiredRole: 'admin',
     description: 'Import a .docx file as a writing piece',
   },
 
@@ -158,7 +158,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
   // Themes - stewards and admins
   'theme-library': {
-    public: true,
+    // public: true,
     requiredRole: 'admin',
     description: 'Manage visible theme palettes for the group',
   },

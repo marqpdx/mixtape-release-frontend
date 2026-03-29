@@ -112,6 +112,22 @@ export const groupPermsApi = {
   },
 
   /**
+   * DELETE /api/groups/{slug}/members/{userId}/roles
+   * Body: { role: 'admin' | 'steward' }
+   */
+  revokeRole: async (
+    groupSlug: string,
+    userId: string,
+    role: string
+  ): Promise<MemberPermissions> => {
+    const res = await axiosInstance.delete(
+      `/api/groups/${groupSlug}/members/${userId}/roles`,
+      { data: { role } }
+    );
+    return res.data;
+  },
+
+  /**
    * GET /api/groups/{slug}/my-permissions
    * Get current user's permissions in the group
    * Used for frontend permission guards

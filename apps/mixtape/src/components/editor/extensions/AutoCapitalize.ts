@@ -63,11 +63,15 @@ export const AutoCapitalize = Extension.create<AutoCapitalizeOptions>({
 
           // Decide if this lowercase letter begins a sentence:
           // 1) start of document
-          // 2) beginning of a new line/paragraph
+          // 2) first character in a new paragraph/textblock
           // 3) after punctuation + space
           const prefix = newState.doc.textBetween(Math.max(0, pos - 4), pos - 1, '\n');
           const sentenceBoundaryPattern = /(?:^|\n|[.!?]\s)$/;
-          if (!sentenceBoundaryPattern.test(prefix)) return null;
+          const atTextblockStart = $from.parentOffset === 1;
+          const atDocumentStart = charPos <= 1;
+          if (!atTextblockStart && !atDocumentStart && !sentenceBoundaryPattern.test(prefix)) {
+            return null;
+          }
 
           // Capitalize the letter
           const capitalLetter = letterChar.toUpperCase();

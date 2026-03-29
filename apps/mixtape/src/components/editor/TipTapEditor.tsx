@@ -124,7 +124,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
   const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
-  const textColor = useColorModeValue("gray.900", "gray.100");
+  const textColor = useColorModeValue("gray.900", "gray.50");
 
   // Writing preferences from localStorage
   const [autoCapitalizeEnabled, setAutoCapitalizeEnabled] = useState(true);
@@ -647,14 +647,49 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           paddingX: "1.4em",
           paddingY: "1em",
           color: textColor,
+          lineHeight: 1.7,
           "&.font-serif": {
             fontFamily: "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif",
           },
           "&.font-sans": {
             fontFamily: "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
           },
+          "& strong, & b, & .bold-text": {
+            fontWeight: 700,
+          },
+          "& em, & i, & .italic-text": {
+            fontStyle: "italic !important",
+          },
           "& .italic-text": {
             fontStyle: "italic",
+          },
+          "& h1": {
+            fontSize: "2rem",
+            lineHeight: 1.2,
+            fontWeight: 700,
+            marginTop: "1.1em",
+            marginBottom: "0.45em",
+          },
+          "& h2": {
+            fontSize: "1.55rem",
+            lineHeight: 1.28,
+            fontWeight: 650,
+            marginTop: "1em",
+            marginBottom: "0.4em",
+          },
+          "& h3": {
+            fontSize: "1.22rem",
+            lineHeight: 1.34,
+            fontWeight: 620,
+            marginTop: "0.9em",
+            marginBottom: "0.35em",
+          },
+          "& h4": {
+            fontSize: "1.05rem",
+            lineHeight: 1.4,
+            fontWeight: 600,
+            marginTop: "0.8em",
+            marginBottom: "0.3em",
           },
           // Reduce margin on first and last children - using :first-of-type for SSR safety
           "& > *:first-of-type": {

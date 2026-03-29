@@ -23,7 +23,6 @@ import {
   AvatarGroup,
   MenuPositioner,
   Badge,
-  Stack,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,11 +31,10 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconBell, IconMessageCircle } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconMessageCircle } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
-import { useNotificationMutations, useNotificationSummary, useNotificationsPage } from "@mixtape/api/hooks/activity";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
 
 // Navigation item types
@@ -103,11 +101,6 @@ export default function UnifiedNavbar({
   // const { groups: userGroups = [] } = useUserGroups();
   const { group: defaultGroup } = useDefaultGroup();
   const { open, onOpen, onClose } = useDisclosure();
-  const {
-    open: notificationsOpen,
-    onOpen: onNotificationsOpen,
-    onClose: onNotificationsClose,
-  } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
   const publicSiteBase =
     process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
@@ -121,14 +114,6 @@ export default function UnifiedNavbar({
     "crossroads";
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
-  const { summary } = useNotificationSummary({ enabled: Boolean(identity) });
-  const { page: notificationsPage, isLoading: isNotificationsLoading } = useNotificationsPage({
-    enabled: Boolean(identity),
-  });
-  const { markRead, dismiss } = useNotificationMutations();
-  const unreadCount = summary?.notifications_unread_count ?? 0;
-  const notificationsPreview = notificationsPage?.results?.slice(0, 6) ?? [];
-
   const { unreads: messageUnreads } = useChatUnread();
   const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
 
@@ -345,31 +330,6 @@ export default function UnifiedNavbar({
                 </NextLink>
               </Button>
             )}
-            {/* TODO: re-enable activity bell */}
-            {false && identity && (
-              <Button
-                variant="ghost"
-                size="sm"
-                position="relative"
-                aria-label="Notifications"
-                onClick={onNotificationsOpen}
-              >
-                <IconBell size={18} />
-                {unreadCount > 0 && (
-                  <Badge
-                    position="absolute"
-                    top="-4px"
-                    right="-4px"
-                    colorScheme="red"
-                    borderRadius="full"
-                    px={1.5}
-                    fontSize="10px"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            )}
             <Box transform={extraCompact ? "scale(0.85)" : "scale(1)"}>
               <ThemeSelector />
             </Box>
@@ -523,94 +483,6 @@ export default function UnifiedNavbar({
         </Drawer.Positioner>
       </Drawer.Root>
 
-      {/* Notifications Drawer */}
-      <Drawer.Root
-        open={notificationsOpen}
-        onOpenChange={({ open }) => (open ? onNotificationsOpen() : onNotificationsClose())}
-        placement="end"
-      >
-        <Drawer.Backdrop />
-        <Drawer.Positioner>
-          <Drawer.Content maxW="sm" bg="theme.surface" borderColor="theme.border">
-            <Drawer.Header borderBottom="1px solid" borderColor="theme.border">
-              <Flex justify="space-between" align="center" w="full">
-                <Drawer.Title color="theme.text">Notifications</Drawer.Title>
-                <IconButton
-                  aria-label="Close notifications"
-                  variant="ghost"
-                  onClick={onNotificationsClose}
-                  size="sm"
-                >
-                  <IconX size={16} />
-                </IconButton>
-              </Flex>
-            </Drawer.Header>
-
-            <Drawer.Body>
-              <Stack gap={4}>
-                <Text color="fg.muted" fontSize="sm">
-                  {unreadCount} unread
-                </Text>
-
-                {isNotificationsLoading && (
-                  <Text color="fg.muted">Loading notifications...</Text>
-                )}
-
-                {!isNotificationsLoading && notificationsPreview.length === 0 && (
-                  <Text color="fg.muted">No notifications yet.</Text>
-                )}
-
-                {!isNotificationsLoading && notificationsPreview.length > 0 && (
-                  <Stack gap={3}>
-                    {notificationsPreview.map((n) => (
-                      <Box
-                        key={n.id}
-                        border="1px solid"
-                        borderColor="theme.border"
-                        borderRadius="md"
-                        p={3}
-                      >
-                        <Stack gap={2}>
-                          <Text fontSize="sm" color="fg.muted">
-                            {n.bucket} · {n.priority}
-                          </Text>
-                          <Text fontWeight="semibold">
-                            {n.actor_name ? `${n.actor_name} ` : ""}
-                            {n.verb || "updated"}
-                            {n.object_name ? ` ${n.object_name}` : ""}
-                            {n.aggregate_count > 1 ? ` (${n.aggregate_count})` : ""}
-                          </Text>
-                          {n.action_url && (
-                            <Link as={NextLink} href={n.action_url}>
-                              Open
-                            </Link>
-                          )}
-                          <HStack gap={2}>
-                            {!n.is_read && (
-                              <Button size="xs" variant="outline" onClick={() => markRead.mutate([n.id])}>
-                                Mark read
-                              </Button>
-                            )}
-                            <Button size="xs" variant="ghost" onClick={() => dismiss.mutate(n.id)}>
-                              Dismiss
-                            </Button>
-                          </HStack>
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-                )}
-
-                <Link as={NextLink} href="/notifications" onClick={onNotificationsClose}>
-                  <Button variant="outline" size="sm" w="full">
-                    View all notifications
-                  </Button>
-                </Link>
-              </Stack>
-            </Drawer.Body>
-          </Drawer.Content>
-        </Drawer.Positioner>
-      </Drawer.Root>
     </Box>
   );
 }

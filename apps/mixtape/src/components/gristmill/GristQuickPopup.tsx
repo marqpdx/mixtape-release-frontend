@@ -50,7 +50,7 @@ function normalizeShortcuts(input: string): string {
 export default function GristQuickPopup() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const isSuperuser = !!user?.is_superuser;
-  const canUseLighthouse = !!user?.can_use_lighthouse;
+  const canUseBeacon = !!(user?.can_use_beacon ?? user?.can_use_lighthouse);
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -364,7 +364,7 @@ export default function GristQuickPopup() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handlePromote, isSuperuser, open, promoting, savingDraft]);
 
-  if (isLoading || !isAuthenticated || !canUseLighthouse) {
+  if (isLoading || !isAuthenticated || !canUseBeacon) {
     return null;
   }
 

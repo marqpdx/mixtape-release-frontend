@@ -136,6 +136,41 @@ export function useGrantRole(groupSlug: string) {
 }
 
 /**
+ * Hook to revoke a role from a member
+ */
+export function useRevokeRole(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      groupPermsApi.revokeRole(groupSlug, userId, role),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData<MemberPermissions[]>(
+        ["permissions", "members", groupSlug],
+        (old) => {
+          if (!old) return [updatedMember];
+          return old.map((m) =>
+            m.user_id === updatedMember.user_id ? updatedMember : m
+          );
+        }
+      );
+
+      toaster.create({
+        title: "Role revoked",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to revoke role",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+/**
  * Hook to get current user's permissions in a group
  * Used for frontend permission guards
  */

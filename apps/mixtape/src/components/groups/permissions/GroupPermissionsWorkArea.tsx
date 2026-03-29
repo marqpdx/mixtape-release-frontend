@@ -22,6 +22,7 @@ import {
   useAvailablePermissions,
   useGrantPermission,
   useGrantRole,
+  useRevokeRole,
   useRevokePermission,
 } from "@mixtape/api/hooks/groups/useGroupPermissions";
 
@@ -108,6 +109,7 @@ export default function GroupPermissionsWorkArea({
   const grantMutation = useGrantPermission(groupSlug);
   const revokeMutation = useRevokePermission(groupSlug);
   const grantRoleMutation = useGrantRole(groupSlug);
+  const revokeRoleMutation = useRevokeRole(groupSlug);
 
   // Use available permissions from API or fall back to default
   const permissions = availablePermissions || AVAILABLE_PERMISSIONS;
@@ -176,6 +178,21 @@ export default function GroupPermissionsWorkArea({
       });
     } catch (error) {
       console.error("Failed to grant admin role:", error);
+    } finally {
+      setRoleSaving(null);
+    }
+  };
+
+  const revokeAdminRole = async (userId: string) => {
+    setRoleSaving(userId);
+    try {
+      await revokeRoleMutation.mutateAsync({ userId, role: "admin" });
+      toaster.create({
+        title: "Admin role rescinded",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Failed to revoke admin role:", error);
     } finally {
       setRoleSaving(null);
     }
@@ -333,7 +350,7 @@ export default function GroupPermissionsWorkArea({
                   <Table.Cell>
                     <Flex align="center" gap={2}>
                       {getRoleBadge(member.roles)}
-                      {!isAdmin && (
+                      {!isAdmin ? (
                         <Button
                           size="xs"
                           variant="outline"
@@ -343,6 +360,18 @@ export default function GroupPermissionsWorkArea({
                         >
                           {roleSaving === member.user_id ? "Saving..." : "Make Admin"}
                         </Button>
+                      ) : (
+                        !member.roles.includes("owner") && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            colorScheme="orange"
+                            onClick={() => revokeAdminRole(member.user_id)}
+                            disabled={roleSaving === member.user_id}
+                          >
+                            {roleSaving === member.user_id ? "Saving..." : "Rescind Admin"}
+                          </Button>
+                        )
                       )}
                     </Flex>
                   </Table.Cell>
@@ -385,7 +414,7 @@ export default function GroupPermissionsWorkArea({
       <Box mt={4} p={3} bg="blue.50" borderRadius="md">
         <Text fontSize="sm" color="blue.800">
           <strong>Note:</strong> Admins have all permissions by default and
-          cannot be modified here. When a member is granted their first
+          cannot have per-permission toggles changed here. When a member is granted their first
           permission, they are automatically promoted to Steward.
         </Text>
       </Box>
