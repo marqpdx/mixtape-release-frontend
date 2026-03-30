@@ -135,9 +135,13 @@ export default function PersonalOverview({
               position="absolute"
               bottom={0}
               right={0}
-              onClick={() =>
-                setActiveSection?.("edit-profile") || router.push(`/member/${identity.username}`)
-              }
+              onClick={() => {
+                if (setActiveSection) {
+                  setActiveSection("edit-profile");
+                  return;
+                }
+                router.push(`/member/${identity.username}`);
+              }}
             >
               <HStack>
                 <IconEdit size={16} />
@@ -236,9 +240,13 @@ export default function PersonalOverview({
               </VStack>
               <Button
                 size="sm"
-                onClick={() =>
-                  setActiveSection?.("edit-profile") || router.push(`/member/${identity.username}`)
-                }
+                onClick={() => {
+                  if (setActiveSection) {
+                    setActiveSection("edit-profile");
+                    return;
+                  }
+                  router.push(`/member/${identity.username}`);
+                }}
               >
                 Edit Profile
               </Button>

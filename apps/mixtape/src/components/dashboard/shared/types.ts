@@ -7,6 +7,7 @@ export interface MenuItem {
   minRole?: string;
   hidden?: boolean;
   adminOnly?: boolean;
+  superuserOnly?: boolean;
   exclude?: string[];
   subItems?: MenuItem[];
 }

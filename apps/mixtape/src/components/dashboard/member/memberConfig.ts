@@ -26,9 +26,9 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     label: "Personal",
     icon: "👤",
     subItems: [
-      { key: "overview", label: "Overview", hidden: false },
+      { key: "overview", label: "Overview", hidden: false, superuserOnly: true },
       { key: "messages", label: "Messages", hidden: false },
-      { key: "profile", label: "Edit Profile", hidden: false },
+      { key: "edit-profile", label: "Edit Profile", hidden: false },
       { key: "preferences", label: "Preferences", hidden: true },
       { key: "activity", label: "Activity Feed", hidden: true },
     ]
@@ -39,12 +39,12 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "📝",
     subItems: [
       { key: "writing", label: "My Writing", hidden: false },
-      { key: "draft-room", label: "Draft Room", hidden: false },
+      { key: "draft-room", label: "Draft Room", hidden: false, superuserOnly: true },
       { key: "draft-room-v2", label: "Draft Room V2", hidden: false },
       { key: "write", label: "Write", hidden: false },
-      { key: "seeds", label: "Seeds", hidden: false },
-      { key: "import-document", label: "Import Document", hidden: false },
-      { key: "mill", label: "Grist Mill", hidden: false },
+      { key: "seeds", label: "Seeds", hidden: false, superuserOnly: true },
+      { key: "import-document", label: "Import Document", hidden: false, superuserOnly: true },
+      { key: "mill", label: "Grist Mill", hidden: false, superuserOnly: true },
       { key: "new-post", label: "New Post", hidden: true },
       { key: "my-drafts", label: "My Drafts", hidden: true },
       { key: "published-posts", label: "Published Posts", hidden: true },
@@ -58,7 +58,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "👥",
     subItems: [
       { key: "my-groups", label: "My Groups" },
-      { key: "create-group", label: "Create Group", adminOnly: true },
+      { key: "create-group", label: "Create Group", superuserOnly: true },
       { key: "discover-groups", label: "Discover", hidden: true},
       { key: "group-invites", label: "Invitations", hidden: true },
 
@@ -90,8 +90,9 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     key: "bazaar",
     label: "Bazaar",
     icon: "🏪",
+    superuserOnly: true,
     subItems: [
-      { key: "bazaar-overview", label: "Bazaar Overview", adminOnly: true },
+      { key: "bazaar-overview", label: "Bazaar Overview", superuserOnly: true },
       { key: "bazaar-products", label: "My Products", hidden: true },
       { key: "bazaar-offerings", label: "My Offerings", hidden: true },
       { key: "bazaar-orders", label: "My Purchases", hidden: true },

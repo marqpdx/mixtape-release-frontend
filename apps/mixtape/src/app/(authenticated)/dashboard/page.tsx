@@ -43,6 +43,7 @@ export default function MemberDashboard() {
   const userRoles = useMemo(() => {
     const roles: string[] = ["member"];
     if (identity?.is_staff || identity?.is_superuser) roles.push("admin");
+    if (identity?.is_superuser) roles.push("superuser");
     return roles;
   }, [identity]);
 

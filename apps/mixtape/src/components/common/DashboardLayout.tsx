@@ -91,14 +91,40 @@ export default function DashboardLayout({
   const urlSection = searchParams?.get("section");
 
   const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+  const isSuperuser = useMemo(
+    () => userRoles.includes("superuser"),
+    [userRoles]
+  );
 
-  const visibleMenuItems = useMemo(() => {
-    return menuItems.filter((item) => {
+  const isMenuItemVisible = useCallback(
+    (item: MenuItem) => {
       if (item.hidden) return false;
       if (item.adminOnly && !isAdmin) return false;
+      if (item.superuserOnly && !isSuperuser) return false;
       return true;
-    });
-  }, [menuItems, isAdmin]);
+    },
+    [isAdmin, isSuperuser]
+  );
+
+  const visibleMenuItems = useMemo(() => {
+    return menuItems
+      .filter(isMenuItemVisible)
+      .map((item) => ({
+        ...item,
+        subItems: item.subItems?.filter(isMenuItemVisible),
+      }))
+      .filter((item) => !item.subItems || item.subItems.length > 0);
+  }, [menuItems, isMenuItemVisible]);
+
+  const firstVisibleSection = useMemo(() => {
+    for (const item of visibleMenuItems) {
+      if (item.subItems?.length) {
+        return item.subItems[0].key;
+      }
+      return item.key;
+    }
+    return defaultSection;
+  }, [visibleMenuItems, defaultSection]);
 
   const primaryTabs = useMemo(
     () => visibleMenuItems.slice(0, 3),
@@ -236,6 +262,23 @@ export default function DashboardLayout({
     openParentForSection(activeSection, setOpenSections, visibleMenuItems);
   }, [activeSection, visibleMenuItems]);
 
+  useEffect(() => {
+    const isVisible = visibleMenuItems.some(
+      (item) =>
+        item.key === activeSection ||
+        item.subItems?.some((sub) => sub.key === activeSection)
+    );
+
+    if (!isVisible && firstVisibleSection) {
+      handleSetActiveSection(firstVisibleSection);
+    }
+  }, [
+    activeSection,
+    visibleMenuItems,
+    firstVisibleSection,
+    handleSetActiveSection,
+  ]);
+
   const toggleAllAccordions = useCallback(() => {
     if (allExpanded) {
       setOpenSections({});
@@ -365,11 +408,7 @@ export default function DashboardLayout({
 
             <VStack align="stretch" gap={0} flex="1" overflowY="auto">
               {visibleMenuItems.map((menuItem) => {
-                const filteredSubItems = menuItem.subItems?.filter((sub) => {
-                  if (sub.hidden) return false;
-                  if (sub.adminOnly && !isAdmin) return false;
-                  return true;
-                });
+                const filteredSubItems = menuItem.subItems;
 
                 if (filteredSubItems?.length === 0) {
                   return null;

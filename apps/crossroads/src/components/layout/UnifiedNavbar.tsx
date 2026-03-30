@@ -220,13 +220,14 @@ export default function UnifiedNavbar({
   }, [shrinkOnScroll]);
 
   const shrink = shrinkOnScroll && isShrunk;
+  const navMinHeight = shrink ? "38px" : "48px";
   const horizontalPadding = shrink ? 1 : (extraCompact ? 2 : (compact ? 3 : 4));
-  const navFontSize = shrink ? "xs" : (extraCompact ? "sm" : (compact ? "sm" : "md"));
-  const navGap = shrink ? 2 : (extraCompact ? 5 : (compact ? 6 : 8));
-  const themeScale = shrink ? "scale(0.75)" : (extraCompact ? "scale(0.85)" : "scale(1)");
+  const navFontSize = shrink ? "sm" : (extraCompact ? "md" : (compact ? "md" : "lg"));
+  const navGap = shrink ? 3 : (extraCompact ? 6 : (compact ? 7 : 9));
+  const themeScale = shrink ? "scale(0.85)" : (extraCompact ? "scale(0.95)" : "scale(1.05)");
   const logoSize = shrink
-    ? (extraCompact ? 210 : (compact ? 240 : 280))
-    : (extraCompact ? 248 : (compact ? 280 : 320));
+    ? (extraCompact ? 230 : (compact ? 260 : 300))
+    : (extraCompact ? 272 : (compact ? 304 : 344));
   const logoOffset = shrink ? "translateY(-10px)" : "translateY(-15px)";
 
   // Loading state - show skeleton while checking auth
@@ -243,7 +244,7 @@ export default function UnifiedNavbar({
         zIndex={1000}
       >
         <Container maxW="7xl">
-          <Flex justify="space-between" align="center" minHeight={shrink ? "32px" : "40px"}>
+          <Flex justify="space-between" align="center" minHeight={navMinHeight}>
             {/* Logo skeleton */}
             {showLogo && (
               <Box w="200px" h="30px" bg="gray.200" borderRadius="md" />
@@ -280,7 +281,7 @@ export default function UnifiedNavbar({
       transition="all 0.3s ease"
     >
       <Container maxW="7xl">
-        <Flex justify="space-between" align="center" minHeight={shrink ? "32px" : "40px"}>
+        <Flex justify="space-between" align="center" minHeight={navMinHeight}>
 
           {/* Left: Logo or Menu Button */}
           <Flex align="center" gap={shrink ? 2 : (extraCompact ? 2 : 4)}>
@@ -291,7 +292,7 @@ export default function UnifiedNavbar({
                   aria-label="Menu"
                   variant="ghost"
                   onClick={onOpen}
-                  size="sm"
+                  size="md"
                 >
                   <IconMenu2 size={18} />
                 </IconButton>
@@ -358,7 +359,7 @@ export default function UnifiedNavbar({
               <MenuRoot positioning={{ placement: "bottom-end" }} >
                 <MenuTrigger asChild>
                   <Button
-                    size="sm"
+                    size={shrink ? "sm" : "md"}
                     variant="ghost"
                     display={{ base: "none", md: "flex" }}
                     gap={2}
@@ -378,7 +379,7 @@ export default function UnifiedNavbar({
                         )}
                       </Avatar.Root>
                     </AvatarGroup>
-                    <Text fontSize={shrink ? "xs" : (extraCompact ? "xs" : "sm")}>
+                    <Text fontSize={shrink ? "sm" : (extraCompact ? "sm" : "md")}>
                       {identity.username || identity.email}
                     </Text>
                   </Button>
@@ -419,9 +420,9 @@ export default function UnifiedNavbar({
               navSection === "public" && (
                 <Link as={NextLink} href={loginHref}>
                   <Button
-                    size="sm"
+                    size={shrink ? "sm" : "md"}
                     variant="solid"
-                    fontSize={shrink ? "xs" : (extraCompact ? "xs" : "sm")}
+                    fontSize={shrink ? "sm" : (extraCompact ? "sm" : "md")}
                   >
                     Login
                   </Button>
@@ -552,7 +553,7 @@ function NavItem({
           fontWeight="700"
           visibility="hidden"
           whiteSpace="nowrap"
-          fontSize={extraCompact ? "sm" : "inherit"}
+          fontSize={extraCompact ? "md" : "inherit"}
         >
           {label}
         </Box>
@@ -572,7 +573,7 @@ function NavItem({
             transform: extraCompact ? "translateY(-0.5px)" : "translateY(-1px)",
           }}
           pointerEvents="none"
-          fontSize={extraCompact ? "sm" : "inherit"}
+          fontSize={extraCompact ? "md" : "inherit"}
         >
           {label}
         </Box>
