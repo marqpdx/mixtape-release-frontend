@@ -33,6 +33,7 @@ import type { JSONContent } from "@tiptap/react";
 interface ProfileFormData {
   display_name: string;
   quick_intro: string;
+  right_now: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -63,6 +64,7 @@ export default function MemberProfileEdit() {
     defaultValues: {
       display_name: "",
       quick_intro: "",
+      right_now: "",
       avatar_url: "",
       profile_image: "",
       background_image: "",
@@ -80,6 +82,7 @@ export default function MemberProfileEdit() {
 
     setValue("display_name", member.display_name || "");
     setValue("quick_intro", member.quick_intro || "");
+    setValue("right_now", member.right_now || "");
     setValue("avatar_url", member.avatar_url || "");
     setValue("profile_image", member.profile_image || "");
     setValue("background_image", member.background_image || "");
@@ -97,6 +100,7 @@ export default function MemberProfileEdit() {
       const updateData: MemberProfileUpdate = {
         display_name: values.display_name || undefined,
         quick_intro: values.quick_intro || undefined,
+        right_now: values.right_now || undefined,
         avatar_url: values.avatar_url || undefined,
         profile_image: values.profile_image || undefined,
         background_image: values.background_image || undefined,
@@ -311,6 +315,26 @@ export default function MemberProfileEdit() {
               </Field.HelperText>
               {errors.quick_intro && (
                 <Field.ErrorText>{errors.quick_intro.message}</Field.ErrorText>
+              )}
+            </Field.Root>
+
+            <Field.Root invalid={!!errors.right_now}>
+              <Field.Label>
+                Right now
+              </Field.Label>
+              <Textarea
+                {...register("right_now", {
+                  maxLength: {
+                    value: 200,
+                    message: "Right now must be 200 characters or less",
+                  },
+                })}
+                placeholder="A few words about how you are right now..."
+                rows={2}
+                resize="vertical"
+              />
+              {errors.right_now && (
+                <Field.ErrorText>{errors.right_now.message}</Field.ErrorText>
               )}
             </Field.Root>
 

@@ -41,6 +41,11 @@ type PersistedDraft = {
   pathname: string;
 };
 
+function currentRoutePath(): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 function normalizeShortcuts(input: string): string {
   return input
     .replace(/(^|\n)\/is(\s+)/g, "$1/issue$2")
@@ -76,12 +81,12 @@ export default function GristQuickPopup() {
 
   const currentPath = typeof window === "undefined"
     ? ""
-    : `${window.location.pathname}${window.location.search}`;
+    : currentRoutePath();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const applyPath = () => setRoutePath(`${window.location.pathname}${window.location.search}`);
+    const applyPath = () => setRoutePath(currentRoutePath());
     applyPath();
     window.addEventListener("popstate", applyPath);
     return () => window.removeEventListener("popstate", applyPath);
@@ -95,7 +100,7 @@ export default function GristQuickPopup() {
       const parsed = JSON.parse(raw) as PersistedDraft;
       if (parsed?.text) {
         setText(parsed.text);
-        const livePath = `${window.location.pathname}${window.location.search}`;
+        const livePath = currentRoutePath();
         setRoutePath(parsed.pathname || livePath);
       }
     } catch {
@@ -152,7 +157,7 @@ export default function GristQuickPopup() {
       const payload: PersistedDraft = {
         text: nextText,
         timestamp: Date.now(),
-        pathname: `${window.location.pathname}${window.location.search}`,
+        pathname: currentRoutePath(),
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       setAutosaveStamp(payload.timestamp);
@@ -283,7 +288,7 @@ export default function GristQuickPopup() {
         nextDraftId,
         undefined,
         Intl.DateTimeFormat().resolvedOptions().timeZone,
-        `${window.location.pathname}${window.location.search}`
+        currentRoutePath()
       );
 
       clearLocal();
@@ -326,7 +331,7 @@ export default function GristQuickPopup() {
         beacon_key: "lighthouse",
         kind: "idea",
         message: lighthouseText.trim(),
-        page_url: typeof window !== "undefined" ? window.location.href : "",
+        page_url: currentRoutePath(),
       });
       setLighthouseText("");
       setOpen(false);

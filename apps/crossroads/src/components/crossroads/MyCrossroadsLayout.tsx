@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
-import { Box, HStack, IconButton } from '@chakra-ui/react';
+import { Box, HStack, IconButton, Text, VStack } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import {
   IconArrowsMaximize,
@@ -81,9 +81,14 @@ export default function MyCrossroadsLayout({
                 </IconButton>
               </Box>
             )}
-            <Box maxW="640px" mx="auto">
-              {narrativePane}
-            </Box>
+            <VStack maxW="640px" mx="auto" align="stretch" gap={4} fontSize="lg">
+              <Text fontSize="2xl" fontWeight="semibold">
+                Storylines
+              </Text>
+              <Box>
+                {narrativePane}
+              </Box>
+            </VStack>
           </Box>
 
           {/* Composer pane (owner only) — always mounted, hidden via width collapse */}
@@ -105,7 +110,14 @@ export default function MyCrossroadsLayout({
               bg={composerBg}
               transition="flex 0.2s ease, max-width 0.2s ease, opacity 0.15s ease, padding 0.2s ease"
             >
-              {composerPane}
+              <VStack align="stretch" gap={4} fontSize="lg">
+                <Text fontSize="2xl" fontWeight="semibold">
+                  Composer
+                </Text>
+                <Box>
+                  {composerPane}
+                </Box>
+              </VStack>
             </Box>
           )}
         </HStack>
@@ -131,8 +143,13 @@ export default function MyCrossroadsLayout({
       {/* Mobile layout */}
       <Box display={{ base: 'block', md: 'none' }} overflowX="hidden">
         {/* Narrative content */}
-        <Box px={4} py={4} pb={isOwner && !mobileComposerHidden ? '280px' : 4}>
-          {narrativePane}
+        <Box px={4} py={4} pb={isOwner && !mobileComposerHidden ? '280px' : 4} fontSize="lg">
+          <VStack align="stretch" gap={4}>
+            <Text fontSize="2xl" fontWeight="semibold">
+              Storylines
+            </Text>
+            <Box>{narrativePane}</Box>
+          </VStack>
         </Box>
 
         {/* Bottom composer (owner only) */}
@@ -160,8 +177,13 @@ export default function MyCrossroadsLayout({
                 <IconChevronDown size={16} />
               </IconButton>
             </Box>
-            <Box px={4} pb={4} maxH="45vh" overflowY="auto">
-              {composerPane}
+            <Box px={4} pb={4} maxH="45vh" overflowY="auto" fontSize="lg">
+              <VStack align="stretch" gap={4}>
+                <Text fontSize="xl" fontWeight="semibold">
+                  Composer
+                </Text>
+                <Box>{composerPane}</Box>
+              </VStack>
             </Box>
           </Box>
         )}

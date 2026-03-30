@@ -4,12 +4,14 @@
 
 import {
   Box,
+  Button,
   Container,
   Flex,
   Heading,
   Text,
   Badge,
   Image,
+  Link,
 } from "@chakra-ui/react";
 import {
   IconBuildingCommunity,
@@ -17,6 +19,7 @@ import {
   IconUserCircle,
   IconNetwork,
 } from "@tabler/icons-react";
+import NextLink from "next/link";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 
 const GROUP_TYPE_ICONS = {
@@ -29,6 +32,7 @@ const GROUP_TYPE_ICONS = {
 interface GroupMemberHeaderProps {
   group: {
     title: string;
+    slug: string;
     group_type?: string;
     emblem?: { size_96_url?: string | null; url?: string | null } | null;
     profile_image_url?: string;
@@ -37,6 +41,7 @@ interface GroupMemberHeaderProps {
   testRole?: 'admin' | 'member' | 'public' | null;
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isAdminOrSteward?: boolean;
+  canEditGroup?: boolean;
 }
 
 export function GroupMemberHeader({
@@ -44,6 +49,7 @@ export function GroupMemberHeader({
   testRole,
   onRoleChange,
   isAdminOrSteward = false,
+  canEditGroup = false,
 }: GroupMemberHeaderProps) {
   const cardBg = "theme.bgSecondary";
   const borderColor = "theme.border";
@@ -67,7 +73,38 @@ export function GroupMemberHeader({
 
             {/* Right side: Group emblem */}
             <Flex alignItems="center" gap={3}>
-              <Image alt={`${group.title} emblem`} height={"96px"} width={"96px"} src={emblemSrc} />
+              {emblemSrc ? (
+                <Image alt={`${group.title} emblem`} height={"96px"} width={"96px"} src={emblemSrc} />
+              ) : canEditGroup ? (
+                <Box
+                  height="96px"
+                  width="96px"
+                  borderWidth="1px"
+                  borderStyle="dashed"
+                  borderColor="theme.border"
+                  borderRadius="md"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  textAlign="center"
+                  px={2}
+                >
+                  <Link as={NextLink} href={`/groups/${group.slug}?view=admin&section=edit-group`}>
+                    <Button size="xs" variant="outline">
+                      Add image
+                    </Button>
+                  </Link>
+                </Box>
+              ) : (
+                <Box
+                  height="96px"
+                  width="96px"
+                  borderWidth="1px"
+                  borderStyle="dashed"
+                  borderColor="theme.border"
+                  borderRadius="md"
+                />
+              )}
             </Flex>
 
             <Box flex="1">

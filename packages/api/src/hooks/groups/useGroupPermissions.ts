@@ -178,6 +178,7 @@ export function useMyPermissions(groupSlug: string) {
   return useQuery({
     queryKey: ["permissions", "my", groupSlug],
     queryFn: () => groupPermsApi.getMyPermissions(groupSlug),
+    enabled: !!groupSlug,
     staleTime: 1000 * 60, // Cache for 1 minute
   });
 }

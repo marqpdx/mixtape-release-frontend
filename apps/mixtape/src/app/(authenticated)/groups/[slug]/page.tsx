@@ -17,6 +17,7 @@ import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions"
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
+import { canAccessSection } from "@/config/groupSectionPermissions";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -34,6 +35,11 @@ export default function GroupPage() {
   const isMember = group ? isGroupMember(group) : false;
   const isAdminOrSteward = group ? canUserModerateGroup(group) : false;
   const primaryRole = group ? getPrimaryRole(group) : null;
+  const canEditGroup = canAccessSection(
+    "edit-group",
+    myPermissions?.roles || [],
+    myPermissions?.decorators || []
+  );
 
   // One canonical storage key (once group is known)
   const storageKey = useMemo(
@@ -170,15 +176,16 @@ export default function GroupPage() {
         isMember={isMember}
       />
       {circleBar}
-      <GroupLanding
-        group={group}
-        userRole={primaryRole}
-        onJoinGroup={handleJoinGroup}
+        <GroupLanding
+          group={group}
+          userRole={primaryRole}
+          onJoinGroup={handleJoinGroup}
         testRole={testRole}
-        onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
-        isMember={isMember}
-        isAdminOrSteward={isAdminOrSteward}
-      />
-    </Box>
+          onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
+          isMember={isMember}
+          isAdminOrSteward={isAdminOrSteward}
+          canEditGroup={canEditGroup}
+        />
+      </Box>
   );
 }

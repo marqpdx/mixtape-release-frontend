@@ -16,6 +16,7 @@ interface GroupLandingProps {
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isMember?: boolean; // Is member of THIS group
   isAdminOrSteward?: boolean; // Has admin/steward role
+  canEditGroup?: boolean;
 }
 
 export function GroupLanding({
@@ -27,6 +28,7 @@ export function GroupLanding({
   onRoleChange,
   isMember = false,
   isAdminOrSteward = false,
+  canEditGroup = false,
 }: GroupLandingProps) {
   void userRole;
   void loading;
@@ -46,6 +48,7 @@ export function GroupLanding({
           testRole={testRole}
           onRoleChange={showRoleSwitcher ? onRoleChange : undefined}
           isAdminOrSteward={isAdminOrSteward}
+          canEditGroup={canEditGroup}
         />
       ) : (
         <GroupPublicHeader

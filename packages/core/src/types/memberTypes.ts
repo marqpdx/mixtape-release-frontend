@@ -27,6 +27,7 @@ export interface MemberProfile {
   slug: string;
   display_name: string;
   quick_intro: string;
+  right_now: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -45,6 +46,7 @@ export interface MemberProfile {
 export interface MemberProfileUpdate {
   display_name?: string;
   quick_intro?: string;
+  right_now?: string;
   avatar_url?: string;
   profile_image?: string;
   background_image?: string;

@@ -22,6 +22,7 @@ export default function MemberHubPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const usernameParam = params?.username as string | undefined;
+  const urlSection = searchParams?.get("section");
 
   const { user: identity, isLoading: identityLoading } = useAuth();
   const username = usernameParam || identity?.username;
@@ -44,7 +45,7 @@ export default function MemberHubPage() {
   });
 
   // Track a pending admin section to navigate to after tab switch
-  const [pendingAdminSection, setPendingAdminSection] = useState<string | null>(null);
+  const [pendingAdminSection, setPendingAdminSection] = useState<string | null>(urlSection || null);
 
   const handleTabChange = useCallback((tab: HubTab) => {
     setActiveTab(tab);
@@ -52,19 +53,27 @@ export default function MemberHubPage() {
       localStorage.setItem(TAB_STORAGE_KEY, tab);
       const url = new URL(window.location.href);
       url.searchParams.set("tab", tab);
+      if (pendingAdminSection) {
+        url.searchParams.set("section", pendingAdminSection);
+      }
       window.history.replaceState({}, "", url.toString());
     }
-  }, []);
+  }, [pendingAdminSection]);
 
   // Switch to admin tab and optionally navigate to a section
   const switchToAdmin = useCallback((section?: string) => {
-    if (section) {
-      setPendingAdminSection(section);
-      // Also store the section so DashboardLayout picks it up
-      localStorage.setItem(MEMBER_HUB_CONFIG.localStorageKey, section);
-    }
+      if (section) {
+        setPendingAdminSection(section);
+        // Also store the section so DashboardLayout picks it up
+        localStorage.setItem(MEMBER_HUB_CONFIG.localStorageKey, section);
+      }
     handleTabChange("admin");
   }, [handleTabChange]);
+
+  useEffect(() => {
+    if (!urlSection) return;
+    setPendingAdminSection(urlSection);
+  }, [urlSection]);
 
   const WorkAreaWrapper = useCallback(
     (props: WorkAreaProps) => {

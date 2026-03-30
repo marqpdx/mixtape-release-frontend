@@ -97,7 +97,9 @@ export function Beacon({
         beacon_key: beaconKey,
         kind,
         message: message.trim(),
-        page_url: typeof window !== "undefined" ? window.location.href : "",
+        page_url: typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "",
       });
       setSubmitted(true);
       setMessage("");

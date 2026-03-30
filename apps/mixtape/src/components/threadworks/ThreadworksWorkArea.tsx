@@ -12,6 +12,7 @@ import {
   Flex,
   Spinner,
   HStack,
+  Link,
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import WorkAreaWrapper from '@components/dashboard/shared/WorkAreaWrapper'
@@ -24,6 +25,8 @@ import {
 import { CreateForumData } from '@mixtape/core/types/threadworksTypes'
 import ForumList from './ForumList'
 import CreateForumModal from './CreateForumModal'
+import { useMyPermissions } from '@mixtape/api/hooks/groups/useGroupPermissions'
+import NextLink from 'next/link'
 
 interface ThreadworksWorkAreaProps {
   section: string
@@ -43,6 +46,13 @@ export default function ThreadworksWorkArea({
 
   const bgColor = useColorModeValue('transparent', 'gray.900')
   const textColor = useColorModeValue('gray.600', 'gray.300')
+  const { data: myPermissions } = useMyPermissions(groupSlug || '')
+  const canManageThreadworks =
+    !!groupSlug &&
+    (myPermissions?.is_admin || myPermissions?.decorators?.includes('can__ManageThreadworks') || false)
+  const adminThreadworksHref = groupSlug
+    ? `/groups/${groupSlug}?view=admin&section=threadworks-landing`
+    : '/app/dashboard'
 
   // Fetch forums - include refreshTrigger in dependencies to refetch on demand
   const { forums, isLoading, error, refetch } = useThreadworks(groupSlug)
@@ -121,14 +131,16 @@ export default function ThreadworksWorkArea({
                 </Tooltip>
               </Button>
             )}
-            <Button
-              colorScheme="green"
-              onClick={() => setCreateModalOpen(true)}
-              disabled={mutations.isCreatingForum}
-            >
-              <IconPlus size={18} />
-              New Forum
-            </Button>
+            {canManageThreadworks && (
+              <Button
+                colorScheme="green"
+                onClick={() => setCreateModalOpen(true)}
+                disabled={mutations.isCreatingForum}
+              >
+                <IconPlus size={18} />
+                New Forum
+              </Button>
+            )}
           </HStack>
         </Flex>
 
@@ -140,11 +152,21 @@ export default function ThreadworksWorkArea({
               No forums yet
             </Heading>
             <Text color={textColor} mb={4}>
-              Get started by creating your first forum
+              {canManageThreadworks ? (
+                <Link as={NextLink} href={adminThreadworksHref} color="green.500" textDecoration="underline">
+                  Click here to create your first forum
+                </Link>
+              ) : (
+                'Ask a group steward to create your first forum'
+              )}
             </Text>
-            <Button colorScheme="green" onClick={() => setCreateModalOpen(true)}>
-              Create Forum
-            </Button>
+            {canManageThreadworks && (
+              <Link as={NextLink} href={adminThreadworksHref}>
+                <Button colorScheme="green">
+                  Create Forum
+                </Button>
+              </Link>
+            )}
           </Box>
         ) : (
           <>

@@ -311,7 +311,7 @@ export default function Composer({ onPosted }: ComposerProps) {
                 loading={isPreparingMic}
               >
                 <IconMicrophone size={18} />
-                <Text fontSize="sm">Voice</Text>
+                <Text fontSize="sm">Voice*</Text>
               </Button>
             )}
             {micError && (
@@ -319,9 +319,6 @@ export default function Composer({ onPosted }: ComposerProps) {
                 {micError}
               </Text>
             )}
-            <Text fontSize="xs" color={mutedColor}>
-              Mic preload is controlled in /app Settings → Preferences (Auto Load Mic).
-            </Text>
           </HStack>
 
           <HStack gap={2}>
@@ -409,6 +406,10 @@ export default function Composer({ onPosted }: ComposerProps) {
           </Text>
         )}
       </Box>
+
+      <Text fontSize="xs" color={mutedColor}>
+        * Mic preload is controlled in /app Settings → Preferences (Auto Load Mic).
+      </Text>
     </VStack>
   );
 }

@@ -17,6 +17,7 @@ import {
   Grid,
   Spinner,
   EmptyState,
+  Link,
 } from '@chakra-ui/react';
 import {
   IconFolder,
@@ -24,8 +25,10 @@ import {
   IconFile,
 } from '@tabler/icons-react';
 import { useCollections, useCreateCollection } from '@mixtape/api/hooks/stackroom/useCollections';
+import { useMyPermissions } from '@mixtape/api/hooks/groups/useGroupPermissions';
 import { toaster } from '@/components/ui/toaster';
 import type { CollectionListItem } from '@mixtape/core/types/collectionTypes';
+import NextLink from 'next/link';
 
 interface CollectionsWorkAreaProps {
   sponsor: {
@@ -45,6 +48,11 @@ export function CollectionsWorkArea({
   const [newCollectionTitle, setNewCollectionTitle] = useState('');
   const [newCollectionSummary, setNewCollectionSummary] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const { data: myPermissions } = useMyPermissions(sponsor.type === 'group' ? sponsor.slug : '');
+  const canCreateCollection =
+    sponsor.type !== 'group'
+      ? true
+      : myPermissions?.is_admin || myPermissions?.decorators?.includes('can__ManageWriting') || false;
 
   // Fetch all collections (filtered by sponsor in backend)
   const { collections, isLoading, refetch } = useCollections();
@@ -139,24 +147,26 @@ export function CollectionsWorkArea({
             </Text>
           </Box>
 
-          <Button
-            colorPalette="blue"
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            size="md"
-          >
-            <HStack gap={2}>
-              <IconPlus size={20} />
-              <Text>New Collection</Text>
-            </HStack>
-          </Button>
+          {canCreateCollection && (
+            <Button
+              colorPalette="blue"
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              size="md"
+            >
+              <HStack gap={2}>
+                <IconPlus size={20} />
+                <Text>Add Collection</Text>
+              </HStack>
+            </Button>
+          )}
         </HStack>
 
         {/* Create Collection Form */}
-        {showCreateForm && (
+        {showCreateForm && canCreateCollection && (
           <Card.Root bg="blue.50">
             <Card.Body>
               <VStack gap={4} align="stretch">
-                <Heading size="sm">Create New Collection</Heading>
+                <Heading size="sm">Add Collection</Heading>
 
                 <Box>
                   <Text fontSize="sm" fontWeight="medium" mb={2}>
@@ -190,7 +200,7 @@ export function CollectionsWorkArea({
                     loading={createMutation.isPending}
                     size="sm"
                   >
-                    Create Collection
+                    Add Collection
                   </Button>
                   <Button
                     variant="ghost"
@@ -234,8 +244,17 @@ export function CollectionsWorkArea({
               <EmptyState.Description>
                 {searchQuery
                   ? `No collections match "${searchQuery}"`
-                  : 'Create your first collection to organize and curate content'}
+                  : canCreateCollection
+                    ? 'Create your first collection to organize and curate content'
+                    : 'No collections yet.'}
               </EmptyState.Description>
+              {!searchQuery && canCreateCollection && sponsor.type === 'group' && (
+                <Link as={NextLink} href={`/groups/${sponsor.slug}?view=admin&section=collections-landing`}>
+                  <Button size="sm" variant="outline" mt={4}>
+                    Add Collection
+                  </Button>
+                </Link>
+              )}
             </EmptyState.Content>
           </EmptyState.Root>
         ) : (

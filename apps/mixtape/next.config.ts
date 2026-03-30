@@ -5,27 +5,56 @@ import path from 'path';
 
 const isProd = process.env.NODE_ENV === 'production';
 
-// Build connect-src based on environment
-const connectSrc = [
-  "'self'",
-  // API + Chat (always)
-  "https://api.crossroads.place",
-  "https://chat.crossroads.place",
-  "wss://chat.crossroads.place",
-  // Dev-only backends (local API + Socket.IO)
-  ...(isProd
-    ? []
-    : [
-        "http://localhost:8010",
-        "http://127.0.0.1:8010",
-        "http://localhost:5001",
-        "http://127.0.0.1:5001",
-        "ws://localhost:5001",
-        "ws://127.0.0.1:5001",
-        "http://localhost:8011",
-        "http://127.0.0.1:8011",
-      ]),
-].join(' ');
+function toOrigin(value?: string | null): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function toWsOrigin(value?: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'http:') return `ws://${url.host}`;
+    if (url.protocol === 'https:') return `wss://${url.host}`;
+    if (url.protocol === 'ws:' || url.protocol === 'wss:') return `${url.protocol}//${url.host}`;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const envConnectOrigins = [
+  toOrigin(process.env.NEXT_PUBLIC_ROOT_API_URL),
+  toOrigin(process.env.NEXT_PUBLIC_LIVEWIRE_URL),
+  toWsOrigin(process.env.NEXT_PUBLIC_LIVEWIRE_URL),
+].filter((value): value is string => Boolean(value));
+
+// Build connect-src from stable defaults plus env-configured service origins.
+const connectSrc = Array.from(
+  new Set([
+    "'self'",
+    "https://api.crossroads.place",
+    "https://chat.crossroads.place",
+    "wss://chat.crossroads.place",
+    ...(!isProd
+      ? [
+          "http://localhost:8010",
+          "http://127.0.0.1:8010",
+          "http://localhost:5001",
+          "http://127.0.0.1:5001",
+          "ws://localhost:5001",
+          "ws://127.0.0.1:5001",
+          "http://localhost:8011",
+          "http://127.0.0.1:8011",
+        ]
+      : []),
+    ...envConnectOrigins,
+  ])
+).join(' ');
 
 // If you load Google Fonts, uncomment these two lines:
 // const styleSrc = "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com";

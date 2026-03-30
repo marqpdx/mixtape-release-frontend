@@ -8,6 +8,7 @@ import { IconShoppingBag, IconFolder, IconCalendar, IconChevronDown, IconChevron
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
+import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { useCalendarOccurrences } from "@mixtape/api/hooks/almanac";
@@ -67,9 +68,14 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       : description;
   const { adminMembers, stewardMembers, activeMembers, isLoading: membersLoading } = useMembers(group.slug);
   const { pin: welcomePin } = useGroupWelcomePin(group.slug);
+  const { data: myPermissions } = useMyPermissions(group.slug);
   const { layout, isLoading: layoutLoading } = useGroupOverviewLayout(group.slug);
   const { stall } = useStall("group", group.id);
   const { collections } = useCollections({ sponsor_type: 'group', sponsor_id: group.id });
+  const canCreateWelcomeNote =
+    myPermissions?.is_admin ||
+    myPermissions?.decorators?.includes("create_post") ||
+    false;
 
   // Upcoming events: fetch next 90 days of calendar occurrences
   const nowRef = useRef(new Date());
@@ -148,31 +154,35 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     </Stack>
   );
 
-  const renderWelcomeBlock = () => (
-    <Card.Root>
-      <Card.Body>
-        <Collapsible.Root
-          open={welcomeOpen}
-          onOpenChange={({ open }) => {
-            setWelcomeOpen(open);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem(welcomeStorageKey, open ? "0" : "1");
-            }
-          }}
-        >
-          <Collapsible.Trigger asChild>
-            <Button variant="outline" size="sm" width="full" justifyContent="space-between">
-              <Flex align="center" gap={2}>
-                {welcomeOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                <Text>Welcome</Text>
-              </Flex>
-              <Collapsible.Indicator />
-            </Button>
-          </Collapsible.Trigger>
-          <Collapsible.Content>
-            <Box pt={4}>
-              {welcomePin ? (
-                (() => {
+  const renderWelcomeBlock = () => {
+    if (!welcomePin) {
+      return canCreateWelcomeNote ? null : null;
+    }
+
+    return (
+      <Card.Root>
+        <Card.Body>
+          <Collapsible.Root
+            open={welcomeOpen}
+            onOpenChange={({ open }) => {
+              setWelcomeOpen(open);
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem(welcomeStorageKey, open ? "0" : "1");
+              }
+            }}
+          >
+            <Collapsible.Trigger asChild>
+              <Button variant="outline" size="sm" width="full" justifyContent="space-between">
+                <Flex align="center" gap={2}>
+                  {welcomeOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  <Text>Welcome</Text>
+                </Flex>
+                <Collapsible.Indicator />
+              </Button>
+            </Collapsible.Trigger>
+            <Collapsible.Content>
+              <Box pt={4}>
+                {(() => {
                   const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
                   const text = collectNodeText(body).replace(/\s+/g, " ").trim();
                   const wordCount = text ? text.split(/\s+/).length : 0;
@@ -212,28 +222,14 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
                       ) : null}
                     </>
                   );
-                })()
-              ) : (
-                <>
-                  <Heading size="md" mb={2}>
-                    Welcome to {group.title}
-                  </Heading>
-                  <Text color="fg.muted">
-                    Add a pinned welcome note to introduce members to this group.
-                  </Text>
-                  <Link as={NextLink} href={`/groups/${group.slug}?view=admin&section=write`} mt={3} display="inline-block">
-                    <Button size="sm" variant="outline">
-                      Add welcome note
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </Box>
-          </Collapsible.Content>
-        </Collapsible.Root>
-      </Card.Body>
-    </Card.Root>
-  );
+                })()}
+              </Box>
+            </Collapsible.Content>
+          </Collapsible.Root>
+        </Card.Body>
+      </Card.Root>
+    );
+  };
 
   const renderAnnouncementsBlock = () => (
     <Card.Root>

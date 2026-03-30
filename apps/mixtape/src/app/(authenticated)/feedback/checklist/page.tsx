@@ -39,6 +39,28 @@ function splitIssueContext(message: string): { cleanMessage: string; context: st
   return { cleanMessage, context };
 }
 
+function normalizePagePath(pageUrl: string): string {
+  if (!pageUrl) return "";
+  try {
+    const parsed = new URL(pageUrl);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return pageUrl;
+  }
+}
+
+function formatPageLabel(pageUrl: string): string {
+  const normalized = normalizePagePath(pageUrl).trim();
+  if (!normalized) return normalized;
+
+  const memberProfileMatch = normalized.match(/^\/members\/([^/?#]+)(\?.*)?$/);
+  if (memberProfileMatch) {
+    return `${memberProfileMatch[0]} member profile page`;
+  }
+
+  return normalized;
+}
+
 export default function FeedbackChecklistPage() {
   const { user } = useAuth();
   const isSuperuser = !!user?.is_superuser;
@@ -289,7 +311,7 @@ export default function FeedbackChecklistPage() {
       const title = splitIssueContext(item.message).cleanMessage.split("\n")[0] || "Untitled issue";
       return `${idx + 1}. [${item.id}] ${title}
 Status: ${item.status}
-Page: ${item.page_url || "(not provided)"}
+Page: ${item.page_url ? formatPageLabel(item.page_url) : "(not provided)"}
 ${splitIssueContext(item.message).context ? `Context: ${splitIssueContext(item.message).context}\n` : ""}Details:
 ${splitIssueContext(item.message).cleanMessage}`;
     });
@@ -556,7 +578,7 @@ Notes:
               )}
 
               {item.page_url ? (
-                <Text mt={2} fontSize="xs" color="fg.muted">Page: {item.page_url}</Text>
+                <Text mt={2} fontSize="xs" color="fg.muted">Page: {formatPageLabel(item.page_url)}</Text>
               ) : null}
               {splitIssueContext(item.message).context ? (
                 <Text fontSize="xs" color="fg.muted">Context: {splitIssueContext(item.message).context}</Text>

@@ -43,8 +43,8 @@ export default function WritingSection({
             <FeedToggle activeMode="storyline" onModeChange={() => {}} />
           )
         ) : (
-          <Text fontSize="lg" fontWeight="semibold" color={headingColor}>
-            Storyline
+          <Text fontSize="xl" fontWeight="semibold" color={headingColor}>
+            Storylines
           </Text>
         )}
         <HStack gap={2}>
