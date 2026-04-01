@@ -119,6 +119,44 @@ export interface LinkedOutputResponse {
   created_at: string;
 }
 
+// Import types
+export type ArtifactKind = ArtifactResponse['kind'];
+export type SourceFormat = 'claude' | 'chatgpt' | 'freeform';
+
+export interface ImportArtifactSpec {
+  kind: ArtifactKind;
+  title: string;
+  body: string;
+  source_turn_idx?: number | null;
+}
+
+export interface ImportPreviewResponse {
+  source_format: SourceFormat;
+  conversation_title: string;
+  turns: RawTranscriptTurn[];
+  detected_artifacts: ImportArtifactSpec[];
+  stats: {
+    turn_count: number;
+    human_turns?: number;
+    assistant_turns?: number;
+    word_count: number;
+    conversation_count?: number;
+  };
+}
+
+export interface ImportConfirmPayload {
+  turns: RawTranscriptTurn[];
+  artifacts: ImportArtifactSpec[];
+  title?: string;
+  session_intent?: SessionResponse['intent'];
+}
+
+export interface ImportConfirmResponse {
+  session: SessionResponse;
+  artifacts_created: number;
+  rolling_summary_queued: boolean;
+}
+
 // ============================================================================
 // Initiatives
 // ============================================================================
@@ -247,6 +285,39 @@ export async function routeArtifactToPuddlejump(
 ): Promise<{ artifact: ArtifactResponse; document: string; message: string }> {
   const res = await axiosInstance.post(
     `/api/groups/${groupSlug}/initiatives/${initiativeId}/artifacts/${artifactId}/route-to-puddlejump`
+  );
+  return res.data;
+}
+
+// ============================================================================
+// Session Import
+// ============================================================================
+
+export async function previewInitiativeImport(
+  groupSlug: string,
+  initiativeId: string,
+  file: File,
+  format?: SourceFormat,
+): Promise<ImportPreviewResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const params = format ? `?format=${format}` : "";
+  const res = await axiosInstance.post(
+    `/api/groups/${groupSlug}/initiatives/${initiativeId}/import-session/preview${params}`,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data;
+}
+
+export async function confirmInitiativeImport(
+  groupSlug: string,
+  initiativeId: string,
+  payload: ImportConfirmPayload,
+): Promise<ImportConfirmResponse> {
+  const res = await axiosInstance.post(
+    `/api/groups/${groupSlug}/initiatives/${initiativeId}/import-session/confirm`,
+    payload,
   );
   return res.data;
 }

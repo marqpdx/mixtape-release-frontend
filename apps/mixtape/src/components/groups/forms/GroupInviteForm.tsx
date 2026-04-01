@@ -495,16 +495,34 @@ export const GroupInviteForm = ({
 
       const res = await axiosInstance.post(`/api/groups/${groupSlug}/invite`, submitData);
 
-      void res.data.invitations_created;
-      const totalInvites = submitData.invited_emails.length + submitData.invited_usernames.length;
+      const created: number = res.data.invitations_created ?? 0;
+      const responseErrors: unknown[] = res.data.errors ?? [];
 
       reset();
 
-      const firstInvitationId = res.data.invitations?.[0]?.id || res.data.id;
-      if (firstInvitationId && onSuccess) {
-        onSuccess(firstInvitationId, {
-          type: 'batch',
-          target: `${totalInvites} recipients`
+      if (created > 0) {
+        toaster.create({
+          title: "Invitation sent",
+          description: `${created} invitation${created !== 1 ? "s" : ""} sent successfully.`,
+          type: "success",
+          duration: 5000,
+        });
+        const firstInvitationId = res.data.invitations?.[0]?.id || res.data.id;
+        if (firstInvitationId && onSuccess) {
+          onSuccess(firstInvitationId, {
+            type: 'batch',
+            target: `${created} recipient${created !== 1 ? "s" : ""}`
+          });
+        }
+      } else {
+        const firstError = Array.isArray(responseErrors) && responseErrors.length > 0
+          ? String((responseErrors[0] as Record<string, unknown>).error ?? "Unknown error")
+          : "No invitations were created.";
+        toaster.create({
+          title: "Invite failed",
+          description: firstError,
+          type: "error",
+          duration: 7000,
         });
       }
 

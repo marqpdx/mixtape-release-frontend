@@ -29,6 +29,7 @@ import {
   IconChevronRight,
   IconClipboardText,
   IconDeviceFloppy,
+  IconFileImport,
   IconLayoutGrid,
   IconList,
   IconMoodSpark,
@@ -38,6 +39,7 @@ import {
   IconSend,
   IconX,
 } from "@tabler/icons-react";
+import ImportSessionPanel from "./ImportSessionPanel";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useGroupInitiatives } from "@mixtape/api/hooks/initiatives/useGroupInitiatives";
 import { useInitiative } from "@mixtape/api/hooks/initiatives/useInitiative";
@@ -495,11 +497,12 @@ function InitiativeDetailView({
   onBack,
   onOpenSession,
 }: InitiativeDetailViewProps) {
-  const { initiative, sessions, artifacts, isLoading, error, createSession, createArtifact } =
+  const { initiative, sessions, artifacts, isLoading, error, createSession, createArtifact, reload } =
     useInitiative(groupSlug, initiativeId);
 
   const [creatingSession, setCreatingSession] = useState(false);
   const [showArtifactForm, setShowArtifactForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const mutedText = useColorModeValue("gray.600", "gray.400");
 
@@ -567,29 +570,57 @@ function InitiativeDetailView({
       <VStack align="stretch" gap={4}>
         <HStack justify="space-between">
           <Heading size="md">Sessions</Heading>
-          <Button
-            size="sm"
-            colorPalette="green"
-            loading={creatingSession}
-            onClick={handleNewSession}
-          >
-            <IconPlus size={16} />
-            New Session
-          </Button>
+          <HStack gap={2}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowImport((v) => !v)}
+            >
+              <IconFileImport size={16} />
+              Import
+            </Button>
+            <Button
+              size="sm"
+              colorPalette="green"
+              loading={creatingSession}
+              onClick={handleNewSession}
+            >
+              <IconPlus size={16} />
+              New Session
+            </Button>
+          </HStack>
         </HStack>
-        {sessions.length === 0 ? (
+
+        {showImport && (
+          <Card.Root variant="outline">
+            <Card.Body>
+              <ImportSessionPanel
+                groupSlug={groupSlug}
+                initiativeId={initiativeId}
+                onDone={({ session }) => {
+                  setShowImport(false);
+                  reload();
+                  onOpenSession(session.id);
+                }}
+                onCancel={() => setShowImport(false)}
+              />
+            </Card.Body>
+          </Card.Root>
+        )}
+
+        {!showImport && sessions.length === 0 ? (
           <Box py={6} textAlign="center">
             <Text color={mutedText} fontSize="sm">
               No sessions yet. Start a session to begin a working conversation.
             </Text>
           </Box>
-        ) : (
+        ) : !showImport ? (
           <VStack align="stretch" gap={2}>
             {sessions.map((s) => (
               <SessionRow key={s.id} session={s} onOpen={onOpenSession} />
             ))}
           </VStack>
-        )}
+        ) : null}
       </VStack>
 
       <Separator />
