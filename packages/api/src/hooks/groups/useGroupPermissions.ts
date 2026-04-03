@@ -3,7 +3,11 @@
 // React hooks for group permissions management
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { groupPermsApi, MemberPermissions } from "@mixtape/api/clients/group/groupPermsApi";
+import {
+  groupPermsApi,
+  GroupPermissionProfile,
+  MemberPermissions,
+} from "@mixtape/api/clients/group/groupPermsApi";
 import { toaster } from "@mixtape/core/lib/toaster";
 
 /**
@@ -25,6 +29,14 @@ export function useMemberPermissions(groupSlug: string) {
     queryKey: ["permissions", "members", groupSlug],
     queryFn: () => groupPermsApi.getMemberPermissions(groupSlug),
     staleTime: 1000 * 30, // Cache for 30 seconds
+  });
+}
+
+export function usePermissionProfiles(groupSlug: string) {
+  return useQuery({
+    queryKey: ["permissions", "profiles", groupSlug],
+    queryFn: () => groupPermsApi.getPermissionProfiles(groupSlug),
+    staleTime: 1000 * 30,
   });
 }
 
@@ -163,6 +175,170 @@ export function useRevokeRole(groupSlug: string) {
     onError: (error: any) => {
       toaster.create({
         title: "Failed to revoke role",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useAssignPermissionProfile(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, profileId }: { userId: string; profileId: string | null }) =>
+      groupPermsApi.assignPermissionProfile(groupSlug, userId, profileId),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData<MemberPermissions[]>(
+        ["permissions", "members", groupSlug],
+        (old) => {
+          if (!old) return [updatedMember];
+          return old.map((m) =>
+            m.user_id === updatedMember.user_id ? updatedMember : m
+          );
+        }
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: ["permissions", "profiles", groupSlug],
+      });
+
+      toaster.create({
+        title: "Permission profile updated",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to update permission profile",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useCreatePermissionProfile(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { name: string; description?: string; decorators?: string[] }) =>
+      groupPermsApi.createPermissionProfile(groupSlug, payload),
+    onSuccess: (createdProfile) => {
+      queryClient.setQueryData<GroupPermissionProfile[]>(
+        ["permissions", "profiles", groupSlug],
+        (old) => (old ? [...old, createdProfile] : [createdProfile])
+      );
+
+      toaster.create({
+        title: "Permission profile created",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to create permission profile",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useUpdatePermissionProfile(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      profileId,
+      payload,
+    }: {
+      profileId: string;
+      payload: { name: string; description?: string; decorators?: string[] };
+    }) => groupPermsApi.updatePermissionProfile(groupSlug, profileId, payload),
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData<GroupPermissionProfile[]>(
+        ["permissions", "profiles", groupSlug],
+        (old) => {
+          if (!old) return [updatedProfile];
+          return old.map((profile) =>
+            profile.id === updatedProfile.id ? updatedProfile : profile
+          );
+        }
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: ["permissions", "members", groupSlug],
+      });
+
+      toaster.create({
+        title: "Permission profile updated",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to update permission profile",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useClonePermissionProfile(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ profileId }: { profileId: string }) =>
+      groupPermsApi.clonePermissionProfile(groupSlug, profileId),
+    onSuccess: (createdProfile) => {
+      queryClient.setQueryData<GroupPermissionProfile[]>(
+        ["permissions", "profiles", groupSlug],
+        (old) => (old ? [...old, createdProfile] : [createdProfile])
+      );
+
+      toaster.create({
+        title: "Permission profile cloned",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to clone permission profile",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useSetDefaultPermissionProfile(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ profileId }: { profileId: string }) =>
+      groupPermsApi.setDefaultPermissionProfile(groupSlug, profileId),
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData<GroupPermissionProfile[]>(
+        ["permissions", "profiles", groupSlug],
+        (old) => {
+          if (!old) return [updatedProfile];
+          return old.map((profile) => ({
+            ...profile,
+            is_default: profile.id === updatedProfile.id,
+          }));
+        }
+      );
+
+      toaster.create({
+        title: "Default permission profile updated",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to update default permission profile",
         description: error.response?.data?.error || error.message,
         type: "error",
       });

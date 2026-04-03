@@ -17,6 +17,7 @@ import {
   IconH3,
   IconH4,
   IconHelpCircle,
+  IconScissors,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -25,7 +26,13 @@ import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 
-export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
+export default function TipTapToolbar({
+  editor,
+  gristMode = false,
+}: {
+  editor: Editor | null
+  gristMode?: boolean
+}) {
   const { user } = useAuth();
   const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
@@ -201,6 +208,25 @@ export default function TipTapToolbar({ editor }: { editor: Editor | null }) {
           tabIndex={-1}
           size="xs"
         />
+        {gristMode && (
+          <>
+            <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
+            <EditorToolbarButton
+              tooltip="Insert split point (/split)"
+              icon={<IconScissors size={16} />}
+              onClick={() =>
+                editor
+                  ?.chain()
+                  .focus()
+                  .insertSplitMarker({ source: 'manual', title: null, rationale: null })
+                  .run()
+              }
+              isActive={false}
+              tabIndex={-1}
+              size="xs"
+            />
+          </>
+        )}
       </HStack>
       <HStack gap={0.5}>
         <EditorToolbarButton

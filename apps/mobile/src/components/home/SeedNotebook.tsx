@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   KeyboardAvoidingView,
   Linking,
@@ -26,11 +27,14 @@ import {
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useAuthStore } from '../../stores/authStore';
 import { useNativeVoiceRecorder } from '../../hooks/useNativeVoiceRecorder';
+import { parseDispatchText, useDispatchCommand } from '../../hooks/useDispatchCommand';
+import { MentionSuggestionList } from './MentionSuggestionList';
 
 interface SeedNotebookProps {
   keyboardVerticalOffset?: number;
   onFocusChange?: (focused: boolean) => void;
   onDevelopSeed: (seed: Seed) => void;
+  dispatchEnabled?: boolean;
 }
 
 function formatSeedTime(value: string): string {
@@ -61,6 +65,7 @@ export function SeedNotebook({
   keyboardVerticalOffset = 0,
   onFocusChange,
   onDevelopSeed,
+  dispatchEnabled = false,
 }: SeedNotebookProps) {
   const currentUser = useAuthStore((state) => state.user);
   const recentSeedsQuery = useRecentSeeds(20);
@@ -75,6 +80,10 @@ export function SeedNotebook({
   const [captureFocused, setCaptureFocused] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [copiedSeedId, setCopiedSeedId] = useState<string | null>(null);
+  const [dispatchParseResult, setDispatchParseResult] = useState(() =>
+    parseDispatchText('')
+  );
+  const dispatch = useDispatchCommand();
   const captureInputRef = useRef<TextInput | null>(null);
   const editInputRef = useRef<TextInput | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
@@ -509,13 +518,27 @@ export function SeedNotebook({
             <>
               <TextInput
                 ref={captureInputRef}
-                style={styles.captureInput}
+                style={[
+                  styles.captureInput,
+                  dispatchEnabled && dispatchParseResult.isDispatchMode && styles.captureInputDispatch,
+                ]}
                 autoFocus={false}
                 multiline
                 placeholder="Type here..."
                 placeholderTextColor="#738292"
                 value={captureText}
                 onChangeText={(value) => {
+                  if (dispatchEnabled) {
+                    const parsed = parseDispatchText(value);
+                    setDispatchParseResult(parsed);
+                    if (parsed.shouldFire && !dispatch.isDispatching) {
+                      void dispatch.fire(parsed, draftStorageKey, (newText) => {
+                        setCaptureText(newText);
+                        setDispatchParseResult(parseDispatchText(newText));
+                      });
+                      return;
+                    }
+                  }
                   setCaptureText(value);
                   if (savedSeed) {
                     setSavedSeed(null);
@@ -538,6 +561,30 @@ export function SeedNotebook({
                   onFocusChange?.(false);
                 }}
               />
+
+              {dispatchEnabled &&
+               dispatchParseResult.isDispatchMode &&
+               dispatchParseResult.mentionQuery !== null ? (
+                <MentionSuggestionList
+                  query={dispatchParseResult.mentionQuery}
+                  onSelect={(username) => {
+                    // Replace the partial @mention at the end of the command line with the completed one
+                    const newText = captureText.replace(/@(\w*)$/, `@${username} `);
+                    setCaptureText(newText);
+                    setDispatchParseResult(parseDispatchText(newText));
+                  }}
+                />
+              ) : null}
+
+              {dispatchEnabled && dispatch.dispatchError ? (
+                <TouchableOpacity
+                  onPress={dispatch.clearError}
+                  style={styles.dispatchError}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.dispatchErrorText}>{dispatch.dispatchError}</Text>
+                </TouchableOpacity>
+              ) : null}
 
               <View style={styles.captureFooter}>
                 {isPaused ? (
@@ -674,6 +721,15 @@ export function SeedNotebook({
             </>
           )}
 
+          {dispatch.confirmationVisible ? (
+            <Animated.View
+              style={[styles.dispatchConfirmation, { opacity: dispatch.confirmationOpacity }]}
+              pointerEvents="none"
+            >
+              <Text style={styles.dispatchConfirmationText}>✓ Message sent</Text>
+            </Animated.View>
+          ) : null}
+
           <View
             style={[
               styles.savedPrompt,
@@ -757,6 +813,38 @@ const styles = StyleSheet.create({
     color: '#13293D',
     fontSize: 16,
     lineHeight: 22,
+  },
+  captureInputDispatch: {
+    borderColor: '#0E5AA7',
+    backgroundColor: '#F0F7FF',
+  },
+  dispatchError: {
+    backgroundColor: '#FFF0EE',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: '#F5C4BF',
+  },
+  dispatchErrorText: {
+    fontSize: 13,
+    color: '#8F3341',
+    fontWeight: '600',
+  },
+  dispatchConfirmation: {
+    position: 'absolute',
+    bottom: 48,
+    alignSelf: 'center',
+    backgroundColor: '#1D6B3F',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    zIndex: 10,
+  },
+  dispatchConfirmationText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   captureFooter: {
     flexDirection: 'row',

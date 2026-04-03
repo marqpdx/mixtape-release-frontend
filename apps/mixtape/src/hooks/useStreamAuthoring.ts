@@ -63,6 +63,7 @@ interface UseStreamAuthoringReturn {
   activateStream: () => void;
   deactivateStream: () => Promise<void>;
   saveSurface: () => void;
+  resumeSession: (sessionId: string, surfaceBodyJson: JSONContent) => void;
 }
 
 // ── Hook ──
@@ -213,6 +214,23 @@ export function useStreamAuthoring({
     setIsActive(true);
   }, []);
 
+  // Resume an existing session (called after execute-split).
+  // Loads the provided surface body into the editor and marks the session active.
+  const resumeSession = useCallback(
+    (sid: string, surfaceBodyJson: JSONContent) => {
+      setSessionId(sid);
+      setIsActive(true);
+      saveCountRef.current = 0;
+      setSaveCount(0);
+      const editor = editorRef.current;
+      if (editor) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (editor as any).commands?.setContent(surfaceBodyJson, false);
+      }
+    },
+    [editorRef]
+  );
+
   // Deactivate: run final checkpoint, end session
   const deactivateStream = useCallback(async () => {
     if (sessionId) {
@@ -248,5 +266,6 @@ export function useStreamAuthoring({
     activateStream,
     deactivateStream,
     saveSurface: triggerSaveSurface,
+    resumeSession,
   };
 }

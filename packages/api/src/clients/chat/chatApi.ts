@@ -143,6 +143,34 @@ export async function createMessage(
 }
 
 /**
+ * Upload a voice message to a conversation.
+ * Uses multipart/form-data — same storage pattern as seed voice notes.
+ * @param conversationSlug - Conversation slug
+ * @param uri - Local file URI from useNativeVoiceRecorder
+ * @param mimeType - Audio MIME type (e.g. 'audio/m4a')
+ * @param fileName - File name (e.g. 'seed-voice.m4a')
+ * @param durationSeconds - Recording duration in seconds
+ */
+export async function uploadVoiceMessage(
+  conversationSlug: string,
+  uri: string,
+  mimeType: string,
+  fileName: string,
+  durationSeconds: number
+): Promise<Message> {
+  const formData = new FormData();
+  formData.append('audio', { uri, type: mimeType, name: fileName } as any);
+  formData.append('duration', String(durationSeconds));
+
+  const response = await axiosInstance.post<Message>(
+    `/api/chat/conversations/${conversationSlug}/voice-upload`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+  return response.data;
+}
+
+/**
  * React to a message
  * @param messageId - Message UUID
  * @param reactionName - Reaction emoji name (e.g., 'thumbs_up', 'heart')

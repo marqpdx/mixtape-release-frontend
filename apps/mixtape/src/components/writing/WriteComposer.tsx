@@ -13,6 +13,8 @@ import { TitleInput } from "@components/writing/composer/TitleInput";
 import { SummarySection } from "@components/writing/composer/SummarySection";
 import { StatusBar } from "@components/writing/composer/StatusBar";
 import { CopyDesk } from "@components/writing/copydesk/CopyDesk";
+import { SplitSuggestionCallout } from "@components/writing/copydesk/SplitSuggestionCallout";
+import { ExecuteSplitBanner } from "@components/writing/copydesk/ExecuteSplitBanner";
 import { TagInput, Tag } from "@components/writing/composer/TagInput";
 
 import { PublishingControls } from "@components/writing/composer/PublishingControls";
@@ -58,6 +60,8 @@ interface WritingPiece {
   body_json?: DocumentJSON;
   excerpt?: string;
   is_empty?: boolean;
+  target_wordcount?: number | null;
+  suggest_splits?: boolean;
   [key: string]: unknown;
 }
 
@@ -95,6 +99,12 @@ export default function WriteComposer({
   const [docJSON, setDocJSON] = useState<DocumentJSON | null>(initialPiece?.body_json || EMPTY_DOC);
   const [excerpt, setExcerpt] = useState<string>(initialPiece?.excerpt || "");
   const [tags, setTags] = useState<Tag[]>([]);
+  const [targetWordCount, setTargetWordCount] = useState<number | null>(
+    initialPiece?.target_wordcount ?? null
+  );
+  const [suggestSplits, setSuggestSplits] = useState<boolean>(
+    initialPiece?.suggest_splits ?? false
+  );
 
   const [lastSavedState, setLastSavedState] = useState({
     title: initialPiece?.title || "",
@@ -213,10 +223,13 @@ export default function WriteComposer({
   const collabReady = wantsCollab && yjsEnabled ? yjsReady : false;
 
   // Solo autosave (when not in collab mode)
-  const { schedule, saveNow, saveStatus: soloSaveStatus } = useWorkingCopyAutosave(
-    pieceId,
-    autosaveDebounceMs
-  );
+  const {
+    schedule,
+    saveNow,
+    saveStatus: soloSaveStatus,
+    splitSuggestionStatus,
+    setSplitSuggestionStatus,
+  } = useWorkingCopyAutosave(pieceId, autosaveDebounceMs);
 
   // Stream authoring — activates lazily on first /new command
   const createArtifactForStream = useCallback(
@@ -268,7 +281,9 @@ export default function WriteComposer({
 
   const {
     streamMode,
+    isActive: streamIsActive,
     deactivateStream,
+    resumeSession,
   } = useStreamAuthoring({
     anchor: {
       contentTypeModel: "writingpiece",
@@ -348,6 +363,12 @@ export default function WriteComposer({
   useEffect(() => {
     excerptRef.current = excerpt;
   }, [excerpt]);
+
+  // Count splitMarker nodes in the current document (for ExecuteSplitBanner)
+  const splitMarkerCount = useMemo(() => {
+    const content = (docJSON as { content?: Array<{ type: string }> })?.content ?? [];
+    return content.filter((n) => n.type === 'splitMarker').length;
+  }, [docJSON]);
 
   // Load tags
   useEffect(() => {
@@ -491,6 +512,26 @@ export default function WriteComposer({
     },
     [pieceId]
   );
+
+  const overTarget = targetWordCount != null && summaryWordCount > targetWordCount;
+
+  const handleTargetWordCountChange = useCallback(async (value: number | null) => {
+    setTargetWordCount(value);
+    try {
+      await axiosInstance.patch(`/api/writing/pieces/${pieceId}`, { target_wordcount: value });
+    } catch (err) {
+      console.error("Failed to save target_wordcount:", err);
+    }
+  }, [pieceId]);
+
+  const handleSuggestSplitsChange = useCallback(async (value: boolean) => {
+    setSuggestSplits(value);
+    try {
+      await axiosInstance.patch(`/api/writing/pieces/${pieceId}`, { suggest_splits: value });
+    } catch (err) {
+      console.error("Failed to save suggest_splits:", err);
+    }
+  }, [pieceId]);
 
   const contentWidth = workspaceOpen ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
 
@@ -645,6 +686,7 @@ export default function WriteComposer({
                 collabReady={collabReady}
                 debugId={collabKey}
                 streamMode={wantsCollab ? undefined : streamMode}
+                gristMode={wantsCollab ? undefined : true}
               />
             </Box>
 
@@ -695,6 +737,7 @@ export default function WriteComposer({
                       wordCount={summaryWordCount}
                       saveStatus="idle"
                       hasUnsavedChanges={false}
+                      overTarget={overTarget}
                     />
                   </Box>
                 </Box>
@@ -773,6 +816,26 @@ export default function WriteComposer({
 
         <ScrollToTopButton workspaceOpen={workspaceOpen} workspaceWidth={workspaceWidth} />
 
+        <SplitSuggestionCallout
+          pieceId={pieceId}
+          status={splitSuggestionStatus}
+          onStatusChange={setSplitSuggestionStatus}
+          onInsertSplitMarkers={(splitPoints) => {
+            const editor = editorRef.current as any // eslint-disable-line @typescript-eslint/no-explicit-any
+            editor?.commands?.insertSplitMarkersFromAI(splitPoints)
+          }}
+        />
+
+        {!wantsCollab && !streamIsActive && (
+          <ExecuteSplitBanner
+            pieceId={pieceId}
+            splitMarkerCount={splitMarkerCount}
+            onSplitExecuted={({ session_id, surface_body_json }) => {
+              resumeSession(session_id, surface_body_json)
+            }}
+          />
+        )}
+
         <WorkspaceToggle workspaceOpen={workspaceOpen} onToggle={() => setWorkspaceOpen(true)} />
 
         <CopyDesk
@@ -792,6 +855,11 @@ export default function WriteComposer({
           titleWordCount={title.length}
           documentWordCount={summaryWordCount}
           summaryWordCount={excerpt.length}
+          targetWordCount={targetWordCount}
+          overTarget={overTarget}
+          suggestSplits={suggestSplits}
+          onTargetWordCountChange={handleTargetWordCountChange}
+          onSuggestSplitsChange={handleSuggestSplitsChange}
         />
       </HStack>
     </Box>

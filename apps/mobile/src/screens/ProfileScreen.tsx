@@ -1,12 +1,15 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
+import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
 
 export default function ProfileScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { dispatchInputEnabled, setDispatchInputEnabled } = useExperimentalSettings();
 
   const initials = (currentUser?.username || '?').charAt(0).toUpperCase();
+  const isSuperuser = currentUser?.is_superuser === true;
 
   return (
     <View style={styles.container}>
@@ -21,6 +24,26 @@ export default function ProfileScreen() {
           <Text style={styles.username}>@{currentUser.username}</Text>
         ) : null}
       </View>
+
+      {isSuperuser ? (
+        <View style={styles.experimentalCard}>
+          <Text style={styles.experimentalHeading}>Experimental Features</Text>
+          <View style={styles.experimentalRow}>
+            <View style={styles.experimentalLabel}>
+              <Text style={styles.experimentalName}>Dispatch Input</Text>
+              <Text style={styles.experimentalDesc}>
+                Send messages inline from the notebook with /msg @user
+              </Text>
+            </View>
+            <Switch
+              value={dispatchInputEnabled}
+              onValueChange={(v) => { void setDispatchInputEnabled(v); }}
+              trackColor={{ false: '#C9D4DE', true: '#0E5AA7' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        </View>
+      ) : null}
 
       <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.8}>
         <Text style={styles.logoutText}>Sign out</Text>
@@ -81,5 +104,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#C0392B',
+  },
+  experimentalCard: {
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#D7E0EA',
+    gap: 14,
+  },
+  experimentalHeading: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#315E87',
+  },
+  experimentalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  experimentalLabel: {
+    flex: 1,
+    gap: 3,
+  },
+  experimentalName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#13293D',
+  },
+  experimentalDesc: {
+    fontSize: 13,
+    color: '#5E6E7D',
+    lineHeight: 18,
   },
 });

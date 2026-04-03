@@ -3,18 +3,20 @@
 'use client';
 
 import { HStack, Text } from '@chakra-ui/react';
-import { IconSunFilled, IconShieldFilled } from '@tabler/icons-react';
+import { IconSunFilled, IconShieldFilled, IconAlertTriangleFilled } from '@tabler/icons-react';
 
 interface WordCountDisplayProps {
   wordCount: number;
   saveStatus: 'idle' | 'saving' | 'saved' | 'error' | 'unsaved';
   hasUnsavedChanges?: boolean;
+  overTarget?: boolean;
 }
 
 export function WordCountDisplay({
   wordCount,
   saveStatus,
-  hasUnsavedChanges = false
+  hasUnsavedChanges = false,
+  overTarget = false,
 }: WordCountDisplayProps) {
   const getSaveIcon = () => {
     // Show shield when saving OR when there are unsaved changes
@@ -61,6 +63,11 @@ export function WordCountDisplay({
       <Text>
         Words: {wordCount}
       </Text>
+
+      {/* Over-target indicator */}
+      {overTarget && (
+        <IconAlertTriangleFilled size={10} color="#f59e0b" title="Over word count target" />
+      )}
     </HStack>
   );
 }

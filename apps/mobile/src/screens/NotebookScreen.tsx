@@ -5,6 +5,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useHomeStore } from '../stores/homeStore';
 import { SeedNotebook } from '../components/home/SeedNotebook';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
+import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
 import type { MainTabParamList } from '../navigation/AppNavigator';
 
 const GUIDE_VISIBILITY_VERSION = 'v1';
@@ -56,6 +57,7 @@ export default function NotebookScreen({ navigation }: NotebookScreenProps) {
   const [guideExpanded, setGuideExpanded] = useState(false);
   const [editorFocused, setEditorFocused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { dispatchInputEnabled } = useExperimentalSettings();
 
   useEffect(() => {
     void AsyncStorage.getItem(GUIDE_COLLAPSED_KEY).then((value) => {
@@ -99,6 +101,7 @@ export default function NotebookScreen({ navigation }: NotebookScreenProps) {
           setSeedToDevelop(seed);
           navigation.navigate('Studio');
         }}
+        dispatchEnabled={dispatchInputEnabled}
       />
     </View>
   );

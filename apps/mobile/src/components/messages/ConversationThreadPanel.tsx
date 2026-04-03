@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   markConversationAsRead,
 } from '@mixtape/api/clients/chat/chatApi';
@@ -18,8 +18,10 @@ import {
 } from 'react-native';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useConversationMessages } from '../../hooks/useConversationMessages';
+import { useChatVoiceUpload } from '../../hooks/useChatVoiceUpload';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
+import { VoiceMessageBubble } from './VoiceMessageBubble';
 import type { Message as SocketMessage } from '../../services/messaging/messagingService';
 import type { Message as ApiMessage } from '@mixtape/core/types/chatTypes';
 
@@ -44,9 +46,14 @@ export function ConversationThreadPanel({
   const setActiveConversation = useChatStore((state) => state.setActiveConversation);
   const [inputText, setInputText] = useState('');
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
+  // Tracks transcript patches arriving via socket after voice messages are uploaded
+  const [transcriptPatches, setTranscriptPatches] = useState<Record<string, Pick<ApiMessage, 'transcript_text' | 'transcript_status'>>>({});
   const flatListRef = useRef<FlatList>(null);
   const lastMarkedReadMessageIdRef = useRef<string | null>(null);
   const isNearBottomRef = useRef(true);
+
+  const voice = useChatVoiceUpload(conversationId);
+  const isVoiceActive = voice.isRecording || voice.isPaused || voice.isPreparing || voice.isUploading;
 
   const { sendMessage, startTyping, stopTyping, onMessage, typingUsers, isConnected } =
     useMessaging(conversationId);
@@ -126,6 +133,57 @@ export function ConversationThreadPanel({
 
     return cleanup;
   }, [clearUnread, conversationId, isConnected, onMessage]);
+
+  // Listen for transcript_ready socket events and patch local message state
+  useEffect(() => {
+    if (!isConnected) return;
+    const { socket } = require('../../services/socket/socketService').socketService;
+    if (!socket) return;
+
+    // Server emits { message_id, transcript } — key is "transcript", status is implicitly "done"
+    const handler = (data: { message_id: string; transcript: string }) => {
+      setTranscriptPatches((prev) => ({
+        ...prev,
+        [data.message_id]: {
+          transcript_text: data.transcript,
+          transcript_status: 'done',
+        },
+      }));
+    };
+
+    socket.on('transcript_ready', handler);
+    return () => {
+      socket.off('transcript_ready', handler);
+    };
+  }, [isConnected]);
+
+  const handleSendVoice = useCallback(async () => {
+    const message = await voice.sendRecording();
+    if (!message) return;
+
+    // Add the returned API message directly to history so it renders immediately
+    // The transcript will be patched in when transcript_ready fires
+    setRealtimeMessages((prev) => {
+      if (prev.some((m) => m.messageId === message.id)) return prev;
+      // Shape the ApiMessage into the SocketMessage format used by realtimeMessages
+      return [
+        ...prev,
+        {
+          // carry all ApiMessage fields (incl. voice fields) — renderItem reads via (msg as any)
+          ...message,
+          messageId: message.id,
+          conversationSlug: conversationId,
+          conversationId,
+          content: message.text || '',
+          createdAt: message.created_at,
+        } as unknown as SocketMessage,
+      ];
+    });
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [conversationId, voice]);
 
   useEffect(() => {
     const lastMessage = allMessages[allMessages.length - 1] as any;
@@ -238,6 +296,10 @@ export function ConversationThreadPanel({
                 minute: '2-digit',
               });
 
+              const isVoice = msg.message_type === 'voice';
+              // Apply any in-flight transcript patches
+              const patch = transcriptPatches[msg.id || msg.messageId];
+
               return (
                 <View
                   style={[
@@ -245,31 +307,41 @@ export function ConversationThreadPanel({
                     isOwnMessage ? styles.messageContainerSent : styles.messageContainerReceived,
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      isOwnMessage ? styles.messageBubbleSent : styles.messageBubbleReceived,
-                    ]}
-                  >
-                    <View style={styles.messageRow}>
-                      <Text
-                        style={[
-                          styles.messageContent,
-                          isOwnMessage ? styles.messageContentSent : styles.messageContentReceived,
-                        ]}
-                      >
-                        {msg.text || msg.content}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.messageTime,
-                          isOwnMessage ? styles.messageTimeSent : styles.messageTimeReceived,
-                        ]}
-                      >
-                        {timeLabel}
-                      </Text>
+                  {isVoice && msg.audio_file_url ? (
+                    <VoiceMessageBubble
+                      audioUrl={msg.audio_file_url}
+                      durationSeconds={msg.audio_duration_seconds ?? null}
+                      transcript={patch?.transcript_text ?? msg.transcript_text ?? null}
+                      transcriptStatus={patch?.transcript_status ?? msg.transcript_status ?? null}
+                      isSent={isOwnMessage}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        isOwnMessage ? styles.messageBubbleSent : styles.messageBubbleReceived,
+                      ]}
+                    >
+                      <View style={styles.messageRow}>
+                        <Text
+                          style={[
+                            styles.messageContent,
+                            isOwnMessage ? styles.messageContentSent : styles.messageContentReceived,
+                          ]}
+                        >
+                          {msg.text || msg.content}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.messageTime,
+                            isOwnMessage ? styles.messageTimeSent : styles.messageTimeReceived,
+                          ]}
+                        >
+                          {timeLabel}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
+                  )}
                 </View>
               );
             }}
@@ -300,23 +372,66 @@ export function ConversationThreadPanel({
         )}
       </View>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          value={inputText}
-          onChangeText={handleTextChange}
-          placeholder="Type a message..."
-          style={styles.input}
-          multiline
-          maxLength={1000}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim()}
-        >
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Voice recording controls — shown while recording/paused */}
+      {isVoiceActive && (
+        <View style={styles.voiceRow}>
+          <TouchableOpacity onPress={voice.cancelRecording} style={styles.voiceCancelButton}>
+            <Text style={styles.voiceCancelText}>✕</Text>
+          </TouchableOpacity>
+
+          <View style={styles.voiceStatus}>
+            {voice.isUploading ? (
+              <>
+                <ActivityIndicator size="small" color="#0E5AA7" />
+                <Text style={styles.voiceStatusText}>Sending…</Text>
+              </>
+            ) : (
+              <>
+                <View style={[styles.voiceDot, voice.isRecording && styles.voiceDotActive]} />
+                <Text style={styles.voiceStatusText}>
+                  {voice.isPreparing ? 'Starting…' : voice.isPaused ? 'Paused' : `${voice.recordingSeconds}s`}
+                </Text>
+              </>
+            )}
+          </View>
+
+          <TouchableOpacity
+            onPress={handleSendVoice}
+            style={[styles.sendButton, voice.isUploading && styles.sendButtonDisabled]}
+            disabled={voice.isUploading || voice.isPreparing}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {(voice.micError || voice.uploadError) ? (
+        <Text style={styles.voiceError}>{voice.micError || voice.uploadError}</Text>
+      ) : null}
+
+      {/* Standard input row — hidden while voice is active */}
+      {!isVoiceActive && (
+        <View style={styles.inputContainer}>
+          <TouchableOpacity onPress={voice.startRecording} style={styles.micButton}>
+            <Text style={styles.micIcon}>🎙</Text>
+          </TouchableOpacity>
+          <TextInput
+            value={inputText}
+            onChangeText={handleTextChange}
+            placeholder="Type a message..."
+            style={styles.input}
+            multiline
+            maxLength={1000}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+            onPress={handleSend}
+            disabled={!inputText.trim()}
+          >
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -461,6 +576,63 @@ const styles = StyleSheet.create({
     paddingBottom: 44,
     gap: 8,
     alignItems: 'flex-end',
+  },
+  micButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EAF2F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micIcon: {
+    fontSize: 20,
+  },
+  voiceRow: {
+    flexDirection: 'row',
+    paddingTop: 10,
+    paddingBottom: 44,
+    gap: 10,
+    alignItems: 'center',
+  },
+  voiceCancelButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0E0E0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceCancelText: {
+    fontSize: 16,
+    color: '#C00',
+    fontWeight: '700',
+  },
+  voiceStatus: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  voiceDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#C9D4DE',
+  },
+  voiceDotActive: {
+    backgroundColor: '#D92B2B',
+  },
+  voiceStatusText: {
+    fontSize: 14,
+    color: '#526170',
+    fontWeight: '600',
+  },
+  voiceError: {
+    fontSize: 12,
+    color: '#C00',
+    paddingHorizontal: 4,
+    paddingBottom: 4,
   },
   input: {
     flex: 1,

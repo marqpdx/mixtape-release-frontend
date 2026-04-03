@@ -66,7 +66,7 @@ export function CrossroadsHeader({
 
       {canUseBeacon ? (
         <MobileBeacon
-          canUseBeacon={canUseBeacon}
+          canUseLighthouse={canUseBeacon}
           isSuperuser={isSuperuser}
           routeLabel={routeLabel}
           open={beaconOpen}

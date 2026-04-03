@@ -1,4 +1,26 @@
-export default {
+// To disable push notifications (e.g. iOS free Apple Developer account):
+//   Set PUSH_NOTIFICATIONS_ENABLED=false in .env and re-run: npx expo prebuild --clean
+const { withEntitlementsPlist } = require('@expo/config-plugins');
+
+const pushEnabled = process.env.PUSH_NOTIFICATIONS_ENABLED !== 'false';
+
+// Strips aps-environment so free Apple accounts can sign without Push Notifications capability
+const withNoPushEntitlements = (config) =>
+  withEntitlementsPlist(config, (mod) => {
+    delete mod.modResults['aps-environment'];
+    return mod;
+  });
+
+const notificationsPlugin = [
+  "expo-notifications",
+  {
+    icon: "./assets/crossroads2-grayscale.png",
+    color: "#6B7280",
+    defaultChannel: "messages",
+  },
+];
+
+module.exports = {
   expo: {
     name: "Mixtape",
     slug: "mixtape-mobile",
@@ -10,7 +32,7 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.mixtape.mobile",
+      bundleIdentifier: pushEnabled ? "com.mixtape.mobile" : "com.marklilly.mixtape.dev",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSMicrophoneUsageDescription:
@@ -31,20 +53,12 @@ export default {
     },
     plugins: [
       "expo-dev-client",
-      [
-        "expo-notifications",
-        {
-          icon: "./assets/crossroads2-grayscale.png",
-          color: "#6B7280",
-          defaultChannel: "messages",
-        },
-      ],
+      ...(pushEnabled ? [notificationsPlugin] : [withNoPushEntitlements]),
     ],
     extra: {
       eas: {
         projectId: "d35d123f-dd50-4020-b6b7-b21c861eb627",
       },
-      // Make environment variables available to the app
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       livewireUrl: process.env.EXPO_PUBLIC_LIVEWIRE_URL,
     },

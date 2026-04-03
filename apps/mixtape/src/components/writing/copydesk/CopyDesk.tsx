@@ -38,6 +38,13 @@ export interface CopyDeskProps {
   titleWordCount: number;
   documentWordCount: number;
   summaryWordCount: number;
+
+  // Word count goal
+  targetWordCount?: number | null;
+  overTarget?: boolean;
+  suggestSplits?: boolean;
+  onTargetWordCountChange?: (value: number | null) => void;
+  onSuggestSplitsChange?: (value: boolean) => void;
 }
 
 export function CopyDesk({
@@ -56,7 +63,12 @@ export function CopyDesk({
   setSummary,
   titleWordCount,
   documentWordCount,
-  summaryWordCount
+  summaryWordCount,
+  targetWordCount,
+  overTarget,
+  suggestSplits,
+  onTargetWordCountChange,
+  onSuggestSplitsChange,
 }: CopyDeskProps) {
   // Color mode values
   const workspaceBg = useColorModeValue("gray.50", "gray.800");
@@ -135,6 +147,11 @@ export function CopyDesk({
               titleWordCount={titleWordCount}
               documentWordCount={documentWordCount}
               summaryWordCount={summaryWordCount}
+              targetWordCount={targetWordCount}
+              overTarget={overTarget}
+              suggestSplits={suggestSplits}
+              onTargetWordCountChange={onTargetWordCountChange}
+              onSuggestSplitsChange={onSuggestSplitsChange}
             />
 
           </Accordion.Root>
@@ -147,6 +164,7 @@ export function CopyDesk({
           titleWordCount={titleWordCount}
           documentWordCount={documentWordCount}
           summaryWordCount={summaryWordCount}
+          overTarget={overTarget}
           compact={true}
         />
       </VStack>

@@ -12,6 +12,7 @@ interface WorkingCopyData {
 
 type ApiError = { response?: { data?: { message?: string } } };
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SplitSuggestionStatus = 'pending' | 'ready' | 'shown' | 'accepted' | 'dismissed' | 'declined' | 'superseded' | 'executed' | null;
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error && typeof error === 'object') {
@@ -38,6 +39,7 @@ export function useWorkingCopyAutosave(
   const pendingAfterCurrentRef = useRef(false);
   const latestAttemptRef = useRef(0);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [splitSuggestionStatus, setSplitSuggestionStatus] = useState<SplitSuggestionStatus>(null);
 
   const clearResetStatusTimer = useCallback(() => {
     if (resetStatusTimer.current) {
@@ -83,11 +85,16 @@ export function useWorkingCopyAutosave(
         setSaveStatus('saving');
         console.log('💾 Saving working copy now for piece:', pieceId);
 
-        await axiosInstance.put(`/api/writing/pieces/${pieceId}/working-copy`, {
+        const response = await axiosInstance.put(`/api/writing/pieces/${pieceId}/working-copy`, {
           title: payload.title,
           body_json: payload.body_json,
           excerpt: payload.excerpt,
         });
+
+        const suggestionStatus = response.data?.split_suggestion_status as SplitSuggestionStatus;
+        if (suggestionStatus !== undefined) {
+          setSplitSuggestionStatus(suggestionStatus);
+        }
 
         setSaveStatus('saved');
         console.log('✅ Working copy saved successfully');
@@ -153,5 +160,7 @@ export function useWorkingCopyAutosave(
     schedule,
     saveNow,
     saveStatus,
-  }), [schedule, saveNow, saveStatus]);
+    splitSuggestionStatus,
+    setSplitSuggestionStatus,
+  }), [schedule, saveNow, saveStatus, splitSuggestionStatus]);
 }

@@ -36,6 +36,9 @@ import { SegmentBoundary, SegmentBoundaryAttrs } from "./extensions/SegmentBound
 import { StreamCommands } from "./extensions/StreamCommands";
 import { streamCommandsRender } from "./extensions/streamCommandsRender";
 import { CompositionBar, CompositionSegment } from "./extensions/CompositionBar";
+import { SplitMarker } from "./extensions/SplitMarker";
+import { GristCommands } from "./extensions/GristCommands";
+import { gristCommandsRender } from "./extensions/gristCommandsRender";
 import { CompositionBarPanel } from "./CompositionBarPanel";
 import { MergeConfirmationDialog } from "./MergeConfirmationDialog";
 
@@ -91,6 +94,8 @@ interface TipTapEditorProps {
     onRenew: () => void;
     onMerge?: (attrs: SegmentBoundaryAttrs) => Promise<void>;
   };
+  // Grist command mode — enables /split and future Copy Desk grist commands
+  gristMode?: boolean;
 }
 
 type MentionState = {
@@ -114,6 +119,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   toolbarOptions = DEFAULT_TOOLBAR_OPTIONS,
   className = "",
   streamMode,
+  gristMode,
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
   const isUpdatingContentRef = useRef(false);
@@ -343,7 +349,14 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         onSegmentsChange: handleSegmentsChange,
       }),
     ] : []),
-  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, handleBoundaryDelete, handleSegmentsChange]);
+    // Grist command extensions (Copy Desk — /split and future commands)
+    ...(gristMode ? [
+      SplitMarker,
+      GristCommands.configure({
+        suggestion: { render: gristCommandsRender },
+      }),
+    ] : []),
+  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, gristMode, handleBoundaryDelete, handleSegmentsChange]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
@@ -710,7 +723,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         pl={1}
         position="relative"
       >
-        <TipTapToolbar editor={editor} />
+        <TipTapToolbar editor={editor} gristMode={!!gristMode} />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />

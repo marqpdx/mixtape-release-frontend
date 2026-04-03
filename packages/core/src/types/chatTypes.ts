@@ -40,6 +40,12 @@ export interface Message {
   reactions?: MessageReaction[];
   mentions?: MessageMention[];
   reaction_summary?: Record<string, number>;
+  // Voice message fields (only present when message_type === 'voice')
+  message_type?: 'text' | 'voice';
+  audio_file_url?: string | null;
+  audio_duration_seconds?: number | null;
+  transcript_text?: string | null;
+  transcript_status?: 'pending' | 'done' | 'failed' | null;
 }
 
 export interface MessageReaction {

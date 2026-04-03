@@ -24,9 +24,25 @@ export interface MemberPermissions {
       display_name?: string;
       avatar?: string;
     };
-  };
+  } | null;
   roles: string[];        // ['member', 'steward', 'admin']
   decorators: string[];   // ['can__ManageWriting', 'can__InviteMembers']
+  permission_profile?: {
+    id: string;
+    code: string;
+    name: string;
+    is_default: boolean;
+  } | null;
+}
+
+export interface GroupPermissionProfile {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  is_default: boolean;
+  sort_order: number;
+  decorators: string[];
 }
 
 /**
@@ -49,6 +65,54 @@ export const groupPermsApi = {
    */
   getMemberPermissions: async (groupSlug: string): Promise<MemberPermissions[]> => {
     const res = await axiosInstance.get(`/api/groups/${groupSlug}/members/permissions`);
+    return res.data;
+  },
+
+  getPermissionProfiles: async (groupSlug: string): Promise<GroupPermissionProfile[]> => {
+    const res = await axiosInstance.get(`/api/groups/${groupSlug}/permission-profiles`);
+    return res.data;
+  },
+
+  createPermissionProfile: async (
+    groupSlug: string,
+    payload: { name: string; description?: string; decorators?: string[] }
+  ): Promise<GroupPermissionProfile> => {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/permission-profiles`,
+      payload
+    );
+    return res.data;
+  },
+
+  updatePermissionProfile: async (
+    groupSlug: string,
+    profileId: string,
+    payload: { name: string; description?: string; decorators?: string[] }
+  ): Promise<GroupPermissionProfile> => {
+    const res = await axiosInstance.patch(
+      `/api/groups/${groupSlug}/permission-profiles/${profileId}`,
+      payload
+    );
+    return res.data;
+  },
+
+  clonePermissionProfile: async (
+    groupSlug: string,
+    profileId: string
+  ): Promise<GroupPermissionProfile> => {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/permission-profiles/${profileId}/clone`
+    );
+    return res.data;
+  },
+
+  setDefaultPermissionProfile: async (
+    groupSlug: string,
+    profileId: string
+  ): Promise<GroupPermissionProfile> => {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/permission-profiles/${profileId}/set-default`
+    );
     return res.data;
   },
 
@@ -123,6 +187,18 @@ export const groupPermsApi = {
     const res = await axiosInstance.delete(
       `/api/groups/${groupSlug}/members/${userId}/roles`,
       { data: { role } }
+    );
+    return res.data;
+  },
+
+  assignPermissionProfile: async (
+    groupSlug: string,
+    userId: string,
+    profileId: string | null
+  ): Promise<MemberPermissions> => {
+    const res = await axiosInstance.patch(
+      `/api/groups/${groupSlug}/members/${userId}/permission-profile`,
+      { profile_id: profileId }
     );
     return res.data;
   },

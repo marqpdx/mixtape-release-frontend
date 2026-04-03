@@ -71,6 +71,8 @@ export interface MainEditorProps {
     onRenew: () => void;
     onMerge?: (attrs: SegmentBoundaryAttrs) => Promise<void>;
   } | null;
+  /** Grist command mode (solo only) — enables /split and Copy Desk grist commands */
+  gristMode?: boolean;
 }
 
 export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
@@ -88,6 +90,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       collabReady = false,
       debugId,
       streamMode,
+      gristMode,
     },
     ref
   ) => {
@@ -313,6 +316,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
               placeholder={placeholder}
               className="borderless-editor"
               streamMode={streamMode ?? undefined}
+              gristMode={gristMode}
             />
           )}
 
