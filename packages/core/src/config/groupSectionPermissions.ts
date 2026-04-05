@@ -78,6 +78,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredRole: 'admin',
     description: 'Import a .docx file as a writing piece',
   },
+  'series-writing': {
+    requiredRole: 'admin',
+    description: 'Series Writing work area — admin/superuser testing surface',
+  },
 
   // Threadworks - accessible to all stewards
   'threadworks-landing': {

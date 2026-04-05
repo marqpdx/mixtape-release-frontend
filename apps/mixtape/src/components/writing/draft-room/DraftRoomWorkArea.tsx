@@ -18,6 +18,8 @@ import {
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Tooltip } from "@components/ui/tooltip";
+import { HelpTip } from "@/components/help/HelpTip";
+import { useHelpRegistration } from "@/components/help/useHelpRegistration";
 import { useWriting } from "@hooks/useWriting";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { TagInput, Tag } from "@components/writing/composer/TagInput";
@@ -57,6 +59,7 @@ export default function DraftRoomWorkArea({
   sponsor,
   setActiveSection,
 }: DraftRoomWorkAreaProps) {
+  useHelpRegistration("DraftRoomWorkArea");
   const [activeTab, setActiveTab] = useState("drafts");
   const [selectedPieceId, setSelectedPieceId] = useState<string | undefined>();
   const [selectedPieceSlug, setSelectedPieceSlug] = useState<string | undefined>();
@@ -353,9 +356,12 @@ export default function DraftRoomWorkArea({
       >
         <VStack align="stretch" gap={3}>
           <HStack justify="space-between">
-            <Text fontSize="lg" fontWeight="semibold">
-              Draft Room
-            </Text>
+            <HStack gap={2}>
+              <Text fontSize="lg" fontWeight="semibold">
+                Draft Room
+              </Text>
+              <HelpTip helpKey="writing-overview" />
+            </HStack>
             <Button size="sm" onClick={() => setSelectedPieceId(undefined)}>
               New draft
             </Button>
@@ -468,9 +474,12 @@ export default function DraftRoomWorkArea({
       >
         <VStack align="stretch" gap={3}>
           <HStack justify="space-between">
-            <Text fontSize="lg" fontWeight="semibold">
-              Draft Room
-            </Text>
+            <HStack gap={2}>
+              <Text fontSize="lg" fontWeight="semibold">
+                Draft Room
+              </Text>
+              <HelpTip helpKey="writing-overview" />
+            </HStack>
             <Badge size="sm" variant="outline" colorScheme="blue">
               Series / Audience / Readiness coming soon
             </Badge>

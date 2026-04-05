@@ -13,7 +13,9 @@ import { usePermissions } from "@mixtape/auth/usePermissions";
 // import AdminSeedButtonWithModal from "@components/writing/AdminSeedButtonWithModal";
 import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
-import { ContextualHelpLink } from "@/components/help/ContextualHelpLink";
+import { HelpProvider } from "@/components/help/HelpProvider";
+import { HelpDrawer } from "@/components/help/HelpDrawer";
+import { HelpButton } from "@/components/help/HelpButton";
 // import PageContainer from "@components/layout/PageContainer";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
@@ -191,49 +193,51 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <ChatUnreadProvider>
-      <ChatRealtimeWire />
-      <ActivityRealtimeWire />
+      <HelpProvider>
+        <ChatRealtimeWire />
+        <ActivityRealtimeWire />
 
-      <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
-        <UnifiedNavbar compact={isAdminPath} />
-        <ContextualHelpLink />
-        {(canExitAssume || canStartAssume) ? (
-          <Box px={4} py={2} bg={canExitAssume ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
-            <HStack justify="space-between" wrap="wrap" gap={2}>
-              <Text fontSize="sm" color="gray.800">
-                {isImpersonating
-                  ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
-                  : canExitAssume
-                    ? "Assume session active. Use Exit assume to return."
-                  : "Superuser mode"}
-              </Text>
-              <HStack gap={2}>
-                {canStartAssume ? (
-                  <Button size="xs" variant="outline" onClick={handleAssume}>
-                    Assume user
-                  </Button>
-                ) : null}
-                {canExitAssume ? (
-                  <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
-                    Exit assume
-                  </Button>
-                ) : null}
+        <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
+          <UnifiedNavbar compact={isAdminPath} />
+          {(canExitAssume || canStartAssume) ? (
+            <Box px={4} py={2} bg={canExitAssume ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
+              <HStack justify="space-between" wrap="wrap" gap={2}>
+                <Text fontSize="sm" color="gray.800">
+                  {isImpersonating
+                    ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
+                    : canExitAssume
+                      ? "Assume session active. Use Exit assume to return."
+                      : "Superuser mode"}
+                </Text>
+                <HStack gap={2}>
+                  {canStartAssume ? (
+                    <Button size="xs" variant="outline" onClick={handleAssume}>
+                      Assume user
+                    </Button>
+                  ) : null}
+                  {canExitAssume ? (
+                    <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
+                      Exit assume
+                    </Button>
+                  ) : null}
+                </HStack>
               </HStack>
-            </HStack>
-          </Box>
-        ) : null}
+            </Box>
+          ) : null}
 
-        <Box
-          as="main"
-          id="main-content"
-          role="main"
-          className="main-authenticated-layout"
-        >
-          {/* <PageContainer> */}
+          <Box
+            as="main"
+            id="main-content"
+            role="main"
+            className="main-authenticated-layout"
+          >
             {children}
-          {/* </PageContainer> */}
+          </Box>
         </Box>
-      </Box>
+
+        <HelpDrawer />
+        <HelpButton />
+      </HelpProvider>
 
       <Footer />
 

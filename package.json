@@ -16,6 +16,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "generate:help": "node ./scripts/generate-help-manifest.mjs",
     "dev": "yarn workspace @mixtape/app dev",
     "dev:crossroads": "yarn workspace @crossroads/app dev",
     "build": "yarn workspace @mixtape/app build",

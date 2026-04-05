@@ -1,5 +1,5 @@
 import { Box, Container, Heading, Stack, Text } from "@chakra-ui/react";
-import { listHelpDocs } from "@/lib/help/helpDocs";
+import { listHelpEntries } from "@/lib/help/helpManifest";
 import { HelpAdminLinks } from "@/components/help/HelpAdminLinks";
 import { HelpIndexClient } from "@/components/help/HelpIndexClient";
 
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function HelpIndexPage() {
-  const docs = await listHelpDocs();
+  const docs = await listHelpEntries();
 
   return (
     <Box as="main" py={{ base: 8, md: 10 }}>

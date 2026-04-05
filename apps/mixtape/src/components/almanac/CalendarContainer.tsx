@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
+  HStack,
+  Text,
   VStack,
 } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
@@ -11,6 +13,8 @@ import { EventDetailDrawer } from './EventDetailDrawer';
 import { CalendarOccurrence } from '@mixtape/api/clients/almanac/almanacApi';
 import { MixtapeAlert } from '@components/ui/alerts/MixtapeAlert';
 import { toaster } from '@mixtape/core/lib/toaster';
+import { HelpTip } from '@/components/help/HelpTip';
+import { useHelpRegistration } from '@/components/help/useHelpRegistration';
 
 interface CalendarContainerProps {
   groupSlug: string;  // ← Required (no default)
@@ -33,6 +37,7 @@ export const CalendarContainer: React.FC<CalendarContainerProps> = ({
   onOccurrenceClick,
   onRSVPSuccess,
 }) => {
+  useHelpRegistration("AlmanacWorkArea");
   const [selectedOccurrence, setSelectedOccurrence] = useState<CalendarOccurrence | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -83,6 +88,18 @@ export const CalendarContainer: React.FC<CalendarContainerProps> = ({
   return (
     <Box bg={bgColor} borderRadius="lg" border="1px solid" borderColor={borderColor} p={4}>
       <VStack align="stretch" gap={4} h="full">
+        <HStack justify="space-between">
+          <Box>
+            <Text fontSize="lg" fontWeight="semibold">
+              Almanac
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              Browse upcoming events and open details without leaving the calendar.
+            </Text>
+          </Box>
+          <HelpTip helpKey="almanac-overview" />
+        </HStack>
+
         {/* Error alert */}
         {error && (
           <MixtapeAlert description={error} />

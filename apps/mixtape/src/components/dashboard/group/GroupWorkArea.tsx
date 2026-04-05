@@ -41,6 +41,7 @@ import DocumentImportWorkArea from "@/components/writing/import/DocumentImportWo
 import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
+import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -422,6 +423,7 @@ export default function GroupWorkArea({
         <SponsorWritingWrapper
           sponsor={{
             type: "group",
+            id: group.id,
             slug: group.slug,
             displayName: group.title,
           }}
@@ -468,6 +470,21 @@ export default function GroupWorkArea({
           sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
           onImported={(piece) => setActiveSection("write", { piece: piece.id })}
           onBack={() => setActiveSection("writing")}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "series-writing") {
+    return (
+      <WorkAreaWrapper>
+        <SeriesWritingWorkArea
+          sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
+          onNavigateToEditor={(pieceId) => {
+            if (pieceId) setActiveSection("write", { piece: pieceId });
+            else setActiveSection("write");
+          }}
+          onNavigateToDetail={({ slug }) => setActiveSection("write", { piece: slug })}
         />
       </WorkAreaWrapper>
     );

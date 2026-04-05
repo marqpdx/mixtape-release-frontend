@@ -9,6 +9,8 @@ import {
   VStack,
   Badge,
   Spinner,
+  Button,
+  Input,
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import {
@@ -28,15 +30,15 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { IconGripVertical, IconPencil, IconFileText, IconCheck } from '@tabler/icons-react'
+import { IconGripVertical, IconPencil, IconFileText, IconCheck, IconPlus } from '@tabler/icons-react'
 import { toaster } from '@mixtape/core/lib/toaster'
 import * as writingApi from '@mixtape/api/clients/writing/writingApi'
-import type { FlattenedPlacement, WorkingDocument } from '@mixtape/core/types/writingTypes'
+import type { FlattenedPlacement, WorkingDocument, WritingSeries } from '@mixtape/core/types/writingTypes'
 
 // ─── Unified item type ─────────────────────────────────────────────────────
 
 interface SeriesItem {
-  id: string          // unique key: piece_id
+  id: string
   pieceId: string
   pieceSlug: string
   title: string
@@ -75,18 +77,47 @@ function draftToItem(d: WorkingDocument): SeriesItem {
   }
 }
 
+function slugify(s: string): string {
+  return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+// ─── Health badge row ──────────────────────────────────────────────────────
+
+function HealthBadges({ items }: { items: SeriesItem[] }) {
+  const published = items.filter(i => i.status === 'published').length
+  const scheduled = items.filter(i => i.status === 'scheduled').length
+  const drafts    = items.filter(i => i.status === 'draft').length
+  return (
+    <HStack gap={1}>
+      {published > 0 && (
+        <Badge size="xs" colorPalette="green" variant="subtle">{published} pub</Badge>
+      )}
+      {scheduled > 0 && (
+        <Badge size="xs" colorPalette="blue" variant="subtle">{scheduled} sched</Badge>
+      )}
+      {drafts > 0 && (
+        <Badge size="xs" colorPalette="gray" variant="subtle">{drafts} draft</Badge>
+      )}
+    </HStack>
+  )
+}
+
 // ─── Sortable row ──────────────────────────────────────────────────────────
 
 function SortableRow({
   item,
+  allSeries,
   onEdit,
   onDetail,
+  onChangeSeries,
   borderColor,
   metaColor,
 }: {
   item: SeriesItem
+  allSeries?: WritingSeries[]
   onEdit: (pieceId: string) => void
   onDetail?: (pieceSlug: string) => void
+  onChangeSeries?: (pieceId: string, seriesId: string | null) => void
   borderColor: string
   metaColor: string
 }) {
@@ -149,6 +180,32 @@ function SortableRow({
           {item.title}
         </Text>
 
+        {/* Series assignment selector */}
+        {allSeries && onChangeSeries && (
+          <select
+            value={item.seriesId ?? ''}
+            onChange={(e) => {
+              const val = e.target.value
+              onChangeSeries(item.pieceId, val === '' ? null : val)
+            }}
+            style={{
+              fontSize: '0.7rem',
+              background: 'transparent',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              padding: '1px 4px',
+              cursor: 'pointer',
+              maxWidth: '100px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <option value="">Unassigned</option>
+            {allSeries.map(s => (
+              <option key={s.id} value={s.id}>{s.title}</option>
+            ))}
+          </select>
+        )}
+
         {/* Status badge */}
         <Badge size="xs" colorPalette={statusColor} variant="subtle" flexShrink={0}>
           {statusLabel}
@@ -184,6 +241,63 @@ function SortableRow({
   )
 }
 
+// ─── Inline series creation form ───────────────────────────────────────────
+
+function CreateSeriesForm({
+  groupId,
+  onCreated,
+}: {
+  groupId: string
+  onCreated: (series: WritingSeries) => void
+}) {
+  const [title, setTitle] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handleCreate = async () => {
+    const trimmed = title.trim()
+    if (!trimmed) return
+    setSaving(true)
+    try {
+      const series = await writingApi.createWritingSeries({
+        title: trimmed,
+        slug: slugify(trimmed),
+        phase_num: null,
+        group: groupId,
+      })
+      onCreated(series)
+      setTitle('')
+    } catch {
+      toaster.create({ title: 'Could not create series', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <HStack gap={2} pt={2}>
+      <Input
+        size="sm"
+        placeholder="New series title…"
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }}
+        flex={1}
+      />
+      <Button
+        size="sm"
+        variant="outline"
+        colorPalette="blue"
+        loading={saving}
+        disabled={!title.trim()}
+        onClick={() => void handleCreate()}
+      >
+        <IconPlus size={14} />
+        Add series
+      </Button>
+    </HStack>
+  )
+}
+
 // ─── Props ─────────────────────────────────────────────────────────────────
 
 interface SeriesGroupViewProps {
@@ -191,16 +305,38 @@ interface SeriesGroupViewProps {
   drafts: WorkingDocument[]
   onEdit: (pieceId: string) => void
   onDetail?: (pieceSlug: string) => void
+  /** Group UUID — enables inline series creation */
+  groupId?: string
+  /** Full series list for assignment dropdowns */
+  allSeries?: WritingSeries[]
+  /**
+   * Phase A filter from the left rail.
+   * undefined = show all, null = show only unassigned, string = show that series ID.
+   */
+  filterSeriesKey?: string | null
+  /** Called after a new series is created inline */
+  onSeriesCreated?: (series: WritingSeries) => void
+  /** Called after a piece is reassigned to a different series */
+  onRefresh?: () => void
 }
 
 // ─── Main component ────────────────────────────────────────────────────────
 
-export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: SeriesGroupViewProps) {
+export function SeriesGroupView({
+  placements,
+  drafts,
+  onEdit,
+  onDetail,
+  groupId,
+  allSeries,
+  filterSeriesKey,
+  onSeriesCreated,
+  onRefresh,
+}: SeriesGroupViewProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const sectionLabelColor = useColorModeValue('blue.600', 'blue.300')
   const metaColor = useColorModeValue('gray.500', 'gray.400')
   const headerBg = useColorModeValue('gray.50', 'gray.800')
-  const subtitleColor = useColorModeValue('gray.500', 'gray.400')
 
   const [saving, setSaving] = useState(false)
 
@@ -209,7 +345,6 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
     const seen = new Set<string>()
     const items: SeriesItem[] = []
 
-    // Published placements first
     for (const p of placements) {
       if (!seen.has(p.piece_id)) {
         seen.add(p.piece_id)
@@ -217,7 +352,6 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
       }
     }
 
-    // Then drafts (pieces not already represented by a placement)
     for (const d of drafts) {
       if (!seen.has(d.piece.id)) {
         seen.add(d.piece.id)
@@ -255,9 +389,15 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
     return order.map(key => ({ key, ...map.get(key)! }))
   }, [allItems])
 
-  // Local reorder state: map of seriesId → items[]
+  // Apply Phase A filter
+  const visibleGroups = useMemo(() => {
+    if (filterSeriesKey === undefined) return seriesGroups
+    return seriesGroups.filter(g => g.key === filterSeriesKey)
+  }, [seriesGroups, filterSeriesKey])
+
+  // Local reorder state per series
   const [localGroups, setLocalGroups] = useState<typeof seriesGroups | null>(null)
-  const groups = localGroups ?? seriesGroups
+  const groups = (localGroups ?? visibleGroups)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -268,7 +408,8 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const targetGroup = (localGroups ?? seriesGroups).find(g => g.key === groupKey)
+    const baseGroups = localGroups ?? visibleGroups
+    const targetGroup = baseGroups.find(g => g.key === groupKey)
     if (!targetGroup) return
 
     const oldIndex = targetGroup.items.findIndex(i => i.id === active.id)
@@ -280,21 +421,10 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
       seriesOrder: idx,
     }))
 
-    // Optimistic update
     setLocalGroups(prev => {
-      const base = prev ?? seriesGroups
-      return base.map(g =>
-        g.key === groupKey ? { ...g, items: reordered } : g
-      )
+      const base = prev ?? visibleGroups
+      return base.map(g => g.key === groupKey ? { ...g, items: reordered } : g)
     })
-
-    // Find what changed and PATCH
-    const changed = reordered.filter((item, idx) => {
-      const original = targetGroup.items[idx]
-      return original?.id !== item.id || original?.seriesOrder !== item.seriesOrder
-    })
-
-    if (changed.length === 0) return
 
     setSaving(true)
     try {
@@ -305,11 +435,24 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
       )
     } catch {
       toaster.create({ title: 'Could not save order', type: 'error' })
-      setLocalGroups(null) // revert
+      setLocalGroups(null)
     } finally {
       setSaving(false)
     }
-  }, [localGroups, seriesGroups])
+  }, [localGroups, visibleGroups])
+
+  const handleChangeSeries = useCallback(async (pieceId: string, seriesId: string | null) => {
+    setSaving(true)
+    try {
+      await writingApi.updatePiece(pieceId, { series: seriesId })
+      setLocalGroups(null) // reset optimistic state; parent refetch will update
+      onRefresh?.()
+    } catch {
+      toaster.create({ title: 'Could not reassign piece', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }, [onRefresh])
 
   if (allItems.length === 0) {
     return (
@@ -331,13 +474,13 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
           color={metaColor}
         >
           <Spinner size="xs" />
-          <Text>Saving order…</Text>
+          <Text>Saving…</Text>
         </HStack>
       )}
 
       {groups.map(group => (
         <Box key={group.key ?? '__unassigned__'}>
-          {/* Section header */}
+          {/* Series header */}
           <Box
             px={3}
             py={2}
@@ -350,17 +493,15 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
             <HStack justify="space-between">
               <VStack align="start" gap={0}>
                 {group.key ? (
-                  <>
-                    <Text
-                      fontSize="xs"
-                      fontWeight="semibold"
-                      letterSpacing="widest"
-                      textTransform="uppercase"
-                      color={sectionLabelColor}
-                    >
-                      {group.title ?? `Phase ${group.phaseNum}`}
-                    </Text>
-                  </>
+                  <Text
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    letterSpacing="widest"
+                    textTransform="uppercase"
+                    color={sectionLabelColor}
+                  >
+                    {group.title ?? `Phase ${group.phaseNum}`}
+                  </Text>
                 ) : (
                   <Text
                     fontSize="xs"
@@ -373,13 +514,16 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
                   </Text>
                 )}
               </VStack>
-              <Text fontSize="xs" color={subtitleColor}>
-                {group.items.length} {group.items.length === 1 ? 'piece' : 'pieces'}
-              </Text>
+              <HStack gap={2}>
+                <HealthBadges items={group.items} />
+                <Text fontSize="xs" color={metaColor}>
+                  {group.items.length} {group.items.length === 1 ? 'piece' : 'pieces'}
+                </Text>
+              </HStack>
             </HStack>
           </Box>
 
-          {/* Sortable list */}
+          {/* Sortable piece list */}
           <Box
             borderWidth="1px"
             borderTopWidth={0}
@@ -399,8 +543,10 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
                   <SortableRow
                     key={item.id}
                     item={item}
+                    allSeries={allSeries}
                     onEdit={onEdit}
                     onDetail={onDetail}
+                    onChangeSeries={allSeries ? handleChangeSeries : undefined}
                     borderColor={borderColor}
                     metaColor={metaColor}
                   />
@@ -419,6 +565,17 @@ export function SeriesGroupView({ placements, drafts, onEdit, onDetail }: Series
           </Box>
         </Box>
       ))}
+
+      {/* Inline series creation — only when groupId provided */}
+      {groupId && (
+        <CreateSeriesForm
+          groupId={groupId}
+          onCreated={(series) => {
+            onSeriesCreated?.(series)
+            onRefresh?.()
+          }}
+        />
+      )}
     </VStack>
   )
 }

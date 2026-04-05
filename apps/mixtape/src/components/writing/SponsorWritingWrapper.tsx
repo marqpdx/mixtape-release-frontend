@@ -25,6 +25,7 @@ interface Group {
 
 interface SponsorConfig {
   type: "group" | "member";
+  id?: string;
   slug: string;
   displayName?: string;
 }
@@ -79,6 +80,7 @@ export default function SponsorWritingWrapper({
     <WritingListWrapper
       sponsor={{
         type: sponsor.type,
+        id: sponsor.id,
         slug: sponsor.slug,
         displayName,
       }}

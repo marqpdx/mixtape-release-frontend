@@ -15,6 +15,8 @@ import { useSearchLibrary, useLibraries, useCreateLibrary } from '@mixtape/api';
 import { getDefaultEmbeddingModel } from '@mixtape/api/clients/stackroom/stackroomApi';
 import type { ChunkResult } from '@mixtape/core/types/stackroomTypes';
 import { toaster } from '@/components/ui/toaster';
+import { HelpTip } from '@/components/help/HelpTip';
+import { useHelpRegistration } from '@/components/help/useHelpRegistration';
 
 interface StackroomWorkAreaProps {
   sponsor: {
@@ -26,6 +28,7 @@ interface StackroomWorkAreaProps {
 }
 
 export function StackroomWorkArea({ sponsor }: StackroomWorkAreaProps) {
+  useHelpRegistration("StackroomWorkArea");
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [selectedLibraryId, setSelectedLibraryId] = useState<string>('');
@@ -169,9 +172,12 @@ export function StackroomWorkArea({ sponsor }: StackroomWorkAreaProps) {
       <VStack gap={6} align="stretch">
         {/* Header */}
         <Box>
-          <Heading size="xl" mb={2}>
-            Stackroom
-          </Heading>
+          <HStack justify="space-between" align="start" mb={2}>
+            <Heading size="xl">
+              Stackroom
+            </Heading>
+            <HelpTip helpKey="stackroom-overview" />
+          </HStack>
           <Text color="gray.600">
             Document libraries for {sponsor.displayName}
           </Text>

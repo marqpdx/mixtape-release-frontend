@@ -58,6 +58,8 @@ import {
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useCurationWorkbench } from "@mixtape/api/hooks/workbench/useCurationWorkbench";
+import { HelpTip } from "@/components/help/HelpTip";
+import { useHelpRegistration } from "@/components/help/useHelpRegistration";
 import type {
   Piece,
   WorkingItemSummary,
@@ -135,6 +137,14 @@ const TYPE_LABELS: Record<string, string> = {
   working_document: "Draft",
 };
 
+// Filter chips shown in Lane 1 when focused (85%)
+const RAW_FILTERS: { key: string; label: string }[] = [
+  { key: "working_document", label: "Drafts" },
+  { key: "seed",             label: "Seeds"  },
+  { key: "leaf",             label: "Leaves" },
+  { key: "milldraft",        label: "Pup'd"  },
+];
+
 // ============================================================================
 // Sub-components
 // ============================================================================
@@ -167,7 +177,7 @@ function LaneHeader({
       flexShrink={0}
     >
       {icon}
-      <Text fontWeight="semibold" fontSize="sm" flex={1} lineClamp={1}>
+      <Text fontWeight="semibold" fontSize="md" flex={1} lineClamp={1}>
         {label}
       </Text>
       {count !== undefined && (
@@ -226,9 +236,9 @@ function PieceCard({
           )}
         </HStack>
         {piece.title && (
-          <Text fontSize="sm" fontWeight="medium" lineClamp={1}>{piece.title}</Text>
+          <Text fontSize="md" fontWeight="medium" lineClamp={1}>{piece.title}</Text>
         )}
-        <Text fontSize="xs" color="gray.500" lineClamp={2}>
+        <Text fontSize="sm" color="gray.500" lineClamp={2}>
           {piece.excerpt || "(no content)"}
         </Text>
         {hasActiveItem && !isInActiveItem && (
@@ -299,7 +309,7 @@ function SortableMembershipRow({
       <Badge colorPalette={TYPE_COLOURS[membership.type_label] || "gray"} size="xs">
         {TYPE_LABELS[membership.type_label] || membership.type_label}
       </Badge>
-      <Text fontSize="xs" flex={1} lineClamp={1} color="gray.600">
+      <Text fontSize="sm" flex={1} lineClamp={1} color="gray.600">
         {membership.content_snapshot.slice(0, 60) || "(empty)"}
       </Text>
       <Button
@@ -351,13 +361,13 @@ function WorkingItemCard({
           <Badge colorPalette={statusColour[item.status] || "gray"} size="xs">
             {item.status}
           </Badge>
-          <Text fontSize="xs" color="gray.400">{item.membership_count} piece{item.membership_count !== 1 ? "s" : ""}</Text>
+          <Text fontSize="sm" color="gray.400">{item.membership_count} piece{item.membership_count !== 1 ? "s" : ""}</Text>
         </HStack>
-        <Text fontSize="sm" fontWeight="medium" lineClamp={2}>
+        <Text fontSize="md" fontWeight="medium" lineClamp={2}>
           {item.title || "(untitled)"}
         </Text>
         {item.last_saved_at && (
-          <Text fontSize="xs" color="gray.400">
+          <Text fontSize="sm" color="gray.400">
             Saved {new Date(item.last_saved_at).toLocaleTimeString()}
           </Text>
         )}
@@ -374,7 +384,7 @@ function GateFailureList({ failures }: { failures: GateFailure[] }) {
           <Badge colorPalette={f.hard ? "red" : "orange"} size="xs">
             {f.hard ? "Required" : "Warning"}
           </Badge>
-          <Text fontSize="xs">{f.message}</Text>
+          <Text fontSize="sm">{f.message}</Text>
         </HStack>
       ))}
     </VStack>
@@ -394,11 +404,30 @@ export default function WorkbenchCurationWorkArea({
   groupId: string;
   groupTitle: string;
 }) {
+  void groupId;
+  void groupTitle;
+  useHelpRegistration("WorkbenchCurationWorkArea");
   const wb = useCurationWorkbench(groupSlug);
 
   const [focusedLane, setFocusedLane] = useState<LaneKey | null>(null);
   const [selectedPieces, setSelectedPieces] = useState<Set<string>>(new Set());
   const [pieceSearch, setPieceSearch] = useState("");
+  const [rawTypeFilter, setRawTypeFilter] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("curation:rawTypeFilter");
+      return stored ? (JSON.parse(stored) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem("curation:rawTypeFilter", JSON.stringify(rawTypeFilter));
+  }, [rawTypeFilter]);
+  const toggleRawFilter = useCallback((key: string) => {
+    setRawTypeFilter(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  }, []);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const [promoting, setPromoting] = useState(false);
@@ -529,12 +558,20 @@ export default function WorkbenchCurationWorkArea({
     });
   }, []);
 
-  const filteredPieces = pieceSearch
-    ? wb.pieces.filter(p =>
-        p.excerpt.toLowerCase().includes(pieceSearch.toLowerCase()) ||
-        p.title.toLowerCase().includes(pieceSearch.toLowerCase())
-      )
-    : wb.pieces;
+  const filteredPieces = useMemo(() => {
+    let pieces = wb.pieces;
+    if (rawTypeFilter.length > 0) {
+      pieces = pieces.filter(p => rawTypeFilter.includes(p.type_label));
+    }
+    if (pieceSearch) {
+      const q = pieceSearch.toLowerCase();
+      pieces = pieces.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.excerpt.toLowerCase().includes(q)
+      );
+    }
+    return pieces;
+  }, [wb.pieces, rawTypeFilter, pieceSearch]);
 
   const handleCreateItem = useCallback(async () => {
     const selected = wb.pieces.filter(p => selectedPieces.has(p.id));
@@ -588,6 +625,18 @@ export default function WorkbenchCurationWorkArea({
         </Alert.Root>
       )}
 
+      <HStack justify="space-between" mb={3} px={1}>
+        <Box>
+          <Text fontSize="xl" fontWeight="semibold">
+            Workbench
+          </Text>
+          <Text fontSize="md" color="gray.500">
+            Triage raw pieces, shape working sets, and promote what moves forward.
+          </Text>
+        </Box>
+        <HelpTip helpKey="workbench-overview" />
+      </HStack>
+
       {/* Four-lane shell */}
       <HStack
         align="stretch"
@@ -625,7 +674,7 @@ export default function WorkbenchCurationWorkArea({
             // Collapsed state — rotated label
             <Box flex={1} display="flex" alignItems="center" justifyContent="center">
               <Text
-                fontSize="xs"
+                fontSize="sm"
                 color="gray.400"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
               >
@@ -641,6 +690,23 @@ export default function WorkbenchCurationWorkArea({
                 value={pieceSearch}
                 onChange={e => setPieceSearch(e.target.value)}
               />
+
+              {/* Type filter chips — only shown when lane is at 85% */}
+              {focusedLane === 1 && (
+                <HStack gap={1} flexWrap="wrap">
+                  {RAW_FILTERS.map(f => (
+                    <Button
+                      key={f.key}
+                      size="xs"
+                      variant={rawTypeFilter.includes(f.key) ? "solid" : "outline"}
+                      colorPalette={TYPE_COLOURS[f.key]}
+                      onClick={() => toggleRawFilter(f.key)}
+                    >
+                      {f.label}
+                    </Button>
+                  ))}
+                </HStack>
+              )}
 
               {/* Selection summary + create CTA */}
               {selectedPieces.size > 0 && (
@@ -669,10 +735,10 @@ export default function WorkbenchCurationWorkArea({
               <VStack flex={1} overflowY="auto" gap={2} align="stretch">
                 {wb.piecesLoading && <Spinner size="sm" mx="auto" />}
                 {wb.piecesError && (
-                  <Text fontSize="xs" color="red.500">{wb.piecesError}</Text>
+                  <Text fontSize="sm" color="red.500">{wb.piecesError}</Text>
                 )}
                 {!wb.piecesLoading && filteredPieces.length === 0 && (
-                  <Text fontSize="xs" color="gray.400" textAlign="center" py={4}>
+                  <Text fontSize="sm" color="gray.400" textAlign="center" py={4}>
                     No raw pieces yet.
                   </Text>
                 )}
@@ -717,7 +783,7 @@ export default function WorkbenchCurationWorkArea({
           {focusedLane !== 2 && focusedLane !== null ? (
             <Box flex={1} display="flex" alignItems="center" justifyContent="center">
               <Text
-                fontSize="xs"
+                fontSize="sm"
                 color="gray.400"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
               >
@@ -739,7 +805,7 @@ export default function WorkbenchCurationWorkArea({
               >
                 {wb.workingItemsLoading && <Spinner size="sm" mx="auto" />}
                 {!wb.workingItemsLoading && wb.workingItems.length === 0 && (
-                  <Text fontSize="xs" color="gray.400" textAlign="center" py={4}>
+                  <Text fontSize="sm" color="gray.400" textAlign="center" py={4}>
                     No working items yet.<br />Select pieces in Lane 1 to create one.
                   </Text>
                 )}
@@ -806,7 +872,7 @@ export default function WorkbenchCurationWorkArea({
                     >
                       <Collapsible.Trigger asChild>
                         <Button variant="outline" size="xs" width="full" justifyContent="space-between" mb={1}>
-                          <Text fontSize="xs" fontWeight="semibold" color="gray.500">
+                          <Text fontSize="sm" fontWeight="semibold" color="gray.500">
                             SOURCE PIECES ({orderedMemberships.length})
                           </Text>
                           <Collapsible.Indicator />
@@ -857,7 +923,7 @@ export default function WorkbenchCurationWorkArea({
                           borderColor="orange.300"
                           bg={mergeWarningBg}
                         >
-                          <Text fontSize="xs" color="orange.700" mb={2}>
+                          <Text fontSize="sm" color="orange.700" mb={2}>
                             This will overwrite your current body copy. Continue?
                           </Text>
                           <HStack gap={2}>
@@ -890,7 +956,7 @@ export default function WorkbenchCurationWorkArea({
 
                   {/* Body editor */}
                   <Box>
-                    <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={1}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.500" mb={1}>
                       BODY
                     </Text>
                     <Textarea
@@ -918,7 +984,7 @@ export default function WorkbenchCurationWorkArea({
 
                   {/* Promote section */}
                   <Box>
-                    <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={2}>PROMOTE TO DRAFT</Text>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.500" mb={2}>PROMOTE TO DRAFT</Text>
 
                     {promoteSuccess && (
                       <Alert.Root status="success" size="sm" mb={2}>
@@ -958,7 +1024,7 @@ export default function WorkbenchCurationWorkArea({
                       </Button>
                     )}
                     {wb.activeItem.status !== "ready" && wb.activeItem.status !== "promoted" && (
-                      <Text fontSize="xs" color="gray.400" mt={1}>
+                      <Text fontSize="sm" color="gray.400" mt={1}>
                         Set status to "ready" to enable promotion.
                       </Text>
                     )}
@@ -995,7 +1061,7 @@ export default function WorkbenchCurationWorkArea({
           {focusedLane !== 3 && focusedLane !== null ? (
             <Box flex={1} display="flex" alignItems="center" justifyContent="center">
               <Text
-                fontSize="xs"
+                fontSize="sm"
                 color="gray.400"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
               >
@@ -1005,7 +1071,7 @@ export default function WorkbenchCurationWorkArea({
           ) : activeDraftPieceId ? (
             <Box flex={1} overflow="hidden" display="flex" flexDir="column">
               <HStack px={3} py={1} borderBottomWidth="1px" borderColor={borderColor} justify="space-between">
-                <Text fontSize="xs" color="gray.500">Editing promoted draft</Text>
+                <Text fontSize="sm" color="gray.500">Editing promoted draft</Text>
                 <Button
                   size="xs"
                   variant="ghost"
@@ -1036,7 +1102,7 @@ export default function WorkbenchCurationWorkArea({
             </Box>
           ) : (
             <Box flex={1} p={3} display="flex" alignItems="center" justifyContent="center">
-              <Text fontSize="sm" color="gray.400" textAlign="center">
+              <Text fontSize="md" color="gray.400" textAlign="center">
                 Promote a working item to open the editor here.
               </Text>
             </Box>
@@ -1065,7 +1131,7 @@ export default function WorkbenchCurationWorkArea({
           {focusedLane !== 4 && focusedLane !== null ? (
             <Box flex={1} display="flex" alignItems="center" justifyContent="center">
               <Text
-                fontSize="xs"
+                fontSize="sm"
                 color="gray.400"
                 style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
               >
@@ -1076,7 +1142,7 @@ export default function WorkbenchCurationWorkArea({
             <VStack flex={1} overflowY="auto" p={2} gap={2} align="stretch">
               {placementsLoading && <Spinner size="sm" mx="auto" />}
               {!placementsLoading && placements.length === 0 && (
-                <Text fontSize="xs" color="gray.400" textAlign="center" py={4}>
+                <Text fontSize="sm" color="gray.400" textAlign="center" py={4}>
                   No published pieces yet.
                 </Text>
               )}
@@ -1088,15 +1154,15 @@ export default function WorkbenchCurationWorkArea({
                   borderColor={borderColor}
                 >
                   <Card.Body p={3} gap={1}>
-                    <Text fontSize="sm" fontWeight="medium" lineClamp={2}>
+                    <Text fontSize="md" fontWeight="medium" lineClamp={2}>
                       {p.piece_title || "(untitled)"}
                     </Text>
                     {p.display?.excerpt && (
-                      <Text fontSize="xs" color="gray.500" lineClamp={2}>
+                      <Text fontSize="sm" color="gray.500" lineClamp={2}>
                         {p.display.excerpt}
                       </Text>
                     )}
-                    <Text fontSize="xs" color="gray.400">
+                    <Text fontSize="sm" color="gray.400">
                       {new Date(p.published_at).toLocaleDateString()}
                     </Text>
                   </Card.Body>

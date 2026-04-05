@@ -1,8 +1,12 @@
 // apps/mixtape/src/components/groups/GroupOverview.tsx
+"use client";
+
 import React from 'react';
 import { VStack, HStack, Text, Button, SimpleGrid, Stat, Box, Collapsible } from '@chakra-ui/react';
 import { Card } from '@chakra-ui/react';
 import WorkAreaWrapper from '@components/dashboard/shared/WorkAreaWrapper';
+import { HelpTip } from '@/components/help/HelpTip';
+import { useHelpRegistration } from '@/components/help/useHelpRegistration';
 
 interface GroupOverviewProps {
   group: {
@@ -13,12 +17,16 @@ interface GroupOverviewProps {
 }
 
 export default function GroupOverview({ group, userRole, onNavigate }: GroupOverviewProps) {
+  useHelpRegistration("GroupOverview");
   return (
     <WorkAreaWrapper>
       <VStack align="stretch" gap={6}>
-        <Text fontSize="2xl" fontWeight="bold">
-          Group Overview
-        </Text>
+        <HStack justify="space-between" align="start">
+          <Text fontSize="2xl" fontWeight="bold">
+            Group Overview
+          </Text>
+          <HelpTip helpKey="groups-overview" />
+        </HStack>
 
         <Card.Root>
           <Card.Header>

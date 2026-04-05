@@ -1,7 +1,7 @@
 import NextLink from "next/link";
 import { notFound } from "next/navigation";
 import { Box, Container, Flex, Link, Stack, Text } from "@chakra-ui/react";
-import { getHelpDocBySlug, listHelpDocs } from "@/lib/help/helpDocs";
+import { getHelpEntryBySlug, listHelpEntries } from "@/lib/help/helpManifest";
 import { Prose } from "@components/ui/prose";
 import { HelpArticleSidebar } from "@/components/help/HelpArticleSidebar";
 
@@ -11,7 +11,7 @@ interface HelpArticlePageProps {
 
 export async function generateMetadata({ params }: HelpArticlePageProps) {
   const { slug } = await params;
-  const doc = await getHelpDocBySlug(slug);
+  const doc = await getHelpEntryBySlug(slug);
 
   if (!doc) {
     return {
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: HelpArticlePageProps) {
 
 export default async function HelpArticlePage({ params }: HelpArticlePageProps) {
   const { slug } = await params;
-  const [doc, allDocs] = await Promise.all([getHelpDocBySlug(slug), listHelpDocs()]);
+  const [doc, allDocs] = await Promise.all([getHelpEntryBySlug(slug), listHelpEntries()]);
 
   if (!doc) {
     notFound();

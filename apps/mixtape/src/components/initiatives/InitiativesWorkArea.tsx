@@ -41,6 +41,8 @@ import {
 } from "@tabler/icons-react";
 import ImportSessionPanel from "./ImportSessionPanel";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { HelpTip } from "@/components/help/HelpTip";
+import { useHelpRegistration } from "@/components/help/useHelpRegistration";
 import { useGroupInitiatives } from "@mixtape/api/hooks/initiatives/useGroupInitiatives";
 import { useInitiative } from "@mixtape/api/hooks/initiatives/useInitiative";
 import { useSessionExchange } from "@mixtape/api/hooks/initiatives/useSessionExchange";
@@ -101,6 +103,7 @@ type View =
   | { kind: "session"; initiativeId: string; sessionId: string };
 
 export default function InitiativesWorkArea({ groupSlug }: InitiativesWorkAreaProps) {
+  useHelpRegistration("InitiativesWorkArea");
   const [view, setView] = useState<View>({ kind: "list" });
 
   if (view.kind === "list") {
@@ -222,6 +225,7 @@ function InitiativeListView({ groupSlug, onOpen }: InitiativeListViewProps) {
           <HStack gap={2}>
             <IconBrain size={24} />
             <Heading size="lg">Initiatives</Heading>
+            <HelpTip helpKey="initiatives-overview" />
           </HStack>
           <Text fontSize="sm" color={mutedText}>
             AI-assisted inquiry sessions for structured group thinking

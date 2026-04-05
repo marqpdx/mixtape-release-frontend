@@ -12,8 +12,11 @@ import { newConversationDialog } from "@components/chat/NewConversationDialog";
 import { IconPlus, IconMessageCircle } from "@tabler/icons-react";
 import { createOrGetConversation } from "@/lib/chat/createOrGetConversation";
 import { useConversationStore } from "@/stores/conversationStore";
+import { HelpTip } from "@/components/help/HelpTip";
+import { useHelpRegistration } from "@/components/help/useHelpRegistration";
 
 export default function MessageCenter() {
+  useHelpRegistration("MessageCenter");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
 
@@ -90,6 +93,7 @@ export default function MessageCenter() {
                 <Text fontSize="lg" fontWeight="bold" color="text.primary">
                   Messages
                 </Text>
+                <HelpTip helpKey="chat-overview" />
               </Flex>
               <Button
                 size="sm"
@@ -170,6 +174,7 @@ export default function MessageCenter() {
           <Text fontSize="xl" fontWeight="bold" color="text.primary">
             Messages
           </Text>
+          <HelpTip helpKey="chat-overview" />
         </Flex>
         <Button
           size="sm"

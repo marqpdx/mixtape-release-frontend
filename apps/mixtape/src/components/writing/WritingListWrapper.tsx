@@ -48,6 +48,9 @@ import { postsColumns } from "../groups/tabs/columns/postsColumns";
 import NextLink from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as writingApi from "@mixtape/api/clients/writing/writingApi";
+import type { WritingSeries } from "@mixtape/core/types/writingTypes";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
 
 type ProseMirrorNode = {
@@ -74,6 +77,7 @@ type Collaborator = {
 
 interface SponsorConfig {
   type: 'group' | 'member';
+  id?: string;
   slug: string;
   displayName?: string;
 }
@@ -119,7 +123,17 @@ export default function WritingListWrapper({
   const [activeTab, setActiveTab] = useState("published");
   const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
+  // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch series list for the rail + assignment dropdowns (group only)
+  const { data: seriesList = [] } = useQuery<WritingSeries[]>({
+    queryKey: ['writing', 'series', sponsor.slug],
+    queryFn: () => writingApi.fetchWritingSeries(sponsor.slug),
+    enabled: sponsor.type === 'group' && groupingMode === 'by-series',
+  });
 
   // Load persisted tab from localStorage on mount
   useEffect(() => {
@@ -1023,12 +1037,96 @@ export default function WritingListWrapper({
               </Accordion.Root>
             </Box>
           ) : groupingMode === "by-series" ? (
-            <SeriesGroupView
-              placements={typedPlacements}
-              drafts={Array.isArray(drafts) ? drafts : []}
-              onEdit={onNavigateToEditor}
-              onDetail={(slug: string) => onNavigateToDetail({ id: '', slug })}
-            />
+            <HStack align="start" gap={0}>
+              {/* Phase A — Series left rail */}
+              <Box
+                w="180px"
+                flexShrink={0}
+                borderRightWidth="1px"
+                borderColor="gray.200"
+                pr={3}
+                mr={4}
+              >
+                <VStack align="stretch" gap={0}>
+                  {/* All */}
+                  <Box
+                    px={2}
+                    py={2}
+                    borderRadius="md"
+                    cursor="pointer"
+                    bg={selectedSeriesKey === undefined ? 'blue.50' : undefined}
+                    fontWeight={selectedSeriesKey === undefined ? 'semibold' : 'normal'}
+                    fontSize="sm"
+                    onClick={() => setSelectedSeriesKey(undefined)}
+                    _hover={{ bg: 'gray.50' }}
+                  >
+                    All pieces
+                  </Box>
+
+                  {/* Named series */}
+                  {seriesList.map(s => {
+                    const count = [...(Array.isArray(drafts) ? drafts : [])].filter(
+                      d => d.piece.series_id === s.id
+                    ).length + typedPlacements.filter(p => p.series_id === s.id).length
+                    return (
+                      <Box
+                        key={s.id}
+                        px={2}
+                        py={2}
+                        borderRadius="md"
+                        cursor="pointer"
+                        bg={selectedSeriesKey === s.id ? 'blue.50' : undefined}
+                        fontWeight={selectedSeriesKey === s.id ? 'semibold' : 'normal'}
+                        fontSize="sm"
+                        onClick={() => setSelectedSeriesKey(s.id)}
+                        _hover={{ bg: 'gray.50' }}
+                      >
+                        <HStack justify="space-between">
+                          <Text lineClamp={1}>{s.title}</Text>
+                          <Badge size="xs" colorPalette="gray" variant="subtle">{count}</Badge>
+                        </HStack>
+                      </Box>
+                    )
+                  })}
+
+                  {/* Unassigned */}
+                  <Box
+                    px={2}
+                    py={2}
+                    borderRadius="md"
+                    cursor="pointer"
+                    bg={selectedSeriesKey === null ? 'blue.50' : undefined}
+                    fontWeight={selectedSeriesKey === null ? 'semibold' : 'normal'}
+                    fontSize="sm"
+                    color="gray.500"
+                    onClick={() => setSelectedSeriesKey(null)}
+                    _hover={{ bg: 'gray.50' }}
+                  >
+                    Unassigned
+                  </Box>
+                </VStack>
+              </Box>
+
+              {/* Series group view */}
+              <Box flex={1} minW={0}>
+                <SeriesGroupView
+                  placements={typedPlacements}
+                  drafts={Array.isArray(drafts) ? drafts : []}
+                  onEdit={onNavigateToEditor}
+                  onDetail={(slug: string) => onNavigateToDetail({ id: '', slug })}
+                  groupId={sponsor.id}
+                  allSeries={seriesList}
+                  filterSeriesKey={selectedSeriesKey}
+                  onSeriesCreated={() => {
+                    void queryClient.invalidateQueries({ queryKey: ['writing', 'series', sponsor.slug] })
+                  }}
+                  onRefresh={() => {
+                    void queryClient.invalidateQueries({ queryKey: ['writing', 'placements', sponsor.type, sponsor.slug] })
+                    void queryClient.invalidateQueries({ queryKey: ['writing', 'drafts', sponsor.type, sponsor.slug] })
+                  }}
+                />
+              </Box>
+            </HStack>
           ) : null}
         </Tabs.Content>
 

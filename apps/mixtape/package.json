@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node ../../scripts/generate-help-manifest.mjs",
     "dev": "next dev -p 3011 -H 127.0.0.1",
+    "prebuild": "node ../../scripts/generate-help-manifest.mjs",
     "build": "next build",
     "start": "next start -p 3011 -H 127.0.0.1",
     "lint": "next lint",

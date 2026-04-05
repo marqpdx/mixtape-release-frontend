@@ -13,7 +13,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import type { HelpDocSummary } from "@/lib/help/helpDocs";
+import type { HelpDocSummary } from "@/types/help";
 
 interface HelpIndexClientProps {
   docs: HelpDocSummary[];

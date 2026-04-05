@@ -1,0 +1,777 @@
+{
+  "entries": {
+    "almanac-overview": {
+      "key": "almanac-overview",
+      "slug": "almanac",
+      "feature": "almanac",
+      "title": "Almanac",
+      "subsystem": "almanac",
+      "area": "overview",
+      "summary": "The Almanac is Mixtape's event and calendar system. Create events, track RSVPs, and manage schedules within your groups.",
+      "excerpt": "The Almanac is Mixtape's event and calendar system. Create events, track RSVPs, and manage schedules within your groups.",
+      "plainText": "Almanac The Almanac is Mixtape's event and calendar system. It lets groups create events, track who's coming, and manage schedules. Members can RSVP to events, follow events they're interested in, and view who else is attending. --- Key concepts Event — A scheduled happening within a group. Events have a title, date/time, and can be published (visible to members) or unpublished (draft state). Occurrence — A single instance of an event. For recurring events, each date is a separate occurrence. For one-time events, there is one occurrence. RSVP — Your formal response to an event or occurrence. You can RSVP or cancel your RSVP at any time. Event Follow — A lighter-weight subscription to an event: you're notified but not formally RSVP'd. Publish / Unpublish — Events start unpublished. An admin publishes an event to make it visible and RSVP-able for members. --- What you can do RSVP to an event - The event must be published and you must be a member of the group. - Navigate to the event in your group. - Click RSVP. Your attendance is recorded. - You can cancel your RSVP at any time. Follow an event - You must be a member of the group. - Click Follow on an event to track it without a formal RSVP. View event attendees - Open any published event. - A list of members who have RSVP'd is available on the event detail page. View your group's calendar - Navigate to your group's Almanac section. - Events are shown grouped by date. Occurrences are listed for recurring events. --- Current limitations - Site-wide event access: The site-wide event detail endpoint does not currently enforce group membership — any authenticated user can read or modify any event by UUID. Event UUIDs should not be shared publicly until this is resolved. --- Related features - Groups — Almanac events are scoped to groups. Group membership determines event access. - Activity — Event RSVPs and follows may generate activity feed entries.",
+      "html": "<h1 id=\"almanac\">Almanac</h1>\n<p>The Almanac is Mixtape's event and calendar system. It lets groups create events, track who's coming, and manage schedules. Members can RSVP to events, follow events they're interested in, and view who else is attending.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Event</strong> — A scheduled happening within a group. Events have a title, date/time, and can be published (visible to members) or unpublished (draft state).</p>\n<p><strong>Occurrence</strong> — A single instance of an event. For recurring events, each date is a separate occurrence. For one-time events, there is one occurrence.</p>\n<p><strong>RSVP</strong> — Your formal response to an event or occurrence. You can RSVP or cancel your RSVP at any time.</p>\n<p><strong>Event Follow</strong> — A lighter-weight subscription to an event: you're notified but not formally RSVP'd.</p>\n<p><strong>Publish / Unpublish</strong> — Events start unpublished. An admin publishes an event to make it visible and RSVP-able for members.</p>\n<hr>\n<h2 id=\"what-you-can-do\">What you can do</h2>\n<h3 id=\"rsvp-to-an-event\">RSVP to an event</h3>\n<ul>\n<li>The event must be published and you must be a member of the group.</li>\n<li>Navigate to the event in your group.</li>\n<li>Click RSVP. Your attendance is recorded.</li>\n<li>You can cancel your RSVP at any time.</li>\n</ul>\n<h3 id=\"follow-an-event\">Follow an event</h3>\n<ul>\n<li>You must be a member of the group.</li>\n<li>Click Follow on an event to track it without a formal RSVP.</li>\n</ul>\n<h3 id=\"view-event-attendees\">View event attendees</h3>\n<ul>\n<li>Open any published event.</li>\n<li>A list of members who have RSVP'd is available on the event detail page.</li>\n</ul>\n<h3 id=\"view-your-groups-calendar\">View your group's calendar</h3>\n<ul>\n<li>Navigate to your group's Almanac section.</li>\n<li>Events are shown grouped by date. Occurrences are listed for recurring events.</li>\n</ul>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Site-wide event access:</strong> The site-wide event detail endpoint does not currently enforce group membership — any authenticated user can read or modify any event by UUID. Event UUIDs should not be shared publicly until this is resolved.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Almanac events are scoped to groups. Group membership determines event access.</li>\n<li><strong>Activity</strong> — Event RSVPs and follows may generate activity feed entries.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "What you can do",
+          "id": "what-you-can-do"
+        },
+        {
+          "depth": 3,
+          "text": "RSVP to an event",
+          "id": "rsvp-to-an-event"
+        },
+        {
+          "depth": 3,
+          "text": "Follow an event",
+          "id": "follow-an-event"
+        },
+        {
+          "depth": 3,
+          "text": "View event attendees",
+          "id": "view-event-attendees"
+        },
+        {
+          "depth": 3,
+          "text": "View your group's calendar",
+          "id": "view-your-groups-calendar"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/almanac",
+        "/almanac/*"
+      ],
+      "workAreas": [
+        "AlmanacWorkArea"
+      ],
+      "tags": [
+        "almanac",
+        "events",
+        "calendar"
+      ]
+    },
+    "chat-overview": {
+      "key": "chat-overview",
+      "slug": "chat",
+      "feature": "chat",
+      "title": "Chat",
+      "subsystem": "chat",
+      "area": "overview",
+      "summary": "Chat is Mixtape's real-time messaging system — text and voice messages between members, within groups and in direct conversations.",
+      "excerpt": "Chat is Mixtape's real-time messaging system — text and voice messages between members, within groups and in direct conversations.",
+      "plainText": "Chat Chat is Mixtape's real-time messaging system. You can send text and voice messages to other members directly, or within group conversations. Messages arrive instantly — you don't need to refresh. --- What you can do here - Send and receive text messages in real time - Record and send voice messages - Play back voice messages from other members - Start direct conversations with other members - Participate in group chat channels --- Key concepts Direct message (DM) — A private conversation between you and one other member. Only the two of you can see it. Group chat — A shared conversation space within a group. All group members with chat access can see and participate. Voice message — A recorded audio clip sent in place of or alongside text. Voice messages are automatically transcribed so you can read them without listening. --- How to send a message 1. Open a conversation from your Messages section or from within a group 2. Click or tap the message input at the bottom 3. Type your message and press Enter (desktop) or tap Send (mobile) --- How to send a voice message 1. Open a conversation 2. Tap the microphone icon in the message input 3. Record your message — tap again or press the stop button to finish 4. Review and tap Send, or tap the trash icon to discard it Voice messages are transcribed automatically. The transcript appears below the audio player so recipients can read the message without playing it. --- How to start a direct message 1. Go to Messages in your personal dashboard 2. Click or tap New Message 3. Search for the member you want to reach and select them 4. Type your first message You can also start a DM from a member's profile page. --- Current limitations - Group chat availability depends on whether the group has it enabled — not all groups have it active - Voice message transcription runs in the background after sending; there may be a brief delay before the transcript appears - Editing or deleting sent messages is not yet available --- Related features - Groups — Chat is available within groups for members who have access - Threadworks — For longer, structured discussions that you want to keep organized over time — distinct from the real-time flow of chat",
+      "html": "<h1 id=\"chat\">Chat</h1>\n<p>Chat is Mixtape's real-time messaging system. You can send text and voice messages to other members directly, or within group conversations. Messages arrive instantly — you don't need to refresh.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Send and receive text messages in real time</li>\n<li>Record and send voice messages</li>\n<li>Play back voice messages from other members</li>\n<li>Start direct conversations with other members</li>\n<li>Participate in group chat channels</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Direct message (DM)</strong> — A private conversation between you and one other member. Only the two of you can see it.</p>\n<p><strong>Group chat</strong> — A shared conversation space within a group. All group members with chat access can see and participate.</p>\n<p><strong>Voice message</strong> — A recorded audio clip sent in place of or alongside text. Voice messages are automatically transcribed so you can read them without listening.</p>\n<hr>\n<h2 id=\"how-to-send-a-message\">How to send a message</h2>\n<ol>\n<li>Open a conversation from your Messages section or from within a group</li>\n<li>Click or tap the message input at the bottom</li>\n<li>Type your message and press <strong>Enter</strong> (desktop) or tap <strong>Send</strong> (mobile)</li>\n</ol>\n<hr>\n<h2 id=\"how-to-send-a-voice-message\">How to send a voice message</h2>\n<ol>\n<li>Open a conversation</li>\n<li>Tap the <strong>microphone icon</strong> in the message input</li>\n<li>Record your message — tap again or press the stop button to finish</li>\n<li>Review and tap <strong>Send</strong>, or tap the trash icon to discard it</li>\n</ol>\n<p>Voice messages are transcribed automatically. The transcript appears below the audio player so recipients can read the message without playing it.</p>\n<hr>\n<h2 id=\"how-to-start-a-direct-message\">How to start a direct message</h2>\n<ol>\n<li>Go to <strong>Messages</strong> in your personal dashboard</li>\n<li>Click or tap <strong>New Message</strong></li>\n<li>Search for the member you want to reach and select them</li>\n<li>Type your first message</li>\n</ol>\n<p>You can also start a DM from a member's profile page.</p>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Group chat</strong> availability depends on whether the group has it enabled — not all groups have it active</li>\n<li><strong>Voice message transcription</strong> runs in the background after sending; there may be a brief delay before the transcript appears</li>\n<li><strong>Editing or deleting sent messages</strong> is not yet available</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Chat is available within groups for members who have access</li>\n<li><strong>Threadworks</strong> — For longer, structured discussions that you want to keep organized over time — distinct from the real-time flow of chat</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to send a message",
+          "id": "how-to-send-a-message"
+        },
+        {
+          "depth": 2,
+          "text": "How to send a voice message",
+          "id": "how-to-send-a-voice-message"
+        },
+        {
+          "depth": 2,
+          "text": "How to start a direct message",
+          "id": "how-to-start-a-direct-message"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/chat",
+        "/chat/*",
+        "/messages"
+      ],
+      "workAreas": [
+        "MessageCenter"
+      ],
+      "tags": [
+        "chat",
+        "messages",
+        "voice",
+        "real-time"
+      ]
+    },
+    "groups-overview": {
+      "key": "groups-overview",
+      "slug": "groups",
+      "feature": "groups",
+      "title": "Groups",
+      "subsystem": "groups",
+      "area": "overview",
+      "summary": "Groups are Mixtape's community spaces — places where members gather, share, discuss, create, and coordinate together.",
+      "excerpt": "Groups are Mixtape's community spaces — places where members gather, share, discuss, create, and coordinate together.",
+      "plainText": "Groups Groups are Mixtape's core community spaces. Each group is a gathering place for people with a shared purpose — a neighborhood association, a creative collective, a study circle, a professional community. Inside a group, members can discuss, write, organize events, run projects, share documents, and work together over time. --- What you can do in a group - Read and join the conversation in the group's forums (Threadworks) - RSVP to events and gatherings (Almanac) - Read and contribute writing published by the group - Browse the group's document library (Stackroom) - Participate in group projects (Projects) - Take courses offered by the group (EarthLab) - Join smaller circles within the group - Participate in group initiatives — AI-assisted thinking sessions What you can see and do depends on your role in the group and the permissions the group admins have configured. --- Key concepts Group — A named community space with its own members, content, and tools. Each group has a dashboard, discussion forums, events, and other sections depending on what the group has enabled. Member — Anyone who has joined the group. Members can participate in discussions, RSVP to events, and access the group's content. Steward — A trusted member with elevated responsibilities. Stewards can manage content and members in areas they've been given access to. Different groups configure steward permissions differently. Admin — Has full access to all group settings, members, and content. Usually the group creator or designated manager. Circle — A smaller group nested inside a larger one. Circles draw their membership from the parent group — you must be a member of the parent group to join a circle. Circles have the same tools as groups but a more focused scope. --- How to join a group 1. Browse groups at /groups or follow a link you've been given 2. Open the group page and click Join 3. Some groups require approval — if so, your request will be sent to the group's admin 4. Once accepted, you'll see the group in your dashboard under My Groups --- How to navigate a group When you're inside a group, you'll see a sidebar or navigation menu with the group's available sections. Common sections: - Home / Overview — Group summary, recent activity, quick links - Threadworks — Discussion forums - Almanac — Events and gatherings - Writing — Published pieces from group members - Stackroom — Document library - Projects — Kanban-style task boards - Circles — Sub-groups within this group - Initiatives — AI-assisted group thinking sessions Not all sections are visible to all members — admins control what each role can access. --- How to leave a group 1. Open the group from your dashboard 2. Go to your profile or group settings 3. Select Leave Group You can rejoin later if the group is open, or request re-admission if it requires approval. --- Circles Circles are sub-groups nested inside a group. They're useful when a larger community wants smaller, more focused spaces for specific interests, working groups, or committees. - You must be a member of the parent group to join a circle - Circles have the same tools as regular groups - Invitation to a circle comes from the parent group's membership pool --- Current limitations - Leaving a circle does not remove you from the parent group - Visibility settings per section are configured by admins — contact your group admin if you can't see a section you expect to have access to --- Related features - Almanac — The event and calendar system used within groups - Threadworks — The discussion forum system - Stackroom — The document library accessible within groups - Initiatives — AI-assisted group inquiry, available as a group section - Projects — Task boards for coordinating group work",
+      "html": "<h1 id=\"groups\">Groups</h1>\n<p>Groups are Mixtape's core community spaces. Each group is a gathering place for people with a shared purpose — a neighborhood association, a creative collective, a study circle, a professional community. Inside a group, members can discuss, write, organize events, run projects, share documents, and work together over time.</p>\n<hr>\n<h2 id=\"what-you-can-do-in-a-group\">What you can do in a group</h2>\n<ul>\n<li>Read and join the conversation in the group's forums (Threadworks)</li>\n<li>RSVP to events and gatherings (Almanac)</li>\n<li>Read and contribute writing published by the group</li>\n<li>Browse the group's document library (Stackroom)</li>\n<li>Participate in group projects (Projects)</li>\n<li>Take courses offered by the group (EarthLab)</li>\n<li>Join smaller circles within the group</li>\n<li>Participate in group initiatives — AI-assisted thinking sessions</li>\n</ul>\n<p>What you can see and do depends on your role in the group and the permissions the group admins have configured.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Group</strong> — A named community space with its own members, content, and tools. Each group has a dashboard, discussion forums, events, and other sections depending on what the group has enabled.</p>\n<p><strong>Member</strong> — Anyone who has joined the group. Members can participate in discussions, RSVP to events, and access the group's content.</p>\n<p><strong>Steward</strong> — A trusted member with elevated responsibilities. Stewards can manage content and members in areas they've been given access to. Different groups configure steward permissions differently.</p>\n<p><strong>Admin</strong> — Has full access to all group settings, members, and content. Usually the group creator or designated manager.</p>\n<p><strong>Circle</strong> — A smaller group nested inside a larger one. Circles draw their membership from the parent group — you must be a member of the parent group to join a circle. Circles have the same tools as groups but a more focused scope.</p>\n<hr>\n<h2 id=\"how-to-join-a-group\">How to join a group</h2>\n<ol>\n<li>Browse groups at <code>/groups</code> or follow a link you've been given</li>\n<li>Open the group page and click <strong>Join</strong></li>\n<li>Some groups require approval — if so, your request will be sent to the group's admin</li>\n<li>Once accepted, you'll see the group in your dashboard under <strong>My Groups</strong></li>\n</ol>\n<hr>\n<h2 id=\"how-to-navigate-a-group\">How to navigate a group</h2>\n<p>When you're inside a group, you'll see a sidebar or navigation menu with the group's available sections. Common sections:</p>\n<ul>\n<li><strong>Home / Overview</strong> — Group summary, recent activity, quick links</li>\n<li><strong>Threadworks</strong> — Discussion forums</li>\n<li><strong>Almanac</strong> — Events and gatherings</li>\n<li><strong>Writing</strong> — Published pieces from group members</li>\n<li><strong>Stackroom</strong> — Document library</li>\n<li><strong>Projects</strong> — Kanban-style task boards</li>\n<li><strong>Circles</strong> — Sub-groups within this group</li>\n<li><strong>Initiatives</strong> — AI-assisted group thinking sessions</li>\n</ul>\n<p>Not all sections are visible to all members — admins control what each role can access.</p>\n<hr>\n<h2 id=\"how-to-leave-a-group\">How to leave a group</h2>\n<ol>\n<li>Open the group from your dashboard</li>\n<li>Go to your profile or group settings</li>\n<li>Select <strong>Leave Group</strong></li>\n</ol>\n<p>You can rejoin later if the group is open, or request re-admission if it requires approval.</p>\n<hr>\n<h2 id=\"circles\">Circles</h2>\n<p>Circles are sub-groups nested inside a group. They're useful when a larger community wants smaller, more focused spaces for specific interests, working groups, or committees.</p>\n<ul>\n<li>You must be a member of the parent group to join a circle</li>\n<li>Circles have the same tools as regular groups</li>\n<li>Invitation to a circle comes from the parent group's membership pool</li>\n</ul>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Leaving a circle</strong> does not remove you from the parent group</li>\n<li><strong>Visibility settings</strong> per section are configured by admins — contact your group admin if you can't see a section you expect to have access to</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Almanac</strong> — The event and calendar system used within groups</li>\n<li><strong>Threadworks</strong> — The discussion forum system</li>\n<li><strong>Stackroom</strong> — The document library accessible within groups</li>\n<li><strong>Initiatives</strong> — AI-assisted group inquiry, available as a group section</li>\n<li><strong>Projects</strong> — Task boards for coordinating group work</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do in a group",
+          "id": "what-you-can-do-in-a-group"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to join a group",
+          "id": "how-to-join-a-group"
+        },
+        {
+          "depth": 2,
+          "text": "How to navigate a group",
+          "id": "how-to-navigate-a-group"
+        },
+        {
+          "depth": 2,
+          "text": "How to leave a group",
+          "id": "how-to-leave-a-group"
+        },
+        {
+          "depth": 2,
+          "text": "Circles",
+          "id": "circles"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/groups",
+        "/groups/*"
+      ],
+      "workAreas": [
+        "GroupWorkArea",
+        "GroupOverview"
+      ],
+      "tags": [
+        "groups",
+        "community",
+        "circles",
+        "members"
+      ]
+    },
+    "initiatives-overview": {
+      "key": "initiatives-overview",
+      "slug": "initiatives",
+      "feature": "initiatives",
+      "title": "Initiatives",
+      "subsystem": "initiatives",
+      "area": "overview",
+      "summary": "Initiatives are your group's long-running thinking threads — a place to capture, distill, and build on ideas across multiple sessions over time.",
+      "excerpt": "Initiatives are your group's long-running thinking threads — a place to capture, distill, and build on ideas across multiple sessions over time.",
+      "plainText": "Initiatives Initiatives are how groups pursue ideas over time. Where a single conversation disappears, an Initiative accumulates — sessions build on each other, the AI distills what emerged, and a rolling picture of the work takes shape. An Initiative has a title and an optional direction (a compass heading, not a rigid scope). Inside it, you hold sessions: conversations — voice or text — where you think through the work. At the end of each session, the AI proposes what to keep. You curate it, and the Initiative updates. --- Key concepts Initiative — A named, group-scoped thread for ongoing thinking or work. It persists across sessions and accumulates what the group has figured out. Direction — A short statement of where the Initiative is pointed. Not a deliverable — more of a compass heading. Optional, but helpful for keeping sessions focused. Session — A single conversation within an Initiative. You speak or type; the AI participates and responds. When you end the session, it's distilled into the rolling record. Distillation — At the end of a session, the AI proposes what was decided, what questions are still open, and what the work looks like now. You review each item and accept, edit, or discard it. Rolling summary — The living document of the Initiative. It accumulates across sessions: current direction, key decisions, open questions, where things stand now. You can edit it directly at any time. Artifact — Something the Initiative produced — a distillation item, a document routed out to the rest of Mixtape, a note. Artifacts appear on the Initiative's timeline. Status — Where the Initiative stands: active (in motion), simmering (ongoing but not the current focus), paused (on hold), resolved (finished), or archived (closed out). --- How to start working in an Initiative Create an Initiative 1. Go to your group's Initiatives section. 2. Click New Initiative. 3. Give it a title. Add a direction if you have one — a sentence about where this is headed. 4. The Initiative is created in active status and ready for its first session. Start a session 1. Open the Initiative. 2. Click Start Session. 3. Talk or type. The session captures your input and the AI's responses. 4. When you're done, click End Session. Review and curate the distillation After ending a session, the AI proposes what to keep: - Decisions made during this session - Open questions that surfaced - A summary of where things stand Review each item. Accept what belongs, edit what's close, skip what doesn't fit. What you accept is merged into the rolling summary. --- What the rolling summary looks like The rolling summary has four parts: - Current direction — where the Initiative is pointed right now - Key decisions — what has been decided (accumulates across sessions) - Open questions — what's still unresolved - Where we are now — a plain-language account of the current state You can edit any of these directly — the AI proposes, but you own the record. --- Routing artifacts out of an Initiative When a session produces something worth saving elsewhere, you can route it: - To Puddlejump — send it as a candidate document for review and promotion - More destinations are planned Routed artifacts appear on the Initiative timeline with a provenance record showing where they came from. --- Initiative statuses Status What it means -------- --------------- Active In motion — current focus of work Simmering Ongoing but not the current priority Paused On hold, with intent to resume Resolved Finished — the work is done Archived Closed out --- Current limitations - Voice session transcription is handled by Web Speech API in v0 — quality may vary by browser and device. Server-side transcription is planned for v1. - Single participant per session — one person can hold a session at a time in v0. Multi-participant sessions are planned for v1. - Tableau routing — the full routing surface (sending artifacts to more destinations) is planned. Puddlejump routing is the first destination available. --- Related features - Groups — Initiatives are scoped to groups. Group membership is required for access. - Puddlejump — Distillation artifacts can be routed to Puddlejump as candidate documents. - Stackroom — Future integration planned: Initiatives will be able to pull from and push to the group's knowledge library.",
+      "html": "<h1 id=\"initiatives\">Initiatives</h1>\n<p>Initiatives are how groups pursue ideas over time. Where a single conversation disappears, an Initiative accumulates — sessions build on each other, the AI distills what emerged, and a rolling picture of the work takes shape.</p>\n<p>An Initiative has a title and an optional direction (a compass heading, not a rigid scope). Inside it, you hold sessions: conversations — voice or text — where you think through the work. At the end of each session, the AI proposes what to keep. You curate it, and the Initiative updates.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Initiative</strong> — A named, group-scoped thread for ongoing thinking or work. It persists across sessions and accumulates what the group has figured out.</p>\n<p><strong>Direction</strong> — A short statement of where the Initiative is pointed. Not a deliverable — more of a compass heading. Optional, but helpful for keeping sessions focused.</p>\n<p><strong>Session</strong> — A single conversation within an Initiative. You speak or type; the AI participates and responds. When you end the session, it's distilled into the rolling record.</p>\n<p><strong>Distillation</strong> — At the end of a session, the AI proposes what was decided, what questions are still open, and what the work looks like now. You review each item and accept, edit, or discard it.</p>\n<p><strong>Rolling summary</strong> — The living document of the Initiative. It accumulates across sessions: current direction, key decisions, open questions, where things stand now. You can edit it directly at any time.</p>\n<p><strong>Artifact</strong> — Something the Initiative produced — a distillation item, a document routed out to the rest of Mixtape, a note. Artifacts appear on the Initiative's timeline.</p>\n<p><strong>Status</strong> — Where the Initiative stands: <code>active</code> (in motion), <code>simmering</code> (ongoing but not the current focus), <code>paused</code> (on hold), <code>resolved</code> (finished), or <code>archived</code> (closed out).</p>\n<hr>\n<h2 id=\"how-to-start-working-in-an-initiative\">How to start working in an Initiative</h2>\n<h3 id=\"create-an-initiative\">Create an Initiative</h3>\n<ol>\n<li>Go to your group's Initiatives section.</li>\n<li>Click <strong>New Initiative</strong>.</li>\n<li>Give it a title. Add a direction if you have one — a sentence about where this is headed.</li>\n<li>The Initiative is created in <code>active</code> status and ready for its first session.</li>\n</ol>\n<h3 id=\"start-a-session\">Start a session</h3>\n<ol>\n<li>Open the Initiative.</li>\n<li>Click <strong>Start Session</strong>.</li>\n<li>Talk or type. The session captures your input and the AI's responses.</li>\n<li>When you're done, click <strong>End Session</strong>.</li>\n</ol>\n<h3 id=\"review-and-curate-the-distillation\">Review and curate the distillation</h3>\n<p>After ending a session, the AI proposes what to keep:</p>\n<ul>\n<li><strong>Decisions made</strong> during this session</li>\n<li><strong>Open questions</strong> that surfaced</li>\n<li><strong>A summary</strong> of where things stand</li>\n</ul>\n<p>Review each item. Accept what belongs, edit what's close, skip what doesn't fit. What you accept is merged into the rolling summary.</p>\n<hr>\n<h2 id=\"what-the-rolling-summary-looks-like\">What the rolling summary looks like</h2>\n<p>The rolling summary has four parts:</p>\n<ul>\n<li><strong>Current direction</strong> — where the Initiative is pointed right now</li>\n<li><strong>Key decisions</strong> — what has been decided (accumulates across sessions)</li>\n<li><strong>Open questions</strong> — what's still unresolved</li>\n<li><strong>Where we are now</strong> — a plain-language account of the current state</li>\n</ul>\n<p>You can edit any of these directly — the AI proposes, but you own the record.</p>\n<hr>\n<h2 id=\"routing-artifacts-out-of-an-initiative\">Routing artifacts out of an Initiative</h2>\n<p>When a session produces something worth saving elsewhere, you can route it:</p>\n<ul>\n<li><strong>To Puddlejump</strong> — send it as a candidate document for review and promotion</li>\n<li>More destinations are planned</li>\n</ul>\n<p>Routed artifacts appear on the Initiative timeline with a provenance record showing where they came from.</p>\n<hr>\n<h2 id=\"initiative-statuses\">Initiative statuses</h2>\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>What it means</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Active</td>\n<td>In motion — current focus of work</td>\n</tr>\n<tr>\n<td>Simmering</td>\n<td>Ongoing but not the current priority</td>\n</tr>\n<tr>\n<td>Paused</td>\n<td>On hold, with intent to resume</td>\n</tr>\n<tr>\n<td>Resolved</td>\n<td>Finished — the work is done</td>\n</tr>\n<tr>\n<td>Archived</td>\n<td>Closed out</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Voice session transcription</strong> is handled by Web Speech API in v0 — quality may vary by browser and device. Server-side transcription is planned for v1.</li>\n<li><strong>Single participant per session</strong> — one person can hold a session at a time in v0. Multi-participant sessions are planned for v1.</li>\n<li><strong>Tableau routing</strong> — the full routing surface (sending artifacts to more destinations) is planned. Puddlejump routing is the first destination available.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Initiatives are scoped to groups. Group membership is required for access.</li>\n<li><strong>Puddlejump</strong> — Distillation artifacts can be routed to Puddlejump as candidate documents.</li>\n<li><strong>Stackroom</strong> — Future integration planned: Initiatives will be able to pull from and push to the group's knowledge library.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to start working in an Initiative",
+          "id": "how-to-start-working-in-an-initiative"
+        },
+        {
+          "depth": 3,
+          "text": "Create an Initiative",
+          "id": "create-an-initiative"
+        },
+        {
+          "depth": 3,
+          "text": "Start a session",
+          "id": "start-a-session"
+        },
+        {
+          "depth": 3,
+          "text": "Review and curate the distillation",
+          "id": "review-and-curate-the-distillation"
+        },
+        {
+          "depth": 2,
+          "text": "What the rolling summary looks like",
+          "id": "what-the-rolling-summary-looks-like"
+        },
+        {
+          "depth": 2,
+          "text": "Routing artifacts out of an Initiative",
+          "id": "routing-artifacts-out-of-an-initiative"
+        },
+        {
+          "depth": 2,
+          "text": "Initiative statuses",
+          "id": "initiative-statuses"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/groups/*/initiatives",
+        "/groups/*?section=initiatives-landing"
+      ],
+      "workAreas": [
+        "InitiativesWorkArea"
+      ],
+      "tags": [
+        "initiatives",
+        "sessions",
+        "ai",
+        "thinking"
+      ]
+    },
+    "mobile-overview": {
+      "key": "mobile-overview",
+      "slug": "mobile",
+      "feature": "mobile",
+      "title": "Mixtape Mobile",
+      "subsystem": "mobile",
+      "area": "overview",
+      "summary": "Mixtape Mobile brings your writing and community to your phone — Pocket Notebook for quick captures, Idea Studio for developing ideas, and a Community Window to stay connected.",
+      "excerpt": "Mixtape Mobile brings your writing and community to your phone — Pocket Notebook for quick captures, Idea Studio for developing ideas, and a Community Window to stay connected.",
+      "plainText": "Mixtape Mobile — User Guide --- What the app is Mixtape Mobile brings your writing and community to your phone. Three things live on the home screen: - Pocket Notebook — capture ideas fast, in text or voice - Idea Studio — turn your captures into Leaves for your Storyline - Community Window — follow your community and chat with people --- Pocket Notebook The notebook is for getting ideas out of your head quickly. No categories, no pressure. Text capture: Tap the text area and start typing. Your draft auto-saves as you write. When you're done, tap save — your idea becomes a Seed. Voice capture: Tap the microphone. Grant microphone permission when asked. Speak your idea, then stop recording. The app uploads your audio and transcribes it in the background. The seed will show \"processing\" until transcription is done — usually less than a minute. Recent seeds: Your last 20 captures appear below the editor. Tap any to revisit it. Develop this?: After saving a seed, a banner appears asking if you'd like to develop it. Tap yes to open it in Idea Studio. --- Idea Studio The studio is where you turn raw captures into something you can share. Writing: Type or edit in the studio editor. Tap Save Draft to save your work without publishing. Tap Add to Storyline to publish your Leaf to your Storyline — it becomes part of your public creative record. --- Community Window Three sub-modes, reachable via the tabs at the top: Streams — a feed of Leaves from people you follow. Messages — your personal and group conversations. Chat — opens a conversation thread inline. --- Messaging Starting a new personal conversation From the Messages tab, tap the + button. Search for a user by name or username. Select one or more people, then tap Create. The conversation opens immediately. Group conversations From the Groups screen (navigate via your group list), select a group. You'll see existing conversations for that group. Tap + to create a new one — only members of that group appear in the picker. Sending messages Type in the text field at the bottom and tap send. Messages appear immediately. Unread badges A blue badge on the Messages tab and on individual conversations shows how many unread messages you have. Opening a conversation clears its badge. --- Push notifications The app will ask for notification permission on first launch. If you grant it, you'll receive a notification when a new message arrives while the app is closed or in the background. Tap the notification to go directly to that conversation. If you're already viewing a conversation, you won't see a notification or badge for messages in that conversation — they appear inline. --- Feedback button If you see a Help or Lighthouse button in the bottom corner of a screen, tap it to send feedback directly to the team. Type a note about a bug, idea, or anything that would make Mixtape better, then tap Send. --- Known limitations - Re-login required after restart: The app does not yet persist your login session. If you close and reopen the app, you'll be asked to sign in again. - Voice seeds require a connection: Audio upload and transcription require an active network connection. Voice seeds saved offline are not yet supported. - SQLite offline drafts: Text drafts are saved to your device's local storage, but not yet to SQLite — they will be lost if you clear the app's data.",
+      "html": "<h1 id=\"mixtape-mobile--user-guide\">Mixtape Mobile — User Guide</h1>\n<hr>\n<h2 id=\"what-the-app-is\">What the app is</h2>\n<p>Mixtape Mobile brings your writing and community to your phone. Three things live on the home screen:</p>\n<ul>\n<li><strong>Pocket Notebook</strong> — capture ideas fast, in text or voice</li>\n<li><strong>Idea Studio</strong> — turn your captures into Leaves for your Storyline</li>\n<li><strong>Community Window</strong> — follow your community and chat with people</li>\n</ul>\n<hr>\n<h2 id=\"pocket-notebook\">Pocket Notebook</h2>\n<p>The notebook is for getting ideas out of your head quickly. No categories, no pressure.</p>\n<p><strong>Text capture</strong>: Tap the text area and start typing. Your draft auto-saves as you write. When you're done, tap save — your idea becomes a Seed.</p>\n<p><strong>Voice capture</strong>: Tap the microphone. Grant microphone permission when asked. Speak your idea, then stop recording. The app uploads your audio and transcribes it in the background. The seed will show \"processing\" until transcription is done — usually less than a minute.</p>\n<p><strong>Recent seeds</strong>: Your last 20 captures appear below the editor. Tap any to revisit it.</p>\n<p><strong>Develop this?</strong>: After saving a seed, a banner appears asking if you'd like to develop it. Tap yes to open it in Idea Studio.</p>\n<hr>\n<h2 id=\"idea-studio\">Idea Studio</h2>\n<p>The studio is where you turn raw captures into something you can share.</p>\n<p><strong>Writing</strong>: Type or edit in the studio editor. Tap <strong>Save Draft</strong> to save your work without publishing. Tap <strong>Add to Storyline</strong> to publish your Leaf to your Storyline — it becomes part of your public creative record.</p>\n<hr>\n<h2 id=\"community-window\">Community Window</h2>\n<p>Three sub-modes, reachable via the tabs at the top:</p>\n<p><strong>Streams</strong> — a feed of Leaves from people you follow.</p>\n<p><strong>Messages</strong> — your personal and group conversations.</p>\n<p><strong>Chat</strong> — opens a conversation thread inline.</p>\n<hr>\n<h2 id=\"messaging\">Messaging</h2>\n<h3 id=\"starting-a-new-personal-conversation\">Starting a new personal conversation</h3>\n<p>From the Messages tab, tap the <strong>+</strong> button. Search for a user by name or username. Select one or more people, then tap <strong>Create</strong>. The conversation opens immediately.</p>\n<h3 id=\"group-conversations\">Group conversations</h3>\n<p>From the Groups screen (navigate via your group list), select a group. You'll see existing conversations for that group. Tap <strong>+</strong> to create a new one — only members of that group appear in the picker.</p>\n<h3 id=\"sending-messages\">Sending messages</h3>\n<p>Type in the text field at the bottom and tap send. Messages appear immediately.</p>\n<h3 id=\"unread-badges\">Unread badges</h3>\n<p>A blue badge on the Messages tab and on individual conversations shows how many unread messages you have. Opening a conversation clears its badge.</p>\n<hr>\n<h2 id=\"push-notifications\">Push notifications</h2>\n<p>The app will ask for notification permission on first launch. If you grant it, you'll receive a notification when a new message arrives while the app is closed or in the background.</p>\n<p>Tap the notification to go directly to that conversation.</p>\n<p>If you're already viewing a conversation, you won't see a notification or badge for messages in that conversation — they appear inline.</p>\n<hr>\n<h2 id=\"feedback-button\">Feedback button</h2>\n<p>If you see a <strong>Help</strong> or <strong>Lighthouse</strong> button in the bottom corner of a screen, tap it to send feedback directly to the team. Type a note about a bug, idea, or anything that would make Mixtape better, then tap Send.</p>\n<hr>\n<h2 id=\"known-limitations\">Known limitations</h2>\n<ul>\n<li><strong>Re-login required after restart</strong>: The app does not yet persist your login session. If you close and reopen the app, you'll be asked to sign in again.</li>\n<li><strong>Voice seeds require a connection</strong>: Audio upload and transcription require an active network connection. Voice seeds saved offline are not yet supported.</li>\n<li><strong>SQLite offline drafts</strong>: Text drafts are saved to your device's local storage, but not yet to SQLite — they will be lost if you clear the app's data.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What the app is",
+          "id": "what-the-app-is"
+        },
+        {
+          "depth": 2,
+          "text": "Pocket Notebook",
+          "id": "pocket-notebook"
+        },
+        {
+          "depth": 2,
+          "text": "Idea Studio",
+          "id": "idea-studio"
+        },
+        {
+          "depth": 2,
+          "text": "Community Window",
+          "id": "community-window"
+        },
+        {
+          "depth": 2,
+          "text": "Messaging",
+          "id": "messaging"
+        },
+        {
+          "depth": 3,
+          "text": "Starting a new personal conversation",
+          "id": "starting-a-new-personal-conversation"
+        },
+        {
+          "depth": 3,
+          "text": "Group conversations",
+          "id": "group-conversations"
+        },
+        {
+          "depth": 3,
+          "text": "Sending messages",
+          "id": "sending-messages"
+        },
+        {
+          "depth": 3,
+          "text": "Unread badges",
+          "id": "unread-badges"
+        },
+        {
+          "depth": 2,
+          "text": "Push notifications",
+          "id": "push-notifications"
+        },
+        {
+          "depth": 2,
+          "text": "Feedback button",
+          "id": "feedback-button"
+        },
+        {
+          "depth": 2,
+          "text": "Known limitations",
+          "id": "known-limitations"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/mobile",
+        "/mobile/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "mobile",
+        "pocket-notebook",
+        "idea-studio"
+      ]
+    },
+    "projects-overview": {
+      "key": "projects-overview",
+      "slug": "projects",
+      "feature": "projects",
+      "title": "Projects",
+      "subsystem": "projects",
+      "area": "overview",
+      "summary": "Projects is Mixtape's task management tool for groups. Create Kanban boards, organize tasks into columns, and coordinate work across your group.",
+      "excerpt": "Projects is Mixtape's task management tool for groups. Create Kanban boards, organize tasks into columns, and coordinate work across your group.",
+      "plainText": "Projects Projects is Mixtape's task management tool for groups. Groups can create projects with Kanban boards, organize tasks into columns, and track work across the group. It's designed for members of a group to coordinate action — integrated into the group context, not a general-purpose project management tool. --- Key concepts Project — A named workspace with a Kanban board, belonging to a group. Projects can be active, archived, or hidden. Column — A stage on the Kanban board (e.g. \"To Do\", \"In Progress\", \"Done\"). Projects have one or more columns. Task — A unit of work placed in a column. Tasks have a position within their column. Kanban Board — The visual layout of all columns and tasks within a project. Hidden — A project that is not visible to regular members. Used to manage visibility before a project is ready to share. --- What you can do View your group's projects - You must be a member of the group. - Navigate to your group's Projects section. - All active, visible projects appear here with their Kanban boards. View a Kanban board - Open a project to see its columns and tasks. - Tasks are shown in order within each column. --- Current limitations - No personal projects: Projects are always group-owned. There is no personal project workspace. --- Related features - Groups — Projects are scoped to groups. Group membership is required for access. - Activity — Task updates and project creation may generate activity feed entries.",
+      "html": "<h1 id=\"projects\">Projects</h1>\n<p>Projects is Mixtape's task management tool for groups. Groups can create projects with Kanban boards, organize tasks into columns, and track work across the group. It's designed for members of a group to coordinate action — integrated into the group context, not a general-purpose project management tool.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Project</strong> — A named workspace with a Kanban board, belonging to a group. Projects can be active, archived, or hidden.</p>\n<p><strong>Column</strong> — A stage on the Kanban board (e.g. \"To Do\", \"In Progress\", \"Done\"). Projects have one or more columns.</p>\n<p><strong>Task</strong> — A unit of work placed in a column. Tasks have a position within their column.</p>\n<p><strong>Kanban Board</strong> — The visual layout of all columns and tasks within a project.</p>\n<p><strong>Hidden</strong> — A project that is not visible to regular members. Used to manage visibility before a project is ready to share.</p>\n<hr>\n<h2 id=\"what-you-can-do\">What you can do</h2>\n<h3 id=\"view-your-groups-projects\">View your group's projects</h3>\n<ul>\n<li>You must be a member of the group.</li>\n<li>Navigate to your group's Projects section.</li>\n<li>All active, visible projects appear here with their Kanban boards.</li>\n</ul>\n<h3 id=\"view-a-kanban-board\">View a Kanban board</h3>\n<ul>\n<li>Open a project to see its columns and tasks.</li>\n<li>Tasks are shown in order within each column.</li>\n</ul>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>No personal projects:</strong> Projects are always group-owned. There is no personal project workspace.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Projects are scoped to groups. Group membership is required for access.</li>\n<li><strong>Activity</strong> — Task updates and project creation may generate activity feed entries.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "What you can do",
+          "id": "what-you-can-do"
+        },
+        {
+          "depth": 3,
+          "text": "View your group's projects",
+          "id": "view-your-groups-projects"
+        },
+        {
+          "depth": 3,
+          "text": "View a Kanban board",
+          "id": "view-a-kanban-board"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/projects",
+        "/projects/*"
+      ],
+      "workAreas": [
+        "ProjectsWorkArea"
+      ],
+      "tags": [
+        "projects",
+        "kanban",
+        "tasks"
+      ]
+    },
+    "puddlejump-overview": {
+      "key": "puddlejump-overview",
+      "slug": "puddlejump",
+      "feature": "puddlejump",
+      "title": "Puddlejump",
+      "subsystem": "puddlejump",
+      "area": "overview",
+      "summary": "Puddlejump is Mixtape's canonical document library system. Curate, approve, version, and export your group's authoritative documents through a structured review process.",
+      "excerpt": "Puddlejump is Mixtape's canonical document library system. Curate, approve, version, and export your group's authoritative documents through a structured review process.",
+      "plainText": "Puddlejump Puddlejump is Mixtape's canonical document library system. It gives groups a structured way to curate, approve, version, and export their agreed knowledge — the documents that are authoritative for the group. Documents move through a review process before being marked Canon, after which every change is tracked. Puddlejump is a governance and curation tool — not a CMS, not a legal archive, and not a replacement for the writing and drafting tools in Inkwell. --- Key concepts Canon Library — A group's curated collection of approved documents. Each group has one Canon Library. Documents in it are considered authoritative. Canon status — A document is Canon when a Group Admin (or a user with the Canon approval permission) approves it. Before approval, documents are editable but not yet canonical. Version history — Once a document is Canon, every subsequent edit creates a new version record tracking who changed it, when, and what changed. History is stored in Mixtape and not included in exports. Check-out / Check-in — Checking out a document signals that you're actively editing it. Other users are notified but not blocked — there are no hard locks in the current version. Bundle — A portable export of the Canon Library: a zip archive containing all Canon documents plus a machine-readable manifest (puddlejump.json) and a human-readable catalog (PUDDLEJUMP.md). Personal library — Every user has a personal Puddlejump library in addition to any group libraries. A personal library is sponsored by the user themselves. --- What you can do View your group's Canon Library - Navigate to your group's Puddlejump section. - All Canon and in-progress documents are listed. Check out a document to edit it - Open a document and select Check Out. - Other editors are notified you're working on it. - Check In when done to signal the edit is ready for review. View version history - Open any Canon document. - The version history shows all changes since it was first canonized: who changed it, when, and a summary. --- Current limitations - No hard locking: Checkout is advisory only. Two users can edit the same document simultaneously; all changes are recorded, but the system does not prevent conflicts. - Markdown only: Puddlejump only handles Markdown documents in the current version. PDF, Word, and other formats are not supported. - Export is a direct download: The export produces a zip file downloaded directly — not a shared link or cloud storage URL. --- Related features - Groups — Group Canon Libraries are owned by groups. Admin or owner membership is required for approval actions. - Stackroom — Canon Library exports feed directly into Stackroom ingestion for AI knowledge extraction. - Inkwell / Mill — Puddlejump governs and certifies documents. Inkwell and Mill are where documents are authored.",
+      "html": "<h1 id=\"puddlejump\">Puddlejump</h1>\n<p>Puddlejump is Mixtape's canonical document library system. It gives groups a structured way to curate, approve, version, and export their agreed knowledge — the documents that are authoritative for the group. Documents move through a review process before being marked Canon, after which every change is tracked.</p>\n<p>Puddlejump is a governance and curation tool — not a CMS, not a legal archive, and not a replacement for the writing and drafting tools in Inkwell.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Canon Library</strong> — A group's curated collection of approved documents. Each group has one Canon Library. Documents in it are considered authoritative.</p>\n<p><strong>Canon status</strong> — A document is Canon when a Group Admin (or a user with the Canon approval permission) approves it. Before approval, documents are editable but not yet canonical.</p>\n<p><strong>Version history</strong> — Once a document is Canon, every subsequent edit creates a new version record tracking who changed it, when, and what changed. History is stored in Mixtape and not included in exports.</p>\n<p><strong>Check-out / Check-in</strong> — Checking out a document signals that you're actively editing it. Other users are notified but not blocked — there are no hard locks in the current version.</p>\n<p><strong>Bundle</strong> — A portable export of the Canon Library: a zip archive containing all Canon documents plus a machine-readable manifest (<code>puddlejump.json</code>) and a human-readable catalog (<code>PUDDLEJUMP.md</code>).</p>\n<p><strong>Personal library</strong> — Every user has a personal Puddlejump library in addition to any group libraries. A personal library is sponsored by the user themselves.</p>\n<hr>\n<h2 id=\"what-you-can-do\">What you can do</h2>\n<h3 id=\"view-your-groups-canon-library\">View your group's Canon Library</h3>\n<ul>\n<li>Navigate to your group's Puddlejump section.</li>\n<li>All Canon and in-progress documents are listed.</li>\n</ul>\n<h3 id=\"check-out-a-document-to-edit-it\">Check out a document to edit it</h3>\n<ul>\n<li>Open a document and select Check Out.</li>\n<li>Other editors are notified you're working on it.</li>\n<li>Check In when done to signal the edit is ready for review.</li>\n</ul>\n<h3 id=\"view-version-history\">View version history</h3>\n<ul>\n<li>Open any Canon document.</li>\n<li>The version history shows all changes since it was first canonized: who changed it, when, and a summary.</li>\n</ul>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>No hard locking:</strong> Checkout is advisory only. Two users can edit the same document simultaneously; all changes are recorded, but the system does not prevent conflicts.</li>\n<li><strong>Markdown only:</strong> Puddlejump only handles Markdown documents in the current version. PDF, Word, and other formats are not supported.</li>\n<li><strong>Export is a direct download:</strong> The export produces a zip file downloaded directly — not a shared link or cloud storage URL.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Group Canon Libraries are owned by groups. Admin or owner membership is required for approval actions.</li>\n<li><strong>Stackroom</strong> — Canon Library exports feed directly into Stackroom ingestion for AI knowledge extraction.</li>\n<li><strong>Inkwell / Mill</strong> — Puddlejump governs and certifies documents. Inkwell and Mill are where documents are authored.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "What you can do",
+          "id": "what-you-can-do"
+        },
+        {
+          "depth": 3,
+          "text": "View your group's Canon Library",
+          "id": "view-your-groups-canon-library"
+        },
+        {
+          "depth": 3,
+          "text": "Check out a document to edit it",
+          "id": "check-out-a-document-to-edit-it"
+        },
+        {
+          "depth": 3,
+          "text": "View version history",
+          "id": "view-version-history"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/puddlejump",
+        "/puddlejump/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "puddlejump",
+        "documents",
+        "canon"
+      ]
+    },
+    "stackroom-overview": {
+      "key": "stackroom-overview",
+      "slug": "stackroom",
+      "feature": "stackroom",
+      "title": "Stackroom",
+      "subsystem": "stackroom",
+      "area": "overview",
+      "summary": "Stackroom is a group's document library — upload documents and search them semantically, finding content by meaning rather than just keywords.",
+      "excerpt": "Stackroom is a group's document library — upload documents and search them semantically, finding content by meaning rather than just keywords.",
+      "plainText": "Stackroom Stackroom is a group's document library. It stores the documents, reference material, and resources that the group wants to keep accessible over time. What makes it different from a simple file folder is its search: Stackroom understands meaning, not just keywords, so you can find a document by describing what you're looking for rather than remembering exactly what it's called. --- What you can do here - Upload documents to the group's library - Browse the group's document collection - Search for documents by meaning — describe what you're looking for in plain language - Access documents shared by other group members --- Key concepts Library — Each group has its own Stackroom library. Documents in one group's Stackroom are separate from another group's. Document — Any file or text you upload. Stackroom processes documents to understand their content and make them searchable. Semantic search — Stackroom can find documents based on meaning. If you search \"how we handle new member onboarding,\" it will find relevant documents even if they don't contain those exact words. Namespace — The technical term for a group's library space. Each group's documents are fully isolated from other groups. --- How to upload a document 1. Open Stackroom from the group's navigation (look for Library or Stackroom) 2. Click or tap Upload 3. Select the file from your device 4. Stackroom processes the document in the background — it will be searchable shortly after upload --- How to search 1. Open Stackroom 2. Type your query in the search bar — describe what you're looking for in plain language 3. Results appear ranked by relevance to your description You can use natural language: \"our founding documents,\" \"meeting notes from last quarter,\" \"the onboarding checklist\" — Stackroom finds what matches best, not just exact text matches. --- Current limitations - Supported file types: Depends on what your group's Stackroom configuration supports — contact your group admin if a file type you need isn't accepted - Processing time: Newly uploaded documents are not immediately searchable — processing typically takes a few seconds to a minute - Cross-group search: You can only search within your current group's library. There is no cross-group document search in v0. --- Related features - Collections — A curated subset of Stackroom documents organized by your group's admins for easier browsing. Think of Collections as featured reading lists drawn from the full library. - Workbench — Where documents go for review and routing before being added to the library - Writing — Published writing pieces live in Writing, not Stackroom. Stackroom is for reference documents and resources.",
+      "html": "<h1 id=\"stackroom\">Stackroom</h1>\n<p>Stackroom is a group's document library. It stores the documents, reference material, and resources that the group wants to keep accessible over time. What makes it different from a simple file folder is its search: Stackroom understands meaning, not just keywords, so you can find a document by describing what you're looking for rather than remembering exactly what it's called.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Upload documents to the group's library</li>\n<li>Browse the group's document collection</li>\n<li>Search for documents by meaning — describe what you're looking for in plain language</li>\n<li>Access documents shared by other group members</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Library</strong> — Each group has its own Stackroom library. Documents in one group's Stackroom are separate from another group's.</p>\n<p><strong>Document</strong> — Any file or text you upload. Stackroom processes documents to understand their content and make them searchable.</p>\n<p><strong>Semantic search</strong> — Stackroom can find documents based on meaning. If you search \"how we handle new member onboarding,\" it will find relevant documents even if they don't contain those exact words.</p>\n<p><strong>Namespace</strong> — The technical term for a group's library space. Each group's documents are fully isolated from other groups.</p>\n<hr>\n<h2 id=\"how-to-upload-a-document\">How to upload a document</h2>\n<ol>\n<li>Open Stackroom from the group's navigation (look for <strong>Library</strong> or <strong>Stackroom</strong>)</li>\n<li>Click or tap <strong>Upload</strong></li>\n<li>Select the file from your device</li>\n<li>Stackroom processes the document in the background — it will be searchable shortly after upload</li>\n</ol>\n<hr>\n<h2 id=\"how-to-search\">How to search</h2>\n<ol>\n<li>Open Stackroom</li>\n<li>Type your query in the search bar — describe what you're looking for in plain language</li>\n<li>Results appear ranked by relevance to your description</li>\n</ol>\n<p>You can use natural language: \"our founding documents,\" \"meeting notes from last quarter,\" \"the onboarding checklist\" — Stackroom finds what matches best, not just exact text matches.</p>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Supported file types:</strong> Depends on what your group's Stackroom configuration supports — contact your group admin if a file type you need isn't accepted</li>\n<li><strong>Processing time:</strong> Newly uploaded documents are not immediately searchable — processing typically takes a few seconds to a minute</li>\n<li><strong>Cross-group search:</strong> You can only search within your current group's library. There is no cross-group document search in v0.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Collections</strong> — A curated subset of Stackroom documents organized by your group's admins for easier browsing. Think of Collections as featured reading lists drawn from the full library.</li>\n<li><strong>Workbench</strong> — Where documents go for review and routing before being added to the library</li>\n<li><strong>Writing</strong> — Published writing pieces live in Writing, not Stackroom. Stackroom is for reference documents and resources.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to upload a document",
+          "id": "how-to-upload-a-document"
+        },
+        {
+          "depth": 2,
+          "text": "How to search",
+          "id": "how-to-search"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/groups/*/stackroom",
+        "/groups/*?section=stackroom-landing"
+      ],
+      "workAreas": [
+        "StackroomWorkArea"
+      ],
+      "tags": [
+        "stackroom",
+        "documents",
+        "library",
+        "search"
+      ]
+    },
+    "workbench-overview": {
+      "key": "workbench-overview",
+      "slug": "workbench",
+      "feature": "workbench",
+      "title": "The Workbench",
+      "subsystem": "workbench",
+      "area": "overview",
+      "summary": "The Workbench is where content goes from raw to ready — a triage and routing surface for managing incoming submissions and deciding what moves forward.",
+      "excerpt": "The Workbench is where content goes from raw to ready — a triage and routing surface for managing incoming submissions and deciding what moves forward.",
+      "plainText": "The Workbench The Workbench is where content goes from raw to ready. Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision. The Workbench is not a writing tool. It is a triage and routing surface. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside. --- The curation suite Mixtape has two surfaces that together handle the full journey from capture to publication: Workbench — triage, queue, routing Handles the question: \"Is this worth working on?\" You see candidates, review what they contain, and take an action. Draft Room — writing, editing, publishing Handles the question: \"Is this ready to publish?\" You write, revise, and publish finished pieces. The connection between them: when you promote a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally. --- Where to find it - Global Workbench — /workbench — everything across all sources, all groups - Group Workbench — /groups/[group-name]/workbench — scoped to one group The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content. --- The two queues Feedback tab Shows items submitted through Lighthouse (the floating feedback button) and other capture beacons. Each row shows: - The message the user submitted - Which beacon it came from (Lighthouse, inline beacon, etc.) - The kind (issue, bug, request, idea) - Current status - Who submitted it and when Actions on each feedback item: Action What it does --- --- Accept Marks the item as sent to agent — moves it to the AI workflow Archive Marks it as won't fix — keeps the record but removes it from the active queue Delete Permanently removes the item Use the kind and status filters at the top to narrow the list. The default view shows items with status new — the freshest unreviewed submissions. --- MillDrafts tab Shows MillDraft candidates — structured content suggestions from connected sources. Currently active sources: - Stackroom — documents uploaded to a library are automatically processed and appear here as candidates - Manual — drafts created directly in the Workbench compose panel Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions). Each row shows: - Title (derived from the source content) - Source (which system produced it) - Content profile (writing, event, etc.) - Current status in the lifecycle - Author and date The MillDraft lifecycle: Status Meaning --- --- candidate Arrived, not yet opened active Opened and being edited ready to promote Validated and staged promoted Promotion succeeded — a canonical object was created archived Set aside (recoverable) --- Taking action on a MillDraft When you select a MillDraft from the queue, you can take one of these actions: Open — moves the draft from candidate to active and opens it for editing. Use this when the content looks promising and you want to work on it. Approve for consideration — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet. Promote — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. (For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.) Promote + Publish — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this. Archive — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind. Reactivate — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow. Discard — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal. --- Compose The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically. --- Draft Room — what happens after promotion When you promote a MillDraft, Mixtape creates a WritingPiece (in draft status) and it appears in your Draft Room. Current limitation: After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2. From the Draft Room you can: - Edit the content in the full writing editor - Use the Copy Desk panel for AI-assisted editorial work - Use the Inspector to check readiness (title, excerpt, word count) - Publish when it's ready The Workbench does not delete the promoted MillDraft — it transitions to promoted status and stays in the system as a provenance record, showing where the content came from. --- Filters and navigation Both queues support filtering: - Feedback queue: filter by kind (issue / bug / request / idea / all) and status - MillDrafts queue: filter by status, content profile, and source type The Refresh button at the top right of each tab reloads the queue without a full page refresh. --- Who can use the Workbench Access is role-gated: Role What they see --- --- Superuser / Admin Global Workbench — all sources, all groups Group Admin / Steward Group Workbench — that group's queue only Member Personal view (own drafts and submissions) — coming in a future release --- What the Workbench is not - It is not a writing tool — for writing, use the Draft Room - It is not a publishing tool — publishing happens in the Draft Room via the Inspector - It is not a search interface — for retrieval from libraries, use the Stackroom --- Roadmap The Workbench will absorb more of the curation surface over time: - Phase 2 (next): Draft Room becomes a panel within the Workbench — edit without leaving triage - Phase 3: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing - Phase 4: Full promotion system — approve, promote, publish as governed actions with audit trail",
+      "html": "<h1 id=\"the-workbench\">The Workbench</h1>\n<p>The Workbench is where content goes from raw to ready.</p>\n<p>Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision.</p>\n<p>The Workbench is not a writing tool. It is a <strong>triage and routing surface</strong>. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside.</p>\n<hr>\n<h2 id=\"the-curation-suite\">The curation suite</h2>\n<p>Mixtape has two surfaces that together handle the full journey from capture to publication:</p>\n<p><strong>Workbench</strong> — triage, queue, routing\nHandles the question: <em>\"Is this worth working on?\"</em>\nYou see candidates, review what they contain, and take an action.</p>\n<p><strong>Draft Room</strong> — writing, editing, publishing\nHandles the question: <em>\"Is this ready to publish?\"</em>\nYou write, revise, and publish finished pieces.</p>\n<p>The connection between them: when you <strong>promote</strong> a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally.</p>\n<hr>\n<h2 id=\"where-to-find-it\">Where to find it</h2>\n<ul>\n<li><strong>Global Workbench</strong> — <code>/workbench</code> — everything across all sources, all groups</li>\n<li><strong>Group Workbench</strong> — <code>/groups/[group-name]/workbench</code> — scoped to one group</li>\n</ul>\n<p>The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content.</p>\n<hr>\n<h2 id=\"the-two-queues\">The two queues</h2>\n<h3 id=\"feedback-tab\">Feedback tab</h3>\n<p>Shows items submitted through <strong>Lighthouse</strong> (the floating feedback button) and other capture beacons.</p>\n<p>Each row shows:</p>\n<ul>\n<li>The message the user submitted</li>\n<li>Which beacon it came from (Lighthouse, inline beacon, etc.)</li>\n<li>The kind (issue, bug, request, idea)</li>\n<li>Current status</li>\n<li>Who submitted it and when</li>\n</ul>\n<p><strong>Actions on each feedback item:</strong></p>\n<table>\n<thead>\n<tr>\n<th>Action</th>\n<th>What it does</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Accept</td>\n<td>Marks the item as sent to agent — moves it to the AI workflow</td>\n</tr>\n<tr>\n<td>Archive</td>\n<td>Marks it as won't fix — keeps the record but removes it from the active queue</td>\n</tr>\n<tr>\n<td>Delete</td>\n<td>Permanently removes the item</td>\n</tr>\n</tbody>\n</table>\n<p>Use the <strong>kind</strong> and <strong>status</strong> filters at the top to narrow the list. The default view shows items with status <code>new</code> — the freshest unreviewed submissions.</p>\n<hr>\n<h3 id=\"milldrafts-tab\">MillDrafts tab</h3>\n<p>Shows <strong>MillDraft candidates</strong> — structured content suggestions from connected sources.</p>\n<p>Currently active sources:</p>\n<ul>\n<li><strong>Stackroom</strong> — documents uploaded to a library are automatically processed and appear here as candidates</li>\n<li><strong>Manual</strong> — drafts created directly in the Workbench compose panel</li>\n</ul>\n<p>Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions).</p>\n<p>Each row shows:</p>\n<ul>\n<li>Title (derived from the source content)</li>\n<li>Source (which system produced it)</li>\n<li>Content profile (writing, event, etc.)</li>\n<li>Current status in the lifecycle</li>\n<li>Author and date</li>\n</ul>\n<p><strong>The MillDraft lifecycle:</strong></p>\n<pre><code>candidate → active → ready to promote → promoted → (archived)\n</code></pre>\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>candidate</td>\n<td>Arrived, not yet opened</td>\n</tr>\n<tr>\n<td>active</td>\n<td>Opened and being edited</td>\n</tr>\n<tr>\n<td>ready to promote</td>\n<td>Validated and staged</td>\n</tr>\n<tr>\n<td>promoted</td>\n<td>Promotion succeeded — a canonical object was created</td>\n</tr>\n<tr>\n<td>archived</td>\n<td>Set aside (recoverable)</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"taking-action-on-a-milldraft\">Taking action on a MillDraft</h2>\n<p>When you select a MillDraft from the queue, you can take one of these actions:</p>\n<p><strong>Open</strong> — moves the draft from <code>candidate</code> to <code>active</code> and opens it for editing. Use this when the content looks promising and you want to work on it.</p>\n<p><strong>Approve for consideration</strong> — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet.</p>\n<p><strong>Promote</strong> — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. <em>(For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.)</em></p>\n<p><strong>Promote + Publish</strong> — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this.</p>\n<p><strong>Archive</strong> — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind.</p>\n<p><strong>Reactivate</strong> — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow.</p>\n<p><strong>Discard</strong> — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal.</p>\n<hr>\n<h2 id=\"compose\">Compose</h2>\n<p>The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically.</p>\n<hr>\n<h2 id=\"draft-room--what-happens-after-promotion\">Draft Room — what happens after promotion</h2>\n<p>When you promote a MillDraft, Mixtape creates a <strong>WritingPiece</strong> (in draft status) and it appears in your <strong>Draft Room</strong>.</p>\n<p><strong>Current limitation:</strong> After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2.</p>\n<p>From the Draft Room you can:</p>\n<ul>\n<li>Edit the content in the full writing editor</li>\n<li>Use the Copy Desk panel for AI-assisted editorial work</li>\n<li>Use the Inspector to check readiness (title, excerpt, word count)</li>\n<li>Publish when it's ready</li>\n</ul>\n<p>The Workbench does not delete the promoted MillDraft — it transitions to <code>promoted</code> status and stays in the system as a provenance record, showing where the content came from.</p>\n<hr>\n<h2 id=\"filters-and-navigation\">Filters and navigation</h2>\n<p>Both queues support filtering:</p>\n<ul>\n<li><strong>Feedback queue</strong>: filter by kind (issue / bug / request / idea / all) and status</li>\n<li><strong>MillDrafts queue</strong>: filter by status, content profile, and source type</li>\n</ul>\n<p>The Refresh button at the top right of each tab reloads the queue without a full page refresh.</p>\n<hr>\n<h2 id=\"who-can-use-the-workbench\">Who can use the Workbench</h2>\n<p>Access is role-gated:</p>\n<table>\n<thead>\n<tr>\n<th>Role</th>\n<th>What they see</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Superuser / Admin</td>\n<td>Global Workbench — all sources, all groups</td>\n</tr>\n<tr>\n<td>Group Admin / Steward</td>\n<td>Group Workbench — that group's queue only</td>\n</tr>\n<tr>\n<td>Member</td>\n<td>Personal view (own drafts and submissions) — coming in a future release</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"what-the-workbench-is-not\">What the Workbench is not</h2>\n<ul>\n<li>It is not a writing tool — for writing, use the Draft Room</li>\n<li>It is not a publishing tool — publishing happens in the Draft Room via the Inspector</li>\n<li>It is not a search interface — for retrieval from libraries, use the Stackroom</li>\n</ul>\n<hr>\n<h2 id=\"roadmap\">Roadmap</h2>\n<p>The Workbench will absorb more of the curation surface over time:</p>\n<ul>\n<li><strong>Phase 2</strong> (next): Draft Room becomes a panel within the Workbench — edit without leaving triage</li>\n<li><strong>Phase 3</strong>: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing</li>\n<li><strong>Phase 4</strong>: Full promotion system — approve, promote, publish as governed actions with audit trail</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "The curation suite",
+          "id": "the-curation-suite"
+        },
+        {
+          "depth": 2,
+          "text": "Where to find it",
+          "id": "where-to-find-it"
+        },
+        {
+          "depth": 2,
+          "text": "The two queues",
+          "id": "the-two-queues"
+        },
+        {
+          "depth": 3,
+          "text": "Feedback tab",
+          "id": "feedback-tab"
+        },
+        {
+          "depth": 3,
+          "text": "MillDrafts tab",
+          "id": "milldrafts-tab"
+        },
+        {
+          "depth": 2,
+          "text": "Taking action on a MillDraft",
+          "id": "taking-action-on-a-milldraft"
+        },
+        {
+          "depth": 2,
+          "text": "Compose",
+          "id": "compose"
+        },
+        {
+          "depth": 2,
+          "text": "Draft Room — what happens after promotion",
+          "id": "draft-room-what-happens-after-promotion"
+        },
+        {
+          "depth": 2,
+          "text": "Filters and navigation",
+          "id": "filters-and-navigation"
+        },
+        {
+          "depth": 2,
+          "text": "Who can use the Workbench",
+          "id": "who-can-use-the-workbench"
+        },
+        {
+          "depth": 2,
+          "text": "What the Workbench is not",
+          "id": "what-the-workbench-is-not"
+        },
+        {
+          "depth": 2,
+          "text": "Roadmap",
+          "id": "roadmap"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/workbench",
+        "/workbench/*"
+      ],
+      "workAreas": [
+        "WorkbenchCurationWorkArea"
+      ],
+      "tags": [
+        "workbench",
+        "curation",
+        "triage"
+      ]
+    },
+    "writing-overview": {
+      "key": "writing-overview",
+      "slug": "writing",
+      "feature": "writing",
+      "title": "Writing",
+      "subsystem": "writing",
+      "area": "overview",
+      "summary": "Mixtape's writing system stays out of your way — capture seeds, draft longer pieces, and publish with explicit control over who can read your work.",
+      "excerpt": "Mixtape's writing system stays out of your way — capture seeds, draft longer pieces, and publish with explicit control over who can read your work.",
+      "plainText": "Writing Mixtape's writing system is built around one idea: start writing, worry about structure later. Whether you're capturing a quick idea on your phone or drafting a long essay, the system is designed to stay out of your way until you're ready to share. --- What you can do here - Capture quick ideas as Seeds (text or voice) - Draft longer pieces in the Draft Room - Publish with explicit control over who can read your work and where it appears - Organize published work onto shelves in your Library - Promote a captured idea into a full draft with one action --- Key concepts Seed — The lowest-friction capture unit. A short note, a voice recording, or a clipped thought. Seeds are private by default and never published automatically. They are the raw material that lives upstream of everything else. Draft — A writing piece in progress. Drafts autosave continuously. You can have many drafts open at once and switch between them freely. Working copy — The live editing version of a draft. Autosave writes here. When you publish, the working copy is merged into the canonical piece. Publishing — The act of finalizing a draft as a canonical, timestamped artifact. Publishing does not automatically make your work visible to anyone — you choose where it goes. Shelf — A curated collection in your public Library where readers find your published work. You decide which pieces go on which shelves, and shelves can be public, members-only, or unlisted. Library — Your outward-facing writing home. Readers who want to browse your writing come here. Work Session — When you use the stream commands (/new, /renew) in the editor, the system quietly creates a Work Session that links all the artifacts you produce in one writing flow. You don't need to manage this — it happens automatically. --- How to capture an idea quickly 1. Go to your Seeds page. 2. Type your idea into the text box and press Save, or tap the microphone to record a voice note. 3. Your seed is saved immediately and privately. Nothing is published. 4. When you want to develop the idea, open the seed and choose Promote to Draft. This creates a new draft pre-filled with your seed's text. --- How to write and save a draft 1. Open the Draft Room (your personal writing workspace). 2. Click New Draft or open an existing draft from the list on the left. 3. Write. The system autosaves every few seconds — you will never lose work. 4. Use the inspector panel (right side) to add a title, excerpt, tags, and categories when you're ready — none of these are required to start writing. --- How to publish a piece 1. Open the draft you want to publish. 2. Click Publish. 3. Choose your audience: - Just me — finalizes the piece privately; nothing appears in your Library. - Readers — makes the piece available to others. 4. If you choose Readers, select where it should appear: your personal Library, a group feed, a specific shelf, or a newsletter. 5. Confirm. The piece is published and placed only where you indicated. Nothing is distributed automatically. Every placement is a deliberate choice. --- How to use stream commands during writing When you're writing a long piece and want to quickly capture a related idea without stopping: 1. On a new line, type /new Event (or /new Course, /new Seed, etc.) and press Enter. 2. The editor switches to that artifact — write the content. 3. Type /renew on a new line to return to your original piece. Your original piece continues from where you left off. The emitted artifact is saved as a draft of that type. The whole flow is recorded as a Work Session. --- Current limitations - Draft Room UI: The full two-column Draft Room (list + editor + inspector) is specified but the dedicated Draft Room route may not yet be available in the app. Check your navigation for its current location. - Tableau / Curate surface: Structural work like merging drafts, building series, and reordering pieces into a visual workspace (called Tableau) is designed but not yet built. - Content Hub / lifecycle dashboard: The lifecycle-oriented dashboard for tracking Seeds → Drafts → Published → Library is designed but not yet built. - Series assignments: The Draft Room inspector is specified to support assigning a piece to multiple series. This is not confirmed as built. - Voice transcription timing: Voice seeds are transcribed in the background. Depending on server load, transcription may take up to a minute. The seed will show \"Transcribing…\" until it is ready. --- Related features - Storyline (Leaves) — The social publishing surface. Leaves are a lighter-weight post type that live in your feed, distinct from full WritingPieces. - Stackroom — Research and knowledge management. Published writing can be linked to Stackroom artifacts. - Library — The public-facing shelf system where readers browse your published work. - Groups — Writing can be published into group feeds, making it visible to group members. --- Roadmap - Tableau (Curate surface): Structural editing — merge, reorder, group, and build series from your drafts. Planned; not yet built. - Writing permissions: Proper editwriting and publishwriting group permissions are planned to replace the current proxy. This will affect who can edit or publish group-sponsored writing. - LinkedIn distribution: A Synopsis + LinkedIn org-posting feature is spec'd. Not yet built.",
+      "html": "<h1 id=\"writing\">Writing</h1>\n<p>Mixtape's writing system is built around one idea: start writing, worry about structure later. Whether you're capturing a quick idea on your phone or drafting a long essay, the system is designed to stay out of your way until you're ready to share.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Capture quick ideas as Seeds (text or voice)</li>\n<li>Draft longer pieces in the Draft Room</li>\n<li>Publish with explicit control over who can read your work and where it appears</li>\n<li>Organize published work onto shelves in your Library</li>\n<li>Promote a captured idea into a full draft with one action</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Seed</strong> — The lowest-friction capture unit. A short note, a voice recording, or a clipped thought. Seeds are private by default and never published automatically. They are the raw material that lives upstream of everything else.</p>\n<p><strong>Draft</strong> — A writing piece in progress. Drafts autosave continuously. You can have many drafts open at once and switch between them freely.</p>\n<p><strong>Working copy</strong> — The live editing version of a draft. Autosave writes here. When you publish, the working copy is merged into the canonical piece.</p>\n<p><strong>Publishing</strong> — The act of finalizing a draft as a canonical, timestamped artifact. Publishing does not automatically make your work visible to anyone — you choose where it goes.</p>\n<p><strong>Shelf</strong> — A curated collection in your public Library where readers find your published work. You decide which pieces go on which shelves, and shelves can be public, members-only, or unlisted.</p>\n<p><strong>Library</strong> — Your outward-facing writing home. Readers who want to browse your writing come here.</p>\n<p><strong>Work Session</strong> — When you use the stream commands (<code>/new</code>, <code>/renew</code>) in the editor, the system quietly creates a Work Session that links all the artifacts you produce in one writing flow. You don't need to manage this — it happens automatically.</p>\n<hr>\n<h2 id=\"how-to-capture-an-idea-quickly\">How to capture an idea quickly</h2>\n<ol>\n<li>Go to your Seeds page.</li>\n<li>Type your idea into the text box and press Save, or tap the microphone to record a voice note.</li>\n<li>Your seed is saved immediately and privately. Nothing is published.</li>\n<li>When you want to develop the idea, open the seed and choose <strong>Promote to Draft</strong>. This creates a new draft pre-filled with your seed's text.</li>\n</ol>\n<hr>\n<h2 id=\"how-to-write-and-save-a-draft\">How to write and save a draft</h2>\n<ol>\n<li>Open the Draft Room (your personal writing workspace).</li>\n<li>Click <strong>New Draft</strong> or open an existing draft from the list on the left.</li>\n<li>Write. The system autosaves every few seconds — you will never lose work.</li>\n<li>Use the inspector panel (right side) to add a title, excerpt, tags, and categories when you're ready — none of these are required to start writing.</li>\n</ol>\n<hr>\n<h2 id=\"how-to-publish-a-piece\">How to publish a piece</h2>\n<ol>\n<li>Open the draft you want to publish.</li>\n<li>Click <strong>Publish</strong>.</li>\n<li>Choose your audience:\n<ul>\n<li><strong>Just me</strong> — finalizes the piece privately; nothing appears in your Library.</li>\n<li><strong>Readers</strong> — makes the piece available to others.</li>\n</ul>\n</li>\n<li>If you choose Readers, select where it should appear: your personal Library, a group feed, a specific shelf, or a newsletter.</li>\n<li>Confirm. The piece is published and placed only where you indicated.</li>\n</ol>\n<p>Nothing is distributed automatically. Every placement is a deliberate choice.</p>\n<hr>\n<h2 id=\"how-to-use-stream-commands-during-writing\">How to use stream commands during writing</h2>\n<p>When you're writing a long piece and want to quickly capture a related idea without stopping:</p>\n<ol>\n<li>On a new line, type <code>/new Event</code> (or <code>/new Course</code>, <code>/new Seed</code>, etc.) and press Enter.</li>\n<li>The editor switches to that artifact — write the content.</li>\n<li>Type <code>/renew</code> on a new line to return to your original piece.</li>\n</ol>\n<p>Your original piece continues from where you left off. The emitted artifact is saved as a draft of that type. The whole flow is recorded as a Work Session.</p>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Draft Room UI</strong>: The full two-column Draft Room (list + editor + inspector) is specified but the dedicated Draft Room route may not yet be available in the app. Check your navigation for its current location.</li>\n<li><strong>Tableau / Curate surface</strong>: Structural work like merging drafts, building series, and reordering pieces into a visual workspace (called Tableau) is designed but not yet built.</li>\n<li><strong>Content Hub / lifecycle dashboard</strong>: The lifecycle-oriented dashboard for tracking Seeds → Drafts → Published → Library is designed but not yet built.</li>\n<li><strong>Series assignments</strong>: The Draft Room inspector is specified to support assigning a piece to multiple series. This is not confirmed as built.</li>\n<li><strong>Voice transcription timing</strong>: Voice seeds are transcribed in the background. Depending on server load, transcription may take up to a minute. The seed will show \"Transcribing…\" until it is ready.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Storyline (Leaves)</strong> — The social publishing surface. Leaves are a lighter-weight post type that live in your feed, distinct from full WritingPieces.</li>\n<li><strong>Stackroom</strong> — Research and knowledge management. Published writing can be linked to Stackroom artifacts.</li>\n<li><strong>Library</strong> — The public-facing shelf system where readers browse your published work.</li>\n<li><strong>Groups</strong> — Writing can be published into group feeds, making it visible to group members.</li>\n</ul>\n<hr>\n<h2 id=\"roadmap\">Roadmap</h2>\n<ul>\n<li><strong>Tableau (Curate surface)</strong>: Structural editing — merge, reorder, group, and build series from your drafts. Planned; not yet built.</li>\n<li><strong>Writing permissions</strong>: Proper <code>edit_writing</code> and <code>publish_writing</code> group permissions are planned to replace the current proxy. This will affect who can edit or publish group-sponsored writing.</li>\n<li><strong>LinkedIn distribution</strong>: A Synopsis + LinkedIn org-posting feature is spec'd. Not yet built.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to capture an idea quickly",
+          "id": "how-to-capture-an-idea-quickly"
+        },
+        {
+          "depth": 2,
+          "text": "How to write and save a draft",
+          "id": "how-to-write-and-save-a-draft"
+        },
+        {
+          "depth": 2,
+          "text": "How to publish a piece",
+          "id": "how-to-publish-a-piece"
+        },
+        {
+          "depth": 2,
+          "text": "How to use stream commands during writing",
+          "id": "how-to-use-stream-commands-during-writing"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        },
+        {
+          "depth": 2,
+          "text": "Roadmap",
+          "id": "roadmap"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/writing",
+        "/writing/*",
+        "/drafts",
+        "/drafts/*"
+      ],
+      "workAreas": [
+        "SponsorWritingWrapper",
+        "WritingEditorWrapper",
+        "SeedsWorkArea",
+        "DraftRoomWorkArea"
+      ],
+      "tags": [
+        "writing",
+        "drafts",
+        "seeds"
+      ]
+    }
+  },
+  "workAreaIndex": {
+    "AlmanacWorkArea": [
+      "almanac-overview"
+    ],
+    "MessageCenter": [
+      "chat-overview"
+    ],
+    "GroupWorkArea": [
+      "groups-overview"
+    ],
+    "GroupOverview": [
+      "groups-overview"
+    ],
+    "InitiativesWorkArea": [
+      "initiatives-overview"
+    ],
+    "ProjectsWorkArea": [
+      "projects-overview"
+    ],
+    "StackroomWorkArea": [
+      "stackroom-overview"
+    ],
+    "WorkbenchCurationWorkArea": [
+      "workbench-overview"
+    ],
+    "SponsorWritingWrapper": [
+      "writing-overview"
+    ],
+    "WritingEditorWrapper": [
+      "writing-overview"
+    ],
+    "SeedsWorkArea": [
+      "writing-overview"
+    ],
+    "DraftRoomWorkArea": [
+      "writing-overview"
+    ]
+  },
+  "subsystemIndex": {
+    "almanac": [
+      "almanac-overview"
+    ],
+    "chat": [
+      "chat-overview"
+    ],
+    "groups": [
+      "groups-overview"
+    ],
+    "initiatives": [
+      "initiatives-overview"
+    ],
+    "mobile": [
+      "mobile-overview"
+    ],
+    "projects": [
+      "projects-overview"
+    ],
+    "puddlejump": [
+      "puddlejump-overview"
+    ],
+    "stackroom": [
+      "stackroom-overview"
+    ],
+    "workbench": [
+      "workbench-overview"
+    ],
+    "writing": [
+      "writing-overview"
+    ]
+  },
+  "generatedAt": "2026-04-04T23:56:21.528Z"
+}

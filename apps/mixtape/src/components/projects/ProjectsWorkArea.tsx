@@ -22,6 +22,8 @@ import {
 } from '@chakra-ui/react';
 import { useProjectBoard, useProjectCreate, useProjectsList } from '@mixtape/api/hooks';
 import { Divider } from '../common/Divider';
+import { HelpTip } from '@/components/help/HelpTip';
+import { useHelpRegistration } from '@/components/help/useHelpRegistration';
 
 interface ProjectsWorkAreaProps {
   groupId: string;
@@ -34,6 +36,7 @@ export default function ProjectsWorkArea({
   groupSlug,
   groupTitle,
 }: ProjectsWorkAreaProps) {
+  useHelpRegistration("ProjectsWorkArea");
   const [projectTitle, setProjectTitle] = useState('');
   const [projectSummary, setProjectSummary] = useState('');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -167,9 +170,12 @@ export default function ProjectsWorkArea({
   return (
     <VStack align="stretch" gap={8}>
       <Box>
-        <Heading size="md" mb={2}>
-          Projects
-        </Heading>
+        <HStack justify="space-between" align="start" mb={2}>
+          <Heading size="md">
+            Projects
+          </Heading>
+          <HelpTip helpKey="projects-overview" />
+        </HStack>
         <HStack gap={3} align="flex-end">
           <Box maxW="360px" w="full">
             <Field.Root>
