@@ -12,6 +12,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { ChatStateManager } from '../components/ChatStateManager';
 import LoginScreen from '../screens/LoginScreen';
 import NotebookScreen from '../screens/NotebookScreen';
+import PlaceScreen from '../screens/PlaceScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
@@ -27,15 +28,16 @@ import { ChatScreen } from '../screens/ChatScreen';
 
 export type MainTabParamList = {
   Notebook: undefined;
+  Place: undefined;
   Studio: undefined;
   Messages: undefined;
   Groups: undefined;
-  Profile: undefined;
 };
 
 export type RootStackParamList = {
   Login: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  Profile: undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
@@ -73,10 +75,10 @@ function MainTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
             Notebook: ['book', 'book-outline'],
+            Place: ['arrow-forward-circle', 'arrow-forward-circle-outline'],
             Studio: ['color-palette', 'color-palette-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
             Groups: ['people', 'people-outline'],
-            Profile: ['person-circle', 'person-circle-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
@@ -85,6 +87,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Notebook" component={NotebookScreen} />
+      <Tab.Screen name="Place" component={PlaceScreen} />
       <Tab.Screen name="Studio" component={StudioScreen} />
       <Tab.Screen
         name="Messages"
@@ -94,7 +97,6 @@ function MainTabs() {
         }}
       />
       <Tab.Screen name="Groups" component={GroupListScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -155,6 +157,11 @@ export default function AppNavigator() {
         ) : (
           <>
             <RootStack.Screen name="MainTabs" component={MainTabs} />
+            <RootStack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ headerShown: false, presentation: 'modal' }}
+            />
             <RootStack.Screen
               name="Chat"
               component={ChatScreen}

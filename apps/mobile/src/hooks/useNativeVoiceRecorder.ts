@@ -16,12 +16,15 @@ interface UseNativeVoiceRecorderReturn {
   meterLevel: number;
   micError: string | null;
   canOpenSettings: boolean;
+  maxDurationReached: boolean;  // true when recording auto-stopped at MAX_RECORDING_SECONDS
   startRecording: () => Promise<void>;
   pauseRecording: () => Promise<void>;
   resumeRecording: () => Promise<void>;
   finalizeRecording: () => Promise<RecordedClip | null>;
   clearRecording: () => Promise<void>;
 }
+
+const MAX_RECORDING_SECONDS = 300; // 5 minutes — per Puddlejump OQ-2 decision
 
 export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
   const [isRecording, setIsRecording] = useState(false);
@@ -31,6 +34,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
   const [meterLevel, setMeterLevel] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
   const [canOpenSettings, setCanOpenSettings] = useState(false);
+  const [maxDurationReached, setMaxDurationReached] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
 
   useEffect(() => {
@@ -85,7 +89,18 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
         },
       };
       recording.setOnRecordingStatusUpdate((status) => {
-        setRecordingSeconds(Math.max(0, Math.round((status.durationMillis || 0) / 1000)));
+        const secs = Math.max(0, Math.round((status.durationMillis || 0) / 1000));
+        setRecordingSeconds(secs);
+
+        // Hard cap — auto-pause at 5 minutes
+        if (secs >= MAX_RECORDING_SECONDS && status.isRecording) {
+          void recording.pauseAsync().catch(() => undefined);
+          setIsRecording(false);
+          setIsPaused(true);
+          setMeterLevel(0);
+          setMaxDurationReached(true);
+          return;
+        }
 
         if (status.isRecording) {
           setIsRecording(true);
@@ -205,6 +220,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
     setCanOpenSettings(false);
     setIsRecording(false);
     setIsPaused(false);
+    setMaxDurationReached(false);
     void Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
     }).catch(() => undefined);
@@ -218,6 +234,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
     meterLevel,
     micError,
     canOpenSettings,
+    maxDurationReached,
     startRecording,
     pauseRecording,
     resumeRecording,

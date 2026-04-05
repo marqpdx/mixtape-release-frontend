@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/authStore';
 import { MobileBeacon } from './feedback/MobileBeacon';
+import { navigationRef } from '../navigation/AppNavigator';
 
 interface CrossroadsHeaderProps {
   routeLabel: string;
@@ -42,6 +43,16 @@ export function CrossroadsHeader({
               size={18}
               color="#9DB9D4"
             />
+          </TouchableOpacity>
+        ) : null}
+
+        {routeLabel !== 'profile' && currentUser ? (
+          <TouchableOpacity
+            onPress={() => navigationRef.isReady() && navigationRef.navigate('Profile')}
+            activeOpacity={0.8}
+            style={styles.iconButton}
+          >
+            <Ionicons name="person-circle-outline" size={20} color="#9DB9D4" />
           </TouchableOpacity>
         ) : null}
 

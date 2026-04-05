@@ -11,6 +11,7 @@ interface UseChatVoiceUploadReturn {
   recordingSeconds: number;
   meterLevel: number;
   micError: string | null;
+  maxDurationReached: boolean;
   // upload state
   isUploading: boolean;
   uploadError: string | null;
@@ -31,6 +32,7 @@ export function useChatVoiceUpload(conversationSlug: string): UseChatVoiceUpload
     recordingSeconds,
     meterLevel,
     micError,
+    maxDurationReached,
     startRecording,
     finalizeRecording,
     clearRecording,
@@ -74,6 +76,7 @@ export function useChatVoiceUpload(conversationSlug: string): UseChatVoiceUpload
     recordingSeconds,
     meterLevel,
     micError,
+    maxDurationReached,
     isUploading,
     uploadError,
     startRecording,

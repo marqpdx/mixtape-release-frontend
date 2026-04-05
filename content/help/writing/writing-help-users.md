@@ -2,72 +2,70 @@
 title: Writing
 subsystem: writing
 area: overview
-excerpt: Mixtape's writing system stays out of your way — capture seeds, draft longer pieces, and publish with explicit control over who can read your work.
+excerpt: Mixtape's writing tools let you capture seeds, shape drafts, and publish deliberately without losing the thread of your work.
 routes:
-  - /writing
-  - /writing/*
-  - /drafts
-  - /drafts/*
+  - /app/dashboard
+  - /app/dashboard/*
+  - /groups/*
 workAreas:
-  - SponsorWritingWrapper
-  - WritingEditorWrapper
-  - SeedsWorkArea
   - DraftRoomWorkArea
 tags:
   - writing
   - drafts
   - seeds
+  - publishing
 ---
 
 # Writing
 
-Mixtape's writing system is built around one idea: start writing, worry about structure later. Whether you're capturing a quick idea on your phone or drafting a long essay, the system is designed to stay out of your way until you're ready to share.
+Mixtape's writing system is designed to let you move from a quick capture to a finished piece without changing tools every time the work deepens. Start with a seed, move into a draft, refine metadata when it matters, and publish only when you are ready.
 
 ---
 
 ## What you can do here
 
-- Capture quick ideas as Seeds (text or voice)
-- Draft longer pieces in the Draft Room
-- Publish with explicit control over who can read your work and where it appears
-- Organize published work onto shelves in your Library
-- Promote a captured idea into a full draft with one action
+- Capture quick ideas as seeds, including voice notes
+- Open and edit longer drafts in the Draft Room
+- Add titles, excerpts, tags, and categories when the piece is ready for shaping
+- Publish with explicit control over audience and placement
+- Keep unpublished work private while you are still thinking
 
 ---
 
 ## Key concepts
 
-**Seed** — The lowest-friction capture unit. A short note, a voice recording, or a clipped thought. Seeds are private by default and never published automatically. They are the raw material that lives upstream of everything else.
+**Seed** — The fastest way to capture something worth returning to. A seed can start as a short note or a voice capture. Seeds are private by default.
 
-**Draft** — A writing piece in progress. Drafts autosave continuously. You can have many drafts open at once and switch between them freely.
+**Draft** — A writing piece in progress. Drafts autosave while you work and stay unpublished until you make a separate publishing decision.
 
-**Working copy** — The live editing version of a draft. Autosave writes here. When you publish, the working copy is merged into the canonical piece.
+**Working document** — The live editing surface for a draft. This is where your latest unsent changes live while you are still shaping the piece.
 
-**Publishing** — The act of finalizing a draft as a canonical, timestamped artifact. Publishing does not automatically make your work visible to anyone — you choose where it goes.
+**Publishing** — The act of turning a draft into a released piece. Publishing is explicit. Mixtape does not assume where a piece should appear.
 
-**Shelf** — A curated collection in your public Library where readers find your published work. You decide which pieces go on which shelves, and shelves can be public, members-only, or unlisted.
+**Placement** — Where a published piece appears. A placement can target your own reader-facing surfaces or a group-sponsored destination.
 
-**Library** — Your outward-facing writing home. Readers who want to browse your writing come here.
+**Library / catalog** — The reader-facing surface where published pieces are gathered and browsed.
 
-**Work Session** — When you use the stream commands (`/new`, `/renew`) in the editor, the system quietly creates a Work Session that links all the artifacts you produce in one writing flow. You don't need to manage this — it happens automatically.
+**Stream authoring** — The command-based writing flow that lets you emit related artifacts inline while staying in the same writing session.
 
 ---
 
 ## How to capture an idea quickly
 
-1. Go to your Seeds page.
-2. Type your idea into the text box and press Save, or tap the microphone to record a voice note.
-3. Your seed is saved immediately and privately. Nothing is published.
-4. When you want to develop the idea, open the seed and choose **Promote to Draft**. This creates a new draft pre-filled with your seed's text.
+1. Open the writing area where seeds are available.
+2. Type into the quick-capture field or use voice capture if enabled.
+3. Save the seed.
+4. Return later and promote it into a fuller draft when the idea is ready to expand.
 
 ---
 
 ## How to write and save a draft
 
-1. Open the Draft Room (your personal writing workspace).
-2. Click **New Draft** or open an existing draft from the list on the left.
-3. Write. The system autosaves every few seconds — you will never lose work.
-4. Use the inspector panel (right side) to add a title, excerpt, tags, and categories when you're ready — none of these are required to start writing.
+1. Open **Draft Room** from the dashboard writing section.
+2. Create a draft or select one from the left rail.
+3. Write first. Autosave will keep the current body safe while you work.
+4. Use the right-side inspector to add title, audience, tags, and categories when the piece starts to take shape.
+5. Save metadata updates before publishing.
 
 ---
 
@@ -75,49 +73,49 @@ Mixtape's writing system is built around one idea: start writing, worry about st
 
 1. Open the draft you want to publish.
 2. Click **Publish**.
-3. Choose your audience:
-   - **Just me** — finalizes the piece privately; nothing appears in your Library.
-   - **Readers** — makes the piece available to others.
-4. If you choose Readers, select where it should appear: your personal Library, a group feed, a specific shelf, or a newsletter.
-5. Confirm. The piece is published and placed only where you indicated.
+3. Choose who the piece is addressed to and who should be able to read it.
+4. Review the destinations and placement options that are offered.
+5. Confirm the publish action.
 
-Nothing is distributed automatically. Every placement is a deliberate choice.
+Publishing is deliberate. A draft is not distributed automatically just because it exists.
 
 ---
 
 ## How to use stream commands during writing
 
-When you're writing a long piece and want to quickly capture a related idea without stopping:
+When you are writing and need to break out a related artifact without leaving the surface:
 
-1. On a new line, type `/new Event` (or `/new Course`, `/new Seed`, etc.) and press Enter.
-2. The editor switches to that artifact — write the content.
-3. Type `/renew` on a new line to return to your original piece.
+1. Type `/new [type] [title]` on a new line.
+2. The editor inserts a boundary marker and starts routing the writing below that marker into the new artifact.
+3. Type `/renew` to return to the original piece.
+4. If you remove a boundary marker, the segmented content merges back into the anchor piece.
 
-Your original piece continues from where you left off. The emitted artifact is saved as a draft of that type. The whole flow is recorded as a Work Session.
+This is most useful when a thought belongs somewhere else but you do not want to lose momentum in the current draft.
+
+Supported types currently include `writingpiece`, `seed`, `event`, and `course`.
 
 ---
 
 ## Current limitations
 
-- **Draft Room UI**: The full two-column Draft Room (list + editor + inspector) is specified but the dedicated Draft Room route may not yet be available in the app. Check your navigation for its current location.
-- **Tableau / Curate surface**: Structural work like merging drafts, building series, and reordering pieces into a visual workspace (called Tableau) is designed but not yet built.
-- **Content Hub / lifecycle dashboard**: The lifecycle-oriented dashboard for tracking Seeds → Drafts → Published → Library is designed but not yet built.
-- **Series assignments**: The Draft Room inspector is specified to support assigning a piece to multiple series. This is not confirmed as built.
-- **Voice transcription timing**: Voice seeds are transcribed in the background. Depending on server load, transcription may take up to a minute. The seed will show "Transcribing…" until it is ready.
+- Some writing surfaces are still evolving, especially around series shaping, import, and lifecycle management.
+- Group-sponsored writing permissions are still being tightened; some controls may follow broader group admin permissions until dedicated writing permissions are fully in place.
+- Voice capture and transcription can take time depending on device and server conditions.
+- Import and distribution tooling are improving quickly, so publishing-related UI may change as article workflows solidify.
 
 ---
 
 ## Related features
 
-- **Storyline (Leaves)** — The social publishing surface. Leaves are a lighter-weight post type that live in your feed, distinct from full WritingPieces.
-- **Stackroom** — Research and knowledge management. Published writing can be linked to Stackroom artifacts.
-- **Library** — The public-facing shelf system where readers browse your published work.
-- **Groups** — Writing can be published into group feeds, making it visible to group members.
+- **Workbench / curation** — Structural shaping for groups that assemble and merge source material before promoting it into fuller drafts.
+- **Groups** — Group-sponsored writing lets a piece live in a shared editorial context instead of only a personal one.
+- **Help Hub** — Use the Help drawer or `/app/help` when you need contextual guidance while writing.
+- **Catalog / display surfaces** — Published pieces can later feed public reading surfaces and external distribution.
 
 ---
 
 ## Roadmap
 
-- **Tableau (Curate surface)**: Structural editing — merge, reorder, group, and build series from your drafts. Planned; not yet built.
-- **Writing permissions**: Proper `edit_writing` and `publish_writing` group permissions are planned to replace the current proxy. This will affect who can edit or publish group-sponsored writing.
-- **LinkedIn distribution**: A Synopsis + LinkedIn org-posting feature is spec'd. Not yet built.
+- **Import improvements** — Batch `.md` and `.docx` import is being built out so externally drafted writing can enter Mixtape cleanly as editable drafts.
+- **Series shaping** — Multi-piece structural editing and working-set flows are expanding.
+- **Synopsis + distribution** — Publishing will eventually feed synopsis-based display and LinkedIn distribution adapters.

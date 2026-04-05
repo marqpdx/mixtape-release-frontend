@@ -1,3 +1,5 @@
+// apps/mobile/src/screens/NotebookScreen.tsx
+
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

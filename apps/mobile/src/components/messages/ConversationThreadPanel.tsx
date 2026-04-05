@@ -385,6 +385,8 @@ export function ConversationThreadPanel({
                 <ActivityIndicator size="small" color="#0E5AA7" />
                 <Text style={styles.voiceStatusText}>Sending…</Text>
               </>
+            ) : voice.maxDurationReached ? (
+              <Text style={styles.voiceStatusText}>5:00 — max reached</Text>
             ) : (
               <>
                 <View style={[styles.voiceDot, voice.isRecording && styles.voiceDotActive]} />

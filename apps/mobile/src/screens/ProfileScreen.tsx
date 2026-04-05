@@ -1,4 +1,4 @@
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
 import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
@@ -6,13 +6,18 @@ import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
 export default function ProfileScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const { dispatchInputEnabled, setDispatchInputEnabled } = useExperimentalSettings();
+  const {
+    dispatchInputEnabled,
+    setDispatchInputEnabled,
+    messageMemoryEnabled,
+    setMessageMemoryEnabled,
+  } = useExperimentalSettings();
 
   const initials = (currentUser?.username || '?').charAt(0).toUpperCase();
   const isSuperuser = currentUser?.is_superuser === true;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <CrossroadsHeader routeLabel="profile" />
 
       <View style={styles.card}>
@@ -25,13 +30,32 @@ export default function ProfileScreen() {
         ) : null}
       </View>
 
+      {/* Privacy settings — visible to all users */}
+      <View style={styles.settingsCard}>
+        <Text style={styles.settingsHeading}>Privacy</Text>
+        <View style={styles.settingsRow}>
+          <View style={styles.settingsLabel}>
+            <Text style={styles.settingsName}>Message Memory</Text>
+            <Text style={styles.settingsDesc}>
+              Allow Mixtape to use your conversations to personalise memory and search. Off by default.
+            </Text>
+          </View>
+          <Switch
+            value={messageMemoryEnabled}
+            onValueChange={(v) => { void setMessageMemoryEnabled(v); }}
+            trackColor={{ false: '#C9D4DE', true: '#0E5AA7' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+      </View>
+
       {isSuperuser ? (
-        <View style={styles.experimentalCard}>
-          <Text style={styles.experimentalHeading}>Experimental Features</Text>
-          <View style={styles.experimentalRow}>
-            <View style={styles.experimentalLabel}>
-              <Text style={styles.experimentalName}>Dispatch Input</Text>
-              <Text style={styles.experimentalDesc}>
+        <View style={styles.settingsCard}>
+          <Text style={styles.settingsHeading}>Experimental Features</Text>
+          <View style={styles.settingsRow}>
+            <View style={styles.settingsLabel}>
+              <Text style={styles.settingsName}>Dispatch Input</Text>
+              <Text style={styles.settingsDesc}>
                 Send messages inline from the notebook with /msg @user
               </Text>
             </View>
@@ -48,7 +72,7 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.8}>
         <Text style={styles.logoutText}>Sign out</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -56,8 +80,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#EEF4F8',
+  },
+  scrollContent: {
     paddingHorizontal: 18,
     paddingTop: 18,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -105,7 +132,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#C0392B',
   },
-  experimentalCard: {
+  settingsCard: {
     marginTop: 16,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -114,29 +141,29 @@ const styles = StyleSheet.create({
     borderColor: '#D7E0EA',
     gap: 14,
   },
-  experimentalHeading: {
+  settingsHeading: {
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: '#315E87',
   },
-  experimentalRow: {
+  settingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
   },
-  experimentalLabel: {
+  settingsLabel: {
     flex: 1,
     gap: 3,
   },
-  experimentalName: {
+  settingsName: {
     fontSize: 15,
     fontWeight: '700',
     color: '#13293D',
   },
-  experimentalDesc: {
+  settingsDesc: {
     fontSize: 13,
     color: '#5E6E7D',
     lineHeight: 18,
