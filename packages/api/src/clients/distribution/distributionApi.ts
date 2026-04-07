@@ -43,7 +43,7 @@ export async function distributePiece(
   scheduled_at?: string | null,
 ): Promise<DistributeResponse> {
   const res = await axiosInstance.post(`/api/distribution/pieces/${pieceId}/distribute`, {
-    sources_config,
+    sources: sources_config,
     ...(scheduled_at ? { scheduled_at } : {}),
   })
   return res.data

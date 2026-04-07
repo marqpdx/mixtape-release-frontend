@@ -2,7 +2,6 @@
 
 "use client";
 
-import { useParams } from "next/navigation";
 import {
   Box,
   Container,

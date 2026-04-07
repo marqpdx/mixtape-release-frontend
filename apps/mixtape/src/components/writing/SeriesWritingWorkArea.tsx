@@ -111,8 +111,8 @@ export default function SeriesWritingWorkArea({
     isLoading: writingLoading,
   } = useWriting(sponsor.type, sponsor.slug)
 
-  const typedPlacements = (placements ?? []) as FlattenedPlacement[]
-  const typedDrafts = (Array.isArray(drafts) ? drafts : []) as WorkingDocument[]
+  const typedPlacements = useMemo(() => (placements ?? []) as FlattenedPlacement[], [placements])
+  const typedDrafts = useMemo(() => (Array.isArray(drafts) ? drafts : []) as WorkingDocument[], [drafts])
 
   // ── Per-series counts for rail ───────────────────────────────────────────
 

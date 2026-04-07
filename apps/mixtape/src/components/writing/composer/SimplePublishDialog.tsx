@@ -651,7 +651,7 @@ export function SimplePublishDialog({
                                   bg="blue.50"
                                 >
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={2}>
-                                    Post copy
+                                    Add synopsis for LinkedIn
                                   </Text>
 
                                   {initialLinkedinCopy && !linkedinCopy && (
