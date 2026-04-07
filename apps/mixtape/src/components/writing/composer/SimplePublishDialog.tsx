@@ -277,9 +277,9 @@ export function SimplePublishDialog({
             // Notification arrives via email when distribution fires
           } else {
             const distributeResult = await distributePiece(piece.id, sourcesConfig)
-            setShareResults(distributeResult.results)
+            setShareResults(distributeResult.share_records)
 
-            const failed = distributeResult.results.filter((r) => r.status === 'failed')
+            const failed = distributeResult.share_records.filter((r) => r.status === 'failed')
             if (failed.length > 0) {
               toaster.create({
                 title: 'Some channels failed',

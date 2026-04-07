@@ -26,9 +26,9 @@ export interface ShareRecordResult {
 }
 
 export interface DistributeResponse {
-  event_id: string
+  id: string
   status: string
-  results: ShareRecordResult[]
+  share_records: ShareRecordResult[]
 }
 
 export async function fetchDistributionSources(groupSlug?: string): Promise<DistributionSource[]> {
