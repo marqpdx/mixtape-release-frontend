@@ -76,6 +76,32 @@ export async function fetchPieceSynopsis(pieceId: string): Promise<{ synopsis: s
   return res.data;
 }
 
+export interface LinkedInCopyExtended {
+  hook: string;
+  short_synopsis: string;
+  one_line_takeaway: string;
+  alt_hook: string;
+}
+
+export interface WritingSynopsisData {
+  id: string;
+  piece: string;
+  teaser: string;
+  description: string;
+  linkedin_copy: string;
+  linkedin_copy_generated_by: string;
+  linkedin_copy_extended: LinkedInCopyExtended | null;
+  [key: string]: unknown;
+}
+
+/**
+ * Generate AI LinkedIn copy for a piece via Inkwell. Stores result on synopsis.
+ */
+export async function generateLinkedInCopy(pieceId: string): Promise<WritingSynopsisData> {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/synopsis/linkedin-copy`);
+  return res.data;
+}
+
 /**
  * Unpublish a piece (return to draft)
  */

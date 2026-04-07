@@ -31,6 +31,7 @@ import {
   type DistributionSource,
   type ShareRecordResult,
 } from '@mixtape/api/clients/distribution/distributionApi'
+import { generateLinkedInCopy } from '@mixtape/api/clients/writing/writingApi'
 
 interface SimplePublishDialogProps {
   isOpen: boolean
@@ -44,6 +45,7 @@ interface SimplePublishDialogProps {
   excerptRef: React.RefObject<string>
   isUpdate?: boolean
   onPublished?: (piece: Record<string, unknown>) => void
+  initialLinkedinCopy?: string
 }
 
 type DocumentJSON = Record<string, unknown>
@@ -75,7 +77,8 @@ export function SimplePublishDialog({
   docJSONRef,
   excerptRef,
   isUpdate = false,
-  onPublished
+  onPublished,
+  initialLinkedinCopy = '',
 }: SimplePublishDialogProps) {
   const [audience, setAudience] = useState<AudienceChoice>('just_me')
   const [publishTiming, setPublishTiming] = useState<PublishTiming>('now')
@@ -86,8 +89,9 @@ export function SimplePublishDialog({
 
   // Distribution state
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
-  const [linkedinCopy, setLinkedinCopy] = useState('')
+  const [linkedinCopy, setLinkedinCopy] = useState(initialLinkedinCopy)
   const [synopsisLoading, setSynopsisLoading] = useState(false)
+  const [linkedinCopyGenerating, setLinkedinCopyGenerating] = useState(false)
   const [shareResults, setShareResults] = useState<ShareRecordResult[] | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
 
@@ -176,6 +180,22 @@ export function SimplePublishDialog({
       toaster.create({ title: 'Could not load synopsis', type: 'error' })
     } finally {
       setSynopsisLoading(false)
+    }
+  }
+
+  const handleGenerateLinkedInCopy = async () => {
+    setLinkedinCopyGenerating(true)
+    try {
+      const result = await generateLinkedInCopy(piece.id)
+      if (result?.linkedin_copy) {
+        setLinkedinCopy(result.linkedin_copy)
+      } else {
+        toaster.create({ title: 'No copy returned', type: 'warning' })
+      }
+    } catch {
+      toaster.create({ title: 'LinkedIn copy generation failed', type: 'error' })
+    } finally {
+      setLinkedinCopyGenerating(false)
     }
   }
 
@@ -621,29 +641,56 @@ export function SimplePublishDialog({
                               </Checkbox.Root>
 
                               {source.kind === 'linkedin' && checked && (
-                                <Box pl={6}>
-                                  <HStack justify="space-between" mb={1}>
-                                    <Text fontSize="xs" color="gray.600">
-                                      Post copy (optional)
+                                <Box
+                                  ml={6}
+                                  mt={1}
+                                  p={3}
+                                  borderLeft="3px solid"
+                                  borderLeftColor="blue.300"
+                                  borderRadius="md"
+                                  bg="blue.50"
+                                >
+                                  <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={2}>
+                                    Post copy
+                                  </Text>
+
+                                  {initialLinkedinCopy && !linkedinCopy && (
+                                    <Text fontSize="xs" color="gray.500" mb={2}>
+                                      Copy generated in the Copy Desk is ready to load.
                                     </Text>
-                                    <Button
-                                      size="xs"
-                                      variant="ghost"
-                                      colorPalette="blue"
-                                      loading={synopsisLoading}
-                                      onClick={handleLoadSynopsis}
-                                    >
-                                      Use synopsis →
-                                    </Button>
-                                  </HStack>
+                                  )}
+
                                   <Textarea
                                     size="sm"
-                                    placeholder="Add a note to accompany the link…"
+                                    placeholder="Write post copy, or generate it below…"
                                     value={linkedinCopy}
                                     onChange={(e) => setLinkedinCopy(e.target.value)}
                                     rows={4}
+                                    bg="white"
                                   />
-                                  <Text fontSize="xs" color="gray.400" mt={1}>
+
+                                  <HStack gap={2} mt={2} flexWrap="wrap">
+                                    <Button
+                                      size="xs"
+                                      variant="outline"
+                                      colorPalette="blue"
+                                      loading={linkedinCopyGenerating}
+                                      onClick={handleGenerateLinkedInCopy}
+                                    >
+                                      Generate →
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      variant="ghost"
+                                      colorPalette="gray"
+                                      loading={synopsisLoading}
+                                      onClick={handleLoadSynopsis}
+                                    >
+                                      Use synopsis
+                                    </Button>
+                                  </HStack>
+
+                                  <Text fontSize="xs" color="gray.400" mt={2}>
                                     LinkedIn will attach a link preview automatically.
                                   </Text>
                                 </Box>

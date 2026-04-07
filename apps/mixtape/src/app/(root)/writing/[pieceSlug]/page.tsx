@@ -1,89 +1,64 @@
 // src/app/(root)/writing/[pieceSlug]/page.tsx
 
-"use client";
+import type { Metadata } from "next";
+import WritingPublicPageClient from "./WritingPublicPageClient";
 
-import { useParams } from "next/navigation";
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  HStack,
-  Skeleton,
-  SkeletonText,
-} from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
-import { useWritingPiece } from "@hooks/useWriting";
-import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
-import { formatDistanceToNow } from "date-fns";
+const ROOT_API_URL = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "http://127.0.0.1:8010";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
 
-export default function WritingPublicPage() {
-  const params = useParams();
-  const pieceSlug = params?.pieceSlug as string | undefined;
+async function fetchPiece(slug: string) {
+  try {
+    const res = await fetch(`${ROOT_API_URL}/api/writing/pieces/view/${slug}`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
 
-  const bgColor = useColorModeValue("gray.50", "gray.900");
-  const cardBg = useColorModeValue("white", "gray.800");
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ pieceSlug: string }>;
+}): Promise<Metadata> {
+  const { pieceSlug } = await params;
+  const piece = await fetchPiece(pieceSlug);
 
-  const { piece, isLoading, error } = useWritingPiece(pieceSlug || null);
-
-  if (isLoading) {
-    return (
-      <Box bg={bgColor} minH="100vh">
-        <Skeleton h="200px" mb={8} />
-        <Container maxW="3xl">
-          <VStack gap={4} align="stretch">
-            <Skeleton h="10" />
-            <SkeletonText lineClamp={5} />
-          </VStack>
-        </Container>
-      </Box>
-    );
+  if (!piece) {
+    return { title: "Writing" };
   }
 
-  if (error || !piece) {
-    return (
-      <Box bg={bgColor} minH="100vh" py={12}>
-        <Container maxW="3xl">
-          <VStack align="center" gap={4}>
-            <Heading size="md">Piece not found</Heading>
-            <Text color="gray.500">
-              This piece may have been deleted or you don't have permission to view it.
-            </Text>
-          </VStack>
-        </Container>
-      </Box>
-    );
-  }
+  const title = piece.title || "Untitled";
+  const description = piece.excerpt || piece.synopsis?.teaser || "";
+  const url = `${SITE_URL}/writing/${pieceSlug}`;
+  const image = piece.og_image || piece.synopsis?.thumbnail_url || undefined;
 
-  return (
-    <Box bg={bgColor} minH="100vh" py={12}>
-      <Container maxW="3xl">
-        <Box bg={cardBg} borderRadius="lg" borderWidth="1px" p={8}>
-          <VStack gap={6} align="stretch">
-            <VStack gap={3} align="stretch">
-              <Heading size="2xl">{piece.title}</Heading>
-              {piece.published_at && (
-                <HStack gap={2} fontSize="sm" color="gray.500">
-                  <Text>
-                    Published {formatDistanceToNow(new Date(piece.published_at), { addSuffix: true })}
-                  </Text>
-                </HStack>
-              )}
-            </VStack>
+  return {
+    title,
+    description: description || undefined,
+    openGraph: {
+      title,
+      description: description || undefined,
+      url,
+      type: "article",
+      ...(image ? { images: [{ url: image }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description: description || undefined,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
-            {piece.excerpt && (
-              <Text fontSize="lg" color="gray.600" fontStyle="italic">
-                {piece.excerpt}
-              </Text>
-            )}
-
-            <Box className="writing-piece-content">
-              <TipTapRenderer content={piece.body_json} />
-            </Box>
-          </VStack>
-        </Box>
-      </Container>
-    </Box>
-  );
+export default async function WritingPublicPage({
+  params,
+}: {
+  params: Promise<{ pieceSlug: string }>;
+}) {
+  const { pieceSlug } = await params;
+  return <WritingPublicPageClient pieceSlug={pieceSlug} />;
 }

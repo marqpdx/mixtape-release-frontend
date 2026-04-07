@@ -38,7 +38,7 @@ export function WorkspaceToggle({ workspaceOpen, onToggle }: WorkspaceToggleProp
           borderRadius="full"
           shadow="sm"
           onClick={onToggle}
-          title="Open workspace"
+          title="Open Copy Desk"
           _hover={{ bg: "green.100", shadow: "md" }}
         >
           <IconSparkles size={16} color="green" />

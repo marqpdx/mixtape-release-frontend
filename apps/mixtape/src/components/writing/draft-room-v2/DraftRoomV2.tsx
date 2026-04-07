@@ -309,7 +309,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
               borderRadius="full"
               shadow="sm"
               onClick={toggleSidePanel}
-              title="Open workspace"
+              title="Open Copy Desk"
               _hover={{ shadow: "md" }}
             >
               <IconSparkles size={16} color="green" />

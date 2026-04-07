@@ -14,6 +14,8 @@ import { ResearchAgent } from './agents/ResearchAgent';
 import { StatisticsAgent } from './agents/StatisticsAgent';
 import { WordAgent } from './agents/WordAgent';
 import { AISummaryAgent } from './agents/AISummaryAgent';
+import { LinkedInCopyAgent } from './agents/LinkedInCopyAgent';
+import type { LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
 
 export interface CopyDeskProps {
   isOpen: boolean;
@@ -45,6 +47,12 @@ export interface CopyDeskProps {
   suggestSplits?: boolean;
   onTargetWordCountChange?: (value: number | null) => void;
   onSuggestSplitsChange?: (value: boolean) => void;
+
+  // LinkedIn copy
+  pieceId?: string;
+  linkedinCopy?: string;
+  linkedinCopyExtended?: LinkedInCopyExtended | null;
+  onLinkedInCopyGenerated?: (copy: string, extended: LinkedInCopyExtended) => void;
 }
 
 export function CopyDesk({
@@ -69,6 +77,10 @@ export function CopyDesk({
   suggestSplits,
   onTargetWordCountChange,
   onSuggestSplitsChange,
+  pieceId,
+  linkedinCopy = '',
+  linkedinCopyExtended = null,
+  onLinkedInCopyGenerated,
 }: CopyDeskProps) {
   // Color mode values
   const workspaceBg = useColorModeValue("gray.50", "gray.800");
@@ -127,6 +139,15 @@ export function CopyDesk({
               onGenerateNewSummary={onGenerateNewSummary}
               summary={summary}
               setSummary={setSummary}
+              documentWordCount={documentWordCount}
+            />
+
+            {/* LinkedIn Copy Agent */}
+            <LinkedInCopyAgent
+              pieceId={pieceId}
+              linkedinCopy={linkedinCopy}
+              linkedinCopyExtended={linkedinCopyExtended ?? null}
+              onGenerated={onLinkedInCopyGenerated ?? (() => {})}
               documentWordCount={documentWordCount}
             />
 

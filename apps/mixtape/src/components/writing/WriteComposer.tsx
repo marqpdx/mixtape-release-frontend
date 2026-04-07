@@ -163,6 +163,10 @@ export default function WriteComposer({
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
 
+  // LinkedIn copy state (Copy Desk agent)
+  const [linkedinCopy, setLinkedinCopy] = useState('');
+  const [linkedinCopyExtended, setLinkedinCopyExtended] = useState<import('@mixtape/api/clients/writing/writingApi').LinkedInCopyExtended | null>(null);
+
   const {
     isCollaborative,
     dispatchContent,
@@ -860,6 +864,13 @@ export default function WriteComposer({
           suggestSplits={suggestSplits}
           onTargetWordCountChange={handleTargetWordCountChange}
           onSuggestSplitsChange={handleSuggestSplitsChange}
+          pieceId={pieceId}
+          linkedinCopy={linkedinCopy}
+          linkedinCopyExtended={linkedinCopyExtended}
+          onLinkedInCopyGenerated={(copy, extended) => {
+            setLinkedinCopy(copy);
+            setLinkedinCopyExtended(extended);
+          }}
         />
       </HStack>
     </Box>
