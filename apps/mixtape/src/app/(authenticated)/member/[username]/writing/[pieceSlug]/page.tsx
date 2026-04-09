@@ -144,7 +144,7 @@ export default function MemberWritingPiecePage() {
               colorScheme="green"
             >
               <Link
-                href={`/member/${usernameParam}?section=write&piece=${piece.id}`}
+                href={`/member/${usernameParam}/hub?section=write&piece=${piece.id}`}
               >
                 <HStack>
                   <Text>Edit</Text>

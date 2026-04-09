@@ -2,7 +2,8 @@
 
 "use client";
 
-import { Box, Text, VStack, HStack, Heading, Badge } from "@chakra-ui/react";
+import { Box, Text, VStack, HStack, Heading, Badge, Separator } from "@chakra-ui/react";
+import { IconMapPin, IconBriefcase } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 import type { MemberProfile } from "@mixtape/core/types/memberTypes";
@@ -33,10 +34,36 @@ export default function MemberProfileSummary({ member }: MemberProfileSummaryPro
           <Badge colorScheme="green">Member</Badge>
         </HStack>
 
+        {(member.practice_area || member.location) && (
+          <HStack mt={3} gap={4} flexWrap="wrap">
+            {member.practice_area && (
+              <HStack gap={1} fontSize="sm" color={muted}>
+                <IconBriefcase size={14} />
+                <Text>{member.practice_area}</Text>
+              </HStack>
+            )}
+            {member.location && (
+              <HStack gap={1} fontSize="sm" color={muted}>
+                <IconMapPin size={14} />
+                <Text>{member.location}</Text>
+              </HStack>
+            )}
+          </HStack>
+        )}
+
         {member.quick_intro && (
           <Text mt={4} color={muted}>
             {member.quick_intro}
           </Text>
+        )}
+
+        {member.right_now && (
+          <>
+            <Separator mt={4} />
+            <Text mt={3} fontSize="sm" color={muted} fontStyle="italic">
+              Right now: {member.right_now}
+            </Text>
+          </>
         )}
       </Box>
 

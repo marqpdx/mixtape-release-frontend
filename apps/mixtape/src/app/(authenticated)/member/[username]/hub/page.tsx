@@ -1,8 +1,9 @@
-// apps/mixtape/src/app/(authenticated)/member/[username]/page.tsx
+// apps/mixtape/src/app/(authenticated)/member/[username]/hub/page.tsx
 
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Box, Text, Tabs } from "@chakra-ui/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -12,13 +13,13 @@ import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayo
 import MemberWorkArea from "@components/dashboard/member/MemberWorkArea";
 import { MEMBER_HUB_CONFIG } from "@components/dashboard/member/memberHubConfig";
 import ProfileHeaderWrapper from "@components/profiles/ProfileHeaderWrapper";
-import MemberLanding from "@components/members/layout/MemberLanding";
 import MemberDashboardLanding from "@components/dashboard/member/MemberDashboardLanding";
 
 type HubTab = "dashboard" | "admin";
 const TAB_STORAGE_KEY = "memberHub_tab";
 
 export default function MemberHubPage() {
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const usernameParam = params?.username as string | undefined;
@@ -62,11 +63,10 @@ export default function MemberHubPage() {
 
   // Switch to admin tab and optionally navigate to a section
   const switchToAdmin = useCallback((section?: string) => {
-      if (section) {
-        setPendingAdminSection(section);
-        // Also store the section so DashboardLayout picks it up
-        localStorage.setItem(MEMBER_HUB_CONFIG.localStorageKey, section);
-      }
+    if (section) {
+      setPendingAdminSection(section);
+      localStorage.setItem(MEMBER_HUB_CONFIG.localStorageKey, section);
+    }
     handleTabChange("admin");
   }, [handleTabChange]);
 
@@ -79,12 +79,10 @@ export default function MemberHubPage() {
     (props: WorkAreaProps) => {
       if (!identity) return null;
 
-      // If we have a pending section from dashboard card click, use it
       const effectiveProps = pendingAdminSection
         ? { ...props, section: pendingAdminSection }
         : props;
 
-      // Clear pending after first render
       if (pendingAdminSection) {
         setTimeout(() => setPendingAdminSection(null), 0);
       }
@@ -113,8 +111,10 @@ export default function MemberHubPage() {
     return <Text>Authentication required...</Text>;
   }
 
+  // Non-owners who land here go to the public profile
   if (member && !isOwner) {
-    return <MemberLanding member={member} />;
+    router.replace(`/member/${member.username}`);
+    return null;
   }
 
   return (
@@ -147,8 +147,6 @@ export default function MemberHubPage() {
         ) : (
           <Box
             css={{
-              // Override DashboardLayout's fixed 100vh heights so it fits
-              // within the tab container instead of pushing past the viewport
               "& .dashboard-layout": { minH: "auto" },
               "& .dashboard-layout > div": { h: "calc(100vh - 320px)" },
             }}

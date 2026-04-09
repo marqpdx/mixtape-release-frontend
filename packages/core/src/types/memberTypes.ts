@@ -28,6 +28,8 @@ export interface MemberProfile {
   display_name: string;
   quick_intro: string;
   right_now: string;
+  practice_area: string;
+  location: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -47,6 +49,8 @@ export interface MemberProfileUpdate {
   display_name?: string;
   quick_intro?: string;
   right_now?: string;
+  practice_area?: string;
+  location?: string;
   avatar_url?: string;
   profile_image?: string;
   background_image?: string;

@@ -29,6 +29,7 @@ import { useStall, useOrders } from "@mixtape/api/hooks/useBazaar";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@mixtape/core/types/bazaarTypes";
 import PersonalOverview from "../sections/PersonalOverview";
 import { MemberSettings } from "@/components/member/settings/MemberSettings";
+import WorkTable from "@components/initiatives/WorkTable";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity?: UserIdentity;
@@ -62,6 +63,14 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <Text color="gray.500">Loading...</Text>
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "worktable") {
+    return (
+      <WorkAreaWrapper padding={0}>
+        <WorkTable />
       </WorkAreaWrapper>
     );
   }

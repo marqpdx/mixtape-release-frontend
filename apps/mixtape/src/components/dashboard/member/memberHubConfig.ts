@@ -4,6 +4,14 @@ import { MenuItem } from "@components/dashboard/shared/types";
 
 export const MEMBER_HUB_MENU_ITEMS: MenuItem[] = [
   {
+    key: "aperture",
+    label: "WorkTable",
+    icon: "⬡",
+    subItems: [
+      { key: "worktable", label: "WorkTable", hidden: false },
+    ],
+  },
+  {
     key: "about",
     label: "About",
     icon: "👤",
@@ -45,6 +53,6 @@ export const MEMBER_HUB_MENU_ITEMS: MenuItem[] = [
 export const MEMBER_HUB_CONFIG = {
   title: "My Crossroads",
   menuItems: MEMBER_HUB_MENU_ITEMS,
-  defaultSection: "overview",
+  defaultSection: "worktable",
   localStorageKey: "memberHub",
 };

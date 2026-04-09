@@ -282,6 +282,13 @@ export function GroupMemberList({
                         @{membership.username}
                       </Text>
                     )}
+
+                    {/* Right now */}
+                    {membership.right_now && (
+                      <Text fontSize="xs" opacity={0.85} fontStyle="italic" textShadow="0 1px 2px rgba(0,0,0,0.8)" lineClamp={2}>
+                        {membership.right_now}
+                      </Text>
+                    )}
                   </VStack>
                 </Card.Body>
               </>
@@ -494,10 +501,18 @@ export function GroupMemberList({
 
           return (
             <VStack align="start" gap={1}>
-              <HStack fontSize="xs" color="gray.400">
-                <IconCalendar size={12} />
-                <Text>Joined {new Date(membership.date_joined).toLocaleDateString()}</Text>
-              </HStack>
+              {membership.right_now && (
+                <Text fontSize="xs" color="gray.500" fontStyle="italic" lineClamp={2}>
+                  {membership.right_now}
+                </Text>
+              )}
+
+              {showPrivateInfo && (
+                <HStack fontSize="xs" color="gray.400">
+                  <IconCalendar size={12} />
+                  <Text>Joined {new Date(membership.date_joined).toLocaleDateString()}</Text>
+                </HStack>
+              )}
 
               {showPrivateInfo && membership.invited_by_username && (
                 <Text fontSize="xs" color="gray.400">

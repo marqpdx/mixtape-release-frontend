@@ -503,7 +503,7 @@ export default function DashboardLayout({
             </VStack>
           </Box>
 
-          <Box flex="1" p={0} overflowY="auto">
+          <Box flex="1" minH="0" p={0} overflowY="auto">
             <WorkAreaComponent
               section={activeSection}
               sectionParams={sectionParams}

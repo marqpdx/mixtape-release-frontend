@@ -330,8 +330,8 @@ export function SimplePublishDialog({
     }
   }
 
-  // Post-publish state: show LinkedIn share link
-  if (shareResults && linkedinShareUrl) {
+  // Post-publish state: show LinkedIn share link (or close option if URL missing)
+  if (shareResults) {
     return (
       <Dialog.Root open={isOpen} onOpenChange={({ open }: { open: boolean }) => !open && onClose()}>
         <Dialog.Backdrop />
@@ -347,18 +347,20 @@ export function SimplePublishDialog({
               <VStack gap={4} align="stretch">
                 <Box borderWidth="1px" borderRadius="md" p={4} bg="green.50">
                   <Text fontWeight="semibold" fontSize="sm" mb={1}>LinkedIn</Text>
-                  <Text fontSize="sm" color="gray.600" mb={3}>
-                    Your post copy is ready. Click to open LinkedIn and share.
-                  </Text>
-                  <Link
-                    href={linkedinShareUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button size="sm" colorPalette="blue">
-                      Open LinkedIn →
-                    </Button>
-                  </Link>
+                  {linkedinShareUrl ? (
+                    <>
+                      <Text fontSize="sm" color="gray.600" mb={3}>
+                        Your post copy is ready. Click to open LinkedIn and share.
+                      </Text>
+                      <Link href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" colorPalette="blue">Open LinkedIn →</Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <Text fontSize="sm" color="gray.600">
+                      Published. Check your email for the LinkedIn share link.
+                    </Text>
+                  )}
                 </Box>
               </VStack>
             </Dialog.Body>

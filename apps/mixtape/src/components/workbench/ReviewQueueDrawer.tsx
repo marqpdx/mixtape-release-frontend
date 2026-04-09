@@ -282,7 +282,7 @@ export const ReviewQueueDrawer: React.FC<ReviewQueueDrawerProps> = ({
                     Draft promoted successfully.
                   </Text>
                   <Link
-                    href={`/member/${user.username}?section=write&piece=${promotedPieceId}`}
+                    href={`/member/${user.username}/hub?section=write&piece=${promotedPieceId}`}
                     color="green.600"
                     fontWeight="semibold"
                     fontSize="sm"

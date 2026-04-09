@@ -158,6 +158,71 @@ export interface ImportConfirmResponse {
 }
 
 // ============================================================================
+// ApertureLog types
+// ============================================================================
+
+export type ApertureLogEntryKind = 'prose' | 'ledger' | 'handoff' | 'emph' | 'seed_spawn';
+export type LedgerEventType =
+  | 'session_started' | 'session_ended' | 'document_bound'
+  | 'seed_promoted' | 'status_changed' | 'artifact_linked' | 'material_late_bound';
+
+export interface ApertureLogEntry {
+  id: string;
+  aperture_log: string;
+  kind: ApertureLogEntryKind;
+  body: string;
+  emph_note: string;
+  ledger_event_type: LedgerEventType | '';
+  ledger_data: Record<string, unknown> | null;
+  spawned_seed_content_type: number | null;
+  spawned_seed_object_id: string | null;
+  emph_is_summary_candidate: boolean;
+  emph_accepted_to_summary: boolean;
+  is_system_generated: boolean;
+  authored_by: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApertureLog {
+  id: string;
+  initiative: string;
+  last_handoff_at: string | null;
+  created_at: string;
+  updated_at: string;
+  entries: ApertureLogEntry[];
+}
+
+export interface ApertureContext {
+  type: 'initiative';
+  id: string;
+  title: string;
+  status: InitiativeResponse['status'];
+  is_personal: boolean;
+  updated_at: string | null;
+  last_handoff_body: string | null;
+  last_handoff_at: string | null;
+}
+
+export interface ApertureOrientationResponse {
+  contexts: ApertureContext[];
+  limit: number;
+}
+
+export interface ApertureLogEntryCreatePayload {
+  kind: Exclude<ApertureLogEntryKind, 'ledger' | 'seed_spawn'>;
+  body?: string;
+  emph_note?: string;
+}
+
+export interface ApertureLogEntryPatchPayload {
+  body?: string;
+  emph_note?: string;
+  emph_accepted_to_summary?: boolean;
+}
+
+// ============================================================================
 // Initiatives
 // ============================================================================
 
@@ -319,5 +384,44 @@ export async function confirmInitiativeImport(
     `/api/groups/${groupSlug}/initiatives/${initiativeId}/import-session/confirm`,
     payload,
   );
+  return res.data;
+}
+
+// ============================================================================
+// ApertureLog
+// ============================================================================
+
+export async function fetchApertureLog(initiativeId: string, page = 1): Promise<ApertureLog> {
+  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/aperture-log?page=${page}`);
+  return res.data;
+}
+
+export async function createApertureLogEntry(
+  initiativeId: string,
+  payload: ApertureLogEntryCreatePayload,
+): Promise<ApertureLogEntry> {
+  const res = await axiosInstance.post(`/api/initiatives/${initiativeId}/aperture-log/entries`, payload);
+  return res.data;
+}
+
+export async function patchApertureLogEntry(
+  initiativeId: string,
+  entryId: string,
+  payload: ApertureLogEntryPatchPayload,
+): Promise<ApertureLogEntry> {
+  const res = await axiosInstance.patch(
+    `/api/initiatives/${initiativeId}/aperture-log/entries/${entryId}`,
+    payload,
+  );
+  return res.data;
+}
+
+export async function fetchApertureHandoffs(initiativeId: string): Promise<ApertureLogEntry[]> {
+  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/aperture-log/handoffs`);
+  return res.data;
+}
+
+export async function fetchApertureOrientation(limit = 10): Promise<ApertureOrientationResponse> {
+  const res = await axiosInstance.get(`/api/members/me/aperture/orientation?limit=${limit}`);
   return res.data;
 }

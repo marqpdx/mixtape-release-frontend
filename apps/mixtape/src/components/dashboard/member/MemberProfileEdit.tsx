@@ -34,6 +34,8 @@ interface ProfileFormData {
   display_name: string;
   quick_intro: string;
   right_now: string;
+  practice_area: string;
+  location: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -65,6 +67,8 @@ export default function MemberProfileEdit() {
       display_name: "",
       quick_intro: "",
       right_now: "",
+      practice_area: "",
+      location: "",
       avatar_url: "",
       profile_image: "",
       background_image: "",
@@ -83,6 +87,8 @@ export default function MemberProfileEdit() {
     setValue("display_name", member.display_name || "");
     setValue("quick_intro", member.quick_intro || "");
     setValue("right_now", member.right_now || "");
+    setValue("practice_area", member.practice_area || "");
+    setValue("location", member.location || "");
     setValue("avatar_url", member.avatar_url || "");
     setValue("profile_image", member.profile_image || "");
     setValue("background_image", member.background_image || "");
@@ -101,6 +107,8 @@ export default function MemberProfileEdit() {
         display_name: values.display_name || undefined,
         quick_intro: values.quick_intro || undefined,
         right_now: values.right_now || undefined,
+        practice_area: values.practice_area || undefined,
+        location: values.location || undefined,
         avatar_url: values.avatar_url || undefined,
         profile_image: values.profile_image || undefined,
         background_image: values.background_image || undefined,
@@ -337,6 +345,23 @@ export default function MemberProfileEdit() {
                 <Field.ErrorText>{errors.right_now.message}</Field.ErrorText>
               )}
             </Field.Root>
+
+            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
+              <Field.Root flex={1}>
+                <Field.Label>Practice area</Field.Label>
+                <Input
+                  {...register("practice_area", { maxLength: { value: 120, message: "120 characters max" } })}
+                  placeholder="e.g. Product, Engineering, Design"
+                />
+              </Field.Root>
+              <Field.Root flex={1}>
+                <Field.Label>Location</Field.Label>
+                <Input
+                  {...register("location", { maxLength: { value: 120, message: "120 characters max" } })}
+                  placeholder="City, region, or Remote"
+                />
+              </Field.Root>
+            </HStack>
 
             <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
               <ImageUploadField

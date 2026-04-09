@@ -31,7 +31,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconMessageCircle } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -312,7 +312,7 @@ export default function UnifiedNavbar({
                 aria-label="Messages"
                 asChild
               >
-                <NextLink href={`/member/${identity.username}?section=messages`}>
+                <NextLink href={`/member/${identity.username}/hub?section=messages`}>
                   <IconMessageCircle size={18} />
                   {messageUnreadCount > 0 && (
                     <Badge
@@ -373,6 +373,12 @@ export default function UnifiedNavbar({
                       <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
+                      </Link>
+                    </MenuItem>
+                    <MenuItem value="hub" asChild>
+                      <Link as={NextLink} href={resolveHref('/member/{username}/hub')} display="flex" gap={2}>
+                        <IconLayoutDashboard size={16} />
+                        Hub
                       </Link>
                     </MenuItem>
                     <MenuItem value="settings" asChild>

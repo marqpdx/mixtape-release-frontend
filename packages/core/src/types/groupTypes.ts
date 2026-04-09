@@ -91,6 +91,7 @@ export interface GroupMembership {
   display_name: string;
   is_active_user: boolean;
   profile_image?: string;
+  right_now?: string;
 
   // Membership-specific data
   roles: GroupRole[];
