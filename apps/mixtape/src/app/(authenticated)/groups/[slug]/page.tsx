@@ -40,6 +40,16 @@ export default function GroupPage() {
     myPermissions?.roles || [],
     myPermissions?.decorators || []
   );
+  const canUseAdminView = isAdminOrSteward || canEditGroup || (
+    myPermissions
+      ? getFilteredGroupMenuItems(
+          "admin",
+          myPermissions.roles || [],
+          myPermissions.decorators || [],
+          group?.group_type || "community"
+        ).length > 0
+      : false
+  );
 
   // One canonical storage key (once group is known)
   const storageKey = useMemo(
@@ -57,10 +67,10 @@ export default function GroupPage() {
 
   // Helper: validate a candidate view for current permissions
   const clampViewToPermissions = useCallback((candidate: ViewRole): ViewRole => {
-    if (isAdminOrSteward) return candidate; // admins/stewards can see any
+    if (canUseAdminView) return candidate;
     if (isMember) return candidate === "admin" ? "member" : candidate; // members: no admin
     return "public"; // public: only public
-  }, [isAdminOrSteward, isMember]);
+  }, [canUseAdminView, isMember]);
 
   // Decide initial view (reads localStorage *after* group is available)
   useEffect(() => {
@@ -85,13 +95,13 @@ export default function GroupPage() {
     }
 
     // Priority 3: role-based default
-    const roleDefault: ViewRole = isAdminOrSteward ? "admin" : isMember ? "member" : "public";
+    const roleDefault: ViewRole = canUseAdminView ? "admin" : isMember ? "member" : "public";
 
     const chosen = clampViewToPermissions(fromUrl ?? fromStorage ?? roleDefault);
 
     setTestRole(chosen);
     setDidInit(true); // allow subsequent saves
-  }, [group, isAdminOrSteward, isMember, storageKey, urlView, clampViewToPermissions]);
+  }, [group, canUseAdminView, isMember, storageKey, urlView, clampViewToPermissions]);
 
   // Persist preference only *after* initialization
   useEffect(() => {
@@ -120,7 +130,7 @@ export default function GroupPage() {
   if (!group) return <Box p={4}>Group not found.</Box>;
 
   const viewingAsAdmin = testRole === "admin";
-  const showAdminDashboard = isAdminOrSteward && viewingAsAdmin;
+  const showAdminDashboard = canUseAdminView && viewingAsAdmin;
 
   // Circle parent context bar (shown for all views)
   const circleBar = <CircleParentBar group={group} />;
@@ -151,7 +161,7 @@ export default function GroupPage() {
           currentGroupSlug={slugStr}
           testRole={testRole}
           onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
-          isAdminOrSteward={isAdminOrSteward}
+          isAdminOrSteward={canUseAdminView}
         />
         {circleBar}
         <DashboardLayout
@@ -180,10 +190,10 @@ export default function GroupPage() {
           group={group}
           userRole={primaryRole}
           onJoinGroup={handleJoinGroup}
-        testRole={testRole}
+          testRole={testRole}
           onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
           isMember={isMember}
-          isAdminOrSteward={isAdminOrSteward}
+          isAdminOrSteward={canUseAdminView}
           canEditGroup={canEditGroup}
         />
       </Box>
