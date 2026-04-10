@@ -182,6 +182,70 @@ export function useRevokeRole(groupSlug: string) {
   });
 }
 
+export function useGrantHelper(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId }: { userId: string }) =>
+      groupPermsApi.grantHelper(groupSlug, userId),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData<MemberPermissions[]>(
+        ["permissions", "members", groupSlug],
+        (old) => {
+          if (!old) return [updatedMember];
+          return old.map((m) =>
+            m.user_id === updatedMember.user_id ? updatedMember : m
+          );
+        }
+      );
+
+      toaster.create({
+        title: "Helper granted",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to grant helper",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
+export function useRevokeHelper(groupSlug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId }: { userId: string }) =>
+      groupPermsApi.revokeHelper(groupSlug, userId),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData<MemberPermissions[]>(
+        ["permissions", "members", groupSlug],
+        (old) => {
+          if (!old) return [updatedMember];
+          return old.map((m) =>
+            m.user_id === updatedMember.user_id ? updatedMember : m
+          );
+        }
+      );
+
+      toaster.create({
+        title: "Helper revoked",
+        type: "success",
+      });
+    },
+    onError: (error: any) => {
+      toaster.create({
+        title: "Failed to revoke helper",
+        description: error.response?.data?.error || error.message,
+        type: "error",
+      });
+    },
+  });
+}
+
 export function useAssignPermissionProfile(groupSlug: string) {
   const queryClient = useQueryClient();
 

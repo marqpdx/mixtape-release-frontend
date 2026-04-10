@@ -27,6 +27,7 @@ export interface MemberPermissions {
   } | null;
   roles: string[];        // ['member', 'steward', 'admin']
   decorators: string[];   // ['can__ManageWriting', 'can__InviteMembers']
+  is_helper: boolean;
   permission_profile?: {
     id: string;
     code: string;
@@ -187,6 +188,26 @@ export const groupPermsApi = {
     const res = await axiosInstance.delete(
       `/api/groups/${groupSlug}/members/${userId}/roles`,
       { data: { role } }
+    );
+    return res.data;
+  },
+
+  grantHelper: async (
+    groupSlug: string,
+    userId: string
+  ): Promise<MemberPermissions> => {
+    const res = await axiosInstance.post(
+      `/api/groups/${groupSlug}/members/${userId}/helper`
+    );
+    return res.data;
+  },
+
+  revokeHelper: async (
+    groupSlug: string,
+    userId: string
+  ): Promise<MemberPermissions> => {
+    const res = await axiosInstance.delete(
+      `/api/groups/${groupSlug}/members/${userId}/helper`
     );
     return res.data;
   },

@@ -24,7 +24,9 @@ import {
   useCreatePermissionProfile,
   useGrantPermission,
   useGrantRole,
+  useGrantHelper,
   useRevokeRole,
+  useRevokeHelper,
   useRevokePermission,
   useAssignPermissionProfile,
   useClonePermissionProfile,
@@ -134,6 +136,8 @@ export default function GroupPermissionsWorkArea({
   const revokeMutation = useRevokePermission(groupSlug);
   const grantRoleMutation = useGrantRole(groupSlug);
   const revokeRoleMutation = useRevokeRole(groupSlug);
+  const grantHelperMutation = useGrantHelper(groupSlug);
+  const revokeHelperMutation = useRevokeHelper(groupSlug);
   const assignProfileMutation = useAssignPermissionProfile(groupSlug);
   const createProfileMutation = useCreatePermissionProfile(groupSlug);
   const updateProfileMutation = useUpdatePermissionProfile(groupSlug);
@@ -283,6 +287,21 @@ export default function GroupPermissionsWorkArea({
     }
   };
 
+  const toggleHelperRole = async (member: MemberPermissions) => {
+    setRoleSaving(member.user_id);
+    try {
+      if (member.is_helper) {
+        await revokeHelperMutation.mutateAsync({ userId: member.user_id });
+      } else {
+        await grantHelperMutation.mutateAsync({ userId: member.user_id });
+      }
+    } catch (error) {
+      console.error("Failed to toggle helper role:", error);
+    } finally {
+      setRoleSaving(null);
+    }
+  };
+
   const updatePermissionProfile = async (
     userId: string,
     profileId: string | null,
@@ -399,7 +418,7 @@ export default function GroupPermissionsWorkArea({
             Member Permissions
           </Heading>
           <Text color="gray.600">
-            Grant steward permissions to group members
+            Grant permissions and temporary helper access to group members
           </Text>
         </Box>
       </Flex>
@@ -685,7 +704,7 @@ export default function GroupPermissionsWorkArea({
                           onClick={() => grantAdminRole(member.user_id)}
                           disabled={roleSaving === member.user_id}
                         >
-                          {roleSaving === member.user_id ? "Saving..." : "Make Admin"}
+                          {roleSaving === member.user_id ? "..." : "A"}
                         </Button>
                       ) : (
                         !member.roles.includes("owner") && (
@@ -696,10 +715,19 @@ export default function GroupPermissionsWorkArea({
                             onClick={() => revokeAdminRole(member.user_id)}
                             disabled={roleSaving === member.user_id}
                           >
-                            {roleSaving === member.user_id ? "Saving..." : "Rescind Admin"}
+                            {roleSaving === member.user_id ? "..." : "A"}
                           </Button>
                         )
                       )}
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorScheme={member.is_helper ? "orange" : "gray"}
+                        onClick={() => toggleHelperRole(member)}
+                        disabled={roleSaving === member.user_id}
+                      >
+                        {roleSaving === member.user_id ? "..." : "H"}
+                      </Button>
                     </Flex>
                   </Table.Cell>
 
