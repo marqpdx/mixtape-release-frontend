@@ -65,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "my-landing", label: "Storyline", href: "/storyline", section: "authenticated", memberOnly: true, shortLabel: "Story" },
+  { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Story" },
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
@@ -151,7 +151,7 @@ export default function UnifiedNavbar({
       : href.replace('{defaultGroupSlug}', defaultGroupSlug);
 
     // Keep public member landing outside /app basePath.
-    if (resolved.startsWith('/members/') || resolved === '/storyline') {
+    if (resolved.startsWith('/members/')) {
       return `${publicSiteBase}${resolved}`;
     }
     return resolved;
@@ -386,7 +386,7 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={`${publicSiteBase}/storyline`} display="flex" gap={2}>
+                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
                         My Storyline
                       </Link>
