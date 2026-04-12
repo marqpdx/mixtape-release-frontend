@@ -84,8 +84,6 @@ export default function GroupsTable({
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchical');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('created');
-  const sortLabel =
-    sortKey === 'name' ? 'Alphabetical' : sortKey === 'created' ? 'Create Date' : 'Last Accessed*';
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -327,7 +325,7 @@ export default function GroupsTable({
             <Menu.Root>
               <Menu.Trigger asChild>
                 <Button size="sm" variant="outline">
-                  Sort: {sortLabel}
+                  Sort: {sortKey === 'name' ? 'Name' : sortKey === 'created' ? 'Date Formed' : 'Last Activity'}
                   <TablerChevronDown size={16} />
                 </Button>
               </Menu.Trigger>
@@ -335,13 +333,13 @@ export default function GroupsTable({
                 <Menu.Positioner>
                   <Menu.Content>
                     <Menu.Item value="activity" onClick={() => setSortKey('activity')}>
-                      Last Accessed*
+                      Last Activity
                     </Menu.Item>
                     <Menu.Item value="created" onClick={() => setSortKey('created')}>
-                      Create Date
+                      Date Formed
                     </Menu.Item>
                     <Menu.Item value="name" onClick={() => setSortKey('name')}>
-                      Alphabetical
+                      Name (A–Z)
                     </Menu.Item>
                   </Menu.Content>
                 </Menu.Positioner>
@@ -396,7 +394,7 @@ export default function GroupsTable({
           <Menu.Root>
             <Menu.Trigger asChild>
               <Button size="sm" variant="outline">
-                Sort: {sortLabel}
+                Sort: {sortKey === 'name' ? 'Name' : sortKey === 'created' ? 'Date Formed' : 'Last Activity'}
                 <TablerChevronDown size={16} />
               </Button>
             </Menu.Trigger>
@@ -404,13 +402,13 @@ export default function GroupsTable({
               <Menu.Positioner>
                 <Menu.Content>
                   <Menu.Item value="activity" onClick={() => setSortKey('activity')}>
-                    Last Accessed*
+                    Last Activity
                   </Menu.Item>
                   <Menu.Item value="created" onClick={() => setSortKey('created')}>
-                    Create Date
+                    Date Formed
                   </Menu.Item>
                   <Menu.Item value="name" onClick={() => setSortKey('name')}>
-                    Alphabetical
+                    Name (A–Z)
                   </Menu.Item>
                 </Menu.Content>
               </Menu.Positioner>

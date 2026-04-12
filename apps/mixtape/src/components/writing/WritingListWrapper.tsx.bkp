@@ -123,7 +123,6 @@ export default function WritingListWrapper({
   const [activeTab, setActiveTab] = useState("published");
   const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
-  const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");
   // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
@@ -151,10 +150,6 @@ export default function WritingListWrapper({
       const savedDateSortOrder = window.localStorage.getItem("writing_date_sort_order");
       if (savedDateSortOrder === "asc" || savedDateSortOrder === "desc") {
         setDateSortOrder(savedDateSortOrder);
-      }
-      const savedDateSortField = window.localStorage.getItem("writing_date_sort_field");
-      if (savedDateSortField === "recent" || savedDateSortField === "created") {
-        setDateSortField(savedDateSortField);
       }
       const savedGroupingMode = window.localStorage.getItem("writing_group_mode");
       if (
@@ -204,18 +199,6 @@ export default function WritingListWrapper({
       }
     }
   }, [dateSortOrder]);
-
-  const handleDateSortFieldToggle = useCallback(() => {
-    const nextField = dateSortField === "recent" ? "created" : "recent";
-    setDateSortField(nextField);
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem("writing_date_sort_field", nextField);
-      } catch (error) {
-        console.warn("Failed to save date sort field:", error);
-      }
-    }
-  }, [dateSortField]);
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const badgeBg = useColorModeValue("green.50", "green.900");
@@ -687,33 +670,21 @@ export default function WritingListWrapper({
 
   const listPublishedPieces = useMemo(() => {
     const sorted = filteredPublishedPieces.slice().sort((a, b) => {
-      const aTime =
-        dateSortField === "created"
-          ? new Date(a.created_at).getTime()
-          : new Date(a.updated_at || a.published_at || a.created_at).getTime();
-      const bTime =
-        dateSortField === "created"
-          ? new Date(b.created_at).getTime()
-          : new Date(b.updated_at || b.published_at || b.created_at).getTime();
+      const aTime = new Date(a.updated_at || a.published_at || a.created_at).getTime();
+      const bTime = new Date(b.updated_at || b.published_at || b.created_at).getTime();
       return dateSortOrder === "desc" ? bTime - aTime : aTime - bTime;
     });
     return sorted;
-  }, [filteredPublishedPieces, dateSortField, dateSortOrder]);
+  }, [filteredPublishedPieces, dateSortOrder]);
 
   const listDrafts = useMemo(() => {
     const sorted = processedDrafts.slice().sort((a, b) => {
-      const aTime =
-        dateSortField === "created"
-          ? new Date(a.piece.created_at).getTime()
-          : new Date(a.last_saved_at || a.piece.updated_at || a.piece.created_at).getTime();
-      const bTime =
-        dateSortField === "created"
-          ? new Date(b.piece.created_at).getTime()
-          : new Date(b.last_saved_at || b.piece.updated_at || b.piece.created_at).getTime();
+      const aTime = new Date(a.last_saved_at || a.piece.updated_at || a.piece.created_at).getTime();
+      const bTime = new Date(b.last_saved_at || b.piece.updated_at || b.piece.created_at).getTime();
       return dateSortOrder === "desc" ? bTime - aTime : aTime - bTime;
     });
     return sorted;
-  }, [processedDrafts, dateSortField, dateSortOrder]);
+  }, [processedDrafts, dateSortOrder]);
 
   const tagGroups = useMemo(() => {
     const groups = new Map<string, FlattenedPlacement[]>();
@@ -911,14 +882,9 @@ export default function WritingListWrapper({
                 </Tabs.List>
               </Tabs.Root>
               {groupingMode === "by-list" && (
-                <>
-                  <Button size="sm" variant="outline" onClick={handleDateSortFieldToggle}>
-                    {dateSortField === "recent" ? "Sort: Recent activity" : "Sort: Creation date"}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleDateSortOrderToggle}>
-                    {dateSortOrder === "desc" ? "Newest first" : "Oldest first"}
-                  </Button>
-                </>
+                <Button size="sm" variant="outline" onClick={handleDateSortOrderToggle}>
+                  {dateSortOrder === "desc" ? "Newest first" : "Oldest first"}
+                </Button>
               )}
             </HStack>
           </Box>

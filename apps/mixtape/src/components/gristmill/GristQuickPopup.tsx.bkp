@@ -82,7 +82,6 @@ export default function GristQuickPopup() {
   const currentPath = typeof window === "undefined"
     ? ""
     : currentRoutePath();
-  const effectiveRoutePath = routePath.trim() || currentPath;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -289,7 +288,7 @@ export default function GristQuickPopup() {
         nextDraftId,
         undefined,
         Intl.DateTimeFormat().resolvedOptions().timeZone,
-        effectiveRoutePath
+        currentRoutePath()
       );
 
       clearLocal();
@@ -313,7 +312,7 @@ export default function GristQuickPopup() {
     } finally {
       setPromoting(false);
     }
-  }, [addRecentTopic, applyIssueContext, clearLocal, draftId, effectiveRoutePath, issueContext, parseForWarning, text]);
+  }, [addRecentTopic, applyIssueContext, clearLocal, draftId, issueContext, parseForWarning, text]);
 
   useEffect(() => {
     if (!open) return;
@@ -468,8 +467,8 @@ export default function GristQuickPopup() {
                     </Button>
                     <Input
                       size="sm"
-                      value={effectiveRoutePath}
-                      onChange={(e) => setRoutePath(e.target.value)}
+                      value={routePath || currentPath}
+                      readOnly
                       color="fg.muted"
                       borderColor="border.muted"
                       flex="1"

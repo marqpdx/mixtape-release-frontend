@@ -15,6 +15,7 @@ import Footer from "@components/layout/Footer";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 import { HelpProvider } from "@/components/help/HelpProvider";
 import { HelpDrawer } from "@/components/help/HelpDrawer";
+import { HelpButton } from "@/components/help/HelpButton";
 // import PageContainer from "@components/layout/PageContainer";
 import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
@@ -235,6 +236,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
         </Box>
 
         <HelpDrawer />
+        <HelpButton />
       </HelpProvider>
 
       <Footer />

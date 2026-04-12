@@ -1,4 +1,4 @@
-// apps/mixtape/src/components/layout/UnifiedNavbar.tsx
+// apps/crossroads/src/components/layout/UnifiedNavbar.tsx
 
 "use client";
 
@@ -22,24 +22,26 @@ import {
   Avatar,
   AvatarGroup,
   MenuPositioner,
-  Badge,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { usePermissions } from "@mixtape/auth/usePermissions";
-import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconChevronDown, IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
-import { useChatUnread } from "@/contexts/ChatUnreadContext";
-import { useHelp } from "@components/help/useHelp";
 
 // Navigation item types
-type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
+type NavSection = "public" | "authenticated" | "admin" | "protected";
+
+interface NavChildItem {
+  key: string;
+  label: string;
+  href: string;
+}
 
 interface NavItem {
   key: string;
@@ -47,38 +49,50 @@ interface NavItem {
   href: string;
   section: NavSection;
   adminOnly?: boolean;
-  superuserOnly?: boolean;
   stewardOnly?: boolean;
   memberOnly?: boolean;
   shortLabel?: string;
+  children?: NavChildItem[];
 }
 
 // Define all navigation items
 const NAV_ITEMS: NavItem[] = [
   // Public section
   { key: "home", label: "Home", href: "/", section: "public" },
-
-  // About section
-  { key: "about", label: "About", href: "/about", section: "about" },
-  { key: "join", label: "Join", href: "/about/join", section: "about" },
-  { key: "explore", label: "Explore", href: "/about/public", section: "about" },
-  { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
+  {
+    key: "about",
+    label: "About",
+    href: "/about",
+    section: "public",
+    children: [
+      { key: "about-overview", label: "Overview", href: "/about" },
+      { key: "about-crossroads", label: "Crossroads", href: "/about/crossroads" },
+      { key: "about-backstory", label: "Backstory", href: "/about/backstory" },
+    ],
+  },
+  {
+    key: "membership",
+    label: "Membership",
+    href: "/membership",
+    section: "public",
+    children: [
+      { key: "membership-participation", label: "Participation", href: "/membership/levels" },
+      { key: "membership-pricing", label: "Pricing", href: "/membership/pricing" },
+      { key: "membership-joining", label: "Joining", href: "/membership/joining" },
+      { key: "membership-reciprocity", label: "Reciprocity", href: "/membership/reciprocity" },
+    ],
+  },
+  { key: "contact", label: "Contact", href: "/contact", section: "public" },
 
   // Authenticated section (members + admins)
-  { key: "my-landing", label: "Storyline", href: "/storyline", section: "authenticated", memberOnly: true, shortLabel: "Story" },
-  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
-  { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
+  { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "help", label: "Help", href: "/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
-  { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
-  { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
-  // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
-  // { key: "stackroom", label: "Stackroom", href: "/stackroom", section: "authenticated", memberOnly: true, shortLabel: "Stack" },
-  // { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
-  // { key: "threadworks", label: "Threadworks", href: "/app/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
-  // { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
-  // { key: "map", label: "Map", href: "/demos/map", section: "authenticated", memberOnly: true },
-  // { key: "bazaar", label: "Bazaar", href: "/bazaar", section: "authenticated", memberOnly: true },
+  { key: "help", label: "Help", href: "/app/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
+  { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
+  // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
+  { key: "loom-codex", label: "Loom & Codex", href: "/loom-and-codex", section: "authenticated", memberOnly: true, shortLabel: "Codex" },
+  { key: "dispatch", label: "Dispatch", href: "/dispatch", section: "authenticated", memberOnly: true, shortLabel: "Dispatch" },
+  { key: "map", label: "Map", href: "/demos/map", section: "authenticated", memberOnly: true },
   { key: "admin-panel", label: "Admin", href: "/admin", section: "authenticated", adminOnly: true, shortLabel: "Admin" },
 ];
 
@@ -88,6 +102,7 @@ interface UnifiedNavbarProps {
   showLogo?: boolean;
   compact?: boolean;
   extraCompact?: boolean;
+  shrinkOnScroll?: boolean;
 }
 
 export default function UnifiedNavbar({
@@ -96,62 +111,46 @@ export default function UnifiedNavbar({
   showLogo = true,
   compact = false,
   extraCompact = true,
+  shrinkOnScroll = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
-  const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
-  const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
-  // const { groups: userGroups = [] } = useUserGroups();
-  const { group: defaultGroup } = useDefaultGroup();
+  const { user: identity, logout, isLoading } = useAuth();
+  // const { isAdmin, isSteward, isMember } = usePermissions();
+  // const { isAdmin, isSteward, isMember } = usePermissions({ user: identity });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
-  const publicSiteBase =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
-  const homeHref = publicSiteBase;
-  const myCrossroadsLabel = defaultGroup?.title
-    ? `My ${defaultGroup.title}`
-    : "My Crossroads";
-  const defaultGroupSlug =
-    defaultGroup?.slug ||
-    process.env.NEXT_PUBLIC_DEFAULT_GROUP_SLUG ||
-    "crossroads";
+  const navBackground = useColorModeValue("rgba(255, 255, 255, 0.75)", "rgba(17, 24, 39, 0.75)");
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
-  const { unreads: messageUnreads } = useChatUnread();
-  const { openDrawer } = useHelp();
-  const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
+  const publicSiteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+  const loginHref =
+    process.env.NODE_ENV === "development"
+      ? "http://127.0.0.1:3011/app/login"
+      : "/app/login";
 
   // Auto-detect section if not provided
   const detectedSection: NavSection =
     section ||
-    (pathname.startsWith("/about") ? "about" :
-     identity && (pathname.startsWith("/dashboard") ||
+    (identity && (pathname.startsWith("/dashboard") ||
                   pathname.startsWith("/groups") ||
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||
                   pathname.startsWith("/loom-and-codex") ||
-                  pathname.startsWith("/puddlejump") ||
-                  pathname.startsWith("/stackroom") ||
-                  pathname.startsWith("/bazaar") ||
-                  pathname.startsWith("/member") ||
+                  pathname.startsWith("/dispatch") ||
                   pathname.startsWith("/map") ||
-                  pathname.startsWith("/workbench") ||
                   pathname.startsWith("/admin")) ? "authenticated" :
      "public");
 
   // For rendering purposes, both /admin and /dashboard use authenticated nav
   const navSection: NavSection = detectedSection;
 
+  const { isAdmin, isSteward } = { isAdmin: false, isSteward: false };
 
-  // Helper to resolve dynamic hrefs (e.g., {username} placeholder)
   const resolveHref = (href: string) => {
     const resolved = identity?.username
-      ? href
-        .replace('{username}', identity.username)
-        .replace('{defaultGroupSlug}', defaultGroupSlug)
-      : href.replace('{defaultGroupSlug}', defaultGroupSlug);
-
-    // Keep public member landing outside /app basePath.
-    if (resolved.startsWith('/members/') || resolved === '/storyline') {
+      ? href.replace('{username}', identity.username)
+      : href;
+    if (resolved.startsWith('/members/')) {
       return `${publicSiteBase}${resolved}`;
     }
     return resolved;
@@ -171,21 +170,27 @@ export default function UnifiedNavbar({
   // Filter items based on current section and permissions
   const visibleItems = NAV_ITEMS.filter(item => {
     if (item.section !== navSection) return false;
-    if (item.superuserOnly && !identity?.is_superuser) return false;
     if (item.adminOnly && !isAdmin) return false;
     if (item.stewardOnly && !isSteward) return false;
     if (item.memberOnly && !identity) return false;
     return true;
-  }).map(item => ({
+  }).map((item) => ({
     ...item,
-    label: item.key === "my-crossroads" ? myCrossroadsLabel : item.label,
     href: resolveHref(item.href),
+    children: item.children?.map((child) => ({
+      ...child,
+      href: resolveHref(child.href),
+    })),
   }));
 
   // Determine active item
   const activeItem = visibleItems.find(item =>
     pathname === navPath(item.href) ||
-    (navPath(item.href) !== "/" && pathname.startsWith(navPath(item.href)))
+    (navPath(item.href) !== "/" && pathname.startsWith(navPath(item.href))) ||
+    item.children?.some(child =>
+      pathname === navPath(child.href) ||
+      (navPath(child.href) !== "/" && pathname.startsWith(navPath(child.href)))
+    )
   );
 
   const handleLogout = async () => {
@@ -203,7 +208,27 @@ export default function UnifiedNavbar({
     }
   };
 
-  const horizontalPadding = extraCompact ? 2 : (compact ? 3 : 4);
+  const [isShrunk, setIsShrunk] = useState(false);
+
+  useEffect(() => {
+    if (!shrinkOnScroll || typeof window === "undefined") return;
+
+    const onScroll = () => setIsShrunk(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [shrinkOnScroll]);
+
+  const shrink = shrinkOnScroll && isShrunk;
+  const navMinHeight = shrink ? "38px" : "48px";
+  const horizontalPadding = shrink ? 1 : (extraCompact ? 2 : (compact ? 3 : 4));
+  const navFontSize = shrink ? "sm" : (extraCompact ? "md" : (compact ? "md" : "lg"));
+  const navGap = shrink ? 3 : (extraCompact ? 6 : (compact ? 7 : 9));
+  const themeScale = shrink ? "scale(0.85)" : (extraCompact ? "scale(0.95)" : "scale(1.05)");
+  const logoSize = shrink
+    ? (extraCompact ? 230 : (compact ? 260 : 300))
+    : (extraCompact ? 272 : (compact ? 304 : 344));
+  const logoOffset = shrink ? "translateY(-10px)" : "translateY(-15px)";
 
   // Loading state - show skeleton while checking auth
   if (isLoading) {
@@ -219,7 +244,7 @@ export default function UnifiedNavbar({
         zIndex={1000}
       >
         <Container maxW="7xl">
-          <Flex justify="space-between" align="center" minHeight="40px">
+          <Flex justify="space-between" align="center" minHeight={navMinHeight}>
             {/* Logo skeleton */}
             {showLogo && (
               <Box w="200px" h="30px" bg="gray.200" borderRadius="md" />
@@ -244,7 +269,7 @@ export default function UnifiedNavbar({
       id="navigation"
       role="navigation"
       aria-label="Main navigation"
-      bg="theme.surface"
+      bg={navBackground}
       borderBottom="1px solid"
       borderColor="theme.border"
       py={0}
@@ -252,14 +277,14 @@ export default function UnifiedNavbar({
       position={sticky ? "sticky" : "relative"}
       top={sticky ? 0 : "auto"}
       zIndex={1000}
-      backdropFilter="blur(10px)"
+      backdropFilter="blur(5px)"
       transition="all 0.3s ease"
     >
       <Container maxW="7xl">
-        <Flex justify="space-between" align="center" minHeight="40px">
+        <Flex justify="space-between" align="center" minHeight={navMinHeight}>
 
           {/* Left: Logo or Menu Button */}
-          <Flex align="center" gap={extraCompact ? 2 : 4}>
+          <Flex align="center" gap={shrink ? 2 : (extraCompact ? 2 : 4)}>
             {/* Mobile Menu Button - Show if there are nav items to display */}
             {visibleItems.length > 0 && (
               <Box display={{ base: "block", lg: "none" }}>
@@ -267,7 +292,7 @@ export default function UnifiedNavbar({
                   aria-label="Menu"
                   variant="ghost"
                   onClick={onOpen}
-                  size="sm"
+                  size="md"
                 >
                   <IconMenu2 size={18} />
                 </IconButton>
@@ -276,10 +301,10 @@ export default function UnifiedNavbar({
 
             {/* Logo */}
             {showLogo && (
-              <Link href={homeHref} _hover={{ textDecoration: "none" }}>
-                <Box transform="translateY(-15px)">
+              <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }}>
+                <Box transform={logoOffset}>
                   <CrossroadsLogo
-                    size={extraCompact ? 248 : (compact ? 280 : 320)}
+                    size={logoSize}
                     color={logoColor}
                   />
                 </Box>
@@ -289,66 +314,43 @@ export default function UnifiedNavbar({
 
           {/* Center: Navigation Items (Desktop) */}
           <HStack
-            gap={extraCompact ? 3 : (compact ? 4 : 6)}
+            gap={navGap}
             display={{ base: "none", lg: "flex" }}
-            fontSize={extraCompact ? "sm" : (compact ? "sm" : "md")}
+            fontSize={navFontSize}
           >
-            {visibleItems.map((item) => (
-              <Box key={item.key} position="relative">
-                <NavItem
-                  href={item.href}
-                  isActive={activeItem?.key === item.key}
-                  extraCompact={extraCompact}
-                >
-                  {item.label}
-                </NavItem>
-              </Box>
-            ))}
+            {visibleItems.map((item) => {
+              const isActive = activeItem?.key === item.key;
+              if (item.children?.length) {
+                return (
+                  <DesktopNavDropdown
+                    key={item.key}
+                    item={item}
+                    isActive={isActive}
+                    extraCompact={extraCompact || shrink}
+                    compact={compact}
+                  />
+                );
+              }
+
+              return (
+                <Box key={item.key} position="relative">
+                  <NavItem
+                    href={item.href}
+                    isActive={isActive}
+                    extraCompact={extraCompact || shrink}
+                  >
+                    {item.label}
+                  </NavItem>
+                </Box>
+              );
+            })}
           </HStack>
 
           {/* Right: Theme Selector + Auth Actions */}
-          <HStack className="zippy" gap={extraCompact ? 1 : 3}>
-            {identity && (
-              <Button
-                variant="ghost"
-                size="sm"
-                position="relative"
-                aria-label="Messages"
-                asChild
-              >
-                <NextLink href={`/member/${identity.username}/hub?section=messages`}>
-                  <IconMessageCircle size={18} />
-                  {messageUnreadCount > 0 && (
-                    <Badge
-                      position="absolute"
-                      top="-4px"
-                      right="-4px"
-                      colorPalette="blue"
-                      borderRadius="full"
-                      px={1.5}
-                      fontSize="10px"
-                    >
-                      {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
-                    </Badge>
-                  )}
-                </NextLink>
-              </Button>
-            )}
-            <Box transform={extraCompact ? "scale(0.85)" : "scale(1)"}>
+          <HStack gap={shrink ? 1 : (extraCompact ? 1 : 3)}>
+            <Box transform={themeScale}>
               <ThemeSelector />
             </Box>
-            {identity && (
-              <Button
-                variant="ghost"
-                size="sm"
-                minW="28px"
-                px={0}
-                aria-label="Open contextual help"
-                onClick={() => openDrawer()}
-              >
-                ?
-              </Button>
-            )}
 
             {/* Auth Actions */}
             {identity ? (
@@ -357,7 +359,7 @@ export default function UnifiedNavbar({
               <MenuRoot positioning={{ placement: "bottom-end" }} >
                 <MenuTrigger asChild>
                   <Button
-                    size="sm"
+                    size={shrink ? "sm" : "md"}
                     variant="ghost"
                     display={{ base: "none", md: "flex" }}
                     gap={2}
@@ -377,7 +379,7 @@ export default function UnifiedNavbar({
                         )}
                       </Avatar.Root>
                     </AvatarGroup>
-                    <Text fontSize={extraCompact ? "xs" : "sm"}>
+                    <Text fontSize={shrink ? "sm" : (extraCompact ? "sm" : "md")}>
                       {identity.username || identity.email}
                     </Text>
                   </Button>
@@ -386,39 +388,17 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={`${publicSiteBase}/storyline`} display="flex" gap={2}>
-                        <IconUser size={16} />
-                        My Storyline
-                      </Link>
-                    </MenuItem>
-                    <MenuItem value="member-profile" asChild>
                       <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
-                        My Profile
+                        Profile
                       </Link>
                     </MenuItem>
-                    <MenuItem value="dashboard" asChild>
-                      <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
-                        <IconLayoutDashboard size={16} />
-                        Dashboard
+                    <MenuItem value="settings" asChild>
+                      <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
+                        <IconSettings size={16} />
+                        Settings
                       </Link>
                     </MenuItem>
-                    {identity?.is_superuser && (
-                      <MenuItem value="hub" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/hub')} display="flex" gap={2}>
-                          <IconLayoutDashboard size={16} />
-                          Hub
-                        </Link>
-                      </MenuItem>
-                    )}
-                    {identity?.is_superuser && (
-                      <MenuItem value="settings" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/settings')} display="flex" gap={2}>
-                          <IconSettings size={16} />
-                          Settings
-                        </Link>
-                      </MenuItem>
-                    )}
                     <MenuSeparator />
                     <MenuItem
                       value="logout"
@@ -438,11 +418,11 @@ export default function UnifiedNavbar({
 
             ) : (
               navSection === "public" && (
-                <Link as={NextLink} href="/app/login">
+                <Link as={NextLink} href={loginHref}>
                   <Button
-                    size="sm"
+                    size={shrink ? "sm" : "md"}
                     variant="solid"
-                    fontSize={extraCompact ? "xs" : "sm"}
+                    fontSize={shrink ? "sm" : (extraCompact ? "sm" : "md")}
                   >
                     Login
                   </Button>
@@ -454,7 +434,7 @@ export default function UnifiedNavbar({
       </Container>
 
       {/* Mobile Drawer */}
-      <Drawer.Root open={open} onOpenChange={({ open }) => (open ? onOpen() : onClose())} placement="start">
+      <Drawer.Root open={open} onOpenChange={({ open }: { open: boolean }) => (open ? onOpen() : onClose())} placement="start">
         <Drawer.Backdrop />
         <Drawer.Positioner>
           <Drawer.Content maxW="xs" bg="theme.surface" borderColor="theme.border">
@@ -474,21 +454,47 @@ export default function UnifiedNavbar({
 
             <Drawer.Body>
               <VStack gap={4} align="stretch" pt={4}>
-                {visibleItems.map((item) => (
-                  <Link
-                    key={item.key}
-                    {...(item.href.startsWith('http')
-                      ? { href: item.href }
-                      : { as: NextLink, href: item.href })}
-                    onClick={onClose}
-                    color={activeItem?.key === item.key ? "theme.accent" : "theme.text"}
-                    fontWeight={activeItem?.key === item.key ? "bold" : "medium"}
-                    fontSize="md"
-                    _hover={{ color: "theme.accent" }}
-                  >
-                    {item.shortLabel || item.label}
-                  </Link>
-                ))}
+                {visibleItems.map((item) => {
+                  const isActive = activeItem?.key === item.key;
+                  return (
+                    <Box key={item.key}>
+                      <Link
+                        {...(item.href.startsWith('http')
+                          ? { href: item.href }
+                          : { as: NextLink, href: item.href })}
+                        onClick={onClose}
+                        color={isActive ? "theme.accent" : "theme.text"}
+                        fontWeight={isActive ? "bold" : "medium"}
+                        fontSize="md"
+                        _hover={{ color: "theme.accent" }}
+                      >
+                        {item.shortLabel || item.label}
+                      </Link>
+                      {item.children?.length && (
+                        <VStack align="start" gap={2} pt={2} pl={4}>
+                          {item.children.map((child) => {
+                            const isChildActive = pathname === child.href;
+                            return (
+                            <Link
+                              key={child.key}
+                              {...(child.href.startsWith('http')
+                                ? { href: child.href }
+                                : { as: NextLink, href: child.href })}
+                              onClick={onClose}
+                              color={isChildActive ? "theme.accent" : "theme.textSecondary"}
+                              fontWeight={isChildActive ? "bold" : "medium"}
+                              fontSize="sm"
+                              _hover={{ color: "theme.accent" }}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                          })}
+                        </VStack>
+                      )}
+                    </Box>
+                  );
+                })}
 
                 {identity && (
                   <>
@@ -508,7 +514,7 @@ export default function UnifiedNavbar({
                 {!identity && navSection === "public" && (
                   <>
                     <Divider borderColor="theme.border" />
-                    <Link as={NextLink} href="/login" onClick={onClose}>
+                    <Link as={NextLink} href={loginHref} onClick={onClose}>
                       <Button variant="solid" w="full">
                         Login
                       </Button>
@@ -520,7 +526,6 @@ export default function UnifiedNavbar({
           </Drawer.Content>
         </Drawer.Positioner>
       </Drawer.Root>
-
     </Box>
   );
 }
@@ -548,7 +553,7 @@ function NavItem({
           fontWeight="700"
           visibility="hidden"
           whiteSpace="nowrap"
-          fontSize={extraCompact ? "sm" : "inherit"}
+          fontSize={extraCompact ? "md" : "inherit"}
         >
           {label}
         </Box>
@@ -568,11 +573,97 @@ function NavItem({
             transform: extraCompact ? "translateY(-0.5px)" : "translateY(-1px)",
           }}
           pointerEvents="none"
-          fontSize={extraCompact ? "sm" : "inherit"}
+          fontSize={extraCompact ? "md" : "inherit"}
         >
           {label}
         </Box>
       </Box>
     </Link>
+  );
+}
+
+function DesktopNavDropdown({
+  item,
+  isActive,
+  extraCompact,
+  compact,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  extraCompact: boolean;
+  compact: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const openDelayMs = 120;
+  const closeDelayMs = 220;
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = () => {
+    if (openTimer.current) {
+      clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimers();
+    };
+  }, []);
+
+  const scheduleOpen = () => {
+    clearTimers();
+    openTimer.current = setTimeout(() => setOpen(true), openDelayMs);
+  };
+
+  const scheduleClose = () => {
+    clearTimers();
+    closeTimer.current = setTimeout(() => setOpen(false), closeDelayMs);
+  };
+
+  return (
+    <Box onMouseEnter={scheduleOpen} onMouseLeave={scheduleClose}>
+      <MenuRoot
+        open={open}
+        onOpenChange={({ open }) => setOpen(open)}
+        positioning={{ placement: "bottom-start" }}
+      >
+        <MenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size={extraCompact || compact ? "sm" : "md"}
+            px={0}
+            py={1}
+            height="auto"
+            fontWeight={isActive ? "700" : "400"}
+            color={isActive ? "theme.text" : "theme.textSecondary"}
+            _hover={{ color: "theme.accent" }}
+            _active={{ bg: "transparent" }}
+            _focusVisible={{ boxShadow: "none" }}
+          >
+            {item.label}
+            <Box as="span" display="inline-flex" ml={0}>
+              <IconChevronDown size={14} />
+            </Box>
+          </Button>
+        </MenuTrigger>
+        <MenuPositioner zIndex={1100}>
+          <MenuContent>
+            {item.children?.map((child) => (
+              <MenuItem key={child.key} value={child.key} asChild>
+                <Link as={NextLink} href={child.href} display="flex" gap={2}>
+                  {child.label}
+                </Link>
+              </MenuItem>
+            ))}
+          </MenuContent>
+        </MenuPositioner>
+      </MenuRoot>
+    </Box>
   );
 }

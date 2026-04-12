@@ -25,8 +25,16 @@ import type {
   PublicMemberProfile,
   PublicShelf,
 } from "@mixtape/api/clients/public/publicApi";
+import { TipTapRenderer } from "@mixtape/content/TipTapRenderer";
 import NextLink from "next/link";
-import MemberProfileTemplate from "@/components/crossroads/MemberProfileTemplate";
+
+function splitProfileList(value?: string | null): string[] {
+  if (!value) return [];
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export default function MemberPublicPage() {
   const params = useParams();
@@ -41,6 +49,7 @@ export default function MemberPublicPage() {
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const borderColor = useColorModeValue("gray.200", "gray.700");
+  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
   const ctaBg = useColorModeValue("gray.50", "gray.800");
   const ctaBorderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -90,6 +99,9 @@ export default function MemberPublicPage() {
   }, [shelves, kindFilter]);
 
   const filteredAllItems = filteredShelves.flatMap((s) => s.items);
+  const skills = splitProfileList(profile?.skills);
+  const workAreas = splitProfileList(profile?.work_areas);
+
   if (loading) {
     return (
       <Box px="6" py="20" textAlign="center">
@@ -127,7 +139,122 @@ export default function MemberPublicPage() {
       )}
 
       <Box maxW="3xl" mx="auto" px="6" pt={profile.background_image_url ? "0" : "10"} pb="10">
-        <MemberProfileTemplate profile={profile} />
+        {/* Header Block */}
+        <HStack gap="4" align="end" mb="4">
+          {/* Avatar */}
+          <Box
+            w="72px"
+            h="72px"
+            borderRadius="full"
+            overflow="hidden"
+            border="3px solid"
+            borderColor={cardBg}
+            flexShrink={0}
+            bg={avatarFallbackBg}
+            position="relative"
+            zIndex={1}
+          >
+            {profile.avatar_url || profile.profile_image_url ? (
+              <Image
+                src={profile.profile_image_url || profile.avatar_url}
+                alt={profile.display_name}
+                w="full"
+                h="full"
+                objectFit="cover"
+              />
+            ) : (
+              <Box
+                w="full"
+                h="full"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                fontSize="2xl"
+                fontWeight="bold"
+                color="white"
+              >
+                {profile.display_name.charAt(0).toUpperCase()}
+              </Box>
+            )}
+          </Box>
+
+          <VStack gap="0" align="start">
+            <Heading size="2xl">{profile.display_name}</Heading>
+            <Text color={mutedColor} fontSize="sm">
+              @{profile.username}
+            </Text>
+          </VStack>
+        </HStack>
+
+        {profile.quick_intro && (
+          <Text mb="2">{profile.quick_intro}</Text>
+        )}
+
+        {profile.right_now && (
+          <Text mb="3" color={mutedColor} fontStyle="italic">
+            Right now: {profile.right_now}
+          </Text>
+        )}
+
+        {(workAreas.length > 0 || skills.length > 0) && (
+          <VStack align="start" gap="3" mb="4">
+            {workAreas.length > 0 && (
+              <Box>
+                <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb="2">
+                  Work Areas
+                </Text>
+                <HStack gap="2" flexWrap="wrap">
+                  {workAreas.map((area) => (
+                    <Badge key={area} variant="subtle" colorPalette="blue">
+                      {area}
+                    </Badge>
+                  ))}
+                </HStack>
+              </Box>
+            )}
+            {skills.length > 0 && (
+              <Box>
+                <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb="2">
+                  Skills
+                </Text>
+                <HStack gap="2" flexWrap="wrap">
+                  {skills.map((skill) => (
+                    <Badge key={skill} variant="subtle" colorPalette="green">
+                      {skill}
+                    </Badge>
+                  ))}
+                </HStack>
+              </Box>
+            )}
+          </VStack>
+        )}
+
+        {/* Group affiliations */}
+        {profile.groups && profile.groups.length > 0 && (
+          <HStack gap="2" flexWrap="wrap" mb="4">
+            {profile.groups.map((g) => (
+              <Badge
+                key={g.slug}
+                variant="subtle"
+                size="sm"
+                borderRadius="full"
+                px="3"
+                py="1"
+              >
+                {g.title}
+              </Badge>
+            ))}
+          </HStack>
+        )}
+
+        {/* Bio */}
+        {profile.bio_json && Object.keys(profile.bio_json).length > 0 && (
+          <Box mb="6">
+            <TipTapRenderer
+              content={profile.bio_json as unknown as Parameters<typeof TipTapRenderer>[0]["content"]}
+            />
+          </Box>
+        )}
 
         {/* Owner link back to workbench */}
         {isOwner && (

@@ -85,7 +85,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "contact", label: "Contact", href: "/contact", section: "public" },
 
   // Authenticated section (members + admins)
-  { key: "my-landing", label: "Homebase", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "my-landing", label: "Storyline", href: "/storyline", section: "authenticated", memberOnly: true, shortLabel: "Story" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "help", label: "Help", href: "/app/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
@@ -388,6 +388,12 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
+                      <Link as={NextLink} href="/storyline" display="flex" gap={2}>
+                        <IconUser size={16} />
+                        Storyline
+                      </Link>
+                    </MenuItem>
+                    <MenuItem value="member-profile" asChild>
                       <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile

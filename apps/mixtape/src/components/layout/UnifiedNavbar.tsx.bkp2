@@ -36,7 +36,6 @@ import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
-import { useHelp } from "@components/help/useHelp";
 
 // Navigation item types
 type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
@@ -65,7 +64,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "my-landing", label: "Storyline", href: "/storyline", section: "authenticated", memberOnly: true, shortLabel: "Story" },
+  { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
@@ -117,7 +116,6 @@ export default function UnifiedNavbar({
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
   const { unreads: messageUnreads } = useChatUnread();
-  const { openDrawer } = useHelp();
   const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
 
   // Auto-detect section if not provided
@@ -151,7 +149,7 @@ export default function UnifiedNavbar({
       : href.replace('{defaultGroupSlug}', defaultGroupSlug);
 
     // Keep public member landing outside /app basePath.
-    if (resolved.startsWith('/members/') || resolved === '/storyline') {
+    if (resolved.startsWith('/members/')) {
       return `${publicSiteBase}${resolved}`;
     }
     return resolved;
@@ -337,18 +335,6 @@ export default function UnifiedNavbar({
             <Box transform={extraCompact ? "scale(0.85)" : "scale(1)"}>
               <ThemeSelector />
             </Box>
-            {identity && (
-              <Button
-                variant="ghost"
-                size="sm"
-                minW="28px"
-                px={0}
-                aria-label="Open contextual help"
-                onClick={() => openDrawer()}
-              >
-                ?
-              </Button>
-            )}
 
             {/* Auth Actions */}
             {identity ? (
@@ -386,15 +372,9 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={`${publicSiteBase}/storyline`} display="flex" gap={2}>
-                        <IconUser size={16} />
-                        My Storyline
-                      </Link>
-                    </MenuItem>
-                    <MenuItem value="member-profile" asChild>
                       <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
-                        My Profile
+                        My Storyline
                       </Link>
                     </MenuItem>
                     <MenuItem value="dashboard" asChild>
