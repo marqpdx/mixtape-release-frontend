@@ -28,14 +28,6 @@ import type {
 import { TipTapRenderer } from "@mixtape/content/TipTapRenderer";
 import NextLink from "next/link";
 
-function splitProfileList(value?: string | null): string[] {
-  if (!value) return [];
-  return value
-    .split(/[\n,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 export default function MemberPublicPage() {
   const params = useParams();
   const username = params.username as string;
@@ -99,8 +91,6 @@ export default function MemberPublicPage() {
   }, [shelves, kindFilter]);
 
   const filteredAllItems = filteredShelves.flatMap((s) => s.items);
-  const skills = splitProfileList(profile?.skills);
-  const workAreas = splitProfileList(profile?.work_areas);
 
   if (loading) {
     return (
@@ -188,45 +178,6 @@ export default function MemberPublicPage() {
 
         {profile.quick_intro && (
           <Text mb="2">{profile.quick_intro}</Text>
-        )}
-
-        {profile.right_now && (
-          <Text mb="3" color={mutedColor} fontStyle="italic">
-            Right now: {profile.right_now}
-          </Text>
-        )}
-
-        {(workAreas.length > 0 || skills.length > 0) && (
-          <VStack align="start" gap="3" mb="4">
-            {workAreas.length > 0 && (
-              <Box>
-                <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb="2">
-                  Work Areas
-                </Text>
-                <HStack gap="2" flexWrap="wrap">
-                  {workAreas.map((area) => (
-                    <Badge key={area} variant="subtle" colorPalette="blue">
-                      {area}
-                    </Badge>
-                  ))}
-                </HStack>
-              </Box>
-            )}
-            {skills.length > 0 && (
-              <Box>
-                <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb="2">
-                  Skills
-                </Text>
-                <HStack gap="2" flexWrap="wrap">
-                  {skills.map((skill) => (
-                    <Badge key={skill} variant="subtle" colorPalette="green">
-                      {skill}
-                    </Badge>
-                  ))}
-                </HStack>
-              </Box>
-            )}
-          </VStack>
         )}
 
         {/* Group affiliations */}

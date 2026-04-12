@@ -18,6 +18,9 @@ export interface PublicMemberProfile {
   username: string;
   display_name: string;
   quick_intro: string;
+  right_now: string;
+  skills: string;
+  work_areas: string;
   avatar_url: string;
   bio_json: Record<string, unknown> | null;
   profile_image_url: string | null;

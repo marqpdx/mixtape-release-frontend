@@ -34,8 +34,6 @@ interface ProfileFormData {
   display_name: string;
   quick_intro: string;
   right_now: string;
-  skills: string;
-  work_areas: string;
   practice_area: string;
   location: string;
   avatar_url: string;
@@ -69,8 +67,6 @@ export default function MemberProfileEdit() {
       display_name: "",
       quick_intro: "",
       right_now: "",
-      skills: "",
-      work_areas: "",
       practice_area: "",
       location: "",
       avatar_url: "",
@@ -91,8 +87,6 @@ export default function MemberProfileEdit() {
     setValue("display_name", member.display_name || "");
     setValue("quick_intro", member.quick_intro || "");
     setValue("right_now", member.right_now || "");
-    setValue("skills", member.skills || "");
-    setValue("work_areas", member.work_areas || "");
     setValue("practice_area", member.practice_area || "");
     setValue("location", member.location || "");
     setValue("avatar_url", member.avatar_url || "");
@@ -113,8 +107,6 @@ export default function MemberProfileEdit() {
         display_name: values.display_name || undefined,
         quick_intro: values.quick_intro || undefined,
         right_now: values.right_now || undefined,
-        skills: values.skills || undefined,
-        work_areas: values.work_areas || undefined,
         practice_area: values.practice_area || undefined,
         location: values.location || undefined,
         avatar_url: values.avatar_url || undefined,
@@ -356,49 +348,6 @@ export default function MemberProfileEdit() {
 
             <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
               <Field.Root flex={1}>
-                <Field.Label>Skills</Field.Label>
-                <Textarea
-                  {...register("skills", {
-                    maxLength: {
-                      value: 400,
-                      message: "Skills must be 400 characters or less",
-                    },
-                  })}
-                  placeholder="A few skills, capacities, or areas of expertise"
-                  rows={2}
-                  resize="vertical"
-                />
-                <Field.HelperText>
-                  Short freeform list is fine for now.
-                </Field.HelperText>
-                {errors.skills && (
-                  <Field.ErrorText>{errors.skills.message}</Field.ErrorText>
-                )}
-              </Field.Root>
-              <Field.Root flex={1}>
-                <Field.Label>Work areas</Field.Label>
-                <Textarea
-                  {...register("work_areas", {
-                    maxLength: {
-                      value: 400,
-                      message: "Work areas must be 400 characters or less",
-                    },
-                  })}
-                  placeholder="Current focus areas, domains, or kinds of work"
-                  rows={2}
-                  resize="vertical"
-                />
-                <Field.HelperText>
-                  What you are actively working in or around.
-                </Field.HelperText>
-                {errors.work_areas && (
-                  <Field.ErrorText>{errors.work_areas.message}</Field.ErrorText>
-                )}
-              </Field.Root>
-            </HStack>
-
-            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
-              <Field.Root flex={1}>
                 <Field.Label>Practice area</Field.Label>
                 <Input
                   {...register("practice_area", { maxLength: { value: 120, message: "120 characters max" } })}
@@ -470,9 +419,6 @@ export default function MemberProfileEdit() {
               if (member) {
                 setValue("display_name", member.display_name || "");
                 setValue("quick_intro", member.quick_intro || "");
-                setValue("right_now", member.right_now || "");
-                setValue("skills", member.skills || "");
-                setValue("work_areas", member.work_areas || "");
                 setValue("avatar_url", member.avatar_url || "");
                 setValue("profile_image", member.profile_image || "");
                 setValue("background_image", member.background_image || "");

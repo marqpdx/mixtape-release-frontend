@@ -224,27 +224,12 @@ export default function Composer({ onPosted }: ComposerProps) {
         Composer
       </Heading>
 
-      <Box
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        bg={useColorModeValue('blue.50', 'gray.800')}
-        p={3}
-      >
-        <Text fontSize="sm" fontWeight="medium" mb={1}>
-          Capture quickly, then decide where it goes.
-        </Text>
-        <Text fontSize="xs" color={mutedColor}>
-          Save privately as a Seed, or send it outward to your Storyline when it is ready to share.
-        </Text>
-      </Box>
-
       {/* Input area */}
       <Box>
         <Textarea
           value={text}
           onChange={handleTextChange}
-          placeholder="Capture a thought, note, or post..."
+          placeholder="Capture a thought..."
           bg={inputBg}
           borderColor={borderColor}
           borderRadius="lg"
@@ -347,10 +332,10 @@ export default function Composer({ onPosted }: ComposerProps) {
               variant="ghost"
               onClick={handleSaveDraft}
               disabled={!hasContent || isPosting || isRecording}
-              title="Save privately as a Seed"
+              title="Save as draft"
             >
               <IconDeviceFloppy size={16} />
-              Save as Seed
+              Draft
             </Button>
             <Button
               size="sm"
@@ -360,7 +345,7 @@ export default function Composer({ onPosted }: ComposerProps) {
               loading={isPosting}
             >
               <IconSend size={16} />
-              Post to Storyline
+              Post
             </Button>
           </HStack>
         </HStack>

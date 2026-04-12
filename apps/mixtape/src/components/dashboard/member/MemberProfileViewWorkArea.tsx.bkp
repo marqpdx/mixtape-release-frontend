@@ -8,14 +8,6 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
-function splitProfileList(value?: string | null): string[] {
-  if (!value) return [];
-  return value
-    .split(/[\n,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 export default function MemberProfileViewWorkArea() {
   const { member, isLoading, error } = useMyMemberProfile();
   const muted = useColorModeValue("gray.600", "gray.400");
@@ -47,8 +39,6 @@ export default function MemberProfileViewWorkArea() {
   }
 
   const displayName = member.display_name || member.username;
-  const skills = splitProfileList(member.skills);
-  const workAreas = splitProfileList(member.work_areas);
 
   return (
     <VStack gap={6} align="stretch">
@@ -65,45 +55,6 @@ export default function MemberProfileViewWorkArea() {
           <Text mt={4} color={muted}>
             {member.quick_intro}
           </Text>
-        )}
-
-        {member.right_now && (
-          <Text mt={3} fontSize="sm" color={muted} fontStyle="italic">
-            Right now: {member.right_now}
-          </Text>
-        )}
-
-        {(skills.length > 0 || workAreas.length > 0) && (
-          <VStack mt={4} gap={3} align="stretch">
-            {workAreas.length > 0 && (
-              <Box>
-                <Text fontSize="sm" fontWeight="medium" color={muted} mb={2}>
-                  Work Areas
-                </Text>
-                <HStack gap={2} flexWrap="wrap">
-                  {workAreas.map((area) => (
-                    <Badge key={area} variant="subtle" colorScheme="blue">
-                      {area}
-                    </Badge>
-                  ))}
-                </HStack>
-              </Box>
-            )}
-            {skills.length > 0 && (
-              <Box>
-                <Text fontSize="sm" fontWeight="medium" color={muted} mb={2}>
-                  Skills
-                </Text>
-                <HStack gap={2} flexWrap="wrap">
-                  {skills.map((skill) => (
-                    <Badge key={skill} variant="subtle" colorScheme="green">
-                      {skill}
-                    </Badge>
-                  ))}
-                </HStack>
-              </Box>
-            )}
-          </VStack>
         )}
       </Box>
 

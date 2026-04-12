@@ -30,14 +30,6 @@ import { Divider } from "@components/common/Divider";
 import { MixtapeAlert } from "@/components/ui/alerts";
 import HeroImageBanner from "@/components/common/HeroImageBanner";
 
-function splitProfileList(value?: string | null): string[] {
-  if (!value) return [];
-  return value
-    .split(/[\n,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 /**
  * DetailItem - displays a labeled field with icon
  */
@@ -126,8 +118,6 @@ const ProfileShowPage = () => {
     month: "long",
     day: "numeric",
   });
-  const skills = splitProfileList(member.skills);
-  const workAreas = splitProfileList(member.work_areas);
 
   return (
     <Container maxW="4xl" py={8}>
@@ -191,47 +181,7 @@ const ProfileShowPage = () => {
                   value={member.quick_intro}
                 />
               )}
-              {member.right_now && (
-                <DetailItem
-                  icon={IconQuote}
-                  label="Right Now"
-                  value={member.right_now}
-                />
-              )}
             </Grid>
-
-            {(workAreas.length > 0 || skills.length > 0) && (
-              <Box w="100%">
-                {workAreas.length > 0 && (
-                  <Box mb={skills.length > 0 ? 4 : 0}>
-                    <Text fontWeight="medium" color="gray.600" fontSize="sm" mb={2}>
-                      Work Areas
-                    </Text>
-                    <HStack gap={2} flexWrap="wrap">
-                      {workAreas.map((area) => (
-                        <Button key={area} size="xs" variant="outline" pointerEvents="none">
-                          {area}
-                        </Button>
-                      ))}
-                    </HStack>
-                  </Box>
-                )}
-                {skills.length > 0 && (
-                  <Box>
-                    <Text fontWeight="medium" color="gray.600" fontSize="sm" mb={2}>
-                      Skills
-                    </Text>
-                    <HStack gap={2} flexWrap="wrap">
-                      {skills.map((skill) => (
-                        <Button key={skill} size="xs" variant="outline" pointerEvents="none">
-                          {skill}
-                        </Button>
-                      ))}
-                    </HStack>
-                  </Box>
-                )}
-              </Box>
-            )}
 
             {/* Roles */}
             {member.roles && member.roles.length > 0 && (

@@ -30,9 +30,8 @@ export default function WritingSection({
   isOwner = true,
   currentUsername,
 }: WritingSectionProps) {
-  const [feedMode, setFeedMode] = useState<FeedMode>(isOwner ? 'streams' : 'storyline');
+  const [feedMode, setFeedMode] = useState<FeedMode>('storyline');
   const headingColor = useColorModeValue('gray.700', 'gray.300');
-  const mutedColor = useColorModeValue('gray.500', 'gray.400');
 
   return (
     <VStack gap={6} align="stretch">
@@ -66,11 +65,6 @@ export default function WritingSection({
           )}
         </HStack>
       </HStack>
-      {isOwner && feedMode === 'streams' && (
-        <Text fontSize="sm" color={mutedColor} mt={-3}>
-          See what the people you follow are posting, then jump back to your own Storyline when you want to publish.
-        </Text>
-      )}
       {isOwner && feedMode === 'streams' ? (
         <StreamsFeed />
       ) : (

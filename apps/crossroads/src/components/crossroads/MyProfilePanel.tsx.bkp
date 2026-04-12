@@ -24,8 +24,6 @@ export default function MyProfilePanel() {
   const [displayName, setDisplayName] = useState('');
   const [quickIntro, setQuickIntro] = useState('');
   const [rightNow, setRightNow] = useState('');
-  const [skills, setSkills] = useState('');
-  const [workAreas, setWorkAreas] = useState('');
 
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -36,8 +34,6 @@ export default function MyProfilePanel() {
     setDisplayName(member.display_name || '');
     setQuickIntro(member.quick_intro || '');
     setRightNow(member.right_now || '');
-    setSkills(member.skills || '');
-    setWorkAreas(member.work_areas || '');
   }, [member]);
 
   const handleSave = async () => {
@@ -47,8 +43,6 @@ export default function MyProfilePanel() {
         display_name: displayName.trim() || undefined,
         quick_intro: quickIntro.trim() || undefined,
         right_now: rightNow.trim() || undefined,
-        skills: skills.trim() || undefined,
-        work_areas: workAreas.trim() || undefined,
       });
       toaster.create({
         title: 'Profile updated',
@@ -110,30 +104,6 @@ export default function MyProfilePanel() {
               placeholder="A few words about how you are right now"
               rows={2}
               maxLength={200}
-              disabled={isLoading || isUpdating}
-            />
-          </Field.Root>
-
-          <Field.Root>
-            <Field.Label>Skills</Field.Label>
-            <Textarea
-              value={skills}
-              onChange={(event) => setSkills(event.target.value)}
-              placeholder="A few skills, capacities, or areas of expertise"
-              rows={2}
-              maxLength={400}
-              disabled={isLoading || isUpdating}
-            />
-          </Field.Root>
-
-          <Field.Root>
-            <Field.Label>Work areas</Field.Label>
-            <Textarea
-              value={workAreas}
-              onChange={(event) => setWorkAreas(event.target.value)}
-              placeholder="Current work areas, domains, or kinds of work"
-              rows={2}
-              maxLength={400}
               disabled={isLoading || isUpdating}
             />
           </Field.Root>

@@ -46,7 +46,6 @@ interface NavItem {
   href: string;
   section: NavSection;
   adminOnly?: boolean;
-  superuserOnly?: boolean;
   stewardOnly?: boolean;
   memberOnly?: boolean;
   shortLabel?: string;
@@ -65,7 +64,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Authenticated section (members + admins)
   { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
+  { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", adminOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "help", label: "Help", href: "/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
@@ -169,7 +168,6 @@ export default function UnifiedNavbar({
   // Filter items based on current section and permissions
   const visibleItems = NAV_ITEMS.filter(item => {
     if (item.section !== navSection) return false;
-    if (item.superuserOnly && !identity?.is_superuser) return false;
     if (item.adminOnly && !isAdmin) return false;
     if (item.stewardOnly && !isSteward) return false;
     if (item.memberOnly && !identity) return false;
@@ -374,31 +372,21 @@ export default function UnifiedNavbar({
                     <MenuItem value="profile" asChild>
                       <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
                         <IconUser size={16} />
-                        My Storyline
+                        Profile
                       </Link>
                     </MenuItem>
-                    <MenuItem value="dashboard" asChild>
-                      <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
+                    <MenuItem value="hub" asChild>
+                      <Link as={NextLink} href={resolveHref('/member/{username}/hub')} display="flex" gap={2}>
                         <IconLayoutDashboard size={16} />
-                        Dashboard
+                        Hub
                       </Link>
                     </MenuItem>
-                    {identity?.is_superuser && (
-                      <MenuItem value="hub" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/hub')} display="flex" gap={2}>
-                          <IconLayoutDashboard size={16} />
-                          Hub
-                        </Link>
-                      </MenuItem>
-                    )}
-                    {identity?.is_superuser && (
-                      <MenuItem value="settings" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/settings')} display="flex" gap={2}>
-                          <IconSettings size={16} />
-                          Settings
-                        </Link>
-                      </MenuItem>
-                    )}
+                    <MenuItem value="settings" asChild>
+                      <Link as={NextLink} href={resolveHref('/member/{username}/settings')} display="flex" gap={2}>
+                        <IconSettings size={16} />
+                        Settings
+                      </Link>
+                    </MenuItem>
                     <MenuSeparator />
                     <MenuItem
                       value="logout"
