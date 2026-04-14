@@ -234,7 +234,7 @@ export default function GroupPublicPage() {
             <HStack gap="0" flexWrap="wrap">
               {group.member_preview.map((m, i) => (
                 <ChakraLink asChild key={m.username}>
-                  <NextLink href={`/member/${m.username}`}>
+                  <NextLink href={`/members/${m.username}`}>
                     <Box
                       w="36px"
                       h="36px"

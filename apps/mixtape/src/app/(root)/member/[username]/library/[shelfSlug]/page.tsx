@@ -152,7 +152,7 @@ export default function MemberShelfPage() {
   const handleItemClick = useCallback(
     (item: ContainerItem) => {
       const ci = item as PlacementContainerItem;
-      router.push(`/member/${username}/writing/${ci.meta.pieceSlug}`);
+      router.push(`/members/${username}/writing/${ci.meta.pieceSlug}`);
     },
     [router, username]
   );
@@ -189,7 +189,7 @@ export default function MemberShelfPage() {
         <VStack align="stretch" gap={6}>
           <Link
             as={NextLink}
-            href={`/app/${member.username}/library`}
+            href={`/members/${member.username}/library`}
             color="green.600"
             fontSize="sm"
           >

@@ -842,7 +842,7 @@ export default function WritingListWrapper({
           </Box>
           {sponsor.type === "member" && (
             <Button asChild size="sm" variant="outline">
-              <NextLink href={`/member/${sponsor.slug}/library`}>View Public Library</NextLink>
+              <NextLink href={`/members/${sponsor.slug}/library`}>View Public Library</NextLink>
             </Button>
           )}
         </HStack>

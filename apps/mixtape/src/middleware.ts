@@ -89,11 +89,31 @@ export function middleware(request: NextRequest) {
 
   const isAuthenticated = !!refreshToken;
 
-  // Rewrite /@username/library to /member/username/library
+  // Redirect /@username/library to canonical public member library path
   const basePath = "/app";
   const normalizedPath = pathname.startsWith(basePath)
     ? pathname.slice(basePath.length) || "/"
     : pathname;
+
+  const publicMemberMatch = normalizedPath.match(
+    /^\/member\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+)?)?$/
+  );
+  if (publicMemberMatch) {
+    const username = publicMemberMatch[1];
+    const rest = publicMemberMatch[2] || "";
+    const redirectUrl = new URL(`${basePath}/members/${username}${rest}`, request.url);
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
+  const pluralMemberMatch = normalizedPath.match(
+    /^\/members\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+)?)?$/
+  );
+  if (pluralMemberMatch) {
+    const username = pluralMemberMatch[1];
+    const rest = pluralMemberMatch[2] || "";
+    const rewriteUrl = new URL(`${basePath}/member/${username}${rest}`, request.url);
+    return NextResponse.rewrite(rewriteUrl);
+  }
 
   // Rewrite /{default-group-slug} to Community Hub
   const defaultGroupSlug = process.env.MIXTAPE_DEFAULT_GROUP_SLUG || "crossroads";
@@ -106,19 +126,19 @@ export function middleware(request: NextRequest) {
     if (match) {
       const username = match[1];
       const rest = match[2] || "";
-      const rewriteUrl = new URL(`${basePath}/member/${username}${rest}`, request.url);
-      return NextResponse.rewrite(rewriteUrl);
+      const redirectUrl = new URL(`${basePath}/members/${username}${rest}`, request.url);
+      return NextResponse.redirect(redirectUrl, 308);
     }
   }
 
-  // Rewrite /{username}/library/... to /member/{username}/library/...
+  // Redirect /{username}/library/... to canonical public member library path
   if (normalizedPath.startsWith("/") && normalizedPath.includes("/library")) {
     const match = normalizedPath.match(/^\/([^/]+)(\/library(?:\/.*)?)$/);
     if (match) {
       const username = match[1];
       const rest = match[2] || "";
-      const rewriteUrl = new URL(`${basePath}/member/${username}${rest}`, request.url);
-      return NextResponse.rewrite(rewriteUrl);
+      const redirectUrl = new URL(`${basePath}/members/${username}${rest}`, request.url);
+      return NextResponse.redirect(redirectUrl, 308);
     }
   }
 
@@ -133,8 +153,7 @@ export function middleware(request: NextRequest) {
   const isProtectedPage = pathname.startsWith('/app/dashboard') ||
                           pathname.startsWith('/app/settings') ||
                           pathname.startsWith('/app/admin') ||
-                          pathname.startsWith('/app/profile') ||
-                          pathname.startsWith('/app/members');
+                          pathname.startsWith('/app/profile');
 
   // Redirect unauthenticated users trying to access protected pages
   if (isProtectedPage && !isAuthenticated) {

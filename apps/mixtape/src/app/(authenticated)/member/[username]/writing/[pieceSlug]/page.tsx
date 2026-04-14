@@ -46,7 +46,7 @@ export default function MemberWritingPiecePage() {
   const headerSubtitle = member?.username ? `@${member.username}` : undefined
   const isLoading = identityLoading || memberLoading || pieceLoading
 
-  const libraryUrl = `/member/${usernameParam}/library`
+  const libraryUrl = `/members/${usernameParam}/library`
 
   if (isLoading) {
     return (

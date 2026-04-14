@@ -38,7 +38,7 @@ export async function generateMetadata({
     openGraph: {
       title: name,
       description: description || undefined,
-      url: `${SITE_URL}/member/${username}`,
+      url: `${SITE_URL}/members/${username}`,
       type: "profile",
       ...(image ? { images: [{ url: image }] } : {}),
     },

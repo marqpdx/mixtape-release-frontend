@@ -140,7 +140,7 @@ export default function PersonalOverview({
                   setActiveSection("edit-profile");
                   return;
                 }
-                router.push(`/member/${identity.username}`);
+                router.push(`/members/${identity.username}`);
               }}
             >
               <HStack>
@@ -245,7 +245,7 @@ export default function PersonalOverview({
                     setActiveSection("edit-profile");
                     return;
                   }
-                  router.push(`/member/${identity.username}`);
+                  router.push(`/members/${identity.username}`);
                 }}
               >
                 Edit Profile

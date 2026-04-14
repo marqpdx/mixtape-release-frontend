@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default async function DeprecatedMemberPage({
+export default async function MemberLibraryIndexPage({
   params,
 }: {
   params: Promise<{ username: string }>;

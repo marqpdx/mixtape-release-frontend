@@ -114,7 +114,7 @@ export function useMemberLibrary(
         title: p.display?.title || p.piece_title || "Untitled",
         type: (p.writing_kind || "document") as LibraryItem["type"],
         addedAt: p.published_at || p.created_at,
-        url: `/member/${username}/writing/${p.piece_slug}`,
+        url: `/members/${username}/writing/${p.piece_slug}`,
         excerpt: p.display?.excerpt || undefined,
       }))
 
