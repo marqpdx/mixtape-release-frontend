@@ -425,3 +425,22 @@ export async function fetchApertureOrientation(limit = 10): Promise<ApertureOrie
   const res = await axiosInstance.get(`/api/members/me/aperture/orientation?limit=${limit}`);
   return res.data;
 }
+
+export interface ApertureTypeaheadItem {
+  id: string;
+  title: string;
+  status: InitiativeResponse['status'];
+  is_personal: boolean;
+  updated_at: string | null;
+}
+
+export interface ApertureTypeaheadResponse {
+  initiatives: ApertureTypeaheadItem[];
+}
+
+export async function fetchApertureInitiativeTypeahead(q: string, limit = 10): Promise<ApertureTypeaheadResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (q) params.set("q", q);
+  const res = await axiosInstance.get(`/api/members/me/aperture/initiatives?${params}`);
+  return res.data;
+}
