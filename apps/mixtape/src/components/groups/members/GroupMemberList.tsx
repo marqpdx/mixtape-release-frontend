@@ -30,7 +30,6 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership, GroupRole } from "@mixtape/core/types/groupTypes";
-import { useRouter } from "next/navigation";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -70,8 +69,6 @@ export function GroupMemberList({
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
   const inputBg = useColorModeValue('white', 'gray.700');
-  const router = useRouter();
-
   const AVATAR_SIZE = 148;
   const viewModeStorageKey = `group_members_view_mode:${group.slug}`;
 

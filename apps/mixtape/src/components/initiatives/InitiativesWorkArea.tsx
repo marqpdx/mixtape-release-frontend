@@ -27,9 +27,10 @@ import {
 import {
   IconArrowLeft,
   IconBrain,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconClipboardText,
+  IconChevronUp,
   IconDeviceFloppy,
   IconFileImport,
   IconLayoutGrid,
@@ -41,6 +42,8 @@ import {
   IconSend,
   IconX,
 } from "@tabler/icons-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ImportSessionPanel from "./ImportSessionPanel";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { HelpTip } from "@/components/help/HelpTip";
@@ -52,7 +55,6 @@ import { routeArtifactToPuddlejump } from "@mixtape/api/clients/initiatives/init
 import type {
   ArtifactResponse,
   InitiativeResponse,
-  SessionDistillation,
   SessionResponse,
 } from "@mixtape/api/clients/initiatives/initiativesApi";
 
@@ -88,6 +90,25 @@ const SESSION_INTENT_LABELS: Record<string, string> = {
 };
 
 const CANVAS_FENCE_TRIGGER = "```doc";
+
+const mdBodyStyles = {
+  "& p": { mb: 3 },
+  "& p:last-child": { mb: 0 },
+  "& h1, & h2, & h3, & h4": { fontWeight: "bold", mt: 4, mb: 2 },
+  "& h1": { fontSize: "xl" },
+  "& h2": { fontSize: "lg" },
+  "& h3": { fontSize: "md" },
+  "& ul, & ol": { pl: 5, mb: 3 },
+  "& li": { mb: 1 },
+  "& li > ul, & li > ol": { mt: 1, mb: 0 },
+  "& code": { fontFamily: "mono", fontSize: "0.875em", bg: "blackAlpha.100", px: "4px", borderRadius: "sm" },
+  "& pre": { bg: "blackAlpha.100", p: 3, borderRadius: "md", overflowX: "auto", mb: 3, fontSize: "sm" },
+  "& pre code": { bg: "transparent", p: 0 },
+  "& blockquote": { borderLeft: "3px solid", borderColor: "gray.300", pl: 3, color: "gray.600", mb: 3 },
+  "& strong": { fontWeight: "semibold" },
+  "& hr": { my: 4 },
+  "& a": { color: "blue.500", textDecoration: "underline" },
+};
 
 function extractCanvasDoc(text: string): string | null {
   const startIdx = text.indexOf(CANVAS_FENCE_TRIGGER);
@@ -441,7 +462,7 @@ function InitiativeCard({
           <MomentumBar score={initiative.momentum_score} />
           <Text fontSize="xs" color={mutedText}>
             {initiative.last_session_at
-              ? `Last session: ${new Date(initiative.last_session_at).toLocaleDateString()}`
+              ? `Last run: ${new Date(initiative.last_session_at).toLocaleDateString()}`
               : "No sessions yet"}
           </Text>
         </VStack>
@@ -587,10 +608,10 @@ function InitiativeDetailView({
 
       <Separator />
 
-      {/* Sessions */}
+      {/* Runs */}
       <VStack align="stretch" gap={4}>
         <HStack justify="space-between">
-          <Heading size="md">Sessions</Heading>
+          <Heading size="md">Runs</Heading>
           <HStack gap={2}>
             <Button
               size="sm"
@@ -607,7 +628,7 @@ function InitiativeDetailView({
               onClick={handleNewSession}
             >
               <IconPlus size={16} />
-              New Session
+              New Run
             </Button>
           </HStack>
         </HStack>
@@ -632,7 +653,7 @@ function InitiativeDetailView({
         {!showImport && sessions.length === 0 ? (
           <Box py={6} textAlign="center">
             <Text color={mutedText} fontSize="sm">
-              No sessions yet. Start a session to begin a working conversation.
+              No runs yet. Start a run to begin a working conversation.
             </Text>
           </Box>
         ) : !showImport ? (
@@ -831,7 +852,7 @@ function SessionRow({
               </Text>
               <Text fontSize="xs" color={mutedText}>
                 {new Date(session.created_at).toLocaleDateString()} ·{" "}
-                {session.raw_transcript.length} turns · {session.artifact_count}{" "}
+                {session.raw_transcript.length} exchanges · {session.artifact_count}{" "}
                 artifacts
               </Text>
             </VStack>
@@ -1166,9 +1187,13 @@ function SessionDetailView({
   const [actionPanelOpen, setActionPanelOpen] = useState(false);
   const [canvasDoc, setCanvasDoc] = useState<string | null>(null);
   const processedTurnCountRef = useRef(0);
+  const [askNavIndex, setAskNavIndex] = useState(-1);
+  const askTurnRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const conversationContainerRef = useRef<HTMLDivElement>(null);
 
   const mutedText = useColorModeValue("gray.600", "gray.400");
-  const humanTurnBg = useColorModeValue("gray.50", "gray.700");
+  // const humanTurnBg = useColorModeValue("gray.50", "gray.700");
   const assistantTurnBg = useColorModeValue("blue.50", "blue.900");
   const streamingBg = useColorModeValue("purple.50", "purple.900");
   const panelBorderColor = useColorModeValue("gray.200", "gray.600");
@@ -1185,6 +1210,14 @@ function SessionDetailView({
     }
   }, [localTurns]);
 
+  // Scroll conversation container to top when a new AI response completes
+  useEffect(() => {
+    const lastTurn = localTurns[localTurns.length - 1];
+    if (lastTurn?.role === "assistant" && !lastTurn.streaming) {
+      conversationContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [localTurns]);
+
   // Populate draft form when distillation is proposed
   useEffect(() => {
     if (session?.distillation_state === "proposed" && session.distillation) {
@@ -1198,7 +1231,7 @@ function SessionDetailView({
         notes: typeof d.notes === "string" ? d.notes : "",
       });
     }
-  }, [session?.id, session?.distillation_state]);
+  }, [session?.id, session?.distillation_state, session?.distillation]);
 
   const handlePause = async () => {
     setPausing(true);
@@ -1357,7 +1390,7 @@ function SessionDetailView({
         <VStack flex={1} align="stretch" gap={3} pr={rightPanelVisible ? 4 : 0}>
           <HStack gap={2} align="center">
             <IconBrain size={18} />
-            <Heading size="sm">Session Exchange</Heading>
+            <Heading size="sm">Run Exchange</Heading>
             {session.raw_transcript.length === 0 &&
               localTurns.length === 0 &&
               commandCards.length === 0 && (
@@ -1367,81 +1400,314 @@ function SessionDetailView({
               )}
           </HStack>
 
-          {/* Persisted transcript */}
-          {session.raw_transcript.length > 0 && (
+          {/* Input — only for open runs, placed above transcript */}
+          {isOpen && (
             <VStack align="stretch" gap={2}>
-              {session.raw_transcript.map((turn, i) => (
-                <Box
-                  key={i}
-                  p={3}
-                  borderRadius="md"
-                  bg={
-                    turn.speaker === "human" ? humanTurnBg : assistantTurnBg
-                  }
-                >
-                  <HStack gap={2} mb={1}>
-                    <Badge
-                      size="sm"
-                      colorPalette={
-                        turn.speaker === "human" ? "gray" : "blue"
-                      }
+              {/* Ask history — scrollable list of prior human turns */}
+              {(() => {
+                const allAsks = [
+                  ...session.raw_transcript
+                    .filter((t) => t.speaker === "human")
+                    .map((t) => t.text),
+                  ...localTurns
+                    .filter((t) => t.role === "user")
+                    .map((t) => t.text),
+                ];
+                if (allAsks.length === 0) return null;
+                const fillAsk = (idx: number) => {
+                  const ask = allAsks[idx];
+                  setAskNavIndex(idx);
+                  setMessage(ask);
+                  requestAnimationFrame(() => {
+                    const el = textareaRef.current;
+                    if (el) { el.focus(); el.setSelectionRange(ask.length, ask.length); }
+                    // Scroll only the conversation container — do not touch the browser scroll.
+                    const target = askTurnRefs.current[idx];
+                    const container = conversationContainerRef.current;
+                    if (target && container) {
+                      container.scrollTop = target.offsetTop - container.offsetTop;
+                    }
+                  });
+                };
+                return (
+                  <HStack gap={2} align="flex-start">
+                    <Box
+                      flex={1}
+                      maxH="80px"
+                      overflowY="auto"
+                      border="1px solid"
+                      borderColor={panelBorderColor}
+                      borderRadius="4px"
+                      px={2}
+                      py={1}
                     >
-                      {turn.speaker === "human"
-                        ? turn.username || "user"
-                        : "assistant"}
-                    </Badge>
-                    <Text fontSize="xs" color={mutedText}>
-                      {new Date(turn.timestamp).toLocaleTimeString()}
-                    </Text>
+                      <VStack align="stretch" gap={0}>
+                        {allAsks.map((ask, i) => (
+                          <Text
+                            key={i}
+                            fontSize="sm"
+                            color={askNavIndex === i ? "purple.500" : mutedText}
+                            cursor="pointer"
+                            py="2px"
+                            lineClamp={1}
+                            onClick={() => fillAsk(i)}
+                          >
+                            {ask}
+                          </Text>
+                        ))}
+                      </VStack>
+                    </Box>
+                    <VStack gap={1}>
+                      <IconButton
+                        size="xs"
+                        variant="ghost"
+                        aria-label="Previous ask"
+                        disabled={allAsks.length === 0 || askNavIndex <= 0}
+                        onClick={() => fillAsk(Math.max(0, askNavIndex <= 0 ? allAsks.length - 1 : askNavIndex - 1))}
+                      >
+                        <IconChevronUp size={14} />
+                      </IconButton>
+                      <IconButton
+                        size="xs"
+                        variant="ghost"
+                        aria-label="Next ask"
+                        disabled={allAsks.length === 0}
+                        onClick={() => fillAsk(askNavIndex >= allAsks.length - 1 ? 0 : askNavIndex + 1)}
+                      >
+                        <IconChevronDown size={14} />
+                      </IconButton>
+                    </VStack>
                   </HStack>
-                  <Text fontSize="sm" whiteSpace="pre-wrap">
-                    {turn.text}
-                  </Text>
-                </Box>
-              ))}
+                );
+              })()}
+
+              {/* Retry — shown when last ask has no response or exchange errored */}
+              {(() => {
+                const lastLocalTurn = localTurns[localTurns.length - 1];
+                const unanswered = lastLocalTurn?.role === "user";
+                const allPersistedAsks = session.raw_transcript.filter(t => t.speaker === "human");
+                const lastPersistedAsk = allPersistedAsks[allPersistedAsks.length - 1]?.text;
+                const showRetry = (exchangeError || unanswered) && (lastPersistedAsk || lastLocalTurn?.text);
+                if (!showRetry) return null;
+                const retryText = unanswered ? lastLocalTurn.text : lastPersistedAsk!;
+                return (
+                  <HStack gap={2} align="center" p={2} borderRadius="md" bg={streamingBg}>
+                    <Text fontSize="sm" color={mutedText} flex={1} lineClamp={1}>
+                      Re-ask: {retryText}
+                    </Text>
+                    <Button
+                      size="xs"
+                      colorPalette="purple"
+                      variant="outline"
+                      onClick={() => {
+                        clearExchangeError();
+                        setMessage(retryText);
+                        requestAnimationFrame(() => {
+                          const el = textareaRef.current;
+                          if (el) { el.focus(); el.setSelectionRange(retryText.length, retryText.length); }
+                        });
+                      }}
+                    >
+                      Retry
+                    </Button>
+                  </HStack>
+                );
+              })()}
+
+              <HStack gap={2} align="flex-end">
+                <Textarea
+                  ref={textareaRef}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={"// · context\n/? · vocab\n// Name · sub-initiative"}
+                  disabled={isStreaming || ending || pausing}
+                  rows={5}
+                  borderColor={panelBorderColor}
+                  borderRadius="4px"
+                  resize="none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  flex={1}
+                />
+                {message && (
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    aria-label="Clear input"
+                    alignSelf="flex-start"
+                    mt={1}
+                    onClick={() => {
+                      setMessage("");
+                      setAskNavIndex(-1);
+                      textareaRef.current?.focus();
+                      conversationContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  >
+                    <IconX size={14} />
+                  </IconButton>
+                )}
+                <Button
+                  colorPalette="purple"
+                  loading={isStreaming}
+                  disabled={!message.trim()}
+                  onClick={handleSend}
+                  alignSelf="flex-end"
+                >
+                  <IconSend size={16} />
+                </Button>
+              </HStack>
+              <HStack justify="space-between" align="center">
+                <Text fontSize="xs" color={mutedText}>
+                  Runs auto-save — close anytime and pick up where you left off.
+                </Text>
+                <HStack gap={2}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    loading={pausing}
+                    disabled={ending}
+                    onClick={handlePause}
+                  >
+                    Pause here
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    colorPalette="purple"
+                    loading={ending}
+                    disabled={pausing}
+                    onClick={handlePauseAndDistill}
+                  >
+                    Pause and distill
+                  </Button>
+                </HStack>
+              </HStack>
+              <HStack gap={1}>
+                <Text fontSize="xs" color={mutedText}>
+                  <Text as="span" fontFamily="mono">{"//"}</Text> · context
+                  {"  "}
+                  <Text as="span" fontFamily="mono">/?</Text> · vocab
+                  {"  "}
+                  <Text as="span" fontFamily="mono">{"// Name"}</Text> · sub-initiative
+                </Text>
+              </HStack>
+            </VStack>
+          )}
+
+          {/* Conversation — scrollable, bounded; most recent at top */}
+          <Box
+            ref={conversationContainerRef}
+            overflowY="auto"
+            maxH="60vh"
+            display="flex"
+            flexDirection="column"
+            gap={0}
+          >
+
+          {/* Persisted transcript — human ask above AI response */}
+          {session.raw_transcript.length > 0 && (
+            <VStack align="stretch" gap={4}>
+              {(() => {
+                // Group flat turns into [ask, response?] pairs for display
+                const pairs: Array<{ ask: typeof session.raw_transcript[0]; response: typeof session.raw_transcript[0] | null; askIndex: number }> = [];
+                let askCount = 0;
+                let i = 0;
+                while (i < session.raw_transcript.length) {
+                  const turn = session.raw_transcript[i];
+                  if (turn.speaker === "human") {
+                    const next = session.raw_transcript[i + 1];
+                    pairs.push({ ask: turn, response: next?.speaker === "assistant" ? next : null, askIndex: askCount++ });
+                    i += next?.speaker === "assistant" ? 2 : 1;
+                  } else {
+                    i++;
+                  }
+                }
+                return [...pairs].reverse().map(({ ask, response, askIndex }) => (
+                  <VStack key={askIndex} align="stretch" gap={2}>
+                    {/* Human ask */}
+                    <Box
+                      ref={(el: HTMLDivElement | null) => { askTurnRefs.current[askIndex] = el; }}
+                      px={2} py={1}
+                    >
+                      <HStack gap={2} mb={1}>
+                        <Badge size="sm" colorPalette="gray">{ask.username || "you"}</Badge>
+                        <Text fontSize="xs" color={mutedText}>{new Date(ask.timestamp).toLocaleTimeString()}</Text>
+                      </HStack>
+                      <Text fontSize="md" fontWeight="medium">{ask.text}</Text>
+                    </Box>
+                    {/* AI response */}
+                    {response && (
+                      <Box p={3} borderRadius="md" bg={assistantTurnBg}>
+                        <Badge size="sm" colorPalette="blue" mb={2}>assistant</Badge>
+                        <Box fontSize="md" css={mdBodyStyles}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{response.text}</ReactMarkdown>
+                        </Box>
+                      </Box>
+                    )}
+                  </VStack>
+                ));
+              })()}
             </VStack>
           )}
 
           {/* Live streaming turns */}
           {localTurns.length > 0 && (
-            <VStack align="stretch" gap={2}>
-              {localTurns.map((turn, i) => (
-                <Box
-                  key={`live-${i}`}
-                  p={3}
-                  borderRadius="md"
-                  bg={
-                    turn.streaming
-                      ? streamingBg
-                      : turn.role === "user"
-                      ? humanTurnBg
-                      : assistantTurnBg
+            <VStack align="stretch" gap={4}>
+              {(() => {
+                const livePairs: Array<{ ask: string; askIndex: number; response: string | null; streaming: boolean }> = [];
+                const persistedAskCount = session.raw_transcript.filter(t => t.speaker === "human").length;
+                let askCount = persistedAskCount;
+                let i = 0;
+                while (i < localTurns.length) {
+                  const turn = localTurns[i];
+                  if (turn.role === "user") {
+                    const next = localTurns[i + 1];
+                    livePairs.push({
+                      ask: turn.text,
+                      askIndex: askCount++,
+                      response: next?.role === "assistant" ? next.text : null,
+                      streaming: next?.streaming ?? false,
+                    });
+                    i += next?.role === "assistant" ? 2 : 1;
+                  } else {
+                    i++;
                   }
-                >
-                  <HStack gap={2} mb={1}>
-                    <Badge
-                      size="sm"
-                      colorPalette={turn.role === "user" ? "gray" : "purple"}
-                      variant={turn.streaming ? "solid" : "outline"}
+                }
+                return [...livePairs].reverse().map(({ ask, askIndex, response, streaming }) => (
+                  <VStack key={`live-${askIndex}`} align="stretch" gap={2}>
+                    {/* Human ask */}
+                    <Box
+                      ref={(el: HTMLDivElement | null) => { askTurnRefs.current[askIndex] = el; }}
+                      px={2} py={1}
                     >
-                      {turn.role === "user"
-                        ? "you"
-                        : turn.streaming
-                        ? "thinking…"
-                        : "assistant"}
-                    </Badge>
-                  </HStack>
-                  <Text fontSize="sm" whiteSpace="pre-wrap">
-                    {turn.text}
-                    {turn.streaming && (
-                      <Text as="span" opacity={0.5}>
-                        {" "}
-                        ▌
-                      </Text>
+                      <Badge size="sm" colorPalette="gray" mb={1}>you</Badge>
+                      <Text fontSize="md" fontWeight="medium">{ask}</Text>
+                    </Box>
+                    {/* AI response */}
+                    {response !== null && (
+                      <Box p={3} borderRadius="md" bg={streaming ? streamingBg : assistantTurnBg}>
+                        <Badge size="sm" colorPalette={streaming ? "purple" : "blue"} variant={streaming ? "solid" : "outline"} mb={2}>
+                          {streaming ? "thinking…" : "assistant"}
+                        </Badge>
+                        {streaming ? (
+                          <Text fontSize="md" whiteSpace="pre-wrap">
+                            {response}
+                            <Text as="span" opacity={0.5}> ▌</Text>
+                          </Text>
+                        ) : (
+                          <Box fontSize="md" css={mdBodyStyles}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{response}</ReactMarkdown>
+                          </Box>
+                        )}
+                      </Box>
                     )}
-                  </Text>
-                </Box>
-              ))}
+                  </VStack>
+                ));
+              })()}
             </VStack>
           )}
 
@@ -1477,75 +1743,7 @@ function SessionDetailView({
             </Alert.Root>
           )}
 
-          {/* Input — only for open sessions */}
-          {isOpen && (
-            <VStack align="stretch" gap={2}>
-              <HStack gap={2} align="flex-end">
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder={"// · context\n/? · vocab\n// Name · sub-initiative"}
-                  disabled={isStreaming || ending || pausing}
-                  rows={5}
-                  borderColor={panelBorderColor}
-                  borderRadius="4px"
-                  resize="none"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  flex={1}
-                />
-                <Button
-                  colorPalette="purple"
-                  loading={isStreaming}
-                  disabled={!message.trim()}
-                  onClick={handleSend}
-                  alignSelf="flex-end"
-                >
-                  <IconSend size={16} />
-                </Button>
-              </HStack>
-              <HStack justify="space-between" align="center">
-                <Text fontSize="xs" color={mutedText}>
-                  Sessions auto-save — close anytime and pick up where you left
-                  off.
-                </Text>
-                <HStack gap={2}>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    loading={pausing}
-                    disabled={ending}
-                    onClick={handlePause}
-                  >
-                    Pause here
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    colorPalette="purple"
-                    loading={ending}
-                    disabled={pausing}
-                    onClick={handlePauseAndDistill}
-                  >
-                    Pause and distill
-                  </Button>
-                </HStack>
-              </HStack>
-              <HStack gap={1}>
-                <Text fontSize="xs" color={mutedText}>
-                  <Text as="span" fontFamily="mono">//</Text> · context
-                  {"  "}
-                  <Text as="span" fontFamily="mono">/?</Text> · vocab
-                  {"  "}
-                  <Text as="span" fontFamily="mono">// Name</Text> · sub-initiative
-                </Text>
-              </HStack>
-            </VStack>
-          )}
+          </Box>{/* end conversation container */}
         </VStack>
 
         {/* Right panel: canvas pane or action panel */}
