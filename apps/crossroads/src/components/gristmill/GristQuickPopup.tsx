@@ -39,6 +39,12 @@ type PersistedDraft = {
   pathname: string;
 };
 
+function truncateTopicLabel(topic: string, maxChars = 18): string {
+  const trimmed = topic.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  return `${trimmed.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+}
+
 function currentRoutePath(): string {
   if (typeof window === "undefined") return "";
   return `${window.location.pathname}${window.location.search}`;
@@ -415,7 +421,7 @@ export default function GristQuickPopup() {
             </HStack>
 
             <VStack align="stretch" gap={2}>
-              <HStack gap={2} wrap="wrap">
+              <HStack gap={2} wrap="nowrap" overflow="hidden">
                 <Button
                   size="xs"
                   borderRadius="full"
@@ -452,24 +458,25 @@ export default function GristQuickPopup() {
                     variant="subtle"
                     onClick={() => setIssueContext(topic)}
                     title={`Use topic context: ${topic}`}
+                    maxW="140px"
+                    minW={0}
+                    flex="1"
+                    overflow="hidden"
                   >
-                    {topic}
+                    {truncateTopicLabel(topic)}
                   </Button>
                 ))}
               </HStack>
               <HStack gap={2} align="center">
-                <Input
+                <Textarea
                   size="xs"
                   value={issueContext}
                   onChange={(event) => setIssueContext(event.currentTarget.value)}
                   placeholder="Context (applies to /issue)"
                   flex="1"
                   minW={0}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                    }
-                  }}
+                  minH="56px"
+                  resize="vertical"
                 />
                 <Button
                   size="xs"
