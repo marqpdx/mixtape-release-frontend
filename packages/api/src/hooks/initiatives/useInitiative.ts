@@ -25,7 +25,7 @@ interface UseInitiativeReturn {
   proposeDistillation: (sessionId: string) => Promise<SessionResponse>;
   commitDistillation: (
     sessionId: string,
-    payload: { decisions?: string; open_questions?: string; actions?: string; notes?: string }
+    payload: { decisions?: string[]; open_questions?: string[]; actions?: string[]; notes?: string }
   ) => Promise<SessionResponse>;
 
   // Artifacts
@@ -136,7 +136,7 @@ export function useInitiative(groupSlug: string, initiativeId: string): UseIniti
 
   const commitDistillation = useCallback(async (
     sessionId: string,
-    payload: { decisions?: string; open_questions?: string; actions?: string; notes?: string }
+    payload: { decisions?: string[]; open_questions?: string[]; actions?: string[]; notes?: string }
   ): Promise<SessionResponse> => {
     setError(null);
     try {

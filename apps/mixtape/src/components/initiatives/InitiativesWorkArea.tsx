@@ -5,7 +5,7 @@
 // Top-level work area for Initiatives, wired into GroupWorkArea via section="initiatives-landing".
 // Three views: list → initiative detail → session detail.
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Alert,
   Badge,
@@ -15,6 +15,7 @@ import {
   Field,
   Heading,
   HStack,
+  IconButton,
   Input,
   Separator,
   SimpleGrid,
@@ -26,6 +27,7 @@ import {
 import {
   IconArrowLeft,
   IconBrain,
+  IconChevronLeft,
   IconChevronRight,
   IconClipboardText,
   IconDeviceFloppy,
@@ -85,9 +87,24 @@ const SESSION_INTENT_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const getSessionDistillation = (
-  distillation: SessionResponse["distillation"]
-): SessionDistillation => distillation ?? {};
+const CANVAS_FENCE_TRIGGER = "```doc";
+
+function extractCanvasDoc(text: string): string | null {
+  const startIdx = text.indexOf(CANVAS_FENCE_TRIGGER);
+  if (startIdx === -1) return null;
+  const afterNewline = text.indexOf("\n", startIdx);
+  if (afterNewline === -1) return null;
+  const endIdx = text.indexOf("\n```", afterNewline);
+  if (endIdx === -1) return null;
+  return text.slice(afterNewline + 1, endIdx);
+}
+
+interface DistillationDraft {
+  decisions: string[];
+  open_questions: string[];
+  actions: string[];
+  notes: string;
+}
 
 // ============================================================================
 // Root — view router
@@ -1111,6 +1128,7 @@ function SessionDetailView({
   onBack,
 }: SessionDetailViewProps) {
   const {
+    initiative,
     sessions,
     artifacts,
     isLoading,
@@ -1133,48 +1151,155 @@ function SessionDetailView({
   const session = sessions.find((s) => s.id === sessionId);
   const sessionArtifacts = artifacts.filter((a) => a.session === sessionId);
 
-  const [proposing, setProposing] = useState(false);
+  const [pausing, setPausing] = useState(false);
+  const [ending, setEnding] = useState(false);
   const [committing, setCommitting] = useState(false);
-  const [showCommitForm, setShowCommitForm] = useState(false);
-  const [commitForm, setCommitForm] = useState({
-    decisions: "",
-    open_questions: "",
-    actions: "",
+  const [commandCards, setCommandCards] = useState<
+    Array<{ id: string; type: "context" | "vocab" | "preview"; name?: string }>
+  >([]);
+  const [draftForm, setDraftForm] = useState<DistillationDraft>({
+    decisions: [],
+    open_questions: [],
+    actions: [],
     notes: "",
   });
-  const [closing, setClosing] = useState(false);
+  const [actionPanelOpen, setActionPanelOpen] = useState(false);
+  const [canvasDoc, setCanvasDoc] = useState<string | null>(null);
+  const processedTurnCountRef = useRef(0);
 
   const mutedText = useColorModeValue("gray.600", "gray.400");
   const humanTurnBg = useColorModeValue("gray.50", "gray.700");
   const assistantTurnBg = useColorModeValue("blue.50", "blue.900");
   const streamingBg = useColorModeValue("purple.50", "purple.900");
+  const panelBorderColor = useColorModeValue("gray.200", "gray.600");
+  const panelBg = useColorModeValue("gray.50", "gray.800");
 
-  const handlePropose = async () => {
-    setProposing(true);
-    try {
-      await proposeDistillation(sessionId);
-    } finally {
-      setProposing(false);
+  // Detect canvas doc blocks in completed assistant turns
+  useEffect(() => {
+    if (localTurns.length <= processedTurnCountRef.current) return;
+    const lastTurn = localTurns[localTurns.length - 1];
+    if (lastTurn?.role === "assistant" && !lastTurn.streaming && lastTurn.text) {
+      processedTurnCountRef.current = localTurns.length;
+      const doc = extractCanvasDoc(lastTurn.text);
+      if (doc !== null) setCanvasDoc(doc);
     }
+  }, [localTurns]);
+
+  // Populate draft form when distillation is proposed
+  useEffect(() => {
+    if (session?.distillation_state === "proposed" && session.distillation) {
+      const d = session.distillation as Record<string, unknown>;
+      setDraftForm({
+        decisions: Array.isArray(d.decisions) ? (d.decisions as string[]) : [],
+        open_questions: Array.isArray(d.open_questions)
+          ? (d.open_questions as string[])
+          : [],
+        actions: Array.isArray(d.actions) ? (d.actions as string[]) : [],
+        notes: typeof d.notes === "string" ? d.notes : "",
+      });
+    }
+  }, [session?.id, session?.distillation_state]);
+
+  const handlePause = async () => {
+    setPausing(true);
+    try {
+      await closeSession(sessionId);
+    } catch {
+      // errors surface via useInitiative error state
+    } finally {
+      setPausing(false);
+    }
+  };
+
+  const handlePauseAndDistill = async () => {
+    setEnding(true);
+    try {
+      await closeSession(sessionId);
+      await proposeDistillation(sessionId);
+    } catch {
+      // errors surface via useInitiative error state
+    } finally {
+      setEnding(false);
+    }
+  };
+
+  const handleSlashCommand = (cmd: string) => {
+    if (cmd === "//") {
+      setCommandCards((prev) => [
+        ...prev,
+        { id: Date.now().toString(), type: "context" },
+      ]);
+    } else if (cmd.startsWith("/?")) {
+      setCommandCards((prev) => [
+        ...prev,
+        { id: Date.now().toString(), type: "vocab" },
+      ]);
+    } else if (cmd.startsWith("// ")) {
+      const name = cmd.slice(3).trim();
+      setCommandCards((prev) => [
+        ...prev,
+        { id: Date.now().toString(), type: "preview", name },
+      ]);
+    }
+  };
+
+  const handleSend = () => {
+    const trimmed = message.trim();
+    if (
+      trimmed === "//" ||
+      trimmed.startsWith("/?") ||
+      trimmed.startsWith("// ")
+    ) {
+      handleSlashCommand(trimmed);
+      setMessage("");
+      return;
+    }
+    sendMessage();
   };
 
   const handleCommit = async () => {
     setCommitting(true);
     try {
-      await commitDistillation(sessionId, commitForm);
-      setShowCommitForm(false);
+      await commitDistillation(sessionId, draftForm);
     } finally {
       setCommitting(false);
     }
   };
 
-  const handleClose = async () => {
-    setClosing(true);
-    try {
-      await closeSession(sessionId);
-    } finally {
-      setClosing(false);
-    }
+  const updateDraftItem = (
+    field: keyof Omit<DistillationDraft, "notes">,
+    idx: number,
+    value: string
+  ) => {
+    setDraftForm((prev) => ({
+      ...prev,
+      [field]: prev[field].map((v, i) => (i === idx ? value : v)),
+    }));
+  };
+
+  const removeDraftItem = (
+    field: keyof Omit<DistillationDraft, "notes">,
+    idx: number
+  ) => {
+    setDraftForm((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== idx),
+    }));
+  };
+
+  const addDraftItem = (field: keyof Omit<DistillationDraft, "notes">) => {
+    setDraftForm((prev) => ({
+      ...prev,
+      [field]: [...prev[field], ""],
+    }));
+  };
+
+  const includeCanvasInMessage = () => {
+    if (!canvasDoc) return;
+    const separator = message ? "\n\n" : "";
+    setMessage(
+      `${message}${separator}${CANVAS_FENCE_TRIGGER}\n${canvasDoc}\n\`\`\``
+    );
   };
 
   if (isLoading) {
@@ -1195,9 +1320,14 @@ function SessionDetailView({
   }
 
   const isOpen = !session.ended_at;
+  const isPendingDistillation =
+    session.distillation_state === "none" ||
+    (session.distillation_state as string) === "pending";
+  const rightPanelVisible = canvasDoc !== null || actionPanelOpen;
+  const rightPanelWidth = canvasDoc !== null ? "360px" : "220px";
 
   return (
-    <VStack align="stretch" gap={6}>
+    <VStack align="stretch" gap={3}>
       {/* Back nav */}
       <HStack>
         <Button variant="ghost" size="sm" onClick={onBack}>
@@ -1206,148 +1336,293 @@ function SessionDetailView({
         </Button>
       </HStack>
 
-      {/* Header */}
+      {/* Header — single row */}
       <HStack justify="space-between">
-        <VStack align="start" gap={1}>
-          <HStack gap={2}>
-            <Badge colorPalette={isOpen ? "green" : "gray"}>
-              {isOpen ? "open" : "closed"}
-            </Badge>
-            <Heading size="md">
-              {SESSION_INTENT_LABELS[session.intent] || session.intent}
-            </Heading>
-          </HStack>
+        <HStack gap={2} flexWrap="wrap">
+          <Badge colorPalette={isOpen ? "green" : "gray"}>
+            {isOpen ? "open" : "closed"}
+          </Badge>
+          <Heading size="md">
+            {SESSION_INTENT_LABELS[session.intent] || session.intent}
+          </Heading>
           <Text fontSize="sm" color={mutedText}>
-            {new Date(session.created_at).toLocaleDateString()} ·{" "}
-            {session.raw_transcript.length} turns
+            · {new Date(session.created_at).toLocaleDateString()} · {session.raw_transcript.length} turns
           </Text>
-        </VStack>
-        {isOpen && (
-          <Button
-            size="sm"
-            variant="outline"
-            colorPalette="gray"
-            loading={closing}
-            onClick={handleClose}
-          >
-            <IconX size={16} />
-            Close Session
-          </Button>
-        )}
+        </HStack>
       </HStack>
 
-      {/* AI Exchange */}
-      <VStack align="stretch" gap={3}>
-        <HStack gap={2}>
-          <IconBrain size={18} />
-          <Heading size="sm">Session Exchange</Heading>
-        </HStack>
-
-        {/* Persisted transcript */}
-        {session.raw_transcript.length > 0 && (
-          <VStack align="stretch" gap={2}>
-            {session.raw_transcript.map((turn, i) => (
-              <Box
-                key={i}
-                p={3}
-                borderRadius="md"
-                bg={turn.speaker === "human" ? humanTurnBg : assistantTurnBg}
-              >
-                <HStack gap={2} mb={1}>
-                  <Badge
-                    size="sm"
-                    colorPalette={turn.speaker === "human" ? "gray" : "blue"}
-                  >
-                    {turn.speaker === "human"
-                      ? turn.username || "user"
-                      : "assistant"}
-                  </Badge>
-                  <Text fontSize="xs" color={mutedText}>
-                    {new Date(turn.timestamp).toLocaleTimeString()}
-                  </Text>
-                </HStack>
-                <Text fontSize="sm" whiteSpace="pre-wrap">
-                  {turn.text}
+      {/* Two-panel exchange area */}
+      <HStack align="stretch" gap={0}>
+        {/* Narrative stream */}
+        <VStack flex={1} align="stretch" gap={3} pr={rightPanelVisible ? 4 : 0}>
+          <HStack gap={2} align="center">
+            <IconBrain size={18} />
+            <Heading size="sm">Session Exchange</Heading>
+            {session.raw_transcript.length === 0 &&
+              localTurns.length === 0 &&
+              commandCards.length === 0 && (
+                <Text fontSize="sm" color={mutedText}>
+                  (send a message to start)
                 </Text>
-              </Box>
-            ))}
-          </VStack>
-        )}
-
-        {/* Live streaming turns */}
-        {localTurns.length > 0 && (
-          <VStack align="stretch" gap={2}>
-            {localTurns.map((turn, i) => (
-              <Box
-                key={`live-${i}`}
-                p={3}
-                borderRadius="md"
-                bg={turn.streaming ? streamingBg : turn.role === "user" ? humanTurnBg : assistantTurnBg}
-              >
-                <HStack gap={2} mb={1}>
-                  <Badge
-                    size="sm"
-                    colorPalette={turn.role === "user" ? "gray" : "purple"}
-                    variant={turn.streaming ? "solid" : "outline"}
-                  >
-                    {turn.role === "user" ? "you" : turn.streaming ? "thinking…" : "assistant"}
-                  </Badge>
-                </HStack>
-                <Text fontSize="sm" whiteSpace="pre-wrap">
-                  {turn.text}
-                  {turn.streaming && <Text as="span" opacity={0.5}> ▌</Text>}
-                </Text>
-              </Box>
-            ))}
-          </VStack>
-        )}
-
-        {session.raw_transcript.length === 0 && localTurns.length === 0 && (
-          <Box py={4} textAlign="center">
-            <Text fontSize="sm" color={mutedText}>
-              No turns yet. Send a message to start the conversation.
-            </Text>
-          </Box>
-        )}
-
-        {/* Exchange error */}
-        {exchangeError && (
-          <Alert.Root status="error">
-            <Alert.Indicator />
-            <Alert.Title>{exchangeError}</Alert.Title>
-            <Button size="xs" variant="ghost" onClick={clearExchangeError} ml="auto">
-              Dismiss
-            </Button>
-          </Alert.Root>
-        )}
-
-        {/* Input — only for open sessions */}
-        {isOpen && (
-          <HStack gap={2}>
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask, reflect, or explore…"
-              disabled={isStreaming}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-              flex={1}
-            />
-            <Button
-              colorPalette="purple"
-              loading={isStreaming}
-              disabled={!message.trim()}
-              onClick={sendMessage}
-            >
-              <IconSend size={16} />
-            </Button>
+              )}
           </HStack>
-        )}
-      </VStack>
+
+          {/* Persisted transcript */}
+          {session.raw_transcript.length > 0 && (
+            <VStack align="stretch" gap={2}>
+              {session.raw_transcript.map((turn, i) => (
+                <Box
+                  key={i}
+                  p={3}
+                  borderRadius="md"
+                  bg={
+                    turn.speaker === "human" ? humanTurnBg : assistantTurnBg
+                  }
+                >
+                  <HStack gap={2} mb={1}>
+                    <Badge
+                      size="sm"
+                      colorPalette={
+                        turn.speaker === "human" ? "gray" : "blue"
+                      }
+                    >
+                      {turn.speaker === "human"
+                        ? turn.username || "user"
+                        : "assistant"}
+                    </Badge>
+                    <Text fontSize="xs" color={mutedText}>
+                      {new Date(turn.timestamp).toLocaleTimeString()}
+                    </Text>
+                  </HStack>
+                  <Text fontSize="sm" whiteSpace="pre-wrap">
+                    {turn.text}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
+          )}
+
+          {/* Live streaming turns */}
+          {localTurns.length > 0 && (
+            <VStack align="stretch" gap={2}>
+              {localTurns.map((turn, i) => (
+                <Box
+                  key={`live-${i}`}
+                  p={3}
+                  borderRadius="md"
+                  bg={
+                    turn.streaming
+                      ? streamingBg
+                      : turn.role === "user"
+                      ? humanTurnBg
+                      : assistantTurnBg
+                  }
+                >
+                  <HStack gap={2} mb={1}>
+                    <Badge
+                      size="sm"
+                      colorPalette={turn.role === "user" ? "gray" : "purple"}
+                      variant={turn.streaming ? "solid" : "outline"}
+                    >
+                      {turn.role === "user"
+                        ? "you"
+                        : turn.streaming
+                        ? "thinking…"
+                        : "assistant"}
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="sm" whiteSpace="pre-wrap">
+                    {turn.text}
+                    {turn.streaming && (
+                      <Text as="span" opacity={0.5}>
+                        {" "}
+                        ▌
+                      </Text>
+                    )}
+                  </Text>
+                </Box>
+              ))}
+            </VStack>
+          )}
+
+          {/* Slash command cards */}
+          {commandCards.map((card) => (
+            <SlashCommandCard
+              key={card.id}
+              type={card.type}
+              name={card.name}
+              initiative={initiative}
+              sessions={sessions}
+              onDismiss={() =>
+                setCommandCards((prev) =>
+                  prev.filter((c) => c.id !== card.id)
+                )
+              }
+            />
+          ))}
+
+          {/* Exchange error */}
+          {exchangeError && (
+            <Alert.Root status="error">
+              <Alert.Indicator />
+              <Alert.Title>{exchangeError}</Alert.Title>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={clearExchangeError}
+                ml="auto"
+              >
+                Dismiss
+              </Button>
+            </Alert.Root>
+          )}
+
+          {/* Input — only for open sessions */}
+          {isOpen && (
+            <VStack align="stretch" gap={2}>
+              <HStack gap={2} align="flex-end">
+                <Textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder={"// · context\n/? · vocab\n// Name · sub-initiative"}
+                  disabled={isStreaming || ending || pausing}
+                  rows={5}
+                  borderColor={panelBorderColor}
+                  borderRadius="4px"
+                  resize="none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  flex={1}
+                />
+                <Button
+                  colorPalette="purple"
+                  loading={isStreaming}
+                  disabled={!message.trim()}
+                  onClick={handleSend}
+                  alignSelf="flex-end"
+                >
+                  <IconSend size={16} />
+                </Button>
+              </HStack>
+              <HStack justify="space-between" align="center">
+                <Text fontSize="xs" color={mutedText}>
+                  Sessions auto-save — close anytime and pick up where you left
+                  off.
+                </Text>
+                <HStack gap={2}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    loading={pausing}
+                    disabled={ending}
+                    onClick={handlePause}
+                  >
+                    Pause here
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    colorPalette="purple"
+                    loading={ending}
+                    disabled={pausing}
+                    onClick={handlePauseAndDistill}
+                  >
+                    Pause and distill
+                  </Button>
+                </HStack>
+              </HStack>
+              <HStack gap={1}>
+                <Text fontSize="xs" color={mutedText}>
+                  <Text as="span" fontFamily="mono">//</Text> · context
+                  {"  "}
+                  <Text as="span" fontFamily="mono">/?</Text> · vocab
+                  {"  "}
+                  <Text as="span" fontFamily="mono">// Name</Text> · sub-initiative
+                </Text>
+              </HStack>
+            </VStack>
+          )}
+        </VStack>
+
+        {/* Right panel: canvas pane or action panel */}
+        <Box
+          w={rightPanelVisible ? rightPanelWidth : "36px"}
+          minW={rightPanelVisible ? rightPanelWidth : "36px"}
+          borderLeft="1px solid"
+          borderColor={panelBorderColor}
+          bg={panelBg}
+          transition="min-width 0.15s ease, width 0.15s ease"
+          flexShrink={0}
+        >
+          {canvasDoc !== null ? (
+            <VStack align="stretch" gap={3} p={3}>
+              <HStack justify="space-between">
+                <Heading size="xs">Document</Heading>
+                <HStack gap={1}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    colorPalette="purple"
+                    onClick={includeCanvasInMessage}
+                    title="Append this document to your next message"
+                  >
+                    Include in message
+                  </Button>
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    aria-label="Close document pane"
+                    onClick={() => setCanvasDoc(null)}
+                  >
+                    <IconX size={14} />
+                  </IconButton>
+                </HStack>
+              </HStack>
+              <Textarea
+                value={canvasDoc}
+                onChange={(e) => setCanvasDoc(e.target.value)}
+                fontFamily="mono"
+                fontSize="xs"
+                rows={20}
+                resize="vertical"
+              />
+            </VStack>
+          ) : actionPanelOpen ? (
+            <VStack align="stretch" gap={3} p={3}>
+              <HStack justify="space-between">
+                <Heading size="xs">Actions</Heading>
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Collapse action panel"
+                  onClick={() => setActionPanelOpen(false)}
+                >
+                  <IconChevronRight size={14} />
+                </IconButton>
+              </HStack>
+              <Text fontSize="xs" color={mutedText}>
+                Action panel — available in v2
+              </Text>
+            </VStack>
+          ) : (
+            <Box p={1} pt={3} display="flex" justifyContent="center">
+              <IconButton
+                size="xs"
+                variant="ghost"
+                aria-label="Expand action panel"
+                title="Actions (v2)"
+                onClick={() => setActionPanelOpen(true)}
+              >
+                <IconChevronLeft size={14} />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+      </HStack>
 
       <Separator />
 
@@ -1355,114 +1630,92 @@ function SessionDetailView({
       <VStack align="stretch" gap={4}>
         <Heading size="sm">Distillation</Heading>
 
-        {session.distillation_state === "none" && (
-          <HStack align="center">
-            <Button
-              size="sm"
-              colorPalette="purple"
-              loading={proposing}
-              onClick={handlePropose}
-            >
-              <IconClipboardText size={16} />
-              Propose Distillation
-            </Button>
-            <Text fontSize="xs" color={mutedText}>
-              Generates a structured summary of this session.
+        {ending && (
+          <HStack gap={2}>
+            <Spinner size="sm" />
+            <Text fontSize="sm" color={mutedText}>
+              Generating distillation proposal…
             </Text>
           </HStack>
         )}
 
-        {session.distillation_state === "proposed" && session.distillation && (
-          <Card.Root borderColor="purple.300" borderWidth="1px">
-            <Card.Header>
-              <HStack justify="space-between">
-                <Heading size="sm">Proposed Distillation</Heading>
-                <Button
-                  size="sm"
-                  colorPalette="purple"
-                  onClick={() => {
-                    const distillation = getSessionDistillation(session.distillation);
-                    setCommitForm({
-                      decisions: distillation.decisions ?? "",
-                      open_questions: distillation.open_questions ?? "",
-                      actions: distillation.actions ?? "",
-                      notes: distillation.notes ?? "",
-                    });
-                    setShowCommitForm(true);
-                  }}
-                >
-                  Curate &amp; Commit
-                </Button>
-              </HStack>
-            </Card.Header>
-            <Card.Body>
-              <Text
-                fontSize="sm"
-                whiteSpace="pre-wrap"
-                color={mutedText}
-                fontFamily="mono"
+        {!ending && isPendingDistillation && isOpen && (
+          <Text fontSize="sm" color={mutedText}>
+            Use "Pause and distill" to generate a distillation proposal.
+          </Text>
+        )}
+
+        {!ending && isPendingDistillation && !isOpen && (
+          <HStack gap={3} align="center">
+            <Text fontSize="sm" color={mutedText}>
+              No distillation yet.
+            </Text>
+            <Button
+              size="xs"
+              colorPalette="purple"
+              loading={ending}
+              onClick={handlePauseAndDistill}
+            >
+              Generate now
+            </Button>
+          </HStack>
+        )}
+
+        {!ending && session.distillation_state === "proposed" && (
+          <VStack align="stretch" gap={5}>
+            <Text fontSize="sm" color={mutedText}>
+              Review and edit items, then commit.
+            </Text>
+            <DistillationItemList
+              label="Decisions"
+              items={draftForm.decisions}
+              onUpdate={(idx, val) => updateDraftItem("decisions", idx, val)}
+              onRemove={(idx) => removeDraftItem("decisions", idx)}
+              onAdd={() => addDraftItem("decisions")}
+            />
+            <DistillationItemList
+              label="Open Questions"
+              items={draftForm.open_questions}
+              onUpdate={(idx, val) =>
+                updateDraftItem("open_questions", idx, val)
+              }
+              onRemove={(idx) => removeDraftItem("open_questions", idx)}
+              onAdd={() => addDraftItem("open_questions")}
+            />
+            <DistillationItemList
+              label="Actions"
+              items={draftForm.actions}
+              onUpdate={(idx, val) => updateDraftItem("actions", idx, val)}
+              onRemove={(idx) => removeDraftItem("actions", idx)}
+              onAdd={() => addDraftItem("actions")}
+            />
+            <Field.Root>
+              <Field.Label>Notes</Field.Label>
+              <Textarea
+                value={draftForm.notes}
+                onChange={(e) =>
+                  setDraftForm((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                rows={3}
+              />
+            </Field.Root>
+            <HStack justify="end">
+              <Button
+                colorPalette="purple"
+                loading={committing}
+                onClick={handleCommit}
               >
-                {JSON.stringify(session.distillation, null, 2)}
-              </Text>
-            </Card.Body>
-          </Card.Root>
+                <IconDeviceFloppy size={16} />
+                Commit Distillation
+              </Button>
+            </HStack>
+          </VStack>
         )}
 
         {session.distillation_state === "curated" && (
           <Badge colorPalette="purple" size="md">
             Distillation committed — rolling summary updated
           </Badge>
-        )}
-
-        {showCommitForm && (
-          <Card.Root>
-            <Card.Header>
-              <Heading size="sm">Curate Distillation</Heading>
-            </Card.Header>
-            <Card.Body>
-              <VStack gap={4} align="stretch">
-                {(
-                  ["decisions", "open_questions", "actions", "notes"] as const
-                ).map((field) => (
-                  <Field.Root key={field}>
-                    <Field.Label>
-                      {field
-                        .replace("_", " ")
-                        .replace(/^\w/, (c) => c.toUpperCase())}
-                    </Field.Label>
-                    <Textarea
-                      value={commitForm[field]}
-                      onChange={(e) =>
-                        setCommitForm((p) => ({
-                          ...p,
-                          [field]: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                    />
-                  </Field.Root>
-                ))}
-              </VStack>
-            </Card.Body>
-            <Card.Footer>
-              <HStack justify="end" gap={2}>
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowCommitForm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  colorPalette="purple"
-                  loading={committing}
-                  onClick={handleCommit}
-                >
-                  <IconSend size={16} />
-                  Commit
-                </Button>
-              </HStack>
-            </Card.Footer>
-          </Card.Root>
         )}
       </VStack>
 
@@ -1495,5 +1748,208 @@ function SessionDetailView({
         </>
       )}
     </VStack>
+  );
+}
+
+// ============================================================================
+// DistillationItemList
+// ============================================================================
+
+interface DistillationItemListProps {
+  label: string;
+  items: string[];
+  onUpdate: (idx: number, value: string) => void;
+  onRemove: (idx: number) => void;
+  onAdd: () => void;
+}
+
+function DistillationItemList({
+  label,
+  items,
+  onUpdate,
+  onRemove,
+  onAdd,
+}: DistillationItemListProps) {
+  const mutedText = useColorModeValue("gray.500", "gray.400");
+  return (
+    <VStack align="stretch" gap={2}>
+      <Text fontSize="sm" fontWeight="semibold">
+        {label}
+      </Text>
+      {items.length === 0 && (
+        <Text fontSize="xs" color={mutedText} fontStyle="italic">
+          None
+        </Text>
+      )}
+      {items.map((item, idx) => (
+        <HStack key={idx} gap={2}>
+          <Input
+            value={item}
+            onChange={(e) => onUpdate(idx, e.target.value)}
+            size="sm"
+            flex={1}
+          />
+          <IconButton
+            size="sm"
+            variant="ghost"
+            colorPalette="red"
+            aria-label={`Remove ${label} item`}
+            onClick={() => onRemove(idx)}
+          >
+            <IconX size={14} />
+          </IconButton>
+        </HStack>
+      ))}
+      <Button size="xs" variant="ghost" onClick={onAdd} alignSelf="start">
+        + Add item
+      </Button>
+    </VStack>
+  );
+}
+
+// ============================================================================
+// SlashCommandCard
+// ============================================================================
+
+interface SlashCommandCardProps {
+  type: "context" | "vocab" | "preview";
+  name?: string;
+  initiative: import("@mixtape/api/clients/initiatives/initiativesApi").InitiativeResponse | null;
+  sessions: import("@mixtape/api/clients/initiatives/initiativesApi").SessionResponse[];
+  onDismiss: () => void;
+}
+
+function SlashCommandCard({
+  type,
+  name,
+  initiative,
+  sessions,
+  onDismiss,
+}: SlashCommandCardProps) {
+  const mutedText = useColorModeValue("gray.600", "gray.400");
+  const cardBg = useColorModeValue("orange.50", "orange.900");
+  const cardBorder = useColorModeValue("orange.200", "orange.700");
+
+  return (
+    <Box
+      p={3}
+      borderRadius="md"
+      bg={cardBg}
+      borderWidth="1px"
+      borderColor={cardBorder}
+      position="relative"
+    >
+      <Box position="absolute" top={2} right={2}>
+        <IconButton
+          size="xs"
+          variant="ghost"
+          aria-label="Dismiss"
+          onClick={onDismiss}
+        >
+          <IconX size={12} />
+        </IconButton>
+      </Box>
+
+      {type === "context" && (
+        <VStack align="stretch" gap={2} pr={8}>
+          <Text fontSize="xs" fontWeight="semibold" color={mutedText}>
+            Initiative Context
+          </Text>
+          {initiative ? (
+            <>
+              {initiative.rolling_summary?.current_direction && (
+                <Text fontSize="sm">
+                  Direction: {initiative.rolling_summary.current_direction}
+                </Text>
+              )}
+              {initiative.rolling_summary?.where_we_are_now && (
+                <Text fontSize="sm">
+                  {initiative.rolling_summary.where_we_are_now}
+                </Text>
+              )}
+              {(initiative.rolling_summary?.key_decisions ?? []).length > 0 && (
+                <VStack align="stretch" gap={1}>
+                  <Text fontSize="xs" fontWeight="medium">
+                    Key decisions:
+                  </Text>
+                  {(initiative.rolling_summary!.key_decisions ?? [])
+                    .slice(0, 5)
+                    .map((d, i) => (
+                      <Text key={i} fontSize="xs" pl={2}>
+                        · {d}
+                      </Text>
+                    ))}
+                </VStack>
+              )}
+              {sessions.length > 0 && (
+                <Text fontSize="xs" color={mutedText}>
+                  {sessions.length} session
+                  {sessions.length !== 1 ? "s" : ""} · Last:{" "}
+                  {new Date(
+                    sessions[sessions.length - 1].created_at
+                  ).toLocaleDateString()}
+                </Text>
+              )}
+              {!initiative.rolling_summary?.current_direction &&
+                !initiative.rolling_summary?.where_we_are_now && (
+                  <Text fontSize="sm" color={mutedText}>
+                    No rolling summary yet — one will be generated after your
+                    first distillation.
+                  </Text>
+                )}
+            </>
+          ) : (
+            <Text fontSize="sm" color={mutedText}>
+              Loading…
+            </Text>
+          )}
+        </VStack>
+      )}
+
+      {type === "vocab" && (
+        <VStack align="stretch" gap={2} pr={8}>
+          <Text fontSize="xs" fontWeight="semibold" color={mutedText}>
+            Mixtape Vocab
+          </Text>
+          {(
+            [
+              ["Initiative", "A structured inquiry you're working through"],
+              ["Session", "A single exchange within an Initiative"],
+              ["Distillation", "AI-extracted key points from a session"],
+              ["Artifact", "A durable document, decision, or action item"],
+              ["Rolling summary", "A living synthesis of all prior sessions"],
+              ["Canvas", "An editable document block in an AI response"],
+            ] as [string, string][]
+          ).map(([term, def]) => (
+            <HStack key={term} gap={3} align="start">
+              <Text
+                fontSize="xs"
+                fontWeight="medium"
+                minW="120px"
+                flexShrink={0}
+              >
+                {term}
+              </Text>
+              <Text fontSize="xs" color={mutedText}>
+                {def}
+              </Text>
+            </HStack>
+          ))}
+          <Text fontSize="xs" color={mutedText} fontStyle="italic" pt={1}>
+            Full Grist vocab — coming soon.
+          </Text>
+        </VStack>
+      )}
+
+      {type === "preview" && (
+        <Text fontSize="sm" color={mutedText} pr={8}>
+          Sub-initiative{" "}
+          <Text as="span" fontFamily="mono">
+            &ldquo;{name}&rdquo;
+          </Text>{" "}
+          — navigation coming in v2.
+        </Text>
+      )}
+    </Box>
   );
 }

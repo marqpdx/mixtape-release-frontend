@@ -14,9 +14,9 @@ export interface RollingSummary {
 }
 
 export interface SessionDistillation {
-  decisions?: string;
-  open_questions?: string;
-  actions?: string;
+  decisions?: string[];
+  open_questions?: string[];
+  actions?: string[];
   notes?: string;
   [key: string]: unknown;
 }
@@ -303,7 +303,7 @@ export async function commitDistillation(
   groupSlug: string,
   initiativeId: string,
   sessionId: string,
-  payload: { decisions?: string; open_questions?: string; actions?: string; notes?: string }
+  payload: { decisions?: string[]; open_questions?: string[]; actions?: string[]; notes?: string }
 ): Promise<SessionResponse> {
   const res = await axiosInstance.post(
     `/api/groups/${groupSlug}/initiatives/${initiativeId}/sessions/${sessionId}/commit-distillation`,
