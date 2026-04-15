@@ -6,7 +6,6 @@ import { Tabs, Text, VStack } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import Composer from './Composer';
 import FollowingList from './FollowingList';
-import MyProfilePanel from './MyProfilePanel';
 
 export default function ComposerPane() {
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
@@ -21,7 +20,6 @@ export default function ComposerPane() {
       <Tabs.List mb={4}>
         <Tabs.Trigger value="composer" fontSize="md">Add to Storyline</Tabs.Trigger>
         <Tabs.Trigger value="following" fontSize="md">Following</Tabs.Trigger>
-        <Tabs.Trigger value="profile" fontSize="md">My Profile</Tabs.Trigger>
       </Tabs.List>
 
       <Tabs.Content value="composer">
@@ -30,10 +28,6 @@ export default function ComposerPane() {
 
       <Tabs.Content value="following">
         <FollowingList />
-      </Tabs.Content>
-
-      <Tabs.Content value="profile">
-        <MyProfilePanel />
       </Tabs.Content>
     </Tabs.Root>
   );

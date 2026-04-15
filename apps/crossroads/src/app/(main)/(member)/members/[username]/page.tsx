@@ -17,6 +17,7 @@ export default function MemberPage() {
   const username = params.username as string;
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const tabStorageKey = username ? `member_profile_last_tab:${username}` : null;
 
   const isOwner = user?.username === username;
 
@@ -28,10 +29,24 @@ export default function MemberPage() {
       (requestedTab === 'storyline' && isOwner)
     ) {
       setActiveTab(requestedTab);
+      if (tabStorageKey && typeof window !== 'undefined') {
+        window.localStorage.setItem(tabStorageKey, requestedTab);
+      }
       return;
     }
+    if (tabStorageKey && typeof window !== 'undefined') {
+      const storedTab = window.localStorage.getItem(tabStorageKey);
+      if (
+        storedTab === 'profile' ||
+        storedTab === 'writing' ||
+        (storedTab === 'storyline' && isOwner)
+      ) {
+        setActiveTab(storedTab);
+        return;
+      }
+    }
     setActiveTab(isOwner ? 'storyline' : 'profile');
-  }, [isOwner, searchParams]);
+  }, [isOwner, searchParams, tabStorageKey]);
 
   const { data: profile } = useQuery({
     queryKey: ['public-member-profile', username],
@@ -45,6 +60,9 @@ export default function MemberPage() {
         value={activeTab}
         onValueChange={({ value }) => {
           setActiveTab(value);
+          if (tabStorageKey && typeof window !== 'undefined') {
+            window.localStorage.setItem(tabStorageKey, value);
+          }
           const params = new URLSearchParams(searchParams?.toString() ?? '');
           params.set('tab', value);
           router.replace(`?${params.toString()}`, { scroll: false });
@@ -66,7 +84,11 @@ export default function MemberPage() {
 
         <Tabs.Content value="profile">
           {profile ? (
-            <MemberProfileTemplate profile={profile} />
+            <MemberProfileTemplate
+              profile={profile}
+              isOwner={isOwner}
+              editHref="/app/dashboard?section=edit-profile"
+            />
           ) : (
             <Box px="6" py="20" textAlign="center">
               <Spinner size="lg" />

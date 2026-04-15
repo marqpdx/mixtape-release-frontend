@@ -29,7 +29,7 @@ import { useEffect, useRef, useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconChevronDown, IconMenu2, IconX, IconUser, IconSettings, IconLogout } from "@tabler/icons-react";
+import { IconChevronDown, IconMenu2, IconX, IconUser, IconLogout, IconLayoutDashboard } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -145,6 +145,17 @@ export default function UnifiedNavbar({
   const navSection: NavSection = detectedSection;
 
   const { isAdmin, isSteward } = { isAdmin: false, isSteward: false };
+  const getMemberProfileHref = () => {
+    if (!identity?.username) return resolveHref('/members/{username}');
+    let href = resolveHref('/members/{username}');
+    if (typeof window !== 'undefined') {
+      const storedTab = window.localStorage.getItem(`member_profile_last_tab:${identity.username}`);
+      if (storedTab) {
+        href = `${href}?tab=${encodeURIComponent(storedTab)}`;
+      }
+    }
+    return href;
+  };
 
   const resolveHref = (href: string) => {
     const resolved = identity?.username
@@ -388,21 +399,15 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
-                        <IconUser size={16} />
-                        Storyline
-                      </Link>
-                    </MenuItem>
-                    <MenuItem value="member-profile" asChild>
-                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
+                      <Link as={NextLink} href={getMemberProfileHref()} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
                       </Link>
                     </MenuItem>
                     <MenuItem value="settings" asChild>
                       <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
-                        <IconSettings size={16} />
-                        Settings
+                        <IconLayoutDashboard size={16} />
+                        Dashboard
                       </Link>
                     </MenuItem>
                     <MenuSeparator />

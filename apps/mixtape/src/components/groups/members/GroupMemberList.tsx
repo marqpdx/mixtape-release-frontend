@@ -12,12 +12,13 @@ import {
   Card,
   Badge,
   Flex,
+  Button,
   IconButton,
   Spinner,
   Avatar,
   Input,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   IconGrid3x3,
@@ -25,6 +26,7 @@ import {
   IconMessage,
   IconCalendar,
   IconUserMinus,
+  IconPencil,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
@@ -32,6 +34,7 @@ import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership, GroupRole } from "@mixtape/core/types/groupTypes";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 interface GroupMemberListProps {
   group: Group;
@@ -61,6 +64,7 @@ export function GroupMemberList({
   onMemberClick,
   canEditMember = () => false
 }: GroupMemberListProps) {
+  const { user: identity } = useAuth();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
@@ -161,6 +165,18 @@ export function GroupMemberList({
       queryClient.invalidateQueries({ queryKey: ["members"] });
     } catch (error) {
       console.error("Failed to remove member:", error);
+    }
+  };
+
+  const canEditOwnProfileImage = (membership: GroupMembership) =>
+    !getAvatar(membership) &&
+    !!membership.username &&
+    membership.username === identity?.username;
+
+  const goToEditProfile = (event: MouseEvent, membership: GroupMembership) => {
+    event.stopPropagation();
+    if (typeof window !== "undefined" && membership.username === identity?.username) {
+      window.location.href = "/dashboard?section=edit-profile";
     }
   };
 
@@ -334,6 +350,20 @@ export function GroupMemberList({
                     </Text>
                   )}
                 </VStack>
+                {canEditOwnProfileImage(membership) && (
+                  <IconButton
+                    aria-label="Edit profile"
+                    size="xs"
+                    variant="solid"
+                    colorScheme="blue"
+                    position="absolute"
+                    right={3}
+                    bottom={3}
+                    onClick={(event) => goToEditProfile(event, membership)}
+                  >
+                    <IconPencil size={14} />
+                  </IconButton>
+                )}
               </Card.Body>
             )}
           </Card.Root>
@@ -515,6 +545,17 @@ export function GroupMemberList({
                 <Text fontSize="xs" color="gray.400">
                   Invited by @{membership.invited_by_username}
                 </Text>
+              )}
+
+              {canEditOwnProfileImage(membership) && (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorScheme="blue"
+                  onClick={(event) => goToEditProfile(event, membership)}
+                >
+                  Add Profile Image
+                </Button>
               )}
             </VStack>
           );

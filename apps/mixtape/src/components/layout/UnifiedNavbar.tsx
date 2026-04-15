@@ -31,7 +31,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconSettings, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -119,6 +119,17 @@ export default function UnifiedNavbar({
   const { unreads: messageUnreads } = useChatUnread();
   const { openDrawer } = useHelp();
   const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
+  const getMemberProfileHref = () => {
+    if (!identity?.username) return resolveHref('/members/{username}');
+    let href = resolveHref('/members/{username}');
+    if (typeof window !== 'undefined') {
+      const storedTab = window.localStorage.getItem(`member_profile_last_tab:${identity.username}`);
+      if (storedTab) {
+        href = `${href}?tab=${encodeURIComponent(storedTab)}`;
+      }
+    }
+    return href;
+  };
 
   // Auto-detect section if not provided
   const detectedSection: NavSection =
@@ -386,15 +397,9 @@ export default function UnifiedNavbar({
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
                     <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
+                      <Link as={NextLink} href={getMemberProfileHref()} display="flex" gap={2}>
                         <IconUser size={16} />
-                        My Storyline
-                      </Link>
-                    </MenuItem>
-                    <MenuItem value="member-profile" asChild>
-                      <Link as={NextLink} href={resolveHref('/members/{username}')} display="flex" gap={2}>
-                        <IconUser size={16} />
-                        My Profile
+                        Profile
                       </Link>
                     </MenuItem>
                     <MenuItem value="dashboard" asChild>
@@ -413,9 +418,9 @@ export default function UnifiedNavbar({
                     )}
                     {identity?.is_superuser && (
                       <MenuItem value="settings" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/settings')} display="flex" gap={2}>
-                          <IconSettings size={16} />
-                          Settings
+                        <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
+                          <IconLayoutDashboard size={16} />
+                          Dashboard
                         </Link>
                       </MenuItem>
                     )}

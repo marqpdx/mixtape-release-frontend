@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Box, Heading, HStack, Image, Text, VStack } from "@chakra-ui/react";
+import { Badge, Box, Button, Heading, HStack, Image, Link, Text, VStack } from "@chakra-ui/react";
+import NextLink from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
 import type { PublicMemberProfile } from "@mixtape/api/clients/public/publicApi";
 import { TipTapRenderer } from "@mixtape/content/TipTapRenderer";
@@ -15,9 +16,15 @@ function splitProfileList(value?: string | null): string[] {
 
 interface MemberProfileTemplateProps {
   profile: PublicMemberProfile;
+  isOwner?: boolean;
+  editHref?: string;
 }
 
-export default function MemberProfileTemplate({ profile }: MemberProfileTemplateProps) {
+export default function MemberProfileTemplate({
+  profile,
+  isOwner = false,
+  editHref = "/app/dashboard?section=edit-profile",
+}: MemberProfileTemplateProps) {
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const panelBg = useColorModeValue("white", "gray.900");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
@@ -53,6 +60,23 @@ export default function MemberProfileTemplate({ profile }: MemberProfileTemplate
               h={{ base: "180px", md: "240px" }}
               background="linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(16,185,129,0.16) 100%)"
             />
+          )}
+
+          {isOwner && (
+            <Button
+              asChild
+              size="sm"
+              position="absolute"
+              top={{ base: 3, md: 5 }}
+              right={{ base: 3, md: 5 }}
+              zIndex={2}
+              colorPalette="blue"
+              variant="solid"
+            >
+              <Link as={NextLink} href={editHref}>
+                Edit Profile
+              </Link>
+            </Button>
           )}
 
           <Box
