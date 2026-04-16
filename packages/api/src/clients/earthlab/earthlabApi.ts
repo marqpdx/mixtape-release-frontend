@@ -161,7 +161,7 @@ export async function reorderCourseItems(
 
 export async function fetchAvailableContent(
   groupSlug: string
-): Promise<{ lessons: LessonListItem[]; libraries: { id: string; title: string; slug: string; scope: string }[] }> {
+): Promise<{ lessons: LessonListItem[]; collections: { id: string; title: string; slug: string; scope: string }[] }> {
   const response = await axiosInstance.get(`/api/earthlab/${groupSlug}/available-content`);
   return response.data;
 }

@@ -46,8 +46,8 @@ export function ContentPickerDialog({
     (l) => l.title.toLowerCase().includes(filterText) && !existingContentIds.has(l.id)
   );
 
-  const filteredLibraries = (data?.libraries || []).filter(
-    (lib) => lib.title.toLowerCase().includes(filterText) && !existingContentIds.has(lib.id)
+  const filteredCollections = (data?.collections || []).filter(
+    (collection) => collection.title.toLowerCase().includes(filterText) && !existingContentIds.has(collection.id)
   );
 
   const handleAdd = (contentType: string, contentId: string) => {
@@ -104,13 +104,13 @@ export function ContentPickerDialog({
               </Box>
             )}
 
-            {filteredLibraries.length > 0 && (
+            {filteredCollections.length > 0 && (
               <Box>
-                <Text fontSize="sm" fontWeight="bold" mb={2}>Modules (Libraries)</Text>
+                <Text fontSize="sm" fontWeight="bold" mb={2}>Modules (Collections)</Text>
                 <VStack align="stretch" gap={1}>
-                  {filteredLibraries.map((lib) => (
+                  {filteredCollections.map((collection) => (
                     <HStack
-                      key={lib.id}
+                      key={collection.id}
                       p={2}
                       border="1px"
                       borderColor="gray.200"
@@ -120,15 +120,15 @@ export function ContentPickerDialog({
                     >
                       <HStack gap={2}>
                         <Badge colorScheme="purple" size="sm">Module</Badge>
-                        <Text fontSize="sm">{lib.title}</Text>
-                        {lib.scope && (
-                          <Text fontSize="xs" color="gray.500">({lib.scope})</Text>
+                        <Text fontSize="sm">{collection.title}</Text>
+                        {collection.scope && (
+                          <Text fontSize="xs" color="gray.500">({collection.scope})</Text>
                         )}
                       </HStack>
                       <Button
                         size="xs"
                         variant="outline"
-                        onClick={() => handleAdd('library', lib.id)}
+                        onClick={() => handleAdd('collection', collection.id)}
                       >
                         Add
                       </Button>
@@ -138,7 +138,7 @@ export function ContentPickerDialog({
               </Box>
             )}
 
-            {!isLoading && filteredLessons.length === 0 && filteredLibraries.length === 0 && (
+            {!isLoading && filteredLessons.length === 0 && filteredCollections.length === 0 && (
               <Text color="gray.500" fontSize="sm" textAlign="center" py={4}>
                 {search ? 'No matching content found' : 'No available content to add'}
               </Text>
