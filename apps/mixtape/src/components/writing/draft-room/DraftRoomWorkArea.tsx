@@ -27,6 +27,7 @@ import { CategoryInput, Category } from "@components/writing/composer/CategoryIn
 import { SimplePublishDialog } from "@components/writing/composer/SimplePublishDialog";
 import { formatDistanceToNow } from "date-fns";
 import { Divider } from "@/components/common/Divider";
+import AtelierShapeTab from "./AtelierShapeTab";
 
 type SponsorConfig = {
   type: "member";
@@ -61,6 +62,7 @@ export default function DraftRoomWorkArea({
 }: DraftRoomWorkAreaProps) {
   useHelpRegistration("DraftRoomWorkArea");
   const [activeTab, setActiveTab] = useState("drafts");
+  const [rightTab, setRightTab] = useState<"meta" | "shape">("meta");
   const [selectedPieceId, setSelectedPieceId] = useState<string | undefined>();
   const [selectedPieceSlug, setSelectedPieceSlug] = useState<string | undefined>();
   const [pieceDetail, setPieceDetail] = useState<PieceDetail | null>(null);
@@ -480,31 +482,8 @@ export default function DraftRoomWorkArea({
               </Text>
               <HelpTip helpKey="writing-overview" />
             </HStack>
-            <Badge size="sm" variant="outline" colorScheme="blue">
-              Series / Audience / Readiness coming soon
-            </Badge>
-          </HStack>
-
-          <HStack gap={4} fontSize="xs" color={textSecondary}>
-            <HStack>
-              <Box w="8px" h="8px" borderRadius="full" bg="green.400" />
-              <Text>ready</Text>
-            </HStack>
-            <HStack>
-              <Box w="8px" h="8px" borderRadius="full" bg="orange.400" />
-              <Text>needs attention</Text>
-            </HStack>
-          </HStack>
-
-          {!selectedPieceId && (
-            <Text fontSize="sm" color={textSecondary}>
-              Select a draft to edit its tags, categories, audience, and series.
-            </Text>
-          )}
-
-          {selectedPieceId && (
-            <VStack align="stretch" gap={4}>
-              <HStack justify="space-between">
+            {selectedPieceId && (
+              <HStack gap={2}>
                 <Button
                   size="sm"
                   variant="outline"
@@ -513,225 +492,124 @@ export default function DraftRoomWorkArea({
                   Edit content
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
-                  Publish...
+                  Publish…
                 </Button>
               </HStack>
+            )}
+          </HStack>
 
-              <Box>
-                <HStack align="center" gap={3} mb={2}>
-                  <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isTitleReady)} />
-                  <Text fontSize="sm" fontWeight="medium">
-                    Title
-                  </Text>
-                  <Input
-                    size="sm"
-                    value={title}
-                    onChange={(event) => {
-                      setTitle(event.target.value);
-                    }}
-                    placeholder="Untitled"
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                    _focus={{ borderColor: inputFocusBorder }}
-                    flex="1"
-                  />
-                  {showTitleSaved && (
-                    <Text fontSize="xs" color={textSecondary}>
-                      saved
-                    </Text>
-                  )}
-                  {showAutoSaved && (
-                    <Text fontSize="xs" color={textSecondary}>
-                      autosaved
-                    </Text>
-                  )}
-                </HStack>
-              </Box>
+          {!selectedPieceId && (
+            <Text fontSize="sm" color={textSecondary}>
+              Select a draft from the left panel.
+            </Text>
+          )}
 
-              <Box>
-                <HStack align="center" gap={3} mb={2}>
-                  <Box
-                    w="8px"
-                    h="8px"
-                    borderRadius="full"
-                    bg={readinessColor(isAudienceReady)}
-                  />
-                  <Text fontSize="sm" fontWeight="medium">
-                    Audience
-                  </Text>
-                </HStack>
-                <Select.Root
-                  collection={selectCollection}
-                  value={addressedTo ? [addressedTo] : []}
-                  onValueChange={({ value }) => {
-                    const nextValue = value[0] ?? "public";
-                    setAddressedTo(nextValue);
-                    persistAddressedTo(nextValue);
-                  }}
-                >
-                  <Select.HiddenSelect />
-                  <Select.Control>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder="Select audience" />
-                    </Select.Trigger>
-                    <Select.IndicatorGroup>
-                      <Select.Indicator />
-                      <Select.ClearTrigger />
-                    </Select.IndicatorGroup>
-                  </Select.Control>
-                  <Portal>
-                    <Select.Positioner>
-                      <Select.Content>
-                        {selectCollection.items.map((item) => (
-                          <Select.Item item={item} key={item.value}>
-                            {item.label}
-                            <Select.ItemIndicator />
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select.Positioner>
-                  </Portal>
-                </Select.Root>
-              </Box>
-
-              <Box>
-                <HStack align="center" gap={3} mb={2}>
-                  <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isTagsReady)} />
-                  <Text fontSize="sm" fontWeight="medium">
-                    Tags
-                  </Text>
-                  <Box flex="1" />
-                  <Tooltip content="This piece OK without tags" portalled={false}>
-                    <Box display="inline-flex">
-                      <Checkbox.Root
-                        size="sm"
-                        checked={noneOkTags}
-                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                          setNoneOkTags(!!checked)
-                        }
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label>🚫✅</Checkbox.Label>
-                      </Checkbox.Root>
-                    </Box>
-                  </Tooltip>
-                </HStack>
-                <TagInput
-                  selectedTags={tags}
-                  onTagsChange={handleTagsChange}
-                  maxTags={10}
-                  inputSize="sm"
-                  inputFontSize="sm"
-                  inputBg={inputBg}
-                  inputBorderColor={inputBorder}
-                  inputFocusBorderColor={inputFocusBorder}
-                />
-              </Box>
-
-              <Box>
-                <HStack align="center" gap={3} mb={2}>
-                  <Box
-                    w="8px"
-                    h="8px"
-                    borderRadius="full"
-                    bg={readinessColor(isCategoriesReady)}
-                  />
-                  <Text fontSize="sm" fontWeight="medium">
-                    Categories
-                  </Text>
-                  <Box flex="1" />
-                  <Tooltip content="This piece OK without categories" portalled={false}>
-                    <Box display="inline-flex">
-                      <Checkbox.Root
-                        size="sm"
-                        checked={noneOkCategories}
-                        onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                          setNoneOkCategories(!!checked)
-                        }
-                      >
-                        <Checkbox.HiddenInput />
-                        <Checkbox.Control>
-                          <Checkbox.Indicator />
-                        </Checkbox.Control>
-                        <Checkbox.Label>🚫✅</Checkbox.Label>
-                      </Checkbox.Root>
-                    </Box>
-                  </Tooltip>
-                </HStack>
-                <CategoryInput
-                  selectedCategories={categories}
-                  onCategoriesChange={handleCategoriesChange}
-                  maxCategories={10}
-                  inputSize="sm"
-                  inputFontSize="sm"
-                  inputBg={inputBg}
-                  inputBorderColor={inputBorder}
-                  inputFocusBorderColor={inputFocusBorder}
-                />
-              </Box>
-
-              <HStack align="flex-start" gap={4}>
-                <Box flex="1">
-                  <HStack align="center" gap={3} mb={2}>
-                    <Box
-                      w="8px"
-                      h="8px"
-                      borderRadius="full"
-                      bg={readinessColor(isSeriesReady)}
-                    />
-                    <Text fontSize="sm" fontWeight="medium">
-                      Series
-                    </Text>
-                    <Box flex="1" />
-                    <Tooltip content="This piece OK not part of a series" portalled={false}>
-                      <Box display="inline-flex">
-                        <Checkbox.Root
-                          size="sm"
-                          checked={noneOkSeries}
-                          onCheckedChange={({ checked }: { checked: boolean | string }) =>
-                            setNoneOkSeries(!!checked)
-                          }
-                        >
-                          <Checkbox.HiddenInput />
-                          <Checkbox.Control>
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                          <Checkbox.Label>🚫✅</Checkbox.Label>
-                        </Checkbox.Root>
-                      </Box>
-                    </Tooltip>
-                  </HStack>
-                  <Input
-                    size="sm"
-                    value={series}
-                    onChange={(event) => setSeries(event.target.value)}
-                    placeholder="Coming soon"
-                    disabled
-                  />
-                </Box>
-              </HStack>
+          {selectedPieceId && (
+            <>
+              <Tabs.Root
+                value={rightTab}
+                onValueChange={(d) => setRightTab(d.value as "meta" | "shape")}
+              >
+                <Tabs.List>
+                  <Tabs.Trigger value="meta">Meta</Tabs.Trigger>
+                  <Tabs.Trigger value="shape">Shape</Tabs.Trigger>
+                </Tabs.List>
+              </Tabs.Root>
 
               <Divider />
 
-              <HStack justify="space-between">
-                <Text fontSize="sm" color={textSecondary}>
-                  Save metadata updates for this draft.
-                </Text>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    void handleSaveMetadata();
-                  }}
-                  disabled={savingMeta}
-                >
-                  {savingMeta ? "Saving..." : "Save metadata"}
-                </Button>
-              </HStack>
-            </VStack>
+              {rightTab === "meta" && (
+                <VStack align="stretch" gap={4}>
+                  <Box>
+                    <HStack align="center" gap={3} mb={2}>
+                      <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isTitleReady)} />
+                      <Text fontSize="sm" fontWeight="medium">
+                        Title
+                      </Text>
+                      <Input
+                        size="sm"
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                        placeholder="Untitled"
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        _focus={{ borderColor: inputFocusBorder }}
+                        flex="1"
+                      />
+                      {showTitleSaved && (
+                        <Text fontSize="xs" color={textSecondary}>saved</Text>
+                      )}
+                      {showAutoSaved && (
+                        <Text fontSize="xs" color={textSecondary}>autosaved</Text>
+                      )}
+                    </HStack>
+                  </Box>
+
+                  <Box>
+                    <HStack align="center" gap={3} mb={2}>
+                      <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isAudienceReady)} />
+                      <Text fontSize="sm" fontWeight="medium">Audience</Text>
+                    </HStack>
+                    <Select.Root
+                      collection={selectCollection}
+                      value={addressedTo ? [addressedTo] : []}
+                      onValueChange={({ value }) => {
+                        const nextValue = value[0] ?? "public";
+                        setAddressedTo(nextValue);
+                        persistAddressedTo(nextValue);
+                      }}
+                    >
+                      <Select.HiddenSelect />
+                      <Select.Control>
+                        <Select.Trigger>
+                          <Select.ValueText placeholder="Select audience" />
+                        </Select.Trigger>
+                        <Select.IndicatorGroup>
+                          <Select.Indicator />
+                          <Select.ClearTrigger />
+                        </Select.IndicatorGroup>
+                      </Select.Control>
+                      <Portal>
+                        <Select.Positioner>
+                          <Select.Content>
+                            {selectCollection.items.map((item) => (
+                              <Select.Item item={item} key={item.value}>
+                                {item.label}
+                                <Select.ItemIndicator />
+                              </Select.Item>
+                            ))}
+                          </Select.Content>
+                        </Select.Positioner>
+                      </Portal>
+                    </Select.Root>
+                  </Box>
+
+                  <Divider />
+
+                  <HStack justify="flex-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { void handleSaveMetadata(); }}
+                      disabled={savingMeta}
+                    >
+                      {savingMeta ? "Saving..." : "Save"}
+                    </Button>
+                  </HStack>
+                </VStack>
+              )}
+
+              {rightTab === "shape" && selectedPieceSlug && (
+                <AtelierShapeTab
+                  pieceSlug={selectedPieceSlug}
+                  pieceId={selectedPieceId}
+                  initialTags={tags}
+                  initialCategories={categories}
+                  onTagsChange={handleTagsChange}
+                  onCategoriesChange={handleCategoriesChange}
+                />
+              )}
+            </>
           )}
         </VStack>
       </Box>
