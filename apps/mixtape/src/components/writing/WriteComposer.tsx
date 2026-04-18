@@ -1,4 +1,4 @@
-// src/components/write/WriteComposer.tsx
+// apps/mixtape/src/components/write/WriteComposer.tsx
 
 "use client";
 
@@ -555,6 +555,7 @@ export default function WriteComposer({
           editor={editorRef.current}
           pieceId={pieceId}
           enableOutline={!!(initialPiece?.enable_outline)}
+          sponsor={{ type: sponsor.type, slug: sponsor.slug }}
         />
 
         <Box
@@ -876,4 +877,3 @@ export default function WriteComposer({
     </Box>
   );
 }
-

@@ -19,6 +19,13 @@ import {
   enableOutline as enableOutlineApi,
   type OutlineNode,
 } from '@mixtape/api/clients/dispatch/outlineApi';
+import {
+  createSuggestedRevision,
+  exportWritingAnalysis,
+  type WritingAnalysisExportResponse,
+  type WritingFidelityReportData,
+  type WritingSuggestedRevisionCreateResponse,
+} from '@mixtape/api/clients/writing/writingApi';
 import type { Editor } from '@tiptap/react';
 import { v4 as uuid } from 'uuid';
 
@@ -71,6 +78,10 @@ interface OutlineDrawerProps {
   editor: Editor | null;
   pieceId: string;
   enableOutline: boolean;
+  sponsor?: {
+    type: 'group' | 'member';
+    slug?: string;
+  };
 }
 
 // --- Phase 1 Heading Item ---
@@ -347,6 +358,7 @@ export function OutlineDrawer({
   editor,
   pieceId,
   enableOutline: initialEnableOutline,
+  sponsor,
 }: OutlineDrawerProps) {
   const [outlineEnabled, setOutlineEnabled] = useState(initialEnableOutline);
   const queryClient = useQueryClient();
@@ -360,6 +372,9 @@ export function OutlineDrawer({
   const [headings, setHeadings] = useState<HeadingEntry[]>([]);
   const [activePos, setActivePos] = useState<number | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const [analysisResult, setAnalysisResult] = useState<WritingAnalysisExportResponse | null>(null);
+  const [revisionResult, setRevisionResult] = useState<WritingSuggestedRevisionCreateResponse | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const panelBg = useColorModeValue('white', 'gray.800');
   const headerBorder = useColorModeValue('gray.200', 'gray.700');
@@ -391,6 +406,36 @@ export function OutlineDrawer({
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dispatch', 'outline', pieceId] });
+    },
+  });
+
+  const exportAnalysisMutation = useMutation({
+    mutationFn: () => exportWritingAnalysis(pieceId, { planner_type: 'hybrid', planner_label: 'outline-drawer-v1' }),
+    onSuccess: (data) => {
+      setAnalysisResult(data);
+      setRevisionResult(null);
+      setAnalysisError(null);
+    },
+    onError: (error: unknown) => {
+      console.error('Failed to export writing analysis:', error);
+      setAnalysisError('Could not analyze this draft right now.');
+    },
+  });
+
+  const createSuggestedRevisionMutation = useMutation({
+    mutationFn: () => {
+      if (!analysisResult?.session?.id) {
+        throw new Error('Missing analysis session');
+      }
+      return createSuggestedRevision(pieceId, analysisResult.session.id);
+    },
+    onSuccess: (data) => {
+      setRevisionResult(data);
+      setAnalysisError(null);
+    },
+    onError: (error: unknown) => {
+      console.error('Failed to create suggested revision:', error);
+      setAnalysisError('Could not create a suggested revision.');
     },
   });
 
@@ -486,6 +531,16 @@ export function OutlineDrawer({
   }, [headings]);
 
   const sectionCount = outlineEnabled ? totalNodes : totalHeadings;
+  const fidelitySummary = revisionResult?.fidelity_report?.report_payload?.summary;
+
+  const handleOpenSuggestedDraft = useCallback(() => {
+    const slug = revisionResult?.piece?.slug;
+    if (!slug || !sponsor?.slug || typeof window === 'undefined') return;
+    const href = sponsor.type === 'group'
+      ? `/groups/${sponsor.slug}/writing/${slug}`
+      : `/member/${sponsor.slug}/writing/${slug}`;
+    window.location.href = href;
+  }, [revisionResult, sponsor]);
 
   return (
     <Box
@@ -575,6 +630,67 @@ export function OutlineDrawer({
                 {createMutation.isPending ? 'Adding...' : '+ Add Section'}
               </Button>
             </Box>
+
+            <Box mt={4} px={2} pt={3} borderTop="1px solid" borderColor={headerBorder}>
+              <VStack gap={2} align="stretch">
+                <Text fontSize="xs" fontWeight="semibold">
+                  Analyze Draft
+                </Text>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => exportAnalysisMutation.mutate()}
+                  disabled={exportAnalysisMutation.isPending}
+                  w="100%"
+                >
+                  {exportAnalysisMutation.isPending ? 'Analyzing...' : 'Analyze for suggested revision'}
+                </Button>
+                {analysisResult && (
+                  <Text fontSize="2xs" color={emptyColor}>
+                    {analysisResult.export.derived.stats.block_count} blocks, {analysisResult.export.derived.stats.word_count} words, {analysisResult.export.outline.detected_headings.length} detected headings.
+                  </Text>
+                )}
+                {analysisResult && !revisionResult && (
+                  <Button
+                    size="xs"
+                    onClick={() => createSuggestedRevisionMutation.mutate()}
+                    disabled={createSuggestedRevisionMutation.isPending}
+                    w="100%"
+                  >
+                    {createSuggestedRevisionMutation.isPending ? 'Creating...' : 'Create Suggested Revision'}
+                  </Button>
+                )}
+                {revisionResult && (
+                  <VStack gap={2} align="stretch">
+                    <Text fontSize="2xs" color={emptyColor}>
+                      Created: {revisionResult.piece.title || 'Suggested revision'}
+                    </Text>
+                    {fidelitySummary && (
+                      <Box fontSize="2xs" color={emptyColor}>
+                        <Text>Unchanged blocks: {fidelitySummary.unchanged_block_count ?? 0}</Text>
+                        <Text>Edited blocks: {fidelitySummary.edited_block_count ?? 0}</Text>
+                        <Text>Added blocks: {fidelitySummary.added_block_count ?? 0}</Text>
+                        <Text>Removed blocks: {fidelitySummary.removed_block_count ?? 0}</Text>
+                      </Box>
+                    )}
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={handleOpenSuggestedDraft}
+                      disabled={!revisionResult.piece?.slug || !sponsor?.slug}
+                      w="100%"
+                    >
+                      Open Suggested Draft
+                    </Button>
+                  </VStack>
+                )}
+                {analysisError && (
+                  <Text fontSize="2xs" color="red.500">
+                    {analysisError}
+                  </Text>
+                )}
+              </VStack>
+            </Box>
           </>
         ) : (
           // Phase 1: Auto-detected headings
@@ -617,6 +733,67 @@ export function OutlineDrawer({
               <Text fontSize="2xs" color={emptyColor} mt={1} textAlign="center">
                 Switch from auto-detected headings to manually managed sections.
               </Text>
+            </Box>
+
+            <Box mt={4} px={2} pt={3} borderTop="1px solid" borderColor={headerBorder}>
+              <VStack gap={2} align="stretch">
+                <Text fontSize="xs" fontWeight="semibold">
+                  Analyze Draft
+                </Text>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => exportAnalysisMutation.mutate()}
+                  disabled={exportAnalysisMutation.isPending}
+                  w="100%"
+                >
+                  {exportAnalysisMutation.isPending ? 'Analyzing...' : 'Analyze for suggested revision'}
+                </Button>
+                {analysisResult && (
+                  <Text fontSize="2xs" color={emptyColor}>
+                    {analysisResult.export.derived.stats.block_count} blocks, {analysisResult.export.derived.stats.word_count} words, {analysisResult.export.outline.detected_headings.length} detected headings.
+                  </Text>
+                )}
+                {analysisResult && !revisionResult && (
+                  <Button
+                    size="xs"
+                    onClick={() => createSuggestedRevisionMutation.mutate()}
+                    disabled={createSuggestedRevisionMutation.isPending}
+                    w="100%"
+                  >
+                    {createSuggestedRevisionMutation.isPending ? 'Creating...' : 'Create Suggested Revision'}
+                  </Button>
+                )}
+                {revisionResult && (
+                  <VStack gap={2} align="stretch">
+                    <Text fontSize="2xs" color={emptyColor}>
+                      Created: {revisionResult.piece.title || 'Suggested revision'}
+                    </Text>
+                    {fidelitySummary && (
+                      <Box fontSize="2xs" color={emptyColor}>
+                        <Text>Unchanged blocks: {fidelitySummary.unchanged_block_count ?? 0}</Text>
+                        <Text>Edited blocks: {fidelitySummary.edited_block_count ?? 0}</Text>
+                        <Text>Added blocks: {fidelitySummary.added_block_count ?? 0}</Text>
+                        <Text>Removed blocks: {fidelitySummary.removed_block_count ?? 0}</Text>
+                      </Box>
+                    )}
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={handleOpenSuggestedDraft}
+                      disabled={!revisionResult.piece?.slug || !sponsor?.slug}
+                      w="100%"
+                    >
+                      Open Suggested Draft
+                    </Button>
+                  </VStack>
+                )}
+                {analysisError && (
+                  <Text fontSize="2xs" color="red.500">
+                    {analysisError}
+                  </Text>
+                )}
+              </VStack>
             </Box>
           </>
         )}

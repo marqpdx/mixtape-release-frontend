@@ -265,3 +265,139 @@ export async function confirmDocumentImportBatch(
   const res = await axiosInstance.post("/api/writing/import/confirm-batch", data);
   return res.data;
 }
+
+export interface WritingAnalysisSessionData {
+  id: string;
+  source_piece_id: string;
+  source_revision_hash: string;
+  export_version: string;
+  planner_type: string;
+  planner_label: string;
+  status: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  warnings: unknown[];
+}
+
+export interface WritingAnalysisExportBlock {
+  block_id: string;
+  kind: string;
+  text: string;
+  markdown: string;
+  word_count: number;
+  node_json: Record<string, unknown>;
+  anchors: Record<string, unknown>;
+  structure: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  provenance: Record<string, unknown>;
+}
+
+export interface WritingAnalysisExportData {
+  version: string;
+  piece: {
+    id: string;
+    title: string;
+    excerpt: string;
+    status: string;
+    enable_outline: boolean;
+  };
+  source: {
+    body_json_revision_hash: string;
+    source_kind: string;
+    working_document_id: string | null;
+    exported_at: string | null;
+    sponsor: {
+      type: string | null;
+      id: string | null;
+      slug: string | null;
+    };
+  };
+  outline: {
+    mode: string;
+    detected_headings: Array<{ block_id: string; text: string; level: number }>;
+    persistent_nodes: Array<Record<string, unknown>>;
+  };
+  document: {
+    block_order: string[];
+    blocks: WritingAnalysisExportBlock[];
+  };
+  derived: {
+    normalized_markdown: string;
+    plain_text: string;
+    stats: {
+      block_count: number;
+      word_count: number;
+      heading_count: number;
+    };
+  };
+}
+
+export interface WritingAnalysisExportResponse {
+  session: WritingAnalysisSessionData;
+  export: WritingAnalysisExportData;
+}
+
+export interface WritingSuggestedRevisionData {
+  id: string;
+  source_piece_id: string;
+  suggested_piece_id: string;
+  analysis_session_id: string;
+  source_revision_hash: string;
+  derivation_type: string;
+  created_at: string;
+}
+
+export interface WritingFidelityReportData {
+  id: string;
+  analysis_session_id: string;
+  suggested_revision_id: string;
+  source_piece_id: string;
+  suggested_piece_id: string;
+  source_revision_hash: string;
+  report_version: string;
+  report_payload: {
+    summary?: {
+      source_word_count?: number;
+      suggested_word_count?: number;
+      source_section_count?: number;
+      suggested_section_count?: number;
+      unchanged_block_count?: number;
+      edited_block_count?: number;
+      moved_block_count?: number;
+      added_block_count?: number;
+      removed_block_count?: number;
+    };
+    structural_changes?: unknown[];
+    textual_changes?: unknown[];
+    warnings?: Array<{ type?: string; message?: string }>;
+  };
+  created_at: string;
+}
+
+export interface WritingSuggestedRevisionCreateResponse {
+  suggested_revision: WritingSuggestedRevisionData;
+  fidelity_report: WritingFidelityReportData | null;
+  piece: WritingPiece;
+  detail?: string;
+}
+
+export async function exportWritingAnalysis(
+  pieceId: string,
+  payload?: { planner_type?: string; planner_label?: string }
+): Promise<WritingAnalysisExportResponse> {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/analysis/export`, payload || {});
+  return res.data;
+}
+
+export async function createSuggestedRevision(
+  pieceId: string,
+  sessionId: string,
+  payload?: { title_suffix?: string }
+): Promise<WritingSuggestedRevisionCreateResponse> {
+  const res = await axiosInstance.post(
+    `/api/writing/pieces/${pieceId}/analysis/sessions/${sessionId}/create-revision`,
+    payload || {}
+  );
+  return res.data;
+}
