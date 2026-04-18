@@ -619,6 +619,7 @@ export default function DraftRoomWorkArea({
           isOpen={dialogOpen}
           onClose={() => setDialogOpen(false)}
           piece={{ id: pieceDetail.id, title: pieceDetail.title || "" }}
+          pieceSlug={selectedPieceSlug}
           sponsorId={sponsor.id}
           sponsorSlug={sponsor.slug}
           sponsorType={sponsor.type}

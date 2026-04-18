@@ -18,10 +18,12 @@ import {
   Separator,
   Link,
   Input,
+  List,
 } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { toaster } from '@mixtape/core/lib/toaster'
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance'
 import { useWritingMutations } from '@hooks/useWriting'
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi'
 import * as writingApi from '@mixtape/api/clients/writing/writingApi'
@@ -37,6 +39,7 @@ interface SimplePublishDialogProps {
   isOpen: boolean
   onClose: () => void
   piece: { id: string; title: string }
+  pieceSlug?: string
   sponsorId: string
   sponsorSlug?: string
   sponsorType: 'group' | 'member'
@@ -70,6 +73,7 @@ export function SimplePublishDialog({
   isOpen,
   onClose,
   piece,
+  pieceSlug,
   sponsorId,
   sponsorSlug,
   sponsorType,
@@ -123,6 +127,21 @@ export function SimplePublishDialog({
     queryKey: ['distribution', 'sources', sponsorSlug],
     queryFn: () => fetchDistributionSources(sponsorType === 'group' ? sponsorSlug : undefined),
     enabled: isOpen && audience === 'readers',
+  })
+
+  const { data: readinessWarnings = [] } = useQuery<string[]>({
+    queryKey: ['atelier', 'readiness-warnings', pieceSlug],
+    queryFn: async () => {
+      const res = await axiosInstance.get<{ overall: string; tags: string; category: string; summaries: string; series: string; relations: string }>(`/api/atelier/${pieceSlug}/readiness/`)
+      const r = res.data
+      const warnings: string[] = []
+      if (r.tags === 'untouched') warnings.push('No tags have been added to this piece.')
+      if (r.category === 'untouched') warnings.push('No category has been set for this piece.')
+      if (r.summaries === 'untouched') warnings.push('No summaries have been written for this piece.')
+      if (r.series === 'untouched') warnings.push('This piece is not part of any series.')
+      return warnings
+    },
+    enabled: isOpen && !!pieceSlug,
   })
 
   const linkedinShareUrl = shareResults?.find((r) => r.source_kind === 'linkedin')?.channel_response?.linkedin_share_url as string | undefined
@@ -389,6 +408,29 @@ export function SimplePublishDialog({
 
           <Dialog.Body>
             <VStack gap={6} align="stretch">
+
+              {/* Craft readiness warnings */}
+              {readinessWarnings.length > 0 && (
+                <Box
+                  borderWidth="1px"
+                  borderColor="yellow.300"
+                  borderRadius="md"
+                  p={3}
+                  bg="yellow.50"
+                  _dark={{ bg: "yellow.900", borderColor: "yellow.600" }}
+                >
+                  <Text fontSize="xs" fontWeight="semibold" color="yellow.800" _dark={{ color: "yellow.200" }} mb={1}>
+                    Craft readiness — you can still publish
+                  </Text>
+                  <List.Root gap={1} pl={3}>
+                    {readinessWarnings.map((w) => (
+                      <List.Item key={w}>
+                        <Text fontSize="xs" color="yellow.700" _dark={{ color: "yellow.300" }}>{w}</Text>
+                      </List.Item>
+                    ))}
+                  </List.Root>
+                </Box>
+              )}
 
               {/* Who is this for? */}
               <VStack gap={3} align="stretch">
