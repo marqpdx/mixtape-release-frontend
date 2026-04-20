@@ -2,6 +2,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useActionRun } from "@/hooks/useActionRun";
+import { submitSummarizeAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
 import {
   Box,
   Button,
@@ -155,6 +157,13 @@ export default function AtelierShapeTab({
   const [summaries, setSummaries] = useState<Summaries | null>(null);
   const [summariesLoading, setSummariesLoading] = useState(false);
   const [savingSummary, setSavingSummary] = useState<string | null>(null);
+  const [excerpt, setExcerpt] = useState<string>("");
+  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+
+  // AI generation
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const activeRun = useActionRun(activeRunId);
 
   // Series
   const [currentSeries, setCurrentSeries] = useState<SeriesOption | null>(null);
@@ -186,7 +195,16 @@ export default function AtelierShapeTab({
     setSummariesLoading(true);
     axiosInstance
       .get(`/api/atelier/${pieceSlug}/summaries/`)
-      .then((res) => setSummaries(res.data as Summaries))
+      .then((res) => {
+        const data = res.data as Summaries & { excerpt?: string };
+        setSummaries(data);
+        setExcerpt(data.excerpt ?? "");
+        setDraftValues({
+          public_synopsis: data.public_synopsis.text,
+          linkedin_synopsis: data.linkedin_synopsis.text,
+          internal_abstract: data.internal_abstract.text,
+        });
+      })
       .catch(() => setSummaries(null))
       .finally(() => setSummariesLoading(false));
   }, [pieceSlug]);
@@ -364,6 +382,45 @@ export default function AtelierShapeTab({
     s.title.toLowerCase().includes(seriesSearch.toLowerCase())
   );
 
+  // AI: poll for completed run and auto-populate + auto-save
+  useEffect(() => {
+    if (!activeRun || !generatingFor) return;
+    if (activeRun.status === "succeeded") {
+      const summary = activeRun.result_payload?.summary as string | undefined;
+      if (summary) {
+        setDraftValues((d) => ({ ...d, [generatingFor]: summary }));
+        axiosInstance
+          .patch(`/api/atelier/${pieceSlug}/summaries/`, { [generatingFor]: summary })
+          .then((res) => {
+            setSummaries(res.data as Summaries);
+            refreshReadiness();
+          });
+      }
+      setGeneratingFor(null);
+      setActiveRunId(null);
+    } else if (activeRun.status === "failed") {
+      setGeneratingFor(null);
+      setActiveRunId(null);
+    }
+  }, [activeRun, generatingFor, pieceSlug, refreshReadiness]);
+
+  const SUMMARY_WORDS: Record<string, number> = {
+    public_synopsis: 60,
+    linkedin_synopsis: 50,
+    internal_abstract: 80,
+  };
+
+  const handleGenerate = async (field: string) => {
+    if (!excerpt || generatingFor) return;
+    setGeneratingFor(field);
+    try {
+      const resp = await submitSummarizeAsync({ text: excerpt, words: SUMMARY_WORDS[field] ?? 60 });
+      setActiveRunId(resp.action_run_id);
+    } catch {
+      setGeneratingFor(null);
+    }
+  };
+
   void pieceId;
 
   // ---------------------------------------------------------------------------
@@ -461,31 +518,43 @@ export default function AtelierShapeTab({
                       {label}
                     </Text>
                   </HStack>
-                  <Button
-                    size="xs"
-                    variant={summaries[field].confirmed ? "solid" : "outline"}
-                    colorScheme={summaries[field].confirmed ? "green" : "gray"}
-                    disabled={
-                      summaries[field].confirmed ||
-                      !summaries[field].text ||
-                      savingSummary === field + "_confirm"
-                    }
-                    onClick={() => handleConfirm(field)}
-                  >
-                    {summaries[field].confirmed ? "Confirmed" : "Confirm"}
-                  </Button>
+                  <HStack gap={1}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => void handleGenerate(field)}
+                      loading={generatingFor === field}
+                      disabled={!excerpt || (!!generatingFor && generatingFor !== field)}
+                    >
+                      Generate
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant={summaries[field].confirmed ? "solid" : "outline"}
+                      colorScheme={summaries[field].confirmed ? "green" : "gray"}
+                      disabled={
+                        summaries[field].confirmed ||
+                        !summaries[field].text ||
+                        savingSummary === field + "_confirm"
+                      }
+                      onClick={() => handleConfirm(field)}
+                    >
+                      {summaries[field].confirmed ? "Confirmed" : "Confirm"}
+                    </Button>
+                  </HStack>
                 </HStack>
                 <Textarea
                   size="sm"
                   rows={3}
-                  defaultValue={summaries[field].text}
+                  value={draftValues[field] ?? summaries[field].text}
+                  onChange={(e) => setDraftValues((d) => ({ ...d, [field]: e.target.value }))}
                   placeholder={`Write ${label.toLowerCase()}…`}
                   bg={inputBg}
                   borderColor={inputBorder}
                   _focus={{ borderColor: inputFocusBorder }}
                   fontSize="sm"
                   onBlur={(e) => handleSummaryBlur(field, e.target.value)}
-                  disabled={savingSummary === field}
+                  disabled={savingSummary === field || generatingFor === field}
                 />
               </Box>
             ))}
