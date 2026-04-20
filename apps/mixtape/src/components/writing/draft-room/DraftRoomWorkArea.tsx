@@ -6,7 +6,6 @@ import {
   Badge,
   Box,
   Button,
-  Checkbox,
   HStack,
   Input,
   Portal,
@@ -17,13 +16,13 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { Tooltip } from "@components/ui/tooltip";
+// import { Tooltip } from "@components/ui/tooltip";
 import { HelpTip } from "@/components/help/HelpTip";
 import { useHelpRegistration } from "@/components/help/useHelpRegistration";
 import { useWriting } from "@hooks/useWriting";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
-import { TagInput, Tag } from "@components/writing/composer/TagInput";
-import { CategoryInput, Category } from "@components/writing/composer/CategoryInput";
+import { Tag } from "@components/writing/composer/TagInput";
+import { Category } from "@components/writing/composer/CategoryInput";
 import { SimplePublishDialog } from "@components/writing/composer/SimplePublishDialog";
 import { formatDistanceToNow } from "date-fns";
 import { Divider } from "@/components/common/Divider";
@@ -70,10 +69,6 @@ export default function DraftRoomWorkArea({
   const [categories, setCategories] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
   const [addressedTo, setAddressedTo] = useState("");
-  const [series, setSeries] = useState("");
-  const [noneOkTags, setNoneOkTags] = useState(false);
-  const [noneOkCategories, setNoneOkCategories] = useState(false);
-  const [noneOkSeries, setNoneOkSeries] = useState(false);
   const [showTitleSaved, setShowTitleSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -168,10 +163,6 @@ export default function DraftRoomWorkArea({
       setCategories([]);
       setTitle("");
       setAddressedTo(getPersistedAddressedTo());
-      setSeries("");
-      setNoneOkTags(false);
-      setNoneOkCategories(false);
-      setNoneOkSeries(false);
       setShowTitleSaved(false);
       lastSavedSnapshotRef.current = null;
       hydratingMetadataRef.current = false;
@@ -341,9 +332,9 @@ export default function DraftRoomWorkArea({
   const readinessColor = (isReady: boolean) => (isReady ? "green.400" : "orange.400");
   const isTitleReady = Boolean(title.trim());
   const isAudienceReady = Boolean(addressedTo.trim());
-  const isTagsReady = tags.length > 0 || noneOkTags;
-  const isCategoriesReady = categories.length > 0 || noneOkCategories;
-  const isSeriesReady = Boolean(series.trim()) || noneOkSeries;
+  // const isTagsReady = tags.length > 0 || noneOkTags;
+  // const isCategoriesReady = categories.length > 0 || noneOkCategories;
+  // const isSeriesReady = Boolean(series.trim()) || noneOkSeries;
 
   return (
     <HStack align="stretch" gap={6} w="100%">

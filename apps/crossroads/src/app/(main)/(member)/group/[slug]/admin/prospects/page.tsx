@@ -8,7 +8,6 @@ import {
   Heading,
   HStack,
   Input,
-  Select,
   Spinner,
   Text,
   VStack,
@@ -29,10 +28,6 @@ interface Prospect {
   created_at: string;
 }
 
-const STATUS_OPTIONS = [
-  "new", "contacted", "intake_started", "meeting_scheduled",
-  "proposal_stage", "won", "lost", "archived",
-];
 
 export default function ProspectsListPage() {
   const params = useParams();
@@ -83,8 +78,9 @@ export default function ProspectsListPage() {
       setName("");
       setContactName("");
       setContactEmail("");
-    } catch (e: any) {
-      setCreateError(e?.response?.data?.detail || "Could not create prospect.");
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setCreateError(msg || "Could not create prospect.");
     } finally {
       setCreating(false);
     }
