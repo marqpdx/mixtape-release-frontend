@@ -82,6 +82,17 @@ interface IncomingRelation {
   created_by: { id: string; display_name: string } | null;
 }
 
+interface WritingMarkerOccurrence {
+  id: string;
+  raw_name: string;
+  raw_marker: string;
+  char_offset: number;
+  status: "pending" | "affirmed" | "dismissed";
+  label: string;
+  body: string;
+  created_at: string;
+}
+
 const VERB_OPTIONS = [
   { value: "mentions", label: "Mentions" },
   { value: "suggests", label: "Suggests" },
@@ -171,6 +182,11 @@ export default function AtelierShapeTab({
   const [seriesLoading, setSeriesLoading] = useState(false);
   const [seriesSearch, setSeriesSearch] = useState("");
 
+  // Markers
+  const [markers, setMarkers] = useState<WritingMarkerOccurrence[]>([]);
+  const [markersLoading, setMarkersLoading] = useState(false);
+  const [markerDrafts, setMarkerDrafts] = useState<Record<string, { label: string; body: string }>>({});
+
   // Relations
   const [outgoing, setOutgoing] = useState<OutgoingRelation[]>([]);
   const [incoming, setIncoming] = useState<IncomingRelation[]>([]);
@@ -241,13 +257,31 @@ export default function AtelierShapeTab({
       .finally(() => setRelationsLoading(false));
   }, [pieceSlug]);
 
+  const fetchMarkers = useCallback(() => {
+    setMarkersLoading(true);
+    axiosInstance
+      .get(`/api/atelier/${pieceSlug}/markers/`)
+      .then((res) => {
+        const data = res.data as WritingMarkerOccurrence[];
+        setMarkers(data);
+        const drafts: Record<string, { label: string; body: string }> = {};
+        for (const m of data) {
+          drafts[m.id] = { label: m.label, body: m.body };
+        }
+        setMarkerDrafts(drafts);
+      })
+      .catch(() => setMarkers([]))
+      .finally(() => setMarkersLoading(false));
+  }, [pieceSlug]);
+
   useEffect(() => {
     if (!pieceSlug) return;
     fetchReadiness();
     fetchSummaries();
     fetchSeries();
     fetchRelations();
-  }, [pieceSlug, fetchReadiness, fetchSummaries, fetchSeries, fetchRelations]);
+    fetchMarkers();
+  }, [pieceSlug, fetchReadiness, fetchSummaries, fetchSeries, fetchRelations, fetchMarkers]);
 
   // Refresh readiness after any mutation
   const refreshReadiness = useCallback(() => {
@@ -376,6 +410,24 @@ export default function AtelierShapeTab({
       .then(() => {
         setIncoming((prev) => prev.filter((r) => r.id !== relationId));
       });
+  };
+
+  const handleAffirmMarker = (marker: WritingMarkerOccurrence) => {
+    const draft = markerDrafts[marker.id];
+    if (!draft?.label?.trim()) return;
+    axiosInstance
+      .patch(`/api/atelier/${pieceSlug}/markers/${marker.id}/`, {
+        action: "affirm",
+        label: draft.label.trim(),
+        body: draft.body,
+      })
+      .then(() => setMarkers((prev) => prev.filter((m) => m.id !== marker.id)));
+  };
+
+  const handleDismissMarker = (markerId: string) => {
+    axiosInstance
+      .patch(`/api/atelier/${pieceSlug}/markers/${markerId}/`, { action: "dismiss" })
+      .then(() => setMarkers((prev) => prev.filter((m) => m.id !== markerId)));
   };
 
   const filteredSeries = availableSeries.filter((s) =>
@@ -774,6 +826,100 @@ export default function AtelierShapeTab({
           )}
         </VStack>
       </Box>
+
+      {/* Markers — only shown when pending occurrences exist */}
+      {(markersLoading || markers.length > 0) && (
+        <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
+          <HStack justify="space-between" mb={3}>
+            <Text fontSize="sm" fontWeight="medium">Markers</Text>
+            {markersLoading && <Spinner size="xs" />}
+          </HStack>
+          {!markersLoading && markers.length === 0 && null}
+          {markers.length > 0 && (
+            <VStack align="stretch" gap={4}>
+              {markers.map((marker) => {
+                const draft = markerDrafts[marker.id] ?? { label: marker.label, body: marker.body };
+                return (
+                  <Box
+                    key={marker.id}
+                    borderWidth="1px"
+                    borderColor={inputBorder}
+                    borderRadius="md"
+                    p={3}
+                  >
+                    <HStack justify="space-between" mb={2}>
+                      <HStack gap={2}>
+                        <Box
+                          px={2} py={0.5}
+                          bg={inputBg}
+                          borderWidth="1px"
+                          borderColor={inputBorder}
+                          borderRadius="sm"
+                          fontSize="xs"
+                          fontFamily="mono"
+                          fontWeight="medium"
+                        >
+                          /{marker.raw_name}
+                        </Box>
+                        <Text fontSize="xs" color={textSecondary} truncate maxW="160px">
+                          {marker.raw_marker}
+                        </Text>
+                      </HStack>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        color={textSecondary}
+                        onClick={() => handleDismissMarker(marker.id)}
+                      >
+                        ×
+                      </Button>
+                    </HStack>
+                    <VStack align="stretch" gap={2}>
+                      <input
+                        style={{
+                          width: "100%",
+                          padding: "4px 8px",
+                          border: "1px solid",
+                          borderRadius: "6px",
+                          fontSize: "13px",
+                          background: "transparent",
+                          boxSizing: "border-box",
+                        }}
+                        placeholder="Label *"
+                        value={draft.label}
+                        onChange={(e) =>
+                          setMarkerDrafts((d) => ({ ...d, [marker.id]: { ...draft, label: e.target.value } }))
+                        }
+                      />
+                      <Textarea
+                        size="sm"
+                        rows={2}
+                        placeholder="Body (optional)"
+                        value={draft.body}
+                        onChange={(e) =>
+                          setMarkerDrafts((d) => ({ ...d, [marker.id]: { ...draft, body: e.target.value } }))
+                        }
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        _focus={{ borderColor: inputFocusBorder }}
+                        fontSize="sm"
+                      />
+                      <Button
+                        size="sm"
+                        colorPalette="blue"
+                        disabled={!draft.label?.trim()}
+                        onClick={() => handleAffirmMarker(marker)}
+                      >
+                        Affirm
+                      </Button>
+                    </VStack>
+                  </Box>
+                );
+              })}
+            </VStack>
+          )}
+        </Box>
+      )}
 
       <Divider />
     </VStack>
