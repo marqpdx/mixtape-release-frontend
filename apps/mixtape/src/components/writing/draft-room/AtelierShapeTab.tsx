@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useActionRun } from "@/hooks/useActionRun";
-import { submitSummarizeAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
+import { submitSummarizeAsync, submitClassifyAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
 import {
   Box,
   Button,
@@ -171,10 +171,17 @@ export default function AtelierShapeTab({
   const [excerpt, setExcerpt] = useState<string>("");
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
 
-  // AI generation
+  // AI generation — summaries
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const activeRun = useActionRun(activeRunId);
+
+  // AI generation — classify (tags + category suggestions)
+  const [classifyRunId, setClassifyRunId] = useState<string | null>(null);
+  const [classifySuggesting, setClassifySuggesting] = useState(false);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [suggestedCategory, setSuggestedCategory] = useState<string>("");
+  const classifyRun = useActionRun(classifyRunId);
 
   // Series
   const [currentSeries, setCurrentSeries] = useState<SeriesOption | null>(null);
@@ -456,6 +463,69 @@ export default function AtelierShapeTab({
     }
   }, [activeRun, generatingFor, pieceSlug, refreshReadiness]);
 
+  // Poll classify run and populate suggestions
+  useEffect(() => {
+    if (!classifyRun || !classifySuggesting) return;
+    if (classifyRun.status === "succeeded") {
+      const t = classifyRun.result_payload?.tags as string[] | undefined;
+      const c = classifyRun.result_payload?.category as string | undefined;
+      if (t?.length) setSuggestedTags(t);
+      if (c) setSuggestedCategory(c);
+      setClassifySuggesting(false);
+      setClassifyRunId(null);
+    } else if (classifyRun.status === "failed") {
+      setClassifySuggesting(false);
+      setClassifyRunId(null);
+    }
+  }, [classifyRun, classifySuggesting]);
+
+  const handleSuggestClassify = async () => {
+    if (!excerpt || classifySuggesting) return;
+    setClassifySuggesting(true);
+    setSuggestedTags([]);
+    setSuggestedCategory("");
+    try {
+      const resp = await submitClassifyAsync({ text: excerpt });
+      setClassifyRunId(resp.action_run_id);
+    } catch {
+      setClassifySuggesting(false);
+    }
+  };
+
+  const handleAddSuggestedTag = async (name: string) => {
+    const search = await axiosInstance.get("/api/classifications/tags", { params: { q: name } });
+    const existing = (search.data as Tag[]).find(
+      (t) => t.title.toLowerCase() === name.toLowerCase()
+    );
+    let tag: Tag;
+    if (existing) {
+      tag = existing;
+    } else {
+      const created = await axiosInstance.post("/api/classifications/tags", { title: name });
+      tag = created.data as Tag;
+    }
+    if (!tags.find((t) => t.id === tag.id)) {
+      handleTagsChange([...tags, tag]);
+    }
+    setSuggestedTags((prev) => prev.filter((t) => t !== name));
+  };
+
+  const handleApplySuggestedCategory = async (name: string) => {
+    const search = await axiosInstance.get("/api/classifications/categories", { params: { q: name } });
+    const existing = (search.data as Category[]).find(
+      (c) => c.title.toLowerCase() === name.toLowerCase()
+    );
+    let cat: Category;
+    if (existing) {
+      cat = existing;
+    } else {
+      const created = await axiosInstance.post("/api/classifications/categories", { title: name });
+      cat = created.data as Category;
+    }
+    handleCategoriesChange([cat]);
+    setSuggestedCategory("");
+  };
+
   const SUMMARY_WORDS: Record<string, number> = {
     public_synopsis: 60,
     linkedin_synopsis: 50,
@@ -509,9 +579,18 @@ export default function AtelierShapeTab({
 
       {/* Tags */}
       <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>
-          Tags
-        </Text>
+        <HStack justify="space-between" mb={2}>
+          <Text fontSize="sm" fontWeight="medium">Tags</Text>
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={() => void handleSuggestClassify()}
+            loading={classifySuggesting}
+            disabled={!excerpt || classifySuggesting}
+          >
+            Suggest
+          </Button>
+        </HStack>
         <TagInput
           selectedTags={tags}
           onTagsChange={handleTagsChange}
@@ -522,13 +601,37 @@ export default function AtelierShapeTab({
           inputBorderColor={inputBorder}
           inputFocusBorderColor={inputFocusBorder}
         />
+        {suggestedTags.length > 0 && (
+          <Box mt={2}>
+            <HStack gap={1} flexWrap="wrap">
+              <Text fontSize="xs" color={textSecondary} mr={1}>Suggested:</Text>
+              {suggestedTags.map((t) => (
+                <Box
+                  key={t}
+                  as="button"
+                  px={2}
+                  py={0.5}
+                  borderWidth="1px"
+                  borderColor={inputBorder}
+                  borderRadius="sm"
+                  fontSize="xs"
+                  _hover={{ bg: inputBg }}
+                  onClick={() => void handleAddSuggestedTag(t)}
+                >
+                  + {t}
+                </Box>
+              ))}
+              <Button size="xs" variant="ghost" color={textSecondary} onClick={() => setSuggestedTags([])}>
+                Clear
+              </Button>
+            </HStack>
+          </Box>
+        )}
       </Box>
 
       {/* Category */}
       <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>
-          Category
-        </Text>
+        <Text fontSize="sm" fontWeight="medium" mb={2}>Category</Text>
         <CategoryInput
           selectedCategories={categories}
           onCategoriesChange={handleCategoriesChange}
@@ -539,6 +642,17 @@ export default function AtelierShapeTab({
           inputBorderColor={inputBorder}
           inputFocusBorderColor={inputFocusBorder}
         />
+        {suggestedCategory && (
+          <HStack mt={2} gap={2}>
+            <Text fontSize="xs" color={textSecondary}>Suggested: <strong>{suggestedCategory}</strong></Text>
+            <Button size="xs" variant="ghost" onClick={() => void handleApplySuggestedCategory(suggestedCategory)}>
+              Apply
+            </Button>
+            <Button size="xs" variant="ghost" color={textSecondary} onClick={() => setSuggestedCategory("")}>
+              ×
+            </Button>
+          </HStack>
+        )}
       </Box>
 
       {/* Summaries */}
@@ -690,6 +804,7 @@ export default function AtelierShapeTab({
       </Box>
 
       {/* Relations */}
+      {/* TODO AT-11 Phase 2: relation suggestions via semantic search (deferred — needs sufficient corpus) */}
       <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
         <HStack justify="space-between" mb={3}>
           <Text fontSize="sm" fontWeight="medium">Relations</Text>
