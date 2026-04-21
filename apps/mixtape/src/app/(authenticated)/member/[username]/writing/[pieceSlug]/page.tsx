@@ -2,6 +2,7 @@
 
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   VStack,
   Box,
@@ -25,6 +26,15 @@ import { useWritingPiece } from "@hooks/useWriting"
 import ProfileHeaderWrapper from "@components/profiles/ProfileHeaderWrapper"
 import { Divider } from "@components/common/Divider"
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer"
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance"
+
+interface AffirmedMarker {
+  id: string
+  raw_name: string
+  label: string
+  body: string
+  char_offset: number
+}
 
 export default function MemberWritingPiecePage() {
   const params = useParams()
@@ -33,6 +43,11 @@ export default function MemberWritingPiecePage() {
 
   const bgColor = useColorModeValue("gray.50", "gray.900")
   const cardBg = useColorModeValue("white", "gray.800")
+  const mutedColor = useColorModeValue("gray.500", "gray.400")
+  const markerBg = useColorModeValue("gray.50", "gray.900")
+  const markerBorder = useColorModeValue("gray.200", "gray.700")
+
+  const [affirmedMarkers, setAffirmedMarkers] = useState<AffirmedMarker[]>([])
 
   const { user: identity, isLoading: identityLoading } = useAuth()
   const username = usernameParam || identity?.username
@@ -47,6 +62,14 @@ export default function MemberWritingPiecePage() {
   const isLoading = identityLoading || memberLoading || pieceLoading
 
   const libraryUrl = `/members/${usernameParam}/library`
+
+  useEffect(() => {
+    if (!pieceSlug) return
+    axiosInstance
+      .get(`/api/atelier/${pieceSlug}/markers/?status=affirmed`)
+      .then((res) => setAffirmedMarkers(res.data as AffirmedMarker[]))
+      .catch(() => setAffirmedMarkers([]))
+  }, [pieceSlug])
 
   if (isLoading) {
     return (
@@ -207,6 +230,44 @@ export default function MemberWritingPiecePage() {
               <Box className="writing-piece-content">
                 <TipTapRenderer content={piece.body_json} />
               </Box>
+
+              {/* Affirmed marker anchors — navigation targets for cross-piece index */}
+              {affirmedMarkers.length > 0 && (
+                <>
+                  <Divider />
+                  <VStack align="stretch" gap={3}>
+                    {affirmedMarkers.map((marker) => (
+                      <Box
+                        key={marker.id}
+                        id={`marker-${marker.id}`}
+                        borderLeftWidth="3px"
+                        borderLeftColor="blue.300"
+                        pl={4}
+                        py={1}
+                        bg={markerBg}
+                        borderRadius="sm"
+                      >
+                        <HStack gap={2} mb={marker.body ? 1 : 0}>
+                          <Box
+                            px={1.5} py={0.5}
+                            bg={markerBorder}
+                            borderRadius="sm"
+                            fontSize="xs"
+                            fontFamily="mono"
+                            color={mutedColor}
+                          >
+                            /{marker.raw_name}
+                          </Box>
+                          <Text fontSize="sm" fontWeight="medium">{marker.label}</Text>
+                        </HStack>
+                        {marker.body && (
+                          <Text fontSize="sm" color={mutedColor} pl={6}>{marker.body}</Text>
+                        )}
+                      </Box>
+                    ))}
+                  </VStack>
+                </>
+              )}
 
               <Divider />
 
