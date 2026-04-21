@@ -95,6 +95,24 @@ export interface AdmissionStatus {
   is_parent_member: boolean;
 }
 
+export interface PublicLibraryPiece {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  writing_kind: string;
+  published_at: string | null;
+  reading_time: number | null;
+  author: {
+    username: string;
+    display_name: string;
+  };
+  sponsor_group: {
+    slug: string;
+    title: string;
+  } | null;
+}
+
 export interface PublicWritingPiece {
   id: string;
   slug: string;
@@ -154,6 +172,24 @@ export async function fetchPublicMemberShelves(
 ): Promise<PublicShelf[]> {
   const response = await axiosInstance.get<PublicShelf[]>(
     `/api/public/members/${username}/shelves`
+  );
+  return response.data;
+}
+
+export async function fetchPublicMemberWriting(
+  username: string
+): Promise<PublicLibraryPiece[]> {
+  const response = await axiosInstance.get<PublicLibraryPiece[]>(
+    `/api/public/members/${username}/writing`
+  );
+  return response.data;
+}
+
+export async function fetchPublicGroupWriting(
+  slug: string
+): Promise<PublicLibraryPiece[]> {
+  const response = await axiosInstance.get<PublicLibraryPiece[]>(
+    `/api/public/groups/${slug}/writing`
   );
   return response.data;
 }
