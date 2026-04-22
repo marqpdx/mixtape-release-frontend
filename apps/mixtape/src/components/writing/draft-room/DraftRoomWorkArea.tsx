@@ -45,6 +45,7 @@ type PieceDetail = {
   slug: string;
   title?: string;
   excerpt?: string;
+  writing_kind?: string;
   body_json?: Record<string, unknown> | null;
 };
 
@@ -598,6 +599,9 @@ export default function DraftRoomWorkArea({
                   initialCategories={categories}
                   onTagsChange={handleTagsChange}
                   onCategoriesChange={handleCategoriesChange}
+                  pieceTitle={title}
+                  writingKind={pieceDetail?.writing_kind}
+                  authorDisplayName={sponsor.displayName}
                 />
               )}
             </>

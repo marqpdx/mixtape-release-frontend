@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useActionRun } from "@/hooks/useActionRun";
 import { submitSummarizeAsync, submitClassifyAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
 import {
+  Badge,
   Box,
   Button,
   HStack,
@@ -109,6 +110,9 @@ interface AtelierShapeTabProps {
   onCategoriesChange?: (categories: Category[]) => void;
   initialTags?: Tag[];
   initialCategories?: Category[];
+  pieceTitle?: string;
+  writingKind?: string;
+  authorDisplayName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +153,9 @@ export default function AtelierShapeTab({
   onCategoriesChange,
   initialTags = [],
   initialCategories = [],
+  pieceTitle,
+  writingKind,
+  authorDisplayName,
 }: AtelierShapeTabProps) {
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const inputBg = useColorModeValue("gray.50", "gray.900");
@@ -1035,6 +1042,91 @@ export default function AtelierShapeTab({
           )}
         </Box>
       )}
+
+      <Divider />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Preview (AT-12 / RO-8)                                              */}
+      {/* ------------------------------------------------------------------ */}
+      <Box>
+        <Text fontSize="sm" fontWeight="semibold" color={textSecondary} mb={3}>
+          Preview
+        </Text>
+        <VStack gap={4} align="stretch">
+          {/* Feed card preview */}
+          <Box>
+            <Text fontSize="xs" color={textSecondary} mb={2} fontWeight="medium">
+              Feed card
+            </Text>
+            <Box
+              border="1px solid"
+              borderColor={sectionBorder}
+              borderRadius="md"
+              p={4}
+              bg={inputBg}
+            >
+              <HStack gap={2} mb={1} flexWrap="wrap" align="flex-start">
+                <Text fontWeight="semibold" fontSize="sm" lineHeight="1.4" flex="1">
+                  {pieceTitle || "Untitled"}
+                </Text>
+                {writingKind && writingKind !== "post" && (
+                  <Badge size="sm" variant="subtle" colorPalette="blue" flexShrink={0}>
+                    {writingKind}
+                  </Badge>
+                )}
+              </HStack>
+              {(summaries?.public_synopsis.text || excerpt) && (
+                <Text fontSize="xs" color={textSecondary} lineClamp={2} mb={2}>
+                  {summaries?.public_synopsis.text || excerpt}
+                </Text>
+              )}
+              <HStack gap={2} fontSize="xs" color={textSecondary} flexWrap="wrap">
+                {authorDisplayName && <Text>{authorDisplayName}</Text>}
+                {tags.length > 0 && (
+                  <>
+                    {authorDisplayName && <Text>·</Text>}
+                    <Text>{tags.map((t) => t.title).join(", ")}</Text>
+                  </>
+                )}
+              </HStack>
+            </Box>
+          </Box>
+
+          {/* Search result preview */}
+          <Box>
+            <Text fontSize="xs" color={textSecondary} mb={2} fontWeight="medium">
+              Search result
+            </Text>
+            <Box
+              border="1px solid"
+              borderColor={sectionBorder}
+              borderRadius="md"
+              p={4}
+              bg={inputBg}
+            >
+              <Text
+                fontWeight="semibold"
+                fontSize="sm"
+                color="blue.500"
+                mb={1}
+                lineClamp={1}
+              >
+                {pieceTitle || "Untitled"}
+              </Text>
+              {(summaries?.public_synopsis.text || excerpt) && (
+                <Text fontSize="xs" color={textSecondary} lineClamp={3}>
+                  {(summaries?.public_synopsis.text || excerpt || "").slice(0, 200)}
+                </Text>
+              )}
+              {authorDisplayName && (
+                <Text fontSize="xs" color={textSecondary} mt={1}>
+                  {authorDisplayName}
+                </Text>
+              )}
+            </Box>
+          </Box>
+        </VStack>
+      </Box>
 
       <Divider />
     </VStack>
