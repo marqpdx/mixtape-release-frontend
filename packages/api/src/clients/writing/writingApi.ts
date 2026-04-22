@@ -382,6 +382,23 @@ export interface WritingSuggestedRevisionCreateResponse {
   detail?: string;
 }
 
+export interface PdfExportResult {
+  blob: Blob;
+  filename: string | null;
+}
+
+function parseContentDispositionFilename(contentDisposition?: string): string | null {
+  if (!contentDisposition) return null;
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const basicMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+  return basicMatch?.[1] ?? null;
+}
+
 export async function exportWritingAnalysis(
   pieceId: string,
   payload?: { planner_type?: string; planner_label?: string }
@@ -400,4 +417,15 @@ export async function createSuggestedRevision(
     payload || {}
   );
   return res.data;
+}
+
+export async function exportPiecePdf(pieceId: string): Promise<PdfExportResult> {
+  const res = await axiosInstance.get(`/api/writing/pieces/${pieceId}/export/pdf`, {
+    responseType: "blob",
+  });
+
+  return {
+    blob: res.data,
+    filename: parseContentDispositionFilename(res.headers["content-disposition"]),
+  };
 }

@@ -7,6 +7,7 @@ import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useQueryClient } from "@tanstack/react-query";
 import { Editor } from "@tiptap/react";
+import { exportPiecePdf } from "@mixtape/api/clients/writing/writingApi";
 
 import { MainEditor } from "@components/writing/composer/MainEditor";
 import { TitleInput } from "@components/writing/composer/TitleInput";
@@ -146,6 +147,8 @@ export default function WriteComposer({
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
   const [workspaceWidth] = useState("360px");
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfExportError, setPdfExportError] = useState<string | null>(null);
 
   // Dispatch custom events when outline opens/closes so DashboardLayout can react
   const setOutlineOpenWithEvent = useCallback((open: boolean) => {
@@ -519,6 +522,28 @@ export default function WriteComposer({
 
   const overTarget = targetWordCount != null && summaryWordCount > targetWordCount;
 
+  const handleExportPdf = useCallback(async () => {
+    setPdfExporting(true);
+    setPdfExportError(null);
+
+    try {
+      const { blob, filename } = await exportPiecePdf(pieceId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename || `${(title || initialPiece?.title || "untitled").trim() || "untitled"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+      setPdfExportError("PDF export failed. Please try again.");
+    } finally {
+      setPdfExporting(false);
+    }
+  }, [initialPiece?.title, pieceId, title]);
+
   const handleTargetWordCountChange = useCallback(async (value: number | null) => {
     setTargetWordCount(value);
     try {
@@ -621,6 +646,15 @@ export default function WriteComposer({
                     <HStack gap={2}>
                       <Button
                         size="xs"
+                        variant="outline"
+                        colorScheme="gray"
+                        onClick={handleExportPdf}
+                        loading={pdfExporting}
+                      >
+                        Export PDF
+                      </Button>
+                      <Button
+                        size="xs"
                         variant={isCollaborative ? "solid" : "outline"}
                         colorScheme={isCollaborative ? "blue" : "gray"}
                         onClick={() => setCollaborationDialogOpen(true)}
@@ -652,8 +686,26 @@ export default function WriteComposer({
                     />
                   </Box>
                 )}
+
+                {!allowCollab && (
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={handleExportPdf}
+                    loading={pdfExporting}
+                  >
+                    Export PDF
+                  </Button>
+                )}
               </Flex>
             </Box>
+
+            {pdfExportError && (
+              <Text fontSize="xs" color="red.500" mt={-2}>
+                {pdfExportError}
+              </Text>
+            )}
 
             <TitleInput title={title} setTitle={onTitleChange} placeholder="Enter your title..." />
 
