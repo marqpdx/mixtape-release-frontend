@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   VStack,
   Box,
@@ -27,6 +27,7 @@ import ProfileHeaderWrapper from "@components/profiles/ProfileHeaderWrapper"
 import { Divider } from "@components/common/Divider"
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer"
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance"
+import { DartOverlay } from "@components/reading/DartOverlay"
 
 interface AffirmedMarker {
   id: string
@@ -48,6 +49,7 @@ export default function MemberWritingPiecePage() {
   const markerBorder = useColorModeValue("gray.200", "gray.700")
 
   const [affirmedMarkers, setAffirmedMarkers] = useState<AffirmedMarker[]>([])
+  const articleRef = useRef<HTMLElement | null>(null)
 
   const { user: identity, isLoading: identityLoading } = useAuth()
   const username = usernameParam || identity?.username
@@ -227,7 +229,11 @@ export default function MemberWritingPiecePage() {
 
               {piece.excerpt && <Divider />}
 
-              <Box className="writing-piece-content">
+              <Box
+                className="writing-piece-content"
+                position="relative"
+                ref={(el) => { articleRef.current = el }}
+              >
                 <TipTapRenderer content={piece.body_json} />
               </Box>
 
@@ -303,6 +309,14 @@ export default function MemberWritingPiecePage() {
           </VStack>
         </VStack>
       </Container>
+
+      {piece && identity && (
+        <DartOverlay
+          artifactId={piece.id}
+          articleRef={articleRef}
+          isOwn={isOwner}
+        />
+      )}
     </Box>
   )
 }
