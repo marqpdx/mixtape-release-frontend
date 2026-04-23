@@ -59,10 +59,11 @@ export function PromotionDialog({
           onClose()
           router.push(`/living-books/${book.id}/`)
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
+          const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } };
           const msg =
-            err?.response?.data?.detail ||
-            err?.response?.data?.error ||
+            axiosErr?.response?.data?.detail ||
+            axiosErr?.response?.data?.error ||
             "Could not promote this piece. Make sure it has an active Dispatch."
           setError(msg)
         },

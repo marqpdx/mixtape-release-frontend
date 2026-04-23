@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, HStack, Text, VStack, Skeleton, Badge } from "@chakra-ui/react";
+import { HStack, Text, VStack, Skeleton, Badge } from "@chakra-ui/react";
 import Link from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useReentry } from "@hooks/console/useConsole";

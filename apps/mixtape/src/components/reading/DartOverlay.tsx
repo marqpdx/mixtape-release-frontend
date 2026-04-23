@@ -156,6 +156,7 @@ function DartPanel({
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const activeBg = useColorModeValue("blue.50", "blue.900");
+  const hoverBg = useColorModeValue("gray.50", "gray.750");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState("");
@@ -245,7 +246,7 @@ function DartPanel({
               bg={isActive ? activeBg : "transparent"}
               cursor="pointer"
               onClick={() => onActivate(isActive ? null : dart.id)}
-              _hover={{ bg: isActive ? activeBg : useColorModeValue("gray.50", "gray.750") }}
+              _hover={{ bg: isActive ? activeBg : hoverBg }}
             >
               {dart.selected_text && (
                 <Text
