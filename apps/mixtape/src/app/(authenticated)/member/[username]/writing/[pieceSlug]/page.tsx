@@ -252,7 +252,7 @@ export default function MemberWritingPiecePage() {
               <Box
                 className="writing-piece-content"
                 position="relative"
-                ref={(el) => { articleRef.current = el }}
+                ref={(el: HTMLDivElement | null) => { articleRef.current = el }}
               >
                 <TipTapRenderer content={piece.body_json} />
               </Box>
