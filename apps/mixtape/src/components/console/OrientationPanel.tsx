@@ -71,7 +71,7 @@ export function OrientationPanel() {
                   cursor="pointer"
                   justify="space-between"
                 >
-                  <Text fontSize="sm" flex={1} noOfLines={1}>
+                  <Text fontSize="sm" flex={1} lineClamp={1}>
                     {ini.title}
                   </Text>
                   <HStack gap={2}>
@@ -108,7 +108,7 @@ export function OrientationPanel() {
                   cursor="pointer"
                   justify="space-between"
                 >
-                  <Text fontSize="sm" flex={1} noOfLines={1}>
+                  <Text fontSize="sm" flex={1} lineClamp={1}>
                     {group.title}
                   </Text>
                   <Text fontSize="xs" color={mutedColor}>

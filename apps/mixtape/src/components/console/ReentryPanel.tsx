@@ -52,7 +52,7 @@ export function ReentryPanel() {
               cursor="pointer"
               justify="space-between"
             >
-              <Text fontSize="sm" fontWeight="medium" noOfLines={1} flex={1}>
+              <Text fontSize="sm" fontWeight="medium" lineClamp={1} flex={1}>
                 {item.title || "(untitled)"}
               </Text>
               <Badge

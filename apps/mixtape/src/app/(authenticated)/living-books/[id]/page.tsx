@@ -78,7 +78,7 @@ export default function LivingBookPage() {
           {isLoading ? (
             <VStack gap={4} align="stretch">
               <Skeleton h="40px" w="60%" />
-              <SkeletonText noOfLines={2} />
+              <SkeletonText lineClamp={2} />
             </VStack>
           ) : (
             <Box
@@ -94,7 +94,7 @@ export default function LivingBookPage() {
                     <IconBook size={24} />
                   </Box>
                   <VStack gap={0} align="start" flex={1} minW={0}>
-                    <Heading size="lg" noOfLines={2}>
+                    <Heading size="lg" lineClamp={2}>
                       {book?.title}
                     </Heading>
                     {book?.status === "draft" && (

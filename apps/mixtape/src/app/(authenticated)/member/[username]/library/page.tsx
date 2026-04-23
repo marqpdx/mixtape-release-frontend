@@ -106,7 +106,7 @@ function LibrarySkeleton({ borderColor }: { borderColor: string }) {
       {[1, 2, 3].map((i) => (
         <Box key={i} py={5} borderBottomWidth="1px" borderColor={borderColor}>
           <Skeleton h="5" w="60%" mb={3} />
-          <SkeletonText noOfLines={2} gap={2} mb={3} />
+          <SkeletonText lineClamp={2} gap={2} mb={3} />
           <Skeleton h="3" w="30%" />
         </Box>
       ))}

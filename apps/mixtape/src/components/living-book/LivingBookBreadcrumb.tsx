@@ -50,7 +50,7 @@ export function LivingBookBreadcrumb({ pieceSlug, username }: LivingBookBreadcru
             <IconBookmark size={14} />
           </Box>
           <Link href={`/living-books/${livingBookId}/`}>
-            <Text fontSize="xs" color={mutedColor} noOfLines={1}>
+            <Text fontSize="xs" color={mutedColor} lineClamp={1}>
               {book.title}
             </Text>
           </Link>
@@ -77,7 +77,7 @@ export function LivingBookBreadcrumb({ pieceSlug, username }: LivingBookBreadcru
             {neighbors?.prev || neighbors?.next ? (
               <>
                 {neighbors.prev && (
-                  <Text as="span" noOfLines={1} maxW="120px" display="inline-block">
+                  <Text as="span" lineClamp={1} maxW="120px" display="inline-block">
                     {neighbors.prev.title}
                   </Text>
                 )}
@@ -87,7 +87,7 @@ export function LivingBookBreadcrumb({ pieceSlug, username }: LivingBookBreadcru
                   </Text>
                 )}
                 {neighbors.next && (
-                  <Text as="span" noOfLines={1} maxW="120px" display="inline-block">
+                  <Text as="span" lineClamp={1} maxW="120px" display="inline-block">
                     {neighbors.next.title}
                   </Text>
                 )}
@@ -114,7 +114,7 @@ export function LivingBookBreadcrumb({ pieceSlug, username }: LivingBookBreadcru
       </HStack>
 
       {neighbors?.next && (
-        <Text fontSize="xs" color={mutedColor} mt={1} noOfLines={1}>
+        <Text fontSize="xs" color={mutedColor} mt={1} lineClamp={1}>
           Next:{" "}
           <Link href={makePieceHref(neighbors.next.slug)}>
             <Text as="span" color={textColor}>

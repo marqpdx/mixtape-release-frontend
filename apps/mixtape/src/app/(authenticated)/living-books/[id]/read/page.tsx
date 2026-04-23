@@ -68,7 +68,7 @@ export default function AccumulatedReadPage() {
           {isLoading ? (
             <VStack gap={4} align="stretch">
               <Skeleton h="32px" w="50%" />
-              <SkeletonText noOfLines={3} />
+              <SkeletonText lineClamp={3} />
             </VStack>
           ) : (
             <>
@@ -133,7 +133,7 @@ export default function AccumulatedReadPage() {
                               <Text
                                 fontSize="sm"
                                 pl={`${node.depth * 12}px`}
-                                noOfLines={1}
+                                lineClamp={1}
                                 color={!node.is_published && isEditor ? draftColor : undefined}
                               >
                                 {node.title || "Untitled"}

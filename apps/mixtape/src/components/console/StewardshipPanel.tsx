@@ -75,7 +75,7 @@ export function StewardshipPanel() {
                         cursor="pointer"
                         justify="space-between"
                       >
-                        <Text fontSize="sm" flex={1} noOfLines={1}>
+                        <Text fontSize="sm" flex={1} lineClamp={1}>
                           {draft.title || "(untitled)"}
                         </Text>
                         <Text fontSize="xs" color={mutedColor}>
@@ -106,7 +106,7 @@ export function StewardshipPanel() {
                       py={2}
                       justify="space-between"
                     >
-                      <Text fontSize="sm" flex={1} noOfLines={1}>
+                      <Text fontSize="sm" flex={1} lineClamp={1}>
                         {reminder.title || reminder.body || "(reminder)"}
                       </Text>
                       <Text fontSize="xs" color="red.400">
@@ -141,7 +141,7 @@ export function StewardshipPanel() {
                         <Text fontFamily="mono" fontSize="xs" color="blue.400" flexShrink={0}>
                           /?
                         </Text>
-                        <Text fontSize="sm" flex={1} noOfLines={1}>
+                        <Text fontSize="sm" flex={1} lineClamp={1}>
                           {q.label || q.piece_title || "(untitled)"}
                         </Text>
                       </HStack>

@@ -129,7 +129,7 @@ function SortableNode({
           <Text
             fontSize="sm"
             fontWeight={node.depth === 0 ? "semibold" : "normal"}
-            noOfLines={1}
+            lineClamp={1}
             color={!node.is_published && isEditor ? draftColor : undefined}
           >
             {node.obj.title || "Untitled"}

@@ -61,11 +61,11 @@ function ContextCard({ title, excerpt, href, direction }: ContextCardProps) {
           </Text>
           {direction === "next" && <IconChevronRight size={12} color="currentColor" />}
         </HStack>
-        <Text fontSize="sm" fontWeight="semibold" noOfLines={2} mb={1}>
+        <Text fontSize="sm" fontWeight="semibold" lineClamp={2} mb={1}>
           {title}
         </Text>
         {excerpt && (
-          <Text fontSize="xs" color={mutedColor} noOfLines={3}>
+          <Text fontSize="xs" color={mutedColor} lineClamp={3}>
             {excerpt}
           </Text>
         )}

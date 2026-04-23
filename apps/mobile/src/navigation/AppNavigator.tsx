@@ -16,6 +16,8 @@ import PlaceScreen from '../screens/PlaceScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
+import InitiativesScreen from '../screens/InitiativesScreen';
+import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
 import NewPersonalChatScreen from '../screens/NewPersonalChatScreen';
@@ -27,9 +29,11 @@ import { ChatScreen } from '../screens/ChatScreen';
 // ============================================================================
 
 export type MainTabParamList = {
+  Console: undefined;
   Notebook: undefined;
   Place: undefined;
   Studio: undefined;
+  Initiatives: undefined;
   Messages: undefined;
   Groups: undefined;
 };
@@ -74,9 +78,11 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
+            Console: ['grid', 'grid-outline'],
             Notebook: ['book', 'book-outline'],
             Place: ['arrow-forward-circle', 'arrow-forward-circle-outline'],
             Studio: ['color-palette', 'color-palette-outline'],
+            Initiatives: ['flash', 'flash-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
             Groups: ['people', 'people-outline'],
           };
@@ -86,9 +92,11 @@ function MainTabs() {
         },
       })}
     >
+      <Tab.Screen name="Console" component={ConsoleScreen} />
       <Tab.Screen name="Notebook" component={NotebookScreen} />
       <Tab.Screen name="Place" component={PlaceScreen} />
       <Tab.Screen name="Studio" component={StudioScreen} />
+      <Tab.Screen name="Initiatives" component={InitiativesScreen} />
       <Tab.Screen
         name="Messages"
         component={MyChatsScreen}

@@ -53,11 +53,11 @@ function SignalGroup({
               cursor="pointer"
               gap={2}
             >
-              <Text fontSize="sm" flex={1} noOfLines={1}>
+              <Text fontSize="sm" flex={1} lineClamp={1}>
                 {item.piece_title || "(untitled)"}
               </Text>
               {item.label && (
-                <Text fontSize="xs" color={mutedColor} noOfLines={1} maxW="40%">
+                <Text fontSize="xs" color={mutedColor} lineClamp={1} maxW="40%">
                   {item.label}
                 </Text>
               )}
@@ -138,11 +138,11 @@ export function SignalsPanel() {
                   cursor="pointer"
                   gap={2}
                 >
-                  <Text fontSize="sm" flex={1} noOfLines={1}>
+                  <Text fontSize="sm" flex={1} lineClamp={1}>
                     {dart.piece_title || "(untitled)"}
                   </Text>
                   {dart.note_text && (
-                    <Text fontSize="xs" color={mutedColor} noOfLines={1} maxW="40%">
+                    <Text fontSize="xs" color={mutedColor} lineClamp={1} maxW="40%">
                       {dart.note_text}
                     </Text>
                   )}
@@ -176,7 +176,7 @@ export function SignalsPanel() {
                   _hover={{ bg: hoverBg }}
                   cursor="pointer"
                 >
-                  <Text fontSize="sm" flex={1} noOfLines={1}>
+                  <Text fontSize="sm" flex={1} lineClamp={1}>
                     {s.piece_title || "(untitled)"}
                   </Text>
                 </HStack>
