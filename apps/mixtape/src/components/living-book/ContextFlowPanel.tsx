@@ -7,7 +7,6 @@ import { useState } from "react"
 import {
   Box,
   HStack,
-  VStack,
   Text,
   IconButton,
 } from "@chakra-ui/react"

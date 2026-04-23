@@ -2,7 +2,6 @@
 
 // LB-4: Living Book Page — title, description, contributors, structure, launch accumulated read
 
-import { useState } from "react"
 import {
   Box,
   Container,
@@ -41,10 +40,6 @@ export default function LivingBookPage() {
       book &&
       (identity.is_superuser || identity.username === book.created_by)
   )
-
-  const trunkAuthorUsername = book?.trunk_slug
-    ? undefined
-    : undefined
 
   const publishedCount = nodes.filter((n) => n.is_published).length
   const totalCount = nodes.length

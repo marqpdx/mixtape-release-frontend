@@ -71,7 +71,6 @@ function SortableNode({
     id: node.obj.id,
   })
 
-  const borderColor = useColorModeValue("gray.100", "gray.700")
   const draftColor = useColorModeValue("orange.500", "orange.300")
   const mutedColor = useColorModeValue("gray.400", "gray.500")
   const hoverBg = useColorModeValue("gray.50", "gray.750")

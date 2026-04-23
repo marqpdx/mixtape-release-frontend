@@ -14,7 +14,6 @@ import {
   Button,
   Skeleton,
   SkeletonText,
-  Divider,
 } from "@chakra-ui/react"
 import { useColorModeValue } from "@components/ui/color-mode"
 import Link from "next/link"

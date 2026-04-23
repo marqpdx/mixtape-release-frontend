@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useRef,
   useState,
   useEffect,
   useCallback,
@@ -16,7 +15,6 @@ import {
   IconButton,
   Textarea,
   Button,
-  Spinner,
 } from "@chakra-ui/react";
 import {
   IconBookmark,
