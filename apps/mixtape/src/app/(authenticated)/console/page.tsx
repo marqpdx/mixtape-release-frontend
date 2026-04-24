@@ -5,10 +5,11 @@
 // CS-D4: Signals panel
 // CS-D5: Orientation panel
 // CS-D6: Stewardship panel (collapsed by default)
-// CS-D2: Universal Action Field — placeholder pending IM-7a component
+// CS-D2: Universal Action Field — desktop wrapper over the live initiatives command contract
 
 import { Box, Container, Heading, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { ConsoleActionField } from "@components/console/ConsoleActionField";
 import { ReentryPanel } from "@components/console/ReentryPanel";
 import { SignalsPanel } from "@components/console/SignalsPanel";
 import { OrientationPanel } from "@components/console/OrientationPanel";
@@ -23,21 +24,10 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ActionFieldPlaceholder() {
-  const bg = useColorModeValue("gray.100", "gray.700");
-  const mutedColor = useColorModeValue("gray.400", "gray.500");
-  return (
-    <Box bg={bg} borderRadius="lg" px={5} py={4}>
-      <Text fontSize="sm" color={mutedColor} fontStyle="italic">
-        Universal Action Field — available when IM-7a ships
-      </Text>
-    </Box>
-  );
-}
-
 export default function ConsolePage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const sectionBorder = useColorModeValue("gray.100", "gray.750");
+  const mutedColor = useColorModeValue("gray.500", "gray.400");
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -47,7 +37,10 @@ export default function ConsolePage() {
           {/* Intentions — Universal Action Field (CS-D2) */}
           <Box>
             <SectionHeading>Console</SectionHeading>
-            <ActionFieldPlaceholder />
+            <Text fontSize="sm" color={mutedColor} mb={4}>
+              Parse, review, and execute quick commands without leaving Console.
+            </Text>
+            <ConsoleActionField />
           </Box>
 
           {/* Re-entry (CS-D3) */}
