@@ -1,3 +1,10 @@
+export interface InitiativeResultRouting {
+  deep_link_type?: 'tab' | 'chat' | 'group_conversations' | 'external_url';
+  target_screen?: string;
+  target_params?: Record<string, string>;
+  external_url?: string;
+}
+
 export type InitiativeVerb =
   | 'note'
   | 'remind'
@@ -40,4 +47,5 @@ export interface InitiativeSessionItem {
   createdAt: string;
   tone: 'neutral' | 'info' | 'success' | 'error';
   verb: InitiativeVerb | null;
+  routing?: InitiativeResultRouting | null;
 }
