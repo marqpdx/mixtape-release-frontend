@@ -21,9 +21,18 @@ export interface InitiativesExecuteResponse {
   parsed: ParsedInitiativeCommand;
 }
 
+export interface TranscribeJobStatus {
+  jobId: string;
+  status: 'processing' | 'complete' | 'failed';
+  transcriptionText?: string;
+  failureReason?: string;
+}
+
 export interface InitiativesCommandClient {
   parseCommand: (request: InitiativesParseRequest) => Promise<InitiativesParseResponse>;
   confirmCommand: (request: InitiativesConfirmRequest) => Promise<InitiativesExecuteResponse>;
+  transcribeVoice: (audioUri: string, mimeType: string) => Promise<{ jobId: string }>;
+  pollTranscribeJob: (jobId: string) => Promise<TranscribeJobStatus>;
 }
 
 interface AgentCommandDetailResponse {
@@ -135,6 +144,42 @@ const initiativesCommandClient: InitiativesCommandClient = {
 
     return {
       parsed: mapAgentCommandResponse(response.data, input),
+    };
+  },
+
+  async transcribeVoice(audioUri, mimeType) {
+    const formData = new FormData();
+    formData.append('audio', {
+      uri: audioUri,
+      type: mimeType,
+      name: 'voice-command.m4a',
+    } as unknown as Blob);
+    formData.append('source', 'mobile_initiatives');
+
+    const response = await axiosInstance.post<{ job_id: string }>(
+      '/api/initiatives/mobile/transcribe',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+
+    return { jobId: response.data.job_id };
+  },
+
+  async pollTranscribeJob(jobId) {
+    const response = await axiosInstance.get<{
+      job_id: string;
+      status: string;
+      transcription_text?: string;
+      failure_reason?: string;
+    }>(`/api/initiatives/mobile/transcribe/${jobId}`);
+
+    const { status, transcription_text, failure_reason } = response.data;
+
+    return {
+      jobId,
+      status: (status === 'complete' || status === 'failed') ? status : 'processing',
+      transcriptionText: transcription_text,
+      failureReason: failure_reason,
     };
   },
 

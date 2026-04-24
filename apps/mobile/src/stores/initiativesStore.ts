@@ -15,6 +15,7 @@ interface InitiativesStore {
   setComposerState: (state: InitiativeComposerState) => void;
   setPendingParse: (value: ParsedInitiativeCommand | null) => void;
   addSessionItem: (item: InitiativeSessionItem) => void;
+  updateSessionItem: (id: string, patch: Partial<InitiativeSessionItem>) => void;
   clearDraft: () => void;
 }
 
@@ -43,6 +44,12 @@ export const useInitiativesStore = create<InitiativesStore>((set) => ({
   addSessionItem: (item) =>
     set((state) => ({
       sessionHistory: [item, ...state.sessionHistory].slice(0, 12),
+    })),
+  updateSessionItem: (id, patch) =>
+    set((state) => ({
+      sessionHistory: state.sessionHistory.map((item) =>
+        item.id === id ? { ...item, ...patch } : item
+      ),
     })),
   clearDraft: () => set({ draftText: '', composerState: 'idle' }),
 }));

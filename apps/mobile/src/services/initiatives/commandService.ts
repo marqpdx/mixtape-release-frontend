@@ -1,4 +1,5 @@
 import type {
+  InitiativeResultRouting,
   InitiativeSessionItem,
   InitiativeVerb,
   ParsedInitiativeCommand,
@@ -181,6 +182,25 @@ export function createErrorItem(
   };
 }
 
+function parseRouting(raw: Record<string, unknown> | null | undefined): InitiativeResultRouting | null {
+  if (!raw) return null;
+  const result: InitiativeResultRouting = {};
+  const type = raw.deep_link_type;
+  if (type === 'tab' || type === 'chat' || type === 'group_conversations' || type === 'external_url') {
+    result.deep_link_type = type;
+  }
+  if (typeof raw.target_screen === 'string') result.target_screen = raw.target_screen;
+  if (raw.target_params && typeof raw.target_params === 'object' && !Array.isArray(raw.target_params)) {
+    result.target_params = Object.fromEntries(
+      Object.entries(raw.target_params as Record<string, unknown>)
+        .filter(([, v]) => typeof v === 'string')
+        .map(([k, v]) => [k, v as string])
+    );
+  }
+  if (typeof raw.external_url === 'string') result.external_url = raw.external_url;
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 export function createResultItem(parsed: ParsedInitiativeCommand): InitiativeSessionItem {
   const verbLabel = parsed.verb ? sentenceCase(parsed.verb) : 'Command';
   const detail = buildAcknowledgmentBody(parsed);
@@ -196,5 +216,6 @@ export function createResultItem(parsed: ParsedInitiativeCommand): InitiativeSes
     createdAt: nowIso(),
     tone: 'success',
     verb: parsed.verb,
+    routing: parseRouting(parsed.routing),
   };
 }
