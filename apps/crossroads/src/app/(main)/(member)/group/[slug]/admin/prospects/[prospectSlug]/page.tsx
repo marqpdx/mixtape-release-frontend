@@ -1,3 +1,5 @@
+// apps/crossroads/app/(main)/(member)/group/[slug]/admin/prospects/**
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -9,7 +11,6 @@ import {
   createListCollection,
   Heading,
   HStack,
-  Input,
   Portal,
   Select,
   Spinner,
@@ -71,6 +72,7 @@ export default function ProspectDetailPage() {
   const [sessionWarning, setSessionWarning] = useState<string | null>(null);
   const [newIntakeUrl, setNewIntakeUrl] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState("pre_meeting");
+  const [deletingProspect, setDeletingProspect] = useState(false);
 
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -122,6 +124,17 @@ export default function ProspectDetailPage() {
     }
   }
 
+  async function handleDeleteProspect() {
+    if (!confirm(`Delete ${prospect?.name} and all their sessions?`)) return;
+    setDeletingProspect(true);
+    try {
+      await axiosInstance.delete(`/api/prospects/${prospectSlug}/`);
+      window.location.href = `/group/${groupSlug}/admin/prospects`;
+    } finally {
+      setDeletingProspect(false);
+    }
+  }
+
   async function handleCreateSession() {
     setCreatingSession(true);
     setSessionWarning(null);
@@ -164,9 +177,14 @@ export default function ProspectDetailPage() {
     <Box maxW="3xl" mx="auto" px="6" py="10">
       <HStack mb="6" justify="space-between" align="center">
         <Heading size="lg">{prospect.name}</Heading>
-        <ChakraLink asChild fontSize="sm" color="blue.500">
-          <NextLink href={`/group/${groupSlug}/admin/prospects`}>← Prospects</NextLink>
-        </ChakraLink>
+        <HStack>
+          <Button size="sm" colorPalette="red" variant="ghost" onClick={handleDeleteProspect} loading={deletingProspect}>
+            Delete prospect
+          </Button>
+          <ChakraLink asChild fontSize="sm" color="blue.500">
+            <NextLink href={`/group/${groupSlug}/admin/prospects`}>← Prospects</NextLink>
+          </ChakraLink>
+        </HStack>
       </HStack>
 
       {/* Edit status + summary */}

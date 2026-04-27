@@ -31,6 +31,7 @@ interface Response {
 interface Session {
   id: string; mode: string; status: string;
   submitted_at: string | null; meeting_date: string | null;
+  resume_token: string;
   responses: Response[];
 }
 interface Insight {
@@ -58,6 +59,7 @@ export default function SessionDetailPage() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingSession, setDeletingSession] = useState(false);
 
   // refined text edit state per response
   const [refining, setRefining] = useState<Record<string, string>>({});
@@ -112,6 +114,17 @@ export default function SessionDetailPage() {
     }
   }
 
+  async function handleDeleteSession() {
+    if (!confirm("Delete this session and all its responses?")) return;
+    setDeletingSession(true);
+    try {
+      await axiosInstance.delete(`/api/prospects/${prospectSlug}/sessions/${sessionId}/`);
+      window.location.href = `/group/${groupSlug}/admin/prospects/${prospectSlug}`;
+    } finally {
+      setDeletingSession(false);
+    }
+  }
+
   async function handleAddInsight() {
     if (!insightTitle.trim() || !insightBody.trim()) return;
     setSavingInsight(true);
@@ -158,10 +171,29 @@ export default function SessionDetailPage() {
             {session.submitted_at ? ` · Submitted ${new Date(session.submitted_at).toLocaleDateString()}` : ""}
           </Text>
         </Box>
-        <ChakraLink asChild fontSize="sm" color="blue.500">
-          <NextLink href={`/group/${groupSlug}/admin/prospects/${prospectSlug}`}>← Prospect</NextLink>
-        </ChakraLink>
+        <HStack>
+          <Button size="sm" colorPalette="red" variant="ghost" onClick={handleDeleteSession} loading={deletingSession}>
+            Delete session
+          </Button>
+          <ChakraLink asChild fontSize="sm" color="blue.500">
+            <NextLink href={`/group/${groupSlug}/admin/prospects/${prospectSlug}`}>← Prospect</NextLink>
+          </ChakraLink>
+        </HStack>
       </HStack>
+
+      {/* Intake link */}
+      {(() => {
+        const intakeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/intake/${session.resume_token}/`;
+        return (
+          <Box p="3" border="1px solid" borderColor={borderColor} borderRadius="md" bg={cardBg} mb="6">
+            <Text fontSize="xs" color={mutedColor} mb="1">Intake link</Text>
+            <HStack gap="2">
+              <Text fontSize="sm" wordBreak="break-all" flex="1">{intakeUrl}</Text>
+              <Button size="xs" variant="outline" onClick={() => navigator.clipboard.writeText(intakeUrl)}>Copy</Button>
+            </HStack>
+          </Box>
+        );
+      })()}
 
       {/* Responses */}
       <VStack gap="6" align="stretch" mb="10">

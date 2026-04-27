@@ -4,10 +4,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@mixtape/core", "@mixtape/api", "@mixtape/content", "leaflet", "react-leaflet"],
-  experimental: {
-    optimizePackageImports: ["@chakra-ui/react"],
-  },
+  transpilePackages: [
+    "@mixtape/core",
+    "@mixtape/api",
+    "@mixtape/content",
+    "leaflet",
+    "react-leaflet",
+    "framer-motion",
+    "motion-dom",
+  ],
   allowedDevOrigins: ["http://127.0.0.1:3010", "http://localhost:3010"],
 
   async rewrites() {
