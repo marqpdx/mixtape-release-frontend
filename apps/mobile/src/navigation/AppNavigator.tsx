@@ -17,6 +17,7 @@ import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
 import InitiativesScreen from '../screens/InitiativesScreen';
+import BusinessHubScreen from '../screens/BusinessHubScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
@@ -34,6 +35,7 @@ export type MainTabParamList = {
   Place: undefined;
   Studio: undefined;
   Initiatives: undefined;
+  BusinessHub: undefined;
   Messages: undefined;
   Groups: undefined;
 };
@@ -83,6 +85,7 @@ function MainTabs() {
             Place: ['arrow-forward-circle', 'arrow-forward-circle-outline'],
             Studio: ['color-palette', 'color-palette-outline'],
             Initiatives: ['flash', 'flash-outline'],
+            BusinessHub: ['briefcase', 'briefcase-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
             Groups: ['people', 'people-outline'],
           };
@@ -97,6 +100,7 @@ function MainTabs() {
       <Tab.Screen name="Place" component={PlaceScreen} />
       <Tab.Screen name="Studio" component={StudioScreen} />
       <Tab.Screen name="Initiatives" component={InitiativesScreen} />
+      <Tab.Screen name="BusinessHub" component={BusinessHubScreen} options={{ title: 'Hub' }} />
       <Tab.Screen
         name="Messages"
         component={MyChatsScreen}
