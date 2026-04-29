@@ -41,9 +41,47 @@ export interface FixItem {
   updated_at: string;
 }
 
+export type ReminderStatus = "pending" | "acknowledged" | "snoozed";
+
+export interface GroupReminder {
+  id: string;
+  title: string;
+  body: string;
+  remind_at: string;
+  status: ReminderStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TaskStatus = "todo" | "in_progress" | "done" | "blocked";
+
+export interface GroupTask {
+  id: string;
+  title: string;
+  details: string;
+  status: TaskStatus;
+  due_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============================================================================
 // API functions
 // ============================================================================
+
+export async function fetchGroupReminders(groupSlug: string): Promise<GroupReminder[]> {
+  const res = await axiosInstance.get<GroupReminder[]>(
+    `/api/worktable/groups/${groupSlug}/reminders`,
+  );
+  return res.data;
+}
+
+export async function fetchGroupTasks(groupSlug: string): Promise<GroupTask[]> {
+  const res = await axiosInstance.get<GroupTask[]>(
+    `/api/worktable/groups/${groupSlug}/tasks`,
+  );
+  return res.data;
+}
 
 export async function fetchSuppliers(groupSlug: string): Promise<Supplier[]> {
   const res = await axiosInstance.get<Supplier[]>(`/api/business/${groupSlug}/suppliers`);

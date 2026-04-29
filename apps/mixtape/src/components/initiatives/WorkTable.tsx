@@ -1,6 +1,7 @@
 // apps/mixtape/src/components/initiatives/WorkTable.tsx
 // The Aperture entry surface — renders the Personal Initiative's ApertureLog.
-// // command: navigation typeahead. /handoff, /emph: log entry commands.
+// // command: initiative nav typeahead. /context {slug}: switch group. /me: return to personal.
+// /handoff, /emph: log entry commands.
 
 "use client";
 
@@ -15,7 +16,8 @@ import {
   Spinner,
   Badge,
 } from "@chakra-ui/react";
-import { IconSend, IconBookmark, IconChevronLeft } from "@tabler/icons-react";
+import { IconSend, IconBookmark, IconChevronLeft, IconBriefcase } from "@tabler/icons-react";
+import { useGroupReminders, useGroupTasks, useFixItems, useSupplyRequests } from "@mixtape/api/hooks/business/useBusiness";
 import {
   fetchApertureOrientation,
   fetchApertureLog,
@@ -71,15 +73,23 @@ function parseEntryPayload(input: string): { kind: ApertureLogEntryKind; body: s
   return { kind: "prose", body: trimmed, emph_note: "" };
 }
 
-// Detect mode from raw input value.
-// Returns: { mode: "nav", query: string } | { mode: "entry" }
-function detectInputMode(value: string): { mode: "nav"; query: string } | { mode: "entry" } {
+type InputMode =
+  | { mode: "nav"; query: string }
+  | { mode: "context"; slug: string }
+  | { mode: "personal" }
+  | { mode: "entry" };
+
+function detectInputMode(value: string): InputMode {
   if (value.startsWith("//")) {
     return { mode: "nav", query: value.slice(2).trimStart() };
   }
-  if (value === "/") {
-    // Single slash — ambiguous, not yet nav; treat as entry prefix
-    return { mode: "entry" };
+  // /context {slug} — switch to group WorkTable
+  if (value.startsWith("/context ")) {
+    return { mode: "context", slug: value.slice("/context ".length).trim() };
+  }
+  // /me — return to personal
+  if (value.trim() === "/me") {
+    return { mode: "personal" };
   }
   return { mode: "entry" };
 }
@@ -136,20 +146,90 @@ function LogEntry({ entry }: { entry: ApertureLogEntry }) {
   );
 }
 
-function HandoffSidebar({ initiativeId }: { initiativeId: string }) {
-  const [handoffs, setHandoffs] = useState<ApertureLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const borderColor = useColorModeValue("gray.200", "gray.700");
+// ---------------------------------------------------------------------------
+// Sidebar bucket: a collapsible list of items
+// ---------------------------------------------------------------------------
 
+function SidebarBucket({
+  label,
+  count,
+  loading,
+  empty,
+  children,
+}: {
+  label: string;
+  count: number;
+  loading: boolean;
+  empty: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(true);
+  const mutedColor = useColorModeValue("gray.500", "gray.400");
+
+  return (
+    <Box>
+      <HStack
+        gap={1}
+        mb={1}
+        cursor="pointer"
+        onClick={() => setOpen((o) => !o)}
+        _hover={{ opacity: 0.7 }}
+        userSelect="none"
+      >
+        <Text fontSize="xs" fontWeight="semibold" color={mutedColor} textTransform="uppercase" letterSpacing="wide" flex="1">
+          {label}
+        </Text>
+        {count > 0 && (
+          <Text fontSize="xs" color={mutedColor}>{count}</Text>
+        )}
+        <Text fontSize="xs" color={mutedColor}>{open ? "▾" : "▸"}</Text>
+      </HStack>
+      {open && (
+        loading ? (
+          <Spinner size="xs" />
+        ) : count === 0 ? (
+          <Text fontSize="xs" color={mutedColor}>{empty}</Text>
+        ) : (
+          children
+        )
+      )}
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// WorkTableSidebar — group context or personal handoffs
+// ---------------------------------------------------------------------------
+
+function WorkTableSidebar({
+  initiativeId,
+  groupSlug,
+}: {
+  initiativeId: string;
+  groupSlug: string | null;
+}) {
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+  const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const pillBg = useColorModeValue("blue.50", "blue.900");
+
+  // Personal: handoffs
+  const [handoffs, setHandoffs] = useState<ApertureLogEntry[]>([]);
+  const [handoffsLoading, setHandoffsLoading] = useState(true);
   useEffect(() => {
-    if (!initiativeId) return;
-    setLoading(true);
+    if (groupSlug) return; // skip when in group context
+    setHandoffsLoading(true);
     fetchApertureHandoffs(initiativeId)
       .then(setHandoffs)
-      .finally(() => setLoading(false));
-  }, [initiativeId]);
+      .finally(() => setHandoffsLoading(false));
+  }, [initiativeId, groupSlug]);
 
-  const latest = handoffs[handoffs.length - 1];
+  // Group: four buckets
+  const { data: reminders = [], isLoading: remindersLoading } = useGroupReminders(groupSlug);
+  const { data: tasks = [], isLoading: tasksLoading } = useGroupTasks(groupSlug);
+  const { data: fixItems = [], isLoading: fixLoading } = useFixItems(groupSlug);
+  const { data: supplyRequests = [], isLoading: supplyLoading } = useSupplyRequests(groupSlug);
+
+  const pendingSupply = supplyRequests.filter((r) => r.status !== "received");
 
   return (
     <Box
@@ -158,25 +238,85 @@ function HandoffSidebar({ initiativeId }: { initiativeId: string }) {
       borderLeft="1px solid"
       borderColor={borderColor}
       pl={4}
+      overflowY="auto"
     >
-      <HStack gap={1} mb={3}>
-        <IconBookmark size={14} />
-        <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
-          Last Handoff
-        </Text>
-      </HStack>
-      {loading ? (
-        <Spinner size="xs" />
-      ) : !latest ? (
-        <Text fontSize="xs" color="fg.muted">No handoff notes yet.</Text>
-      ) : (
-        <VStack align="stretch" gap={1}>
-          <Text fontSize="sm" whiteSpace="pre-wrap">{latest.body}</Text>
-          <Text fontSize="xs" color="fg.muted">{formatRelative(latest.created_at)}</Text>
-          {handoffs.length > 1 && (
-            <Text fontSize="xs" color="fg.muted">{handoffs.length - 1} earlier</Text>
-          )}
+      {groupSlug ? (
+        // Group context mode
+        <VStack align="stretch" gap={4}>
+          <HStack gap={1}>
+            <IconBriefcase size={13} />
+            <Text fontSize="xs" fontWeight="semibold" color={mutedColor} textTransform="uppercase" letterSpacing="wide">
+              {groupSlug}
+            </Text>
+          </HStack>
+          <Text fontSize="xs" color={mutedColor} mt={-3}>
+            type <Box as="span" fontFamily="mono" bg={pillBg} px={1} borderRadius="sm">/me</Box> to return to personal
+          </Text>
+
+          <SidebarBucket label="Reminders" count={reminders.length} loading={remindersLoading} empty="No pending reminders.">
+            <VStack align="stretch" gap={1}>
+              {reminders.map((r) => (
+                <Box key={r.id}>
+                  <Text fontSize="xs" fontWeight="medium">{r.title || r.body}</Text>
+                  <Text fontSize="xs" color={mutedColor}>{new Date(r.remind_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</Text>
+                </Box>
+              ))}
+            </VStack>
+          </SidebarBucket>
+
+          <SidebarBucket label="Fix List" count={fixItems.length} loading={fixLoading} empty="Nothing to fix.">
+            <VStack align="stretch" gap={1}>
+              {fixItems.map((f) => (
+                <Text key={f.id} fontSize="xs" fontWeight="medium">{f.title}</Text>
+              ))}
+            </VStack>
+          </SidebarBucket>
+
+          <SidebarBucket label="Need More" count={pendingSupply.length} loading={supplyLoading} empty="No pending orders.">
+            <VStack align="stretch" gap={1}>
+              {pendingSupply.map((s) => (
+                <Box key={s.id}>
+                  <Text fontSize="xs" fontWeight="medium">{s.item_name}</Text>
+                  {s.supplier_name && <Text fontSize="xs" color={mutedColor}>from {s.supplier_name}</Text>}
+                </Box>
+              ))}
+            </VStack>
+          </SidebarBucket>
+
+          <SidebarBucket label="Tasks" count={tasks.length} loading={tasksLoading} empty="No open tasks.">
+            <VStack align="stretch" gap={1}>
+              {tasks.map((t) => (
+                <Text key={t.id} fontSize="xs" fontWeight="medium">{t.title}</Text>
+              ))}
+            </VStack>
+          </SidebarBucket>
         </VStack>
+      ) : (
+        // Personal mode: handoffs only
+        <>
+          <HStack gap={1} mb={3}>
+            <IconBookmark size={14} />
+            <Text fontSize="xs" fontWeight="semibold" color={mutedColor} textTransform="uppercase" letterSpacing="wide">
+              Last Handoff
+            </Text>
+          </HStack>
+          {handoffsLoading ? (
+            <Spinner size="xs" />
+          ) : handoffs.length === 0 ? (
+            <Text fontSize="xs" color={mutedColor}>No handoff notes yet.</Text>
+          ) : (
+            <VStack align="stretch" gap={1}>
+              <Text fontSize="sm" whiteSpace="pre-wrap">{handoffs[handoffs.length - 1].body}</Text>
+              <Text fontSize="xs" color={mutedColor}>{formatRelative(handoffs[handoffs.length - 1].created_at)}</Text>
+              {handoffs.length > 1 && (
+                <Text fontSize="xs" color={mutedColor}>{handoffs.length - 1} earlier</Text>
+              )}
+            </VStack>
+          )}
+          <Text fontSize="xs" color={mutedColor} mt={4}>
+            type <Box as="span" fontFamily="mono" bg={useColorModeValue("gray.100", "gray.800")} px={1} borderRadius="sm">/context {"{group}"}</Box> to switch
+          </Text>
+        </>
       )}
     </Box>
   );
@@ -384,6 +524,9 @@ export default function WorkTable() {
   const [log, setLog] = useState<ApertureLog | null>(null);
   const [logLoading, setLogLoading] = useState(false);
 
+  // Group context — set via /context {slug}, cleared via /me
+  const [activeGroupSlug, setActiveGroupSlug] = useState<string | null>(null);
+
   // Dissolve animation state
   const [dissolving, setDissolving] = useState(false);
 
@@ -451,6 +594,20 @@ export default function WorkTable() {
     if (!trimmed || !activeInitiative || submitting) return;
     if (inputMode.mode === "nav") return; // nav mode — Enter is handled by dropdown
 
+    // /context {slug} — switch group context
+    if (inputMode.mode === "context") {
+      setActiveGroupSlug(inputMode.slug || null);
+      setInput("");
+      return;
+    }
+
+    // /me — return to personal context
+    if (inputMode.mode === "personal") {
+      setActiveGroupSlug(null);
+      setInput("");
+      return;
+    }
+
     const { kind, body, emph_note } = parseEntryPayload(trimmed);
     setSubmitting(true);
     try {
@@ -477,7 +634,7 @@ export default function WorkTable() {
           return;
         }
         e.preventDefault();
-        handleSubmit();
+        void handleSubmit();
       }
       if (e.key === "Escape" && inputMode.mode === "nav") {
         e.preventDefault();
@@ -521,7 +678,11 @@ export default function WorkTable() {
   // ---------------------------------------------------------------------------
 
   const commandHint =
-    inputMode.mode === "entry"
+    inputMode.mode === "context"
+      ? `Switch to group context: ${inputMode.slug || "…"}`
+      : inputMode.mode === "personal"
+      ? "Return to personal context"
+      : inputMode.mode === "entry"
       ? input.startsWith("/handoff ")
         ? "Handoff note"
         : input.startsWith("/emph ")
@@ -530,6 +691,7 @@ export default function WorkTable() {
       : null;
 
   const isNavMode = inputMode.mode === "nav";
+  const isContextMode = inputMode.mode === "context" || inputMode.mode === "personal";
 
   // ---------------------------------------------------------------------------
   // Render
@@ -562,6 +724,12 @@ export default function WorkTable() {
           <Text fontSize="sm" fontWeight="semibold">
             {activeInitiative ? activeInitiative.title : "WorkTable"}
           </Text>
+          {activeGroupSlug && (
+            <Badge colorPalette="blue" size="xs" variant="subtle" display="flex" alignItems="center" gap={1}>
+              <IconBriefcase size={10} />
+              {activeGroupSlug}
+            </Badge>
+          )}
         </HStack>
       </Box>
 
@@ -635,7 +803,7 @@ export default function WorkTable() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Write a log entry · // to navigate · /handoff · /emph &quot;note&quot;"
+                  placeholder="Write a log entry · // to navigate · /context {group} · /me · /handoff · /emph"
                   rows={isNavMode ? 1 : 2}
                   resize="none"
                   fontSize="sm"
@@ -664,17 +832,17 @@ export default function WorkTable() {
               </HStack>
               {!isNavMode && (
                 <Text fontSize="xs" color="fg.muted" mt={1}>
-                  Enter to submit · Shift+Enter for newline · // to navigate · /. to return
+                  Enter to submit · Shift+Enter for newline · // to navigate · /context {"{group}"} · /me
                 </Text>
               )}
             </Box>
           )}
         </Box>
 
-        {/* Handoff sidebar */}
+        {/* WorkTable sidebar — handoffs (personal) or four-bucket group hub */}
         {activeInitiative && (
           <Box px={4} py={3} display={{ base: "none", lg: "block" }}>
-            <HandoffSidebar initiativeId={activeInitiative.id} />
+            <WorkTableSidebar initiativeId={activeInitiative.id} groupSlug={activeGroupSlug} />
           </Box>
         )}
       </Flex>

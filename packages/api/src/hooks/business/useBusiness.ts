@@ -6,6 +6,8 @@ import type { FixItemStatus, SupplyRequestStatus } from "@mixtape/api/clients/bu
 
 const businessKeys = {
   all: (slug: string) => ["business", slug] as const,
+  reminders: (slug: string) => ["business", slug, "reminders"] as const,
+  tasks: (slug: string) => ["business", slug, "tasks"] as const,
   suppliers: (slug: string) => ["business", slug, "suppliers"] as const,
   supplyRequests: (slug: string, status?: SupplyRequestStatus) =>
     ["business", slug, "supply-requests", status ?? "all"] as const,
@@ -75,5 +77,23 @@ export function useUpdateFixItem(groupSlug: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: businessKeys.fixItems(groupSlug) });
     },
+  });
+}
+
+export function useGroupReminders(groupSlug: string | null) {
+  return useQuery({
+    queryKey: businessKeys.reminders(groupSlug ?? ""),
+    queryFn: () => businessApi.fetchGroupReminders(groupSlug!),
+    enabled: !!groupSlug,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useGroupTasks(groupSlug: string | null) {
+  return useQuery({
+    queryKey: businessKeys.tasks(groupSlug ?? ""),
+    queryFn: () => businessApi.fetchGroupTasks(groupSlug!),
+    enabled: !!groupSlug,
+    staleTime: 60 * 1000,
   });
 }
