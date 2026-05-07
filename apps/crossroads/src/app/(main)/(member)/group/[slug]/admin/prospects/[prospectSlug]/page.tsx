@@ -11,6 +11,7 @@ import {
   createListCollection,
   Heading,
   HStack,
+  Input,
   Portal,
   Select,
   Spinner,
@@ -28,6 +29,14 @@ interface Prospect {
   id: string; name: string; slug: string; status: string;
   primary_contact_name: string; primary_contact_email: string;
   primary_contact_phone: string; business_type: string; website: string; summary: string;
+  converted_to_group_slug: string | null;
+}
+
+interface ConvertResult {
+  group: string;
+  migrated_count: number;
+  skipped_count: number;
+  detail: string[];
 }
 interface Session {
   id: string; mode: string; status: string; created_at: string;
@@ -74,9 +83,16 @@ export default function ProspectDetailPage() {
   const [sessionMode, setSessionMode] = useState("pre_meeting");
   const [deletingProspect, setDeletingProspect] = useState(false);
 
+  const [convertGroupSlug, setConvertGroupSlug] = useState("");
+  const [converting, setConverting] = useState(false);
+  const [convertResult, setConvertResult] = useState<ConvertResult | null>(null);
+  const [convertError, setConvertError] = useState<string | null>(null);
+
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const convertedCardBg = useColorModeValue("green.50", "green.900");
+  const convertedItemBg = useColorModeValue("white", "gray.800");
 
   const statusCollection = useMemo(() => createListCollection({
     items: STATUS_OPTIONS.map((s) => ({ label: s.replace(/_/g, " "), value: s })),
@@ -160,6 +176,27 @@ export default function ProspectDetailPage() {
       setNewNote("");
     } finally {
       setSavingNote(false);
+    }
+  }
+
+  async function handleConvert() {
+    const target = convertGroupSlug.trim();
+    if (!target) return;
+    if (!confirm(`Convert ${prospect?.name} to client group "${target}"? This cannot be undone.`)) return;
+    setConverting(true);
+    setConvertError(null);
+    setConvertResult(null);
+    try {
+      const res = await axiosInstance.post(`/api/prospects/${prospectSlug}/convert/`, { group_slug: target });
+      setConvertResult(res.data as ConvertResult);
+      // Refresh prospect so header shows converted state
+      const updated = await axiosInstance.get(`/api/prospects/${prospectSlug}/`);
+      setProspect(updated.data);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setConvertError(msg ?? "Conversion failed. Check group slug and try again.");
+    } finally {
+      setConverting(false);
     }
   }
 
@@ -302,6 +339,70 @@ export default function ProspectDetailPage() {
                 </NextLink>
               </ChakraLink>
             ))}
+          </VStack>
+        )}
+      </Box>
+
+      {/* EC-D1: Convert to Client */}
+      <Box mb="8" p="5" border="1px solid" borderColor={prospect.converted_to_group_slug ? "green.200" : borderColor} borderRadius="md" bg={prospect.converted_to_group_slug ? convertedCardBg : cardBg}>
+        <Text fontWeight="600" mb="3">Convert to client</Text>
+
+        {prospect.converted_to_group_slug ? (
+          <VStack align="flex-start" gap="2">
+            <HStack>
+              <Badge colorPalette="green">Converted</Badge>
+              <Text fontSize="sm">This prospect is linked to group</Text>
+              <ChakraLink asChild fontSize="sm" color="blue.500" fontWeight="600">
+                <NextLink href={`/group/${prospect.converted_to_group_slug}`}>{prospect.converted_to_group_slug}</NextLink>
+              </ChakraLink>
+            </HStack>
+            {convertResult && (
+              <Box w="full" mt="2">
+                <Text fontSize="sm" fontWeight="600" mb="2">
+                  Migration result — {convertResult.migrated_count} field{convertResult.migrated_count !== 1 ? "s" : ""} populated
+                  {convertResult.skipped_count > 0 ? `, ${convertResult.skipped_count} skipped` : ""}
+                </Text>
+                {/* EC-D2: GroupContext answers with "from intake" flag */}
+                <VStack align="stretch" gap="1">
+                  {convertResult.detail.map((line, i) => (
+                    <HStack key={i} p="2" bg={convertedItemBg} border="1px solid" borderColor="green.200" borderRadius="sm" gap="3">
+                      <Badge colorPalette="orange" size="sm" flexShrink={0}>from intake</Badge>
+                      <Text fontSize="xs" color={mutedColor} flex="1">{line}</Text>
+                    </HStack>
+                  ))}
+                </VStack>
+                <Text fontSize="xs" color={mutedColor} mt="3">
+                  Group admin should review and confirm these answers still hold.
+                </Text>
+              </Box>
+            )}
+          </VStack>
+        ) : (
+          <VStack align="stretch" gap="3">
+            <Text fontSize="sm" color={mutedColor}>
+              Enter the target group slug. Intake responses will be mapped into the group's context and marked as "brought from intake."
+            </Text>
+            <HStack>
+              <Input
+                size="sm"
+                placeholder="group-slug"
+                value={convertGroupSlug}
+                onChange={(e) => setConvertGroupSlug(e.target.value)}
+                flex="1"
+              />
+              <Button
+                size="sm"
+                colorPalette="green"
+                onClick={handleConvert}
+                loading={converting}
+                disabled={!convertGroupSlug.trim()}
+              >
+                Convert to client
+              </Button>
+            </HStack>
+            {convertError && (
+              <Text fontSize="sm" color="red.500">{convertError}</Text>
+            )}
           </VStack>
         )}
       </Box>
