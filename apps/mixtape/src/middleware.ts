@@ -150,7 +150,8 @@ export function middleware(request: NextRequest) {
                      pathname.startsWith('/app/signup') ||
                      pathname.startsWith('/app/forgot-password');
 
-  const isProtectedPage = pathname.startsWith('/app/dashboard') ||
+  const isProtectedPage = pathname.startsWith('/app/console') ||
+                          pathname.startsWith('/app/dashboard') ||
                           pathname.startsWith('/app/settings') ||
                           pathname.startsWith('/app/admin') ||
                           pathname.startsWith('/app/profile');

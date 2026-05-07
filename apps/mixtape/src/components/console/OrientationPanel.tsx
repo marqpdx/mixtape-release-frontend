@@ -96,26 +96,33 @@ export function OrientationPanel() {
           </Text>
           <VStack gap={1} align="stretch">
             {groups.map((group) => (
-              <Link key={group.id} href={`/groups/${group.slug}`}>
-                <HStack
-                  bg={cardBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="md"
-                  px={3}
-                  py={2}
-                  _hover={{ bg: hoverBg }}
-                  cursor="pointer"
-                  justify="space-between"
-                >
-                  <Text fontSize="sm" flex={1} lineClamp={1}>
+              <HStack
+                key={group.id}
+                bg={cardBg}
+                border="1px solid"
+                borderColor={borderColor}
+                borderRadius="md"
+                px={3}
+                py={2}
+                justify="space-between"
+                gap={2}
+              >
+                <Link href={`/groups/${group.slug}`} style={{ flex: 1, minWidth: 0 }}>
+                  <Text fontSize="sm" lineClamp={1} _hover={{ textDecoration: "underline" }}>
                     {group.title}
                   </Text>
+                </Link>
+                <HStack gap={2} flexShrink={0}>
                   <Text fontSize="xs" color={mutedColor}>
                     {formatRelative(group.updated_at)}
                   </Text>
+                  <Link href={`/groups/${group.slug}/workbench`}>
+                    <Text fontSize="xs" color="blue.500" _hover={{ textDecoration: "underline" }}>
+                      workbench
+                    </Text>
+                  </Link>
                 </HStack>
-              </Link>
+              </HStack>
             ))}
           </VStack>
         </Box>

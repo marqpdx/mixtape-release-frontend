@@ -211,6 +211,7 @@ function WorkTableSidebar({
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const pillBg = useColorModeValue("blue.50", "blue.900");
+  const personalContextBg = useColorModeValue("gray.100", "gray.800");
 
   // Personal: handoffs
   const [handoffs, setHandoffs] = useState<ApertureLogEntry[]>([]);
@@ -314,7 +315,7 @@ function WorkTableSidebar({
             </VStack>
           )}
           <Text fontSize="xs" color={mutedColor} mt={4}>
-            type <Box as="span" fontFamily="mono" bg={useColorModeValue("gray.100", "gray.800")} px={1} borderRadius="sm">/context {"{group}"}</Box> to switch
+            type <Box as="span" fontFamily="mono" bg={personalContextBg} px={1} borderRadius="sm">/context {"{group}"}</Box> to switch
           </Text>
         </>
       )}
@@ -691,7 +692,6 @@ export default function WorkTable() {
       : null;
 
   const isNavMode = inputMode.mode === "nav";
-  const isContextMode = inputMode.mode === "context" || inputMode.mode === "personal";
 
   // ---------------------------------------------------------------------------
   // Render

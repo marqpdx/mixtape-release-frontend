@@ -9,12 +9,10 @@ import {
   Field,
   HStack,
   Input,
-  Select,
   Spinner,
   Text,
   Textarea,
   VStack,
-  createListCollection,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useOrientation } from "@hooks/console/useConsole";
@@ -23,17 +21,23 @@ import {
   confirmAgentCommand,
   createAgentCommand,
 } from "@mixtape/api/clients/initiatives/agentCommandsApi";
+import {
+  createInitiative,
+} from "@mixtape/api/clients/initiatives/initiativesApi";
 
-type SupportedVerb = "note" | "remind" | "task";
+type SupportedVerb = "note" | "remind" | "task" | "workstream";
 type ScopeOption = {
   label: string;
   value: string;
   initiativeId?: string;
   sponsorModel?: string;
   sponsorId?: string;
+  slug?: string;
 };
 
-const SUPPORTED_VERBS: SupportedVerb[] = ["note", "remind", "task"];
+const SUPPORTED_VERBS: SupportedVerb[] = ["note", "remind", "task", "workstream"];
+
+const WORKSTREAM_PREFIX = /^\/n\s+(.+)/i;
 
 function isSupportedVerb(value: string): value is SupportedVerb {
   return SUPPORTED_VERBS.includes(value as SupportedVerb);
@@ -158,7 +162,11 @@ export function ConsoleActionField() {
   const [submitting, setSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [workstreamCreated, setWorkstreamCreated] = useState<{ id: string; title: string } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const workstreamMatch = WORKSTREAM_PREFIX.exec(input.trim());
+  const workstreamName = workstreamMatch ? workstreamMatch[1].trim() : null;
   const { data: orientation, isLoading: orientationLoading } = useOrientation();
 
   const cardBg = useColorModeValue("white", "gray.800");
@@ -179,18 +187,12 @@ export function ConsoleActionField() {
       value: `group:${group.id}`,
       sponsorModel: "group",
       sponsorId: group.id,
+      slug: group.slug,
     }));
 
     return [...initiativeItems, ...groupItems];
   }, [orientation]);
 
-  const scopesCollection = useMemo(
-    () =>
-      createListCollection({
-        items: scopeOptions,
-      }),
-    [scopeOptions],
-  );
 
   const activeScope = useMemo(
     () => scopeOptions.find((scope) => scope.value === selectedScope) ?? null,
@@ -234,8 +236,13 @@ export function ConsoleActionField() {
   const canConfirm = Boolean(command && supportedVerb && command.status === "parsed");
 
   const helpText = useMemo(() => {
+    if (workstreamName) {
+      return activeScope?.slug
+        ? `Press Create to start workstream "${workstreamName}" in ${activeScope.label}.`
+        : "Select a group scope to create a workstream.";
+    }
     if (!command) {
-      return "Supports note, remind, and task today. More verbs will follow as backend coverage expands.";
+      return "Supports note, remind, and task. Use /n Name to create a new workstream. More verbs coming.";
     }
     if (!supportedVerb) {
       return `Parsed ${command.verb}, but desktop confirm is only wired for note, remind, and task right now.`;
@@ -244,7 +251,7 @@ export function ConsoleActionField() {
       return "Review and edit before confirming.";
     }
     return "Review the parsed command and confirm.";
-  }, [command, supportedVerb]);
+  }, [command, supportedVerb, workstreamName, activeScope]);
 
   const handleSubmit = async () => {
     const trimmed = input.trim();
@@ -296,11 +303,27 @@ export function ConsoleActionField() {
     }
   };
 
+  const handleCreateWorkstream = async () => {
+    if (!workstreamName || !activeScope?.slug) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const created = await createInitiative(activeScope.slug, { title: workstreamName });
+      setWorkstreamCreated({ id: created.id, title: created.title });
+      setInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create workstream.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const reset = () => {
     setCommand(null);
     setDraftFields({});
     setError(null);
     setInput("");
+    setWorkstreamCreated(null);
     inputRef.current?.focus();
   };
 
@@ -310,38 +333,33 @@ export function ConsoleActionField() {
         <VStack align="stretch" gap={4}>
           <Field.Root>
             <Field.Label>Universal Action Field</Field.Label>
-            <Select.Root
-              collection={scopesCollection}
-              value={selectedScope ? [selectedScope] : []}
-              onValueChange={(details) => {
-                const nextScope = details.value[0];
-                if (nextScope) {
-                  setSelectedScope(nextScope);
-                }
-              }}
-              disabled={orientationLoading || scopeOptions.length === 0}
-              mb={3}
-            >
-              <Select.Label fontSize="sm" fontWeight="medium" mb={2}>
-                Scope
-              </Select.Label>
-              <Select.Control>
-                <Select.Trigger>
-                  <Select.ValueText placeholder="Choose an initiative or group" />
-                  <Select.Indicator />
-                </Select.Trigger>
-              </Select.Control>
-              <Select.Positioner>
-                <Select.Content>
-                  {scopesCollection.items.map((scope) => (
-                    <Select.Item key={scope.value} item={scope}>
-                      <Select.ItemText>{scope.label}</Select.ItemText>
-                      <Select.ItemIndicator />
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Select.Root>
+            <Box mb={3}>
+              <Text fontSize="sm" fontWeight="medium" mb={2}>Scope</Text>
+              <select
+                value={selectedScope}
+                onChange={(e) => setSelectedScope(e.target.value)}
+                disabled={orientationLoading || scopeOptions.length === 0}
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid",
+                  borderColor: "inherit",
+                  fontSize: "14px",
+                  background: "transparent",
+                  cursor: scopeOptions.length === 0 ? "not-allowed" : "pointer",
+                }}
+              >
+                {scopeOptions.length === 0 && (
+                  <option value="">No initiatives or groups yet</option>
+                )}
+                {scopeOptions.map((scope) => (
+                  <option key={scope.value} value={scope.value}>
+                    {scope.label}
+                  </option>
+                ))}
+              </select>
+            </Box>
             <Textarea
               ref={inputRef}
               value={input}
@@ -361,15 +379,37 @@ export function ConsoleActionField() {
                 Focus action field
               </Text>
             </HStack>
-            <Button
-              colorPalette="blue"
-              onClick={handleSubmit}
-              disabled={!input.trim() || submitting || !activeScope}
-              loading={submitting}
-            >
-              Parse Command
-            </Button>
+            {workstreamName ? (
+              <Button
+                colorPalette="teal"
+                onClick={handleCreateWorkstream}
+                disabled={!workstreamName || !activeScope?.slug || submitting}
+                loading={submitting}
+              >
+                Create Workstream
+              </Button>
+            ) : (
+              <Button
+                colorPalette="blue"
+                onClick={handleSubmit}
+                disabled={!input.trim() || submitting || !activeScope}
+                loading={submitting}
+              >
+                Parse Command
+              </Button>
+            )}
           </HStack>
+
+          {workstreamCreated ? (
+            <Box bg="teal.50" _dark={{ bg: "teal.950" }} borderRadius="md" px={3} py={2}>
+              <HStack justify="space-between">
+                <Text fontSize="sm" color="teal.700" _dark={{ color: "teal.300" }}>
+                  Workstream created: <strong>{workstreamCreated.title}</strong>
+                </Text>
+                <Button size="xs" variant="ghost" onClick={reset}>Dismiss</Button>
+              </HStack>
+            </Box>
+          ) : null}
 
           {error ? (
             <Box bg="red.50" _dark={{ bg: "red.950" }} borderRadius="md" px={3} py={2}>

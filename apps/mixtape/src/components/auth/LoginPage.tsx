@@ -25,9 +25,6 @@ import * as authApi from "@mixtape/api/clients/auth/api";
 
 import { LoginFormProps } from "./interfaces";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
-const PUBLIC_MEMBER_URL = `${SITE_URL}/members`;
-
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const router = useRouter();
@@ -59,7 +56,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const userData = await login({
+      await login({
         identifier: formData.identifier,
         password: formData.password,
       });
@@ -78,15 +75,10 @@ const LoginPage: React.FC = () => {
 
       const requestedRedirect = searchParams.get("redirect");
       if (requestedRedirect) {
-        const redirectTo = safeRedirect(requestedRedirect, `/members/${userData.username}`);
-        console.log("LoginPage redirecting to:", redirectTo);
-        // Keep SPA navigation for in-app redirects
+        const redirectTo = safeRedirect(requestedRedirect, "/app/console");
         router.push(redirectTo);
       } else {
-        const publicMemberUrl = `${PUBLIC_MEMBER_URL}/${encodeURIComponent(userData.username)}`;
-        console.log("LoginPage redirecting to public member page:", publicMemberUrl);
-        // Full navigation is intentional: this target is on the public site domain.
-        window.location.assign(publicMemberUrl);
+        router.push("/app/console");
       }
 
       console.log("LoginPage login successful");
