@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useOrientation, useStewardship } from "@hooks/console/useConsole";
+import { useHubCaptures, useOrientation, useResolveCapture, useStewardship } from "@hooks/console/useConsole";
 
 function SidebarSection({
   value,
@@ -62,14 +62,21 @@ function EmptyNote({ text }: { text: string }) {
 export function ConsoleSidebar() {
   const { data: orientation, isLoading: orientationLoading } = useOrientation();
   const { data: stewardship, isLoading: stewardshipLoading } = useStewardship();
+  const { data: fixData, isLoading: fixLoading } = useHubCaptures("fix");
+  const { data: needMoreData, isLoading: needMoreLoading } = useHubCaptures("need_more");
+  const resolveCapture = useResolveCapture();
+
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const hoverBg = useColorModeValue("gray.50", "gray.750");
+  const mutedColor = useColorModeValue("gray.400", "gray.500");
 
   const initiatives = orientation?.initiatives ?? [];
   const reminders = stewardship?.overdue_reminders ?? [];
+  const fixes = fixData?.captures ?? [];
+  const needMores = needMoreData?.captures ?? [];
 
-  const isLoading = orientationLoading || stewardshipLoading;
+  const isLoading = orientationLoading || stewardshipLoading || fixLoading || needMoreLoading;
 
   if (isLoading) {
     return (
@@ -145,13 +152,77 @@ export function ConsoleSidebar() {
       </SidebarSection>
 
       {/* Let's Fix's */}
-      <SidebarSection value="letsFix" label="Let's Fix's" count={0}>
-        <EmptyNote text="Hub items coming from mobile." />
+      <SidebarSection value="letsFix" label="Let's Fix's" count={fixes.length} colorPalette="red">
+        {fixes.length === 0 ? (
+          <EmptyNote text="No open fixes." />
+        ) : (
+          <VStack gap={1} align="stretch">
+            {fixes.map((c) => (
+              <HStack
+                key={c.id}
+                bg={cardBg}
+                border="1px solid"
+                borderColor={borderColor}
+                borderRadius="md"
+                px={3}
+                py={2}
+                justify="space-between"
+              >
+                <Text fontSize="sm" flex={1} lineClamp={2}>
+                  {c.body}
+                </Text>
+                <Text
+                  fontSize="xs"
+                  color={mutedColor}
+                  cursor="pointer"
+                  _hover={{ color: "green.400" }}
+                  onClick={() => resolveCapture.mutate(c.id)}
+                  flexShrink={0}
+                  ml={2}
+                >
+                  ✓
+                </Text>
+              </HStack>
+            ))}
+          </VStack>
+        )}
       </SidebarSection>
 
       {/* We Need More's */}
-      <SidebarSection value="weNeedMore" label="We Need More's" count={0}>
-        <EmptyNote text="Hub items coming from mobile." />
+      <SidebarSection value="weNeedMore" label="We Need More's" count={needMores.length} colorPalette="blue">
+        {needMores.length === 0 ? (
+          <EmptyNote text="No open needs." />
+        ) : (
+          <VStack gap={1} align="stretch">
+            {needMores.map((c) => (
+              <HStack
+                key={c.id}
+                bg={cardBg}
+                border="1px solid"
+                borderColor={borderColor}
+                borderRadius="md"
+                px={3}
+                py={2}
+                justify="space-between"
+              >
+                <Text fontSize="sm" flex={1} lineClamp={2}>
+                  {c.body}
+                </Text>
+                <Text
+                  fontSize="xs"
+                  color={mutedColor}
+                  cursor="pointer"
+                  _hover={{ color: "green.400" }}
+                  onClick={() => resolveCapture.mutate(c.id)}
+                  flexShrink={0}
+                  ml={2}
+                >
+                  ✓
+                </Text>
+              </HStack>
+            ))}
+          </VStack>
+        )}
       </SidebarSection>
     </Accordion.Root>
   );

@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  fetchHubCaptures,
   fetchOrientation,
   fetchReentry,
   fetchSignals,
   fetchStewardship,
+  HubCaptureKind,
+  resolveHubCapture,
 } from "@mixtape/api/clients/console/consoleApi";
 
 const CONSOLE_STALE_MS = 60_000;
@@ -37,5 +40,24 @@ export function useStewardship() {
     queryKey: ["console", "stewardship"],
     queryFn: fetchStewardship,
     staleTime: CONSOLE_STALE_MS,
+  });
+}
+
+export function useHubCaptures(kind: HubCaptureKind, groupSlug?: string) {
+  return useQuery({
+    queryKey: ["console", "hub-captures", kind, groupSlug ?? null],
+    queryFn: () => fetchHubCaptures(kind, groupSlug),
+    staleTime: CONSOLE_STALE_MS,
+  });
+}
+
+export function useResolveCapture() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolveHubCapture,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["console", "hub-captures"] });
+      queryClient.invalidateQueries({ queryKey: ["console", "orientation"] });
+    },
   });
 }

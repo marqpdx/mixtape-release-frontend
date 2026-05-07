@@ -72,6 +72,7 @@ export interface OrientationGroup {
 export interface OrientationResponse {
   initiatives: OrientationInitiative[];
   groups: OrientationGroup[];
+  capture_counts: Record<string, number>;
 }
 
 export interface StaleDraft {
@@ -124,5 +125,45 @@ export async function fetchOrientation(): Promise<OrientationResponse> {
 
 export async function fetchStewardship(): Promise<StewardshipResponse> {
   const res = await axiosInstance.get<StewardshipResponse>("/api/console/stewardship/");
+  return res.data;
+}
+
+// ---------------------------------------------------------------------------
+// HubCapture
+// ---------------------------------------------------------------------------
+
+export type HubCaptureKind = "fix" | "need_more" | "remind" | "note";
+export type HubCaptureStatus = "open" | "resolved" | "promoted";
+
+export interface HubCapture {
+  id: string;
+  kind: HubCaptureKind;
+  body: string;
+  status: HubCaptureStatus;
+  group_id: string | null;
+  remind_at: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+export interface HubCapturesResponse {
+  captures: HubCapture[];
+}
+
+export async function fetchHubCaptures(
+  kind: HubCaptureKind,
+  groupSlug?: string,
+): Promise<HubCapturesResponse> {
+  const params: Record<string, string> = { kind, status: "open" };
+  if (groupSlug) params.group = groupSlug;
+  const res = await axiosInstance.get<HubCapturesResponse>("/api/console/hub/captures/", { params });
+  return res.data;
+}
+
+export async function resolveHubCapture(captureId: string): Promise<HubCapture> {
+  const res = await axiosInstance.patch<HubCapture>(
+    `/api/console/hub/captures/${captureId}/`,
+    { status: "resolved" },
+  );
   return res.data;
 }
