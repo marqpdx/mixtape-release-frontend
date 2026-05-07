@@ -10,11 +10,12 @@
 // CS-D6: Stewardship panel (collapsed by default)
 // CS-D7: Right sidebar — Initiatives, Remind Me's, Let's Fix's, We Need More's
 
-import { Box, Button, Container, Grid, GridItem, Heading, HStack, Text, VStack } from "@chakra-ui/react";
+import { Badge, Box, Button, Container, Grid, GridItem, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import Link from "next/link";
+import { useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { ConsoleActionField } from "@components/console/ConsoleActionField";
+import { ActiveContext, ConsoleActionField } from "@components/console/ConsoleActionField";
 import { ReentryPanel } from "@components/console/ReentryPanel";
 import { SignalsPanel } from "@components/console/SignalsPanel";
 import { OrientationPanel } from "@components/console/OrientationPanel";
@@ -30,6 +31,39 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
     <Heading as="h2" size="sm" color={color} mb={3}>
       {children}
     </Heading>
+  );
+}
+
+function ContextBar({
+  context,
+  onClear,
+}: {
+  context: Extract<ActiveContext, { kind: "group" }>;
+  onClear: () => void;
+}) {
+  return (
+    <HStack
+      bg="purple.50"
+      _dark={{ bg: "purple.950" }}
+      border="1px solid"
+      borderColor="purple.200"
+      _dark-borderColor="purple.800"
+      borderRadius="md"
+      px={4}
+      py={2}
+      mb={4}
+      justify="space-between"
+    >
+      <HStack gap={2}>
+        <Badge colorPalette="purple" variant="subtle">context</Badge>
+        <Text fontSize="sm" fontWeight="medium" color="purple.700" _dark={{ color: "purple.300" }}>
+          {context.title}
+        </Text>
+      </HStack>
+      <Button size="xs" variant="ghost" colorPalette="purple" onClick={onClear}>
+        × personal
+      </Button>
+    </HStack>
   );
 }
 
@@ -67,23 +101,33 @@ export default function ConsolePage() {
   const sidebarBg = useColorModeValue("white", "gray.850");
   const sidebarBorder = useColorModeValue("gray.200", "gray.700");
 
+  const [activeContext, setActiveContext] = useState<ActiveContext>({ kind: "personal" });
+  const groupCtx = activeContext.kind === "group" ? activeContext : null;
+
   return (
     <Box bg={bgColor} minH="100vh">
       <Container maxW="6xl" py={8}>
         {user && <QuickNav username={user.username} />}
+
+        {groupCtx && (
+          <ContextBar context={groupCtx} onClear={() => setActiveContext({ kind: "personal" })} />
+        )}
 
         <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={8} alignItems="start">
           {/* Main column */}
           <GridItem>
             <VStack gap={8} align="stretch">
 
-              {/* Universal Action Field (CS-D2) */}
+              {/* Universal Action Field (CS-D2, CS-D12) */}
               <Box>
                 <SectionHeading>Console</SectionHeading>
                 <Text fontSize="sm" color={mutedColor} mb={4}>
-                  Parse, review, and execute quick commands. Use /n Name to start a new workstream.
+                  Parse, review, and execute quick commands. Use /n Name to start a workstream. Use // GroupName to switch context.
                 </Text>
-                <ConsoleActionField />
+                <ConsoleActionField
+                  activeContext={activeContext}
+                  onContextSwitch={setActiveContext}
+                />
               </Box>
 
               {/* Re-entry (CS-D3) */}
@@ -112,7 +156,7 @@ export default function ConsolePage() {
               {/* Lists (CS-D10) */}
               <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
                 <SectionHeading>Lists</SectionHeading>
-                <ListsPanel />
+                <ListsPanel groupId={groupCtx?.id} />
               </Box>
 
             </VStack>
@@ -131,7 +175,7 @@ export default function ConsolePage() {
               p={4}
             >
               <SectionHeading>Activity</SectionHeading>
-              <ConsoleSidebar />
+              <ConsoleSidebar groupSlug={groupCtx?.slug} />
             </Box>
           </GridItem>
         </Grid>

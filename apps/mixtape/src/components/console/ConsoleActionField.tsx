@@ -35,9 +35,14 @@ type ScopeOption = {
   slug?: string;
 };
 
+export type ActiveContext =
+  | { kind: "personal" }
+  | { kind: "group"; id: string; slug: string; title: string };
+
 const SUPPORTED_VERBS: SupportedVerb[] = ["note", "remind", "task", "workstream"];
 
 const WORKSTREAM_PREFIX = /^\/n\s+(.+)/i;
+const CONTEXT_SWITCH_PREFIX = /^\/\/(.+)/;
 
 function isSupportedVerb(value: string): value is SupportedVerb {
   return SUPPORTED_VERBS.includes(value as SupportedVerb);
@@ -154,7 +159,13 @@ function ResultSummary({ command }: { command: AgentCommandResponse }) {
   );
 }
 
-export function ConsoleActionField() {
+export function ConsoleActionField({
+  activeContext = { kind: "personal" },
+  onContextSwitch,
+}: {
+  activeContext?: ActiveContext;
+  onContextSwitch?: (ctx: ActiveContext) => void;
+} = {}) {
   const [input, setInput] = useState("");
   const [command, setCommand] = useState<AgentCommandResponse | null>(null);
   const [draftFields, setDraftFields] = useState<Record<string, string>>({});
@@ -167,6 +178,8 @@ export function ConsoleActionField() {
 
   const workstreamMatch = WORKSTREAM_PREFIX.exec(input.trim());
   const workstreamName = workstreamMatch ? workstreamMatch[1].trim() : null;
+  const contextSwitchMatch = CONTEXT_SWITCH_PREFIX.exec(input.trim());
+  const contextSwitchQuery = contextSwitchMatch ? contextSwitchMatch[1].trim().toLowerCase() : null;
   const { data: orientation, isLoading: orientationLoading } = useOrientation();
 
   const cardBg = useColorModeValue("white", "gray.800");
@@ -174,6 +187,13 @@ export function ConsoleActionField() {
   const subtleBg = useColorModeValue("gray.50", "gray.900");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const noScope = !orientationLoading && !orientation?.initiatives?.length && !orientation?.groups?.length;
+
+  const contextSwitchTarget = useMemo(() => {
+    if (!contextSwitchQuery) return null;
+    return (orientation?.groups ?? []).find(
+      (g) => g.title.toLowerCase().includes(contextSwitchQuery) || g.slug.includes(contextSwitchQuery),
+    ) ?? null;
+  }, [contextSwitchQuery, orientation]);
 
   const scopeOptions = useMemo<ScopeOption[]>(() => {
     const initiativeItems = (orientation?.initiatives ?? []).map((initiative) => ({
@@ -235,14 +255,25 @@ export function ConsoleActionField() {
   const supportedVerb = command?.verb && isSupportedVerb(command.verb) ? command.verb : null;
   const canConfirm = Boolean(command && supportedVerb && command.status === "parsed");
 
+  const handleContextSwitch = () => {
+    if (!contextSwitchTarget || !onContextSwitch) return;
+    onContextSwitch({ kind: "group", id: contextSwitchTarget.id, slug: contextSwitchTarget.slug, title: contextSwitchTarget.title });
+    setInput("");
+  };
+
   const helpText = useMemo(() => {
+    if (contextSwitchQuery) {
+      return contextSwitchTarget
+        ? `Press Switch to enter ${contextSwitchTarget.title} context.`
+        : `No group matching "${contextSwitchQuery}".`;
+    }
     if (workstreamName) {
       return activeScope?.slug
         ? `Press Create to start workstream "${workstreamName}" in ${activeScope.label}.`
         : "Select a group scope to create a workstream.";
     }
     if (!command) {
-      return "Supports note, remind, and task. Use /n Name to create a new workstream. More verbs coming.";
+      return "Supports note, remind, and task. Use /n Name to start a workstream. Use // GroupName to switch context.";
     }
     if (!supportedVerb) {
       return `Parsed ${command.verb}, but desktop confirm is only wired for note, remind, and task right now.`;
@@ -379,7 +410,15 @@ export function ConsoleActionField() {
                 Focus action field
               </Text>
             </HStack>
-            {workstreamName ? (
+            {contextSwitchQuery ? (
+              <Button
+                colorPalette="purple"
+                onClick={handleContextSwitch}
+                disabled={!contextSwitchTarget || !onContextSwitch}
+              >
+                Switch Context
+              </Button>
+            ) : workstreamName ? (
               <Button
                 colorPalette="teal"
                 onClick={handleCreateWorkstream}

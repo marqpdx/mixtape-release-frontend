@@ -70,11 +70,11 @@ function EmptyNote({ text }: { text: string }) {
   );
 }
 
-export function ConsoleSidebar() {
+export function ConsoleSidebar({ groupSlug }: { groupSlug?: string } = {}) {
   const { data: orientation, isLoading: orientationLoading } = useOrientation();
   const { data: stewardship, isLoading: stewardshipLoading } = useStewardship();
-  const { data: fixData, isLoading: fixLoading } = useHubCaptures("fix");
-  const { data: needMoreData, isLoading: needMoreLoading } = useHubCaptures("need_more");
+  const { data: fixData, isLoading: fixLoading } = useHubCaptures("fix", groupSlug);
+  const { data: needMoreData, isLoading: needMoreLoading } = useHubCaptures("need_more", groupSlug);
   const resolveCapture = useResolveCapture();
   const promoteCaptures = usePromoteCaptures();
 

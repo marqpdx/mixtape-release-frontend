@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useLists } from "@hooks/lists/useLists";
 
-export function ListsPanel() {
-  const { lists, isLoading } = useLists();
+export function ListsPanel({ groupId }: { groupId?: string } = {}) {
+  const { lists, isLoading } = useLists(
+    groupId ? { sponsorType: "group", sponsorObjectId: groupId } : {},
+  );
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const hoverBg = useColorModeValue("gray.50", "gray.750");
