@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +11,7 @@ import {
 import { UniversalActionField } from '../initiatives/UniversalActionField';
 import { useConsoleSurface } from '../../hooks/useConsoleSurface';
 import { useInitiativesStore } from '../../stores/initiativesStore';
+import { useOrientation } from '@mixtape/api/hooks/console/useConsole';
 
 function SectionCard({
   kicker,
@@ -32,6 +34,13 @@ function SectionCard({
   );
 }
 
+const CAPTURE_KIND_LABELS: Record<string, string> = {
+  fix: "Fix",
+  need_more: "Need More",
+  remind: "Reminders",
+  note: "Notes",
+};
+
 export function ConsoleMobileSurface({
   onActionFocusChange,
 }: {
@@ -39,8 +48,20 @@ export function ConsoleMobileSurface({
 }) {
   const [stewardshipExpanded, setStewardshipExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const { data, isLoading, error } = useConsoleSurface();
+  const { data, isLoading, error, reload } = useConsoleSurface();
+  const { data: orientation, refetch: refetchOrientation } = useOrientation();
   const sessionHistory = useInitiativesStore((state) => state.sessionHistory);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([reload(), refetchOrientation()]);
+    setRefreshing(false);
+  };
+
+  const captureCounts = orientation?.capture_counts ?? {};
+  const totalCaptures = Object.values(captureCounts).reduce((sum, n) => sum + n, 0);
 
   if (isLoading && !data) {
     return (
@@ -61,7 +82,13 @@ export function ConsoleMobileSurface({
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor="#0E5AA7" />
+      }
+    >
       <SectionCard
         kicker="Re-entry"
         title="Resume momentum"
@@ -84,6 +111,25 @@ export function ConsoleMobileSurface({
           )}
         </View>
       </SectionCard>
+
+      {totalCaptures > 0 && (
+        <SectionCard
+          kicker="Captures"
+          title="Open items"
+          subtitle="Raw captures waiting to be resolved or promoted. Tap the Capture tab to add more."
+        >
+          <View style={styles.captureCountRow}>
+            {Object.entries(captureCounts)
+              .filter(([, count]) => count > 0)
+              .map(([kind, count]) => (
+                <View key={kind} style={styles.captureCountChip}>
+                  <Text style={styles.captureCountNum}>{count}</Text>
+                  <Text style={styles.captureCountLabel}>{CAPTURE_KIND_LABELS[kind] ?? kind}</Text>
+                </View>
+              ))}
+          </View>
+        </SectionCard>
+      )}
 
       <SectionCard
         kicker="Signals"
@@ -397,5 +443,33 @@ const styles = StyleSheet.create({
     color: '#6C5A32',
     fontSize: 14,
     lineHeight: 20,
+  },
+  captureCountRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  captureCountChip: {
+    alignItems: 'center',
+    backgroundColor: '#F7FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#D7E0EA',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minWidth: 72,
+  },
+  captureCountNum: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0E5AA7',
+  },
+  captureCountLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#627181',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
