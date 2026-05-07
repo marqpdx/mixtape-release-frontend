@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Badge,
@@ -87,6 +87,8 @@ export default function ProspectDetailPage() {
   const [converting, setConverting] = useState(false);
   const [convertResult, setConvertResult] = useState<ConvertResult | null>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
+  const [groupCheckState, setGroupCheckState] = useState<"idle" | "checking" | "found" | "not_found">("idle");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -115,12 +117,31 @@ export default function ProspectDetailPage() {
       setEditStatus(pRes.data.status);
       setEditSummary(pRes.data.summary || "");
       setSessions(sRes.data);
+      // Pre-populate convert slug from prospect slug if not yet converted
+      if (!pRes.data.converted_to_group_slug) {
+        setConvertGroupSlug(pRes.data.slug ?? "");
+      }
     } catch {
       setError("Could not load prospect.");
     } finally {
       setLoading(false);
     }
   }, [prospectSlug]);
+
+  const handleConvertSlugChange = useCallback((value: string) => {
+    setConvertGroupSlug(value);
+    setGroupCheckState(value.trim() ? "checking" : "idle");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim()) return;
+    debounceRef.current = setTimeout(async () => {
+      try {
+        await axiosInstance.get(`/api/public/groups/${value.trim()}/admission-status`);
+        setGroupCheckState("found");
+      } catch {
+        setGroupCheckState("not_found");
+      }
+    }, 400);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) load();
@@ -380,26 +401,40 @@ export default function ProspectDetailPage() {
         ) : (
           <VStack align="stretch" gap="3">
             <Text fontSize="sm" color={mutedColor}>
-              Enter the target group slug. Intake responses will be mapped into the group's context and marked as "brought from intake."
+              Enter the slug of the existing group to link this prospect to. Intake responses will be mapped into the group's context and marked as "brought from intake."
             </Text>
             <HStack>
-              <Input
-                size="sm"
-                placeholder="group-slug"
-                value={convertGroupSlug}
-                onChange={(e) => setConvertGroupSlug(e.target.value)}
-                flex="1"
-              />
+              <Box flex="1" position="relative">
+                <Input
+                  size="sm"
+                  placeholder="group-slug"
+                  value={convertGroupSlug}
+                  onChange={(e) => handleConvertSlugChange(e.target.value)}
+                  borderColor={
+                    groupCheckState === "found" ? "green.400" :
+                    groupCheckState === "not_found" ? "red.400" : undefined
+                  }
+                />
+              </Box>
               <Button
                 size="sm"
                 colorPalette="green"
                 onClick={handleConvert}
                 loading={converting}
-                disabled={!convertGroupSlug.trim()}
+                disabled={!convertGroupSlug.trim() || groupCheckState === "not_found" || groupCheckState === "checking"}
               >
                 Convert to client
               </Button>
             </HStack>
+            {groupCheckState === "checking" && (
+              <Text fontSize="xs" color={mutedColor}>Checking group…</Text>
+            )}
+            {groupCheckState === "found" && (
+              <Text fontSize="xs" color="green.600">✓ Group found</Text>
+            )}
+            {groupCheckState === "not_found" && (
+              <Text fontSize="xs" color="red.500">✗ No group with that slug — check the spelling or create the group first.</Text>
+            )}
             {convertError && (
               <Text fontSize="sm" color="red.500">{convertError}</Text>
             )}
