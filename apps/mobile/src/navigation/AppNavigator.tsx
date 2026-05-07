@@ -16,8 +16,7 @@ import PlaceScreen from '../screens/PlaceScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
 import GroupListScreen from '../screens/GroupListScreen';
-import InitiativesScreen from '../screens/InitiativesScreen';
-import BusinessHubScreen from '../screens/BusinessHubScreen';
+import HubCaptureScreen from '../screens/HubCaptureScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
@@ -34,8 +33,7 @@ export type MainTabParamList = {
   Notebook: undefined;
   Place: undefined;
   Studio: undefined;
-  Initiatives: undefined;
-  BusinessHub: undefined;
+  Capture: undefined;
   Messages: undefined;
   Groups: undefined;
 };
@@ -84,8 +82,7 @@ function MainTabs() {
             Notebook: ['book', 'book-outline'],
             Place: ['arrow-forward-circle', 'arrow-forward-circle-outline'],
             Studio: ['color-palette', 'color-palette-outline'],
-            Initiatives: ['flash', 'flash-outline'],
-            BusinessHub: ['briefcase', 'briefcase-outline'],
+            Capture: ['add-circle', 'add-circle-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
             Groups: ['people', 'people-outline'],
           };
@@ -99,8 +96,7 @@ function MainTabs() {
       <Tab.Screen name="Notebook" component={NotebookScreen} />
       <Tab.Screen name="Place" component={PlaceScreen} />
       <Tab.Screen name="Studio" component={StudioScreen} />
-      <Tab.Screen name="Initiatives" component={InitiativesScreen} />
-      <Tab.Screen name="BusinessHub" component={BusinessHubScreen} options={{ title: 'Hub' }} />
+      <Tab.Screen name="Capture" component={HubCaptureScreen} />
       <Tab.Screen
         name="Messages"
         component={MyChatsScreen}

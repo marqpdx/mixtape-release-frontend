@@ -244,9 +244,8 @@ export default function BusinessHubScreen() {
   };
 
   const handleVerbTile = (prefix: string) => {
-    // Navigate to Initiatives tab — the command surface will be focused
-    // The prefix can seed the draft in a future enhancement via navigation params
-    navigation.navigate('MainTabs', { screen: 'Initiatives' });
+    // Navigate to Capture tab for quick HubCapture entry
+    navigation.navigate('MainTabs', { screen: 'Capture' });
   };
 
   const handleMarkFixResolved = (id: string) => {

@@ -47,10 +47,11 @@ const consoleClient: ConsoleClient = {
       signalGroups: [
         ...signals.markers.map((group) => ({
           id: `marker-${group.signal}`,
-          marker:
+          marker: (
             group.symbol === '/!' || group.symbol === '/~' || group.symbol === '/?' || group.symbol === '/@'
               ? group.symbol
-              : '/?',
+              : '/?'
+          ) as '/!' | '/~' | '/?' | '/@',
           title: group.label,
           items: group.items.map((item) => item.body || item.label || item.piece_title),
         })),

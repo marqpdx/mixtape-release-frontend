@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { UniversalActionField } from '../initiatives/UniversalActionField';
 import { useConsoleSurface } from '../../hooks/useConsoleSurface';
+import { useInitiativesStore } from '../../stores/initiativesStore';
 
 function SectionCard({
   kicker,
@@ -37,7 +38,9 @@ export function ConsoleMobileSurface({
   onActionFocusChange?: (focused: boolean) => void;
 }) {
   const [stewardshipExpanded, setStewardshipExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const { data, isLoading, error } = useConsoleSurface();
+  const sessionHistory = useInitiativesStore((state) => state.sessionHistory);
 
   if (isLoading && !data) {
     return (
@@ -176,6 +179,43 @@ export function ConsoleMobileSurface({
           </View>
         ) : null}
       </SectionCard>
+
+      {/* Session history — absorbed from Initiatives tab */}
+      {sessionHistory.length > 0 && (
+        <SectionCard
+          kicker="Commands"
+          title="Session history"
+          subtitle="Recent parsed commands from this session."
+        >
+          <TouchableOpacity
+            style={styles.stewardshipToggle}
+            onPress={() => setHistoryExpanded((v) => !v)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.stewardshipToggleText}>
+              {historyExpanded ? 'Hide history' : `Show ${sessionHistory.length} command${sessionHistory.length > 1 ? 's' : ''}`}
+            </Text>
+          </TouchableOpacity>
+
+          {historyExpanded && (
+            <View style={styles.stewardshipList}>
+              {sessionHistory.map((item) => (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.stewardshipItem,
+                    item.tone === 'success' && { backgroundColor: '#F5FBF7', borderColor: '#9BC8AE' },
+                    item.tone === 'error' && { backgroundColor: '#FFF5F5', borderColor: '#E1A5A5' },
+                  ]}
+                >
+                  <Text style={[styles.stewardshipText, { fontWeight: '700' }]}>{item.title}</Text>
+                  {item.body ? <Text style={styles.stewardshipText}>{item.body}</Text> : null}
+                </View>
+              ))}
+            </View>
+          )}
+        </SectionCard>
+      )}
     </ScrollView>
   );
 }
