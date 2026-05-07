@@ -109,6 +109,10 @@ const AVAILABLE_PERMISSIONS: Permission[] = [
   },
 ];
 
+const PERMISSION_LABEL_OVERRIDES: Record<string, string> = {
+  can__InviteMembers: "Invite to Group",
+};
+
 export default function GroupPermissionsWorkArea({
   groupSlug,
   groupId,
@@ -146,6 +150,14 @@ export default function GroupPermissionsWorkArea({
 
   // Use available permissions from API or fall back to default
   const permissions = availablePermissions || AVAILABLE_PERMISSIONS;
+  const visiblePermissions = useMemo(
+    () =>
+      permissions.map((permission) => ({
+        ...permission,
+        name: PERMISSION_LABEL_OVERRIDES[permission.code] || permission.name,
+      })),
+    [permissions],
+  );
   const sortedProfiles = useMemo(
     () => [...(profiles || [])].sort((a, b) => a.sort_order - b.sort_order),
     [profiles],
@@ -564,7 +576,7 @@ export default function GroupPermissionsWorkArea({
                     Included permissions
                   </Text>
                   <Flex wrap="wrap" gap={3}>
-                    {permissions.map((perm) => (
+                    {visiblePermissions.map((perm) => (
                       <Box
                         key={`profile-${selectedProfile.id}-${perm.code}`}
                         minW="240px"
@@ -624,7 +636,7 @@ export default function GroupPermissionsWorkArea({
           <Collapsible.Content>
             <Box mt={2} p={4} bg="gray.50" borderRadius="md">
               <Flex direction="column" gap={2}>
-                {permissions.map((perm) => (
+                {visiblePermissions.map((perm) => (
                   <Box key={perm.code}>
                     <Text fontWeight="semibold" fontSize="sm">
                       {perm.name}
@@ -642,168 +654,231 @@ export default function GroupPermissionsWorkArea({
 
       {/* Permissions Matrix */}
       <Box borderWidth={1} borderRadius="lg" overflow="hidden">
-        <Table.Root size="sm">
-          <Table.Header>
-            <Table.Row bg="gray.100">
-              <Table.ColumnHeader width="300px">Member</Table.ColumnHeader>
-              <Table.ColumnHeader width="120px">Role</Table.ColumnHeader>
-              <Table.ColumnHeader width="240px">Profile</Table.ColumnHeader>
-              {permissions.map((perm) => (
-                <Table.ColumnHeader key={perm.code} textAlign="center">
-                  {perm.name}
+        <Box
+          px={4}
+          py={3}
+          borderBottomWidth={1}
+          bg="gray.50"
+        >
+          <Text fontSize="sm" color="gray.600">
+            Scroll right to manage member-specific permissions. Member, role, and profile stay pinned while you review capabilities.
+          </Text>
+        </Box>
+        <Box overflowX="auto">
+          <Table.Root size="sm" minW="1100px">
+            <Table.Header>
+              <Table.Row bg="gray.100">
+                <Table.ColumnHeader
+                  width="300px"
+                  minW="300px"
+                  position="sticky"
+                  left="0"
+                  zIndex={3}
+                  bg="gray.100"
+                  boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                >
+                  Member
                 </Table.ColumnHeader>
-              ))}
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {members.map((member) => {
-              const isAdmin = member.roles.includes("admin");
-              const isSaving = saving === member.user_id;
+                <Table.ColumnHeader
+                  width="160px"
+                  minW="160px"
+                  position="sticky"
+                  left="300px"
+                  zIndex={3}
+                  bg="gray.100"
+                  boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                >
+                  Role
+                </Table.ColumnHeader>
+                <Table.ColumnHeader
+                  width="240px"
+                  minW="240px"
+                  position="sticky"
+                  left="460px"
+                  zIndex={3}
+                  bg="gray.100"
+                  boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                >
+                  Profile
+                </Table.ColumnHeader>
+                {visiblePermissions.map((perm) => (
+                  <Table.ColumnHeader key={perm.code} textAlign="center" minW="140px">
+                    {perm.name}
+                  </Table.ColumnHeader>
+                ))}
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {members.map((member) => {
+                const isAdmin = member.roles.includes("admin");
+                const isSaving = saving === member.user_id;
 
-              return (
-                <Table.Row key={member.user_id}>
-                  {/* Member Info */}
-                  <Table.Cell>
-                    <Flex align="center" gap={3}>
-                      <Avatar.Root size="sm">
-                        {getMemberAvatar(member) ? (
-                          <Avatar.Image
-                            src={getMemberAvatar(member)}
-                            alt={
-                              getMemberDisplayName(member)
-                            }
-                          />
-                        ) : (
-                          <Avatar.Fallback>
-                            {getMemberDisplayName(member)
-                              .charAt(0)
-                              .toUpperCase()}
-                          </Avatar.Fallback>
-                        )}
-                      </Avatar.Root>
-                      <Box>
-                        <Text fontWeight="medium">
-                          {getMemberDisplayName(member)}
-                        </Text>
-                        <Text fontSize="sm" color="gray.500">
-                          {getMemberEmail(member)}
-                        </Text>
-                      </Box>
-                    </Flex>
-                  </Table.Cell>
+                return (
+                  <Table.Row key={member.user_id}>
+                    {/* Member Info */}
+                    <Table.Cell
+                      position="sticky"
+                      left="0"
+                      zIndex={2}
+                      bg="white"
+                      minW="300px"
+                      boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                    >
+                      <Flex align="center" gap={3}>
+                        <Avatar.Root size="sm">
+                          {getMemberAvatar(member) ? (
+                            <Avatar.Image
+                              src={getMemberAvatar(member)}
+                              alt={
+                                getMemberDisplayName(member)
+                              }
+                            />
+                          ) : (
+                            <Avatar.Fallback>
+                              {getMemberDisplayName(member)
+                                .charAt(0)
+                                .toUpperCase()}
+                            </Avatar.Fallback>
+                          )}
+                        </Avatar.Root>
+                        <Box>
+                          <Text fontWeight="medium">
+                            {getMemberDisplayName(member)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500">
+                            {getMemberEmail(member)}
+                          </Text>
+                        </Box>
+                      </Flex>
+                    </Table.Cell>
 
-                  {/* Role Badge */}
-                  <Table.Cell>
-                    <Flex align="center" gap={2}>
-                      {getRoleBadge(member.roles)}
-                      {!isAdmin ? (
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          colorScheme="red"
-                          onClick={() => grantAdminRole(member.user_id)}
-                          disabled={roleSaving === member.user_id}
-                        >
-                          {roleSaving === member.user_id ? "..." : "A"}
-                        </Button>
-                      ) : (
-                        !member.roles.includes("owner") && (
+                    {/* Role Badge */}
+                    <Table.Cell
+                      position="sticky"
+                      left="300px"
+                      zIndex={2}
+                      bg="white"
+                      minW="160px"
+                      boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                    >
+                      <Flex align="center" gap={2} wrap="wrap">
+                        {getRoleBadge(member.roles)}
+                        {!isAdmin ? (
                           <Button
                             size="xs"
                             variant="outline"
-                            colorScheme="orange"
-                            onClick={() => revokeAdminRole(member.user_id)}
+                            colorScheme="red"
+                            onClick={() => grantAdminRole(member.user_id)}
                             disabled={roleSaving === member.user_id}
                           >
-                            {roleSaving === member.user_id ? "..." : "A"}
+                            {roleSaving === member.user_id ? "..." : "Make admin"}
                           </Button>
-                        )
-                      )}
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        colorScheme={member.is_helper ? "orange" : "gray"}
-                        onClick={() => toggleHelperRole(member)}
-                        disabled={roleSaving === member.user_id}
-                      >
-                        {roleSaving === member.user_id ? "..." : "H"}
-                      </Button>
-                    </Flex>
-                  </Table.Cell>
-
-                  <Table.Cell>
-                    <Flex direction="column" gap={2}>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {getProfileName(member.permission_profile)}
-                      </Text>
-                      <Flex align="center" gap={2} wrap="wrap">
-                        <select
-                          value={member.permission_profile?.id || ""}
-                          onChange={(event) =>
-                            updatePermissionProfile(
-                              member.user_id,
-                              event.target.value || null,
-                            )
-                          }
-                          disabled={profileSaving === member.user_id}
-                          style={{
-                            fontSize: "12px",
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            border: "1px solid #D1D5DB",
-                            background: "white",
-                          }}
-                        >
-                          <option value="">No profile</option>
-                          {(profiles || []).map((profile) => (
-                            <option key={profile.id} value={profile.id}>
-                              {profile.name}
-                              {profile.is_default ? " (Default)" : ""}
-                            </option>
-                          ))}
-                        </select>
-                        {profileSaving === member.user_id && <Spinner size="sm" />}
-                        {isCustomized(member, profiles) && (
-                          <Badge colorPalette="orange" size="sm">
-                            Customized
-                          </Badge>
-                        )}
-                      </Flex>
-                    </Flex>
-                  </Table.Cell>
-
-                  {/* Permission Checkboxes */}
-                  {permissions.map((perm) => (
-                    <Table.Cell key={perm.code} textAlign="center">
-                      <Flex justify="center" align="center">
-                        {isSaving ? (
-                          <Spinner size="sm" />
                         ) : (
-                          <Checkbox.Root
-                            checked={
-                              isAdmin ||
-                              member.decorators.includes(perm.code)
-                            }
-                            disabled={isAdmin}
-                            onCheckedChange={() =>
-                              togglePermission(member.user_id, perm.code)
-                            }
-                            aria-label={perm.name}
-                          >
-                            <Checkbox.HiddenInput />
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                          </Checkbox.Root>
+                          !member.roles.includes("owner") && (
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              colorScheme="orange"
+                              onClick={() => revokeAdminRole(member.user_id)}
+                              disabled={roleSaving === member.user_id}
+                            >
+                              {roleSaving === member.user_id ? "..." : "Remove admin"}
+                            </Button>
+                          )
                         )}
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          colorScheme={member.is_helper ? "orange" : "gray"}
+                          onClick={() => toggleHelperRole(member)}
+                          disabled={roleSaving === member.user_id}
+                        >
+                          {roleSaving === member.user_id ? "..." : "Helper"}
+                        </Button>
                       </Flex>
                     </Table.Cell>
-                  ))}
-                </Table.Row>
-              );
-            })}
-          </Table.Body>
-        </Table.Root>
+
+                    <Table.Cell
+                      position="sticky"
+                      left="460px"
+                      zIndex={2}
+                      bg="white"
+                      minW="240px"
+                      boxShadow="1px 0 0 rgba(0, 0, 0, 0.08)"
+                    >
+                      <Flex direction="column" gap={2}>
+                        <Text fontSize="sm" fontWeight="medium">
+                          {getProfileName(member.permission_profile)}
+                        </Text>
+                        <Flex align="center" gap={2} wrap="wrap">
+                          <select
+                            value={member.permission_profile?.id || ""}
+                            onChange={(event) =>
+                              updatePermissionProfile(
+                                member.user_id,
+                                event.target.value || null,
+                              )
+                            }
+                            disabled={profileSaving === member.user_id}
+                            style={{
+                              fontSize: "12px",
+                              padding: "4px 8px",
+                              borderRadius: "6px",
+                              border: "1px solid #D1D5DB",
+                              background: "white",
+                            }}
+                          >
+                            <option value="">No profile</option>
+                            {(profiles || []).map((profile) => (
+                              <option key={profile.id} value={profile.id}>
+                                {profile.name}
+                                {profile.is_default ? " (Default)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {profileSaving === member.user_id && <Spinner size="sm" />}
+                          {isCustomized(member, profiles) && (
+                            <Badge colorPalette="orange" size="sm">
+                              Customized
+                            </Badge>
+                          )}
+                        </Flex>
+                      </Flex>
+                    </Table.Cell>
+
+                    {/* Permission Checkboxes */}
+                    {visiblePermissions.map((perm) => (
+                      <Table.Cell key={perm.code} textAlign="center">
+                        <Flex justify="center" align="center">
+                          {isSaving ? (
+                            <Spinner size="sm" />
+                          ) : (
+                            <Checkbox.Root
+                              checked={
+                                isAdmin ||
+                                member.decorators.includes(perm.code)
+                              }
+                              disabled={isAdmin}
+                              onCheckedChange={() =>
+                                togglePermission(member.user_id, perm.code)
+                              }
+                              aria-label={perm.name}
+                            >
+                              <Checkbox.HiddenInput />
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                            </Checkbox.Root>
+                          )}
+                        </Flex>
+                      </Table.Cell>
+                    ))}
+                  </Table.Row>
+                );
+              })}
+            </Table.Body>
+          </Table.Root>
+        </Box>
       </Box>
 
       {/* Admin Note */}
