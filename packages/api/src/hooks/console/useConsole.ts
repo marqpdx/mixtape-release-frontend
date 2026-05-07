@@ -6,6 +6,7 @@ import {
   fetchSignals,
   fetchStewardship,
   HubCaptureKind,
+  promoteHubCaptures,
   resolveHubCapture,
 } from "@mixtape/api/clients/console/consoleApi";
 
@@ -55,6 +56,18 @@ export function useResolveCapture() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: resolveHubCapture,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["console", "hub-captures"] });
+      queryClient.invalidateQueries({ queryKey: ["console", "orientation"] });
+    },
+  });
+}
+
+export function usePromoteCaptures() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ captureIds, targetTitle }: { captureIds: string[]; targetTitle: string }) =>
+      promoteHubCaptures(captureIds, targetTitle),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["console", "hub-captures"] });
       queryClient.invalidateQueries({ queryKey: ["console", "orientation"] });

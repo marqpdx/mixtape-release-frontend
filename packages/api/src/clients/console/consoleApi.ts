@@ -167,3 +167,20 @@ export async function resolveHubCapture(captureId: string): Promise<HubCapture> 
   );
   return res.data;
 }
+
+export interface PromoteCapturesResponse {
+  promoted_to: string;
+  list_id: string;
+  list_title: string;
+}
+
+export async function promoteHubCaptures(
+  captureIds: string[],
+  targetTitle: string,
+): Promise<PromoteCapturesResponse> {
+  const res = await axiosInstance.post<PromoteCapturesResponse>(
+    "/api/console/hub/captures/promote/",
+    { capture_ids: captureIds, target_kind: "list", target_title: targetTitle },
+  );
+  return res.data;
+}
