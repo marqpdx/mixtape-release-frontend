@@ -20,6 +20,7 @@ import { SignalsPanel } from "@components/console/SignalsPanel";
 import { OrientationPanel } from "@components/console/OrientationPanel";
 import { StewardshipPanel } from "@components/console/StewardshipPanel";
 import { ConsoleSidebar } from "@components/console/ConsoleSidebar";
+import { ListsPanel } from "@components/console/ListsPanel";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
@@ -106,6 +107,12 @@ export default function ConsolePage() {
               {/* Stewardship (CS-D6) */}
               <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
                 <StewardshipPanel />
+              </Box>
+
+              {/* Lists (CS-D10) */}
+              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
+                <SectionHeading>Lists</SectionHeading>
+                <ListsPanel />
               </Box>
 
             </VStack>
