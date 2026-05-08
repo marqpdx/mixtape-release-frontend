@@ -12,10 +12,8 @@ import { useNotifications } from '../hooks/useNotifications';
 import { ChatStateManager } from '../components/ChatStateManager';
 import LoginScreen from '../screens/LoginScreen';
 import NotebookScreen from '../screens/NotebookScreen';
-import PlaceScreen from '../screens/PlaceScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
-import GroupListScreen from '../screens/GroupListScreen';
 import HubCaptureScreen from '../screens/HubCaptureScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -29,13 +27,11 @@ import { ChatScreen } from '../screens/ChatScreen';
 // ============================================================================
 
 export type MainTabParamList = {
-  Console: undefined;
   Notebook: undefined;
-  Place: undefined;
   Studio: undefined;
-  Capture: undefined;
   Messages: undefined;
-  Groups: undefined;
+  Console: undefined;
+  Ops: undefined;
 };
 
 export type RootStackParamList = {
@@ -78,13 +74,11 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
-            Console: ['grid', 'grid-outline'],
             Notebook: ['book', 'book-outline'],
-            Place: ['arrow-forward-circle', 'arrow-forward-circle-outline'],
             Studio: ['color-palette', 'color-palette-outline'],
-            Capture: ['add-circle', 'add-circle-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
-            Groups: ['people', 'people-outline'],
+            Console: ['grid', 'grid-outline'],
+            Ops: ['flash', 'flash-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
@@ -92,11 +86,8 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Console" component={ConsoleScreen} />
       <Tab.Screen name="Notebook" component={NotebookScreen} />
-      <Tab.Screen name="Place" component={PlaceScreen} />
       <Tab.Screen name="Studio" component={StudioScreen} />
-      <Tab.Screen name="Capture" component={HubCaptureScreen} />
       <Tab.Screen
         name="Messages"
         component={MyChatsScreen}
@@ -104,7 +95,12 @@ function MainTabs() {
           tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? '99+' : totalUnread) : undefined,
         }}
       />
-      <Tab.Screen name="Groups" component={GroupListScreen} />
+      <Tab.Screen name="Console" component={ConsoleScreen} />
+      <Tab.Screen
+        name="Ops"
+        component={HubCaptureScreen}
+        options={{ tabBarLabel: 'Ops' }}
+      />
     </Tab.Navigator>
   );
 }

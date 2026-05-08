@@ -147,7 +147,7 @@ export default function HubCaptureScreen() {
 
   return (
     <View style={styles.container}>
-      <CrossroadsHeader routeLabel="capture" />
+      <CrossroadsHeader routeLabel="operations" />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

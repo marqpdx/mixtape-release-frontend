@@ -245,7 +245,7 @@ export default function BusinessHubScreen() {
 
   const handleVerbTile = (prefix: string) => {
     // Navigate to Capture tab for quick HubCapture entry
-    navigation.navigate('MainTabs', { screen: 'Capture' });
+    navigation.navigate('MainTabs', { screen: 'Ops' });
   };
 
   const handleMarkFixResolved = (id: string) => {
