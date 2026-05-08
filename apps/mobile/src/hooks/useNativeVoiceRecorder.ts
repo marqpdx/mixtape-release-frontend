@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Audio } from 'expo-av';
 
-interface RecordedClip {
+export interface RecordedClip {
   uri: string;
   durationSeconds: number;
   mimeType: string;
