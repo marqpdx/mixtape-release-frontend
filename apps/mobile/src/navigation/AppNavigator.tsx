@@ -14,7 +14,7 @@ import LoginScreen from '../screens/LoginScreen';
 import NotebookScreen from '../screens/NotebookScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
-import HubCaptureScreen from '../screens/HubCaptureScreen';
+import OpsScreen from '../screens/OpsScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
@@ -98,7 +98,7 @@ function MainTabs() {
       <Tab.Screen name="Console" component={ConsoleScreen} />
       <Tab.Screen
         name="Ops"
-        component={HubCaptureScreen}
+        component={OpsScreen}
         options={{ tabBarLabel: 'Ops' }}
       />
     </Tab.Navigator>
