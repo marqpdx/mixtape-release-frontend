@@ -3,6 +3,8 @@
 // Operations screen (Ops tab) — enterprise action capture.
 // Group selector + op type selector at top; CaptureDock + recent items below.
 // OP-2: shell, wiring, group emblem with fade transition.
+// OP-3: voice list parsing + confirmation sheet.
+// OP-4: voice session resilience via AsyncStorage.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -11,6 +13,7 @@ import {
   Animated,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -28,11 +31,17 @@ import { CrossroadsHeader } from '../components/CrossroadsHeader';
 import { CaptureDock } from '../components/shared/CaptureDock';
 import { useUserGroups } from '@mixtape/api/hooks/groups/useGroups';
 import { useHubCaptures, useResolveCapture } from '@mixtape/api/hooks/console/useConsole';
+import {
+  useCreateVoiceSeed,
+  useDeleteSeed,
+  useRecentSeeds,
+} from '@mixtape/api/hooks/useSeed';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import type { HubCapture, HubCaptureKind } from '@mixtape/api/clients/console/consoleApi';
 import { useAuthStore } from '../stores/authStore';
 import type { RecordedClip } from '../hooks/useNativeVoiceRecorder';
 import type { Group } from '@mixtape/core/types/groupTypes';
+import { parseVoiceList, LIST_PARSE_KINDS } from '../utils/parseVoiceList';
 
 // ---------------------------------------------------------------------------
 // Op type config
@@ -105,6 +114,14 @@ const LAST_OP_KEY = (username: string) =>
   `mixtape.mobile.ops.lastOpIndex.${username}`;
 const DRAFT_KEY = (username: string, groupSlug: string, opIndex: number) =>
   `mixtape.mobile.ops.draft.${username}.${groupSlug}.${opIndex}`;
+const PENDING_VOICE_KEY = (username: string, groupSlug: string, opIndex: number) =>
+  `mixtape.mobile.ops.pendingVoice.${username}.${groupSlug}.${opIndex}`;
+
+interface ConfirmItem {
+  id: string;
+  text: string;
+  checked: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // Mock group emblem (OP-2; real emblem via identity/ API in future pass)
@@ -201,6 +218,12 @@ export default function OpsScreen() {
   const [selectedOpIndex, setSelectedOpIndex] = useState(4); // default: Note
   const [actionFocused, setActionFocused] = useState(false);
 
+  // OP-3: transcription + confirmation sheet state
+  const [transcribing, setTranscribing] = useState(false);
+  const [pendingSeedId, setPendingSeedId] = useState<string | null>(null);
+  const [confirmItems, setConfirmItems] = useState<ConfirmItem[]>([]);
+  const [confirmSheetVisible, setConfirmSheetVisible] = useState(false);
+
   // Emblem fade transition
   const emblemOpacity = useRef(new Animated.Value(1)).current;
 
@@ -234,6 +257,7 @@ export default function OpsScreen() {
   const groupSlugParam = selectedGroupSlug === PERSONAL.slug ? undefined : selectedGroupSlug;
   const activeGroup = groupOptions.find((g) => g.slug === selectedGroupSlug) ?? PERSONAL;
   const draftKey = DRAFT_KEY(username, selectedGroupSlug, selectedOpIndex);
+  const pendingVoiceKey = PENDING_VOICE_KEY(username, selectedGroupSlug, selectedOpIndex);
 
   // Recent ops list
   const { data: captureData, isLoading: capturesLoading, refetch } =
@@ -241,6 +265,131 @@ export default function OpsScreen() {
   const captures = captureData?.captures ?? [];
 
   const resolveCapture = useResolveCapture();
+
+  // OP-3: voice transcription vehicle
+  const createVoiceSeed = useCreateVoiceSeed();
+  const deleteSeed = useDeleteSeed();
+  const recentSeedsQuery = useRecentSeeds(20);
+
+  // OP-4: check for pending voice clip on mount
+  useEffect(() => {
+    if (!username) return;
+    void AsyncStorage.getItem(pendingVoiceKey).then((uri) => {
+      if (!uri) return;
+      Alert.alert(
+        'Unsent recording',
+        'You have a voice recording that was not sent. Would you like to send it now?',
+        [
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => void AsyncStorage.removeItem(pendingVoiceKey),
+          },
+          {
+            text: 'Send',
+            onPress: () => {
+              // Re-trigger voice upload with saved URI
+              void handlePendingVoiceRecovery(uri);
+            },
+          },
+        ]
+      );
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, pendingVoiceKey]);
+
+  // OP-3: poll recent seeds for transcription completion
+  useEffect(() => {
+    if (!pendingSeedId) return;
+
+    const seed = recentSeedsQuery.data?.find((s) => s.id === pendingSeedId);
+    if (!seed) return;
+
+    if (seed.status === 'ready' && seed.body_text) {
+      setTranscribing(false);
+      setPendingSeedId(null);
+
+      const text = seed.body_text;
+      const items = LIST_PARSE_KINDS.has(activeOp.kind)
+        ? parseVoiceList(text)
+        : [text];
+
+      if (items.length > 1) {
+        setConfirmItems(items.map((t, i) => ({ id: String(i), text: t, checked: true })));
+        setConfirmSheetVisible(true);
+      } else {
+        // Single item — create directly
+        void createHubCapturesBatch(items);
+        void deleteSeed.mutateAsync(pendingSeedId).catch(() => {});
+      }
+    } else if (seed.status === 'failed') {
+      setTranscribing(false);
+      setPendingSeedId(null);
+      Alert.alert('Transcription failed', 'Could not transcribe the recording. Please try again.');
+      void deleteSeed.mutateAsync(pendingSeedId).catch(() => {});
+    } else if (seed.status === 'processing') {
+      // Keep polling
+      const timer = setTimeout(() => void recentSeedsQuery.refetch(), 4000);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSeedId, recentSeedsQuery.data, activeOp.kind]);
+
+  const createHubCapturesBatch = useCallback(async (texts: string[]) => {
+    await Promise.all(
+      texts.map((text) =>
+        axiosInstance.post('/api/console/hub/captures/', {
+          kind: activeOp.kind,
+          body: text,
+          group_slug: groupSlugParam ?? undefined,
+        })
+      )
+    );
+    void queryClient.invalidateQueries({ queryKey: ['console', 'hub-captures'] });
+    void queryClient.invalidateQueries({ queryKey: ['console', 'orientation'] });
+    void AsyncStorage.removeItem(pendingVoiceKey);
+  }, [activeOp.kind, groupSlugParam, queryClient, pendingVoiceKey]);
+
+  const handlePendingVoiceRecovery = useCallback(async (uri: string) => {
+    setTranscribing(true);
+    try {
+      const seed = await createVoiceSeed.mutateAsync({
+        uri,
+        mimeType: 'audio/m4a',
+        fileName: 'ops-voice-recovery.m4a',
+        source: 'mobile',
+      });
+      setPendingSeedId(seed.id);
+      void recentSeedsQuery.refetch();
+    } catch {
+      setTranscribing(false);
+      Alert.alert('Upload failed', 'Could not send the recording. Please try again.');
+    }
+  }, [createVoiceSeed, recentSeedsQuery]);
+
+  // OP-4: save clip URI to AsyncStorage before upload
+  const handleRecordingFinalized = useCallback((clip: RecordedClip) => {
+    void AsyncStorage.setItem(pendingVoiceKey, clip.uri);
+  }, [pendingVoiceKey]);
+
+  // OP-3: confirm sheet handlers
+  const handleConfirmToggle = useCallback((id: string) => {
+    setConfirmItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, checked: !item.checked } : item)
+    );
+  }, []);
+
+  const handleConfirmSubmit = useCallback(async () => {
+    const selected = confirmItems.filter((i) => i.checked).map((i) => i.text);
+    setConfirmSheetVisible(false);
+    setConfirmItems([]);
+    if (selected.length === 0) return;
+    await createHubCapturesBatch(selected);
+    if (pendingSeedId) {
+      void deleteSeed.mutateAsync(pendingSeedId).catch(() => {});
+      setPendingSeedId(null);
+    }
+  }, [confirmItems, createHubCapturesBatch, deleteSeed, pendingSeedId]);
 
   // CaptureDock submit handlers
   const handleSubmitText = useCallback(async (text: string) => {
@@ -254,21 +403,22 @@ export default function OpsScreen() {
   }, [activeOp.kind, groupSlugParam, queryClient]);
 
   const handleSubmitVoice = useCallback(async (clip: RecordedClip) => {
-    const form = new FormData();
-    form.append('audio', {
-      uri: clip.uri,
-      type: clip.mimeType,
-      name: clip.fileName,
-    } as unknown as Blob);
-    form.append('kind', activeOp.kind);
-    if (groupSlugParam) form.append('group_slug', groupSlugParam);
-
-    await axiosInstance.post('/api/console/hub/captures/voice/', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    void queryClient.invalidateQueries({ queryKey: ['console', 'hub-captures'] });
-    void queryClient.invalidateQueries({ queryKey: ['console', 'orientation'] });
-  }, [activeOp.kind, groupSlugParam, queryClient]);
+    // OP-3: use voice seed as transcription vehicle, then parse + confirm
+    setTranscribing(true);
+    try {
+      const seed = await createVoiceSeed.mutateAsync({
+        uri: clip.uri,
+        mimeType: clip.mimeType,
+        fileName: clip.fileName,
+        source: 'mobile',
+      });
+      setPendingSeedId(seed.id);
+      void recentSeedsQuery.refetch();
+    } catch {
+      setTranscribing(false);
+      Alert.alert('Upload failed', 'Could not send the recording. Please try again.');
+    }
+  }, [createVoiceSeed, recentSeedsQuery]);
 
   return (
     <View style={styles.container}>
@@ -384,6 +534,13 @@ export default function OpsScreen() {
           )}
         />
 
+        {transcribing && (
+          <View style={styles.transcribingBanner}>
+            <ActivityIndicator size="small" color="#0E5AA7" />
+            <Text style={styles.transcribingText}>Transcribing your recording…</Text>
+          </View>
+        )}
+
         <View style={styles.dockWrap}>
           <CaptureDock
             draftStorageKey={draftKey}
@@ -392,10 +549,77 @@ export default function OpsScreen() {
             kickerSub={activeOp.buttonText}
             onSubmitText={handleSubmitText}
             onSubmitVoice={handleSubmitVoice}
+            onRecordingFinalized={handleRecordingFinalized}
             onFocusChange={setActionFocused}
+            isSubmittingVoice={transcribing}
           />
         </View>
       </KeyboardAvoidingView>
+
+      {/* OP-3: Voice list confirmation sheet */}
+      <Modal
+        visible={confirmSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setConfirmSheetVisible(false)}
+      >
+        <View style={styles.sheetOverlay}>
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>
+              {confirmItems.length} items from your recording
+            </Text>
+            <Text style={styles.sheetSubtitle}>
+              Uncheck any you don't want to save.
+            </Text>
+
+            <ScrollView style={styles.sheetList} showsVerticalScrollIndicator={false}>
+              {confirmItems.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.sheetItem}
+                  onPress={() => handleConfirmToggle(item.id)}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
+                    {item.checked && (
+                      <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                    )}
+                  </View>
+                  <Text style={[styles.sheetItemText, !item.checked && styles.sheetItemTextUnchecked]}>
+                    {item.text}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={styles.sheetActions}>
+              <TouchableOpacity
+                style={styles.sheetCancelBtn}
+                onPress={() => {
+                  setConfirmSheetVisible(false);
+                  setConfirmItems([]);
+                }}
+              >
+                <Text style={styles.sheetCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sheetSubmitBtn,
+                  { backgroundColor: activeOp.color },
+                  !confirmItems.some((i) => i.checked) && styles.buttonDisabled,
+                ]}
+                onPress={() => void handleConfirmSubmit()}
+                disabled={!confirmItems.some((i) => i.checked)}
+              >
+                <Text style={styles.sheetSubmitText}>
+                  Add {confirmItems.filter((i) => i.checked).length} item
+                  {confirmItems.filter((i) => i.checked).length !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -586,5 +810,114 @@ const styles = StyleSheet.create({
   dockWrap: {
     paddingTop: 8,
     paddingBottom: 4,
+  },
+
+  // Transcribing banner
+  transcribingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#EEF4F8',
+  },
+  transcribingText: {
+    fontSize: 13,
+    color: '#435261',
+    fontWeight: '600',
+  },
+
+  // Confirmation sheet
+  sheetOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 36,
+    maxHeight: '80%',
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#13293D',
+    marginBottom: 4,
+  },
+  sheetSubtitle: {
+    fontSize: 13,
+    color: '#627181',
+    marginBottom: 16,
+  },
+  sheetList: {
+    maxHeight: 320,
+    marginBottom: 16,
+  },
+  sheetItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF4F8',
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#C9D4DE',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    backgroundColor: '#0E5AA7',
+    borderColor: '#0E5AA7',
+  },
+  sheetItemText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#13293D',
+  },
+  sheetItemTextUnchecked: {
+    color: '#9AACBA',
+    textDecorationLine: 'line-through',
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  sheetCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#EEF4F8',
+    alignItems: 'center',
+  },
+  sheetCancelText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#435261',
+  },
+  sheetSubmitBtn: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  sheetSubmitText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    opacity: 0.45,
   },
 });

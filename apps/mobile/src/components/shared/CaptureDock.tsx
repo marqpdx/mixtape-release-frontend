@@ -29,6 +29,9 @@ export interface CaptureDockProps {
   submitLabel?: string;
   onSubmitText: (text: string) => Promise<void>;
   onSubmitVoice: (clip: RecordedClip) => Promise<void>;
+  /** Called immediately after the recording is finalized, before upload begins.
+   *  Use this to persist the clip URI for resilience (OP-4). */
+  onRecordingFinalized?: (clip: RecordedClip) => void;
   onFocusChange?: (focused: boolean) => void;
   isSubmittingText?: boolean;
   isSubmittingVoice?: boolean;
@@ -48,6 +51,7 @@ export function CaptureDock({
   submitLabel,
   onSubmitText,
   onSubmitVoice,
+  onRecordingFinalized,
   onFocusChange,
   isSubmittingText = false,
   isSubmittingVoice = false,
@@ -128,6 +132,7 @@ export function CaptureDock({
     if ((!isRecording && !isPaused) || isSubmittingVoice) return;
     const clip = await finalizeRecording();
     if (!clip) return;
+    onRecordingFinalized?.(clip);  // OP-4: caller can persist URI before upload
     await onSubmitVoice(clip);
   };
 
