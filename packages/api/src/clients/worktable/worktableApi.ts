@@ -6,6 +6,7 @@ export interface StreamEntry {
   kind?: "fix" | "need_more" | "remind" | "note";
   body: string;
   status?: "open" | "resolved" | "promoted";
+  visibility?: "private" | "shared";
   created_at: string;
   metadata: Record<string, unknown>;
 }

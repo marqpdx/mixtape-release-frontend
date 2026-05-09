@@ -52,6 +52,9 @@ export function StreamEntry({ entry }: { entry: StreamEntryData }) {
             >
               {KIND_LABELS[entry.kind ?? "note"] ?? entry.kind}
             </Badge>
+            {entry.visibility === "shared" && (
+              <Badge colorPalette="blue" variant="outline" fontSize="xs">group</Badge>
+            )}
             {entry.status === "resolved" && (
               <Badge colorPalette="green" variant="outline" fontSize="xs">resolved</Badge>
             )}

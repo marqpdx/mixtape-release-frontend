@@ -34,6 +34,7 @@ export function WorkTableCommandField({
   onCapture: (entry: StreamEntry) => void;
 }) {
   const [input, setInput] = useState("");
+  const [visibility, setVisibility] = useState<"private" | "shared">("private");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCapture, setLastCapture] = useState<{ kind: string; body: string } | null>(null);
@@ -85,15 +86,17 @@ export function WorkTableCommandField({
     // Natural language → HubCapture
     const kind = detectKind(trimmed);
     const groupSlug = context.kind === "group" ? context.slug : undefined;
+    const captureVisibility = groupSlug ? visibility : "private";
 
     setSubmitting(true);
     try {
       const res = await axiosInstance.post<{
-        id: string; kind: string; body: string; status: string; created_at: string;
+        id: string; kind: string; body: string; status: string; visibility: string; created_at: string;
       }>("/api/console/hub/captures/", {
         kind,
         body: trimmed,
         group_slug: groupSlug,
+        visibility: captureVisibility,
       });
 
       const entry: StreamEntry = {
@@ -102,6 +105,7 @@ export function WorkTableCommandField({
         kind: res.data.kind as HubCaptureKind,
         body: res.data.body,
         status: res.data.status as "open",
+        visibility: res.data.visibility as "private" | "shared",
         created_at: res.data.created_at,
         metadata: {},
       };
@@ -152,6 +156,29 @@ export function WorkTableCommandField({
         fontSize="sm"
         mb={3}
       />
+      {context.kind === "group" && (
+        <HStack mb={3} gap={2}>
+          <Text fontSize="xs" color={mutedColor} fontWeight="medium">Visibility:</Text>
+          <Box
+            as="button"
+            px={2}
+            py={1}
+            borderRadius="md"
+            fontSize="xs"
+            fontWeight="600"
+            bg={visibility === "private" ? "gray.100" : "blue.50"}
+            color={visibility === "private" ? "gray.600" : "blue.600"}
+            _dark={{ bg: visibility === "private" ? "gray.700" : "blue.900", color: visibility === "private" ? "gray.300" : "blue.300" }}
+            onClick={() => setVisibility(visibility === "private" ? "shared" : "private")}
+            title={visibility === "private" ? "Only you can see this — click to share with group" : "Shared with group — click to make private"}
+          >
+            {visibility === "private" ? "🔒 Private" : "👥 Shared"}
+          </Box>
+          {visibility === "shared" && (
+            <Text fontSize="xs" color={mutedColor}>Visible to all group members</Text>
+          )}
+        </HStack>
+      )}
       <HStack justify="space-between" align="center">
         <Text fontSize="xs" color={mutedColor}>{helpText}</Text>
         <HStack gap={2}>
