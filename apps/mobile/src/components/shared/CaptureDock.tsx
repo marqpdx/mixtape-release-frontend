@@ -236,15 +236,14 @@ export function CaptureDock({
           <Pressable
             style={[
               styles.sendButton,
-              (!captureText.trim() || isSubmittingText || isRecording) && styles.buttonDisabled,
+              (!captureText.trim() || isSubmittingText) && styles.buttonDisabled,
             ]}
-            focusable={false}
             onPressIn={() => {
               retainFocusRef.current = true;
               captureInputRef.current?.focus();
             }}
             onPress={() => void handleSubmitText()}
-            disabled={!captureText.trim() || isSubmittingText || isRecording}
+            disabled={!captureText.trim() || isSubmittingText}
           >
             {isSubmittingText
               ? <ActivityIndicator color="#FFFFFF" />
