@@ -1,29 +1,23 @@
 // apps/mixtape/src/app/(authenticated)/console/page.tsx
+//
+// WorkTable W1: stream-based console surface.
+// Stream replaces main column panel layout.
+// OrientationHeader collapses after first command field interaction.
+// Right sidebar (captures by kind + Stewardship) unchanged.
 
 "use client";
 
-// CS-D1: Console page — control surface with quick nav + two-column layout
-// CS-D2: Universal Action Field
-// CS-D3: Re-entry panel
-// CS-D4: Signals panel
-// CS-D5: Orientation panel
-// CS-D6: Stewardship panel (collapsed by default)
-// CS-D7: Right sidebar — Initiatives, Remind Me's, Let's Fix's, We Need More's
-
-import { Badge, Box, Button, Container, Grid, GridItem, Heading, HStack, Text, VStack } from "@chakra-ui/react";
-import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Box, Container, Grid, GridItem, Heading } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { ActiveContext, ConsoleActionField } from "@components/console/ConsoleActionField";
-import { ReentryPanel } from "@components/console/ReentryPanel";
-import { SignalsPanel } from "@components/console/SignalsPanel";
-import { OrientationPanel } from "@components/console/OrientationPanel";
 import { StewardshipPanel } from "@components/console/StewardshipPanel";
 import { ConsoleSidebar } from "@components/console/ConsoleSidebar";
-import { ListsPanel } from "@components/console/ListsPanel";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+import { OrientationHeader } from "@components/worktable/OrientationHeader";
+import { WorkTableStream } from "@components/worktable/WorkTableStream";
+import { WorkTableCommandField } from "@components/worktable/WorkTableCommandField";
+import type { WorkTableContext } from "@components/worktable/types";
+import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   const color = useColorModeValue("gray.700", "gray.300");
@@ -34,135 +28,59 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ContextBar({
-  context,
-  onClear,
-}: {
-  context: Extract<ActiveContext, { kind: "group" }>;
-  onClear: () => void;
-}) {
-  return (
-    <HStack
-      bg="purple.50"
-      _dark={{ bg: "purple.950" }}
-      border="1px solid"
-      borderColor="purple.200"
-      _dark-borderColor="purple.800"
-      borderRadius="md"
-      px={4}
-      py={2}
-      mb={4}
-      justify="space-between"
-    >
-      <HStack gap={2}>
-        <Badge colorPalette="purple" variant="subtle">context</Badge>
-        <Text fontSize="sm" fontWeight="medium" color="purple.700" _dark={{ color: "purple.300" }}>
-          {context.title}
-        </Text>
-      </HStack>
-      <Button size="xs" variant="ghost" colorPalette="purple" onClick={onClear}>
-        × personal
-      </Button>
-    </HStack>
-  );
-}
-
-function QuickNav({ username }: { username: string }) {
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-
-  return (
-    <HStack
-      gap={3}
-      pb={5}
-      mb={2}
-      borderBottom="1px solid"
-      borderColor={borderColor}
-      flexWrap="wrap"
-    >
-      <Text fontSize="xs" color={mutedColor} fontWeight="medium" textTransform="uppercase" letterSpacing="wide">
-        Go to
-      </Text>
-      <a href={`${SITE_URL}/members/${encodeURIComponent(username)}`} target="_blank" rel="noopener noreferrer">
-        <Button size="xs" variant="outline">Publishing</Button>
-      </a>
-      <Link href="/dashboard">
-        <Button size="xs" variant="outline">Dashboard</Button>
-      </Link>
-    </HStack>
-  );
-}
-
 export default function ConsolePage() {
-  const { user } = useAuth();
+  useAuth();
   const bgColor = useColorModeValue("gray.50", "gray.900");
-  const sectionBorder = useColorModeValue("gray.100", "gray.750");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
   const sidebarBg = useColorModeValue("white", "gray.850");
   const sidebarBorder = useColorModeValue("gray.200", "gray.700");
 
-  const [activeContext, setActiveContext] = useState<ActiveContext>({ kind: "personal" });
-  const groupCtx = activeContext.kind === "group" ? activeContext : null;
+  const [context, setContext] = useState<WorkTableContext>({ kind: "personal" });
+  const [orientationCollapsed, setOrientationCollapsed] = useState(false);
+  const appendRef = useRef<((entry: StreamEntry) => void) | null>(null);
+
+  const groupCtx = context.kind === "group" ? context : null;
+
+  const handleCapture = (entry: StreamEntry) => {
+    appendRef.current?.(entry);
+  };
+
+  const handleFirstInteraction = () => {
+    if (!orientationCollapsed) setOrientationCollapsed(true);
+  };
 
   return (
     <Box bg={bgColor} minH="100vh">
       <Container maxW="6xl" py={8}>
-        {user && <QuickNav username={user.username} />}
-
-        {groupCtx && (
-          <ContextBar context={groupCtx} onClear={() => setActiveContext({ kind: "personal" })} />
-        )}
-
         <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={8} alignItems="start">
-          {/* Main column */}
+
+          {/* Main column — stream */}
           <GridItem>
-            <VStack gap={8} align="stretch">
+            <OrientationHeader
+              collapsed={orientationCollapsed}
+              onToggle={() => setOrientationCollapsed((v) => !v)}
+            />
 
-              {/* Universal Action Field (CS-D2, CS-D12) */}
-              <Box>
-                <SectionHeading>Console</SectionHeading>
-                <Text fontSize="sm" color={mutedColor} mb={4}>
-                  Parse, review, and execute quick commands. Use /n Name to start a workstream. Use // GroupName to switch context.
-                </Text>
-                <ConsoleActionField
-                  activeContext={activeContext}
-                  onContextSwitch={setActiveContext}
-                />
-              </Box>
+            {/* Stream */}
+            <Box mb={4} minH="300px">
+              <WorkTableStream context={context} appendRef={appendRef} />
+            </Box>
 
-              {/* Re-entry (CS-D3) */}
-              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
-                <SectionHeading>Resume</SectionHeading>
-                <ReentryPanel />
-              </Box>
-
-              {/* Signals (CS-D4) */}
-              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
-                <SectionHeading>Signals</SectionHeading>
-                <SignalsPanel />
-              </Box>
-
-              {/* Orientation (CS-D5) */}
-              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
-                <SectionHeading>Working Context</SectionHeading>
-                <OrientationPanel />
-              </Box>
-
-              {/* Stewardship (CS-D6) */}
-              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
-                <StewardshipPanel />
-              </Box>
-
-              {/* Lists (CS-D10) */}
-              <Box borderTop="1px solid" borderColor={sectionBorder} pt={6}>
-                <SectionHeading>Lists</SectionHeading>
-                <ListsPanel groupId={groupCtx?.id} />
-              </Box>
-
-            </VStack>
+            {/* Command field — pinned at bottom of column */}
+            <Box
+              position="sticky"
+              bottom={4}
+              onClick={handleFirstInteraction}
+            >
+              <WorkTableCommandField
+                context={context}
+                onContextSwitch={setContext}
+                onContextReturn={() => setContext({ kind: "personal" })}
+                onCapture={handleCapture}
+              />
+            </Box>
           </GridItem>
 
-          {/* Right sidebar (CS-D7) */}
+          {/* Right sidebar — capture panels + stewardship (WT-D7) */}
           <GridItem
             position={{ base: "static", lg: "sticky" }}
             top={{ lg: "24px" }}
@@ -173,9 +91,20 @@ export default function ConsolePage() {
               borderColor={sidebarBorder}
               borderRadius="lg"
               p={4}
+              mb={4}
             >
               <SectionHeading>Activity</SectionHeading>
               <ConsoleSidebar groupSlug={groupCtx?.slug} />
+            </Box>
+            <Box
+              bg={sidebarBg}
+              border="1px solid"
+              borderColor={sidebarBorder}
+              borderRadius="lg"
+              p={4}
+            >
+              <SectionHeading>Stewardship</SectionHeading>
+              <StewardshipPanel />
             </Box>
           </GridItem>
         </Grid>
