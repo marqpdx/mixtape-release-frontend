@@ -22,6 +22,45 @@ export interface OpsTilesResponse {
   tiles: OpsSummaryTile[];
 }
 
+export interface OpsPostgresDetailSection {
+  status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
+  latency_ms?: number;
+  collected_at?: string | null;
+  expires_at?: string | null;
+  source?: string | null;
+  errors?: string[];
+  data?: {
+    connection_breakdown?: {
+      active?: number;
+      idle?: number;
+      idle_in_transaction?: number;
+      waiting?: number;
+    };
+    long_running_queries?: Array<{
+      pid: number;
+      duration_seconds: number;
+      query: string;
+      state: string;
+    }>;
+    db_size_bytes?: number | null;
+    top_tables?: Array<{
+      table_name: string;
+      total_bytes: number;
+      table_bytes: number;
+    }>;
+    cache_hit_ratio?: number | null;
+    dead_tuple_tables?: Array<{
+      table_name: string;
+      dead_tuples: number;
+      live_tuples: number;
+    }>;
+    replication?: Array<{
+      client_addr: string;
+      lag_seconds: number;
+    }>;
+  };
+}
+
 export interface OpsHealthSnapshotResponse {
   schema_version: string;
   generated_at: string;
@@ -31,6 +70,7 @@ export interface OpsHealthSnapshotResponse {
   network: Record<string, unknown>;
   services: Record<string, unknown>;
   application: Record<string, unknown>;
+  postgres_detail?: OpsPostgresDetailSection;
 }
 
 // Cache-busting parameter to bypass nginx/proxy caching

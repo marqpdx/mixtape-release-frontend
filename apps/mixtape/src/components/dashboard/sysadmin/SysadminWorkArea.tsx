@@ -18,6 +18,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { UserIdentity } from "@mixtape/core/types/auth";
+import type { OpsPostgresDetailSection } from "@mixtape/api/clients/ops/opsApi";
 import { useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
 
 interface SysadminWorkAreaProps extends WorkAreaProps {
@@ -81,12 +82,18 @@ function getStatusColor(status: string | undefined): string {
   if (status === "healthy" || status === "active" || status === "ok") return "green";
   if (status === "degraded" || status === "concerning" || status === "warn") return "orange";
   if (status === "critical" || status === "failed" || status === "inactive" || status === "crit") return "red";
+  if (status === "stale" || status === "unavailable") return "gray";
   return "gray";
 }
 
 // Status badge component
 function StatusBadge({ status }: { status: string | undefined }) {
   return <Badge colorScheme={getStatusColor(status)}>{status || "unknown"}</Badge>;
+}
+
+function formatPercent(value: number | undefined | null): string {
+  if (value === undefined || value === null) return "—";
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 // Emoji map for tiles
@@ -430,6 +437,17 @@ export default function SysadminWorkArea({
   if (section === "svc-postgres") {
     const postgres = services.postgres as ServiceState;
     const activeConns = applicationData.postgres_active_connections as number | undefined;
+    const postgresDetail = snapshot?.postgres_detail as OpsPostgresDetailSection | undefined;
+    const connectionBreakdown = postgresDetail?.data?.connection_breakdown;
+    const cacheHitRatio = postgresDetail?.data?.cache_hit_ratio;
+    const dbSizeBytes = postgresDetail?.data?.db_size_bytes;
+    const longRunningCount = postgresDetail?.data?.long_running_queries?.length ?? 0;
+    const postgresCollectedAt = postgresDetail?.collected_at
+      ? new Date(postgresDetail.collected_at).toLocaleString()
+      : null;
+    const postgresStatus = postgresDetail?.status || "unavailable";
+    const postgresErrors = postgresDetail?.errors || [];
+
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
@@ -438,16 +456,120 @@ export default function SysadminWorkArea({
             <StatusBadge status={postgres?.status} />
           </HStack>
           <ServiceCard name="postgresql" state={postgres} showOwnership />
-          {activeConns !== undefined && (
-            <Card.Root>
-              <Card.Body>
-                <HStack justify="space-between">
-                  <Text>Active Connections</Text>
-                  <Text fontWeight="bold">{activeConns}</Text>
+          <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(postgresStatus)}.500`}>
+            <Card.Header>
+              <HStack justify="space-between">
+                <Text fontWeight="semibold">Database Monitor</Text>
+                <StatusBadge status={postgresStatus} />
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={4}>
+                <HStack justify="space-between" align="start" wrap="wrap">
+                  <VStack align="start" gap={1}>
+                    <Text fontSize="sm" color="gray.500">
+                      {postgresCollectedAt ? `Collected ${postgresCollectedAt}` : "No snapshot collected yet"}
+                    </Text>
+                    {postgresDetail?.source && (
+                      <Text fontSize="xs" color="gray.500">
+                        Source: {postgresDetail.source}
+                      </Text>
+                    )}
+                  </VStack>
+                  <Button size="sm" variant="outline" onClick={handleRefresh} loading={isFetching}>
+                    Refresh
+                  </Button>
                 </HStack>
-              </Card.Body>
-            </Card.Root>
-          )}
+
+                <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} gap={4}>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Active Connections</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                      {connectionBreakdown?.active ?? activeConns ?? "—"}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Cache Hit Ratio</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                      {formatPercent(cacheHitRatio)}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Database Size</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                      {formatBytes(dbSizeBytes)}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Long-Running Queries</Text>
+                    <Text
+                      fontSize="2xl"
+                      fontWeight="bold"
+                      color={longRunningCount > 0 ? "orange.500" : undefined}
+                    >
+                      {longRunningCount}
+                    </Text>
+                  </VStack>
+                </SimpleGrid>
+
+                <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Idle</Text>
+                    <Text fontWeight="bold">{connectionBreakdown?.idle ?? "—"}</Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Idle in Transaction</Text>
+                    <Text
+                      fontWeight="bold"
+                      color={(connectionBreakdown?.idle_in_transaction ?? 0) > 0 ? "orange.500" : undefined}
+                    >
+                      {connectionBreakdown?.idle_in_transaction ?? "—"}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Waiting</Text>
+                    <Text
+                      fontWeight="bold"
+                      color={(connectionBreakdown?.waiting ?? 0) > 0 ? "orange.500" : undefined}
+                    >
+                      {connectionBreakdown?.waiting ?? "—"}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Replication</Text>
+                    <Text fontWeight="bold">
+                      {postgresDetail?.data?.replication?.length
+                        ? `${postgresDetail.data.replication.length} replica${postgresDetail.data.replication.length === 1 ? "" : "s"}`
+                        : "none"}
+                    </Text>
+                  </VStack>
+                </SimpleGrid>
+
+                {postgresStatus === "stale" && (
+                  <Text fontSize="sm" color="orange.500">
+                    Postgres snapshot is stale. The dashboard is showing the latest stored result, not a fresh collection.
+                  </Text>
+                )}
+                {postgresStatus === "unavailable" && (
+                  <Text fontSize="sm" color="gray.500">
+                    No stored Postgres snapshot is available yet.
+                  </Text>
+                )}
+                {postgresErrors.length > 0 && (
+                  <Box pt={2} borderTopWidth="1px">
+                    <Text fontSize="xs" color="gray.500" mb={1}>
+                      Snapshot notes
+                    </Text>
+                    {postgresErrors.map((errorText) => (
+                      <Text key={errorText} fontSize="xs" color="gray.500">
+                        • {errorText}
+                      </Text>
+                    ))}
+                  </Box>
+                )}
+              </VStack>
+            </Card.Body>
+          </Card.Root>
         </VStack>
       </WorkAreaWrapper>
     );
