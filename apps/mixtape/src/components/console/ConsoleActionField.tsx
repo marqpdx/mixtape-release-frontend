@@ -160,7 +160,6 @@ function ResultSummary({ command }: { command: AgentCommandResponse }) {
 }
 
 export function ConsoleActionField({
-  activeContext = { kind: "personal" },
   onContextSwitch,
 }: {
   activeContext?: ActiveContext;
@@ -282,7 +281,7 @@ export function ConsoleActionField({
       return "Review and edit before confirming.";
     }
     return "Review the parsed command and confirm.";
-  }, [command, supportedVerb, workstreamName, activeScope]);
+  }, [command, supportedVerb, workstreamName, activeScope, contextSwitchQuery, contextSwitchTarget]);
 
   const handleSubmit = async () => {
     const trimmed = input.trim();
