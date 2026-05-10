@@ -91,8 +91,8 @@ export function WorkTableCommandField({
       try {
         const res = await axiosInstance.post<{
           id: string; entry_type: string; body: string; created_at: string;
-        }>("/api/worktable/prose/", {
-          initiative_id: context.id,
+        }>(`/api/initiatives/${context.id}/aperture-log/entries`, {
+          kind: "prose",
           body: logBody,
         });
         const entry: StreamEntry = {
