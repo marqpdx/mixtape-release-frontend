@@ -10,7 +10,8 @@ import type { WorkTableContext } from "./types";
 
 const WORKSTREAM_RE = /^\/n\s+(.+)/i;
 const CONTEXT_SWITCH_RE = /^\/\/(.+)/;
-const CONTEXT_RETURN_RE = /^\/\.$/;
+const CONTEXT_RETURN_RE = /^\/\.(\s|$)/;
+const LOG_ENTRY_RE = /^\/log\s+([\s\S]+)/i;
 
 type HubCaptureKind = "fix" | "need_more" | "remind" | "note";
 
@@ -48,6 +49,7 @@ export function WorkTableCommandField({
   const workstreamMatch = WORKSTREAM_RE.exec(input.trim());
   const contextSwitchMatch = CONTEXT_SWITCH_RE.exec(input.trim());
   const isReturn = CONTEXT_RETURN_RE.test(input.trim());
+  const logMatch = LOG_ENTRY_RE.exec(input.trim());
   const workstreamName = workstreamMatch?.[1]?.trim() ?? null;
   const contextQuery = contextSwitchMatch?.[1]?.trim().toLowerCase() ?? null;
 
@@ -74,6 +76,41 @@ export function WorkTableCommandField({
     if (contextTarget) {
       onContextSwitch({ kind: "group", id: contextTarget.id, slug: contextTarget.slug, title: contextTarget.title });
       setInput("");
+      return;
+    }
+
+    // /log prose entry — WT-D11
+    if (logMatch) {
+      const logBody = logMatch[1].trim();
+      if (!logBody) return;
+      if (context.kind !== "initiative") {
+        setError("/log entries require an initiative context. Use // InitiativeName to switch.");
+        return;
+      }
+      setSubmitting(true);
+      try {
+        const res = await axiosInstance.post<{
+          id: string; entry_type: string; body: string; created_at: string;
+        }>("/api/worktable/prose/", {
+          initiative_id: context.id,
+          body: logBody,
+        });
+        const entry: StreamEntry = {
+          id: res.data.id,
+          entry_type: "prose",
+          body: res.data.body,
+          created_at: res.data.created_at,
+          metadata: {},
+        };
+        onCapture(entry);
+        setLastCapture({ kind: "log", body: logBody });
+        setInput("");
+        setTimeout(() => setLastCapture(null), 3000);
+      } catch {
+        setError("Failed to save log entry. Try again.");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -133,6 +170,7 @@ export function WorkTableCommandField({
   let buttonDisabled = !input.trim() || submitting;
 
   if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
+  else if (logMatch) { buttonLabel = "Log Entry"; buttonColor = "orange"; }
   else if (contextTarget) { buttonLabel = `Switch to ${contextTarget.title}`; buttonColor = "purple"; }
   else if (contextQuery && !contextTarget) { buttonDisabled = true; }
   else if (workstreamName) { buttonLabel = "New Workstream"; buttonColor = "teal"; }
@@ -140,8 +178,9 @@ export function WorkTableCommandField({
   const helpText = contextQuery
     ? contextTarget ? `Press to switch to ${contextTarget.title}` : `No group matching "${contextQuery}"`
     : isReturn ? "Return to personal context"
+    : logMatch ? "Write a prose log entry into the initiative's ApertureLog"
     : workstreamName ? "Create workstream (use Console action field below)"
-    : 'Type to capture. ⌘↩ to send. // GroupName to switch context. /. to return.';
+    : 'Type to capture. /log ... for prose entries. // GroupName to switch. /. to return.';
 
   return (
     <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={4}>

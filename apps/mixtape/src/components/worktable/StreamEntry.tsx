@@ -82,6 +82,32 @@ export function StreamEntry({ entry }: { entry: StreamEntryData }) {
     );
   }
 
-  // prose / ledger / agentic_return — W2/W4 placeholders
+  // WT-D9: Prose entry — full-width, readable, author + timestamp in margin
+  if (entry.entry_type === "prose") {
+    return (
+      <Box borderLeft="3px solid" borderColor={borderColor} pl={4} py={2}>
+        <Text fontSize="sm" lineHeight="tall" color={useColorModeValue("gray.800", "gray.200")} whiteSpace="pre-wrap">
+          {entry.body}
+        </Text>
+        <Text fontSize="xs" color={mutedColor} mt={1}>{formatTime(entry.created_at)}</Text>
+      </Box>
+    );
+  }
+
+  // WT-D10: Ledger entry — muted, small, system icon, not actionable
+  if (entry.entry_type === "ledger") {
+    const eventType = (entry.metadata as Record<string, string>)?.ledger_event_type ?? "";
+    return (
+      <HStack gap={2} px={2} py={1} opacity={0.6}>
+        <Text fontSize="xs">⟐</Text>
+        <Text fontSize="xs" color={mutedColor} fontStyle="italic">
+          {entry.body || eventType.replace(/_/g, " ")}
+        </Text>
+        <Text fontSize="xs" color={mutedColor}>· {formatTime(entry.created_at)}</Text>
+      </HStack>
+    );
+  }
+
+  // agentic_return — W4 placeholder
   return null;
 }
