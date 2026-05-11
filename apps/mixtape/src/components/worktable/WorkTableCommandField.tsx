@@ -6,12 +6,26 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useOrientation } from "@mixtape/api/hooks/console/useConsole";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
+import type { ApertureLogEntry, ApertureLogEntryKind } from "@mixtape/api/clients/initiatives/initiativesApi";
 import type { WorkTableContext } from "./types";
 import { parseNeedMoreItems, parseRemindAt, formatRemindPreview } from "./parseCapture";
 
 const CONTEXT_SWITCH_RE = /^\/\/(.+)/;
 const CONTEXT_RETURN_RE = /^\/\.(\s|$)/;
 const LOG_ENTRY_RE = /^\/log\s+([\s\S]+)/i;
+const HANDOFF_RE = /^\/handoff\s+([\s\S]+)/i;
+const EMPH_RE = /^\/emph\s+([\s\S]+)/i;
+
+function parseApertureKind(text: string): { kind: Exclude<ApertureLogEntryKind, "ledger" | "seed_spawn">; body: string; emph_note: string } {
+  const handoffMatch = HANDOFF_RE.exec(text);
+  if (handoffMatch) return { kind: "handoff", body: handoffMatch[1].trim(), emph_note: "" };
+  const emphMatch = EMPH_RE.exec(text);
+  if (emphMatch) {
+    const note = emphMatch[1].trim();
+    return { kind: "emph", body: "", emph_note: note.startsWith('"') && note.endsWith('"') ? note.slice(1, -1) : note };
+  }
+  return { kind: "prose", body: text, emph_note: "" };
+}
 
 type HubCaptureKind = "fix" | "need_more" | "remind" | "note";
 
@@ -28,11 +42,13 @@ export function WorkTableCommandField({
   onContextSwitch,
   onContextReturn,
   onCapture,
+  onApertureCapture,
 }: {
   context: WorkTableContext;
   onContextSwitch: (ctx: WorkTableContext) => void;
   onContextReturn: () => void;
   onCapture: (entry: StreamEntry) => void;
+  onApertureCapture?: (entry: ApertureLogEntry) => void;
 }) {
   const [input, setInput] = useState("");
   const [visibility, setVisibility] = useState<"private" | "shared">("private");
@@ -93,28 +109,39 @@ export function WorkTableCommandField({
       return;
     }
 
-    // /log prose entry
+    // Initiative context — all entries go to the Aperture log
+    if (context.kind === "initiative") {
+      setSubmitting(true);
+      try {
+        const { kind, body, emph_note } = parseApertureKind(trimmed);
+        const res = await axiosInstance.post<ApertureLogEntry>(
+          `/api/initiatives/${context.id}/aperture-log/entries`,
+          { kind, body, emph_note }
+        );
+        onApertureCapture?.(res.data);
+        setLastCapture({ kind, body: body || emph_note });
+        setInput("");
+        setTimeout(() => setLastCapture(null), 3000);
+      } catch {
+        setError("Failed to save entry. Try again.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // /log prose entry (personal / group contexts)
     if (logMatch) {
       const logBody = logMatch[1].trim();
       if (!logBody) return;
       setSubmitting(true);
       try {
-        let res;
-        if (context.kind === "initiative") {
-          res = await axiosInstance.post<{
-            id: string; entry_type: string; body: string; created_at: string;
-          }>(`/api/initiatives/${context.id}/aperture-log/entries`, {
-            kind: "prose",
-            body: logBody,
-          });
-        } else {
-          res = await axiosInstance.post<{
-            id: string; entry_type: string; body: string; created_at: string;
-          }>("/api/worktable/prose/", {
-            body: logBody,
-            ...(context.kind === "group" ? { group_slug: context.slug } : {}),
-          });
-        }
+        const res = await axiosInstance.post<{
+          id: string; entry_type: string; body: string; created_at: string;
+        }>("/api/worktable/prose/", {
+          body: logBody,
+          ...(context.kind === "group" ? { group_slug: context.slug } : {}),
+        });
         const entry: StreamEntry = {
           id: res.data.id,
           entry_type: "prose",
@@ -200,7 +227,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, context, onCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
+  }, [trimmed, submitting, contextTarget, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -221,9 +248,11 @@ export function WorkTableCommandField({
   else if (isNeedMore && needItems.length > 1) { buttonLabel = `Save ${needItems.length} items`; }
 
   // Help text
+  const isInitiative = context.kind === "initiative";
   const helpText = contextQuery
     ? contextTarget ? `Switch to ${contextTarget.title}` : `No group matching "${contextQuery}"`
     : isReturn ? "Return to personal context"
+    : isInitiative ? '/handoff · /emph "note" · prose to log'
     : logMatch ? "Write a prose log entry"
     : isRemind ? "Use 'on Tuesday', 'tomorrow', or 'next week' to set a date"
     : isNeedMore ? "Items split on commas, 'and', or new lines"
@@ -236,7 +265,7 @@ export function WorkTableCommandField({
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type to capture — or // GroupName to switch context…"
+        placeholder={isInitiative ? 'Write a log entry — /handoff · /emph "note"' : "Type to capture — or // GroupName to switch context…"}
         minH="80px"
         resize="vertical"
         fontSize="sm"

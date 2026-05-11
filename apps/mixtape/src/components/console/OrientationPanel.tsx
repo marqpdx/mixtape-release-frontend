@@ -59,7 +59,7 @@ export function OrientationPanel() {
           </Text>
           <VStack gap={1} align="stretch">
             {initiatives.map((ini) => (
-              <Link key={ini.id} href={`/aperture`}>
+              <Link key={ini.id} href="/console">
                 <HStack
                   bg={cardBg}
                   border="1px solid"

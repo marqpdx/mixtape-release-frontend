@@ -6,7 +6,9 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { useWorktableStream } from "@mixtape/api/hooks/worktable/useWorktable";
 import { archiveStreamEntry, deleteStreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
+import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { StreamBundle, groupIntoBundles } from "./StreamBundle";
+import { ApertureLogStream } from "./ApertureLogStream";
 import type { WorkTableContext } from "./types";
 
 export type { StreamEntry };
@@ -37,20 +39,21 @@ function saveDismissed(scope: string, ids: Set<string>) {
 export function WorkTableStream({
   context,
   appendRef,
+  apertureAppendRef,
 }: {
   context: WorkTableContext;
   appendRef?: React.MutableRefObject<((entry: StreamEntry) => void) | null>;
+  apertureAppendRef?: React.MutableRefObject<((entry: ApertureLogEntry) => void) | null>;
 }) {
+  if (context.kind === "initiative") {
+    return <ApertureLogStream initiativeId={context.id} appendRef={apertureAppendRef} />;
+  }
+
   const params = contextToParams(context);
   const { entries, isLoading, hasMore, isLoadingMore, loadMore, appendEntry } =
     useWorktableStream(params);
 
-  const scopeKey =
-    context.kind === "group"
-      ? `group-${context.slug}`
-      : context.kind === "initiative"
-      ? `initiative-${context.id}`
-      : "personal";
+  const scopeKey = context.kind === "group" ? `group-${context.slug}` : "personal";
 
   const [sortDesc, setSortDesc] = useState(true);
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed(scopeKey));

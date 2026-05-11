@@ -20,6 +20,7 @@ import { ContextSwitcher } from "@components/worktable/ContextSwitcher";
 import { ContextSummary } from "@components/worktable/ContextSummary";
 import type { WorkTableContext } from "@components/worktable/types";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
+import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   const color = useColorModeValue("gray.700", "gray.300");
@@ -40,11 +41,16 @@ export default function ConsolePage() {
   const [context, setContext] = useState<WorkTableContext>({ kind: "personal" });
   const [orientationCollapsed, setOrientationCollapsed] = useState(true);
   const appendRef = useRef<((entry: StreamEntry) => void) | null>(null);
+  const appendApertureRef = useRef<((entry: ApertureLogEntry) => void) | null>(null);
 
   const groupCtx = context.kind === "group" ? context : null;
 
   const handleCapture = (entry: StreamEntry) => {
     appendRef.current?.(entry);
+  };
+
+  const handleApertureCapture = (entry: ApertureLogEntry) => {
+    appendApertureRef.current?.(entry);
   };
 
   return (
@@ -68,13 +74,14 @@ export default function ConsolePage() {
                 onContextSwitch={setContext}
                 onContextReturn={() => setContext({ kind: "personal" })}
                 onCapture={handleCapture}
+                onApertureCapture={handleApertureCapture}
               />
             </Box>
 
             {/* 3 — Pending summary + activity stream */}
             <ContextSummary context={context} />
             <Box mb={4} minH="300px">
-              <WorkTableStream context={context} appendRef={appendRef} />
+              <WorkTableStream context={context} appendRef={appendRef} apertureAppendRef={appendApertureRef} />
             </Box>
 
             {/* 4 — Orientation (collapsed by default) */}
