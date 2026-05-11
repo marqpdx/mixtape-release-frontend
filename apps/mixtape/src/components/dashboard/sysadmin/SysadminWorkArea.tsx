@@ -59,6 +59,14 @@ interface ProcessInfo {
   elapsed_seconds: number;
 }
 
+interface QuickListItem {
+  key: string;
+  label: string;
+  status: string;
+  detail: string;
+  hint?: string;
+}
+
 // Helper to format bytes
 function formatBytes(bytes: number | undefined | null): string {
   if (bytes === undefined || bytes === null) return "—";
@@ -89,6 +97,50 @@ function getStatusColor(status: string | undefined): string {
 // Status badge component
 function StatusBadge({ status }: { status: string | undefined }) {
   return <Badge colorScheme={getStatusColor(status)}>{status || "unknown"}</Badge>;
+}
+
+function QuickListPanel({ items }: { items: QuickListItem[] }) {
+  return (
+    <Card.Root position={{ base: "static", xl: "sticky" }} top="6">
+      <Card.Header>
+        <VStack align="stretch" gap={1}>
+          <Text fontSize="lg" fontWeight="semibold">QuickList</Text>
+          <Text fontSize="sm" color="gray.500">
+            Scan current service state before drilling into cards and work areas.
+          </Text>
+        </VStack>
+      </Card.Header>
+      <Card.Body>
+        <VStack align="stretch" gap={3}>
+          {items.map((item) => (
+            <HStack key={item.key} align="start" gap={3}>
+              <Box
+                mt="1.5"
+                boxSize="10px"
+                borderRadius="full"
+                bg={`${getStatusColor(item.status)}.500`}
+                flexShrink={0}
+              />
+              <VStack align="stretch" gap={0.5} flex="1">
+                <HStack justify="space-between" align="start" gap={2}>
+                  <Text fontSize="sm" fontWeight="semibold">
+                    {item.label}
+                  </Text>
+                  <StatusBadge status={item.status} />
+                </HStack>
+                <Text fontSize="sm">{item.detail}</Text>
+                {item.hint && (
+                  <Text fontSize="xs" color="gray.500">
+                    {item.hint}
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
+          ))}
+        </VStack>
+      </Card.Body>
+    </Card.Root>
+  );
 }
 
 function formatPercent(value: number | undefined | null): string {
@@ -313,6 +365,18 @@ export default function SysadminWorkArea({
     return app?.data || {};
   }, [snapshot]);
 
+  const applicationSection = useMemo(() => {
+    return (snapshot?.application || {}) as Record<string, unknown>;
+  }, [snapshot]);
+
+  const applicationSnapshotMeta = useMemo(() => {
+    return snapshot?.application as { collected_at?: string | null; expires_at?: string | null; source?: string | null } | undefined;
+  }, [snapshot]);
+
+  const postgresDetail = useMemo(() => {
+    return snapshot?.postgres_detail as OpsPostgresDetailSection | undefined;
+  }, [snapshot]);
+
   const backupsSummary = useMemo(() => {
     const backups = services.backups as ServiceUnits & { summary?: BackupsSummary } | undefined;
     return backups?.summary;
@@ -322,6 +386,138 @@ export default function SysadminWorkArea({
     if (!summary?.timestamp) return null;
     return new Date(summary.timestamp).toLocaleString();
   }, [summary?.timestamp]);
+
+  const overviewTiles = useMemo(() => {
+    if (!summary) return [];
+    const tiles = [...summary.tiles];
+    const postgresStatus = postgresDetail?.status || "unavailable";
+    const active = postgresDetail?.data?.connection_breakdown?.active;
+    const dbSize = postgresDetail?.data?.db_size_bytes;
+    const cacheHit = postgresDetail?.data?.cache_hit_ratio;
+    const detail =
+      active !== undefined || dbSize !== undefined
+        ? `${active ?? "—"} active • ${formatBytes(dbSize)}`
+        : "Waiting for async database snapshot";
+    const hint = postgresDetail?.collected_at
+      ? `Cache hit ${formatPercent(cacheHit)} • Collected ${new Date(postgresDetail.collected_at).toLocaleString()}`
+      : "Postgres detail is populated by the async polling worker.";
+
+    tiles.push({
+      title: "Database",
+      status: postgresStatus,
+      detail,
+      hint,
+    });
+    return tiles;
+  }, [postgresDetail, summary]);
+
+  const quickListItems = useMemo(() => {
+    const items: QuickListItem[] = [];
+    const pushItem = (item: QuickListItem | null) => {
+      if (item) items.push(item);
+    };
+
+    const sectionStatus = (sectionValue: unknown) =>
+      ((sectionValue as { status?: string } | undefined)?.status || "unknown");
+
+    pushItem({
+      key: "system",
+      label: "System",
+      status: sectionStatus(snapshot?.system),
+      detail: `${systemData.cpu_cores || "—"} cores • load ${(systemData.load_average as { ["1m"]?: number } | undefined)?.["1m"]?.toFixed?.(1) ?? "—"}`,
+      hint: `Swap used ${formatBytes((systemData.swap_bytes as { used?: number } | undefined)?.used)}`,
+    });
+
+    pushItem({
+      key: "disk",
+      label: "Disk",
+      status: sectionStatus(snapshot?.disk),
+      detail: `${((diskData.root as { free_percent?: number } | undefined)?.free_percent ?? 0).toFixed(1)}% free`,
+      hint: `${formatBytes((diskData.root as { free?: number } | undefined)?.free)} available on root`,
+    });
+
+    pushItem({
+      key: "application",
+      label: "Application",
+      status: sectionStatus(applicationSection),
+      detail: `RabbitMQ ${applicationData.rabbitmq_connection_count ?? "—"} • Celery depth ${applicationData.celery_queue_depth ?? "—"}`,
+      hint: typeof applicationSnapshotMeta?.collected_at === "string"
+        ? `Collected ${new Date(applicationSnapshotMeta.collected_at).toLocaleString()}`
+        : "Async application snapshot pending",
+    });
+
+    pushItem({
+      key: "postgres",
+      label: "PostgreSQL",
+      status: postgresDetail?.status || ((services.postgres as ServiceState | undefined)?.status || "unavailable"),
+      detail: `${postgresDetail?.data?.connection_breakdown?.active ?? applicationData.postgres_active_connections ?? "—"} active • ${formatBytes(postgresDetail?.data?.db_size_bytes)}`,
+      hint: `Cache hit ${formatPercent(postgresDetail?.data?.cache_hit_ratio)} • ${postgresDetail?.data?.replication?.length ? `${postgresDetail.data.replication.length} replica(s)` : "no replication"}`,
+    });
+
+    Object.entries(services).forEach(([key, value]) => {
+      if (key === "postgres") return;
+
+      if ((value as ServiceUnits).units) {
+        const unitMap = (value as ServiceUnits).units || {};
+        const unitStates = Object.values(unitMap);
+        const healthyUnits = unitStates.filter((unit) => {
+          const status = unit?.status || unit?.active_state;
+          return status === "healthy" || status === "active";
+        }).length;
+        const overallStatus =
+          key === "backups"
+            ? backupsSummary?.status || "unknown"
+            : unitStates.some((unit) => (unit?.status || unit?.active_state) === "critical")
+              ? "critical"
+              : unitStates.some((unit) => {
+                  const status = unit?.status || unit?.active_state;
+                  return status === "degraded" || status === "inactive" || status === "failed";
+                })
+                ? "degraded"
+                : "healthy";
+        pushItem({
+          key,
+          label: key === "seaweedfs" ? "SeaweedFS" : key.charAt(0).toUpperCase() + key.slice(1),
+          status: overallStatus,
+          detail:
+            key === "backups"
+              ? `${backupsSummary?.issues?.length || 0} backup issue(s)`
+              : `${healthyUnits}/${unitStates.length} units healthy`,
+          hint:
+            key === "backups"
+              ? backupsSummary?.issues?.[0] || "Timers and backup services look healthy."
+              : `${unitStates.length} systemd units tracked`,
+        });
+        return;
+      }
+
+      const serviceState = value as ServiceState;
+      pushItem({
+        key,
+        label: key === "inkwell" ? "Inkwell" : key.charAt(0).toUpperCase() + key.slice(1),
+        status: serviceState.status || serviceState.active_state || "unknown",
+        detail: `${serviceState.active_state || "unknown"} / ${serviceState.sub_state || "unknown"}`,
+        hint:
+          serviceState.pressure && serviceState.pressure !== "expected"
+            ? `Pressure: ${serviceState.pressure}`
+            : serviceState.uptime_seconds
+              ? `Uptime ${formatUptime(serviceState.uptime_seconds)}`
+              : undefined,
+      });
+    });
+
+    return items;
+  }, [
+    applicationData,
+    applicationSection,
+    applicationSnapshotMeta,
+    backupsSummary,
+    diskData,
+    postgresDetail,
+    services,
+    snapshot,
+    systemData,
+  ]);
 
   // Access check
   if (!isSuperuser) {
@@ -341,92 +537,100 @@ export default function SysadminWorkArea({
   if (section === "system-overview") {
     return (
       <WorkAreaWrapper>
-        <VStack align="stretch" gap={6}>
-          <HStack justify="space-between">
-            <Text fontSize="2xl" fontWeight="bold">System Overview</Text>
-            {summary?.overall_status && (
-              <Badge
-                colorScheme={
-                  summary.overall_status === "healthy" ? "green" :
-                  summary.overall_status === "degraded" ? "orange" : "red"
-                }
-                fontSize="md"
-                px={3}
-                py={1}
-              >
-                {summary.overall_status}
-              </Badge>
+        <Box
+          display="grid"
+          gridTemplateColumns={{ base: "1fr", xl: "minmax(0, 3fr) minmax(280px, 1fr)" }}
+          gap={6}
+          alignItems="start"
+        >
+          <VStack align="stretch" gap={6}>
+            <HStack justify="space-between">
+              <Text fontSize="2xl" fontWeight="bold">System Overview</Text>
+              {summary?.overall_status && (
+                <Badge
+                  colorScheme={
+                    summary.overall_status === "healthy" ? "green" :
+                    summary.overall_status === "degraded" ? "orange" : "red"
+                  }
+                  fontSize="md"
+                  px={3}
+                  py={1}
+                >
+                  {summary.overall_status}
+                </Badge>
+              )}
+            </HStack>
+
+            <HStack justify="space-between">
+              <Text fontSize="sm" color="gray.500">
+                {lastUpdated ? `Last updated ${lastUpdated}` : "Loading..."}
+              </Text>
+              <Button size="sm" onClick={handleRefresh} loading={isFetching}>
+                Refresh
+              </Button>
+            </HStack>
+
+            {isLoading && <Text>Loading system summary...</Text>}
+            {error && <Text color="red.500">Unable to load summary.</Text>}
+
+            {summary && (
+              <>
+                <Card.Root>
+                  <Card.Header>
+                    <Text fontSize="lg" fontWeight="semibold">{summary.headline}</Text>
+                  </Card.Header>
+                  <Card.Body>
+                    <VStack align="stretch" gap={2}>
+                      {summary.highlights.map((item, idx) => {
+                        const isWarning = item.toLowerCase().includes("attention") ||
+                          item.toLowerCase().includes("elevated") ||
+                          item.toLowerCase().includes("building up");
+                        const isOk = item.toLowerCase().includes("no urgent") ||
+                          item.toLowerCase().includes("healthy");
+                        const bulletColor = isWarning ? "orange.500" : isOk ? "green.500" : "gray.600";
+                        const bullet = isWarning ? "⚠️" : isOk ? "✅" : "•";
+                        return (
+                          <Text key={idx} color={bulletColor}>
+                            {bullet} {item}
+                          </Text>
+                        );
+                      })}
+                    </VStack>
+                  </Card.Body>
+                </Card.Root>
+
+                <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
+                  {overviewTiles.map((tile) => (
+                    <Card.Root
+                      key={tile.title}
+                      borderLeftWidth="4px"
+                      borderLeftColor={`${getStatusColor(tile.status)}.500`}
+                    >
+                      <Card.Header>
+                        <HStack justify="space-between">
+                          <Text fontSize="md" fontWeight="semibold">
+                            {getTileEmoji(tile.title)} {tile.title}
+                          </Text>
+                          <StatusBadge status={tile.status} />
+                        </HStack>
+                      </Card.Header>
+                      <Card.Body>
+                        <VStack align="stretch" gap={2}>
+                          <Text>{tile.detail}</Text>
+                          {tile.hint && (
+                            <Text fontSize="sm" color="gray.500">{tile.hint}</Text>
+                          )}
+                        </VStack>
+                      </Card.Body>
+                    </Card.Root>
+                  ))}
+                </SimpleGrid>
+              </>
             )}
-          </HStack>
+          </VStack>
 
-          <HStack justify="space-between">
-            <Text fontSize="sm" color="gray.500">
-              {lastUpdated ? `Last updated ${lastUpdated}` : "Loading..."}
-            </Text>
-            <Button size="sm" onClick={handleRefresh} loading={isFetching}>
-              Refresh
-            </Button>
-          </HStack>
-
-          {isLoading && <Text>Loading system summary...</Text>}
-          {error && <Text color="red.500">Unable to load summary.</Text>}
-
-          {summary && (
-            <>
-              <Card.Root>
-                <Card.Header>
-                  <Text fontSize="lg" fontWeight="semibold">{summary.headline}</Text>
-                </Card.Header>
-                <Card.Body>
-                  <VStack align="stretch" gap={2}>
-                    {summary.highlights.map((item, idx) => {
-                      // Color bullets based on content
-                      const isWarning = item.toLowerCase().includes("attention") ||
-                        item.toLowerCase().includes("elevated") ||
-                        item.toLowerCase().includes("building up");
-                      const isOk = item.toLowerCase().includes("no urgent") ||
-                        item.toLowerCase().includes("healthy");
-                      const bulletColor = isWarning ? "orange.500" : isOk ? "green.500" : "gray.600";
-                      const bullet = isWarning ? "⚠️" : isOk ? "✅" : "•";
-                      return (
-                        <Text key={idx} color={bulletColor}>
-                          {bullet} {item}
-                        </Text>
-                      );
-                    })}
-                  </VStack>
-                </Card.Body>
-              </Card.Root>
-
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
-                {summary.tiles.map((tile) => (
-                  <Card.Root
-                    key={tile.title}
-                    borderLeftWidth="4px"
-                    borderLeftColor={`${getStatusColor(tile.status)}.500`}
-                  >
-                    <Card.Header>
-                      <HStack justify="space-between">
-                        <Text fontSize="md" fontWeight="semibold">
-                          {getTileEmoji(tile.title)} {tile.title}
-                        </Text>
-                        <StatusBadge status={tile.status} />
-                      </HStack>
-                    </Card.Header>
-                    <Card.Body>
-                      <VStack align="stretch" gap={2}>
-                        <Text>{tile.detail}</Text>
-                        {tile.hint && (
-                          <Text fontSize="sm" color="gray.500">{tile.hint}</Text>
-                        )}
-                      </VStack>
-                    </Card.Body>
-                  </Card.Root>
-                ))}
-              </SimpleGrid>
-            </>
-          )}
-        </VStack>
+          <QuickListPanel items={quickListItems} />
+        </Box>
       </WorkAreaWrapper>
     );
   }
@@ -437,7 +641,6 @@ export default function SysadminWorkArea({
   if (section === "svc-postgres") {
     const postgres = services.postgres as ServiceState;
     const activeConns = applicationData.postgres_active_connections as number | undefined;
-    const postgresDetail = snapshot?.postgres_detail as OpsPostgresDetailSection | undefined;
     const connectionBreakdown = postgresDetail?.data?.connection_breakdown;
     const cacheHitRatio = postgresDetail?.data?.cache_hit_ratio;
     const dbSizeBytes = postgresDetail?.data?.db_size_bytes;
