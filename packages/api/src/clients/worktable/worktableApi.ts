@@ -8,6 +8,7 @@ export interface StreamEntry {
   status?: "open" | "resolved" | "promoted";
   visibility?: "private" | "shared";
   created_at: string;
+  archived_at?: string | null;
   metadata: Record<string, unknown>;
 }
 
@@ -18,6 +19,14 @@ export interface StreamResponse {
 }
 
 export type StreamScope = "personal" | "group" | "initiative";
+
+export async function archiveStreamEntry(entryId: string): Promise<void> {
+  await axiosInstance.post(`/api/worktable/entries/${entryId}/archive/`);
+}
+
+export async function deleteStreamEntry(entryId: string): Promise<void> {
+  await axiosInstance.delete(`/api/worktable/entries/${entryId}/`);
+}
 
 export async function fetchWorktableStream(params: {
   scope: StreamScope;

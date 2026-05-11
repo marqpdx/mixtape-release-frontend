@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Box, Spinner, Text, VStack } from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { Box, HStack, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useWorktableStream } from "@mixtape/api/hooks/worktable/useWorktable";
+import { archiveStreamEntry, deleteStreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import { StreamBundle, groupIntoBundles } from "./StreamBundle";
 import type { WorkTableContext } from "./types";
@@ -16,6 +17,23 @@ function contextToParams(ctx: WorkTableContext) {
   return { scope: "initiative" as const, initiative_id: ctx.id };
 }
 
+const DISMISSED_KEY = (scope: string) => `mixtape.web.stream.dismissed.${scope}`;
+
+function loadDismissed(scope: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY(scope));
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissed(scope: string, ids: Set<string>) {
+  try {
+    localStorage.setItem(DISMISSED_KEY(scope), JSON.stringify([...ids]));
+  } catch {}
+}
+
 export function WorkTableStream({
   context,
   appendRef,
@@ -26,20 +44,57 @@ export function WorkTableStream({
   const params = contextToParams(context);
   const { entries, isLoading, hasMore, isLoadingMore, loadMore, appendEntry } =
     useWorktableStream(params);
+
+  const scopeKey =
+    context.kind === "group"
+      ? `group-${context.slug}`
+      : context.kind === "initiative"
+      ? `initiative-${context.id}`
+      : "personal";
+
+  const [sortDesc, setSortDesc] = useState(true);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed(scopeKey));
+
+  // Reload dismissed set when scope changes
+  useEffect(() => {
+    setDismissed(loadDismissed(scopeKey));
+  }, [scopeKey]);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const mutedColor = useColorModeValue("gray.500", "gray.400");
 
-  // Expose appendEntry to parent (for optimistic updates from command field)
   useEffect(() => {
     if (appendRef) appendRef.current = appendEntry;
   }, [appendEntry, appendRef]);
 
-  // Scroll to bottom when new entries arrive
+  // Only scroll to bottom when sorted asc (oldest-first) and new entry arrives
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [entries.length]);
+    if (!sortDesc) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [entries.length, sortDesc]);
 
-  const bundles = groupIntoBundles(entries);
+  const handleArchive = (id: string) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveDismissed(scopeKey, next);
+      return next;
+    });
+    void archiveStreamEntry(id);
+  };
+
+  const handleDelete = (id: string) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveDismissed(scopeKey, next);
+      return next;
+    });
+    void deleteStreamEntry(id);
+  };
+
+  const visible = entries.filter((e) => !dismissed.has(e.id));
+  const sorted = sortDesc ? [...visible].reverse() : visible;
+  const bundles = groupIntoBundles(sorted);
 
   if (isLoading) {
     return (
@@ -51,7 +106,21 @@ export function WorkTableStream({
 
   return (
     <VStack gap={3} align="stretch">
-      {hasMore && (
+      {/* Sort control */}
+      <HStack justify="flex-end">
+        <Box
+          as="button"
+          fontSize="xs"
+          color={mutedColor}
+          onClick={() => setSortDesc((v) => !v)}
+          _hover={{ opacity: 0.7 }}
+        >
+          {sortDesc ? "newest first ↓" : "oldest first ↑"}
+        </Box>
+      </HStack>
+
+      {/* Load more (shown at top when sorted desc) */}
+      {sortDesc && hasMore && (
         <Box textAlign="center">
           <Box
             as="button"
@@ -68,13 +137,28 @@ export function WorkTableStream({
       {bundles.length === 0 ? (
         <Box textAlign="center" py={12}>
           <Text fontSize="sm" color={mutedColor}>
-            No activity yet. Use the command field below to capture something.
+            No activity yet. Use the field above to capture something.
           </Text>
         </Box>
       ) : (
         bundles.map((bundle) => (
-          <StreamBundle key={bundle.key} bundle={bundle} />
+          <StreamBundle key={bundle.key} bundle={bundle} onArchive={handleArchive} onDelete={handleDelete} />
         ))
+      )}
+
+      {/* Load more at bottom when sorted asc */}
+      {!sortDesc && hasMore && (
+        <Box textAlign="center">
+          <Box
+            as="button"
+            fontSize="xs"
+            color={mutedColor}
+            onClick={loadMore}
+            _hover={{ opacity: 0.7 }}
+          >
+            {isLoadingMore ? "Loading…" : "Load earlier"}
+          </Box>
+        </Box>
       )}
 
       <div ref={bottomRef} />

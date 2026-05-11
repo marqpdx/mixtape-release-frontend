@@ -97,6 +97,12 @@ const OPS: OpConfig[] = [
 // We distinguish Draft vs Note by index since both use kind='note'
 const DRAFT_INDEX = 3;
 
+// Contextual hints shown in the context bar for ops that need input guidance
+const OP_HINTS_BY_INDEX: Record<number, string> = {
+  0: "Say 'on Tuesday', 'tomorrow', or 'next week'",
+  1: "Use commas, 'and', or new lines to list items",
+};
+
 // ---------------------------------------------------------------------------
 // Persistence keys
 // ---------------------------------------------------------------------------
@@ -383,11 +389,18 @@ export default function OpsScreen() {
         {/* Context bar with emblem */}
         <Animated.View style={[styles.contextBar, { opacity: emblemOpacity }]}>
           <GroupEmblem group={activeGroup.slug === '__personal__' ? null : activeGroup as Group} />
-          <View>
-            <Text style={styles.contextGroupName}>{activeGroup.title}</Text>
-            <Text style={[styles.contextOpLabel, { color: activeOp.color }]}>
-              {activeOp.buttonText}
-            </Text>
+          <View style={styles.contextBarContent}>
+            <View>
+              <Text style={styles.contextGroupName}>{activeGroup.title}</Text>
+              <Text style={[styles.contextOpLabel, { color: activeOp.color }]}>
+                {activeOp.buttonText}
+              </Text>
+            </View>
+            {OP_HINTS_BY_INDEX[selectedOpIndex] != null && (
+              <Text style={styles.contextHint} numberOfLines={2}>
+                {OP_HINTS_BY_INDEX[selectedOpIndex]}
+              </Text>
+            )}
           </View>
         </Animated.View>
 
@@ -533,6 +546,20 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
     marginBottom: 4,
+  },
+  contextBarContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  contextHint: {
+    flex: 1,
+    fontSize: 11,
+    color: '#6A7785',
+    textAlign: 'right',
+    lineHeight: 15,
   },
   emblem: {
     width: 36,

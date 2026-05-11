@@ -54,14 +54,28 @@ const KIND_LABELS: Record<string, string> = {
   note: "note",
 };
 
-export function StreamBundle({ bundle }: { bundle: Bundle }) {
+export function StreamBundle({
+  bundle,
+  onArchive,
+  onDelete,
+}: {
+  bundle: Bundle;
+  onArchive?: (id: string) => void;
+  onDelete?: (id: string) => void;
+}) {
   const { entries } = bundle;
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const collapseBg = useColorModeValue("gray.50", "gray.850");
   const [expanded, setExpanded] = useState(entries.length <= 2);
 
   if (entries.length === 1) {
-    return <StreamEntry entry={entries[0]} />;
+    return (
+      <StreamEntry
+        entry={entries[0]}
+        onArchive={onArchive ? () => onArchive(entries[0].id) : undefined}
+        onDelete={onDelete ? () => onDelete(entries[0].id) : undefined}
+      />
+    );
   }
 
   const newest = entries[entries.length - 1];
@@ -107,7 +121,12 @@ export function StreamBundle({ bundle }: { bundle: Bundle }) {
         </HStack>
       )}
       {entries.map((e) => (
-        <StreamEntry key={e.id} entry={e} />
+        <StreamEntry
+          key={e.id}
+          entry={e}
+          onArchive={onArchive ? () => onArchive(e.id) : undefined}
+          onDelete={onDelete ? () => onDelete(e.id) : undefined}
+        />
       ))}
     </VStack>
   );

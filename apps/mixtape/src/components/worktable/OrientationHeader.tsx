@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Box, HStack, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { ReentryPanel } from "@components/console/ReentryPanel";

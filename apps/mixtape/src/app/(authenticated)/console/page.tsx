@@ -16,6 +16,8 @@ import { ConsoleSidebar } from "@components/console/ConsoleSidebar";
 import { OrientationHeader } from "@components/worktable/OrientationHeader";
 import { WorkTableStream } from "@components/worktable/WorkTableStream";
 import { WorkTableCommandField } from "@components/worktable/WorkTableCommandField";
+import { ContextSwitcher } from "@components/worktable/ContextSwitcher";
+import { ContextSummary } from "@components/worktable/ContextSummary";
 import type { WorkTableContext } from "@components/worktable/types";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 
@@ -29,13 +31,14 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 export default function ConsolePage() {
-  useAuth();
+  const { user } = useAuth();
   const bgColor = useColorModeValue("gray.50", "gray.900");
+  const username = user?.username ?? "";
   const sidebarBg = useColorModeValue("white", "gray.850");
   const sidebarBorder = useColorModeValue("gray.200", "gray.700");
 
   const [context, setContext] = useState<WorkTableContext>({ kind: "personal" });
-  const [orientationCollapsed, setOrientationCollapsed] = useState(false);
+  const [orientationCollapsed, setOrientationCollapsed] = useState(true);
   const appendRef = useRef<((entry: StreamEntry) => void) | null>(null);
 
   const groupCtx = context.kind === "group" ? context : null;
@@ -44,33 +47,22 @@ export default function ConsolePage() {
     appendRef.current?.(entry);
   };
 
-  const handleFirstInteraction = () => {
-    if (!orientationCollapsed) setOrientationCollapsed(true);
-  };
-
   return (
     <Box bg={bgColor} minH="100vh">
       <Container maxW="6xl" py={8}>
         <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={8} alignItems="start">
 
-          {/* Main column — stream */}
+          {/* Main column */}
           <GridItem>
-            <OrientationHeader
-              collapsed={orientationCollapsed}
-              onToggle={() => setOrientationCollapsed((v) => !v)}
+            {/* 1 — Context switcher */}
+            <ContextSwitcher
+              context={context}
+              username={username}
+              onSelect={setContext}
             />
 
-            {/* Stream */}
-            <Box mb={4} minH="300px">
-              <WorkTableStream context={context} appendRef={appendRef} />
-            </Box>
-
-            {/* Command field — pinned at bottom of column */}
-            <Box
-              position="sticky"
-              bottom={4}
-              onClick={handleFirstInteraction}
-            >
+            {/* 2 — Command field */}
+            <Box mb={4}>
               <WorkTableCommandField
                 context={context}
                 onContextSwitch={setContext}
@@ -78,6 +70,18 @@ export default function ConsolePage() {
                 onCapture={handleCapture}
               />
             </Box>
+
+            {/* 3 — Pending summary + activity stream */}
+            <ContextSummary context={context} />
+            <Box mb={4} minH="300px">
+              <WorkTableStream context={context} appendRef={appendRef} />
+            </Box>
+
+            {/* 4 — Orientation (collapsed by default) */}
+            <OrientationHeader
+              collapsed={orientationCollapsed}
+              onToggle={() => setOrientationCollapsed((v) => !v)}
+            />
           </GridItem>
 
           {/* Right sidebar — capture panels + stewardship (WT-D7) */}

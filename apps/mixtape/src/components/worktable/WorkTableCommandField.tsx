@@ -1,14 +1,14 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Badge, Box, Button, HStack, Text, Textarea } from "@chakra-ui/react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { Badge, Box, Button, HStack, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useOrientation } from "@mixtape/api/hooks/console/useConsole";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { WorkTableContext } from "./types";
+import { parseNeedMoreItems, parseRemindAt, formatRemindPreview } from "./parseCapture";
 
-const WORKSTREAM_RE = /^\/n\s+(.+)/i;
 const CONTEXT_SWITCH_RE = /^\/\/(.+)/;
 const CONTEXT_RETURN_RE = /^\/\.(\s|$)/;
 const LOG_ENTRY_RE = /^\/log\s+([\s\S]+)/i;
@@ -45,12 +45,15 @@ export function WorkTableCommandField({
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const previewBg = useColorModeValue("blue.50", "blue.900");
+  const previewColor = useColorModeValue("blue.700", "blue.200");
+  const remindHintBg = useColorModeValue("orange.50", "orange.900");
+  const remindHintColor = useColorModeValue("orange.700", "orange.200");
 
-  const workstreamMatch = WORKSTREAM_RE.exec(input.trim());
-  const contextSwitchMatch = CONTEXT_SWITCH_RE.exec(input.trim());
-  const isReturn = CONTEXT_RETURN_RE.test(input.trim());
-  const logMatch = LOG_ENTRY_RE.exec(input.trim());
-  const workstreamName = workstreamMatch?.[1]?.trim() ?? null;
+  const trimmed = input.trim();
+  const contextSwitchMatch = CONTEXT_SWITCH_RE.exec(trimmed);
+  const isReturn = CONTEXT_RETURN_RE.test(trimmed);
+  const logMatch = LOG_ENTRY_RE.exec(trimmed);
   const contextQuery = contextSwitchMatch?.[1]?.trim().toLowerCase() ?? null;
 
   const contextTarget = contextQuery
@@ -59,42 +62,59 @@ export function WorkTableCommandField({
       ) ?? null
     : null;
 
-  const handleSubmit = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || submitting) return;
+  // Detect kind + parse
+  const detectedKind = trimmed ? detectKind(trimmed) : null;
+  const isNeedMore = detectedKind === "need_more";
+  const isRemind = detectedKind === "remind";
 
+  const needItems = useMemo(
+    () => (isNeedMore && trimmed ? parseNeedMoreItems(trimmed) : []),
+    [isNeedMore, trimmed]
+  );
+  const remindAt = isRemind && trimmed ? parseRemindAt(trimmed) : null;
+
+  // ---------------------------------------------------------------------------
+  // Submit
+  // ---------------------------------------------------------------------------
+
+  const handleSubmit = useCallback(async () => {
+    if (!trimmed || submitting) return;
     setError(null);
 
-    // /. — return to personal
     if (CONTEXT_RETURN_RE.test(trimmed)) {
       onContextReturn();
       setInput("");
       return;
     }
 
-    // // context switch
     if (contextTarget) {
       onContextSwitch({ kind: "group", id: contextTarget.id, slug: contextTarget.slug, title: contextTarget.title });
       setInput("");
       return;
     }
 
-    // /log prose entry — WT-D11
+    // /log prose entry
     if (logMatch) {
       const logBody = logMatch[1].trim();
       if (!logBody) return;
-      if (context.kind !== "initiative") {
-        setError("/log entries require an initiative context. Use // InitiativeName to switch.");
-        return;
-      }
       setSubmitting(true);
       try {
-        const res = await axiosInstance.post<{
-          id: string; entry_type: string; body: string; created_at: string;
-        }>(`/api/initiatives/${context.id}/aperture-log/entries`, {
-          kind: "prose",
-          body: logBody,
-        });
+        let res;
+        if (context.kind === "initiative") {
+          res = await axiosInstance.post<{
+            id: string; entry_type: string; body: string; created_at: string;
+          }>(`/api/initiatives/${context.id}/aperture-log/entries`, {
+            kind: "prose",
+            body: logBody,
+          });
+        } else {
+          res = await axiosInstance.post<{
+            id: string; entry_type: string; body: string; created_at: string;
+          }>("/api/worktable/prose/", {
+            body: logBody,
+            ...(context.kind === "group" ? { group_slug: context.slug } : {}),
+          });
+        }
         const entry: StreamEntry = {
           id: res.data.id,
           entry_type: "prose",
@@ -114,19 +134,43 @@ export function WorkTableCommandField({
       return;
     }
 
-    // /n workstream — stub for W1
-    if (workstreamName) {
-      setError("Workstream creation not yet wired to WorkTable. Use the Console action field below.");
-      return;
-    }
-
-    // Natural language → HubCapture
     const kind = detectKind(trimmed);
     const groupSlug = context.kind === "group" ? context.slug : undefined;
     const captureVisibility = groupSlug ? visibility : "private";
 
     setSubmitting(true);
     try {
+      // need_more with multiple items → one capture per item
+      if (kind === "need_more" && needItems.length > 1) {
+        const entries: StreamEntry[] = [];
+        for (const item of needItems) {
+          const res = await axiosInstance.post<{
+            id: string; kind: string; body: string; status: string; visibility: string; created_at: string;
+          }>("/api/console/hub/captures/", {
+            kind,
+            body: item,
+            group_slug: groupSlug,
+            visibility: captureVisibility,
+          });
+          entries.push({
+            id: res.data.id,
+            entry_type: "capture",
+            kind: res.data.kind as HubCaptureKind,
+            body: res.data.body,
+            status: res.data.status as "open",
+            visibility: res.data.visibility as "private" | "shared",
+            created_at: res.data.created_at,
+            metadata: {},
+          });
+        }
+        entries.forEach((e) => onCapture(e));
+        setLastCapture({ kind: "need_more", body: `${needItems.length} items` });
+        setInput("");
+        setTimeout(() => setLastCapture(null), 3000);
+        return;
+      }
+
+      // Single capture
       const res = await axiosInstance.post<{
         id: string; kind: string; body: string; status: string; visibility: string; created_at: string;
       }>("/api/console/hub/captures/", {
@@ -134,6 +178,7 @@ export function WorkTableCommandField({
         body: trimmed,
         group_slug: groupSlug,
         visibility: captureVisibility,
+        ...(kind === "remind" && remindAt ? { remind_at: remindAt.toISOString() } : {}),
       });
 
       const entry: StreamEntry = {
@@ -155,7 +200,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [input, submitting, contextTarget, workstreamName, context, onCapture, onContextSwitch, onContextReturn]);
+  }, [trimmed, submitting, contextTarget, context, onCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -164,23 +209,25 @@ export function WorkTableCommandField({
     }
   };
 
-  // Button label and state
-  let buttonLabel = "Capture";
+  // Button label + state
+  let buttonLabel = "Save";
   let buttonColor: string = "blue";
-  let buttonDisabled = !input.trim() || submitting;
+  let buttonDisabled = !trimmed || submitting;
 
   if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
-  else if (logMatch) { buttonLabel = "Log Entry"; buttonColor = "orange"; }
+  else if (logMatch) { buttonLabel = "Log"; buttonColor = "orange"; }
   else if (contextTarget) { buttonLabel = `Switch to ${contextTarget.title}`; buttonColor = "purple"; }
   else if (contextQuery && !contextTarget) { buttonDisabled = true; }
-  else if (workstreamName) { buttonLabel = "New Workstream"; buttonColor = "teal"; }
+  else if (isNeedMore && needItems.length > 1) { buttonLabel = `Save ${needItems.length} items`; }
 
+  // Help text
   const helpText = contextQuery
-    ? contextTarget ? `Press to switch to ${contextTarget.title}` : `No group matching "${contextQuery}"`
+    ? contextTarget ? `Switch to ${contextTarget.title}` : `No group matching "${contextQuery}"`
     : isReturn ? "Return to personal context"
-    : logMatch ? "Write a prose log entry into the initiative's ApertureLog"
-    : workstreamName ? "Create workstream (use Console action field below)"
-    : 'Type to capture. /log ... for prose entries. // GroupName to switch. /. to return.';
+    : logMatch ? "Write a prose log entry"
+    : isRemind ? "Use 'on Tuesday', 'tomorrow', or 'next week' to set a date"
+    : isNeedMore ? "Items split on commas, 'and', or new lines"
+    : 'Capture · /log … · // Group · /. return';
 
   return (
     <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={4}>
@@ -195,48 +242,82 @@ export function WorkTableCommandField({
         fontSize="sm"
         mb={3}
       />
-      {context.kind === "group" && (
-        <HStack mb={3} gap={2}>
-          <Text fontSize="xs" color={mutedColor} fontWeight="medium">Visibility:</Text>
-          <Box
-            as="button"
-            px={2}
-            py={1}
-            borderRadius="md"
-            fontSize="xs"
-            fontWeight="600"
-            bg={visibility === "private" ? "gray.100" : "blue.50"}
-            color={visibility === "private" ? "gray.600" : "blue.600"}
-            _dark={{ bg: visibility === "private" ? "gray.700" : "blue.900", color: visibility === "private" ? "gray.300" : "blue.300" }}
-            onClick={() => setVisibility(visibility === "private" ? "shared" : "private")}
-            title={visibility === "private" ? "Only you can see this — click to share with group" : "Shared with group — click to make private"}
-          >
-            {visibility === "private" ? "🔒 Private" : "👥 Shared"}
-          </Box>
-          {visibility === "shared" && (
-            <Text fontSize="xs" color={mutedColor}>Visible to all group members</Text>
-          )}
-        </HStack>
+
+      {/* Parsed previews */}
+      {isNeedMore && needItems.length > 1 && (
+        <Box bg={previewBg} borderRadius="md" px={3} py={2} mb={3}>
+          <Text fontSize="xs" fontWeight="700" color={previewColor} mb={1}>
+            {needItems.length} items detected:
+          </Text>
+          <VStack align="start" gap={0.5}>
+            {needItems.map((item, i) => (
+              <Text key={i} fontSize="xs" color={previewColor}>· {item}</Text>
+            ))}
+          </VStack>
+        </Box>
       )}
-      <HStack justify="space-between" align="center">
-        <Text fontSize="xs" color={mutedColor}>{helpText}</Text>
-        <HStack gap={2}>
-          <Badge variant="subtle">⌘↩</Badge>
-          <Button
-            size="sm"
-            colorPalette={buttonColor}
-            onClick={() => void handleSubmit()}
-            disabled={buttonDisabled}
-            loading={submitting}
-          >
-            {buttonLabel}
-          </Button>
-        </HStack>
+
+      {isRemind && remindAt && (
+        <Box bg={remindHintBg} borderRadius="md" px={3} py={2} mb={3}>
+          <Text fontSize="xs" color={remindHintColor}>
+            🔔 Remind at: <strong>{formatRemindPreview(remindAt)}</strong>
+          </Text>
+        </Box>
+      )}
+
+      {isRemind && !remindAt && trimmed && (
+        <Box bg={remindHintBg} borderRadius="md" px={3} py={2} mb={3}>
+          <Text fontSize="xs" color={remindHintColor}>
+            No date detected — add "on Tuesday", "tomorrow", or "next week"
+          </Text>
+        </Box>
+      )}
+
+      {/* Visibility + help text — same row */}
+      <HStack justify="space-between" align="center" mb={2}>
+        {context.kind === "group" ? (
+          <HStack gap={2}>
+            <Text fontSize="xs" color={mutedColor} fontWeight="medium">Visibility:</Text>
+            <Box
+              as="button"
+              px={2}
+              py={1}
+              borderRadius="md"
+              fontSize="xs"
+              fontWeight="600"
+              bg={visibility === "private" ? "gray.100" : "blue.50"}
+              color={visibility === "private" ? "gray.600" : "blue.600"}
+              _dark={{ bg: visibility === "private" ? "gray.700" : "blue.900", color: visibility === "private" ? "gray.300" : "blue.300" }}
+              onClick={() => setVisibility(visibility === "private" ? "shared" : "private")}
+              title={visibility === "private" ? "Only you — click to share with group" : "Shared with group — click to make private"}
+            >
+              {visibility === "private" ? "🔒 Private" : "👥 Shared"}
+            </Box>
+          </HStack>
+        ) : (
+          <Box />
+        )}
+        <Text fontSize="xs" color={mutedColor} textAlign="right">{helpText}</Text>
       </HStack>
+
+      {/* Submit row */}
+      <HStack justify="flex-end" gap={2}>
+        <Badge variant="subtle">⌘↩</Badge>
+        <Button
+          size="sm"
+          colorPalette={buttonColor}
+          onClick={() => void handleSubmit()}
+          disabled={buttonDisabled}
+          loading={submitting}
+        >
+          {buttonLabel}
+        </Button>
+      </HStack>
+
       {error && <Text fontSize="xs" color="red.500" mt={2}>{error}</Text>}
       {lastCapture && (
         <Text fontSize="xs" color="green.600" mt={2}>
-          ✓ Captured as {lastCapture.kind}: {lastCapture.body.slice(0, 60)}
+          ✓ Saved: {lastCapture.body.slice(0, 60)}
         </Text>
       )}
     </Box>
