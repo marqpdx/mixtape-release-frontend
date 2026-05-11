@@ -45,15 +45,15 @@ export function WorkTableStream({
   appendRef?: React.MutableRefObject<((entry: StreamEntry) => void) | null>;
   apertureAppendRef?: React.MutableRefObject<((entry: ApertureLogEntry) => void) | null>;
 }) {
-  if (context.kind === "initiative") {
-    return <ApertureLogStream initiativeId={context.id} appendRef={apertureAppendRef} />;
-  }
+  const isInitiative = context.kind === "initiative";
+  const streamContext: WorkTableContext =
+    context.kind === "initiative" ? { kind: "personal" } : context;
 
-  const params = contextToParams(context);
+  const params = contextToParams(streamContext);
   const { entries, isLoading, hasMore, isLoadingMore, loadMore, appendEntry } =
     useWorktableStream(params);
 
-  const scopeKey = context.kind === "group" ? `group-${context.slug}` : "personal";
+  const scopeKey = streamContext.kind === "group" ? `group-${streamContext.slug}` : "personal";
 
   const [sortDesc, setSortDesc] = useState(true);
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed(scopeKey));
@@ -98,6 +98,10 @@ export function WorkTableStream({
   const visible = entries.filter((e) => !dismissed.has(e.id));
   const sorted = sortDesc ? [...visible].reverse() : visible;
   const bundles = groupIntoBundles(sorted);
+
+  if (isInitiative) {
+    return <ApertureLogStream initiativeId={context.id} appendRef={apertureAppendRef} />;
+  }
 
   if (isLoading) {
     return (
