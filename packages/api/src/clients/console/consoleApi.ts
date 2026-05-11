@@ -133,13 +133,14 @@ export async function fetchStewardship(): Promise<StewardshipResponse> {
 // ---------------------------------------------------------------------------
 
 export type HubCaptureKind = "fix" | "need_more" | "remind" | "note";
-export type HubCaptureStatus = "open" | "resolved" | "promoted";
+export type HubCaptureStatus = "processing" | "open" | "failed" | "resolved" | "promoted";
 
 export interface HubCapture {
   id: string;
   kind: HubCaptureKind;
   body: string;
   status: HubCaptureStatus;
+  transcript_error?: string;
   group_id: string | null;
   remind_at: string | null;
   resolved_at: string | null;

@@ -36,6 +36,13 @@ import { useAuthStore } from '../stores/authStore';
 import type { RecordedClip } from '../hooks/useNativeVoiceRecorder';
 import type { Group } from '@mixtape/core/types/groupTypes';
 
+const OPS_POLL_ATTEMPTS = 6;
+const OPS_POLL_DELAY_MS = 1500;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // ---------------------------------------------------------------------------
 // Op type config
 // ---------------------------------------------------------------------------
@@ -212,7 +219,8 @@ export default function OpsScreen() {
   const [selectedOpIndex, setSelectedOpIndex] = useState(4); // default: Note
   const [actionFocused, setActionFocused] = useState(false);
 
-  const [transcribing, setTranscribing] = useState(false);
+  const [uploadingVoice, setUploadingVoice] = useState(false);
+  const [processingVoice, setProcessingVoice] = useState(false);
 
   // Emblem fade transition
   const emblemOpacity = useRef(new Animated.Value(1)).current;
@@ -283,8 +291,29 @@ export default function OpsScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const pollForProcessedCapture = useCallback((startingCount: number) => {
+    setProcessingVoice(true);
+    void (async () => {
+      try {
+        for (let attempt = 0; attempt < OPS_POLL_ATTEMPTS; attempt += 1) {
+          await sleep(OPS_POLL_DELAY_MS);
+          const result = await refetch();
+          const nextCount = result.data?.captures?.length ?? 0;
+          if (nextCount > startingCount) {
+            break;
+          }
+        }
+      } finally {
+        setProcessingVoice(false);
+        void queryClient.invalidateQueries({ queryKey: ['console', 'hub-captures'] });
+        void queryClient.invalidateQueries({ queryKey: ['console', 'orientation'] });
+      }
+    })();
+  }, [queryClient, refetch]);
+
   const handleVoiceUpload = useCallback(async (uri: string, mimeType: string, fileName: string) => {
-    setTranscribing(true);
+    setUploadingVoice(true);
+    const startingCount = captures.length;
     try {
       const form = new FormData();
       form.append('audio', { uri, type: mimeType, name: fileName } as unknown as Blob);
@@ -294,15 +323,26 @@ export default function OpsScreen() {
       await axiosInstance.post('/api/console/hub/captures/voice/', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      void queryClient.invalidateQueries({ queryKey: ['console', 'hub-captures'] });
-      void queryClient.invalidateQueries({ queryKey: ['console', 'orientation'] });
       void AsyncStorage.removeItem(pendingVoiceKey);
-    } catch {
+      pollForProcessedCapture(startingCount);
+    } catch (err) {
+      const error = err as {
+        message?: string;
+        response?: { status?: number; data?: unknown };
+        config?: { url?: string; method?: string };
+      };
+      console.error('[OpsVoiceUpload] Request failed', {
+        message: error?.message,
+        method: error?.config?.method,
+        url: error?.config?.url ?? '/api/console/hub/captures/voice/',
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
       Alert.alert('Upload failed', 'Could not send the recording. Please try again.');
     } finally {
-      setTranscribing(false);
+      setUploadingVoice(false);
     }
-  }, [activeOp.kind, groupSlugParam, queryClient, pendingVoiceKey]);
+  }, [activeOp.kind, captures.length, groupSlugParam, pendingVoiceKey, pollForProcessedCapture]);
 
   // CaptureDock submit handlers
   const handleSubmitText = useCallback(async (text: string) => {
@@ -440,10 +480,10 @@ export default function OpsScreen() {
           )}
         />
 
-        {transcribing && (
+        {processingVoice && (
           <View style={styles.transcribingBanner}>
             <ActivityIndicator size="small" color="#0E5AA7" />
-            <Text style={styles.transcribingText}>Transcribing your recording…</Text>
+            <Text style={styles.transcribingText}>Processing your recording…</Text>
           </View>
         )}
 
@@ -457,7 +497,7 @@ export default function OpsScreen() {
             onSubmitVoice={handleSubmitVoice}
             onRecordingFinalized={handleRecordingFinalized}
             onFocusChange={setActionFocused}
-            isSubmittingVoice={transcribing}
+            isSubmittingVoice={uploadingVoice}
           />
         </View>
       </KeyboardAvoidingView>
