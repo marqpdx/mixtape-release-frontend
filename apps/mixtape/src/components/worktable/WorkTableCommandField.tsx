@@ -302,45 +302,41 @@ export function WorkTableCommandField({
         </Box>
       )}
 
-      {/* Visibility + help text — same row */}
-      <HStack justify="space-between" align="center" mb={2}>
+      {/* Visibility + help text + submit — single row */}
+      <HStack justify="space-between" align="center" mt={2} gap={2}>
         {context.kind === "group" ? (
-          <HStack gap={2}>
-            <Text fontSize="xs" color={mutedColor} fontWeight="medium">Visibility:</Text>
-            <Box
-              as="button"
-              px={2}
-              py={1}
-              borderRadius="md"
-              fontSize="xs"
-              fontWeight="600"
-              bg={visibility === "private" ? "gray.100" : "blue.50"}
-              color={visibility === "private" ? "gray.600" : "blue.600"}
-              _dark={{ bg: visibility === "private" ? "gray.700" : "blue.900", color: visibility === "private" ? "gray.300" : "blue.300" }}
-              onClick={() => setVisibility(visibility === "private" ? "shared" : "private")}
-              title={visibility === "private" ? "Only you — click to share with group" : "Shared with group — click to make private"}
-            >
-              {visibility === "private" ? "🔒 Private" : "👥 Shared"}
-            </Box>
-          </HStack>
+          <Box
+            as="button"
+            px={2}
+            py={0.5}
+            borderRadius="md"
+            fontSize="xs"
+            fontWeight="600"
+            flexShrink={0}
+            bg={visibility === "private" ? "gray.100" : "blue.50"}
+            color={visibility === "private" ? "gray.600" : "blue.600"}
+            _dark={{ bg: visibility === "private" ? "gray.700" : "blue.900", color: visibility === "private" ? "gray.300" : "blue.300" }}
+            onClick={() => setVisibility(visibility === "private" ? "shared" : "private")}
+            title={visibility === "private" ? "Only you — click to share with group" : "Shared with group — click to make private"}
+          >
+            {visibility === "private" ? "🔒 Private" : "👥 Shared"}
+          </Box>
         ) : (
           <Box />
         )}
-        <Text fontSize="xs" color={mutedColor} textAlign="right">{helpText}</Text>
-      </HStack>
-
-      {/* Submit row */}
-      <HStack justify="flex-end" gap={2}>
-        <Badge variant="subtle">⌘↩</Badge>
-        <Button
-          size="sm"
-          colorPalette={buttonColor}
-          onClick={() => void handleSubmit()}
-          disabled={buttonDisabled}
-          loading={submitting}
-        >
-          {buttonLabel}
-        </Button>
+        <Text fontSize="xs" color={mutedColor} flex={1} textAlign="center">{helpText}</Text>
+        <HStack gap={1.5} flexShrink={0}>
+          <Badge variant="subtle" fontSize="10px">⌘↩</Badge>
+          <Button
+            size="xs"
+            colorPalette={buttonColor}
+            onClick={() => void handleSubmit()}
+            disabled={buttonDisabled}
+            loading={submitting}
+          >
+            {buttonLabel}
+          </Button>
+        </HStack>
       </HStack>
 
       {error && <Text fontSize="xs" color="red.500" mt={2}>{error}</Text>}

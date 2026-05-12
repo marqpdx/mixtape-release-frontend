@@ -244,17 +244,17 @@ export function ContextSwitcher({
 
   return (
     <Box mb={3}>
-      <Text
-        fontSize="10px"
-        fontWeight="700"
-        color={labelColor}
-        letterSpacing="widest"
-        textTransform="uppercase"
-        mb={2}
-      >
-        Context
-      </Text>
-      <HStack gap={2} flexWrap="nowrap" alignItems="center">
+      <HStack gap={3} flexWrap="nowrap" alignItems="center">
+        <Text
+          fontSize="xs"
+          fontWeight="700"
+          color={labelColor}
+          letterSpacing="widest"
+          textTransform="uppercase"
+          flexShrink={0}
+        >
+          Context
+        </Text>
         <ContextChip
           label="Personal"
           active={activeSlug === "__personal__"}
@@ -278,4 +278,5 @@ export function ContextSwitcher({
       </HStack>
     </Box>
   );
+
 }
