@@ -51,12 +51,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   // Members - requires invite permission
   'members-roles': {
     requiredDecorator: 'can__InviteMembers',
-    // requiredRole: 'admin',
     description: 'View and manage group members',
   },
   'invitations': {
-    // requiredDecorator: 'can__InviteMembers',
-    requiredRole: 'admin',
+    requiredDecorator: 'can__InviteMembers',
     description: 'Send invitations to new members',
   },
   'coalition-invitations': {
@@ -85,7 +83,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
   // Threadworks - accessible to all stewards
   'threadworks-landing': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageThreadworks',
     description: 'Group forums and discussions',
   },
 
@@ -168,12 +166,12 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   },
 
   'collections-landing': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageCollections',
     description: 'Landing page for group Collections management',
   },
 
   'collection-detail': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__ManageCollections',
     description: 'Collection Detail',
   },
 
