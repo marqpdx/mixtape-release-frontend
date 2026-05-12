@@ -58,6 +58,10 @@ function statusColor(s: string) {
   return "gray";
 }
 
+function toSlug(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export default function ProspectDetailPage() {
   const params = useParams();
   const groupSlug = params.slug as string;
@@ -83,11 +87,14 @@ export default function ProspectDetailPage() {
   const [sessionMode, setSessionMode] = useState("pre_meeting");
   const [deletingProspect, setDeletingProspect] = useState(false);
 
-  const [convertGroupSlug, setConvertGroupSlug] = useState("");
+  const [convertTitle, setConvertTitle] = useState("");
+  const [convertGroupType, setConvertGroupType] = useState("community");
+  const [convertSlug, setConvertSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertResult, setConvertResult] = useState<ConvertResult | null>(null);
   const [convertError, setConvertError] = useState<string | null>(null);
-  const [groupCheckState, setGroupCheckState] = useState<"idle" | "checking" | "found" | "not_found">("idle");
+  const [slugCheckState, setSlugCheckState] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cardBg = useColorModeValue("gray.50", "gray.800");
@@ -99,6 +106,14 @@ export default function ProspectDetailPage() {
   const statusCollection = useMemo(() => createListCollection({
     items: STATUS_OPTIONS.map((s) => ({ label: s.replace(/_/g, " "), value: s })),
   }), []);
+  const groupTypeCollection = useMemo(() => createListCollection({
+    items: [
+      { label: "Community", value: "community" },
+      { label: "Circle", value: "circle" },
+      { label: "Persona", value: "persona" },
+      { label: "Coalition", value: "coalition" },
+    ],
+  }), []);
   const modeCollection = useMemo(() => createListCollection({
     items: [
       { label: "pre meeting", value: "pre_meeting" },
@@ -106,6 +121,22 @@ export default function ProspectDetailPage() {
       { label: "hybrid", value: "hybrid" },
     ],
   }), []);
+
+  const checkSlugAvailability = useCallback((slug: string) => {
+    setSlugCheckState(slug.trim() ? "checking" : "idle");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!slug.trim()) return;
+    debounceRef.current = setTimeout(async () => {
+      try {
+        await axiosInstance.get(`/api/public/groups/${slug.trim()}/admission-status`);
+        // 200 means group exists → slug taken
+        setSlugCheckState("taken");
+      } catch {
+        // 404 means no group with that slug → available
+        setSlugCheckState("available");
+      }
+    }, 400);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -117,31 +148,35 @@ export default function ProspectDetailPage() {
       setEditStatus(pRes.data.status);
       setEditSummary(pRes.data.summary || "");
       setSessions(sRes.data);
-      // Pre-populate convert slug from prospect slug if not yet converted
+      // Pre-populate convert title/slug from prospect if not yet converted
       if (!pRes.data.converted_to_group_slug) {
-        setConvertGroupSlug(pRes.data.slug ?? "");
+        const name = pRes.data.name ?? "";
+        setConvertTitle(name);
+        const derived = toSlug(name);
+        setConvertSlug(derived);
+        checkSlugAvailability(derived);
       }
     } catch {
       setError("Could not load prospect.");
     } finally {
       setLoading(false);
     }
-  }, [prospectSlug]);
+  }, [prospectSlug, checkSlugAvailability]);
+
+  const handleConvertTitleChange = useCallback((value: string) => {
+    setConvertTitle(value);
+    if (!slugEdited) {
+      const derived = toSlug(value);
+      setConvertSlug(derived);
+      checkSlugAvailability(derived);
+    }
+  }, [slugEdited, checkSlugAvailability]);
 
   const handleConvertSlugChange = useCallback((value: string) => {
-    setConvertGroupSlug(value);
-    setGroupCheckState(value.trim() ? "checking" : "idle");
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) return;
-    debounceRef.current = setTimeout(async () => {
-      try {
-        await axiosInstance.get(`/api/public/groups/${value.trim()}/admission-status`);
-        setGroupCheckState("found");
-      } catch {
-        setGroupCheckState("not_found");
-      }
-    }, 400);
-  }, []);
+    setConvertSlug(value);
+    setSlugEdited(true);
+    checkSlugAvailability(value);
+  }, [checkSlugAvailability]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) load();
@@ -201,21 +236,25 @@ export default function ProspectDetailPage() {
   }
 
   async function handleConvert() {
-    const target = convertGroupSlug.trim();
-    if (!target) return;
-    if (!confirm(`Convert ${prospect?.name} to client group "${target}"? This cannot be undone.`)) return;
+    if (!convertTitle.trim() || !convertSlug.trim()) return;
+    if (slugCheckState !== "available") return;
+    if (!confirm(`Create group "${convertTitle}" (/${convertSlug}) and convert ${prospect?.name} to client? This cannot be undone.`)) return;
     setConverting(true);
     setConvertError(null);
     setConvertResult(null);
     try {
-      const res = await axiosInstance.post(`/api/prospects/${prospectSlug}/convert/`, { group_slug: target });
+      const res = await axiosInstance.post(`/api/prospects/${prospectSlug}/convert/`, {
+        title: convertTitle.trim(),
+        group_type: convertGroupType,
+        slug: convertSlug.trim(),
+      });
       setConvertResult(res.data as ConvertResult);
       // Refresh prospect so header shows converted state
       const updated = await axiosInstance.get(`/api/prospects/${prospectSlug}/`);
       setProspect(updated.data);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setConvertError(msg ?? "Conversion failed. Check group slug and try again.");
+      setConvertError(msg ?? "Conversion failed. Try again.");
     } finally {
       setConverting(false);
     }
@@ -401,40 +440,81 @@ export default function ProspectDetailPage() {
         ) : (
           <VStack align="stretch" gap="3">
             <Text fontSize="sm" color={mutedColor}>
-              Enter the slug of the existing group to link this prospect to. Intake responses will be mapped into the group's context and marked as "brought from intake."
+              A new group will be created and intake responses mapped into its context, marked as "brought from intake."
             </Text>
+            {/* Title */}
             <HStack>
-              <Box flex="1" position="relative">
-                <Input
-                  size="sm"
-                  placeholder="group-slug"
-                  value={convertGroupSlug}
-                  onChange={(e) => handleConvertSlugChange(e.target.value)}
-                  borderColor={
-                    groupCheckState === "found" ? "green.400" :
-                    groupCheckState === "not_found" ? "red.400" : undefined
-                  }
-                />
-              </Box>
+              <Text fontSize="sm" w="80px" color={mutedColor} flexShrink={0}>Name</Text>
+              <Input
+                size="sm"
+                placeholder="Group name"
+                value={convertTitle}
+                onChange={(e) => handleConvertTitleChange(e.target.value)}
+              />
+            </HStack>
+            {/* Group type */}
+            <HStack>
+              <Text fontSize="sm" w="80px" color={mutedColor} flexShrink={0}>Type</Text>
+              <Select.Root
+                collection={groupTypeCollection}
+                size="sm"
+                value={[convertGroupType]}
+                onValueChange={({ value }) => setConvertGroupType(value[0])}
+              >
+                <Select.HiddenSelect />
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup><Select.Indicator /></Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {groupTypeCollection.items.map((item) => (
+                        <Select.Item key={item.value} item={item}>
+                          {item.label}<Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </HStack>
+            {/* Slug */}
+            <HStack>
+              <Text fontSize="sm" w="80px" color={mutedColor} flexShrink={0}>Slug</Text>
+              <Input
+                size="sm"
+                placeholder="group-slug"
+                value={convertSlug}
+                onChange={(e) => handleConvertSlugChange(e.target.value)}
+                borderColor={
+                  slugCheckState === "available" ? "green.400" :
+                  slugCheckState === "taken" ? "red.400" : undefined
+                }
+              />
+            </HStack>
+            {slugCheckState === "checking" && (
+              <Text fontSize="xs" color={mutedColor} pl="88px">Checking…</Text>
+            )}
+            {slugCheckState === "available" && (
+              <Text fontSize="xs" color="green.600" pl="88px">✓ Slug available</Text>
+            )}
+            {slugCheckState === "taken" && (
+              <Text fontSize="xs" color="red.500" pl="88px">✗ Slug already taken — choose another.</Text>
+            )}
+            <HStack justify="flex-end">
               <Button
                 size="sm"
                 colorPalette="green"
                 onClick={handleConvert}
                 loading={converting}
-                disabled={!convertGroupSlug.trim() || groupCheckState === "not_found" || groupCheckState === "checking"}
+                disabled={!convertTitle.trim() || !convertSlug.trim() || slugCheckState !== "available"}
               >
-                Convert to client
+                Create group &amp; convert
               </Button>
             </HStack>
-            {groupCheckState === "checking" && (
-              <Text fontSize="xs" color={mutedColor}>Checking group…</Text>
-            )}
-            {groupCheckState === "found" && (
-              <Text fontSize="xs" color="green.600">✓ Group found</Text>
-            )}
-            {groupCheckState === "not_found" && (
-              <Text fontSize="xs" color="red.500">✗ No group with that slug — check the spelling or create the group first.</Text>
-            )}
             {convertError && (
               <Text fontSize="sm" color="red.500">{convertError}</Text>
             )}
