@@ -36,6 +36,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
   const [canOpenSettings, setCanOpenSettings] = useState(false);
   const [maxDurationReached, setMaxDurationReached] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const isStartingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -55,6 +56,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
     }
 
     try {
+      isStartingRef.current = true;
       setIsPreparing(true);
       setMicError(null);
       setCanOpenSettings(false);
@@ -105,7 +107,8 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
         if (status.isRecording) {
           setIsRecording(true);
           setIsPaused(false);
-        } else if (status.canRecord) {
+          isStartingRef.current = false;
+        } else if (status.canRecord && !isStartingRef.current) {
           setIsRecording(false);
           setIsPaused(true);
         }
@@ -132,6 +135,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
       const err = error as Error | undefined;
       setMicError(err?.message || 'Unable to start recording.');
       setMeterLevel(0);
+      isStartingRef.current = false;
     } finally {
       setIsPreparing(false);
     }
@@ -162,6 +166,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
 
     try {
       setMicError(null);
+      isStartingRef.current = false;
       await recording.startAsync();
       setIsRecording(true);
       setIsPaused(false);
@@ -198,6 +203,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
       setMicError(err?.message || 'Unable to finalize recording.');
       return null;
     } finally {
+      isStartingRef.current = false;
       recordingRef.current = null;
       setIsRecording(false);
       setIsPaused(false);
@@ -221,6 +227,7 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
     setIsRecording(false);
     setIsPaused(false);
     setMaxDurationReached(false);
+    isStartingRef.current = false;
     void Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
     }).catch(() => undefined);

@@ -80,6 +80,7 @@ export function CaptureDock({
   } = useNativeVoiceRecorder();
 
   const showVoiceStatus = isRecording || isPaused;
+  const voiceSessionActive = isRecording || isPaused;
 
   // Restore draft on mount
   useEffect(() => {
@@ -194,7 +195,7 @@ export function CaptureDock({
             disabled={isPreparing}
           >
             <Text style={styles.voiceSecondaryButtonText}>
-              {isPreparing ? 'Preparing' : isRecording ? 'Pause' : 'Record'}
+              {showVoiceStatus ? 'Pause' : 'Record'}
             </Text>
           </TouchableOpacity>
         )}
@@ -221,7 +222,7 @@ export function CaptureDock({
           <View style={styles.captureFooterSpacer} />
         )}
 
-        {isRecording || isPaused ? (
+        {voiceSessionActive ? (
           <TouchableOpacity
             onPress={() => void handleSubmitVoice()}
             activeOpacity={0.85}

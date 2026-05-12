@@ -110,7 +110,8 @@ export function SeedNotebook({
     () => selectVisibleSeeds(recentSeedsQuery.data ?? []),
     [recentSeedsQuery.data]
   );
-  const showVoiceStatus = isRecording || isPaused;
+  const showVoiceStatus = isRecording || isPaused || isPreparing;
+  const voiceSessionActive = isRecording || isPaused || isPreparing;
   const draftStorageKey = currentUser?.username
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
@@ -629,7 +630,7 @@ export function SeedNotebook({
                     disabled={isPreparing}
                   >
                     <Text style={styles.voiceSecondaryButtonText}>
-                      {isPreparing ? 'Preparing' : isRecording ? 'Pause' : 'Record'}
+                      {showVoiceStatus ? 'Pause' : 'Record'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -656,7 +657,7 @@ export function SeedNotebook({
                 ) : (
                   <View style={styles.captureFooterSpacer} />
                 )}
-                {isRecording || isPaused ? (
+                {voiceSessionActive ? (
                   <TouchableOpacity
                     onPress={() => {
                       void handleSendVoiceSeed();
