@@ -1,4 +1,4 @@
-// apps/crossroads/app/(main)/(member)/group/[slug]/admin/prospects/**
+// apps/crossroads/app/(main)/(member)/group/[slug]/admin/prospects/[prospectSlug]/page.tsx
 
 "use client";
 
