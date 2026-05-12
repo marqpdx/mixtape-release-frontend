@@ -32,10 +32,12 @@ export const safeRedirect = (value: string | null, fallback = "/dashboard") => {
     // absolute URL? reject
     const url = new URL(value, window.location.origin);
     if (url.origin !== window.location.origin) return fallback;
-    return url.pathname + url.search + url.hash;
+    const nextPath = url.pathname + url.search + url.hash;
+    return nextPath.startsWith("/app/") ? nextPath.slice("/app".length) : nextPath;
   } catch {
     // relative path is fine if it starts with /
-    return value.startsWith("/") ? value : fallback;
+    if (!value.startsWith("/")) return fallback;
+    return value.startsWith("/app/") ? value.slice("/app".length) : value;
   }
 };
 
