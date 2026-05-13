@@ -317,7 +317,7 @@ export default function MemberProfileEdit() {
 
             <Field.Root invalid={!!errors.quick_intro}>
               <Field.Label>
-                Quick Intro
+                Quick Intro *
               </Field.Label>
               <Textarea
                 {...register("quick_intro", {

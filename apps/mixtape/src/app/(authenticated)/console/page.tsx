@@ -62,7 +62,6 @@ export default function ConsolePage() {
   const username = user?.username ?? "";
   const sidebarBg = useColorModeValue("white", "gray.850");
   const sidebarBorder = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.400", "gray.500");
   const toggleColor = useColorModeValue("gray.500", "gray.400");
 
   const [context, setContext] = useState<WorkTableContext>({ kind: "personal" });
