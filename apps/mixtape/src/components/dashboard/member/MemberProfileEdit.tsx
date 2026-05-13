@@ -110,16 +110,16 @@ export default function MemberProfileEdit() {
     try {
       setSaveError(null);
       const updateData: MemberProfileUpdate = {
-        display_name: values.display_name || undefined,
-        quick_intro: values.quick_intro || undefined,
-        right_now: values.right_now || undefined,
-        skills: values.skills || undefined,
-        work_areas: values.work_areas || undefined,
-        practice_area: values.practice_area || undefined,
-        location: values.location || undefined,
-        avatar_url: values.avatar_url || undefined,
-        profile_image: values.profile_image || undefined,
-        background_image: values.background_image || undefined,
+        display_name: values.display_name,
+        quick_intro: values.quick_intro,
+        right_now: values.right_now,
+        skills: values.skills,
+        work_areas: values.work_areas,
+        practice_area: values.practice_area,
+        location: values.location,
+        avatar_url: values.avatar_url,
+        profile_image: values.profile_image,
+        background_image: values.background_image,
         bio_json: values.bio_json || undefined,
       };
 
@@ -317,17 +317,17 @@ export default function MemberProfileEdit() {
 
             <Field.Root invalid={!!errors.quick_intro}>
               <Field.Label>
-                Quick Intro *
+                Quick Intro
               </Field.Label>
               <Textarea
                 {...register("quick_intro", {
-                  maxLength: { value: 500, message: "Quick intro must be 500 characters or less" }
+                  maxLength: { value: 300, message: "Quick intro must be 300 characters or less" }
                 })}
                 placeholder="A brief introduction about yourself..."
                 rows={4}
               />
               <Field.HelperText>
-                A short bio or introduction (up to 500 characters)
+                A short bio or introduction (up to 300 characters)
               </Field.HelperText>
               {errors.quick_intro && (
                 <Field.ErrorText>{errors.quick_intro.message}</Field.ErrorText>
