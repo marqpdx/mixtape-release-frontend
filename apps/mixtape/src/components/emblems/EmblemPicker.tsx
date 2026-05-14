@@ -196,11 +196,10 @@ export function EmblemPicker({
           <Text fontSize="lg" fontWeight="semibold">Choose emblem</Text>
           <Beacon
             beaconKey="emblems_v1"
+            title="Help refine Emblems"
             areaLabel="Emblems"
             position="inline"
-            featureContext={
-              "Emblems are curated from public-domain and permissively licensed sources, chosen for clarity at small sizes. We welcome feedback on missing visual categories, balance between abstract/person styles, and open-source libraries we should consider. Requests for proprietary art or custom logos are out of scope."
-            }
+            featureContext="Emblems are curated from public-domain and permissively licensed sources, chosen for clarity at small sizes. We welcome feedback on missing visual categories, balance between abstract/person styles, and open-source libraries we should consider. Requests for proprietary art or custom logos are out of scope."
           />
         </HStack>
         <HStack gap={2}>

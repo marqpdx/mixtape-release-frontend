@@ -1,13 +1,8 @@
 // components/crossroads/Beacon.tsx
-//
-// Feedback Beacon — DB-driven, admin-controlled feedback prompt.
-// Fetches beacon config from /api/feedback/beacons/<key>.
-// If beacon is inactive or dismissed → renders nothing.
-// Re-exported from the shared feedback system for use in crossroads surfaces.
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -24,17 +19,11 @@ import {
 } from '@chakra-ui/react';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
-type BeaconConfig = {
-  key: string;
-  title: string;
-  body_markdown: string;
-  feature_context: string;
-  is_active: boolean;
-};
-
 interface BeaconProps {
   beaconKey: string;
   areaLabel: string;
+  title?: string;
+  body?: string;
   featureContext?: string;
   position?: 'inline' | 'corner';
   size?: 'sm' | 'md';
@@ -45,53 +34,33 @@ const DISMISS_DAYS = 30;
 export function Beacon({
   beaconKey,
   areaLabel,
+  title,
+  body,
   featureContext,
   position = 'inline',
   size = 'sm',
 }: BeaconProps) {
-  const [config, setConfig] = useState<BeaconConfig | null>(null);
-  const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState<'bug' | 'request' | 'idea'>('idea');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   const isDismissed = useMemo(() => {
     if (typeof window === 'undefined') return false;
-    const key = `beacon_dismissed_${beaconKey}`;
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(`beacon_dismissed_${beaconKey}`);
     if (!raw) return false;
     const ts = Number(raw);
     if (!ts || Number.isNaN(ts)) return false;
-    const cutoff = ts + DISMISS_DAYS * 24 * 60 * 60 * 1000;
-    return Date.now() < cutoff;
+    return Date.now() < ts + DISMISS_DAYS * 24 * 60 * 60 * 1000;
   }, [beaconKey]);
-
-  useEffect(() => {
-    if (isDismissed) {
-      setLoading(false);
-      return;
-    }
-    const fetchBeacon = async () => {
-      setLoading(true);
-      try {
-        const res = await axiosInstance.get(`/api/feedback/beacons/${beaconKey}`);
-        setConfig(res.data?.data || null);
-      } catch {
-        setConfig(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBeacon();
-  }, [beaconKey, isDismissed]);
 
   const handleDismiss = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(`beacon_dismissed_${beaconKey}`, String(Date.now()));
     }
+    setDismissed(true);
     setOpen(false);
-    setConfig(null);
   };
 
   const handleSubmit = async () => {
@@ -106,16 +75,15 @@ export function Beacon({
       setSubmitted(true);
       setMessage('');
     } catch {
-      // quiet fail — beacon is optional
+      // quiet fail
     }
   };
 
-  if (loading || !config || isDismissed) {
+  if (isDismissed || dismissed) {
     return null;
   }
 
-  const body = config.body_markdown || '';
-  const context = config.feature_context || featureContext || '';
+  const displayTitle = title || areaLabel;
 
   return (
     <Box position={position === 'corner' ? 'absolute' : 'relative'}>
@@ -139,7 +107,7 @@ export function Beacon({
               <Popover.Body>
                 <VStack align="stretch" gap={4}>
                   <HStack justify="space-between">
-                    <Text fontWeight="semibold">{config.title || 'Feedback Beacon'}</Text>
+                    <Text fontWeight="semibold">{displayTitle}</Text>
                     <Button size="xs" variant="ghost" onClick={handleDismiss}>
                       Hide for 30 days
                     </Button>
@@ -147,16 +115,18 @@ export function Beacon({
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                     <VStack align="stretch" gap={2}>
-                      <Text fontSize="sm" color="gray.600" whiteSpace="pre-wrap">
-                        {body}
-                      </Text>
-                      {context && (
+                      {body && (
+                        <Text fontSize="sm" color="gray.600" whiteSpace="pre-wrap">
+                          {body}
+                        </Text>
+                      )}
+                      {featureContext && (
                         <Box p={3} bg="gray.50" borderRadius="md">
                           <Text fontSize="xs" textTransform="uppercase" color="gray.500">
                             Feature Context
                           </Text>
                           <Text fontSize="sm" color="gray.700" whiteSpace="pre-wrap">
-                            {context}
+                            {featureContext}
                           </Text>
                         </Box>
                       )}
