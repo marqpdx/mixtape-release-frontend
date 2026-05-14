@@ -18,16 +18,13 @@ export default function MemberPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const tabStorageKey = username ? `member_profile_last_tab:${username}` : null;
+  const enabledTabs = new Set(['profile']);
 
   const isOwner = user?.username === username;
 
   useEffect(() => {
     const requestedTab = searchParams?.get('tab');
-    if (
-      requestedTab === 'profile' ||
-      requestedTab === 'writing' ||
-      (requestedTab === 'storyline' && isOwner)
-    ) {
+    if (requestedTab && enabledTabs.has(requestedTab)) {
       setActiveTab(requestedTab);
       if (tabStorageKey && typeof window !== 'undefined') {
         window.localStorage.setItem(tabStorageKey, requestedTab);
@@ -36,17 +33,13 @@ export default function MemberPage() {
     }
     if (tabStorageKey && typeof window !== 'undefined') {
       const storedTab = window.localStorage.getItem(tabStorageKey);
-      if (
-        storedTab === 'profile' ||
-        storedTab === 'writing' ||
-        (storedTab === 'storyline' && isOwner)
-      ) {
+      if (storedTab && enabledTabs.has(storedTab)) {
         setActiveTab(storedTab);
         return;
       }
     }
-    setActiveTab(isOwner ? 'storyline' : 'profile');
-  }, [isOwner, searchParams, tabStorageKey]);
+    setActiveTab('profile');
+  }, [enabledTabs, searchParams, tabStorageKey]);
 
   const { data: profile } = useQuery({
     queryKey: ['public-member-profile', username],
@@ -59,6 +52,7 @@ export default function MemberPage() {
       <Tabs.Root
         value={activeTab}
         onValueChange={({ value }) => {
+          if (!enabledTabs.has(value)) return;
           setActiveTab(value);
           if (tabStorageKey && typeof window !== 'undefined') {
             window.localStorage.setItem(tabStorageKey, value);
@@ -70,10 +64,14 @@ export default function MemberPage() {
       >
         <Tabs.List mb={6}>
           {isOwner ? (
-            <Tabs.Trigger value="storyline">My Storyline</Tabs.Trigger>
+            <Tabs.Trigger value="storyline" disabled>
+              My Storyline
+            </Tabs.Trigger>
           ) : null}
           <Tabs.Trigger value="profile">Profile</Tabs.Trigger>
-          <Tabs.Trigger value="writing">Writing</Tabs.Trigger>
+          <Tabs.Trigger value="writing" disabled>
+            Writing
+          </Tabs.Trigger>
         </Tabs.List>
 
         {isOwner ? (

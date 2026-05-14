@@ -75,10 +75,10 @@ const LoginPage: React.FC = () => {
 
       const requestedRedirect = searchParams.get("redirect");
       if (requestedRedirect) {
-        const redirectTo = safeRedirect(requestedRedirect, "/console");
+        const redirectTo = safeRedirect(requestedRedirect, "/dashboard");
         router.push(redirectTo);
       } else {
-        router.push("/console");
+        router.push("/dashboard");
       }
 
       console.log("LoginPage login successful");
