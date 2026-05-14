@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Box, Heading, Text } from "@chakra-ui/react";
+import { Box, Text } from "@chakra-ui/react";
 import type { Group, GroupMembership } from "@mixtape/core/types/groupTypes";
 import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
 import { useMembers } from "@mixtape/api/hooks";
@@ -24,9 +24,6 @@ export function MembersTab({ group }: { group: Group }) {
 
   return (
     <Box>
-      <Heading size="lg" mb={4}>
-        Group Members
-      </Heading>
       {error && (
         <Text color="fg.muted" mb={4}>
           Unable to load members right now.

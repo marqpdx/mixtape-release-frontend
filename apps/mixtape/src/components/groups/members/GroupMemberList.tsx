@@ -98,7 +98,7 @@ export function GroupMemberList({
     return Array.from(roles).sort();
   }, [members]);
 
-  // Filtered members
+  // Filtered members, sorted by username a→z
   const filteredMembers = useMemo(() => {
     let result = members;
     if (nameFilter.trim()) {
@@ -112,7 +112,9 @@ export function GroupMemberList({
     if (roleFilter !== "all") {
       result = result.filter((m) => m.roles.includes(roleFilter));
     }
-    return result;
+    return [...result].sort((a, b) =>
+      (a.username || "").toLowerCase().localeCompare((b.username || "").toLowerCase())
+    );
   }, [members, nameFilter, roleFilter]);
 
   // Helper to get display name (uses utility from groupTypes)
@@ -612,29 +614,7 @@ export function GroupMemberList({
               bg={inputBg}
             />
           </Box>
-          {availableRoles.length > 1 && (
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                const next = e.target.value;
-                if (next === "all" || availableRoles.includes(next as GroupRole)) {
-                  setRoleFilter(next as GroupRole | "all");
-                }
-              }}
-              style={{
-                fontSize: "0.875rem",
-                padding: "4px 12px",
-                borderRadius: "6px",
-                border: "1px solid",
-                borderColor: "inherit",
-              }}
-            >
-              <option value="all">All roles</option>
-              {availableRoles.map((role) => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
-          )}
+          {/* Roles filter hidden until re-enabled */}
         </HStack>
       )}
 

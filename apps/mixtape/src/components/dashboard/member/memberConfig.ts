@@ -27,7 +27,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
     icon: "👤",
     subItems: [
       { key: "overview", label: "Overview", hidden: false, superuserOnly: true },
-      { key: "messages", label: "Messages", hidden: false },
+      { key: "messages", label: "Private Chats", hidden: false },
       { key: "edit-profile", label: "Edit Profile", hidden: false },
       { key: "preferences", label: "Preferences", hidden: true },
       { key: "activity", label: "Activity Feed", hidden: true },
@@ -103,7 +103,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
 export const MEMBER_DASHBOARD_CONFIG = {
   title: "Community Dashboard",
   menuItems: MEMBER_MENU_ITEMS,
-  defaultSection: "overview",
+  defaultSection: "my-groups",
   localStorageKey: "memberDashboard"
 };
 

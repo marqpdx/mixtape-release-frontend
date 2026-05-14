@@ -13,11 +13,12 @@ import {
   Flex,
   Menu
 } from "@chakra-ui/react";
+import { useConversationStore } from "@/stores/conversationStore";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { IconMoodSmile, IconArrowDown, IconSearch } from "@tabler/icons-react";
+import { IconMoodSmile, IconSearch } from "@tabler/icons-react";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
@@ -71,6 +72,12 @@ type ConversationDetailProps = {
 
 export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   const { user: identity } = useAuth();
+  const { conversations } = useConversationStore();
+  const conversation = conversations.find(c => c.slug === slug);
+  const chatTitle = conversation?.participants.length
+    ? conversation.participants.join(", ")
+    : slug;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -98,8 +105,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAckRef = useRef<{ slug: string; lastMessageId?: string } | null>(null);
 
-  // Track if user manually scrolled (to prevent auto-scroll)
-  const [userScrolledUp, setUserScrolledUp] = useState(false);
 
   const { setActiveConversationId, resetUnread } = useChatUnread();
 
@@ -168,7 +173,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         if (process.env.NODE_ENV === 'development') {
           console.log(`ConversationDetail: Got ${Array.isArray(messagesData) ? messagesData.length : 0} messages for ${slug}`);
         }
-        setMessages(Array.isArray(messagesData) ? [...messagesData].reverse() : []);
+        setMessages(Array.isArray(messagesData) ? messagesData : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -223,24 +228,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
     };
   }, [slug]);
 
-  // Scroll to bottom when messages change (but only if user hasn't scrolled up)
-  useEffect(() => {
-    if (!userScrolledUp && messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [messages, userScrolledUp]);
-
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth"
-      });
-    }
-    setUserScrolledUp(false);
-  };
 
   // Handle mention autocomplete
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -373,9 +360,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
       // Reload all messages to get updated reactions
       const messagesResponse = await axiosInstance.get(`/api/chat/conversations/${slug}/messages`);
       const messagesData = messagesResponse.data?.results || messagesResponse.data;
-      setMessages(Array.isArray(messagesData) ? [...messagesData].reverse() : []);
-      // Don't auto-scroll when adding reactions
-      setUserScrolledUp(true);
+      setMessages(Array.isArray(messagesData) ? messagesData : []);
 
     } catch (error) {
       console.error('🎭 Failed to add reaction:', error);
@@ -447,19 +432,8 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
           fontWeight="bold"
           color="text.primary"
         >
-          Chat: {slug}
+          Chat: {chatTitle}
         </Text>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={scrollToBottom}
-          color="text.secondary"
-        >
-          <IconArrowDown size={16} />
-          <Text display={["none", "inline"]} ml={1}>
-            Scroll to Bottom
-          </Text>
-        </Button>
       </Flex>
 
       {safeMessages.length > 0 && (
@@ -482,7 +456,73 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         </HStack>
       )}
 
-      {/* Messages Container */}
+      {/* Send message input — above message list */}
+      <Box position="relative">
+        <HStack gap={[1, 2]}>
+          <Input
+            ref={inputRef}
+            value={newMessage}
+            onChange={handleInputChange}
+            placeholder="Type a message... (@mention someone)"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !showMentions) {
+                handleSend();
+              }
+            }}
+            onInput={handleTyping}
+            bg="bg.input"
+            border="1px solid"
+            borderColor="border.input"
+            color="text.primary"
+            _placeholder={{ color: "text.secondary" }}
+            fontSize={["sm", "md"]}
+          />
+          <Button
+            onClick={handleSend}
+            colorScheme="green"
+            size={["sm", "md"]}
+          >
+            Send
+          </Button>
+        </HStack>
+
+        {/* Mention suggestions — positioned below input */}
+        {showMentions && mentionSuggestions.length > 0 && (
+          <Box
+            position="absolute"
+            top="100%"
+            left="0"
+            right="0"
+            bg="bg.surface"
+            border="1px solid"
+            borderColor="border.default"
+            borderRadius="md"
+            shadow="md"
+            maxH="200px"
+            overflowY="auto"
+            zIndex={10}
+          >
+            {mentionSuggestions.map((suggestion) => (
+              <Box
+                key={suggestion.id}
+                p={2}
+                cursor="pointer"
+                _hover={{ bg: "bg.subtle" }}
+                onClick={() => insertMention(suggestion)}
+              >
+                <Text fontWeight="medium" color="text.primary">
+                  {suggestion.mention_text}
+                </Text>
+                <Text fontSize="sm" color="text.secondary">
+                  {suggestion.display_name}
+                </Text>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+
+      {/* Messages Container — newest first */}
       <Box
         ref={messagesContainerRef}
         flex={1}
@@ -494,11 +534,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         bg="bg.canvas"
         borderRadius="md"
         scrollBehavior="smooth"
-        onScroll={(e) => {
-          const target = e.target as HTMLElement;
-          const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
-          setUserScrolledUp(!isAtBottom);
-        }}
       >
         {safeMessages.length === 0 ? (
           <Text color="text.secondary" textAlign="center" py={8}>
@@ -662,69 +697,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
         )}
       </Box>
 
-      {/* Mention suggestions */}
-      {showMentions && mentionSuggestions.length > 0 && (
-        <Box
-          position="absolute"
-          bottom={["50px", "60px"]}
-          left="0"
-          right="0"
-          bg="bg.surface"
-          border="1px solid"
-          borderColor="border.default"
-          borderRadius="md"
-          shadow="md"
-          maxH="200px"
-          overflowY="auto"
-          zIndex={10}
-        >
-          {mentionSuggestions.map((suggestion) => (
-            <Box
-              key={suggestion.id}
-              p={2}
-              cursor="pointer"
-              _hover={{ bg: "bg.subtle" }}
-              onClick={() => insertMention(suggestion)}
-            >
-              <Text fontWeight="medium" color="text.primary">
-                {suggestion.mention_text}
-              </Text>
-              <Text fontSize="sm" color="text.secondary">
-                {suggestion.display_name}
-              </Text>
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {/* Send message input */}
-      <HStack gap={[1, 2]}>
-        <Input
-          ref={inputRef}
-          value={newMessage}
-          onChange={handleInputChange}
-          placeholder="Type a message... (@mention someone)"
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && !showMentions) {
-              handleSend();
-            }
-          }}
-          onInput={handleTyping}
-          bg="bg.input"
-          border="1px solid"
-          borderColor="border.input"
-          color="text.primary"
-          _placeholder={{ color: "text.secondary" }}
-          fontSize={["sm", "md"]}
-        />
-        <Button
-          onClick={handleSend}
-          colorScheme="green"
-          size={["sm", "md"]}
-        >
-          Send
-        </Button>
-      </HStack>
     </VStack>
   );
 };

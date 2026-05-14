@@ -350,7 +350,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       <Card.Header>
         <Flex align="center" gap={2}>
           <IconFolder size={20} />
-          <Heading size="md">Resources</Heading>
+          <Heading size="md">Core Resources</Heading>
         </Flex>
       </Card.Header>
       <Card.Body>
@@ -424,17 +424,17 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       case "announcements":
         return renderAnnouncementsBlock();
       case "upcoming_events":
-        return renderUpcomingEventsBlock();
+        return null;
       case "recent_posts":
         return renderRecentPostsBlock();
       case "member_highlights":
         return renderMemberHighlightsBlock();
       case "stewards":
-        return renderStewardsBlock();
+        return null;
       case "pinned_resources":
         return renderPinnedResourcesBlock();
       case "pinned_writing":
-        return renderPinnedWritingBlock();
+        return null;
       case "quick_links":
         return renderQuickLinksBlock();
       default:
@@ -488,18 +488,6 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
                 {showFullDescription ? "Show less" : "Read more"}
               </Button>
             )}
-          </Card.Body>
-        </Card.Root>
-
-        <Card.Root>
-          <Card.Header>
-            <Heading size="md">Stewardship</Heading>
-          </Card.Header>
-          <Card.Body>
-            <Stack gap={4}>
-              {renderLeaderRow("Admins", leadership.admins)}
-              {renderLeaderRow("Stewards", leadership.stewards)}
-            </Stack>
           </Card.Body>
         </Card.Root>
 

@@ -30,8 +30,8 @@ interface GroupTabsProps {
 const memberTabs = [
   { key: 'overview', label: 'Overview', icon: IconInfoHexagon },
   { key: 'members', label: 'Group Members', icon: IconUsers },
-  { key: 'threadworks', label: 'Threadworks', icon: IconMessages },
-  { key: 'collections', label: 'Collections', icon: IconFolder },
+  { key: 'threadworks', label: 'Conversations', icon: IconMessages },
+  { key: 'collections', label: 'Content Collections', icon: IconFolder },
 ];
 
 const publicTabs = [

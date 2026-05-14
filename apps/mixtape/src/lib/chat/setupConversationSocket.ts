@@ -83,7 +83,7 @@ export const setupConversationSocket = (
           id: messageId || `temp-${Date.now()}-${Math.random()}`,
         };
         console.log('📨 Adding message to state:', newMessage);
-        return [...prev, newMessage];
+        return [newMessage, ...prev];
       });
     } else {
       // 🔔 Increment unread count for background conversations

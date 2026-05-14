@@ -110,10 +110,10 @@ export default function ThreadworksWorkArea({
         <Flex justify="space-between" align="center" mb={6}>
           <VStack align="start" gap={2}>
             <Heading size="2xl" color="green.500">
-              Threadworks
+              Threadworks Conversations
             </Heading>
             <Text color={textColor} fontSize="sm">
-              Community forums for discussion and conversations
+              Community forums for long-ranging discussion
             </Text>
           </VStack>
 

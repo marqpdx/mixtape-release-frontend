@@ -91,7 +91,7 @@ export default function MessageCenter() {
               <Flex align="center" gap={2}>
                 <IconMessageCircle size={20} />
                 <Text fontSize="lg" fontWeight="bold" color="text.primary">
-                  Messages
+                  Private Chats
                 </Text>
                 <HelpTip helpKey="chat-overview" />
               </Flex>
@@ -172,7 +172,7 @@ export default function MessageCenter() {
         <Flex align="center" gap={2}>
           <IconMessageCircle size={20} />
           <Text fontSize="xl" fontWeight="bold" color="text.primary">
-            Messages
+            Private Chats
           </Text>
           <HelpTip helpKey="chat-overview" />
         </Flex>
@@ -230,10 +230,7 @@ export default function MessageCenter() {
               <IconMessageCircle size={48} color="var(--chakra-colors-text-secondary)" />
               <VStack gap={2}>
                 <Text fontSize="lg" color="text.secondary" textAlign="center">
-                  Select a conversation to start chatting
-                </Text>
-                <Text fontSize="sm" color="text.secondary" textAlign="center">
-                  Or click "New Chat" to start a conversation
+                  Select a chat to begin
                 </Text>
               </VStack>
             </VStack>
