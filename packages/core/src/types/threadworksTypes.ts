@@ -7,6 +7,7 @@ import { IsoDateString } from "./groupTypes";
 
 export type ForumVisibility = 'public' | 'members' | 'group';
 export type DiscussionStatus = 'active' | 'archived' | 'pinned';
+export type ForumAudienceType = 'all_members' | 'subset';
 
 // ---------- User (embedded in forum/discussion data) ----------
 
@@ -43,6 +44,13 @@ export interface Discussion {
   last_post?: Post;
 }
 
+export interface ForumAudienceMember {
+  id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+}
+
 export interface Forum {
   id: string;
   slug: string;
@@ -56,6 +64,10 @@ export interface Forum {
   discussion_count: number;
   recent_participants: ThreadworksUser[];
   last_activity?: IsoDateString;
+  audience_type: ForumAudienceType;
+  auto_add_new_members: boolean;
+  audience_member_count?: number | null;
+  audience_members?: ForumAudienceMember[];
 }
 
 // ---------- API Response Types ----------
@@ -77,9 +89,18 @@ export interface CreateForumData {
   title: string;
   description: string;
   visibility: ForumVisibility;
+  audience_type?: ForumAudienceType;
+  auto_add_new_members?: boolean;
+  member_ids?: string[];
 }
 
 export interface UpdateForumData extends Partial<CreateForumData> {}
+
+export interface UpdateForumAudienceData {
+  audience_type?: ForumAudienceType;
+  auto_add_new_members?: boolean;
+  member_ids?: string[];
+}
 
 export interface CreateDiscussionData {
   title: string;

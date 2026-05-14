@@ -209,6 +209,7 @@ export default function ThreadworksWorkArea({
           onClose={() => setCreateModalOpen(false)}
           onSubmit={handleCreateForum}
           isSubmitting={mutations.isCreatingForum}
+          groupSlug={groupSlug}
         />
       </Box>
     </WorkAreaWrapper>

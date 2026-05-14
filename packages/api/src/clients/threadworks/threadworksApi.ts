@@ -7,6 +7,7 @@ import {
   Post,
   CreateForumData,
   UpdateForumData,
+  UpdateForumAudienceData,
   CreateDiscussionData,
   UpdateDiscussionData,
   CreatePostData,
@@ -77,6 +78,19 @@ export async function createForum(
     : data;
 
   const response = await axiosInstance.post<Forum>(endpoint, payload);
+  return response.data;
+}
+
+/**
+ * Update audience for a group-scoped forum
+ */
+export async function updateForumAudience(
+  forumSlug: string,
+  data: UpdateForumAudienceData,
+  groupSlug: string
+): Promise<Forum> {
+  const endpoint = `/api/groups/${groupSlug}/threadworks/${forumSlug}/audience`;
+  const response = await axiosInstance.patch<Forum>(endpoint, data);
   return response.data;
 }
 

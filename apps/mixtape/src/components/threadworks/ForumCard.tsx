@@ -60,9 +60,22 @@ export default function ForumCard({ forum, onClick }: ForumCardProps) {
             <Heading size="md" lineClamp={2}>
               {forum.title}
             </Heading>
-            <Badge colorScheme={getVisibilityColor(forum.visibility)} size="sm">
-              {forum.visibility}
-            </Badge>
+            <HStack gap={2} wrap="wrap">
+              <Badge colorScheme={getVisibilityColor(forum.visibility)} size="sm">
+                {forum.visibility}
+              </Badge>
+              {forum.audience_type === 'subset' ? (
+                <Badge colorScheme="orange" size="sm">
+                  {forum.audience_member_count != null
+                    ? `${forum.audience_member_count} members`
+                    : 'Subset'}
+                </Badge>
+              ) : (
+                <Badge colorScheme="gray" variant="subtle" size="sm">
+                  All Members
+                </Badge>
+              )}
+            </HStack>
           </VStack>
         </Flex>
       </Card.Header>
