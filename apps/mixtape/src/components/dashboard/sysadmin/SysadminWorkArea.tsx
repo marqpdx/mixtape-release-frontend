@@ -18,7 +18,11 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { UserIdentity } from "@mixtape/core/types/auth";
-import type { OpsPostgresDetailSection } from "@mixtape/api/clients/ops/opsApi";
+import type {
+  OpsApplicationSurface,
+  OpsApplicationSurfacesSection,
+  OpsPostgresDetailSection,
+} from "@mixtape/api/clients/ops/opsApi";
 import { useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
 
 interface SysadminWorkAreaProps extends WorkAreaProps {
@@ -148,12 +152,18 @@ function formatPercent(value: number | undefined | null): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function formatAge(seconds: number | undefined | null): string {
+  if (seconds === undefined || seconds === null) return "—";
+  return `${formatUptime(seconds)} ago`;
+}
+
 // Emoji map for tiles
 const TILE_EMOJI: Record<string, string> = {
   "Core services": "⚡",
   "Storage": "💾",
   "Background work": "⚙️",
   "Backups": "🗄️",
+  "Application Surfaces": "🖥️",
   // Fallbacks
   "Database": "🗃️",
   "API": "🌐",
@@ -377,6 +387,23 @@ export default function SysadminWorkArea({
     return snapshot?.postgres_detail as OpsPostgresDetailSection | undefined;
   }, [snapshot]);
 
+  const applicationSurfaces = useMemo(() => {
+    return snapshot?.application_surfaces as OpsApplicationSurfacesSection | undefined;
+  }, [snapshot]);
+
+  const applicationSurfaceEntries = useMemo(() => {
+    const surfaces = applicationSurfaces?.data?.surfaces || {};
+    return Object.entries(surfaces) as Array<[string, OpsApplicationSurface]>;
+  }, [applicationSurfaces]);
+
+  const applicationSurfaceSummary = useMemo(() => {
+    const total = applicationSurfaceEntries.length;
+    const healthy = applicationSurfaceEntries.filter(([, surface]) => surface.status === "healthy").length;
+    const degraded = applicationSurfaceEntries.filter(([, surface]) => surface.status === "degraded").length;
+    const critical = applicationSurfaceEntries.filter(([, surface]) => surface.status === "critical").length;
+    return { total, healthy, degraded, critical };
+  }, [applicationSurfaceEntries]);
+
   const backupsSummary = useMemo(() => {
     const backups = services.backups as ServiceUnits & { summary?: BackupsSummary } | undefined;
     return backups?.summary;
@@ -408,8 +435,23 @@ export default function SysadminWorkArea({
       detail,
       hint,
     });
+
+    const surfaceStatus = applicationSurfaces?.status || "unavailable";
+    const surfaceDetail = applicationSurfaceEntries.length
+      ? `${applicationSurfaceSummary.healthy}/${applicationSurfaceSummary.total} healthy • ${applicationSurfaceEntries.map(([, surface]) => `${surface.label}: ${surface.status}`).join(" • ")}`
+      : "No application surfaces configured";
+    const surfaceHint = applicationSurfaces?.collected_at
+      ? `Collected ${new Date(applicationSurfaces.collected_at).toLocaleString()}`
+      : "Local application surfaces are probed live during snapshot generation.";
+
+    tiles.push({
+      title: "Application Surfaces",
+      status: surfaceStatus,
+      detail: surfaceDetail,
+      hint: surfaceHint,
+    });
     return tiles;
-  }, [postgresDetail, summary]);
+  }, [applicationSurfaceEntries, applicationSurfaceSummary, applicationSurfaces, postgresDetail, summary]);
 
   const quickListItems = useMemo(() => {
     const items: QuickListItem[] = [];
@@ -452,6 +494,18 @@ export default function SysadminWorkArea({
       status: postgresDetail?.status || ((services.postgres as ServiceState | undefined)?.status || "unavailable"),
       detail: `${postgresDetail?.data?.connection_breakdown?.active ?? applicationData.postgres_active_connections ?? "—"} active • ${formatBytes(postgresDetail?.data?.db_size_bytes)}`,
       hint: `Cache hit ${formatPercent(postgresDetail?.data?.cache_hit_ratio)} • ${postgresDetail?.data?.replication?.length ? `${postgresDetail.data.replication.length} replica(s)` : "no replication"}`,
+    });
+
+    pushItem({
+      key: "application-surfaces",
+      label: "Application Surfaces",
+      status: applicationSurfaces?.status || "unavailable",
+      detail: applicationSurfaceEntries.length
+        ? `${applicationSurfaceSummary.healthy}/${applicationSurfaceSummary.total} healthy`
+        : "No surfaces configured",
+      hint: applicationSurfaces?.collected_at
+        ? `Collected ${new Date(applicationSurfaces.collected_at).toLocaleString()}`
+        : "Live local probes pending",
     });
 
     Object.entries(services).forEach(([key, value]) => {
@@ -511,6 +565,9 @@ export default function SysadminWorkArea({
     applicationData,
     applicationSection,
     applicationSnapshotMeta,
+    applicationSurfaceEntries,
+    applicationSurfaceSummary,
+    applicationSurfaces,
     backupsSummary,
     diskData,
     postgresDetail,
@@ -764,6 +821,223 @@ export default function SysadminWorkArea({
                       Snapshot notes
                     </Text>
                     {postgresErrors.map((errorText) => (
+                      <Text key={errorText} fontSize="xs" color="gray.500">
+                        • {errorText}
+                      </Text>
+                    ))}
+                  </Box>
+                )}
+              </VStack>
+            </Card.Body>
+          </Card.Root>
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "svc-application-surfaces") {
+    const surfacesStatus = applicationSurfaces?.status || "unavailable";
+    const surfaceErrors = applicationSurfaces?.errors || [];
+    const collectedAt = applicationSurfaces?.collected_at
+      ? new Date(applicationSurfaces.collected_at).toLocaleString()
+      : null;
+
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={4}>
+          <HStack justify="space-between">
+            <Text fontSize="xl" fontWeight="bold">Application Surfaces</Text>
+            <StatusBadge status={surfacesStatus} />
+          </HStack>
+
+          <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(surfacesStatus)}.500`}>
+            <Card.Header>
+              <HStack justify="space-between">
+                <Text fontWeight="semibold">Surface Monitor</Text>
+                <StatusBadge status={surfacesStatus} />
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={4}>
+                <HStack justify="space-between" align="start" wrap="wrap">
+                  <VStack align="start" gap={1}>
+                    <Text fontSize="sm" color="gray.500">
+                      {collectedAt ? `Collected ${collectedAt}` : "No application surface snapshot collected yet"}
+                    </Text>
+                    {applicationSurfaces?.source && (
+                      <Text fontSize="xs" color="gray.500">
+                        Source: {applicationSurfaces.source}
+                      </Text>
+                    )}
+                  </VStack>
+                  <Button size="sm" variant="outline" onClick={handleRefresh} loading={isFetching}>
+                    Refresh
+                  </Button>
+                </HStack>
+
+                <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Total Surfaces</Text>
+                    <Text fontSize="2xl" fontWeight="bold">{applicationSurfaceSummary.total}</Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Healthy</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={applicationSurfaceSummary.healthy > 0 ? "green.500" : undefined}>
+                      {applicationSurfaceSummary.healthy}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Degraded</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={applicationSurfaceSummary.degraded > 0 ? "orange.500" : undefined}>
+                      {applicationSurfaceSummary.degraded}
+                    </Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Critical</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={applicationSurfaceSummary.critical > 0 ? "red.500" : undefined}>
+                      {applicationSurfaceSummary.critical}
+                    </Text>
+                  </VStack>
+                </SimpleGrid>
+
+                <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
+                  {applicationSurfaceEntries.map(([surfaceKey, surface]) => (
+                    <Card.Root
+                      key={surfaceKey}
+                      variant="outline"
+                      borderLeftWidth="4px"
+                      borderLeftColor={`${getStatusColor(surface.status)}.500`}
+                    >
+                      <Card.Header>
+                        <HStack justify="space-between" align="start">
+                          <VStack align="start" gap={0}>
+                            <Text fontWeight="semibold">{surface.label}</Text>
+                            <Text fontSize="xs" color="gray.500">
+                              {surface.provider} • {surface.environment} • {surface.surface_type}
+                            </Text>
+                          </VStack>
+                          <StatusBadge status={surface.status} />
+                        </HStack>
+                      </Card.Header>
+                      <Card.Body>
+                        <VStack align="stretch" gap={3}>
+                          <HStack justify="space-between">
+                            <Text fontSize="sm" color="gray.500">Endpoint</Text>
+                            <Text fontSize="sm" fontWeight="bold">{surface.endpoint || "—"}</Text>
+                          </HStack>
+                          <HStack justify="space-between">
+                            <Text fontSize="sm" color="gray.500">Summary</Text>
+                            <Text fontSize="sm" fontWeight="bold">{surface.summary?.headline || surface.status}</Text>
+                          </HStack>
+                          <Text fontSize="sm">{surface.summary?.detail || "No summary available."}</Text>
+
+                          <SimpleGrid columns={{ base: 2, md: 4 }} gap={3}>
+                            <VStack align="stretch" gap={1}>
+                              <Text fontSize="xs" color="gray.500">Port</Text>
+                              <Text fontWeight="bold">{surface.runtime?.port ?? "—"}</Text>
+                            </VStack>
+                            <VStack align="stretch" gap={1}>
+                              <Text fontSize="xs" color="gray.500">Process</Text>
+                              <Text fontWeight="bold">
+                                {surface.runtime?.process_detected === undefined
+                                  ? "—"
+                                  : surface.runtime.process_detected
+                                    ? "detected"
+                                    : "not detected"}
+                              </Text>
+                            </VStack>
+                            <VStack align="stretch" gap={1}>
+                              <Text fontSize="xs" color="gray.500">Deploy Age</Text>
+                              <Text fontWeight="bold">{formatAge(surface.deploy?.age_seconds)}</Text>
+                            </VStack>
+                            <VStack align="stretch" gap={1}>
+                              <Text fontSize="xs" color="gray.500">Runtime Errors</Text>
+                              <Text fontWeight="bold">{surface.usage?.runtime_errors ?? "—"}</Text>
+                            </VStack>
+                          </SimpleGrid>
+
+                          {surface.probes && surface.probes.length > 0 && (
+                            <Table.Root size="sm">
+                              <Table.Header>
+                                <Table.Row>
+                                  <Table.ColumnHeader>Probe</Table.ColumnHeader>
+                                  <Table.ColumnHeader>Status</Table.ColumnHeader>
+                                  <Table.ColumnHeader textAlign="right">HTTP</Table.ColumnHeader>
+                                  <Table.ColumnHeader textAlign="right">Latency</Table.ColumnHeader>
+                                </Table.Row>
+                              </Table.Header>
+                              <Table.Body>
+                                {surface.probes.map((probe) => (
+                                  <Table.Row key={`${surfaceKey}-${probe.name}`}>
+                                    <Table.Cell>
+                                      <VStack align="start" gap={0}>
+                                        <Text>{probe.name}</Text>
+                                        {probe.url && (
+                                          <Text fontSize="xs" color="gray.500">
+                                            {probe.url}
+                                          </Text>
+                                        )}
+                                      </VStack>
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                      <StatusBadge status={probe.status} />
+                                    </Table.Cell>
+                                    <Table.Cell textAlign="right">{probe.http_status ?? "—"}</Table.Cell>
+                                    <Table.Cell textAlign="right">
+                                      {probe.latency_ms !== undefined && probe.latency_ms !== null
+                                        ? `${probe.latency_ms}ms`
+                                        : "—"}
+                                    </Table.Cell>
+                                  </Table.Row>
+                                ))}
+                              </Table.Body>
+                            </Table.Root>
+                          )}
+
+                          {surface.probes?.some((probe) => probe.detail) && (
+                            <Box pt={2} borderTopWidth="1px">
+                              <Text fontSize="xs" color="gray.500" mb={1}>
+                                Probe notes
+                              </Text>
+                              {surface.probes
+                                .filter((probe) => probe.detail)
+                                .map((probe) => (
+                                  <Text key={`${surfaceKey}-${probe.name}-detail`} fontSize="xs" color="gray.500">
+                                    • {probe.name}: {probe.detail}
+                                  </Text>
+                                ))}
+                            </Box>
+                          )}
+
+                          {surface.errors && surface.errors.length > 0 && (
+                            <Box pt={2} borderTopWidth="1px">
+                              <Text fontSize="xs" color="gray.500" mb={1}>
+                                Surface notes
+                              </Text>
+                              {surface.errors.map((errorText) => (
+                                <Text key={errorText} fontSize="xs" color="gray.500">
+                                  • {errorText}
+                                </Text>
+                              ))}
+                            </Box>
+                          )}
+                        </VStack>
+                      </Card.Body>
+                    </Card.Root>
+                  ))}
+                </SimpleGrid>
+
+                {applicationSurfaceEntries.length === 0 && (
+                  <Text fontSize="sm" color="gray.500">
+                    No application surfaces are configured yet.
+                  </Text>
+                )}
+                {surfaceErrors.length > 0 && (
+                  <Box pt={2} borderTopWidth="1px">
+                    <Text fontSize="xs" color="gray.500" mb={1}>
+                      Section notes
+                    </Text>
+                    {surfaceErrors.map((errorText) => (
                       <Text key={errorText} fontSize="xs" color="gray.500">
                         • {errorText}
                       </Text>

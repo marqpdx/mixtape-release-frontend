@@ -61,6 +61,66 @@ export interface OpsPostgresDetailSection {
   };
 }
 
+export interface OpsApplicationSurfaceProbe {
+  name: string;
+  url?: string;
+  status: "healthy" | "degraded" | "critical" | "unavailable" | string;
+  http_status?: number | null;
+  latency_ms?: number | null;
+  detail?: string;
+}
+
+export interface OpsApplicationSurface {
+  label: string;
+  surface_type: "nextjs" | "mobile" | "webapp" | string;
+  provider: "local-next" | "vercel" | "expo" | "unknown" | string;
+  environment: "local" | "preview" | "production" | string;
+  status: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
+  endpoint?: string;
+  notes?: string[];
+  errors?: string[];
+  summary?: {
+    headline?: string;
+    detail?: string;
+  };
+  probes?: OpsApplicationSurfaceProbe[];
+  runtime?: {
+    process_detected?: boolean;
+    pid?: number | null;
+    uptime_seconds?: number | null;
+    port?: number | null;
+  };
+  deploy?: {
+    state?: string;
+    url?: string;
+    age_seconds?: number | null;
+  };
+  routing?: {
+    production_domain?: string;
+    alias_count?: number | null;
+  };
+  checks?: {
+    status?: string;
+    passing?: number | null;
+    failing?: number | null;
+  };
+  usage?: {
+    runtime_errors?: number | null;
+  };
+}
+
+export interface OpsApplicationSurfacesSection {
+  status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
+  latency_ms?: number;
+  collected_at?: string | null;
+  expires_at?: string | null;
+  source?: string | null;
+  errors?: string[];
+  data?: {
+    surfaces?: Record<string, OpsApplicationSurface>;
+  };
+}
+
 export interface OpsHealthSnapshotResponse {
   schema_version: string;
   generated_at: string;
@@ -71,6 +131,7 @@ export interface OpsHealthSnapshotResponse {
   services: Record<string, unknown>;
   application: Record<string, unknown>;
   postgres_detail?: OpsPostgresDetailSection;
+  application_surfaces?: OpsApplicationSurfacesSection;
 }
 
 // Cache-busting parameter to bypass nginx/proxy caching

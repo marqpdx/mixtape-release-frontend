@@ -244,6 +244,7 @@ export const SYSADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "🚨",
     subItems: [
       { key: "svc-postgres", label: "Database" },
+      { key: "svc-application-surfaces", label: "Application Surfaces" },
       { key: "svc-django", label: "API" },
       { key: "svc-rabbitmq", label: "Message Broker" },
       { key: "svc-backups", label: "Backups" },
@@ -353,6 +354,7 @@ export const DASHBOARD_ROUTES: Record<string, DashboardType> = {
   // Sysadmin sections
   'system-overview': 'sysadmin',
   'svc-postgres': 'sysadmin',
+  'svc-application-surfaces': 'sysadmin',
   'svc-django': 'sysadmin',
   'svc-rabbitmq': 'sysadmin',
   'svc-backups': 'sysadmin',
