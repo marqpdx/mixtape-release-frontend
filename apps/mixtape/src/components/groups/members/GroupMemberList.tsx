@@ -18,7 +18,8 @@ import {
   Avatar,
   Input,
 } from "@chakra-ui/react";
-import { MouseEvent, useEffect, useMemo, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useState, useCallback } from "react";
+import { GroupMemberProfilePanel } from "./GroupMemberProfilePanel";
 import Image from "next/image";
 import {
   IconGrid3x3,
@@ -69,6 +70,7 @@ export function GroupMemberList({
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState<GroupRole | "all">("all");
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
@@ -140,22 +142,39 @@ export function GroupMemberList({
     };
   };
 
-  const handleMemberClick = (membership: GroupMembership) => {
-    if (membership.username) {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          "memberProfileReturn",
-          JSON.stringify({
-            slug: group.slug,
-            title: group.title,
-          })
-        );
-      }
-      window.location.href = `/members/${membership.username}`;
-      return;
+  const handleMemberClick = useCallback((membership: GroupMembership) => {
+    const idx = filteredMembers.findIndex((m) => m.member_id === membership.member_id);
+    if (idx !== -1) {
+      setSelectedIndex(idx);
+    } else {
+      onMemberClick?.(membership);
     }
-    onMemberClick?.(membership);
-  };
+  }, [filteredMembers, onMemberClick]);
+
+  const handleReturn = useCallback(() => setSelectedIndex(null), []);
+
+  const handleViewComplete = useCallback((username: string) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        "memberProfileReturn",
+        JSON.stringify({ slug: group.slug, title: group.title })
+      );
+      window.location.href = `/members/${username}`;
+    }
+  }, [group.slug, group.title]);
+
+  // Escape key closes the panel
+  useEffect(() => {
+    if (selectedIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedIndex(null);
+      if (e.key === "ArrowLeft" && selectedIndex > 0) setSelectedIndex((i) => (i ?? 0) - 1);
+      if (e.key === "ArrowRight" && selectedIndex < filteredMembers.length - 1)
+        setSelectedIndex((i) => (i ?? 0) + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIndex, filteredMembers.length]);
 
   const handleRemoveMember = async (membership: GroupMembership) => {
     const displayName = getDisplayName(membership);
@@ -566,8 +585,44 @@ export function GroupMemberList({
     );
   };
 
+  const selectedMember = selectedIndex !== null ? filteredMembers[selectedIndex] : null;
+
   return (
-    <Box>
+    <Box position="relative">
+      {/* In-page member profile panel */}
+      <Box
+        position={selectedMember ? "relative" : "absolute"}
+        top={0}
+        left={0}
+        right={0}
+        opacity={selectedMember ? 1 : 0}
+        pointerEvents={selectedMember ? "auto" : "none"}
+        transition="opacity 0.15s ease"
+        zIndex={selectedMember ? 1 : 0}
+        aria-hidden={!selectedMember}
+      >
+        {selectedMember?.username && (
+          <GroupMemberProfilePanel
+            username={selectedMember.username}
+            displayName={selectedMember.display_name || selectedMember.username || ""}
+            avatarUrl={selectedMember.profile_image || undefined}
+            onReturn={handleReturn}
+            onPrev={() => setSelectedIndex((i) => Math.max(0, (i ?? 0) - 1))}
+            onNext={() => setSelectedIndex((i) => Math.min(filteredMembers.length - 1, (i ?? 0) + 1))}
+            hasPrev={selectedIndex !== null && selectedIndex > 0}
+            hasNext={selectedIndex !== null && selectedIndex < filteredMembers.length - 1}
+            onViewComplete={() => handleViewComplete(selectedMember.username!)}
+          />
+        )}
+      </Box>
+
+      {/* Member list — fades out when a profile is open */}
+      <Box
+        opacity={selectedMember ? 0 : 1}
+        pointerEvents={selectedMember ? "none" : "auto"}
+        transition="opacity 0.15s ease"
+        aria-hidden={!!selectedMember}
+      >
       {/* Header with view toggle */}
       <Flex justify="space-between" align="center" mb={4}>
         <VStack align="start" gap={1}>
@@ -676,6 +731,7 @@ export function GroupMemberList({
           {viewMode === 'grid' ? <GridView /> : <TableView />}
         </>
       )}
+      </Box>{/* end member list fade box */}
     </Box>
   );
 }
