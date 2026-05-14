@@ -30,6 +30,7 @@ import {
   IconFold,
 } from "@tabler/icons-react";
 import { openParentForSection } from "@components/groups/navigationUtils";
+import { readPreferenceSync } from "@mixtape/api/hooks/useUserPreferences";
 
 export default function DashboardLayout({
   title,
@@ -65,8 +66,11 @@ export default function DashboardLayout({
 
   const [activeSection, setActiveSection] = useState<string>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(localStorageKey);
-      return stored || defaultSection;
+      const rememberLast = readPreferenceSync("remember_last_work_area", false);
+      if (rememberLast) {
+        const stored = localStorage.getItem(localStorageKey);
+        return stored || defaultSection;
+      }
     }
     return defaultSection;
   });

@@ -29,7 +29,7 @@ export const MEMBER_MENU_ITEMS: MenuItem[] = [
       { key: "overview", label: "Overview", hidden: false, superuserOnly: true },
       { key: "messages", label: "Private Chats", hidden: false },
       { key: "edit-profile", label: "Edit Profile", hidden: false },
-      { key: "preferences", label: "Preferences", hidden: true },
+      { key: "preferences", label: "Preferences", hidden: false },
       { key: "activity", label: "Activity Feed", hidden: true },
     ]
   },

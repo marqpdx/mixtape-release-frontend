@@ -3,8 +3,9 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
-import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem } from "@chakra-ui/react";
-import { IconShoppingBag, IconFolder, IconCalendar, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem, IconButton } from "@chakra-ui/react";
+import { Tooltip } from "@components/ui/tooltip";
+import { IconShoppingBag, IconFolder, IconCalendar, IconChevronDown, IconChevronRight, IconX, IconMessage, IconSpeakerphone, IconUsers } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
@@ -53,7 +54,41 @@ function truncateWordsAtBoundary(input: string, limit: number): string {
   return `${words.slice(0, limit).join(" ")}...`;
 }
 
+const DISMISSABLE_BLOCKS = [
+  { key: "welcome", label: "Welcome", icon: IconMessage },
+  { key: "announcements", label: "Announcements", icon: IconSpeakerphone },
+  { key: "pinned_resources", label: "Core Resources", icon: IconFolder },
+  { key: "member_highlights", label: "Members", icon: IconUsers },
+] as const;
+
+type DismissableKey = (typeof DISMISSABLE_BLOCKS)[number]["key"];
+
 export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
+  const dismissStorageKey = `group:${group.slug}:dismissed-blocks`;
+  const [dismissedBlocks, setDismissedBlocks] = useState<DismissableKey[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(dismissStorageKey);
+      return raw ? (JSON.parse(raw) as DismissableKey[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const dismissBlock = (key: DismissableKey) => {
+    const next = [...dismissedBlocks, key];
+    setDismissedBlocks(next);
+    localStorage.setItem(dismissStorageKey, JSON.stringify(next));
+  };
+
+  const restoreBlock = (key: DismissableKey) => {
+    const next = dismissedBlocks.filter((k) => k !== key);
+    setDismissedBlocks(next);
+    localStorage.setItem(dismissStorageKey, JSON.stringify(next));
+  };
+
+  const isDismissed = (key: DismissableKey) => dismissedBlocks.includes(key);
+
   const welcomeStorageKey = `group:${group.slug}:welcome-collapsed`;
   const [welcomeOpen, setWelcomeOpen] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -155,6 +190,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
   );
 
   const renderWelcomeBlock = () => {
+    if (isDismissed("welcome")) return null;
     if (!welcomePin) {
       return canCreateWelcomeNote ? null : null;
     }
@@ -162,6 +198,13 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     return (
       <Card.Root>
         <Card.Body>
+          <Flex justify="flex-end" mb={1}>
+            <Tooltip content="Dismiss Welcome">
+              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
+                <IconX size={12} />
+              </IconButton>
+            </Tooltip>
+          </Flex>
           <Collapsible.Root
             open={welcomeOpen}
             onOpenChange={({ open }) => {
@@ -231,16 +274,26 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     );
   };
 
-  const renderAnnouncementsBlock = () => (
-    <Card.Root>
-      <Card.Header>
-        <Heading size="md">Announcements</Heading>
-      </Card.Header>
-      <Card.Body>
-        <Text color="fg.muted">No announcements yet.</Text>
-      </Card.Body>
-    </Card.Root>
-  );
+  const renderAnnouncementsBlock = () => {
+    if (isDismissed("announcements")) return null;
+    return (
+      <Card.Root>
+        <Card.Header>
+          <Flex justify="space-between" align="center">
+            <Heading size="md">Announcements</Heading>
+            <Tooltip content="Dismiss Announcements">
+              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("announcements")}>
+                <IconX size={12} />
+              </IconButton>
+            </Tooltip>
+          </Flex>
+        </Card.Header>
+        <Card.Body>
+          <Text color="fg.muted">No announcements yet.</Text>
+        </Card.Body>
+      </Card.Root>
+    );
+  };
 
   const renderUpcomingEventsBlock = () => (
     <Card.Root>
@@ -284,10 +337,19 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
   const renderRecentPostsBlock = () => null; // Hidden until wired up
 
-  const renderMemberHighlightsBlock = () => (
+  const renderMemberHighlightsBlock = () => {
+    if (isDismissed("member_highlights")) return null;
+    return (
     <Card.Root>
       <Card.Header>
-        <Heading size="md">Members</Heading>
+        <Flex justify="space-between" align="center">
+          <Heading size="md">Members</Heading>
+          <Tooltip content="Dismiss Members">
+            <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("member_highlights")}>
+              <IconX size={12} />
+            </IconButton>
+          </Tooltip>
+        </Flex>
       </Card.Header>
       <Card.Body>
         {membersLoading ? (
@@ -327,7 +389,8 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
         )}
       </Card.Body>
     </Card.Root>
-  );
+    );
+  };
 
   const renderStewardsBlock = () => (
     <Card.Root>
@@ -345,12 +408,21 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
   const totalCollectionItems = collections?.reduce((sum, c) => sum + (c.item_count || 0), 0) ?? 0;
 
-  const renderPinnedResourcesBlock = () => (
+  const renderPinnedResourcesBlock = () => {
+    if (isDismissed("pinned_resources")) return null;
+    return (
     <Card.Root>
       <Card.Header>
-        <Flex align="center" gap={2}>
-          <IconFolder size={20} />
-          <Heading size="md">Core Resources</Heading>
+        <Flex justify="space-between" align="center">
+          <Flex align="center" gap={2}>
+            <IconFolder size={20} />
+            <Heading size="md">Core Resources</Heading>
+          </Flex>
+          <Tooltip content="Dismiss Core Resources">
+            <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("pinned_resources")}>
+              <IconX size={12} />
+            </IconButton>
+          </Tooltip>
         </Flex>
       </Card.Header>
       <Card.Body>
@@ -368,7 +440,8 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
         )}
       </Card.Body>
     </Card.Root>
-  );
+    );
+  };
 
   const renderPinnedWritingBlock = () => {
     // If a welcome pin exists, show it here as well (welcome pin IS the pinned writing)
@@ -580,8 +653,29 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     </Grid>
   );
 
+  const dismissedMeta = DISMISSABLE_BLOCKS.filter((b) => dismissedBlocks.includes(b.key));
+
   return (
     <Stack gap={6}>
+      {/* Restore bar — shows icons for any dismissed blocks */}
+      {dismissedMeta.length > 0 && (
+        <Flex align="center" gap={2} justify="flex-end" flexWrap="wrap">
+          <Text fontSize="xs" color="fg.muted">Dismissed:</Text>
+          {dismissedMeta.map(({ key, label, icon: Icon }) => (
+            <Tooltip key={key} content={`Restore ${label}`}>
+              <IconButton
+                aria-label={`Restore ${label}`}
+                size="xs"
+                variant="outline"
+                onClick={() => restoreBlock(key as DismissableKey)}
+              >
+                <Icon size={14} />
+              </IconButton>
+            </Tooltip>
+          ))}
+        </Flex>
+      )}
+
       {layoutLoading && (
         <Card.Root>
           <Card.Body>

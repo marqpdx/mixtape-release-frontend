@@ -30,6 +30,7 @@ import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@m
 import PersonalOverview from "../sections/PersonalOverview";
 import { MemberSettings } from "@/components/member/settings/MemberSettings";
 import WorkTable from "@components/initiatives/WorkTable";
+import MemberPreferencesWorkArea from "./MemberPreferencesWorkArea";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity?: UserIdentity;
@@ -95,6 +96,15 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper>
         <MessageCenter />
+      </WorkAreaWrapper>
+    );
+  }
+
+  // Preferences section
+  if (section === "preferences") {
+    return (
+      <WorkAreaWrapper>
+        <MemberPreferencesWorkArea />
       </WorkAreaWrapper>
     );
   }
