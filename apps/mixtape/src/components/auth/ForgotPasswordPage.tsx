@@ -16,6 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { toaster } from "@mixtape/core/lib/toaster";
+import * as authApi from "@mixtape/api/clients/auth/api";
 
 const ForgotPasswordPage: React.FC = () => {
   const router = useRouter();
@@ -27,18 +28,11 @@ const ForgotPasswordPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement password reset API endpoint
-      // await fetch(`${process.env.NEXT_PUBLIC_ROOT_API_URL}/api/auth/password-reset`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email }),
-      // });
-
+      await authApi.requestPasswordReset(email);
       toaster.success({
         title: "Reset link sent",
         description: "If an account exists with this email, you'll receive a password reset link.",
       });
-
       setEmail("");
     } catch {
       toaster.error({

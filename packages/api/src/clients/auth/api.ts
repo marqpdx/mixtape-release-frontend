@@ -25,6 +25,8 @@ const ASSUME_EXIT_URL = `${API_BASE}/api/auth/assume/exit`;
 const REGISTER_URL = `${API_BASE}/api/auth/register`;
 const CSRF_URL = `${API_BASE}/api/csrf/`;
 const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
+const PASSWORD_RESET_URL = `${API_BASE}/api/auth/password-reset`;
+const PASSWORD_RESET_CONFIRM_URL = `${API_BASE}/api/auth/password-reset/confirm`;
 
 function logAuthDebug(message: string, extra?: Record<string, unknown>): void {
   console.log('[AuthApi]', message, extra || {});
@@ -527,4 +529,34 @@ export async function exitAssumeUser(): Promise<UserIdentity> {
 
   applyAuthResponseToSession(data);
   return fetchUserIdentity(data.access);
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const response = await fetch(PASSWORD_RESET_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const data = (await response.json()) as { detail?: string };
+    throw new Error(data.detail || "Failed to send reset link.");
+  }
+}
+
+export async function confirmPasswordReset(
+  uid: string,
+  token: string,
+  newPassword: string
+): Promise<void> {
+  const response = await fetch(PASSWORD_RESET_CONFIRM_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, token, new_password: newPassword }),
+  });
+
+  const data = (await response.json()) as { detail?: string };
+  if (!response.ok) {
+    throw new Error(data.detail || "Failed to reset password.");
+  }
 }
