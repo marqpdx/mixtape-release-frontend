@@ -10,6 +10,8 @@ import MemberProfileTemplate from '@/components/crossroads/MemberProfileTemplate
 import MemberPublicWritingPanel from '@/components/crossroads/MemberPublicWritingPanel';
 import { fetchPublicMemberProfile } from '@mixtape/api/clients/public/publicApi';
 
+const ENABLED_TABS = new Set(['profile']);
+
 export default function MemberPage() {
   const params = useParams();
   const router = useRouter();
@@ -18,13 +20,12 @@ export default function MemberPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const tabStorageKey = username ? `member_profile_last_tab:${username}` : null;
-  const enabledTabs = new Set(['profile']);
 
   const isOwner = user?.username === username;
 
   useEffect(() => {
     const requestedTab = searchParams?.get('tab');
-    if (requestedTab && enabledTabs.has(requestedTab)) {
+    if (requestedTab && ENABLED_TABS.has(requestedTab)) {
       setActiveTab(requestedTab);
       if (tabStorageKey && typeof window !== 'undefined') {
         window.localStorage.setItem(tabStorageKey, requestedTab);
@@ -33,13 +34,13 @@ export default function MemberPage() {
     }
     if (tabStorageKey && typeof window !== 'undefined') {
       const storedTab = window.localStorage.getItem(tabStorageKey);
-      if (storedTab && enabledTabs.has(storedTab)) {
+      if (storedTab && ENABLED_TABS.has(storedTab)) {
         setActiveTab(storedTab);
         return;
       }
     }
     setActiveTab('profile');
-  }, [enabledTabs, searchParams, tabStorageKey]);
+  }, [searchParams, tabStorageKey]);
 
   const { data: profile } = useQuery({
     queryKey: ['public-member-profile', username],
@@ -52,7 +53,7 @@ export default function MemberPage() {
       <Tabs.Root
         value={activeTab}
         onValueChange={({ value }) => {
-          if (!enabledTabs.has(value)) return;
+          if (!ENABLED_TABS.has(value)) return;
           setActiveTab(value);
           if (tabStorageKey && typeof window !== 'undefined') {
             window.localStorage.setItem(tabStorageKey, value);

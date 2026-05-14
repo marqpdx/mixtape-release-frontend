@@ -31,6 +31,7 @@ export type MainTabParamList = {
   Studio: undefined;
   Messages: undefined;
   Console: undefined;
+  ProfileTab: undefined;
   Ops: undefined;
 };
 
@@ -78,6 +79,7 @@ function MainTabs() {
             Studio: ['color-palette', 'color-palette-outline'],
             Messages: ['chatbubble', 'chatbubble-outline'],
             Console: ['grid', 'grid-outline'],
+            ProfileTab: ['person', 'person-outline'],
             Ops: ['flash', 'flash-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
@@ -96,6 +98,11 @@ function MainTabs() {
         }}
       />
       <Tab.Screen name="Console" component={ConsoleScreen} />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+      />
       <Tab.Screen
         name="Ops"
         component={OpsScreen}

@@ -6,7 +6,7 @@
     "dev": "next dev -H 127.0.0.1 -p 3010",
     "build": "next build",
     "start": "next start -p 3010 -H 127.0.0.1",
-    "lint": "next lint"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@chakra-ui/react": "3.35.0",

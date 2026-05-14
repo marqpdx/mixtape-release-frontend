@@ -1,8 +1,11 @@
 // To disable push notifications (e.g. iOS free Apple Developer account):
 //   Set PUSH_NOTIFICATIONS_ENABLED=false in .env and re-run: npx expo prebuild --clean
+// To build a standalone iOS alpha app (no Expo dev client):
+//   Set IOS_ALPHA_STANDALONE=true in .env and re-run: npx expo prebuild --clean --platform ios
 const { withEntitlementsPlist } = require('@expo/config-plugins');
 
 const pushEnabled = process.env.PUSH_NOTIFICATIONS_ENABLED !== 'false';
+const iosAlphaStandalone = process.env.IOS_ALPHA_STANDALONE === 'true';
 
 // Strips aps-environment so free Apple accounts can sign without Push Notifications capability
 const withNoPushEntitlements = (config) =>
@@ -52,7 +55,7 @@ module.exports = {
       favicon: "./assets/favicon.png",
     },
     plugins: [
-      "expo-dev-client",
+      ...(iosAlphaStandalone ? [] : ["expo-dev-client"]),
       ...(pushEnabled ? [notificationsPlugin] : [withNoPushEntitlements]),
     ],
     extra: {

@@ -6,6 +6,8 @@ export interface Forum {
   title: string
   description: string
   visibility: 'public' | 'members' | 'group'
+  audience_type: 'all_members' | 'subset'
+  audience_member_count?: number | null
   topic_count: number
   sponsor_type: string
   sponsor_id: string | number
