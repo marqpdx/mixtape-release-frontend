@@ -315,7 +315,7 @@ export default function DashboardLayout({
           header={header}
         />
       ) : (
-        <Flex h="100vh" position="relative">
+        <Flex h="100vh" minH="100vh" position="relative" overflow="hidden">
           {showBubbleNote && (
             <Box
               position="absolute"
@@ -350,6 +350,7 @@ export default function DashboardLayout({
 
           <Box
             w={sidebarWidth}
+            flexShrink={0}
             bg={sidebarBg}
             borderRight="1px solid"
             borderColor={borderColor}
@@ -503,7 +504,14 @@ export default function DashboardLayout({
             </VStack>
           </Box>
 
-          <Box flex="1" minH="0" p={0} overflowY="auto">
+          <Box
+            flex="1 1 0%"
+            minW="0"
+            minH="0"
+            p={0}
+            overflowX="hidden"
+            overflowY="auto"
+          >
             <WorkAreaComponent
               section={activeSection}
               sectionParams={sectionParams}
