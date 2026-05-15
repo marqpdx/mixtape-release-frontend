@@ -21,6 +21,7 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import type {
   OpsApplicationSurface,
   OpsApplicationSurfacesSection,
+  OpsLivewireDetailSection,
   OpsPostgresDetailSection,
 } from "@mixtape/api/clients/ops/opsApi";
 import { useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
@@ -35,6 +36,9 @@ interface ServiceState {
   sub_state?: string;
   uptime_seconds?: number;
   memory_bytes?: number;
+  last_trigger_timestamp?: string;
+  last_trigger_age_seconds?: number;
+  result?: string;
   status?: string;
   pressure?: string;
   ownership?: {
@@ -391,6 +395,10 @@ export default function SysadminWorkArea({
     return snapshot?.application_surfaces as OpsApplicationSurfacesSection | undefined;
   }, [snapshot]);
 
+  const livewireDetail = useMemo(() => {
+    return snapshot?.livewire_detail as OpsLivewireDetailSection | undefined;
+  }, [snapshot]);
+
   const applicationSurfaceEntries = useMemo(() => {
     const surfaces = applicationSurfaces?.data?.surfaces || {};
     return Object.entries(surfaces) as Array<[string, OpsApplicationSurface]>;
@@ -450,8 +458,23 @@ export default function SysadminWorkArea({
       detail: surfaceDetail,
       hint: surfaceHint,
     });
+
+    const livewireStatus = livewireDetail?.status || ((services.livewire as ServiceState | undefined)?.status || "unavailable");
+    const livewireDetailLine = livewireDetail?.data?.summary?.headline
+      ? `${livewireDetail.data.summary.headline} • ${livewireDetail.data.runtime?.port ?? "—"}`
+      : "Socket.IO handshake monitor pending";
+    const livewireHint = livewireDetail?.collected_at
+      ? `Collected ${new Date(livewireDetail.collected_at).toLocaleString()}`
+      : "Livewire probe is evaluated during snapshot generation.";
+
+    tiles.push({
+      title: "Livewire",
+      status: livewireStatus,
+      detail: livewireDetailLine,
+      hint: livewireHint,
+    });
     return tiles;
-  }, [applicationSurfaceEntries, applicationSurfaceSummary, applicationSurfaces, postgresDetail, summary]);
+  }, [applicationSurfaceEntries, applicationSurfaceSummary, applicationSurfaces, livewireDetail, postgresDetail, services.livewire, summary]);
 
   const quickListItems = useMemo(() => {
     const items: QuickListItem[] = [];
@@ -508,8 +531,19 @@ export default function SysadminWorkArea({
         : "Live local probes pending",
     });
 
+    pushItem({
+      key: "livewire",
+      label: "Livewire",
+      status: livewireDetail?.status || ((services.livewire as ServiceState | undefined)?.status || "unavailable"),
+      detail: livewireDetail?.data?.summary?.detail || "Socket.IO handshake monitor pending",
+      hint: livewireDetail?.data?.probe?.url
+        ? `Probe ${livewireDetail.data.probe.url}`
+        : "No Livewire probe URL configured",
+    });
+
     Object.entries(services).forEach(([key, value]) => {
       if (key === "postgres") return;
+      if (key === "livewire") return;
 
       if ((value as ServiceUnits).units) {
         const unitMap = (value as ServiceUnits).units || {};
@@ -1107,6 +1141,7 @@ export default function SysadminWorkArea({
 
   if (section === "svc-backups") {
     const backups = services.backups as ServiceUnits;
+    const backupUnits = Object.entries(backups?.units || {});
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
@@ -1114,7 +1149,69 @@ export default function SysadminWorkArea({
             <Text fontSize="xl" fontWeight="bold">Backups</Text>
             <StatusBadge status={backupsSummary?.status} />
           </HStack>
+
+          <Card.Root>
+            <Card.Header>
+              <Text fontWeight="semibold">Backup Policy</Text>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={2}>
+                <Text fontSize="sm">
+                  Backup timers wake daily. The backup scripts themselves may skip until 72 hours have passed
+                  since the last successful archive.
+                </Text>
+                <Text fontSize="sm" color="gray.600">
+                  A red or orange state here usually means a timer is inactive, a trigger is stale, or a oneshot
+                  backup/upload unit failed.
+                </Text>
+              </VStack>
+            </Card.Body>
+          </Card.Root>
+
           <MultiUnitServiceCard name="Backup Units" data={backups} backupsSummary={backupsSummary} />
+
+          {backupUnits.length > 0 && (
+            <Card.Root variant="outline">
+              <Card.Header>
+                <Text fontWeight="semibold">Unit Detail</Text>
+              </Card.Header>
+              <Card.Body>
+                <Table.Root size="sm" variant="simple">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>Unit</Table.ColumnHeader>
+                      <Table.ColumnHeader>Status</Table.ColumnHeader>
+                      <Table.ColumnHeader>Last Trigger</Table.ColumnHeader>
+                      <Table.ColumnHeader>Result</Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {backupUnits.map(([unitName, unitState]) => (
+                      <Table.Row key={unitName}>
+                        <Table.Cell>
+                          <VStack align="start" gap={0}>
+                            <Text>{unitName.replace(/^crossroads-/, "")}</Text>
+                            <Text fontSize="xs" color="gray.500">
+                              {unitState?.active_state || "unknown"} / {unitState?.sub_state || "—"}
+                            </Text>
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <StatusBadge status={unitState?.status || unitState?.active_state} />
+                        </Table.Cell>
+                        <Table.Cell>
+                          {unitState?.last_trigger_age_seconds !== undefined && unitState?.last_trigger_age_seconds !== null
+                            ? `${formatUptime(unitState.last_trigger_age_seconds)} ago`
+                            : unitState?.last_trigger_timestamp || "—"}
+                        </Table.Cell>
+                        <Table.Cell>{unitState?.result || "—"}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              </Card.Body>
+            </Card.Root>
+          )}
         </VStack>
       </WorkAreaWrapper>
     );
@@ -1218,13 +1315,129 @@ export default function SysadminWorkArea({
 
   if (section === "svc-livewire") {
     const livewire = services.livewire as ServiceState;
+    const livewireStatus = livewireDetail?.status || livewire?.status || "unavailable";
+    const livewireCollectedAt = livewireDetail?.collected_at
+      ? new Date(livewireDetail.collected_at).toLocaleString()
+      : null;
+
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
           <HStack justify="space-between">
             <Text fontSize="xl" fontWeight="bold">Livewire (Realtime)</Text>
-            <StatusBadge status={livewire?.status} />
+            <StatusBadge status={livewireStatus} />
           </HStack>
+
+          <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(livewireStatus)}.500`}>
+            <Card.Header>
+              <HStack justify="space-between">
+                <Text fontWeight="semibold">Socket.IO Handshake Monitor</Text>
+                <StatusBadge status={livewireStatus} />
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={4}>
+                <HStack justify="space-between" align="start" wrap="wrap">
+                  <VStack align="start" gap={1}>
+                    <Text fontSize="sm" color="gray.500">
+                      {livewireCollectedAt ? `Collected ${livewireCollectedAt}` : "No Livewire probe collected yet"}
+                    </Text>
+                    {livewireDetail?.source && (
+                      <Text fontSize="xs" color="gray.500">
+                        Source: {livewireDetail.source}
+                      </Text>
+                    )}
+                  </VStack>
+                  <Button size="sm" variant="outline" onClick={handleRefresh} loading={isFetching}>
+                    Refresh
+                  </Button>
+                </HStack>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Endpoint</Text>
+                    <Code whiteSpace="normal">{livewireDetail?.data?.endpoint || "—"}</Code>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Provider</Text>
+                    <Text>{livewireDetail?.data?.provider || "—"} • {livewireDetail?.data?.environment || "—"}</Text>
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Summary</Text>
+                    <Text fontWeight="bold">{livewireDetail?.data?.summary?.headline || "Probe pending"}</Text>
+                    {livewireDetail?.data?.summary?.detail && (
+                      <Text fontSize="sm" color="gray.600">{livewireDetail.data.summary.detail}</Text>
+                    )}
+                  </VStack>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="gray.500">Runtime</Text>
+                    <Text>
+                      Port {livewireDetail?.data?.runtime?.port ?? "—"} • {livewireDetail?.data?.runtime?.process_detected ? "reachable" : "unreachable"}
+                    </Text>
+                  </VStack>
+                </SimpleGrid>
+
+                <Card.Root variant="outline">
+                  <Card.Header>
+                    <Text fontWeight="semibold">Probe</Text>
+                  </Card.Header>
+                  <Card.Body>
+                    <Table.Root size="sm" variant="simple">
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.ColumnHeader>Name</Table.ColumnHeader>
+                          <Table.ColumnHeader>Status</Table.ColumnHeader>
+                          <Table.ColumnHeader>HTTP</Table.ColumnHeader>
+                          <Table.ColumnHeader>Latency</Table.ColumnHeader>
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        <Table.Row>
+                          <Table.Cell>
+                            <VStack align="start" gap={0}>
+                              <Text>{livewireDetail?.data?.probe?.name || "socketio_handshake"}</Text>
+                              {livewireDetail?.data?.probe?.url && (
+                                <Code fontSize="xs" whiteSpace="normal">{livewireDetail.data.probe.url}</Code>
+                              )}
+                            </VStack>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <StatusBadge status={livewireDetail?.data?.probe?.status || livewireStatus} />
+                          </Table.Cell>
+                          <Table.Cell>{livewireDetail?.data?.probe?.http_status ?? "—"}</Table.Cell>
+                          <Table.Cell>{livewireDetail?.data?.probe?.latency_ms ? `${livewireDetail.data.probe.latency_ms} ms` : "—"}</Table.Cell>
+                        </Table.Row>
+                      </Table.Body>
+                    </Table.Root>
+                    {livewireDetail?.data?.probe?.detail && (
+                      <Text fontSize="sm" color="red.500" mt={3}>
+                        Probe detail: {livewireDetail.data.probe.detail}
+                      </Text>
+                    )}
+                  </Card.Body>
+                </Card.Root>
+
+                {(livewireDetail?.data?.notes?.length || livewireDetail?.errors?.length) && (
+                  <Card.Root variant="outline">
+                    <Card.Header>
+                      <Text fontWeight="semibold">Notes</Text>
+                    </Card.Header>
+                    <Card.Body>
+                      <VStack align="stretch" gap={2}>
+                        {(livewireDetail?.data?.notes || []).map((note) => (
+                          <Text key={note} fontSize="sm">{note}</Text>
+                        ))}
+                        {(livewireDetail?.errors || []).map((error) => (
+                          <Text key={error} fontSize="sm" color="red.500">{error}</Text>
+                        ))}
+                      </VStack>
+                    </Card.Body>
+                  </Card.Root>
+                )}
+              </VStack>
+            </Card.Body>
+          </Card.Root>
+
           <ServiceCard name="crossroads-livewire" state={livewire} />
         </VStack>
       </WorkAreaWrapper>

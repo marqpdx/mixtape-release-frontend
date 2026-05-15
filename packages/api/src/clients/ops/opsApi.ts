@@ -121,6 +121,38 @@ export interface OpsApplicationSurfacesSection {
   };
 }
 
+export interface OpsLivewireDetailSection {
+  status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
+  latency_ms?: number;
+  collected_at?: string | null;
+  expires_at?: string | null;
+  source?: string | null;
+  errors?: string[];
+  data?: {
+    label?: string;
+    provider?: string;
+    environment?: string;
+    endpoint?: string;
+    probe?: {
+      name?: string;
+      url?: string;
+      status?: string;
+      http_status?: number | null;
+      latency_ms?: number | null;
+      detail?: string | null;
+    };
+    runtime?: {
+      process_detected?: boolean;
+      port?: number | null;
+    };
+    summary?: {
+      headline?: string;
+      detail?: string;
+    };
+    notes?: string[];
+  };
+}
+
 export interface OpsHealthSnapshotResponse {
   schema_version: string;
   generated_at: string;
@@ -132,6 +164,7 @@ export interface OpsHealthSnapshotResponse {
   application: Record<string, unknown>;
   postgres_detail?: OpsPostgresDetailSection;
   application_surfaces?: OpsApplicationSurfacesSection;
+  livewire_detail?: OpsLivewireDetailSection;
 }
 
 // Cache-busting parameter to bypass nginx/proxy caching
