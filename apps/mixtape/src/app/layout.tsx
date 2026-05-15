@@ -1,8 +1,12 @@
 import { Providers } from '@/components/providers';
 import { SkipLinks } from '@/components/accessibility';
-import { Inter, DM_Serif_Display } from 'next/font/google';
+import {
+  Inter, DM_Serif_Display,
+  Instrument_Serif, Instrument_Sans,
+  Space_Grotesk, JetBrains_Mono,
+  DM_Sans, Caprasimo,
+} from 'next/font/google';
 
-// Configure Inter font with optimization
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -11,7 +15,6 @@ const inter = Inter({
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
 });
 
-// Configure DM Serif Display font with optimization
 const dmSerif = DM_Serif_Display({
   weight: ['400'],
   subsets: ['latin'],
@@ -21,8 +24,44 @@ const dmSerif = DM_Serif_Display({
   fallback: ['Georgia', 'Times New Roman', 'serif'],
 });
 
-// Note: Joan font - if available from Google Fonts, add here
-// For now using system serif fallback in theme config
+// Profile revamp font pairings
+const instrumentSerif = Instrument_Serif({
+  weight: ['400'],
+  subsets: ['latin'],
+  variable: '--font-instrument-serif',
+  display: 'swap',
+});
+
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  variable: '--font-instrument-sans',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const caprasimo = Caprasimo({
+  weight: ['400'],
+  subsets: ['latin'],
+  variable: '--font-caprasimo',
+  display: 'swap',
+});
 
 const defaultGroupName =
   process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
@@ -40,7 +79,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmSerif.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Providers>
           <SkipLinks />
