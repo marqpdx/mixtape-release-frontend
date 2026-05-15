@@ -6,7 +6,6 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { useWorktableStream } from "@mixtape/api/hooks/worktable/useWorktable";
 import { useHubCaptures, useStewardship } from "@mixtape/api/hooks/console/useConsole";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
-import { ApertureLogStream } from "./ApertureLogStream";
 import type { WorkTableContext } from "./types";
 import type { ActionMode } from "./ActionPanel";
 
@@ -227,9 +226,8 @@ function DayRow({
 // ---------------------------------------------------------------------------
 
 function contextToParams(ctx: WorkTableContext) {
-  if (ctx.kind === "personal") return { scope: "personal" as const };
   if (ctx.kind === "group") return { scope: "group" as const, group_slug: ctx.slug };
-  return { scope: "initiative" as const, initiative_id: ctx.id };
+  return { scope: "personal" as const };
 }
 
 export function DigestStream({
@@ -245,10 +243,6 @@ export function DigestStream({
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.400", "gray.500");
-
-  if (context.kind === "initiative") {
-    return <ApertureLogStream initiativeId={context.id} />;
-  }
 
   const todayKey = toDateKey(new Date().toISOString());
   const groups = groupByDay(entries);

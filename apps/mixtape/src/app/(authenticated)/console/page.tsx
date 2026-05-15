@@ -13,6 +13,7 @@ import { WorkTableCommandField } from "@components/worktable/WorkTableCommandFie
 import { ContextSwitcher } from "@components/worktable/ContextSwitcher";
 import { ActionPanel } from "@components/worktable/ActionPanel";
 import { DigestStream } from "@components/worktable/DigestStream";
+import { ApertureLogStream } from "@components/worktable/ApertureLogStream";
 import type { WorkTableContext } from "@components/worktable/types";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
@@ -143,9 +144,17 @@ export default function ConsolePage() {
                 <ActionPanel mode={actionMode} context={context} onClear={() => setActionMode("empty")} />
               </GridItem>
 
-              {/* Right — Digest stream */}
+              {/* Right — Stream */}
               <GridItem>
-                <DigestStream context={context} onAction={setActionMode} />
+                {context.kind === "initiative" ? (
+                  <ApertureLogStream
+                    initiativeId={context.id}
+                    onAction={setActionMode}
+                    appendRef={appendApertureRef}
+                  />
+                ) : (
+                  <DigestStream context={context} onAction={setActionMode} />
+                )}
               </GridItem>
             </Grid>
 

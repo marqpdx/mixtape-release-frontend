@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge, Box, HStack, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useHubCaptures, useStewardship } from "@mixtape/api/hooks/console/useConsole";
 import {
   fetchApertureLog,
   type ApertureLogEntry,
   type ApertureLogEntryKind,
 } from "@mixtape/api/clients/initiatives/initiativesApi";
+import type { ActionMode } from "./ActionPanel";
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "";
@@ -68,16 +70,63 @@ function LogEntry({ entry }: { entry: ApertureLogEntry }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Status bar — open counts for initiative surface
+// ---------------------------------------------------------------------------
+
+function StatusBar({ onAction }: { onAction: (mode: ActionMode) => void }) {
+  const { data: needData } = useHubCaptures("need_more", undefined);
+  const { data: fixData } = useHubCaptures("fix", undefined);
+  const { data: stewardship } = useStewardship();
+
+  const borderColor = useColorModeValue("gray.100", "gray.700");
+  const mutedColor = useColorModeValue("gray.400", "gray.500");
+
+  const needCount = needData?.captures.length ?? 0;
+  const fixCount = fixData?.captures.length ?? 0;
+  const remindCount = stewardship?.overdue_reminders.length ?? 0;
+
+  const items: { label: string; count: number; mode: ActionMode; color: string }[] = (
+    [
+      { label: "We Need More's", count: needCount, mode: "needs" as ActionMode, color: "blue.500" },
+      { label: "Let's Fix's", count: fixCount, mode: "fixes" as ActionMode, color: "red.500" },
+      { label: "Reminders", count: remindCount, mode: "reminders" as ActionMode, color: "orange.500" },
+    ] as { label: string; count: number; mode: ActionMode; color: string }[]
+  ).filter((i) => i.count > 0);
+
+  if (items.length === 0) return null;
+
+  return (
+    <HStack gap={4} pb={3} mb={3} borderBottom="1px solid" borderColor={borderColor} flexWrap="wrap">
+      {items.map((item) => (
+        <Box key={item.mode} as="button" onClick={() => onAction(item.mode)} _hover={{ opacity: 0.7 }}>
+          <Text fontSize="xs" color={mutedColor} as="span">{item.label} </Text>
+          <Text fontSize="xs" fontWeight="700" color={item.color} as="span">{item.count}</Text>
+        </Box>
+      ))}
+    </HStack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ApertureLogStream
+// ---------------------------------------------------------------------------
+
 export function ApertureLogStream({
   initiativeId,
   appendRef,
+  onAction,
 }: {
   initiativeId: string;
   appendRef?: React.MutableRefObject<((entry: ApertureLogEntry) => void) | null>;
+  onAction?: (mode: ActionMode) => void;
 }) {
   const [entries, setEntries] = useState<ApertureLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const cardBg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
 
   const load = useCallback(async (reset = false) => {
@@ -106,31 +155,25 @@ export function ApertureLogStream({
     };
   }, [load]);
 
-  if (isLoading) {
-    return (
-      <Box textAlign="center" py={8}>
-        <Spinner size="md" color="blue.500" />
-      </Box>
-    );
-  }
-
-  if (entries.length === 0) {
-    return (
-      <Box textAlign="center" py={12}>
-        <Text fontSize="sm" color={mutedColor}>
-          No entries yet. Write something to begin.
-        </Text>
-      </Box>
-    );
-  }
-
-  const sorted = [...entries].reverse();
-
   return (
-    <VStack align="stretch" gap={0} divideY="1px">
-      {sorted.map((entry) => (
-        <LogEntry key={entry.id} entry={entry} />
-      ))}
-    </VStack>
+    <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={4} minH="200px">
+      {onAction && <StatusBar onAction={onAction} />}
+
+      {isLoading ? (
+        <Box textAlign="center" py={8}>
+          <Spinner size="md" color="blue.500" />
+        </Box>
+      ) : entries.length === 0 ? (
+        <Box textAlign="center" py={12}>
+          <Text fontSize="sm" color={mutedColor}>No entries yet. Write something to begin.</Text>
+        </Box>
+      ) : (
+        <VStack align="stretch" gap={0} divideY="1px">
+          {[...entries].reverse().map((entry) => (
+            <LogEntry key={entry.id} entry={entry} />
+          ))}
+        </VStack>
+      )}
+    </Box>
   );
 }
