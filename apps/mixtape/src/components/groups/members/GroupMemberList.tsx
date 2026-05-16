@@ -32,7 +32,7 @@ import {
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
 import UniversalDataTable from "@components/common/UniversalDataTable";
-import { getMemberDisplayName, Group, GroupMembership, GroupRole } from "@mixtape/core/types/groupTypes";
+import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -69,7 +69,6 @@ export function GroupMemberList({
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState<GroupRole | "all">("all");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -93,13 +92,6 @@ export function GroupMemberList({
     }
   };
 
-  // Available roles for filter
-  const availableRoles = useMemo(() => {
-    const roles = new Set<GroupRole>();
-    members.forEach((m) => m.roles.forEach((r) => roles.add(r)));
-    return Array.from(roles).sort();
-  }, [members]);
-
   // Filtered members, sorted by username a→z
   const filteredMembers = useMemo(() => {
     let result = members;
@@ -111,13 +103,10 @@ export function GroupMemberList({
         return name.includes(q) || username.includes(q);
       });
     }
-    if (roleFilter !== "all") {
-      result = result.filter((m) => m.roles.includes(roleFilter));
-    }
     return [...result].sort((a, b) =>
       (a.username || "").toLowerCase().localeCompare((b.username || "").toLowerCase())
     );
-  }, [members, nameFilter, roleFilter]);
+  }, [members, nameFilter]);
 
   // Helper to get display name (uses utility from groupTypes)
   const getDisplayName = (membership: GroupMembership): string => {
@@ -717,10 +706,10 @@ export function GroupMemberList({
           bg={cardBg}
         >
           <Text fontSize="lg" fontWeight="medium" color={textSecondary} mb={2}>
-            {nameFilter || roleFilter !== "all" ? "No matching members" : "No members found"}
+            {nameFilter ? "No matching members" : "No members found"}
           </Text>
           <Text color={textSecondary}>
-            {nameFilter || roleFilter !== "all" ? "Try adjusting your filters" : "This group doesn't have any members yet"}
+            {nameFilter ? "Try adjusting your filters" : "This group doesn't have any members yet"}
           </Text>
         </Box>
       )}

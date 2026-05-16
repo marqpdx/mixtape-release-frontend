@@ -21,6 +21,7 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import type {
   OpsApplicationSurface,
   OpsApplicationSurfacesSection,
+  OpsBackupsDetailSection,
   OpsLivewireDetailSection,
   OpsPostgresDetailSection,
 } from "@mixtape/api/clients/ops/opsApi";
@@ -417,6 +418,10 @@ export default function SysadminWorkArea({
     return backups?.summary;
   }, [services]);
 
+  const backupsDetail = useMemo(() => {
+    return snapshot?.backups_detail as OpsBackupsDetailSection | undefined;
+  }, [snapshot]);
+
   const lastUpdated = useMemo(() => {
     if (!summary?.timestamp) return null;
     return new Date(summary.timestamp).toLocaleString();
@@ -604,6 +609,9 @@ export default function SysadminWorkArea({
     applicationSurfaces,
     backupsSummary,
     diskData,
+    livewireDetail?.data?.probe?.url,
+    livewireDetail?.data?.summary?.detail,
+    livewireDetail?.status,
     postgresDetail,
     services,
     snapshot,
@@ -1142,13 +1150,39 @@ export default function SysadminWorkArea({
   if (section === "svc-backups") {
     const backups = services.backups as ServiceUnits;
     const backupUnits = Object.entries(backups?.units || {});
+    const backupMonitors = Object.entries(backupsDetail?.data?.monitors || {});
+    const backupsCollectedAt = backupsDetail?.collected_at
+      ? new Date(backupsDetail.collected_at).toLocaleString()
+      : null;
     return (
       <WorkAreaWrapper>
         <VStack align="stretch" gap={4}>
           <HStack justify="space-between">
             <Text fontSize="xl" fontWeight="bold">Backups</Text>
-            <StatusBadge status={backupsSummary?.status} />
+            <StatusBadge status={backupsDetail?.status || backupsSummary?.status} />
           </HStack>
+
+          <Card.Root borderLeftWidth="4px" borderLeftColor={`${getStatusColor(backupsDetail?.status || backupsSummary?.status)}.500`}>
+            <Card.Header>
+              <HStack justify="space-between">
+                <Text fontWeight="semibold">Backup Monitor</Text>
+                <StatusBadge status={backupsDetail?.status || backupsSummary?.status} />
+              </HStack>
+            </Card.Header>
+            <Card.Body>
+              <VStack align="stretch" gap={2}>
+                <Text fontSize="sm" color="gray.500">
+                  {backupsCollectedAt ? `Collected ${backupsCollectedAt}` : "No backup detail collected yet"}
+                </Text>
+                {backupsDetail?.source && (
+                  <Text fontSize="xs" color="gray.500">Source: {backupsDetail.source}</Text>
+                )}
+                <Text fontSize="sm">
+                  This monitor combines systemd timer/unit state with success stamp files and the configured 72-hour backup window.
+                </Text>
+              </VStack>
+            </Card.Body>
+          </Card.Root>
 
           <Card.Root>
             <Card.Header>
@@ -1168,6 +1202,85 @@ export default function SysadminWorkArea({
             </Card.Body>
           </Card.Root>
 
+          {backupMonitors.length > 0 && (
+            <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
+              {backupMonitors.map(([monitorKey, monitor]) => (
+                <Card.Root
+                  key={monitorKey}
+                  variant="outline"
+                  borderLeftWidth="4px"
+                  borderLeftColor={`${getStatusColor(monitor.status)}.500`}
+                >
+                  <Card.Header>
+                    <HStack justify="space-between">
+                      <Text fontWeight="semibold">{monitor.label || monitorKey}</Text>
+                      <StatusBadge status={monitor.status} />
+                    </HStack>
+                  </Card.Header>
+                  <Card.Body>
+                    <VStack align="stretch" gap={2}>
+                      <Text fontWeight="bold">{monitor.summary?.headline || "—"}</Text>
+                      {monitor.summary?.detail && (
+                        <Text fontSize="sm" color="gray.600">{monitor.summary.detail}</Text>
+                      )}
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">Last success</Text>
+                        <Text fontSize="sm">
+                          {monitor.last_success_at
+                            ? `${new Date(monitor.last_success_at).toLocaleString()}`
+                            : "—"}
+                        </Text>
+                      </HStack>
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">Age</Text>
+                        <Text fontSize="sm">
+                          {monitor.last_success_age_seconds !== undefined && monitor.last_success_age_seconds !== null
+                            ? formatUptime(monitor.last_success_age_seconds)
+                            : "—"}
+                        </Text>
+                      </HStack>
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">Next expected</Text>
+                        <Text fontSize="sm">
+                          {monitor.next_expected_at
+                            ? new Date(monitor.next_expected_at).toLocaleString()
+                            : "—"}
+                        </Text>
+                      </HStack>
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">72h window</Text>
+                        <Text fontSize="sm">
+                          {monitor.window_elapsed === undefined || monitor.window_elapsed === null
+                            ? "unknown"
+                            : monitor.window_elapsed
+                              ? "elapsed"
+                              : "within window"}
+                        </Text>
+                      </HStack>
+                      <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">Off-host</Text>
+                        <Text fontSize="sm">{monitor.off_host_status || "unknown"}</Text>
+                      </HStack>
+                      {monitor.stamp_file && (
+                        <VStack align="stretch" gap={1}>
+                          <Text fontSize="sm" color="gray.500">Stamp file</Text>
+                          <Code fontSize="xs" whiteSpace="normal">{monitor.stamp_file}</Code>
+                        </VStack>
+                      )}
+                      {(monitor.errors || []).length > 0 && (
+                        <Box pt={2} borderTopWidth="1px">
+                          {(monitor.errors || []).map((error) => (
+                            <Text key={error} fontSize="xs" color="red.500">• {error}</Text>
+                          ))}
+                        </Box>
+                      )}
+                    </VStack>
+                  </Card.Body>
+                </Card.Root>
+              ))}
+            </SimpleGrid>
+          )}
+
           <MultiUnitServiceCard name="Backup Units" data={backups} backupsSummary={backupsSummary} />
 
           {backupUnits.length > 0 && (
@@ -1176,7 +1289,7 @@ export default function SysadminWorkArea({
                 <Text fontWeight="semibold">Unit Detail</Text>
               </Card.Header>
               <Card.Body>
-                <Table.Root size="sm" variant="simple">
+                <Table.Root size="sm" variant="line">
                   <Table.Header>
                     <Table.Row>
                       <Table.ColumnHeader>Unit</Table.ColumnHeader>
@@ -1382,7 +1495,7 @@ export default function SysadminWorkArea({
                     <Text fontWeight="semibold">Probe</Text>
                   </Card.Header>
                   <Card.Body>
-                    <Table.Root size="sm" variant="simple">
+                    <Table.Root size="sm" variant="line">
                       <Table.Header>
                         <Table.Row>
                           <Table.ColumnHeader>Name</Table.ColumnHeader>

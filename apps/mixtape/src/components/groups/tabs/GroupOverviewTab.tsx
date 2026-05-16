@@ -2,17 +2,16 @@
 
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useState } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem, IconButton } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
-import { IconShoppingBag, IconFolder, IconCalendar, IconChevronDown, IconChevronRight, IconX, IconMessage, IconSpeakerphone, IconUsers } from "@tabler/icons-react";
+import { IconShoppingBag, IconFolder, IconChevronDown, IconChevronRight, IconX, IconMessage, IconSpeakerphone, IconUsers } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
-import { useCalendarOccurrences } from "@mixtape/api/hooks/almanac";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
 interface GroupOverviewTabProps {
@@ -101,7 +100,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     shouldTruncate && !showFullDescription
       ? `${description.slice(0, 320)}...`
       : description;
-  const { adminMembers, stewardMembers, activeMembers, isLoading: membersLoading } = useMembers(group.slug);
+  const { activeMembers, isLoading: membersLoading } = useMembers(group.slug);
   const { pin: welcomePin } = useGroupWelcomePin(group.slug);
   const { data: myPermissions } = useMyPermissions(group.slug);
   const { layout, isLoading: layoutLoading } = useGroupOverviewLayout(group.slug);
@@ -112,82 +111,6 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     myPermissions?.decorators?.includes("create_post") ||
     false;
 
-  // Upcoming events: fetch next 90 days of calendar occurrences
-  const nowRef = useRef(new Date());
-  const endDateRef = useRef(new Date(nowRef.current.getTime() + 90 * 24 * 60 * 60 * 1000));
-  const { occurrences: upcomingEvents, isLoading: eventsLoading } = useCalendarOccurrences({
-    groupSlug: group.slug,
-    startDate: nowRef.current,
-    endDate: endDateRef.current,
-  });
-
-  const leadership = useMemo(() => {
-    const admins = adminMembers;
-    const stewards = stewardMembers.filter(
-      (member) => !member.roles.includes("admin")
-    );
-    return { admins, stewards };
-  }, [adminMembers, stewardMembers]);
-
-  const renderLeaderRow = (label: string, members: typeof adminMembers) => (
-    <Stack gap={2}>
-      <Text fontSize="sm" color="fg.muted">
-        {label}
-      </Text>
-      {membersLoading ? (
-        <Text fontSize="sm" color="fg.muted">
-          Loading...
-        </Text>
-      ) : members.length === 0 ? (
-        <Text fontSize="sm" color="fg.muted">
-          None yet
-        </Text>
-      ) : (
-        <Stack gap={2}>
-          {members.map((member) => {
-            const displayName =
-              member.display_name || member.username || "Member";
-            const initial = displayName.charAt(0).toUpperCase();
-            const memberHref = member.username ? `/members/${member.username}` : null;
-            return (
-              <Flex key={member.member_id} align="center" gap={3}>
-                {memberHref ? (
-                  <Link as={NextLink} href={memberHref}>
-                    <AvatarGroup>
-                      <Avatar.Root size="sm" cursor="pointer">
-                        {member.profile_image ? (
-                          <Avatar.Image src={member.profile_image} alt={displayName} />
-                        ) : (
-                          <Avatar.Fallback>{initial}</Avatar.Fallback>
-                        )}
-                      </Avatar.Root>
-                    </AvatarGroup>
-                  </Link>
-                ) : (
-                  <AvatarGroup>
-                    <Avatar.Root size="sm">
-                      {member.profile_image ? (
-                        <Avatar.Image src={member.profile_image} alt={displayName} />
-                      ) : (
-                        <Avatar.Fallback>{initial}</Avatar.Fallback>
-                      )}
-                    </Avatar.Root>
-                  </AvatarGroup>
-                )}
-                {memberHref ? (
-                  <Link as={NextLink} href={memberHref}>
-                    <Text fontWeight="medium">{displayName}</Text>
-                  </Link>
-                ) : (
-                  <Text fontWeight="medium">{displayName}</Text>
-                )}
-              </Flex>
-            );
-          })}
-        </Stack>
-      )}
-    </Stack>
-  );
 
   const renderWelcomeBlock = () => {
     if (isDismissed("welcome")) return null;
@@ -295,46 +218,6 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     );
   };
 
-  const renderUpcomingEventsBlock = () => (
-    <Card.Root>
-      <Card.Header>
-        <Flex align="center" gap={2}>
-          <IconCalendar size={20} />
-          <Heading size="md">Upcoming Events</Heading>
-        </Flex>
-      </Card.Header>
-      <Card.Body>
-        {eventsLoading ? (
-          <Text color="fg.muted">Loading events...</Text>
-        ) : upcomingEvents.length === 0 ? (
-          <Text color="fg.muted">No upcoming events.</Text>
-        ) : (
-          <Stack gap={3}>
-            {upcomingEvents.slice(0, 5).map((occ) => {
-              const startDate = new Date(occ.start);
-              const month = startDate.toLocaleDateString(undefined, { month: "short" });
-              const day = startDate.getDate();
-              const time = startDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-              return (
-                <Flex key={occ.id} gap={3} p={3} borderWidth="1px" borderRadius="md">
-                  <Box textAlign="center" minW="50px">
-                    <Text fontSize="xs" fontWeight="bold">{month}</Text>
-                    <Text fontSize="xl" fontWeight="bold">{day}</Text>
-                  </Box>
-                  <Stack gap={0} flex="1">
-                    <Text fontWeight="bold">{occ.title}</Text>
-                    <Text fontSize="sm" color="fg.muted">{time}</Text>
-                    {occ.location && <Text fontSize="sm" color="fg.muted">{occ.location}</Text>}
-                  </Stack>
-                </Flex>
-              );
-            })}
-          </Stack>
-        )}
-      </Card.Body>
-    </Card.Root>
-  );
-
   const renderRecentPostsBlock = () => null; // Hidden until wired up
 
   const renderMemberHighlightsBlock = () => {
@@ -392,20 +275,6 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     );
   };
 
-  const renderStewardsBlock = () => (
-    <Card.Root>
-      <Card.Header>
-        <Heading size="md">Stewardship</Heading>
-      </Card.Header>
-      <Card.Body>
-        <Stack gap={4}>
-          {renderLeaderRow("Admins", leadership.admins)}
-          {renderLeaderRow("Stewards", leadership.stewards)}
-        </Stack>
-      </Card.Body>
-    </Card.Root>
-  );
-
   const totalCollectionItems = collections?.reduce((sum, c) => sum + (c.item_count || 0), 0) ?? 0;
 
   const renderPinnedResourcesBlock = () => {
@@ -440,42 +309,6 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
         )}
       </Card.Body>
     </Card.Root>
-    );
-  };
-
-  const renderPinnedWritingBlock = () => {
-    // If a welcome pin exists, show it here as well (welcome pin IS the pinned writing)
-    if (welcomePin) {
-      return (
-        <Card.Root>
-          <Card.Header>
-            <Heading size="md">Pinned Writing</Heading>
-          </Card.Header>
-          <Card.Body>
-            <Heading size="sm" mb={1}>{welcomePin.display?.title || welcomePin.piece.title}</Heading>
-            {(welcomePin.display?.excerpt || welcomePin.piece.excerpt) && (
-              <Text color="fg.muted" fontSize="sm" mb={2}>
-                {welcomePin.display?.excerpt || welcomePin.piece.excerpt}
-              </Text>
-            )}
-            {welcomePin.piece.slug && (
-              <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
-                <Button size="sm" variant="outline">Read</Button>
-              </Link>
-            )}
-          </Card.Body>
-        </Card.Root>
-      );
-    }
-    return (
-      <Card.Root>
-        <Card.Header>
-          <Heading size="md">Pinned Writing</Heading>
-        </Card.Header>
-        <Card.Body>
-          <Text color="fg.muted">No pinned writing yet.</Text>
-        </Card.Body>
-      </Card.Root>
     );
   };
 

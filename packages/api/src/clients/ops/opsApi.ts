@@ -153,6 +153,38 @@ export interface OpsLivewireDetailSection {
   };
 }
 
+export interface OpsBackupsDetailSection {
+  status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
+  latency_ms?: number;
+  collected_at?: string | null;
+  expires_at?: string | null;
+  source?: string | null;
+  errors?: string[];
+  data?: {
+    monitors?: Record<string, {
+      label?: string;
+      status?: string;
+      interval_seconds?: number;
+      stamp_file?: string | null;
+      last_success_at?: string | null;
+      last_success_age_seconds?: number | null;
+      next_expected_at?: string | null;
+      window_elapsed?: boolean | null;
+      off_host_status?: string;
+      summary?: {
+        headline?: string;
+        detail?: string;
+      };
+      units?: {
+        timer?: { name?: string; state?: Record<string, unknown> };
+        service?: { name?: string; state?: Record<string, unknown> };
+        upload?: { name?: string; state?: Record<string, unknown> } | null;
+      };
+      errors?: string[];
+    }>;
+  };
+}
+
 export interface OpsHealthSnapshotResponse {
   schema_version: string;
   generated_at: string;
@@ -165,6 +197,7 @@ export interface OpsHealthSnapshotResponse {
   postgres_detail?: OpsPostgresDetailSection;
   application_surfaces?: OpsApplicationSurfacesSection;
   livewire_detail?: OpsLivewireDetailSection;
+  backups_detail?: OpsBackupsDetailSection;
 }
 
 // Cache-busting parameter to bypass nginx/proxy caching
