@@ -179,6 +179,57 @@ function GroupTypeahead({
 // ContextSwitcher
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// InitiativeChip — shown when context.kind === "initiative"
+// ---------------------------------------------------------------------------
+
+const INITIATIVE_COLOR = "#0D7377";
+
+function InitiativeChip({
+  title,
+  onDismiss,
+}: {
+  title: string;
+  onDismiss: () => void;
+}) {
+  return (
+    <Box
+      display="inline-flex"
+      alignItems="center"
+      gap={1.5}
+      px={3}
+      py={1.5}
+      borderRadius="full"
+      border="1.5px solid"
+      fontSize="xs"
+      fontWeight="700"
+      whiteSpace="nowrap"
+      flexShrink={0}
+      bg={INITIATIVE_COLOR}
+      borderColor={INITIATIVE_COLOR}
+      color="white"
+    >
+      <Box as="span" opacity={0.75} fontSize="10px">initiative</Box>
+      <Box as="span">{title}</Box>
+      <Box
+        as="button"
+        ml={1}
+        opacity={0.7}
+        _hover={{ opacity: 1 }}
+        onClick={onDismiss}
+        lineHeight={1}
+        aria-label="Return to personal context"
+      >
+        ×
+      </Box>
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ContextSwitcher
+// ---------------------------------------------------------------------------
+
 export function ContextSwitcher({
   context,
   username,
@@ -200,7 +251,7 @@ export function ContextSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups.length > 0]);
 
-  // Restore last active context on mount
+  // Restore last active context on mount — only group contexts persist
   useEffect(() => {
     if (!username || groups.length === 0) return;
     const saved = loadActive(username);
@@ -242,6 +293,9 @@ export function ContextSwitcher({
   const recentSlugSet = new Set(recentSlugs);
   const remainingGroups = groups.filter(g => !recentSlugSet.has(g.slug));
 
+  // In initiative context: show initiative chip + Personal; hide group chips
+  const isInitiativeCtx = context.kind === "initiative";
+
   return (
     <Box mb={3}>
       <HStack gap={3} flexWrap="nowrap" alignItems="center">
@@ -255,25 +309,46 @@ export function ContextSwitcher({
         >
           Context
         </Text>
-        <ContextChip
-          label="Personal"
-          active={activeSlug === "__personal__"}
-          onClick={handlePersonal}
-        />
-        {recentGroups.map(g => (
-          <ContextChip
-            key={g.slug}
-            label={g.title}
-            active={activeSlug === g.slug}
-            color={slugColor(g.slug)}
-            onClick={() => handleGroupSelect(g)}
-          />
-        ))}
-        {groups.length > 0 && (
-          <GroupTypeahead
-            groups={remainingGroups.length > 0 ? remainingGroups : groups}
-            onSelect={handleGroupSelect}
-          />
+        {isInitiativeCtx ? (
+          <>
+            <InitiativeChip
+              title={context.title}
+              onDismiss={handlePersonal}
+            />
+            <Box
+              as="button"
+              fontSize="xs"
+              color={labelColor}
+              _hover={{ opacity: 0.7 }}
+              onClick={handlePersonal}
+              flexShrink={0}
+            >
+              Personal
+            </Box>
+          </>
+        ) : (
+          <>
+            <ContextChip
+              label="Personal"
+              active={activeSlug === "__personal__"}
+              onClick={handlePersonal}
+            />
+            {recentGroups.map(g => (
+              <ContextChip
+                key={g.slug}
+                label={g.title}
+                active={activeSlug === g.slug}
+                color={slugColor(g.slug)}
+                onClick={() => handleGroupSelect(g)}
+              />
+            ))}
+            {groups.length > 0 && (
+              <GroupTypeahead
+                groups={remainingGroups.length > 0 ? remainingGroups : groups}
+                onSelect={handleGroupSelect}
+              />
+            )}
+          </>
         )}
       </HStack>
     </Box>

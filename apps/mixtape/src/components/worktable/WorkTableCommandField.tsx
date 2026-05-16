@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Box, Button, HStack, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -9,6 +9,12 @@ import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { ApertureLogEntry, ApertureLogEntryKind } from "@mixtape/api/clients/initiatives/initiativesApi";
 import type { WorkTableContext } from "./types";
 import { parseNeedMoreItems, parseRemindAt, formatRemindPreview } from "./parseCapture";
+
+interface InitiativeSearchResult {
+  id: string;
+  title: string;
+  is_personal: boolean;
+}
 
 const CONTEXT_SWITCH_RE = /^\/\/(.+)/;
 const CONTEXT_RETURN_RE = /^\/\.(\s|$)/;
@@ -55,6 +61,8 @@ export function WorkTableCommandField({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCapture, setLastCapture] = useState<{ kind: string; body: string } | null>(null);
+  const [initiativeResults, setInitiativeResults] = useState<InitiativeSearchResult[]>([]);
+  const [showInitiativeDropdown, setShowInitiativeDropdown] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const { data: orientation } = useOrientation();
 
@@ -65,6 +73,9 @@ export function WorkTableCommandField({
   const previewColor = useColorModeValue("blue.700", "blue.200");
   const remindHintBg = useColorModeValue("orange.50", "orange.900");
   const remindHintColor = useColorModeValue("orange.700", "orange.200");
+  const dropdownBg = useColorModeValue("white", "gray.800");
+  const dropdownHoverBg = useColorModeValue("gray.50", "gray.700");
+  const dropdownTextColor = useColorModeValue("gray.700", "gray.200");
 
   const trimmed = input.trim();
   const contextSwitchMatch = CONTEXT_SWITCH_RE.exec(trimmed);
@@ -77,6 +88,28 @@ export function WorkTableCommandField({
         (g) => g.title.toLowerCase().includes(contextQuery) || g.slug.includes(contextQuery)
       ) ?? null
     : null;
+
+  // Initiative typeahead — fetch when // text is typed and no group match found
+  useEffect(() => {
+    if (!contextQuery || contextTarget) {
+      setInitiativeResults([]);
+      setShowInitiativeDropdown(false);
+      return;
+    }
+    let cancelled = false;
+    axiosInstance
+      .get<{ initiatives: InitiativeSearchResult[] }>(`/api/initiatives/search`, { params: { q: contextQuery } })
+      .then((res) => {
+        if (!cancelled) {
+          setInitiativeResults(res.data.initiatives);
+          setShowInitiativeDropdown(res.data.initiatives.length > 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) { setInitiativeResults([]); setShowInitiativeDropdown(false); }
+      });
+    return () => { cancelled = true; };
+  }, [contextQuery, contextTarget]);
 
   // Detect kind + parse
   const detectedKind = trimmed ? detectKind(trimmed) : null;
@@ -106,6 +139,17 @@ export function WorkTableCommandField({
     if (contextTarget) {
       onContextSwitch({ kind: "group", id: contextTarget.id, slug: contextTarget.slug, title: contextTarget.title });
       setInput("");
+      setShowInitiativeDropdown(false);
+      return;
+    }
+
+    // If exactly one initiative matches, dissolve into it on submit
+    if (contextQuery && initiativeResults.length === 1) {
+      const init = initiativeResults[0];
+      onContextSwitch({ kind: "initiative", id: init.id, title: init.title, sponsor: "personal" });
+      setInput("");
+      setInitiativeResults([]);
+      setShowInitiativeDropdown(false);
       return;
     }
 
@@ -227,7 +271,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
+  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -244,33 +288,82 @@ export function WorkTableCommandField({
   if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
   else if (logMatch) { buttonLabel = "Log"; buttonColor = "orange"; }
   else if (contextTarget) { buttonLabel = `Switch to ${contextTarget.title}`; buttonColor = "purple"; }
-  else if (contextQuery && !contextTarget) { buttonDisabled = true; }
+  else if (contextQuery && initiativeResults.length === 1) { buttonLabel = `Open ${initiativeResults[0].title}`; buttonColor = "teal"; }
+  else if (contextQuery && !contextTarget && initiativeResults.length === 0) { buttonDisabled = true; }
   else if (isNeedMore && needItems.length > 1) { buttonLabel = `Save ${needItems.length} items`; }
 
   // Help text
   const isInitiative = context.kind === "initiative";
   const helpText = contextQuery
-    ? contextTarget ? `Switch to ${contextTarget.title}` : `No group matching "${contextQuery}"`
+    ? contextTarget
+      ? `Switch to ${contextTarget.title}`
+      : initiativeResults.length > 0
+      ? `${initiativeResults.length} initiative${initiativeResults.length > 1 ? "s" : ""} found`
+      : `No match for "${contextQuery}"`
     : isReturn ? "Return to personal context"
     : isInitiative ? '/handoff · /emph "note" · prose to log'
     : logMatch ? "Write a prose log entry"
     : isRemind ? "Use 'on Tuesday', 'tomorrow', or 'next week' to set a date"
     : isNeedMore ? "Items split on commas, 'and', or new lines"
-    : 'Capture · /log … · // Group · /. return';
+    : 'Capture · /log … · // Group or Initiative · /. return';
+
+  const handleInitiativeSelect = (init: InitiativeSearchResult) => {
+    onContextSwitch({ kind: "initiative", id: init.id, title: init.title, sponsor: "personal" });
+    setInput("");
+    setInitiativeResults([]);
+    setShowInitiativeDropdown(false);
+  };
 
   return (
     <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={4}>
-      <Textarea
-        ref={inputRef}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={isInitiative ? 'Write a log entry — /handoff · /emph "note"' : "Type to capture — or // GroupName to switch context…"}
-        minH="80px"
-        resize="vertical"
-        fontSize="sm"
-        mb={3}
-      />
+      <Box position="relative">
+        <Textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={isInitiative ? 'Write a log entry — /handoff · /emph "note"' : "Type to capture — or // GroupName to switch context…"}
+          minH="80px"
+          resize="vertical"
+          fontSize="sm"
+          mb={showInitiativeDropdown ? 0 : 3}
+        />
+        {showInitiativeDropdown && (
+          <Box
+            position="absolute"
+            top="100%"
+            left={0}
+            right={0}
+            zIndex={200}
+            bg={dropdownBg}
+            border="1px solid"
+            borderColor={borderColor}
+            borderRadius="md"
+            mt={1}
+            mb={3}
+            shadow="md"
+            overflow="hidden"
+          >
+            {initiativeResults.map((init) => (
+              <Box
+                key={init.id}
+                px={3}
+                py={2}
+                fontSize="sm"
+                color={dropdownTextColor}
+                cursor="pointer"
+                _hover={{ bg: dropdownHoverBg }}
+                onMouseDown={() => handleInitiativeSelect(init)}
+              >
+                <HStack gap={2}>
+                  <Text as="span" fontSize="xs" color="teal.500" fontWeight="700">initiative</Text>
+                  <Text as="span">{init.title}</Text>
+                </HStack>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
 
       {/* Parsed previews */}
       {isNeedMore && needItems.length > 1 && (
