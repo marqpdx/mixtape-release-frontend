@@ -18,8 +18,21 @@ export async function fetchMyProfile(): Promise<ProfileDTO> {
   return data;
 }
 
+// Translate DTO camelCase keys to backend snake_case before sending
+const DTO_TO_BACKEND: Record<string, string> = {
+  displayName: 'display_name',
+  bio:         'bio_markdown',
+  status:      'right_now',
+};
+
+function toBackendKeys(patch: ProfilePatch): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(patch).map(([k, v]) => [DTO_TO_BACKEND[k] ?? k, v])
+  );
+}
+
 export async function patchMyProfile(patch: ProfilePatch): Promise<ProfileDTO> {
-  const { data } = await axiosInstance.patch<ProfileDTO>('/api/me/profile/new', patch);
+  const { data } = await axiosInstance.patch<ProfileDTO>('/api/me/profile/new', toBackendKeys(patch));
   return data;
 }
 

@@ -18,6 +18,7 @@ import HalftoneBg from './backgrounds/HalftoneBg';
 interface Props {
   profile: ProfileDTO;
   isEditor?: boolean;
+  onPatch?: (patch: Partial<ProfileDTO>) => void;
 }
 
 const BG_COMPONENTS = {
@@ -29,9 +30,9 @@ const BG_COMPONENTS = {
   halftone: HalftoneBg,
 };
 
-function SectionComponent({ id, profile, isEditor }: { id: SectionId; profile: ProfileDTO; isEditor?: boolean }) {
+function SectionComponent({ id, profile, isEditor, onPatch }: { id: SectionId; profile: ProfileDTO; isEditor?: boolean; onPatch?: (p: Partial<ProfileDTO>) => void }) {
   switch (id) {
-    case 'header':   return <ProfileHeader profile={profile} isEditor={isEditor} />;
+    case 'header':   return <ProfileHeader profile={profile} isEditor={isEditor} onPatch={onPatch} />;
     case 'pinned':   return profile.pinned ? <PinnedShowcase pinned={profile.pinned} /> : null;
     case 'now':      return profile.nowPlaying ? <NowPlaying now={profile.nowPlaying} /> : null;
     case 'activity': return <ActivityFeed activity={profile.activity} />;
@@ -43,7 +44,7 @@ function SectionComponent({ id, profile, isEditor }: { id: SectionId; profile: P
   }
 }
 
-export default function Profile({ profile, isEditor }: Props) {
+export default function Profile({ profile, isEditor, onPatch }: Props) {
   const { theme, accent, font, background, density, sectionLayout } = profile;
 
   const BgComp = BG_COMPONENTS[background ?? 'none'];
@@ -77,7 +78,7 @@ export default function Profile({ profile, isEditor }: Props) {
       {BgComp && <BgComp />}
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: rowGap }}>
         {visibleSections.map(entry => (
-          <SectionComponent key={entry.id} id={entry.id} profile={profile} isEditor={isEditor} />
+          <SectionComponent key={entry.id} id={entry.id} profile={profile} isEditor={isEditor} onPatch={onPatch} />
         ))}
       </div>
     </div>

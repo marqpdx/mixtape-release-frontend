@@ -66,7 +66,7 @@ export default function ProfileEditor() {
         isSaving={patchMutation.isPending || reorderMutation.isPending || publishMutation.isPending}
       />
       <main style={{ flex: 1, overflowY: 'auto' }}>
-        <Profile profile={profile} isEditor />
+        <Profile profile={profile} isEditor onPatch={handlePatch} />
       </main>
     </div>
   );

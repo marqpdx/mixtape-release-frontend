@@ -1,13 +1,19 @@
 import Image from 'next/image';
 import type { ProfileDTO } from '../api/types';
+import EditableText from '../editor/inline/EditableText';
 
 interface Props {
   profile: ProfileDTO;
   isEditor?: boolean;
+  onPatch?: (patch: Partial<ProfileDTO>) => void;
 }
 
-export default function ProfileHeader({ profile, isEditor }: Props) {
+export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
   const { displayName, role, bio, status, avatarUrl, avatarSticker, stats, avatarShape } = profile;
+
+  function commit(field: string, value: string) {
+    onPatch?.({ [field]: value } as Partial<ProfileDTO>);
+  }
 
   const avatarBorderRadius = {
     rounded: '24px',
@@ -44,21 +50,21 @@ export default function ProfileHeader({ profile, isEditor }: Props) {
       <div style={{ flex: 1, minWidth: 200 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--ink)' }}>
           {isEditor ? (
-            <span contentEditable suppressContentEditableWarning data-field="displayName">{displayName}</span>
+            <EditableText value={displayName} field="displayName" maxLength={48} onCommit={commit} />
           ) : displayName}
         </h1>
         {role && <p style={{ margin: '2px 0 0', fontSize: 14, color: 'var(--ink-soft)' }}>{role}</p>}
-        {status && (
+        {(status || isEditor) && (
           <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--ink)', fontStyle: 'italic' }}>
             {isEditor ? (
-              <span contentEditable suppressContentEditableWarning data-field="status">{status}</span>
+              <EditableText value={status || ''} field="status" maxLength={200} onCommit={commit} style={{ fontStyle: 'italic' }} />
             ) : status}
           </p>
         )}
-        {bio && (
+        {(bio || isEditor) && (
           <p style={{ margin: '10px 0 0', fontSize: 15, color: 'var(--ink)', lineHeight: 1.55 }}>
             {isEditor ? (
-              <span contentEditable suppressContentEditableWarning data-field="bio">{bio}</span>
+              <EditableText value={bio || ''} field="bio" maxLength={2000} multiline onCommit={commit} />
             ) : bio}
           </p>
         )}
