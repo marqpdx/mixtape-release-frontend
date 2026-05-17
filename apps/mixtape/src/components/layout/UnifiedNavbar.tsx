@@ -65,7 +65,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "console", label: "Console", href: "/app/console", section: "authenticated", adminOnly: true, shortLabel: "Console" },
+  { key: "console", label: "Console", href: "/console", section: "authenticated", adminOnly: true, shortLabel: "Console" },
   { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", adminOnly: true, shortLabel: "Story" },
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
