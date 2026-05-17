@@ -224,6 +224,7 @@ export function WorkTableCommandField({
           id: string; entry_type: string; body: string; created_at: string;
         }>("/api/worktable/prose/", {
           body: logBody,
+          ...(context.kind === "initiative" ? { initiative_id: context.id } : {}),
           ...(context.kind === "group" ? { group_slug: context.slug } : {}),
         });
         const entry: StreamEntry = {
