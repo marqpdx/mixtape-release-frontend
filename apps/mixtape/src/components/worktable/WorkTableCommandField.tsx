@@ -21,6 +21,8 @@ const CONTEXT_RETURN_RE = /^\/\.(\s|$)/;
 const LOG_ENTRY_RE = /^\/log\s+([\s\S]+)/i;
 const HANDOFF_RE = /^\/handoff\s+([\s\S]+)/i;
 const EMPH_RE = /^\/emph\s+([\s\S]+)/i;
+const ORIENTATION_ONLY_RE = /^\/\/$/;
+const INITIATIVE_CREATE_RE = /^\/n\s+(.+)/i;
 
 function parseApertureKind(text: string): { kind: Exclude<ApertureLogEntryKind, "ledger" | "seed_spawn">; body: string; emph_note: string } {
   const handoffMatch = HANDOFF_RE.exec(text);
@@ -82,12 +84,32 @@ export function WorkTableCommandField({
   const isReturn = CONTEXT_RETURN_RE.test(trimmed);
   const logMatch = LOG_ENTRY_RE.exec(trimmed);
   const contextQuery = contextSwitchMatch?.[1]?.trim().toLowerCase() ?? null;
+  const isOrientationOnly = ORIENTATION_ONLY_RE.test(trimmed);
+  const initiativeCreateMatch = INITIATIVE_CREATE_RE.exec(trimmed);
+  const initiativeCreateTitle = initiativeCreateMatch?.[1]?.trim() ?? null;
 
   const contextTarget = contextQuery
     ? (orientation?.groups ?? []).find(
         (g) => g.title.toLowerCase().includes(contextQuery) || g.slug.includes(contextQuery)
       ) ?? null
     : null;
+
+  // Merged recency-sorted list for // alone orientation panel
+  const orientationItems = useMemo(() => {
+    if (!orientation) return [];
+    type OrientItem =
+      | { kind: "initiative"; id: string; title: string; status: string; updated_at: string }
+      | { kind: "group"; id: string; title: string; slug: string; updated_at: string };
+    const inits: OrientItem[] = (orientation.initiatives ?? []).map((i) => ({
+      kind: "initiative" as const, id: i.id, title: i.title, status: i.status, updated_at: i.updated_at,
+    }));
+    const grps: OrientItem[] = (orientation.groups ?? []).map((g) => ({
+      kind: "group" as const, id: g.id, title: g.title, slug: g.slug, updated_at: g.updated_at,
+    }));
+    return [...inits, ...grps]
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+      .slice(0, 10);
+  }, [orientation]);
 
   // Initiative typeahead — fetch when // text is typed and no group match found
   useEffect(() => {
@@ -133,6 +155,24 @@ export function WorkTableCommandField({
     if (CONTEXT_RETURN_RE.test(trimmed)) {
       onContextReturn();
       setInput("");
+      return;
+    }
+
+    // /n {title} — create personal initiative and dissolve into it
+    if (initiativeCreateTitle) {
+      setSubmitting(true);
+      try {
+        const res = await axiosInstance.post<{ id: string; title: string; status: string }>(
+          "/api/initiatives/personal",
+          { title: initiativeCreateTitle }
+        );
+        onContextSwitch({ kind: "initiative", id: res.data.id, title: res.data.title, sponsor: "personal" });
+        setInput("");
+      } catch {
+        setError("Failed to create initiative. Try again.");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -271,7 +311,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
+  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -285,7 +325,9 @@ export function WorkTableCommandField({
   let buttonColor: string = "blue";
   let buttonDisabled = !trimmed || submitting;
 
-  if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
+  if (isOrientationOnly) { buttonDisabled = true; }
+  else if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
+  else if (initiativeCreateTitle) { buttonLabel = `Create "${initiativeCreateTitle}"`; buttonColor = "teal"; }
   else if (logMatch) { buttonLabel = "Log"; buttonColor = "orange"; }
   else if (contextTarget) { buttonLabel = `Switch to ${contextTarget.title}`; buttonColor = "purple"; }
   else if (contextQuery && initiativeResults.length === 1) { buttonLabel = `Open ${initiativeResults[0].title}`; buttonColor = "teal"; }
@@ -294,7 +336,13 @@ export function WorkTableCommandField({
 
   // Help text
   const isInitiative = context.kind === "initiative";
-  const helpText = contextQuery
+  const helpText = isOrientationOnly
+    ? orientationItems.length > 0
+      ? `${orientationItems.length} recent context${orientationItems.length > 1 ? "s" : ""} — click to switch`
+      : "No recent contexts"
+    : initiativeCreateTitle
+    ? `New initiative: ${initiativeCreateTitle}`
+    : contextQuery
     ? contextTarget
       ? `Switch to ${contextTarget.title}`
       : initiativeResults.length > 0
@@ -305,7 +353,7 @@ export function WorkTableCommandField({
     : logMatch ? "Write a prose log entry"
     : isRemind ? "Use 'on Tuesday', 'tomorrow', or 'next week' to set a date"
     : isNeedMore ? "Items split on commas, 'and', or new lines"
-    : 'Capture · /log … · // Group or Initiative · /. return';
+    : 'Capture · /log … · /n New Initiative · // Context · /. return';
 
   const handleInitiativeSelect = (init: InitiativeSearchResult) => {
     onContextSwitch({ kind: "initiative", id: init.id, title: init.title, sponsor: "personal" });
@@ -326,8 +374,57 @@ export function WorkTableCommandField({
           minH="80px"
           resize="vertical"
           fontSize="sm"
-          mb={showInitiativeDropdown ? 0 : 3}
+          mb={(showInitiativeDropdown || isOrientationOnly) ? 0 : 3}
         />
+        {isOrientationOnly && orientationItems.length > 0 && (
+          <Box
+            position="absolute"
+            top="100%"
+            left={0}
+            right={0}
+            zIndex={200}
+            bg={dropdownBg}
+            border="1px solid"
+            borderColor={borderColor}
+            borderRadius="md"
+            mt={1}
+            mb={3}
+            shadow="md"
+            overflow="hidden"
+          >
+            {orientationItems.map((item) => (
+              <Box
+                key={`${item.kind}-${item.id}`}
+                px={3}
+                py={2}
+                fontSize="sm"
+                color={dropdownTextColor}
+                cursor="pointer"
+                _hover={{ bg: dropdownHoverBg }}
+                onMouseDown={() => {
+                  if (item.kind === "initiative") {
+                    onContextSwitch({ kind: "initiative", id: item.id, title: item.title, sponsor: "personal" });
+                  } else {
+                    onContextSwitch({ kind: "group", id: item.id, slug: item.slug, title: item.title });
+                  }
+                  setInput("");
+                }}
+              >
+                <HStack gap={2}>
+                  <Text
+                    as="span"
+                    fontSize="xs"
+                    fontWeight="700"
+                    color={item.kind === "initiative" ? "teal.500" : "purple.500"}
+                  >
+                    {item.kind}
+                  </Text>
+                  <Text as="span">{item.title}</Text>
+                </HStack>
+              </Box>
+            ))}
+          </Box>
+        )}
         {showInitiativeDropdown && (
           <Box
             position="absolute"
