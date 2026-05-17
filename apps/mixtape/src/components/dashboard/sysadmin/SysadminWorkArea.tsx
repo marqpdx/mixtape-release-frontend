@@ -68,6 +68,8 @@ interface ProcessInfo {
   elapsed_seconds: number;
 }
 
+type BackupMonitor = NonNullable<NonNullable<OpsBackupsDetailSection["data"]>["monitors"]>[string];
+
 interface QuickListItem {
   key: string;
   label: string;
@@ -160,6 +162,11 @@ function formatPercent(value: number | undefined | null): string {
 function formatAge(seconds: number | undefined | null): string {
   if (seconds === undefined || seconds === null) return "—";
   return `${formatUptime(seconds)} ago`;
+}
+
+function formatDateTime(value: string | undefined | null): string {
+  if (!value) return "—";
+  return new Date(value).toLocaleString();
 }
 
 // Emoji map for tiles
@@ -422,6 +429,12 @@ export default function SysadminWorkArea({
     return snapshot?.backups_detail as OpsBackupsDetailSection | undefined;
   }, [snapshot]);
 
+  const backupMonitorEntries = useMemo(() => {
+    return Object.entries(
+      backupsDetail?.data?.monitors || {},
+    ) as Array<[string, BackupMonitor]>;
+  }, [backupsDetail]);
+
   const lastUpdated = useMemo(() => {
     if (!summary?.timestamp) return null;
     return new Date(summary.timestamp).toLocaleString();
@@ -559,7 +572,7 @@ export default function SysadminWorkArea({
         }).length;
         const overallStatus =
           key === "backups"
-            ? backupsSummary?.status || "unknown"
+            ? backupsDetail?.status || backupsSummary?.status || "unknown"
             : unitStates.some((unit) => (unit?.status || unit?.active_state) === "critical")
               ? "critical"
               : unitStates.some((unit) => {
@@ -574,11 +587,17 @@ export default function SysadminWorkArea({
           status: overallStatus,
           detail:
             key === "backups"
-              ? `${backupsSummary?.issues?.length || 0} backup issue(s)`
+              ? backupMonitorEntries.length
+                ? backupMonitorEntries
+                  .map(([, monitor]) => `${monitor.label || "Backup"}: ${formatAge(monitor.last_success_age_seconds)}`)
+                  .join(" • ")
+                : `${backupsSummary?.issues?.length || 0} backup issue(s)`
               : `${healthyUnits}/${unitStates.length} units healthy`,
           hint:
             key === "backups"
-              ? backupsSummary?.issues?.[0] || "Timers and backup services look healthy."
+              ? backupMonitorEntries.find(([, monitor]) => monitor.success_source === "local_archive_fallback")
+                ? "At least one backup monitor is inferring success from archive timestamps because the success stamp is missing."
+                : backupsSummary?.issues?.[0] || "Timers and backup services look healthy."
               : `${unitStates.length} systemd units tracked`,
         });
         return;
@@ -607,6 +626,8 @@ export default function SysadminWorkArea({
     applicationSurfaceEntries,
     applicationSurfaceSummary,
     applicationSurfaces,
+    backupMonitorEntries,
+    backupsDetail?.status,
     backupsSummary,
     diskData,
     livewireDetail?.data?.probe?.url,
@@ -1150,7 +1171,6 @@ export default function SysadminWorkArea({
   if (section === "svc-backups") {
     const backups = services.backups as ServiceUnits;
     const backupUnits = Object.entries(backups?.units || {});
-    const backupMonitors = Object.entries(backupsDetail?.data?.monitors || {});
     const backupsCollectedAt = backupsDetail?.collected_at
       ? new Date(backupsDetail.collected_at).toLocaleString()
       : null;
@@ -1202,9 +1222,9 @@ export default function SysadminWorkArea({
             </Card.Body>
           </Card.Root>
 
-          {backupMonitors.length > 0 && (
+          {backupMonitorEntries.length > 0 && (
             <SimpleGrid columns={{ base: 1, xl: 2 }} gap={4}>
-              {backupMonitors.map(([monitorKey, monitor]) => (
+              {backupMonitorEntries.map(([monitorKey, monitor]) => (
                 <Card.Root
                   key={monitorKey}
                   variant="outline"
@@ -1224,10 +1244,14 @@ export default function SysadminWorkArea({
                         <Text fontSize="sm" color="gray.600">{monitor.summary.detail}</Text>
                       )}
                       <HStack justify="space-between">
+                        <Text fontSize="sm" color="gray.500">Evidence source</Text>
+                        <Text fontSize="sm">{monitor.success_source || "unknown"}</Text>
+                      </HStack>
+                      <HStack justify="space-between">
                         <Text fontSize="sm" color="gray.500">Last success</Text>
                         <Text fontSize="sm">
                           {monitor.last_success_at
-                            ? `${new Date(monitor.last_success_at).toLocaleString()}`
+                            ? `${formatDateTime(monitor.last_success_at)}`
                             : "—"}
                         </Text>
                       </HStack>
@@ -1243,7 +1267,7 @@ export default function SysadminWorkArea({
                         <Text fontSize="sm" color="gray.500">Next expected</Text>
                         <Text fontSize="sm">
                           {monitor.next_expected_at
-                            ? new Date(monitor.next_expected_at).toLocaleString()
+                            ? formatDateTime(monitor.next_expected_at)
                             : "—"}
                         </Text>
                       </HStack>
@@ -1259,13 +1283,70 @@ export default function SysadminWorkArea({
                       </HStack>
                       <HStack justify="space-between">
                         <Text fontSize="sm" color="gray.500">Off-host</Text>
-                        <Text fontSize="sm">{monitor.off_host_status || "unknown"}</Text>
+                        <StatusBadge status={monitor.off_host_status || "unknown"} />
                       </HStack>
                       {monitor.stamp_file && (
                         <VStack align="stretch" gap={1}>
                           <Text fontSize="sm" color="gray.500">Stamp file</Text>
                           <Code fontSize="xs" whiteSpace="normal">{monitor.stamp_file}</Code>
                         </VStack>
+                      )}
+                      {monitor.archive_inventory && (
+                        <Box pt={2} borderTopWidth="1px">
+                          <VStack align="stretch" gap={2}>
+                            <HStack justify="space-between">
+                              <Text fontSize="sm" color="gray.500">Archive path</Text>
+                              <Code fontSize="xs" whiteSpace="normal">{monitor.archive_inventory.path || "—"}</Code>
+                            </HStack>
+                            <SimpleGrid columns={{ base: 2, md: 4 }} gap={3}>
+                              <VStack align="stretch" gap={1}>
+                                <Text fontSize="sm" color="gray.500">File count</Text>
+                                <Text fontWeight="bold">{monitor.archive_inventory.file_count ?? "—"}</Text>
+                              </VStack>
+                              <VStack align="stretch" gap={1}>
+                                <Text fontSize="sm" color="gray.500">Total size</Text>
+                                <Text fontWeight="bold">{formatBytes(monitor.archive_inventory.total_bytes)}</Text>
+                              </VStack>
+                              <VStack align="stretch" gap={1}>
+                                <Text fontSize="sm" color="gray.500">Newest file age</Text>
+                                <Text fontWeight="bold">{formatAge(monitor.archive_inventory.newest_age_seconds)}</Text>
+                              </VStack>
+                              <VStack align="stretch" gap={1}>
+                                <Text fontSize="sm" color="gray.500">Newest file</Text>
+                                <Text fontWeight="bold" fontSize="sm">
+                                  {monitor.archive_inventory.newest_file || "—"}
+                                </Text>
+                              </VStack>
+                            </SimpleGrid>
+
+                            {(monitor.archive_inventory.expected_archives || []).length > 0 && (
+                              <Table.Root size="sm" variant="line">
+                                <Table.Header>
+                                  <Table.Row>
+                                    <Table.ColumnHeader>Target</Table.ColumnHeader>
+                                    <Table.ColumnHeader>Present</Table.ColumnHeader>
+                                    <Table.ColumnHeader>Latest File</Table.ColumnHeader>
+                                    <Table.ColumnHeader>Age</Table.ColumnHeader>
+                                    <Table.ColumnHeader>Size</Table.ColumnHeader>
+                                  </Table.Row>
+                                </Table.Header>
+                                <Table.Body>
+                                  {(monitor.archive_inventory.expected_archives || []).map((archive) => (
+                                    <Table.Row key={archive.label || archive.prefix || "archive"}>
+                                      <Table.Cell>{archive.label || "archive"}</Table.Cell>
+                                      <Table.Cell>
+                                        <StatusBadge status={archive.present ? "healthy" : "critical"} />
+                                      </Table.Cell>
+                                      <Table.Cell>{archive.latest_file || "—"}</Table.Cell>
+                                      <Table.Cell>{formatAge(archive.latest_age_seconds)}</Table.Cell>
+                                      <Table.Cell>{formatBytes(archive.size_bytes)}</Table.Cell>
+                                    </Table.Row>
+                                  ))}
+                                </Table.Body>
+                              </Table.Root>
+                            )}
+                          </VStack>
+                        </Box>
                       )}
                       {(monitor.errors || []).length > 0 && (
                         <Box pt={2} borderTopWidth="1px">

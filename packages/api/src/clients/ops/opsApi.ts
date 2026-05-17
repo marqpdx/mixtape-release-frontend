@@ -166,11 +166,37 @@ export interface OpsBackupsDetailSection {
       status?: string;
       interval_seconds?: number;
       stamp_file?: string | null;
+      success_source?: "stamp" | "local_archive_fallback" | "none" | string;
       last_success_at?: string | null;
       last_success_age_seconds?: number | null;
       next_expected_at?: string | null;
       window_elapsed?: boolean | null;
       off_host_status?: string;
+      archive_inventory?: {
+        path?: string;
+        file_count?: number;
+        total_bytes?: number;
+        newest_file?: string | null;
+        newest_modified_at?: string | null;
+        newest_age_seconds?: number | null;
+        oldest_file?: string | null;
+        oldest_modified_at?: string | null;
+        expected_archives?: Array<{
+          label?: string;
+          prefix?: string;
+          suffix?: string;
+          present?: boolean;
+          latest_file?: string | null;
+          latest_modified_at?: string | null;
+          latest_age_seconds?: number | null;
+          size_bytes?: number | null;
+        }>;
+        recent_files?: Array<{
+          name?: string;
+          size_bytes?: number;
+          modified_at?: string | null;
+        }>;
+      };
       summary?: {
         headline?: string;
         detail?: string;
