@@ -47,7 +47,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
       const redirectTarget = query ? `${pathname}?${query}` : pathname;
       router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
     }
-  }, [user, isAuthenticated, identityLoading, router, pathname, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, isAuthenticated, identityLoading, router, pathname, searchParams]);  
 
   // ✅ Initialize Socket.IO connection when authenticated
   useEffect(() => {
