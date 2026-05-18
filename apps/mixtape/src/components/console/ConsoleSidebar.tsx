@@ -1,3 +1,5 @@
+// apps/mixtape/src/components/console/ConsoleSidebar.tsx
+
 "use client";
 
 import {

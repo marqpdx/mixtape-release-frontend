@@ -28,7 +28,7 @@ export function groupIntoBundles(entries: StreamEntryData[]): Bundle[] {
     const sameType = entry.entry_type === prev.entry_type;
     const sameKind = entry.kind === prev.kind;
 
-    if (sameType && sameKind && timeDiff <= BUNDLE_WINDOW_MS) {
+    if (sameType && sameKind && timeDiff <= BUNDLE_WINDOW_MS && entry.entry_type !== "prose") {
       current.push(entry);
     } else {
       bundles.push({ entries: [...current], key: current[0].id });

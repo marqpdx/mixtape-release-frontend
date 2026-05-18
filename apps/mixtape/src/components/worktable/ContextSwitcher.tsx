@@ -3,7 +3,7 @@
 // ContextSwitcher — Personal pill + up to 3 recent group pills + typeahead search.
 // Recent group slugs are persisted in localStorage (separate key from active slug).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, HStack, Input, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
@@ -33,6 +33,7 @@ function slugColor(slug: string): string {
 
 const ACTIVE_KEY = (u: string) => `mixtape.web.worktable.contextSlug.${u}`;
 const RECENTS_KEY = (u: string) => `mixtape.web.worktable.recentSlugs.${u}`;
+const INITIATIVE_KEY = (u: string) => `mixtape.web.worktable.initiative.${u}`;
 
 function saveActive(username: string, slug: string) {
   try { localStorage.setItem(ACTIVE_KEY(username), slug); } catch {}
@@ -51,6 +52,19 @@ function pushRecent(username: string, slug: string) {
     const next = [slug, ...loadRecents(username).filter(s => s !== slug)].slice(0, 3);
     localStorage.setItem(RECENTS_KEY(username), JSON.stringify(next));
   } catch {}
+}
+type SavedInitiative = { id: string; title: string; sponsor: "personal" | "group" };
+function saveInitiative(username: string, ctx: SavedInitiative) {
+  try { localStorage.setItem(INITIATIVE_KEY(username), JSON.stringify(ctx)); } catch {}
+}
+function clearInitiative(username: string) {
+  try { localStorage.removeItem(INITIATIVE_KEY(username)); } catch {}
+}
+function loadInitiative(username: string): SavedInitiative | null {
+  try {
+    const raw = localStorage.getItem(INITIATIVE_KEY(username));
+    return raw ? (JSON.parse(raw) as SavedInitiative) : null;
+  } catch { return null; }
 }
 
 // ---------------------------------------------------------------------------
@@ -243,6 +257,7 @@ export function ContextSwitcher({
   const labelColor = useColorModeValue("gray.500", "gray.400");
 
   const [recentSlugs, setRecentSlugs] = useState<string[]>([]);
+  const initiativeRestoredRef = useRef(false);
 
   // Load recents from localStorage once groups are available
   useEffect(() => {
@@ -251,9 +266,21 @@ export function ContextSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups.length > 0]);
 
-  // Restore last active context on mount — only group contexts persist
+  // Restore initiative context on mount (before groups load)
+  useEffect(() => {
+    if (!username) return;
+    const saved = loadInitiative(username);
+    if (saved) {
+      initiativeRestoredRef.current = true;
+      onSelect({ kind: "initiative", id: saved.id, title: saved.title, sponsor: saved.sponsor });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
+  // Restore last active group context on mount — skipped if initiative was restored
   useEffect(() => {
     if (!username || groups.length === 0) return;
+    if (initiativeRestoredRef.current) return;
     const saved = loadActive(username);
     if (!saved || saved === "__personal__") return;
     const match = groups.find(g => g.slug === saved);
@@ -269,6 +296,13 @@ export function ContextSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups.length > 0]);
 
+  // Save initiative context whenever it becomes active
+  useEffect(() => {
+    if (context.kind === "initiative") {
+      saveInitiative(username, { id: context.id, title: context.title, sponsor: context.sponsor });
+    }
+  }, [context, username]);
+
   const activeSlug =
     context.kind === "group" ? context.slug : "__personal__";
 
@@ -277,11 +311,15 @@ export function ContextSwitcher({
     saveActive(username, g.slug);
     pushRecent(username, g.slug);
     setRecentSlugs(loadRecents(username));
+    clearInitiative(username);
+    initiativeRestoredRef.current = false;
   };
 
   const handlePersonal = () => {
     onSelect({ kind: "personal" });
     saveActive(username, "__personal__");
+    clearInitiative(username);
+    initiativeRestoredRef.current = false;
   };
 
   // Build the up-to-3 recent group chips
