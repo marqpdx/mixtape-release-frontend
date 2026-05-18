@@ -23,21 +23,23 @@ import type { ActionMode } from "@components/worktable/ActionPanel";
 // Panel ratio — persisted per user
 // ---------------------------------------------------------------------------
 
-type PanelRatio = "1:2" | "2:1";
+type PanelWidth = "33" | "50" | "67";
 
 const RATIO_KEY = (u: string) => `mixtape.web.console.panelRatio.${u}`;
 
-function loadRatio(username: string): PanelRatio {
+function loadRatio(username: string): PanelWidth {
   try {
     const v = localStorage.getItem(RATIO_KEY(username));
-    return v === "2:1" ? "2:1" : "1:2";
+    if (v === "33" || v === "50" || v === "67") return v;
+    if (v === "2:1") return "67";
+    return "33";
   } catch {
-    return "1:2";
+    return "33";
   }
 }
 
-function saveRatio(username: string, ratio: PanelRatio) {
-  try { localStorage.setItem(RATIO_KEY(username), ratio); } catch {}
+function saveRatio(username: string, width: PanelWidth) {
+  try { localStorage.setItem(RATIO_KEY(username), width); } catch {}
 }
 
 // ---------------------------------------------------------------------------
@@ -68,17 +70,15 @@ export default function ConsolePage() {
   const [context, setContext] = useState<WorkTableContext>({ kind: "personal" });
   const [orientationCollapsed, setOrientationCollapsed] = useState(true);
   const [actionMode, setActionMode] = useState<ActionMode>("empty");
-  const [panelRatio, setPanelRatio] = useState<PanelRatio>("1:2");
+  const [panelWidth, setPanelWidth] = useState<PanelWidth>("33");
 
   const appendRef = useRef<((entry: StreamEntry) => void) | null>(null);
   const appendApertureRef = useRef<((entry: ApertureLogEntry) => void) | null>(null);
 
-  // Load persisted ratio after username is available
+  // Load persisted width after username is available
   useEffect(() => {
-    if (username) setPanelRatio(loadRatio(username));
+    if (username) setPanelWidth(loadRatio(username));
   }, [username]);
-
-  const groupCtx = context.kind === "group" ? context : null;
 
   const handleCapture = (entry: StreamEntry) => {
     appendRef.current?.(entry);
@@ -88,14 +88,13 @@ export default function ConsolePage() {
     appendApertureRef.current?.(entry);
   };
 
-  function toggleRatio() {
-    const next: PanelRatio = panelRatio === "1:2" ? "2:1" : "1:2";
-    setPanelRatio(next);
-    if (username) saveRatio(username, next);
+  function handleWidthChange(w: PanelWidth) {
+    setPanelWidth(w);
+    if (username) saveRatio(username, w);
   }
 
-  const leftCols = panelRatio === "1:2" ? "1fr" : "2fr";
-  const rightCols = panelRatio === "1:2" ? "2fr" : "1fr";
+  const leftCols = panelWidth === "67" ? "2fr" : "1fr";
+  const rightCols = panelWidth === "33" ? "2fr" : "1fr";
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -118,18 +117,25 @@ export default function ConsolePage() {
               />
             </Box>
 
-            {/* 3 — Panel ratio toggle */}
-            <HStack justify="flex-end" mb={2}>
-              <Box
-                as="button"
-                fontSize="10px"
-                color={toggleColor}
-                onClick={toggleRatio}
-                _hover={{ opacity: 0.7 }}
-                letterSpacing="wide"
-              >
-                {panelRatio === "1:2" ? "⇤ expand left" : "expand right ⇥"}
-              </Box>
+            {/* 3 — Panel width toggle */}
+            <HStack justify="flex-end" mb={2} gap={1}>
+              {(["33", "50", "67"] as PanelWidth[]).map((w) => (
+                <Box
+                  key={w}
+                  as="button"
+                  fontSize="10px"
+                  px={1.5}
+                  py={0.5}
+                  borderRadius="sm"
+                  color={panelWidth === w ? "blue.400" : toggleColor}
+                  fontWeight={panelWidth === w ? "700" : "400"}
+                  onClick={() => handleWidthChange(w)}
+                  _hover={{ opacity: 0.7 }}
+                  letterSpacing="wide"
+                >
+                  {w}%
+                </Box>
+              ))}
             </HStack>
 
             {/* 4 — Two-pane work surface */}
