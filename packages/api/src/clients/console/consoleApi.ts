@@ -59,6 +59,8 @@ export interface OrientationInitiative {
   title: string;
   status: string;
   updated_at: string;
+  sponsor_type: "personal" | "group";
+  sponsor_slug: string | null;
 }
 
 export interface OrientationGroup {

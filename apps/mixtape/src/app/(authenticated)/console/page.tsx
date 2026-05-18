@@ -179,7 +179,7 @@ export default function ConsolePage() {
               mb={4}
             >
               <SectionHeading>Activity</SectionHeading>
-              <ConsoleSidebar groupSlug={groupCtx?.slug} />
+              <ConsoleSidebar context={context} onInitiativeSelect={setContext} />
             </Box>
             <Box
               bg={sidebarBg}

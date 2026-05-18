@@ -4,6 +4,7 @@
 // Recent group slugs are persisted in localStorage (separate key from active slug).
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Box, HStack, Input, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
@@ -366,20 +367,33 @@ export function ContextSwitcher({
           </>
         ) : (
           <>
-            <ContextChip
-              label="Personal"
-              active={activeSlug === "__personal__"}
-              onClick={handlePersonal}
-            />
-            {recentGroups.map(g => (
+            <motion.div layout="position" style={{ flexShrink: 0 }}>
               <ContextChip
-                key={g.slug}
-                label={g.title}
-                active={activeSlug === g.slug}
-                color={slugColor(g.slug)}
-                onClick={() => handleGroupSelect(g)}
+                label="Personal"
+                active={activeSlug === "__personal__"}
+                onClick={handlePersonal}
               />
-            ))}
+            </motion.div>
+            <AnimatePresence mode="popLayout">
+              {recentGroups.map(g => (
+                <motion.div
+                  key={g.slug}
+                  layout="position"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ flexShrink: 0 }}
+                >
+                  <ContextChip
+                    label={g.title}
+                    active={activeSlug === g.slug}
+                    color={slugColor(g.slug)}
+                    onClick={() => handleGroupSelect(g)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
             {groups.length > 0 && (
               <GroupTypeahead
                 groups={remainingGroups.length > 0 ? remainingGroups : groups}

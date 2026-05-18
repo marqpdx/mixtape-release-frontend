@@ -14,10 +14,10 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import Link from "next/link";
 import { useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useHubCaptures, useOrientation, usePromoteCaptures, useResolveCapture, useStewardship } from "@hooks/console/useConsole";
+import type { WorkTableContext } from "@components/worktable/types";
 
 function SidebarSection({
   value,
@@ -72,7 +72,14 @@ function EmptyNote({ text }: { text: string }) {
   );
 }
 
-export function ConsoleSidebar({ groupSlug }: { groupSlug?: string } = {}) {
+export function ConsoleSidebar({
+  context = { kind: "personal" },
+  onInitiativeSelect,
+}: {
+  context?: WorkTableContext;
+  onInitiativeSelect?: (ctx: WorkTableContext) => void;
+}) {
+  const groupSlug = context.kind === "group" ? context.slug : undefined;
   const { data: orientation, isLoading: orientationLoading } = useOrientation();
   const { data: stewardship, isLoading: stewardshipLoading } = useStewardship();
   const { data: fixData, isLoading: fixLoading } = useHubCaptures("fix", groupSlug);
@@ -90,7 +97,19 @@ export function ConsoleSidebar({ groupSlug }: { groupSlug?: string } = {}) {
   const hoverBg = useColorModeValue("gray.50", "gray.750");
   const mutedColor = useColorModeValue("gray.400", "gray.500");
 
-  const initiatives = orientation?.initiatives ?? [];
+  const allInitiatives = orientation?.initiatives ?? [];
+
+  // Split: current-context initiatives vs recent-from-others
+  const contextInitiatives = allInitiatives.filter((ini) => {
+    if (context.kind === "personal") return ini.sponsor_type === "personal";
+    if (context.kind === "group") return ini.sponsor_type === "group" && ini.sponsor_slug === context.slug;
+    return false; // initiative context: none in "current"
+  });
+  const otherInitiatives = allInitiatives
+    .filter((ini) => !contextInitiatives.includes(ini))
+    .slice(0, 5);
+
+  const initiatives = allInitiatives; // keep for count badge
   const reminders = stewardship?.overdue_reminders ?? [];
   const fixes = fixData?.captures ?? [];
   const needMores = needMoreData?.captures ?? [];
@@ -140,28 +159,77 @@ export function ConsoleSidebar({ groupSlug }: { groupSlug?: string } = {}) {
           <EmptyNote text="No active initiatives." />
         ) : (
           <VStack gap={1} align="stretch">
-            {initiatives.map((ini) => (
-              <Link key={ini.id} href="/console">
-                <HStack
-                  bg={cardBg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="md"
-                  px={3}
-                  py={2}
-                  _hover={{ bg: hoverBg }}
-                  cursor="pointer"
-                  justify="space-between"
-                >
-                  <Text fontSize="sm" flex={1} lineClamp={1}>
-                    {ini.title}
-                  </Text>
-                  <Badge size="sm" colorPalette="green" variant="subtle">
-                    {ini.status}
-                  </Badge>
-                </HStack>
-              </Link>
+            {/* Current-context initiatives */}
+            {contextInitiatives.map((ini) => (
+              <HStack
+                key={ini.id}
+                bg={cardBg}
+                border="1px solid"
+                borderColor={borderColor}
+                borderRadius="md"
+                px={3}
+                py={2}
+                _hover={{ bg: hoverBg }}
+                cursor="pointer"
+                justify="space-between"
+                onClick={() => onInitiativeSelect?.({
+                  kind: "initiative",
+                  id: ini.id,
+                  title: ini.title,
+                  sponsor: ini.sponsor_type,
+                })}
+              >
+                <Text fontSize="sm" flex={1} lineClamp={1}>
+                  {ini.title}
+                </Text>
+                <Badge size="sm" colorPalette="green" variant="subtle">
+                  {ini.status}
+                </Badge>
+              </HStack>
             ))}
+
+            {/* Divider + recent from other contexts */}
+            {otherInitiatives.length > 0 && (
+              <>
+                {contextInitiatives.length > 0 && (
+                  <Text fontSize="xs" color={mutedColor} px={1} py={0.5} letterSpacing="wide">
+                    ─────
+                  </Text>
+                )}
+                {otherInitiatives.map((ini) => (
+                  <HStack
+                    key={ini.id}
+                    bg={cardBg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="md"
+                    px={3}
+                    py={1.5}
+                    _hover={{ bg: hoverBg }}
+                    cursor="pointer"
+                    justify="space-between"
+                    opacity={0.65}
+                    onClick={() => onInitiativeSelect?.({
+                      kind: "initiative",
+                      id: ini.id,
+                      title: ini.title,
+                      sponsor: ini.sponsor_type,
+                    })}
+                  >
+                    <Text fontSize="xs" flex={1} lineClamp={1}>
+                      {ini.title}
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor}>
+                      {ini.sponsor_type === "personal" ? "personal" : ini.sponsor_slug ?? "group"}
+                    </Text>
+                  </HStack>
+                ))}
+              </>
+            )}
+
+            {contextInitiatives.length === 0 && otherInitiatives.length === 0 && (
+              <EmptyNote text="No active initiatives." />
+            )}
           </VStack>
         )}
       </SidebarSection>
