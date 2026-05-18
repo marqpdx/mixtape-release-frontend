@@ -114,6 +114,7 @@ export default function ConsolePage() {
                 onContextReturn={() => setContext({ kind: "personal" })}
                 onCapture={handleCapture}
                 onApertureCapture={handleApertureCapture}
+                onHandover={() => setActionMode("handover")}
               />
             </Box>
 
@@ -147,7 +148,12 @@ export default function ConsolePage() {
             >
               {/* Left — Action surface */}
               <GridItem>
-                <ActionPanel mode={actionMode} context={context} onClear={() => setActionMode("empty")} />
+                <ActionPanel
+                  mode={actionMode}
+                  context={context}
+                  onClear={() => setActionMode("empty")}
+                  onApertureCapture={handleApertureCapture}
+                />
               </GridItem>
 
               {/* Right — Stream */}

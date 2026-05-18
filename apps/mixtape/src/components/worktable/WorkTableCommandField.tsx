@@ -23,6 +23,7 @@ const HANDOFF_RE = /^\/handoff\s+([\s\S]+)/i;
 const EMPH_RE = /^\/emph\s+([\s\S]+)/i;
 const ORIENTATION_ONLY_RE = /^\/\/$/;
 const INITIATIVE_CREATE_RE = /^\/n\s+(.+)/i;
+const Z_GESTURE_RE = /^\/z$/i;
 
 function parseApertureKind(text: string): { kind: Exclude<ApertureLogEntryKind, "ledger" | "seed_spawn">; body: string; emph_note: string } {
   const handoffMatch = HANDOFF_RE.exec(text);
@@ -51,12 +52,14 @@ export function WorkTableCommandField({
   onContextReturn,
   onCapture,
   onApertureCapture,
+  onHandover,
 }: {
   context: WorkTableContext;
   onContextSwitch: (ctx: WorkTableContext) => void;
   onContextReturn: () => void;
   onCapture: (entry: StreamEntry) => void;
   onApertureCapture?: (entry: ApertureLogEntry) => void;
+  onHandover?: () => void;
 }) {
   const [input, setInput] = useState("");
   const [visibility, setVisibility] = useState<"private" | "shared">("private");
@@ -82,6 +85,7 @@ export function WorkTableCommandField({
   const trimmed = input.trim();
   const contextSwitchMatch = CONTEXT_SWITCH_RE.exec(trimmed);
   const isReturn = CONTEXT_RETURN_RE.test(trimmed);
+  const isZGesture = Z_GESTURE_RE.test(trimmed);
   const logMatch = LOG_ENTRY_RE.exec(trimmed);
   const contextQuery = contextSwitchMatch?.[1]?.trim().toLowerCase() ?? null;
   const isOrientationOnly = ORIENTATION_ONLY_RE.test(trimmed);
@@ -154,6 +158,13 @@ export function WorkTableCommandField({
 
     if (CONTEXT_RETURN_RE.test(trimmed)) {
       onContextReturn();
+      setInput("");
+      return;
+    }
+
+    // /z — surface AI handover draft in action panel
+    if (Z_GESTURE_RE.test(trimmed)) {
+      onHandover?.();
       setInput("");
       return;
     }
@@ -311,7 +322,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, logMatch, visibility, needItems, remindAt]);
+  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, onHandover, logMatch, visibility, needItems, remindAt, isZGesture]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -327,6 +338,7 @@ export function WorkTableCommandField({
 
   if (isOrientationOnly) { buttonDisabled = true; }
   else if (isReturn) { buttonLabel = "Return to Personal"; buttonColor = "gray"; }
+  else if (isZGesture) { buttonLabel = "Open handover draft"; buttonColor = "teal"; }
   else if (initiativeCreateTitle) { buttonLabel = `Create "${initiativeCreateTitle}"`; buttonColor = "teal"; }
   else if (logMatch) { buttonLabel = "Log"; buttonColor = "orange"; }
   else if (contextTarget) { buttonLabel = `Switch to ${contextTarget.title}`; buttonColor = "purple"; }
@@ -349,7 +361,8 @@ export function WorkTableCommandField({
       ? `${initiativeResults.length} initiative${initiativeResults.length > 1 ? "s" : ""} found`
       : `No match for "${contextQuery}"`
     : isReturn ? "Return to personal context"
-    : isInitiative ? '/handoff · /emph "note" · prose to log'
+    : isZGesture ? "Surface AI-generated handover draft"
+    : isInitiative ? '/z · /handoff · /emph "note" · prose to log'
     : logMatch ? "Write a prose log entry"
     : isRemind ? "Use 'on Tuesday', 'tomorrow', or 'next week' to set a date"
     : isNeedMore ? "Items split on commas, 'and', or new lines"

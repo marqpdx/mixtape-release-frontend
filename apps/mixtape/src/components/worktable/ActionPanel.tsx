@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, HStack, Input, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Input, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useHubCaptures,
@@ -9,10 +9,13 @@ import {
   useResolveCapture,
   useStewardship,
 } from "@mixtape/api/hooks/console/useConsole";
+import { useHandoverDraft } from "@mixtape/api/hooks/initiatives";
+import { createApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { ContextSummary } from "./ContextSummary";
 import type { WorkTableContext } from "./types";
+import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 
-export type ActionMode = "empty" | "needs" | "reminders" | "fixes";
+export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover";
 
 // ---------------------------------------------------------------------------
 // Shared header with back button
@@ -274,6 +277,153 @@ function FixesPanel({ context, onBack }: { context: WorkTableContext; onBack: ()
 }
 
 // ---------------------------------------------------------------------------
+// HandoverPanel
+// ---------------------------------------------------------------------------
+
+const HANDOVER_COLOR = "#0D7377";
+
+function HandoverPanel({
+  initiativeId,
+  onBack,
+  onApertureCapture,
+}: {
+  initiativeId: string;
+  onBack: () => void;
+  onApertureCapture?: (entry: ApertureLogEntry) => void;
+}) {
+  const { draft, isLoading, error, refetch } = useHandoverDraft(initiativeId);
+  const [body, setBody] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
+
+  const mutedColor = useColorModeValue("gray.400", "gray.500");
+  const labelColor = useColorModeValue("gray.500", "gray.400");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+
+  // Sync textarea when draft arrives (only on first load)
+  const editableBody = body ?? draft?.draft_body ?? "";
+
+  async function handleApprove() {
+    if (!editableBody.trim() || approving) return;
+    setApproving(true);
+    setApproveError(null);
+    try {
+      const entry = await createApertureLogEntry(initiativeId, { kind: "handoff", body: editableBody.trim() });
+      onApertureCapture?.(entry);
+      onBack();
+    } catch {
+      setApproveError("Failed to save. Try again.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  async function handleRegenerate() {
+    setBody(null);
+    await refetch();
+  }
+
+  if (isLoading) {
+    return (
+      <Box>
+        <PanelHeader title="Handover draft" onBack={onBack} />
+        <HStack gap={2} py={4}>
+          <Spinner size="sm" color={HANDOVER_COLOR} />
+          <Text fontSize="sm" color={mutedColor}>Generating…</Text>
+        </HStack>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box>
+        <PanelHeader title="Handover draft" onBack={onBack} />
+        <Text fontSize="sm" color="red.400">{error}</Text>
+      </Box>
+    );
+  }
+
+  if (!draft) {
+    return (
+      <Box>
+        <PanelHeader title="Handover draft" onBack={onBack} />
+        <Text fontSize="sm" color={mutedColor}>
+          No recent activity to summarize. Write a handoff note directly with{" "}
+          <Box as="span" fontFamily="mono" fontSize="xs" fontWeight="700">/handoff</Box>.
+        </Text>
+      </Box>
+    );
+  }
+
+  const generatedAgo = (() => {
+    const ms = Date.now() - new Date(draft.generated_at).getTime();
+    const min = Math.round(ms / 60_000);
+    return min < 1 ? "just now" : `${min} min ago`;
+  })();
+
+  return (
+    <Box>
+      <HStack justify="space-between" mb={3}>
+        <Text fontSize="sm" fontWeight="700">Handover draft</Text>
+        <HStack gap={2}>
+          <Text fontSize="xs" color={labelColor}>{generatedAgo}</Text>
+          <Box
+            as="button"
+            fontSize="xs"
+            color={mutedColor}
+            _hover={{ opacity: 0.7 }}
+            onClick={() => void handleRegenerate()}
+            title="Regenerate"
+          >
+            ⟳
+          </Box>
+          <Box as="button" fontSize="xs" color={mutedColor} onClick={onBack} _hover={{ opacity: 0.7 }}>
+            ← back
+          </Box>
+        </HStack>
+      </HStack>
+
+      <Textarea
+        value={editableBody}
+        onChange={(e) => setBody(e.target.value)}
+        fontSize="sm"
+        minH="260px"
+        resize="vertical"
+        mb={3}
+        fontFamily="mono"
+        borderColor={borderColor}
+      />
+
+      {approveError && (
+        <Text fontSize="xs" color="red.400" mb={2}>{approveError}</Text>
+      )}
+
+      <HStack gap={2} justify="flex-end">
+        <Button
+          size="sm"
+          variant="ghost"
+          colorPalette="gray"
+          onClick={onBack}
+          disabled={approving}
+        >
+          Discard
+        </Button>
+        <Button
+          size="sm"
+          colorPalette="teal"
+          onClick={() => void handleApprove()}
+          loading={approving}
+          disabled={!editableBody.trim()}
+        >
+          Approve — save as handoff note
+        </Button>
+      </HStack>
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // EmptyState
 // ---------------------------------------------------------------------------
 
@@ -289,10 +439,12 @@ export function ActionPanel({
   mode,
   context,
   onClear,
+  onApertureCapture,
 }: {
   mode: ActionMode;
   context: WorkTableContext;
   onClear: () => void;
+  onApertureCapture?: (entry: ApertureLogEntry) => void;
 }) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -310,6 +462,16 @@ export function ActionPanel({
       {mode === "needs" && <NeedsPanel context={context} onBack={onClear} />}
       {mode === "reminders" && <RemindersPanel onBack={onClear} />}
       {mode === "fixes" && <FixesPanel context={context} onBack={onClear} />}
+      {mode === "handover" && context.kind === "initiative" && (
+        <HandoverPanel
+          initiativeId={context.id}
+          onBack={onClear}
+          onApertureCapture={onApertureCapture}
+        />
+      )}
+      {mode === "handover" && context.kind !== "initiative" && (
+        <EmptyState context={context} />
+      )}
     </Box>
   );
 }

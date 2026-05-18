@@ -421,6 +421,22 @@ export async function fetchApertureHandoffs(initiativeId: string): Promise<Apert
   return res.data;
 }
 
+export interface HandoverDraft {
+  generated_at: string;
+  entry_window_from: string | null;
+  entry_window_to: string;
+  draft_body: string;
+  entry_count: number;
+  model: string;
+}
+
+export async function fetchHandoverDraft(initiativeId: string): Promise<HandoverDraft | null> {
+  const res = await axiosInstance.get<{ draft: HandoverDraft | null }>(
+    `/api/initiatives/${initiativeId}/aperture-log/handover-draft`,
+  );
+  return res.data.draft;
+}
+
 export async function fetchApertureOrientation(limit = 10): Promise<ApertureOrientationResponse> {
   const res = await axiosInstance.get(`/api/members/me/aperture/orientation?limit=${limit}`);
   return res.data;
