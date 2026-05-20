@@ -40,6 +40,9 @@ export interface MemberProfile {
   background_image: string;
   profile_image_url?: string | null;
   background_image_url?: string | null;
+  intro_voice?: string;
+  intro_voice_url?: string | null;
+  intro_voice_transcript?: string;
   bio_json: Record<string, unknown>;
   bio_markdown: string;
   created_at: string;

@@ -285,6 +285,20 @@ export function GroupMemberProfilePanel({
               </Box>
             )}
 
+            {profile?.intro_voice_url && (
+              <Box mt={4}>
+                <Text fontSize="xs" fontWeight="semibold" color={muted} mb={2} textTransform="uppercase" letterSpacing="wide">
+                  Voice Intro
+                </Text>
+                <Box as="audio" controls src={profile.intro_voice_url} w="100%" />
+                {profile.intro_voice_transcript && (
+                  <Text fontSize="xs" color={muted} mt={2} fontStyle="italic">
+                    {profile.intro_voice_transcript}
+                  </Text>
+                )}
+              </Box>
+            )}
+
             {/* Email Me */}
             {username !== authUser?.username && (
               <Box mt={4}>

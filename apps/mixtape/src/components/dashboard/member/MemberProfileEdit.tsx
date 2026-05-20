@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -20,6 +20,7 @@ import {
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useMyMemberProfile, useMemberProfileMutation } from "@hooks/member/useMemberProfile";
+import { uploadMemberVoice, deleteMemberVoice } from "@mixtape/api/clients/member/memberApi";
 import { MemberProfileUpdate } from "@mixtape/core/types/memberTypes";
 import { toaster } from "@mixtape/core/lib/toaster";
 // import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
@@ -54,8 +55,12 @@ interface ProfileFormData {
  * Editable fields: display_name, quick_intro, avatar_url, profile_image, background_image, bio_json
  */
 export default function MemberProfileEdit() {
-  const { member, isLoading, error } = useMyMemberProfile();
+  const { member, isLoading, error, refetch: refetchMember } = useMyMemberProfile();
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [voiceUploading, setVoiceUploading] = useState(false);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const [voiceTranscript, setVoiceTranscript] = useState<string>("");
+  const voiceInputRef = useRef<HTMLInputElement>(null);
 
   const cardBg = useColorModeValue("white", "gray.800");
   const cardBorder = useColorModeValue("gray.200", "gray.700");
@@ -108,6 +113,8 @@ export default function MemberProfileEdit() {
     setValue("profile_image", member.profile_image || "");
     setValue("background_image", member.background_image || "");
     setValue("bio_json", (member.bio_json as JSONContent) || { type: "doc", content: [] });
+    setVoiceUrl(member.intro_voice_url ?? null);
+    setVoiceTranscript(member.intro_voice_transcript ?? "");
   }, [member, setValue]);
 
   const onSubmit: SubmitHandler<ProfileFormData> = async (values) => {
@@ -172,6 +179,38 @@ export default function MemberProfileEdit() {
 
   const avatarPreview =
     previewUrls.profile || member?.profile_image_url || avatarUrl || undefined;
+
+  async function handleVoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVoiceUploading(true);
+    try {
+      const result = await uploadMemberVoice(file);
+      setVoiceUrl(result.url);
+      setVoiceTranscript("");
+      toaster.create({ title: "Voice note uploaded", description: "Transcription will appear shortly.", type: "success", duration: 4000 });
+      refetchMember();
+    } catch {
+      toaster.create({ title: "Upload failed", description: "Could not upload voice note. Please try again.", type: "error", duration: 5000 });
+    } finally {
+      setVoiceUploading(false);
+      if (voiceInputRef.current) voiceInputRef.current.value = "";
+    }
+  }
+
+  async function handleVoiceDelete() {
+    setVoiceUploading(true);
+    try {
+      await deleteMemberVoice();
+      setVoiceUrl(null);
+      setVoiceTranscript("");
+      toaster.create({ title: "Voice note removed", type: "success", duration: 3000 });
+    } catch {
+      toaster.create({ title: "Could not remove voice note", type: "error", duration: 5000 });
+    } finally {
+      setVoiceUploading(false);
+    }
+  }
 
   // Loading state
   if (isLoading) {
@@ -464,6 +503,59 @@ export default function MemberProfileEdit() {
                 {errors.why_are_you_here && <Field.ErrorText>{errors.why_are_you_here.message}</Field.ErrorText>}
               </Field.Root>
             </HStack>
+
+            {/* Voice Note */}
+            <Field.Root>
+              <Field.Label>Intro Voice Note</Field.Label>
+              <Field.HelperText mb={2}>
+                A short audio intro (up to 25 MB). Transcribed automatically.
+              </Field.HelperText>
+              <VStack align="start" gap={3} w="100%">
+                {voiceUrl && (
+                  <Box w="100%">
+                    <Box as="audio" controls src={voiceUrl} w="100%" mb={2} />
+                    {voiceTranscript && (
+                      <Text fontSize="xs" color={subtextColor} fontStyle="italic">
+                        {voiceTranscript}
+                      </Text>
+                    )}
+                    {!voiceTranscript && (
+                      <Text fontSize="xs" color={subtextColor} fontStyle="italic">
+                        Transcript pending…
+                      </Text>
+                    )}
+                  </Box>
+                )}
+                <HStack gap={2}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    loading={voiceUploading}
+                    onClick={() => voiceInputRef.current?.click()}
+                  >
+                    {voiceUrl ? "Replace" : "Upload audio"}
+                  </Button>
+                  {voiceUrl && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      colorPalette="red"
+                      loading={voiceUploading}
+                      onClick={() => void handleVoiceDelete()}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                  <input
+                    ref={voiceInputRef}
+                    type="file"
+                    accept="audio/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => void handleVoiceUpload(e)}
+                  />
+                </HStack>
+              </VStack>
+            </Field.Root>
 
             <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
               <ImageUploadField

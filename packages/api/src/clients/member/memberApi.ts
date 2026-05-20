@@ -72,3 +72,21 @@ export const contactMember = async (
 ): Promise<void> => {
   await axiosInstance.post(`/api/members/${username}/contact`, data);
 };
+
+export interface VoiceUploadResult {
+  key: string;
+  url: string;
+}
+
+export const uploadMemberVoice = async (file: File): Promise<VoiceUploadResult> => {
+  const form = new FormData();
+  form.append('audio', file);
+  const response = await axiosInstance.post<VoiceUploadResult>('/api/members/me/voice', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const deleteMemberVoice = async (): Promise<void> => {
+  await axiosInstance.delete('/api/members/me/voice');
+};
