@@ -65,12 +65,12 @@ export function CollectionBrowser({
     }
   };
 
-  const handleAddDocument = async (documentId: string) => {
+  const handleAddDocument = async (documentId: string, docType: 'writing_piece' | 'dispatch_post' = 'writing_piece') => {
     try {
       await createMutation.mutateAsync({
         collectionId,
         data: {
-          content_type: 'writing_piece',
+          content_type: docType,
           content_id: documentId,
         },
       });

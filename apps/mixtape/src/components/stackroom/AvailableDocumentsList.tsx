@@ -28,7 +28,7 @@ import { createListCollection } from '@chakra-ui/react';
 
 interface AvailableDocumentsListProps {
   documents: WritingPieceMinimal[];
-  onAddDocument: (documentId: string) => void;
+  onAddDocument: (documentId: string, docType: 'writing_piece' | 'dispatch_post') => void;
   isLoading?: boolean;
 }
 
@@ -163,7 +163,7 @@ export function AvailableDocumentsList({
                           aria-label="Add another instance"
                           size="sm"
                           variant="ghost"
-                          onClick={() => onAddDocument(doc.id)}
+                          onClick={() => onAddDocument(doc.id, doc.doc_type ?? 'writing_piece')}
                         >
                           <PlusIcon className="h-5 w-5" />
                         </IconButton>
@@ -174,7 +174,7 @@ export function AvailableDocumentsList({
                         size="sm"
                         variant="solid"
                         colorPalette="blue"
-                        onClick={() => onAddDocument(doc.id)}
+                        onClick={() => onAddDocument(doc.id, doc.doc_type ?? 'writing_piece')}
                       >
                         <PlusIcon className="h-5 w-5" />
                       </IconButton>

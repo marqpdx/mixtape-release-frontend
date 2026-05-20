@@ -216,7 +216,7 @@ export type LibraryItem =
  * Request to create a new LibraryItem (polymorphic)
  */
 export interface LibraryItemCreateRequest {
-  content_type: 'source_file' | 'writing_piece' | 'collection';
+  content_type: 'source_file' | 'writing_piece' | 'dispatch_post' | 'collection';
   content_id: string;
   order_index?: number; // Auto if not provided
   folder_path?: string;
@@ -234,6 +234,7 @@ export interface WritingPieceMinimal {
   title: string;
   slug: string;
   summary: string;
+  doc_type?: 'writing_piece' | 'dispatch_post';
   writing_kind: 'dispatch' | 'article' | 'post' | 'announcement' | 'page' | 'forum' | 'almanac' | 'other';
   status: string;
   author_name: string;
