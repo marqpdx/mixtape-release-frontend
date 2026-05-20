@@ -92,6 +92,9 @@ export interface GroupMembership {
   is_active_user: boolean;
   profile_image?: string;
   right_now?: string;
+  quick_intro?: string;
+  location?: string;
+  quick_link?: string;
 
   // Membership-specific data
   roles: GroupRole[];

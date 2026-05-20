@@ -32,6 +32,9 @@ export interface MemberProfile {
   work_areas: string;
   practice_area: string;
   location: string;
+  quick_link: string;
+  who_are_you: string;
+  why_are_you_here: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -55,6 +58,9 @@ export interface MemberProfileUpdate {
   work_areas?: string;
   practice_area?: string;
   location?: string;
+  quick_link?: string;
+  who_are_you?: string;
+  why_are_you_here?: string;
   avatar_url?: string;
   profile_image?: string;
   background_image?: string;

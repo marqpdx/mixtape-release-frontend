@@ -28,6 +28,8 @@ import {
   IconCalendar,
   IconUserMinus,
   IconPencil,
+  IconMapPin,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
@@ -266,52 +268,45 @@ export function GroupMemberList({
                   justifyContent="flex-end"
                   color="white"
                 >
-                  <VStack gap={2} align="start">
-                    <VStack gap={1} align="start" w="full">
+                  <VStack gap={2} align="start" w="full">
+                    <VStack gap={0.5} align="start" w="full">
                       <Text fontWeight="bold" fontSize="lg" textShadow="0 1px 3px rgba(0,0,0,0.8)">
                         {displayName}
                       </Text>
-                      <HStack gap={2}>
-                        <Badge
-                          // colorScheme={getRoleBadgeColor(membership.role)}
-                          size="sm"
-                          bg="whiteAlpha.800"
-                          color="gray.800"
-                        >
-                          {(membership.roles || []).join(", ")}
-                        </Badge>
-
-                        {membership.is_pending && (
-                          <Badge colorScheme="orange" size="sm" bg="orange.500" color="white">
-                            Pending
-                          </Badge>
-                        )}
-                        {!membership.is_active && (
-                          <Badge colorScheme="red" size="sm" bg="red.500" color="white">
-                            Inactive
-                          </Badge>
-                        )}
-                        {!membership.is_active_user && (
-                          <Badge colorScheme="gray" size="sm" bg="gray.500" color="white">
-                            User Inactive
-                          </Badge>
-                        )}
-                      </HStack>
+                      {membership.username && (
+                        <Text fontSize="xs" fontFamily="mono" opacity={0.8} textShadow="0 1px 2px rgba(0,0,0,0.8)">
+                          @{membership.username}
+                        </Text>
+                      )}
                     </VStack>
 
-                    {/* Username */}
-                    {membership.username && (
-                      <Text fontSize="sm" fontFamily="mono" opacity={0.9} textShadow="0 1px 2px rgba(0,0,0,0.8)">
-                        @{membership.username}
+                    {membership.quick_intro && (
+                      <Text fontSize="xs" opacity={0.9} textShadow="0 1px 2px rgba(0,0,0,0.8)" lineClamp={3}>
+                        {membership.quick_intro}
                       </Text>
                     )}
 
-                    {/* Right now */}
-                    {membership.right_now && (
-                      <Text fontSize="xs" opacity={0.85} fontStyle="italic" textShadow="0 1px 2px rgba(0,0,0,0.8)" lineClamp={2}>
-                        {membership.right_now}
-                      </Text>
-                    )}
+                    <HStack gap={3} w="full" justify="space-between" mt="auto">
+                      {membership.location ? (
+                        <HStack gap={1} opacity={0.8}>
+                          <IconMapPin size={11} />
+                          <Text fontSize="xs" textShadow="0 1px 2px rgba(0,0,0,0.8)">{membership.location}</Text>
+                        </HStack>
+                      ) : <Box />}
+                      {membership.quick_link && (
+                        <Box
+                          as="a"
+                          href={membership.quick_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                          opacity={0.8}
+                          _hover={{ opacity: 1 }}
+                        >
+                          <IconExternalLink size={14} />
+                        </Box>
+                      )}
+                    </HStack>
                   </VStack>
                 </Card.Body>
               </>
@@ -331,13 +326,25 @@ export function GroupMemberList({
                     <Text fontWeight="bold" fontSize="sm" textAlign="center" lineClamp={1}>
                       {displayName}
                     </Text>
-                    <Badge
-                      // colorScheme={getRoleBadgeColor(membership.role)}
-                      size="sm"
-                    >
-                      {/* {membership.role} */}
-                    </Badge>
+                    {membership.username && (
+                      <Text fontSize="xs" color={textSecondary} fontFamily="mono">
+                        @{membership.username}
+                      </Text>
+                    )}
                   </VStack>
+
+                  {membership.quick_intro && (
+                    <Text fontSize="xs" color={textSecondary} textAlign="center" lineClamp={3} px={1}>
+                      {membership.quick_intro}
+                    </Text>
+                  )}
+
+                  {membership.location && (
+                    <HStack gap={1} color={textSecondary}>
+                      <IconMapPin size={11} />
+                      <Text fontSize="xs">{membership.location}</Text>
+                    </HStack>
+                  )}
 
                   {/* Status indicators */}
                   <HStack gap={1}>
@@ -352,14 +359,23 @@ export function GroupMemberList({
                       </Badge>
                     )}
                   </HStack>
-
-                  {/* Username */}
-                  {membership.username && (
-                    <Text fontSize="xs" color="gray.400" fontFamily="mono">
-                      @{membership.username}
-                    </Text>
-                  )}
                 </VStack>
+                {membership.quick_link && (
+                  <Box
+                    as="a"
+                    href={membership.quick_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    position="absolute"
+                    right={3}
+                    bottom={3}
+                    color={textSecondary}
+                    _hover={{ color: "blue.400" }}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  >
+                    <IconExternalLink size={14} />
+                  </Box>
+                )}
                 {canEditOwnProfileImage(membership) && (
                   <IconButton
                     aria-label="Edit profile"

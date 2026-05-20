@@ -58,3 +58,17 @@ export const updateMemberProfile = async (
   );
   return response.data;
 };
+
+export interface ContactMemberPayload {
+  sender_name: string;
+  sender_email: string;
+  message: string;
+  save_email?: boolean;
+}
+
+export const contactMember = async (
+  username: string,
+  data: ContactMemberPayload
+): Promise<void> => {
+  await axiosInstance.post(`/api/members/${username}/contact`, data);
+};

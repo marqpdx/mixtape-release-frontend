@@ -16,8 +16,7 @@ export default function MyGroupsCard({ identity, onViewAll }: MyGroupsCardProps)
   const { groups, isLoading } = useUserGroups();
 
   const sorted = [...groups]
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, 4);
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
   const hoverBg = useColorModeValue("gray.50", "gray.700");
   const countColor = useColorModeValue("gray.500", "gray.400");

@@ -125,6 +125,7 @@ export default function GroupsTable({
     const memberCircles: Group[] = [];
     const groupCirclesMap = new Map<string, Group[]>();
     const orphanCircles: Group[] = [];
+    const visibleGroupIds = new Set(groups.map((group) => group.id));
 
     groups.forEach(group => {
       if (group.group_type === 'circle') {
@@ -134,6 +135,10 @@ export default function GroupsTable({
         } else if (group.sponsor_group.type === 'member') {
           memberCircles.push(group);
         } else if (group.sponsor_group.id) {
+          if (!visibleGroupIds.has(group.sponsor_group.id)) {
+            orphanCircles.push(group);
+            return;
+          }
           // Group-sponsored circle
           const parentId = group.sponsor_group.id;
           if (!groupCirclesMap.has(parentId)) {
@@ -613,11 +618,11 @@ export default function GroupsTable({
           );
         })}
 
-        {/* Orphan circles (shouldn't exist, but handle gracefully) */}
+        {/* Standalone circles */}
         {hierarchy.orphanCircles.length > 0 && (
           <Box>
-            <Text fontSize="sm" color="red.500" mb={2}>
-              Circles without a parent (data issue):
+            <Text fontSize="sm" color="gray.500" mb={2}>
+              Standalone circles:
             </Text>
             {hierarchy.orphanCircles.map(circle => (
               <Box
@@ -626,10 +631,11 @@ export default function GroupsTable({
                 mb={2}
                 borderWidth="1px"
                 borderRadius="md"
-                bg="red.50"
-                _dark={{ bg: "red.900" }}
+                bg="gray.50"
+                _dark={{ bg: "gray.800" }}
                 cursor="pointer"
                 onClick={() => handleGroupClick(circle)}
+                _hover={{ bg: "gray.100", _dark: { bg: "gray.700" } }}
               >
                 <HStack align="start">
                   {renderAvatar(circle)}
@@ -637,6 +643,11 @@ export default function GroupsTable({
                     {renderTitle(circle)}
                     {renderDescription(circle)}
                     {renderMetadata(circle)}
+                    {circle.sponsor_group?.title && (
+                      <Text fontSize="xs" color="gray.500">
+                        Sponsored by {circle.sponsor_group.title}
+                      </Text>
+                    )}
                   </VStack>
                 </HStack>
               </Box>

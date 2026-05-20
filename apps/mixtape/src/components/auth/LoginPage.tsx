@@ -22,6 +22,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@mixtape/core/lib/toaster";
 import * as authApi from "@mixtape/api/clients/auth/api";
+import { fetchUserGroups } from "@mixtape/api/clients/group/groupApi";
 
 import { LoginFormProps } from "./interfaces";
 
@@ -77,9 +78,22 @@ const LoginPage: React.FC = () => {
       if (requestedRedirect) {
         const redirectTo = safeRedirect(requestedRedirect, "/dashboard");
         router.push(redirectTo);
-      } else {
-        router.push("/dashboard");
+        return;
       }
+
+      // Single-group redirect: if the user belongs to exactly one group,
+      // drop them directly into its members tab.
+      try {
+        const groups = await fetchUserGroups();
+        if (groups.length === 1) {
+          router.push(`/groups/${groups[0].slug}/members`);
+          return;
+        }
+      } catch {
+        // Fall through to dashboard on any fetch error
+      }
+
+      router.push("/dashboard");
 
       console.log("LoginPage login successful");
 

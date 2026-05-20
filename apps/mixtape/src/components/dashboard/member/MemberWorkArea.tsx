@@ -42,12 +42,16 @@ export default function MemberWorkArea({
   identity,
   sectionParams,
 }: MemberWorkAreaProps) {
-  const { groups, isLoading, error } = useGroups({
+  const { groups } = useGroups({
     ordering: '-created_at',
     is_active: true
   });
 
-  const { groups: myGroups } = useUserGroups();
+  const {
+    groups: myGroups,
+    isLoading: isLoadingMyGroups,
+    error: myGroupsError,
+  } = useUserGroups();
 
   // Define the permission function
   const canEditGroup = useMemo(() => {
@@ -281,8 +285,8 @@ export default function MemberWorkArea({
       <WorkAreaWrapper>
         <GroupsTable
           groups={myGroups}
-          isLoading={isLoading}
-          error={error}
+          isLoading={isLoadingMyGroups}
+          error={myGroupsError}
           setActiveSection={setActiveSection}
           showCreateButton={false}
           canEditGroup={canEditGroup}
