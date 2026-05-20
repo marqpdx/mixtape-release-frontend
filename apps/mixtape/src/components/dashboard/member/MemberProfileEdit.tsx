@@ -38,6 +38,9 @@ interface ProfileFormData {
   work_areas: string;
   practice_area: string;
   location: string;
+  quick_link: string;
+  who_are_you: string;
+  why_are_you_here: string;
   avatar_url: string;
   profile_image: string;
   background_image: string;
@@ -73,6 +76,9 @@ export default function MemberProfileEdit() {
       work_areas: "",
       practice_area: "",
       location: "",
+      quick_link: "",
+      who_are_you: "",
+      why_are_you_here: "",
       avatar_url: "",
       profile_image: "",
       background_image: "",
@@ -95,6 +101,9 @@ export default function MemberProfileEdit() {
     setValue("work_areas", member.work_areas || "");
     setValue("practice_area", member.practice_area || "");
     setValue("location", member.location || "");
+    setValue("quick_link", member.quick_link || "");
+    setValue("who_are_you", member.who_are_you || "");
+    setValue("why_are_you_here", member.why_are_you_here || "");
     setValue("avatar_url", member.avatar_url || "");
     setValue("profile_image", member.profile_image || "");
     setValue("background_image", member.background_image || "");
@@ -117,6 +126,9 @@ export default function MemberProfileEdit() {
         work_areas: values.work_areas,
         practice_area: values.practice_area,
         location: values.location,
+        quick_link: values.quick_link,
+        who_are_you: values.who_are_you,
+        why_are_you_here: values.why_are_you_here,
         avatar_url: values.avatar_url,
         profile_image: values.profile_image,
         background_image: values.background_image,
@@ -414,6 +426,45 @@ export default function MemberProfileEdit() {
               </Field.Root>
             </HStack>
 
+            <Field.Root invalid={!!errors.quick_link}>
+              <Field.Label>Quick Link</Field.Label>
+              <Input
+                {...register("quick_link", {
+                  maxLength: { value: 512, message: "512 characters max" },
+                  pattern: {
+                    value: /^(https?:\/\/.*|)$/,
+                    message: "Must be a valid URL starting with http:// or https://",
+                  },
+                })}
+                placeholder="https://yoursite.com or social profile"
+              />
+              <Field.HelperText>A personal or work link shown on your member card</Field.HelperText>
+              {errors.quick_link && <Field.ErrorText>{errors.quick_link.message}</Field.ErrorText>}
+            </Field.Root>
+
+            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
+              <Field.Root flex={1}>
+                <Field.Label>Who I am</Field.Label>
+                <Textarea
+                  {...register("who_are_you", { maxLength: { value: 512, message: "512 characters max" } })}
+                  placeholder="How you'd describe yourself to the group..."
+                  rows={3}
+                  resize="vertical"
+                />
+                {errors.who_are_you && <Field.ErrorText>{errors.who_are_you.message}</Field.ErrorText>}
+              </Field.Root>
+              <Field.Root flex={1}>
+                <Field.Label>Why I'm here</Field.Label>
+                <Textarea
+                  {...register("why_are_you_here", { maxLength: { value: 512, message: "512 characters max" } })}
+                  placeholder="Why you joined / what you're looking for..."
+                  rows={3}
+                  resize="vertical"
+                />
+                {errors.why_are_you_here && <Field.ErrorText>{errors.why_are_you_here.message}</Field.ErrorText>}
+              </Field.Root>
+            </HStack>
+
             <HStack align="start" gap={6} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
               <ImageUploadField
                 imageType="profile"
@@ -473,6 +524,10 @@ export default function MemberProfileEdit() {
                 setValue("right_now", member.right_now || "");
                 setValue("skills", member.skills || "");
                 setValue("work_areas", member.work_areas || "");
+                setValue("location", member.location || "");
+                setValue("quick_link", member.quick_link || "");
+                setValue("who_are_you", member.who_are_you || "");
+                setValue("why_are_you_here", member.why_are_you_here || "");
                 setValue("avatar_url", member.avatar_url || "");
                 setValue("profile_image", member.profile_image || "");
                 setValue("background_image", member.background_image || "");
