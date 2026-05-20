@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogCloseTrigger,
 } from '@components/ui/dialog';
-import { useCanonDiff, useApproveCanon } from '@mixtape/api/hooks/stackroom/usePuddlejump';
+import { useCanonDiff, useApproveCanon } from '@mixtape/api/hooks/puddlejump/usePuddlejump';
 import { diffLines } from 'diff';
 
 interface CanonApprovalDialogProps {

@@ -15,7 +15,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 import { StarIcon } from '@heroicons/react/24/outline';
-import { useSuggestCanonical } from '@mixtape/api/hooks/stackroom';
+import { useSuggestCanonical } from '@mixtape/api/hooks/puddlejump';
 
 interface CanonicalPanelProps {
   libraryId: string | null;

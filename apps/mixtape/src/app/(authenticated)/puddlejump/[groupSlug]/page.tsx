@@ -4,7 +4,7 @@
 
 import { Box, Spinner, Text } from '@chakra-ui/react';
 import { useParams } from 'next/navigation';
-import { useGroupPuddlejump } from '@mixtape/api/hooks/stackroom';
+import { useGroupPuddlejump } from '@mixtape/api/hooks/puddlejump';
 import DashboardLayout from '@components/common/DashboardLayout';
 import type { MenuItem } from '@components/dashboard/shared/types';
 import PuddlejumpWorkArea from '@components/puddlejump/PuddlejumpWorkArea';

@@ -21,7 +21,7 @@ import {
   CheckCircleIcon,
   ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
-import { useLibraryHealth, usePersonalPuddlejump } from '@mixtape/api/hooks/stackroom';
+import { useLibraryHealth, usePersonalPuddlejump } from '@mixtape/api/hooks/puddlejump';
 import ExportDialog from '../ExportDialog';
 
 interface OverviewPanelProps {

@@ -15,7 +15,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
-import { useExtractGlossary } from '@mixtape/api/hooks/stackroom';
+import { useExtractGlossary } from '@mixtape/api/hooks/puddlejump';
 
 interface GlossaryPanelProps {
   libraryId: string | null;

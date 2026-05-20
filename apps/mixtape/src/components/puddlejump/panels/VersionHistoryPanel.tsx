@@ -2,7 +2,7 @@
 
 import { Box, VStack, HStack, Text, Badge, Spinner } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
-import { useVersionHistory } from '@mixtape/api/hooks/stackroom/usePuddlejump';
+import { useVersionHistory } from '@mixtape/api/hooks/puddlejump/usePuddlejump';
 import type { SourceFileVersion } from '@mixtape/core/types/puddlejump';
 
 interface VersionHistoryPanelProps {

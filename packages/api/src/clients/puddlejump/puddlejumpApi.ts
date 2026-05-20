@@ -1,4 +1,4 @@
-// packages/api/src/clients/stackroom/puddlejumpApi.ts
+// packages/api/src/clients/puddlejump/puddlejumpApi.ts
 
 // Puddlejump API client
 // Handles Puddlejump library, sync, and bundle operations

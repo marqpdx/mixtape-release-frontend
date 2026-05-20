@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogCloseTrigger,
 } from '@components/ui/dialog';
-import { usePuddlejumpExport } from '@mixtape/api/hooks/stackroom/usePuddlejump';
+import { usePuddlejumpExport } from '@mixtape/api/hooks/puddlejump/usePuddlejump';
 
 interface ExportDialogProps {
   open: boolean;

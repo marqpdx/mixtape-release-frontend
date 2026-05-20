@@ -3,7 +3,7 @@
 'use client';
 
 import { Box, Spinner, Text } from '@chakra-ui/react';
-import { usePersonalPuddlejump } from '@mixtape/api/hooks/stackroom';
+import { usePersonalPuddlejump } from '@mixtape/api/hooks/puddlejump';
 import DashboardLayout from '@components/common/DashboardLayout';
 import type { MenuItem } from '@components/dashboard/shared/types';
 import PuddlejumpWorkArea from '@components/puddlejump/PuddlejumpWorkArea';

@@ -19,7 +19,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
-import { usePuddlejumpImport } from '@mixtape/api/hooks/stackroom/usePuddlejump';
+import { usePuddlejumpImport } from '@mixtape/api/hooks/puddlejump/usePuddlejump';
 import { toaster } from '@/components/ui/toaster';
 import type { PuddlejumpImportResponse } from '@mixtape/core/types/puddlejump';
 

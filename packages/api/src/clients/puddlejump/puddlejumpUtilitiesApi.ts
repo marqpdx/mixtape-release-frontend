@@ -1,4 +1,4 @@
-// packages/api/src/clients/stackroom/puddlejumpUtilitiesApi.ts
+// packages/api/src/clients/puddlejump/puddlejumpUtilitiesApi.ts
 
 // Puddlejump Utilities API client
 // Handles library health, duplicate detection, glossary extraction,

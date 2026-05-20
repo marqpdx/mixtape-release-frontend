@@ -15,7 +15,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 import { RectangleGroupIcon } from '@heroicons/react/24/outline';
-import { useRestructureDocuments } from '@mixtape/api/hooks/stackroom';
+import { useRestructureDocuments } from '@mixtape/api/hooks/puddlejump';
 
 interface RestructurePanelProps {
   libraryId: string | null;

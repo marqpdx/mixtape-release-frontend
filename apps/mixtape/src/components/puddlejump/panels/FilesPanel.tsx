@@ -20,12 +20,12 @@ import {
   DocumentTextIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
-import { usePersonalPuddlejump } from '@mixtape/api/hooks/stackroom';
+import { usePersonalPuddlejump } from '@mixtape/api/hooks/puddlejump';
 import {
   useCheckoutStatus,
   useCheckout,
   useCheckin,
-} from '@mixtape/api/hooks/stackroom/usePuddlejump';
+} from '@mixtape/api/hooks/puddlejump/usePuddlejump';
 import CheckoutBanner from '../CheckoutBanner';
 import CanonApprovalDialog from '../CanonApprovalDialog';
 import VersionHistoryPanel from './VersionHistoryPanel';

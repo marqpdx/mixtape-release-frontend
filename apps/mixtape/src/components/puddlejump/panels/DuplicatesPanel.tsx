@@ -15,7 +15,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { useCheckDuplicates } from '@mixtape/api/hooks/stackroom';
+import { useCheckDuplicates } from '@mixtape/api/hooks/puddlejump';
 
 interface DuplicatesPanelProps {
   libraryId: string | null;

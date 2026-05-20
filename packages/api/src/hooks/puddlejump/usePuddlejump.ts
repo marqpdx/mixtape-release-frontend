@@ -2,10 +2,10 @@
 // React hooks for Puddlejump bundle import/export operations
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as puddlejumpApi from '@mixtape/api/clients/stackroom/puddlejumpApi';
+import * as puddlejumpApi from '@mixtape/api/clients/puddlejump/puddlejumpApi';
 import { PuddlejumpImportResponse, PersonalPuddlejump } from '@mixtape/core/types/puddlejump';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
-import { collectionQueryKeys } from './useCollections';
+import { collectionQueryKeys } from '../stackroom/useCollections';
 
 // ============================================================================
 // QUERY KEY FACTORIES

@@ -14,7 +14,7 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import { SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useSuggestSummaries } from '@mixtape/api/hooks/stackroom';
+import { useSuggestSummaries } from '@mixtape/api/hooks/puddlejump';
 
 interface SummariesPanelProps {
   libraryId: string | null;

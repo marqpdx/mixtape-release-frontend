@@ -2,7 +2,7 @@
 // React Query hooks for library analysis and maintenance utilities
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-import * as utilitiesApi from '@mixtape/api/clients/stackroom/puddlejumpUtilitiesApi';
+import * as utilitiesApi from '@mixtape/api/clients/puddlejump/puddlejumpUtilitiesApi';
 import type {
   LibraryHealthResponse,
   DuplicateDetectionResponse,
@@ -10,7 +10,7 @@ import type {
   CanonicalCandidatesResponse,
   SuggestSummariesResponse,
   RestructureResponse,
-} from '@mixtape/api/clients/stackroom/puddlejumpUtilitiesApi';
+} from '@mixtape/api/clients/puddlejump/puddlejumpUtilitiesApi';
 
 // Re-export types for consumers
 export type {
@@ -31,7 +31,7 @@ export type {
   ClusterDocument,
   DocumentCluster,
   RestructureResponse,
-} from '@mixtape/api/clients/stackroom/puddlejumpUtilitiesApi';
+} from '@mixtape/api/clients/puddlejump/puddlejumpUtilitiesApi';
 
 // ============================================================================
 // QUERY KEY FACTORIES
