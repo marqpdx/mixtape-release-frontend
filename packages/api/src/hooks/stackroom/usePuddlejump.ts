@@ -4,6 +4,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as puddlejumpApi from '@mixtape/api/clients/stackroom/puddlejumpApi';
 import { PuddlejumpImportResponse, PersonalPuddlejump } from '@mixtape/core/types/puddlejump';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { collectionQueryKeys } from './useCollections';
 
 // ============================================================================
@@ -14,6 +15,7 @@ export const puddlejumpQueryKeys = {
   all: ['puddlejump'] as const,
   health: () => [...puddlejumpQueryKeys.all, 'health'] as const,
   personal: () => [...puddlejumpQueryKeys.all, 'personal'] as const,
+  group: (groupSlug: string) => [...puddlejumpQueryKeys.all, 'group', groupSlug] as const,
   versions: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'versions', sourceFileId] as const,
   diff: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'diff', sourceFileId] as const,
   checkout: (sourceFileId: string) => [...puddlejumpQueryKeys.all, 'checkout', sourceFileId] as const,
@@ -329,6 +331,36 @@ export const usePersonalPuddlejump = () => {
 
   return {
     puddlejump,
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
+ * Hook to get a group's Puddlejump library manifest.
+ * Requires `manage_puddlejump` permission in the group.
+ */
+export const useGroupPuddlejump = (groupSlug: string | null) => {
+  const {
+    data: library = null,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: puddlejumpQueryKeys.group(groupSlug ?? ''),
+    queryFn: async () => {
+      const response = await axiosInstance.get<PersonalPuddlejump>(
+        `/api/puddlejump/${groupSlug}/`
+      );
+      return response.data;
+    },
+    enabled: !!groupSlug,
+    staleTime: 60 * 1000,
+  });
+
+  return {
+    library,
     isLoading,
     error: error as Error | null,
     refetch,

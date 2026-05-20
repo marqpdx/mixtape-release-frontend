@@ -1,7 +1,7 @@
 // packages/api/src/clients/stackroom/puddlejumpApi.ts
 
 // Puddlejump API client
-// Handles Puddlejump bundle import/export operations
+// Handles Puddlejump library, sync, and bundle operations
 
 import {
   PuddlejumpImportResponse,
@@ -27,8 +27,53 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
  */
 export async function getPersonalPuddlejump(): Promise<PersonalPuddlejump> {
   const response = await axiosInstance.get<PersonalPuddlejump>(
-    '/api/stackroom/puddlejump/personal'
+    '/api/puddlejump/personal'
   );
+  return response.data;
+}
+
+// ============================================================================
+// SYNC PROTOCOL
+// ============================================================================
+
+export async function getSyncStatus(): Promise<{
+  synced: boolean;
+  file_count: number;
+  total_size_bytes: number;
+  last_synced_at: string | null;
+}> {
+  const response = await axiosInstance.get('/api/puddlejump/sync/status');
+  return response.data;
+}
+
+export async function syncUpload(data: {
+  title?: string;
+  filename: string;
+  folder_path?: string;
+  size_bytes?: number;
+  content_type?: string;
+  source_file_id?: string;
+  tags?: string[];
+  notes?: string;
+  order_index?: number;
+}): Promise<PuddlejumpItem> {
+  const response = await axiosInstance.post<PuddlejumpItem>('/api/puddlejump/sync/upload', data);
+  return response.data;
+}
+
+export async function syncDownload(itemId: string): Promise<PuddlejumpItem> {
+  const response = await axiosInstance.get<PuddlejumpItem>(
+    `/api/puddlejump/sync/download/${itemId}/`
+  );
+  return response.data;
+}
+
+export async function syncDelete(itemId: string): Promise<void> {
+  await axiosInstance.delete(`/api/puddlejump/sync/delete/${itemId}/`);
+}
+
+export async function syncComplete(): Promise<{ last_synced_at: string }> {
+  const response = await axiosInstance.post('/api/puddlejump/sync/complete');
   return response.data;
 }
 
@@ -57,7 +102,7 @@ export async function importPuddlejumpBundle(
   formData.append('auto_ingest', String(autoIngest));
 
   const response = await axiosInstance.post<PuddlejumpImportResponse>(
-    '/api/stackroom/puddlejump/import',
+    '/api/puddlejump/import',
     formData,
     {
       headers: {
@@ -79,7 +124,7 @@ export async function exportPuddlejumpBundle(
   includeNonCanonical: boolean = false
 ): Promise<Blob> {
   const response = await axiosInstance.get(
-    `/api/stackroom/libraries/${libraryId}/export`,
+    `/api/puddlejump/${libraryId}/export`,
     {
       params: { include_non_canonical: includeNonCanonical },
       responseType: 'blob',
@@ -194,9 +239,6 @@ export async function checkPuddlejumpHealth(): Promise<{
   version: string;
   phase: string;
 }> {
-  const response = await axiosInstance.get(
-    '/api/stackroom/puddlejump/health'
-  );
-
+  const response = await axiosInstance.get('/api/puddlejump/health');
   return response.data;
 }

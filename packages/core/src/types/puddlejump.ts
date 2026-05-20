@@ -409,15 +409,16 @@ export const PUDDLEJUMP_SCHEMA_URL = 'https://puddlejump.mixtape.ai/schema/v1.0.
  */
 
 export type PuddlejumpApiEndpoint =
-  | '/api/stackroom/puddlejump/personal'
-  | '/api/stackroom/puddlejump/import'
-  | '/api/stackroom/puddlejump/health'
-  | '/api/stackroom/puddlejump/sync/status'
-  | '/api/stackroom/puddlejump/sync/upload'
-  | '/api/stackroom/puddlejump/sync/download/{file_id}'
-  | '/api/stackroom/puddlejump/sync/delete/{file_id}'
-  | '/api/stackroom/puddlejump/sync/complete'
-  | '/api/stackroom/libraries/{library_id}/export';
+  | '/api/puddlejump/personal'
+  | '/api/puddlejump/import'
+  | '/api/puddlejump/health'
+  | '/api/puddlejump/sync/status'
+  | '/api/puddlejump/sync/upload'
+  | '/api/puddlejump/sync/download/{item_id}'
+  | '/api/puddlejump/sync/delete/{item_id}'
+  | '/api/puddlejump/sync/complete'
+  | '/api/puddlejump/{library_id}/export'
+  | '/api/puddlejump/{group_slug}/';
 
 // ============================================================================
 // PERSONAL PUDDLEJUMP TYPES
