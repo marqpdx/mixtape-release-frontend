@@ -303,6 +303,23 @@ export interface PublicCommonsDetail extends PublicCommonsItem {
   filaments: PublicCommonsFilament[];
 }
 
+export interface InviteInfoGroup {
+  title: string;
+  slug: string;
+  profile_image_url: string | null;
+}
+
+export interface InviteInfoResponse {
+  group: InviteInfoGroup;
+}
+
+export async function fetchInviteInfo(shortcode: string): Promise<InviteInfoResponse> {
+  const response = await axiosInstance.get<InviteInfoResponse>(
+    `/api/auth/invite-info/${shortcode}`
+  );
+  return response.data;
+}
+
 export async function fetchPublicCommons(params?: {
   type?: string;
   search?: string;

@@ -3,13 +3,12 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Collapsible, Link, GridItem, IconButton } from "@chakra-ui/react";
+import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
-import { IconShoppingBag, IconFolder, IconChevronDown, IconChevronRight, IconX, IconMessage, IconSpeakerphone, IconUsers } from "@tabler/icons-react";
+import { IconShoppingBag, IconFolder, IconInfoCircle, IconSpeakerphone, IconUsers, IconX } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
-import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
@@ -54,7 +53,7 @@ function truncateWordsAtBoundary(input: string, limit: number): string {
 }
 
 const DISMISSABLE_BLOCKS = [
-  { key: "welcome", label: "Welcome", icon: IconMessage },
+  { key: "welcome", label: "Welcome", icon: IconInfoCircle },
   { key: "announcements", label: "Announcements", icon: IconSpeakerphone },
   { key: "pinned_resources", label: "Core Resources", icon: IconFolder },
   { key: "member_highlights", label: "Members", icon: IconUsers },
@@ -86,13 +85,13 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     localStorage.setItem(dismissStorageKey, JSON.stringify(next));
   };
 
+  const restoreAll = () => {
+    setDismissedBlocks([]);
+    localStorage.removeItem(dismissStorageKey);
+  };
+
   const isDismissed = (key: DismissableKey) => dismissedBlocks.includes(key);
 
-  const welcomeStorageKey = `group:${group.slug}:welcome-collapsed`;
-  const [welcomeOpen, setWelcomeOpen] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.localStorage.getItem(welcomeStorageKey) !== "1";
-  });
   const [showFullDescription, setShowFullDescription] = useState(false);
   const description = group.summary?.trim() || group.description?.trim() || "No summary provided yet.";
   const shouldTruncate = description.length > 320;
@@ -102,96 +101,62 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       : description;
   const { activeMembers, isLoading: membersLoading } = useMembers(group.slug);
   const { pin: welcomePin } = useGroupWelcomePin(group.slug);
-  const { data: myPermissions } = useMyPermissions(group.slug);
   const { layout, isLoading: layoutLoading } = useGroupOverviewLayout(group.slug);
   const { stall } = useStall("group", group.id);
   const { collections } = useCollections({ sponsor_type: 'group', sponsor_id: group.id });
-  const canCreateWelcomeNote =
-    myPermissions?.is_admin ||
-    myPermissions?.decorators?.includes("create_post") ||
-    false;
 
 
   const renderWelcomeBlock = () => {
     if (isDismissed("welcome")) return null;
-    if (!welcomePin) {
-      return canCreateWelcomeNote ? null : null;
-    }
+    if (!welcomePin) return null;
+
+    const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
+    const text = collectNodeText(body).replace(/\s+/g, " ").trim();
+    const wordCount = text ? text.split(/\s+/).length : 0;
+    const hasImage = bodyHasImage(body);
+    const shouldShowReadMore = hasImage || wordCount > WELCOME_INLINE_WORD_LIMIT;
+    const excerptFallback = (welcomePin.display?.excerpt || welcomePin.piece.excerpt || "").trim();
+    const previewText = excerptFallback || truncateWordsAtBoundary(text, WELCOME_PREVIEW_WORD_LIMIT);
 
     return (
       <Card.Root>
         <Card.Body>
-          <Flex justify="flex-end" mb={1}>
-            <Tooltip content="Dismiss Welcome">
-              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
-                <IconX size={12} />
+          <Flex justify="space-between" align="flex-start" mb={3}>
+            <Heading size="md">
+              {welcomePin.display?.title || welcomePin.piece.title}
+            </Heading>
+            <Tooltip content="Minimize Welcome">
+              <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
+                <IconInfoCircle size={14} />
               </IconButton>
             </Tooltip>
           </Flex>
-          <Collapsible.Root
-            open={welcomeOpen}
-            onOpenChange={({ open }) => {
-              setWelcomeOpen(open);
-              if (typeof window !== "undefined") {
-                window.localStorage.setItem(welcomeStorageKey, open ? "0" : "1");
-              }
-            }}
-          >
-            <Collapsible.Trigger asChild>
-              <Button variant="outline" size="sm" width="full" justifyContent="space-between">
-                <Flex align="center" gap={2}>
-                  {welcomeOpen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  <Text>Welcome</Text>
-                </Flex>
-                <Collapsible.Indicator />
-              </Button>
-            </Collapsible.Trigger>
-            <Collapsible.Content>
-              <Box pt={4}>
-                {(() => {
-                  const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
-                  const text = collectNodeText(body).replace(/\s+/g, " ").trim();
-                  const wordCount = text ? text.split(/\s+/).length : 0;
-                  const hasImage = bodyHasImage(body);
-                  const shouldShowReadMore = hasImage || wordCount > WELCOME_INLINE_WORD_LIMIT;
-                  const excerptFallback = (welcomePin.display?.excerpt || welcomePin.piece.excerpt || "").trim();
-                  const previewText = excerptFallback || truncateWordsAtBoundary(text, WELCOME_PREVIEW_WORD_LIMIT);
 
-                  return (
-                    <>
-                      <Heading size="md" mb={2}>
-                        {welcomePin.display?.title || welcomePin.piece.title}
-                      </Heading>
-                      {body && !shouldShowReadMore ? (
-                        <Box mb={3}>
-                          <TipTapRenderer content={body as { type: "doc"; [key: string]: unknown }} />
-                        </Box>
-                      ) : previewText ? (
-                        <Text color="fg.muted" mb={3}>
-                          {previewText}
-                        </Text>
-                      ) : hasImage ? (
-                        <Text color="fg.muted" mb={3}>
-                          This welcome note includes rich media.
-                        </Text>
-                      ) : (
-                        <Text color="fg.muted" mb={3}>
-                          Welcome to {group.title}.
-                        </Text>
-                      )}
-                      {shouldShowReadMore && welcomePin.piece.slug ? (
-                        <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
-                          <Button size="xs" variant="outline">
-                            Read more
-                          </Button>
-                        </Link>
-                      ) : null}
-                    </>
-                  );
-                })()}
-              </Box>
-            </Collapsible.Content>
-          </Collapsible.Root>
+          {body && !shouldShowReadMore ? (
+            <Box mb={3}>
+              <TipTapRenderer content={body as { type: "doc"; [key: string]: unknown }} />
+            </Box>
+          ) : previewText ? (
+            <Text color="fg.muted" mb={3}>
+              {previewText}
+            </Text>
+          ) : hasImage ? (
+            <Text color="fg.muted" mb={3}>
+              This welcome note includes rich media.
+            </Text>
+          ) : (
+            <Text color="fg.muted" mb={3}>
+              Welcome to {group.title}.
+            </Text>
+          )}
+
+          {shouldShowReadMore && welcomePin.piece.slug ? (
+            <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
+              <Button size="xs" variant="outline">
+                Read more
+              </Button>
+            </Link>
+          ) : null}
         </Card.Body>
       </Card.Root>
     );
@@ -493,7 +458,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
       {/* Restore bar — shows icons for any dismissed blocks */}
       {dismissedMeta.length > 0 && (
         <Flex align="center" gap={2} justify="flex-end" flexWrap="wrap">
-          <Text fontSize="xs" color="fg.muted">Dismissed:</Text>
+          <Text fontSize="xs" color="fg.muted">Minimized:</Text>
           {dismissedMeta.map(({ key, label, icon: Icon }) => (
             <Tooltip key={key} content={`Restore ${label}`}>
               <IconButton
@@ -506,6 +471,9 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
               </IconButton>
             </Tooltip>
           ))}
+          <Button size="xs" variant="ghost" onClick={restoreAll}>
+            Restore all
+          </Button>
         </Flex>
       )}
 
