@@ -267,18 +267,20 @@ export default function DashboardLayout({
   }, [activeSection, visibleMenuItems]);
 
   useEffect(() => {
-    const isVisible = visibleMenuItems.some(
+    // Check the full menuItems prop (including hidden ones) so that sections set
+    // programmatically (e.g. collection-detail) are not reset to the default.
+    const isInMenu = menuItems.some(
       (item) =>
         item.key === activeSection ||
         item.subItems?.some((sub) => sub.key === activeSection)
     );
 
-    if (!isVisible && firstVisibleSection) {
+    if (!isInMenu && firstVisibleSection) {
       handleSetActiveSection(firstVisibleSection);
     }
   }, [
     activeSection,
-    visibleMenuItems,
+    menuItems,
     firstVisibleSection,
     handleSetActiveSection,
   ]);

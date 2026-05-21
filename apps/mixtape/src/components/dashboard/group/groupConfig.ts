@@ -193,16 +193,21 @@ export function filterMenuByPermissions(
       // Filter subItems based on permissions and group type
       const filteredSubItems = item.subItems
         ?.filter(subItem => {
-          // Skip hidden items
-          if (subItem.hidden) return false;
+          // Hidden items are kept so programmatic navigation (e.g. collection-detail) still
+          // resolves correctly in DashboardLayout. Display suppression is handled there via
+          // isMenuItemVisible, which already checks item.hidden.
 
           // Check if section is allowed for this group type
-          if (!isSectionAllowedForGroupType(subItem.key, groupType)) {
+          if (!subItem.hidden && !isSectionAllowedForGroupType(subItem.key, groupType)) {
             return false;
           }
 
-          // Check if user has access to this section
-          return canAccessSection(subItem.key, userRoles, userDecorators);
+          // Check if user has access to this section (skip check for hidden nav-only items)
+          if (!subItem.hidden && !canAccessSection(subItem.key, userRoles, userDecorators)) {
+            return false;
+          }
+
+          return true;
         });
 
       // If this is a parent item with subItems, only include if it has accessible children
