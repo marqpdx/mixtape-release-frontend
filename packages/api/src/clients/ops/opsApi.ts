@@ -22,6 +22,33 @@ export interface OpsTilesResponse {
   tiles: OpsSummaryTile[];
 }
 
+export interface BuildLogEntry {
+  id: number;
+  commit_hash: string;
+  commit_message: string;
+  repo: string;
+  date: string;
+  work_effort: string;
+  body: string;
+  source_filename: string;
+  ingested_at: string;
+}
+
+export interface BuildLogListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  repo_choices: string[];
+  results: BuildLogEntry[];
+}
+
+export interface BuildLogListParams {
+  q?: string;
+  repo?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface OpsPostgresDetailSection {
   status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
   latency_ms?: number;
@@ -228,7 +255,7 @@ export interface OpsHealthSnapshotResponse {
 
 // Cache-busting parameter to bypass nginx/proxy caching
 function cacheBust(url: string): string {
-  return `${url}?_t=${Date.now()}`;
+  return `${url}${url.includes("?") ? "&" : "?"}_t=${Date.now()}`;
 }
 
 export async function fetchOpsSummary(): Promise<OpsSummaryResponse> {
@@ -244,4 +271,20 @@ export async function fetchOpsTiles(): Promise<OpsTilesResponse> {
 export async function fetchOpsSnapshot(): Promise<OpsHealthSnapshotResponse> {
   const res = await axiosInstance.get(cacheBust("/api/ops/health-snapshot"));
   return res.data as OpsHealthSnapshotResponse;
+}
+
+export async function fetchBuildLogEntries(params: BuildLogListParams = {}): Promise<BuildLogListResponse> {
+  const queryParams: Record<string, string | number> = {
+    _t: Date.now(),
+  };
+
+  if (params.q) queryParams.q = params.q;
+  if (params.repo) queryParams.repo = params.repo;
+  if (params.limit !== undefined) queryParams.limit = params.limit;
+  if (params.offset !== undefined) queryParams.offset = params.offset;
+
+  const res = await axiosInstance.get("/api/ops/build-log", {
+    params: queryParams,
+  });
+  return res.data as BuildLogListResponse;
 }

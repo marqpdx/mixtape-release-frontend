@@ -285,6 +285,7 @@ export const SYSADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Diagnostics",
     icon: "🔍",
     subItems: [
+      { key: "diag-build-log", label: "Build Log" },
       { key: "diag-processes", label: "Top Processes" },
       { key: "diag-snapshot", label: "Raw Snapshot" },
     ]
@@ -364,6 +365,7 @@ export const DASHBOARD_ROUTES: Record<string, DashboardType> = {
   'svc-inkwell': 'sysadmin',
   'svc-lanternmail': 'sysadmin',
   'svc-livewire': 'sysadmin',
+  'diag-build-log': 'sysadmin',
   'res-memory': 'sysadmin',
   'res-disk': 'sysadmin',
   'res-network': 'sysadmin',

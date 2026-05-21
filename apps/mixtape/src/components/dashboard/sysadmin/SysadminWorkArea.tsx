@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useDeferredValue, useEffect, useState } from "react";
 import { WorkAreaProps } from "../shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
 import {
@@ -16,16 +16,23 @@ import {
   Code,
   Table,
   Box,
+  Field,
+  Input,
+  NativeSelect,
+  Separator,
+  Flex,
+  Grid,
 } from "@chakra-ui/react";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import type {
+  BuildLogEntry,
   OpsApplicationSurface,
   OpsApplicationSurfacesSection,
   OpsBackupsDetailSection,
   OpsLivewireDetailSection,
   OpsPostgresDetailSection,
 } from "@mixtape/api/clients/ops/opsApi";
-import { useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
+import { useBuildLogEntries, useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
 
 interface SysadminWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -77,6 +84,8 @@ interface QuickListItem {
   detail: string;
   hint?: string;
 }
+
+const BUILD_LOG_PAGE_SIZE = 25;
 
 // Helper to format bytes
 function formatBytes(bytes: number | undefined | null): string {
@@ -167,6 +176,11 @@ function formatAge(seconds: number | undefined | null): string {
 function formatDateTime(value: string | undefined | null): string {
   if (!value) return "—";
   return new Date(value).toLocaleString();
+}
+
+function formatDate(value: string | undefined | null): string {
+  if (!value) return "—";
+  return new Date(`${value}T00:00:00`).toLocaleDateString();
 }
 
 // Emoji map for tiles
@@ -335,14 +349,38 @@ export default function SysadminWorkArea({
   identity,
 }: SysadminWorkAreaProps) {
   const isSuperuser = !!identity?.is_superuser;
+  const [buildLogSearch, setBuildLogSearch] = useState("");
+  const [buildLogRepo, setBuildLogRepo] = useState("");
+  const [buildLogOffset, setBuildLogOffset] = useState(0);
+  const [expandedEntryId, setExpandedEntryId] = useState<number | null>(null);
+  const deferredBuildLogSearch = useDeferredValue(buildLogSearch);
   const { data: summary, isLoading, error, refetch: refetchSummary, isFetching } =
     useOpsSummary({ enabled: isSuperuser });
   const { data: snapshot, refetch: refetchSnapshot } = useOpsSnapshot({ enabled: isSuperuser });
+  const {
+    data: buildLogData,
+    isLoading: buildLogLoading,
+    isFetching: buildLogFetching,
+    error: buildLogError,
+    refetch: refetchBuildLog,
+  } = useBuildLogEntries(
+    {
+      q: deferredBuildLogSearch.trim() || undefined,
+      repo: buildLogRepo || undefined,
+      limit: BUILD_LOG_PAGE_SIZE,
+      offset: buildLogOffset,
+    },
+    { enabled: isSuperuser },
+  );
 
   const handleRefresh = useCallback(() => {
     refetchSummary();
     refetchSnapshot();
   }, [refetchSummary, refetchSnapshot]);
+
+  const handleRefreshBuildLog = useCallback(() => {
+    refetchBuildLog();
+  }, [refetchBuildLog]);
 
   const handleDownloadSnapshot = useCallback(() => {
     if (!snapshot) return;
@@ -355,6 +393,10 @@ export default function SysadminWorkArea({
     link.click();
     URL.revokeObjectURL(url);
   }, [snapshot]);
+
+  useEffect(() => {
+    setBuildLogOffset(0);
+  }, [deferredBuildLogSearch, buildLogRepo]);
 
   // Extract data from snapshot
   const services = useMemo(() => {
@@ -439,6 +481,12 @@ export default function SysadminWorkArea({
     if (!summary?.timestamp) return null;
     return new Date(summary.timestamp).toLocaleString();
   }, [summary?.timestamp]);
+
+  const buildLogEntries = buildLogData?.results || [];
+  const buildLogRepoChoices = buildLogData?.repo_choices || [];
+  const buildLogCount = buildLogData?.count || 0;
+  const buildLogPageStart = buildLogCount === 0 ? 0 : buildLogOffset + 1;
+  const buildLogPageEnd = Math.min(buildLogOffset + buildLogEntries.length, buildLogCount);
 
   const overviewTiles = useMemo(() => {
     if (!summary) return [];
@@ -1938,6 +1986,102 @@ export default function SysadminWorkArea({
     );
   }
 
+  if (section === "diag-build-log") {
+    return (
+      <WorkAreaWrapper>
+        <VStack align="stretch" gap={6}>
+          <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+            <VStack align="stretch" gap={1}>
+              <Text fontSize="2xl" fontWeight="bold">Build Log</Text>
+              <Text fontSize="sm" color="gray.500">
+                Review build-session handoffs across repos without leaving the sysadmin dashboard.
+              </Text>
+            </VStack>
+            <Button size="sm" onClick={handleRefreshBuildLog} loading={buildLogFetching}>
+              Refresh
+            </Button>
+          </HStack>
+
+          <Card.Root>
+            <Card.Body>
+              <Grid templateColumns={{ base: "1fr", md: "minmax(0, 2fr) 220px" }} gap={4}>
+                <Field.Root>
+                  <Field.Label>Search</Field.Label>
+                  <Input
+                    placeholder="Commit hash, message, work effort, or body"
+                    value={buildLogSearch}
+                    onChange={(event) => setBuildLogSearch(event.target.value)}
+                  />
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label>Repo</Field.Label>
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={buildLogRepo}
+                      onChange={(event) => setBuildLogRepo(event.target.value)}
+                    >
+                      <option value="">All repos</option>
+                      {buildLogRepoChoices.map((repo) => (
+                        <option key={repo} value={repo}>
+                          {repo}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                </Field.Root>
+              </Grid>
+            </Card.Body>
+          </Card.Root>
+
+          <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+            <Text fontSize="sm" color="gray.500">
+              {buildLogCount === 0
+                ? "No build log entries found."
+                : `Showing ${buildLogPageStart}–${buildLogPageEnd} of ${buildLogCount} entries`}
+            </Text>
+            <HStack gap={2}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setBuildLogOffset((current) => Math.max(0, current - BUILD_LOG_PAGE_SIZE))}
+                disabled={buildLogOffset === 0}
+              >
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setBuildLogOffset((current) => current + BUILD_LOG_PAGE_SIZE)}
+                disabled={buildLogOffset + BUILD_LOG_PAGE_SIZE >= buildLogCount}
+              >
+                Next
+              </Button>
+            </HStack>
+          </HStack>
+
+          {buildLogLoading && <Text>Loading build log entries...</Text>}
+          {buildLogError && <Text color="red.500">Unable to load build log entries.</Text>}
+
+          {!buildLogLoading && !buildLogError && (
+            <VStack align="stretch" gap={4}>
+              {buildLogEntries.map((entry) => {
+                const isExpanded = expandedEntryId === entry.id;
+                return (
+                  <BuildLogEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    isExpanded={isExpanded}
+                    onToggle={() => setExpandedEntryId(isExpanded ? null : entry.id)}
+                  />
+                );
+              })}
+            </VStack>
+          )}
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
   // =========================================================================
   // DEFAULT FALLBACK
   // =========================================================================
@@ -1948,5 +2092,58 @@ export default function SysadminWorkArea({
         <Text>This sysadmin section is under development.</Text>
       </VStack>
     </WorkAreaWrapper>
+  );
+}
+
+function BuildLogEntryCard({
+  entry,
+  isExpanded,
+  onToggle,
+}: {
+  entry: BuildLogEntry;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const bodyPreview = entry.body.length > 220 ? `${entry.body.slice(0, 220)}...` : entry.body;
+
+  return (
+    <Card.Root borderLeftWidth="4px" borderLeftColor="blue.500">
+      <Card.Header>
+        <VStack align="stretch" gap={3}>
+          <Flex justify="space-between" gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
+            <VStack align="stretch" gap={1} flex="1">
+              <HStack gap={2} flexWrap="wrap">
+                <Badge colorScheme="blue">{entry.repo}</Badge>
+                <Text fontSize="sm" color="gray.500">{formatDate(entry.date)}</Text>
+                <Text fontSize="sm" fontFamily="mono">{entry.commit_hash}</Text>
+              </HStack>
+              <Text fontWeight="semibold">{entry.commit_message || "No commit message recorded."}</Text>
+            </VStack>
+            <Button size="sm" variant="outline" onClick={onToggle}>
+              {isExpanded ? "Collapse" : "Expand"}
+            </Button>
+          </Flex>
+          {entry.work_effort && (
+            <Text fontSize="sm" color="gray.600">
+              Work effort: {entry.work_effort}
+            </Text>
+          )}
+        </VStack>
+      </Card.Header>
+      <Card.Body>
+        <VStack align="stretch" gap={3}>
+          <Text whiteSpace="pre-wrap">{isExpanded ? entry.body : bodyPreview || "No build summary recorded."}</Text>
+          <Separator />
+          <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+            <Text fontSize="xs" color="gray.500">
+              Source file: {entry.source_filename || "—"}
+            </Text>
+            <Text fontSize="xs" color="gray.500">
+              Ingested: {formatDateTime(entry.ingested_at)}
+            </Text>
+          </HStack>
+        </VStack>
+      </Card.Body>
+    </Card.Root>
   );
 }
