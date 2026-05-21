@@ -91,6 +91,7 @@ export default function AgreementsPage() {
   const router = useRouter();
 
   const [groupName, setGroupName] = useState("");
+  const [groupSlug, setGroupSlug] = useState("");
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -106,6 +107,7 @@ export default function AgreementsPage() {
       const url = new URL(window.location.href);
       const group = url.searchParams.get("group") || "";
       setGroupName(group);
+      setGroupSlug(url.searchParams.get("group_slug") || "");
     } catch {
       setGroupName("");
     }
@@ -180,9 +182,9 @@ export default function AgreementsPage() {
   const handleContinue = () => {
     safeSetItem(STORAGE_ACCEPTED_KEY, agreeChecked ? "true" : "false");
 
-    const nextUrl =
-      "/welcome/finish" +
-      (groupName ? `?group=${encodeURIComponent(groupName)}` : "");
+    const nextUrl = groupSlug
+      ? `/login?post_invite_group=${encodeURIComponent(groupSlug)}`
+      : "/login";
 
     router.push(nextUrl);
   };
@@ -198,7 +200,7 @@ export default function AgreementsPage() {
             letterSpacing="0.08em"
             textTransform="uppercase"
           >
-            Step 2 of 3
+            Step 2 of 2
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             Community Agreements

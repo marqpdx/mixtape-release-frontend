@@ -100,11 +100,12 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       });
 
       const groupSlug = res.data.group?.slug;
+      const groupTitle = res.data.group?.title;
       if (isNewUser) {
-        const loginUrl = groupSlug
-          ? `/login?post_invite_group=${encodeURIComponent(groupSlug)}`
-          : "/login";
-        router.push(loginUrl);
+        const params = new URLSearchParams();
+        if (groupSlug) params.set("group_slug", groupSlug);
+        if (groupTitle) params.set("group", groupTitle);
+        router.push(`/welcome/agreements?${params.toString()}`);
       } else {
         router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }
