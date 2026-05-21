@@ -3,26 +3,27 @@
 "use client";
 
 import {
+  Avatar,
+  AvatarGroup,
+  Badge,
   Box,
+  Button,
   Checkbox,
   Flex,
   HStack,
   Heading,
+  IconButton,
+  Image,
   Input,
+  Link,
+  Spinner,
   Text,
-  Badge,
   Textarea,
   VStack,
-  Button,
-  IconButton,
-  Spinner,
-  Avatar,
-  AvatarGroup,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconChevronLeft, IconChevronRight, IconArrowLeft, IconExternalLink, IconMapPin, IconMail } from "@tabler/icons-react";
-import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useMemberProfile } from "@mixtape/api/hooks/member/useMemberProfile";
 import { contactMember } from "@mixtape/api/clients/member/memberApi";
@@ -198,9 +199,9 @@ export function GroupMemberProfilePanel({
                     <Image
                       src={effectiveAvatar}
                       alt={effectiveName}
-                      width={80}
-                      height={80}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      w="full"
+                      h="full"
+                      objectFit="cover"
                     />
                   </Box>
                 ) : (
@@ -214,21 +215,39 @@ export function GroupMemberProfilePanel({
                 )}
               </Box>
 
-              {/* Identity */}
+              {/* Identity + Email Me button in same row */}
               <Box flex={1} pt={effectiveBanner ? 10 : 0}>
-                <Heading size="lg">{effectiveName}</Heading>
-                <Text color={muted} fontFamily="mono">@{username}</Text>
-                {profile?.practice_area && (
-                  <Text fontSize="sm" color={muted} mt={1}>
-                    {profile.practice_area}
-                  </Text>
-                )}
-                {profile?.location && (
-                  <HStack gap={1} mt={0.5}>
-                    <IconMapPin size={13} color="var(--chakra-colors-gray-400)" />
-                    <Text fontSize="sm" color={muted}>{profile.location}</Text>
-                  </HStack>
-                )}
+                <HStack justify="space-between" align="start" gap={3}>
+                  <Box>
+                    <Heading size="lg">{effectiveName}</Heading>
+                    <Text color={muted} fontFamily="mono">@{username}</Text>
+                    {profile?.practice_area && (
+                      <Text fontSize="sm" color={muted} mt={1}>
+                        {profile.practice_area}
+                      </Text>
+                    )}
+                    {profile?.location && (
+                      <HStack gap={1} mt={0.5}>
+                        <IconMapPin size={13} color="var(--chakra-colors-gray-400)" />
+                        <Text fontSize="sm" color={muted}>{profile.location}</Text>
+                      </HStack>
+                    )}
+                  </Box>
+
+                  {/* Email Me — far right of name row */}
+                  {username !== authUser?.username && !contactOpen && !sentOk && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      colorPalette="gray"
+                      flexShrink={0}
+                      onClick={() => setContactOpen(true)}
+                    >
+                      <IconMail size={14} />
+                      <Text ml={1}>Email me</Text>
+                    </Button>
+                  )}
+                </HStack>
               </Box>
             </HStack>
 
@@ -267,8 +286,7 @@ export function GroupMemberProfilePanel({
 
             {profile?.quick_link && (
               <Box mt={3}>
-                <Box
-                  as="a"
+                <Link
                   href={profile.quick_link}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -281,7 +299,7 @@ export function GroupMemberProfilePanel({
                 >
                   <IconExternalLink size={14} />
                   {profile.quick_link.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                </Box>
+                </Link>
               </Box>
             )}
 
@@ -290,7 +308,7 @@ export function GroupMemberProfilePanel({
                 <Text fontSize="xs" fontWeight="semibold" color={muted} mb={2} textTransform="uppercase" letterSpacing="wide">
                   Voice Intro
                 </Text>
-                <Box as="audio" controls src={profile.intro_voice_url} w="100%" />
+                <audio controls src={profile.intro_voice_url} style={{ width: "100%" }} />
                 {profile.intro_voice_transcript && (
                   <Text fontSize="xs" color={muted} mt={2} fontStyle="italic">
                     {profile.intro_voice_transcript}
@@ -299,20 +317,10 @@ export function GroupMemberProfilePanel({
               </Box>
             )}
 
-            {/* Email Me */}
-            {username !== authUser?.username && (
+            {/* Email Me form — expands inline below the header */}
+            {username !== authUser?.username && contactOpen && (
               <Box mt={4}>
-                {!contactOpen ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    colorPalette="gray"
-                    onClick={() => setContactOpen(true)}
-                  >
-                    <IconMail size={14} />
-                    <Text ml={1}>Email Me</Text>
-                  </Button>
-                ) : sentOk ? (
+                {sentOk ? (
                   <Box fontSize="sm" color="green.400">Message sent.</Box>
                 ) : (
                   <VStack gap={2} align="stretch" pt={1}>

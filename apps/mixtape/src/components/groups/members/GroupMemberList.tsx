@@ -13,6 +13,7 @@ import {
   Badge,
   Flex,
   Button,
+  Link,
   IconButton,
   Spinner,
   Avatar,
@@ -294,8 +295,7 @@ export function GroupMemberList({
                         </HStack>
                       ) : <Box />}
                       {membership.quick_link && (
-                        <Box
-                          as="a"
+                        <Link
                           href={membership.quick_link}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -304,7 +304,7 @@ export function GroupMemberList({
                           _hover={{ opacity: 1 }}
                         >
                           <IconExternalLink size={14} />
-                        </Box>
+                        </Link>
                       )}
                     </HStack>
                   </VStack>
@@ -361,8 +361,7 @@ export function GroupMemberList({
                   </HStack>
                 </VStack>
                 {membership.quick_link && (
-                  <Box
-                    as="a"
+                  <Link
                     href={membership.quick_link}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -374,7 +373,7 @@ export function GroupMemberList({
                     onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   >
                     <IconExternalLink size={14} />
-                  </Box>
+                  </Link>
                 )}
                 {canEditOwnProfileImage(membership) && (
                   <IconButton

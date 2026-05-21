@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { Box, Spinner, Tabs, Text } from '@chakra-ui/react';
+import { Box, Button, HStack, Link, Spinner, Tabs, Text } from '@chakra-ui/react';
+import NextLink from 'next/link';
+import { IconArrowLeft } from '@tabler/icons-react';
 import StorylineExperience from '@/components/crossroads/StorylineExperience';
 import MemberProfileTemplate from '@/components/crossroads/MemberProfileTemplate';
 import MemberPublicWritingPanel from '@/components/crossroads/MemberPublicWritingPanel';
@@ -22,6 +24,9 @@ export default function MemberPage() {
   const tabStorageKey = username ? `member_profile_last_tab:${username}` : null;
 
   const isOwner = user?.username === username;
+  // Only allow same-site group paths to prevent open redirect
+  const rawReturnTo = searchParams?.get('returnTo') ?? null;
+  const returnTo = rawReturnTo?.startsWith('/group/') ? rawReturnTo : null;
 
   useEffect(() => {
     const requestedTab = searchParams?.get('tab');
@@ -50,6 +55,18 @@ export default function MemberPage() {
 
   return (
     <Box maxW="1400px" mx="auto" px={{ base: 3, md: 6 }} py={6}>
+      {/* Return to Group banner — shown when arriving via Me button */}
+      {returnTo && (
+        <HStack mb={4}>
+          <Button asChild size="sm" variant="outline" colorPalette="gray">
+            <Link as={NextLink} href={returnTo}>
+              <IconArrowLeft size={14} />
+              Return to Group
+            </Link>
+          </Button>
+        </HStack>
+      )}
+
       <Tabs.Root
         value={activeTab}
         onValueChange={({ value }) => {

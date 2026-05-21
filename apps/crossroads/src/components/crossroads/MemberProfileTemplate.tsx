@@ -180,6 +180,20 @@ export default function MemberProfileTemplate({
             </VStack>
           )}
 
+          {profile.intro_voice_url && (
+            <Box>
+              <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb={2}>
+                Voice intro
+              </Text>
+              <audio controls src={profile.intro_voice_url} style={{ width: "100%", maxWidth: "420px" }} />
+              {profile.intro_voice_transcript && (
+                <Text fontSize="sm" color={mutedColor} mt={2} fontStyle="italic">
+                  {profile.intro_voice_transcript}
+                </Text>
+              )}
+            </Box>
+          )}
+
           {profile.bio_json && Object.keys(profile.bio_json).length > 0 && (
             <Box pt={2}>
               <TipTapRenderer

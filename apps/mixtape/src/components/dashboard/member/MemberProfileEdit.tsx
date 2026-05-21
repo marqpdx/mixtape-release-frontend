@@ -20,7 +20,7 @@ import {
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useMyMemberProfile, useMemberProfileMutation } from "@hooks/member/useMemberProfile";
-import { uploadMemberVoice, deleteMemberVoice } from "@mixtape/api/clients/member/memberApi";
+import { uploadMemberVoice, deleteMemberVoice, fetchMyProfile } from "@mixtape/api/clients/member/memberApi";
 import { MemberProfileUpdate } from "@mixtape/core/types/memberTypes";
 import { toaster } from "@mixtape/core/lib/toaster";
 // import { ErrorAlert } from "@components/ui/alerts/ErrorAlert";
@@ -60,7 +60,10 @@ export default function MemberProfileEdit() {
   const [voiceUploading, setVoiceUploading] = useState(false);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState<string>("");
+  const [transcriptPolling, setTranscriptPolling] = useState(false);
   const voiceInputRef = useRef<HTMLInputElement>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollDeadlineRef = useRef<number>(0);
 
   const cardBg = useColorModeValue("white", "gray.800");
   const cardBorder = useColorModeValue("gray.200", "gray.700");
@@ -94,6 +97,9 @@ export default function MemberProfileEdit() {
   // Get mutation hook (only when we have a username)
   const username = member?.username || "";
   const { update, isUpdating, error: mutationError } = useMemberProfileMutation(username);
+
+  // Clean up poll timer on unmount
+  useEffect(() => () => { if (pollTimerRef.current) clearTimeout(pollTimerRef.current); }, []);
 
   // Initialize form with member data
   useEffect(() => {
@@ -183,13 +189,14 @@ export default function MemberProfileEdit() {
   async function handleVoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    stopPolling();
     setVoiceUploading(true);
     try {
       const result = await uploadMemberVoice(file);
       setVoiceUrl(result.url);
       setVoiceTranscript("");
       toaster.create({ title: "Voice note uploaded", description: "Transcription will appear shortly.", type: "success", duration: 4000 });
-      refetchMember();
+      startPolling();
     } catch {
       toaster.create({ title: "Upload failed", description: "Could not upload voice note. Please try again.", type: "error", duration: 5000 });
     } finally {
@@ -199,6 +206,7 @@ export default function MemberProfileEdit() {
   }
 
   async function handleVoiceDelete() {
+    stopPolling();
     setVoiceUploading(true);
     try {
       await deleteMemberVoice();
@@ -210,6 +218,41 @@ export default function MemberProfileEdit() {
     } finally {
       setVoiceUploading(false);
     }
+  }
+
+  function stopPolling() {
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    setTranscriptPolling(false);
+  }
+
+  function startPolling() {
+    pollDeadlineRef.current = Date.now() + 90_000;
+    setTranscriptPolling(true);
+    schedulePoll();
+  }
+
+  function schedulePoll() {
+    pollTimerRef.current = setTimeout(async () => {
+      if (Date.now() > pollDeadlineRef.current) {
+        setTranscriptPolling(false);
+        return;
+      }
+      try {
+        const fresh = await fetchMyProfile();
+        if (fresh.intro_voice_transcript) {
+          setVoiceTranscript(fresh.intro_voice_transcript);
+          setTranscriptPolling(false);
+          refetchMember();
+          return;
+        }
+      } catch {
+        // silent — keep polling
+      }
+      schedulePoll();
+    }, 5_000);
   }
 
   // Loading state
@@ -513,7 +556,9 @@ export default function MemberProfileEdit() {
               <VStack align="start" gap={3} w="100%">
                 {voiceUrl && (
                   <Box w="100%">
-                    <Box as="audio" controls src={voiceUrl} w="100%" mb={2} />
+                    <Box mb={2}>
+                      <audio controls src={voiceUrl} style={{ width: "100%" }} />
+                    </Box>
                     {voiceTranscript && (
                       <Text fontSize="xs" color={subtextColor} fontStyle="italic">
                         {voiceTranscript}
@@ -521,7 +566,7 @@ export default function MemberProfileEdit() {
                     )}
                     {!voiceTranscript && (
                       <Text fontSize="xs" color={subtextColor} fontStyle="italic">
-                        Transcript pending…
+                        {transcriptPolling ? "Transcribing…" : "Transcript pending"}
                       </Text>
                     )}
                   </Box>

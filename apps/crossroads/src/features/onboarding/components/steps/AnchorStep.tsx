@@ -12,6 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
+const MAX_CHARS = 280;
+
 interface AnchorStepProps {
   username: string;
   initialQuickIntro: string;
@@ -29,7 +31,7 @@ export function AnchorStep({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const charCount = quickIntro.length;
+  const remaining = MAX_CHARS - quickIntro.length;
 
   async function handleContinue() {
     setError(null);
@@ -51,7 +53,7 @@ export function AnchorStep({
           A little about you
         </Heading>
         <Text fontSize="sm" color="gray.500">
-          How people in this group will know you.
+          How people in this group will know you. You can always update this later.
         </Text>
       </VStack>
 
@@ -61,25 +63,6 @@ export function AnchorStep({
         </Text>
       )}
 
-      {/* Username — read-only; they just set this during invite acceptance */}
-      <Field.Root>
-        <Field.Label>Username</Field.Label>
-        <Text
-          px={3}
-          py={2}
-          bg="gray.50"
-          borderRadius="md"
-          border="1px solid"
-          borderColor="gray.200"
-          fontSize="sm"
-          color="gray.700"
-          fontFamily="mono"
-        >
-          {username}
-        </Text>
-        <Field.HelperText>You just set this — change it any time from your profile.</Field.HelperText>
-      </Field.Root>
-
       <Field.Root>
         <Field.Label>Quick intro</Field.Label>
         <Textarea
@@ -87,17 +70,15 @@ export function AnchorStep({
           onChange={(e) => setQuickIntro(e.target.value)}
           placeholder="What brings you here? What are you working on?"
           rows={3}
-          maxLength={280}
+          maxLength={MAX_CHARS}
           resize="none"
         />
         <Field.HelperText>
           <Box display="flex" justifyContent="space-between">
             <Text>Just a sentence or two is perfect.</Text>
-            {charCount >= 200 && (
-              <Text color={charCount >= 270 ? "red.500" : "gray.500"}>
-                {charCount}/280
-              </Text>
-            )}
+            <Text color={remaining <= 20 ? "red.500" : remaining <= 60 ? "orange.400" : "gray.400"}>
+              {remaining} left
+            </Text>
           </Box>
         </Field.HelperText>
       </Field.Root>
@@ -111,10 +92,10 @@ export function AnchorStep({
           loadingText="Saving..."
           _hover={{ bg: "green.600" }}
         >
-          Continue →
+          Save and enter group →
         </Button>
         <Button variant="ghost" size="sm" onClick={onSkip} color="gray.500">
-          Skip for now
+          Skip for now — you can fill this in later
         </Button>
       </VStack>
     </VStack>

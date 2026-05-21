@@ -3,14 +3,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, HStack, Text } from "@chakra-ui/react";
+import { Box, HStack, Image, Link, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
+import NextLink from "next/link";
 import {
   IconInfoHexagon,
   IconMessages,
   IconUsers,
   IconFolder,
 } from "@tabler/icons-react";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { OverviewTab } from "./OverviewTab";
 import { ThreadworksTab } from "./ThreadworksTab";
 import { MembersTab } from "./MembersTab";
@@ -43,6 +45,7 @@ export function GroupTabs({
   viewingAsMember,
   onJoinGroup,
 }: GroupTabsProps) {
+  const { user } = useAuth();
   const panelBg = useColorModeValue("gray.50", "gray.900");
   const tabStripBg = useColorModeValue("gray.100", "gray.800");
   const tabContentBg = useColorModeValue("white", "gray.900");
@@ -87,7 +90,7 @@ export function GroupTabs({
         onValueChange={(e) => handleTabChange(e.value as string)}
         variant="enclosed"
       >
-        <Tabs.List
+        <HStack
           mb={4}
           bg={tabStripBg}
           borderRadius="lg"
@@ -95,32 +98,85 @@ export function GroupTabs({
           borderWidth="1px"
           borderColor={tabBorderColor}
           gap={1}
+          align="center"
+          justify="space-between"
         >
-          {tabsToShow.map((tab) => {
-            const IconComponent = tab.icon;
-            return (
-              <Tabs.Trigger
-                key={tab.key}
-                value={tab.key}
-                borderRadius="md"
-                px={3}
-                py={2}
+          <Tabs.List gap={1} border="none" bg="transparent" p={0}>
+            {tabsToShow.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <Tabs.Trigger
+                  key={tab.key}
+                  value={tab.key}
+                  borderRadius="md"
+                  px={3}
+                  py={2}
+                  color={tabTextColor}
+                  _selected={{
+                    bg: tabActiveBg,
+                    color: tabActiveTextColor,
+                    borderColor: tabBorderColor,
+                  }}
+                >
+                  <HStack>
+                    <IconComponent size={16} />
+                    <Text>{tab.label}</Text>
+                  </HStack>
+                </Tabs.Trigger>
+              );
+            })}
+            <Tabs.Indicator />
+          </Tabs.List>
+
+          {/* Me button — visible to members only */}
+          {viewingAsMember && user?.username && (
+            <Link
+              as={NextLink}
+              href={`/groups/${group.slug}/me`}
+              title="About Me"
+              _hover={{ textDecoration: "none" }}
+              flexShrink={0}
+              mr={1}
+            >
+              <HStack
+                gap={1.5}
+                px={2.5}
+                py={1.5}
+                borderRadius="full"
+                border="1px solid"
+                borderColor={tabBorderColor}
+                bg={tabActiveBg}
+                fontSize="sm"
+                fontWeight="500"
                 color={tabTextColor}
-                _selected={{
-                  bg: tabActiveBg,
-                  color: tabActiveTextColor,
-                  borderColor: tabBorderColor,
-                }}
+                _hover={{ borderColor: "gray.400" }}
+                transition="all 0.15s"
               >
-                <HStack>
-                  <IconComponent size={16} />
-                  <Text>{tab.label}</Text>
-                </HStack>
-              </Tabs.Trigger>
-            );
-          })}
-          <Tabs.Indicator />
-        </Tabs.List>
+                {user.profile?.avatar_url ? (
+                  <Box w="18px" h="18px" borderRadius="full" overflow="hidden" flexShrink={0}>
+                    <Image src={user.profile.avatar_url} alt="me" w="full" h="full" objectFit="cover" />
+                  </Box>
+                ) : (
+                  <Box
+                    w="18px"
+                    h="18px"
+                    borderRadius="full"
+                    bg="gray.300"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    fontSize="2xs"
+                    color="gray.600"
+                    flexShrink={0}
+                  >
+                    {user.username.charAt(0).toUpperCase()}
+                  </Box>
+                )}
+                <Text>Me</Text>
+              </HStack>
+            </Link>
+          )}
+        </HStack>
 
         {/* Member Tabs */}
         {viewingAsMember && (

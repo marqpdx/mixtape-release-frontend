@@ -25,6 +25,8 @@ export interface PublicMemberProfile {
   bio_json: Record<string, unknown> | null;
   profile_image_url: string | null;
   background_image_url: string | null;
+  intro_voice_url: string | null;
+  intro_voice_transcript: string;
   date_joined: string;
   groups: PublicGroupAffiliation[];
 }

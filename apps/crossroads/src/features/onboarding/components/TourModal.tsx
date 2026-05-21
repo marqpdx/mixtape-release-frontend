@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { Box, Dialog, HStack, Text, VStack } from "@chakra-ui/react";
 import { WelcomeStep } from "./steps/WelcomeStep";
-import { AnchorStep } from "./steps/AnchorStep";
-import { ProfileNudgeStep } from "./steps/ProfileNudgeStep";
 import { GroupPreviewStep } from "./steps/GroupPreviewStep";
+import { AnchorStep } from "./steps/AnchorStep";
 
 interface TourModalProps {
   groupSlug: string;
@@ -17,7 +16,7 @@ interface TourModalProps {
   onComplete: (skipHighlight?: boolean) => void;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function TourModal({
   groupSlug,
@@ -31,7 +30,6 @@ export function TourModal({
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(true);
 
-  // Reset step when modal opens
   useEffect(() => {
     if (isOpen) setStep(0);
   }, [isOpen]);
@@ -45,15 +43,16 @@ export function TourModal({
   }
 
   function next() {
-    if (step < TOTAL_STEPS - 1) transition(step + 1);
+    if (step < TOTAL_STEPS - 1) {
+      transition(step + 1);
+    } else {
+      // Final step "continue" completes the tour
+      onComplete(false);
+    }
   }
 
   function skip() {
-    onComplete(true); // skip = no highlight tour
-  }
-
-  function complete() {
-    onComplete(false); // complete = trigger highlight tour
+    onComplete(true);
   }
 
   const stepContent = (() => {
@@ -69,20 +68,17 @@ export function TourModal({
         );
       case 1:
         return (
+          <GroupPreviewStep
+            groupTitle={groupTitle}
+            onNext={next}
+          />
+        );
+      case 2:
+        return (
           <AnchorStep
             username={username}
             initialQuickIntro={quickIntro}
             onNext={next}
-            onSkip={next}
-          />
-        );
-      case 2:
-        return <ProfileNudgeStep onNext={next} onSkip={next} />;
-      case 3:
-        return (
-          <GroupPreviewStep
-            groupTitle={groupTitle}
-            onComplete={complete}
             onSkip={skip}
           />
         );

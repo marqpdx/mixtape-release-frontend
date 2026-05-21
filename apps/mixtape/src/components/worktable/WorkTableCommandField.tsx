@@ -322,7 +322,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, onHandover, logMatch, visibility, needItems, remindAt, isZGesture]);
+  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, onHandover, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
