@@ -131,6 +131,83 @@
         "real-time"
       ]
     },
+    "console-overview": {
+      "key": "console-overview",
+      "slug": "console",
+      "feature": "console",
+      "title": "Console",
+      "subsystem": "console",
+      "area": "overview",
+      "summary": "Console is your personal re-entry surface — a quick-capture hub and daily dashboard that keeps your most important work visible without getting in the way.",
+      "excerpt": "Console is your personal re-entry surface — a quick-capture hub and daily dashboard that keeps your most important work visible without getting in the way.",
+      "plainText": "Console Console is your personal re-entry surface on Mixtape. It gives you a fast way to capture thoughts and tasks, and a daily view of what needs your attention — without requiring you to dig through groups, drafts, or notifications. Think of it as your home base: you arrive here, you know what's open, and you leave with clarity on what's next. --- Key concepts HubCapture — A quick capture: a note, a task, a reminder, or something you need to revisit. Captures live in your personal queue until you act on them, resolve them, or promote them to a permanent home. Signal — A marker you apply to any piece of content to flag it for review. Signals use short notation: Signal Meaning -------- --------- /! Important — this needs attention / In progress — you're actively working on it /? Question — open and unresolved /@ Delegated — handed off, but you're watching WorkTable — The running stream of everything you've captured, created, or flagged. It's a scrollable, filterable view of your full activity — captures, notes, prose — in reverse chronological order. Capture kinds: Kind Use it for ------ ----------- note Anything you want to remember or act on later fix Something that's broken and needs fixing need more Something unfinished — a placeholder until you have more remind A time-based nudge to yourself --- What you can do Capture something quickly 1. Open Console from the navigation. 2. Type in the capture field and choose a kind (note, fix, need more, remind). 3. For reminders, set a time. 4. Submit — your capture lands in your personal queue. You can also capture by voice: tap the microphone icon, speak, and Console will transcribe and parse what you said into one or more captures automatically. Use signals Signals let you flag content for follow-up from anywhere in Mixtape — a draft, an initiative, a conversation thread. To apply a signal: - Use the signal menu on any piece of content, or - Type the signal notation (/!, /, /?, /@) directly in the capture field to create a flagged capture. Signals surface in your Console view under the Signals panel, so you can find everything you've flagged in one place. See what needs your attention Console organizes your workspace into four panels: Re-entry — Recent items you were working on. Picks up where you left off: open drafts, recent reads, things you touched but didn't finish. Maximum 7 items. Signals — Everything you've flagged with /!, /, /?, or /@. Also surfaces any content you've flagged for re-reading. Orientation — Your active initiatives and group memberships, with a capture count for each. Helps you see where your attention is distributed across projects. Stewardship — The items that need a decision: drafts you haven't touched in 30+ days, overdue reminders, and open questions with no resolution. These are the things that silently wait. Promote a capture When a capture deserves a more permanent home, promote it: 1. Open the capture. 2. Tap Promote. 3. Choose a destination: a List or an Initiative. The capture is linked to its new home, and you can still find it in your history. Browse your WorkTable WorkTable is the full stream of your activity — captures, notes, prose, and all your flagged content — in one scrollable view. - Scroll to browse your full history. - Filter by type or time range. - Archive entries you no longer need. - Delete entries that were noise. --- Current limitations - Group captures — Captures are currently personal only. Group-level capture and shared signal views are planned but not yet built. - Voice capture languages — Transcription is English only in the current release. - Promote destinations — You can currently promote captures to Lists and Initiatives only. Library items and other destinations are planned. - Signals on external content — Signals currently work on Mixtape content only (drafts, initiatives, notes). Signaling external URLs is planned. --- Related features - Initiatives — Where captures go when they grow up. Initiatives hold the structured work that Console's orientation panel surfaces. - Writing — Drafts that have been stale for 30+ days appear in your Stewardship panel. - Puddlejump — Your personal file library. Future: captures can be promoted directly to library items.",
+      "html": "<h1 id=\"console\">Console</h1>\n<p>Console is your personal re-entry surface on Mixtape. It gives you a fast way to capture thoughts and tasks, and a daily view of what needs your attention — without requiring you to dig through groups, drafts, or notifications.</p>\n<p>Think of it as your home base: you arrive here, you know what's open, and you leave with clarity on what's next.</p>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>HubCapture</strong> — A quick capture: a note, a task, a reminder, or something you need to revisit. Captures live in your personal queue until you act on them, resolve them, or promote them to a permanent home.</p>\n<p><strong>Signal</strong> — A marker you apply to any piece of content to flag it for review. Signals use short notation:</p>\n<table>\n<thead>\n<tr>\n<th>Signal</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>/!</code></td>\n<td>Important — this needs attention</td>\n</tr>\n<tr>\n<td><code>/~</code></td>\n<td>In progress — you're actively working on it</td>\n</tr>\n<tr>\n<td><code>/?</code></td>\n<td>Question — open and unresolved</td>\n</tr>\n<tr>\n<td><code>/@</code></td>\n<td>Delegated — handed off, but you're watching</td>\n</tr>\n</tbody>\n</table>\n<p><strong>WorkTable</strong> — The running stream of everything you've captured, created, or flagged. It's a scrollable, filterable view of your full activity — captures, notes, prose — in reverse chronological order.</p>\n<p><strong>Capture kinds:</strong></p>\n<table>\n<thead>\n<tr>\n<th>Kind</th>\n<th>Use it for</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>note</code></td>\n<td>Anything you want to remember or act on later</td>\n</tr>\n<tr>\n<td><code>fix</code></td>\n<td>Something that's broken and needs fixing</td>\n</tr>\n<tr>\n<td><code>need more</code></td>\n<td>Something unfinished — a placeholder until you have more</td>\n</tr>\n<tr>\n<td><code>remind</code></td>\n<td>A time-based nudge to yourself</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"what-you-can-do\">What you can do</h2>\n<h3 id=\"capture-something-quickly\">Capture something quickly</h3>\n<ol>\n<li>Open Console from the navigation.</li>\n<li>Type in the capture field and choose a kind (note, fix, need more, remind).</li>\n<li>For reminders, set a time.</li>\n<li>Submit — your capture lands in your personal queue.</li>\n</ol>\n<p>You can also capture by voice: tap the microphone icon, speak, and Console will transcribe and parse what you said into one or more captures automatically.</p>\n<h3 id=\"use-signals\">Use signals</h3>\n<p>Signals let you flag content for follow-up from anywhere in Mixtape — a draft, an initiative, a conversation thread.</p>\n<p>To apply a signal:</p>\n<ul>\n<li>Use the signal menu on any piece of content, or</li>\n<li>Type the signal notation (<code>/!</code>, <code>/~</code>, <code>/?</code>, <code>/@</code>) directly in the capture field to create a flagged capture.</li>\n</ul>\n<p>Signals surface in your Console view under the Signals panel, so you can find everything you've flagged in one place.</p>\n<h3 id=\"see-what-needs-your-attention\">See what needs your attention</h3>\n<p>Console organizes your workspace into four panels:</p>\n<p><strong>Re-entry</strong> — Recent items you were working on. Picks up where you left off: open drafts, recent reads, things you touched but didn't finish. Maximum 7 items.</p>\n<p><strong>Signals</strong> — Everything you've flagged with <code>/!</code>, <code>/~</code>, <code>/?</code>, or <code>/@</code>. Also surfaces any content you've flagged for re-reading.</p>\n<p><strong>Orientation</strong> — Your active initiatives and group memberships, with a capture count for each. Helps you see where your attention is distributed across projects.</p>\n<p><strong>Stewardship</strong> — The items that need a decision: drafts you haven't touched in 30+ days, overdue reminders, and open questions with no resolution. These are the things that silently wait.</p>\n<h3 id=\"promote-a-capture\">Promote a capture</h3>\n<p>When a capture deserves a more permanent home, promote it:</p>\n<ol>\n<li>Open the capture.</li>\n<li>Tap Promote.</li>\n<li>Choose a destination: a List or an Initiative.</li>\n</ol>\n<p>The capture is linked to its new home, and you can still find it in your history.</p>\n<h3 id=\"browse-your-worktable\">Browse your WorkTable</h3>\n<p>WorkTable is the full stream of your activity — captures, notes, prose, and all your flagged content — in one scrollable view.</p>\n<ul>\n<li>Scroll to browse your full history.</li>\n<li>Filter by type or time range.</li>\n<li>Archive entries you no longer need.</li>\n<li>Delete entries that were noise.</li>\n</ul>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Group captures</strong> — Captures are currently personal only. Group-level capture and shared signal views are planned but not yet built.</li>\n<li><strong>Voice capture languages</strong> — Transcription is English only in the current release.</li>\n<li><strong>Promote destinations</strong> — You can currently promote captures to Lists and Initiatives only. Library items and other destinations are planned.</li>\n<li><strong>Signals on external content</strong> — Signals currently work on Mixtape content only (drafts, initiatives, notes). Signaling external URLs is planned.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Initiatives</strong> — Where captures go when they grow up. Initiatives hold the structured work that Console's orientation panel surfaces.</li>\n<li><strong>Writing</strong> — Drafts that have been stale for 30+ days appear in your Stewardship panel.</li>\n<li><strong>Puddlejump</strong> — Your personal file library. Future: captures can be promoted directly to library items.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "What you can do",
+          "id": "what-you-can-do"
+        },
+        {
+          "depth": 3,
+          "text": "Capture something quickly",
+          "id": "capture-something-quickly"
+        },
+        {
+          "depth": 3,
+          "text": "Use signals",
+          "id": "use-signals"
+        },
+        {
+          "depth": 3,
+          "text": "See what needs your attention",
+          "id": "see-what-needs-your-attention"
+        },
+        {
+          "depth": 3,
+          "text": "Promote a capture",
+          "id": "promote-a-capture"
+        },
+        {
+          "depth": 3,
+          "text": "Browse your WorkTable",
+          "id": "browse-your-worktable"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/console",
+        "/console/*",
+        "/worktable",
+        "/worktable/*"
+      ],
+      "workAreas": [
+        "ConsoleWorkArea",
+        "WorkTableWorkArea"
+      ],
+      "tags": [
+        "console",
+        "capture",
+        "hub",
+        "worktable",
+        "signals"
+      ]
+    },
     "groups-overview": {
       "key": "groups-overview",
       "slug": "groups",
@@ -707,6 +784,12 @@
     "MessageCenter": [
       "chat-overview"
     ],
+    "ConsoleWorkArea": [
+      "console-overview"
+    ],
+    "WorkTableWorkArea": [
+      "console-overview"
+    ],
     "GroupWorkArea": [
       "groups-overview"
     ],
@@ -736,6 +819,9 @@
     "chat": [
       "chat-overview"
     ],
+    "console": [
+      "console-overview"
+    ],
     "groups": [
       "groups-overview"
     ],
@@ -761,5 +847,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-05-21T18:36:05.699Z"
+  "generatedAt": "2026-05-21T21:09:54.390Z"
 }

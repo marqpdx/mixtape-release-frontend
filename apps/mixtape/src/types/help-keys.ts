@@ -2,6 +2,7 @@
 export type HelpKey =
   | "almanac-overview"
   | "chat-overview"
+  | "console-overview"
   | "groups-overview"
   | "initiatives-overview"
   | "mobile-overview"
