@@ -38,6 +38,8 @@ import UniversalDataTable from "@components/common/UniversalDataTable";
 import { getMemberDisplayName, Group, GroupMembership } from "@mixtape/core/types/groupTypes";
 import * as groupApi from "@mixtape/api/clients/group/groupApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { memberQueryKeys } from "@mixtape/api/hooks/useMembers";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 interface GroupMemberListProps {
@@ -73,6 +75,7 @@ export function GroupMemberList({
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
@@ -169,15 +172,30 @@ export function GroupMemberList({
   }, [selectedIndex, filteredMembers.length]);
 
   const handleRemoveMember = async (membership: GroupMembership) => {
+    if (removingMemberId === membership.member_id) return;
+
     const displayName = getDisplayName(membership);
     const confirmed = window.confirm(`Remove ${displayName} from ${group.title}?`);
     if (!confirmed) return;
 
     try {
+      setRemovingMemberId(membership.member_id);
       await groupApi.removeGroupMember(group.slug, membership.member_id);
-      queryClient.invalidateQueries({ queryKey: ["members"] });
+      await queryClient.invalidateQueries({
+        queryKey: memberQueryKeys.lists(),
+      });
+      toaster.create({
+        title: `${displayName} was removed from ${group.title}.`,
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to remove member:", error);
+      toaster.create({
+        title: `Could not remove ${displayName}.`,
+        type: "error",
+      });
+    } finally {
+      setRemovingMemberId(null);
     }
   };
 
@@ -199,6 +217,7 @@ export function GroupMemberList({
         const displayName = getDisplayName(membership);
         const avatar = getAvatar(membership);
         const canRemove = canEditMember(membership);
+        const isRemoving = removingMemberId === membership.member_id;
 
         return (
           <Card.Root
@@ -224,6 +243,8 @@ export function GroupMemberList({
                 top={3}
                 right={3}
                 zIndex={3}
+                loading={isRemoving}
+                disabled={isRemoving}
                 onClick={(event) => {
                   event.stopPropagation();
                   handleRemoveMember(membership);
@@ -307,6 +328,22 @@ export function GroupMemberList({
                         </Link>
                       )}
                     </HStack>
+
+                    {canRemove && (
+                      <Button
+                        size="xs"
+                        colorPalette="red"
+                        variant="solid"
+                        loading={isRemoving}
+                        disabled={isRemoving}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRemoveMember(membership);
+                        }}
+                      >
+                        Remove from group
+                      </Button>
+                    )}
                   </VStack>
                 </Card.Body>
               </>
@@ -359,6 +396,22 @@ export function GroupMemberList({
                       </Badge>
                     )}
                   </HStack>
+
+                  {canRemove && (
+                    <Button
+                      size="xs"
+                      colorPalette="red"
+                      variant="outline"
+                      loading={isRemoving}
+                      disabled={isRemoving}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveMember(membership);
+                      }}
+                    >
+                      Remove from group
+                    </Button>
+                  )}
                 </VStack>
                 {membership.quick_link && (
                   <Link
@@ -580,6 +633,22 @@ export function GroupMemberList({
                   onClick={(event) => goToEditProfile(event, membership)}
                 >
                   Add Profile Image
+                </Button>
+              )}
+
+              {canEditMember(membership) && (
+                <Button
+                  size="xs"
+                  colorPalette="red"
+                  variant="outline"
+                  loading={removingMemberId === membership.member_id}
+                  disabled={removingMemberId === membership.member_id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleRemoveMember(membership);
+                  }}
+                >
+                  Remove from group
                 </Button>
               )}
             </VStack>

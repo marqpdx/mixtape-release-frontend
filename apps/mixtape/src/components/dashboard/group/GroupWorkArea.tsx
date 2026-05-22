@@ -42,6 +42,8 @@ import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
 import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
 interface GroupWorkAreaProps extends WorkAreaProps {
   group: Group;
@@ -56,6 +58,7 @@ export default function GroupWorkArea({
   group,
   userRole,
 }: GroupWorkAreaProps) {
+  const { user: identity } = useAuth();
 
   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
 
@@ -363,6 +366,16 @@ export default function GroupWorkArea({
   // Members sections
   if (section === "members-roles") {
     const canModerate = userRole === "admin" || userRole === "member"; // "member" here means steward viewing dashboard
+    const isAdmin = userRole === "admin";
+    const canEditMember = (membership: GroupMembership): boolean => {
+      const membershipRoles = membership.roles as readonly string[];
+      if (!canModerate) return false;
+      if (membership.member_id === identity?.id) return false;
+      if (membershipRoles.includes("owner")) return false;
+      if (membershipRoles.includes("admin") && !isAdmin) return false;
+      return true;
+    };
+
     return (
       <WorkAreaWrapper>
         <GroupMemberList
@@ -372,7 +385,7 @@ export default function GroupWorkArea({
           error={error?.message}
           showPrivateInfo={userRole === "admin"}
           onMemberClick={() => {}}
-          canEditMember={() => canModerate}
+          canEditMember={canEditMember}
         />
       </WorkAreaWrapper>
     );
