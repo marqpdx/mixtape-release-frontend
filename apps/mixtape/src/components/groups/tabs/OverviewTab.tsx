@@ -5,10 +5,11 @@ import type { Group } from "@mixtape/core/types/groupTypes";
 
 interface OverviewTabProps {
   group: Group;
+  onNavigateToTab?: (tab: string) => void;
 }
 
-export function OverviewTab({ group }: OverviewTabProps) {
-  return <GroupOverviewTab group={group} />;
+export function OverviewTab({ group, onNavigateToTab }: OverviewTabProps) {
+  return <GroupOverviewTab group={group} onNavigateToTab={onNavigateToTab} />;
 }
 
 // // src/components/groups/tabs/OverviewTab.tsx

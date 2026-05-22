@@ -40,16 +40,7 @@ export default function GroupPage() {
     myPermissions?.roles || [],
     myPermissions?.decorators || []
   );
-  const canUseAdminView = isAdminOrSteward || canEditGroup || (
-    myPermissions
-      ? getFilteredGroupMenuItems(
-          "admin",
-          myPermissions.roles || [],
-          myPermissions.decorators || [],
-          group?.group_type || "community"
-        ).length > 0
-      : false
-  );
+  const canUseAdminView = isAdminOrSteward || canEditGroup;
 
   // One canonical storage key (once group is known)
   const storageKey = useMemo(

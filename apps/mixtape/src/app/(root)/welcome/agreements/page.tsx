@@ -343,7 +343,6 @@ export default function AgreementsPage() {
 
         <HStack mt={6} gap={4} color="theme.textSecondary">
           <Link
-            as={NextLink}
             href="/about/how-it-works"
             _hover={{ color: "theme.accent" }}
           >

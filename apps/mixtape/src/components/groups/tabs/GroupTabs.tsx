@@ -182,7 +182,7 @@ export function GroupTabs({
         {viewingAsMember && (
           <>
             <Tabs.Content value="overview" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
-              <OverviewTab group={group} />
+              <OverviewTab group={group} onNavigateToTab={handleTabChange} />
             </Tabs.Content>
             <Tabs.Content value="threadworks" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
               <ThreadworksTab group={group} />

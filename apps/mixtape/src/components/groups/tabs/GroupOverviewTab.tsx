@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { IconShoppingBag, IconFolder, IconInfoCircle, IconSpeakerphone, IconUsers, IconX } from "@tabler/icons-react";
@@ -15,6 +15,7 @@ import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
 interface GroupOverviewTabProps {
   group: Group;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 const WELCOME_INLINE_WORD_LIMIT = 55;
@@ -61,7 +62,7 @@ const DISMISSABLE_BLOCKS = [
 
 type DismissableKey = (typeof DISMISSABLE_BLOCKS)[number]["key"];
 
-export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
+export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabProps) {
   const dismissStorageKey = `group:${group.slug}:dismissed-blocks`;
   const [dismissedBlocks, setDismissedBlocks] = useState<DismissableKey[]>(() => {
     if (typeof window === "undefined") return [];
@@ -73,10 +74,23 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
     }
   });
 
+  const [closingKeys, setClosingKeys] = useState<Set<DismissableKey>>(new Set());
+  const closingTimers = useRef<Map<DismissableKey, ReturnType<typeof setTimeout>>>(new Map());
+
   const dismissBlock = (key: DismissableKey) => {
     const next = [...dismissedBlocks, key];
     setDismissedBlocks(next);
     localStorage.setItem(dismissStorageKey, JSON.stringify(next));
+  };
+
+  const dismissBlockAnimated = (key: DismissableKey) => {
+    setClosingKeys((prev) => new Set([...prev, key]));
+    const timer = setTimeout(() => {
+      dismissBlock(key);
+      setClosingKeys((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      closingTimers.current.delete(key);
+    }, 350);
+    closingTimers.current.set(key, timer);
   };
 
   const restoreBlock = (key: DismissableKey) => {
@@ -107,17 +121,20 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
 
   const renderWelcomeBlock = () => {
-    if (isDismissed("welcome")) return null;
+    if (isDismissed("welcome") && !closingKeys.has("welcome")) return null;
 
-    // No welcome pin — show a default orienting block
+    const isClosing = closingKeys.has("welcome");
+
+    let content: React.ReactNode;
+
     if (!welcomePin) {
-      return (
+      content = (
         <Card.Root>
           <Card.Body>
             <Flex justify="space-between" align="flex-start" mb={3}>
               <Heading size="md">Welcome to {group.title}</Heading>
               <Tooltip content="Minimize">
-                <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
+                <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("welcome")}>
                   <IconInfoCircle size={14} />
                 </IconButton>
               </Tooltip>
@@ -128,143 +145,169 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
           </Card.Body>
         </Card.Root>
       );
+    } else {
+      const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
+      const text = collectNodeText(body).replace(/\s+/g, " ").trim();
+      const wordCount = text ? text.split(/\s+/).length : 0;
+      const hasImage = bodyHasImage(body);
+      const shouldShowReadMore = hasImage || wordCount > WELCOME_INLINE_WORD_LIMIT;
+      const excerptFallback = (welcomePin.display?.excerpt || welcomePin.piece.excerpt || "").trim();
+      const previewText = excerptFallback || truncateWordsAtBoundary(text, WELCOME_PREVIEW_WORD_LIMIT);
+
+      content = (
+        <Card.Root>
+          <Card.Body>
+            <Flex justify="space-between" align="flex-start" mb={3}>
+              <Heading size="md">
+                {welcomePin.display?.title || welcomePin.piece.title}
+              </Heading>
+              <Tooltip content="Minimize Welcome">
+                <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("welcome")}>
+                  <IconInfoCircle size={14} />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+
+            {body && !shouldShowReadMore ? (
+              <Box mb={3}>
+                <TipTapRenderer content={body as { type: "doc"; [key: string]: unknown }} />
+              </Box>
+            ) : previewText ? (
+              <Text color="fg.muted" mb={3}>
+                {previewText}
+              </Text>
+            ) : hasImage ? (
+              <Text color="fg.muted" mb={3}>
+                This welcome note includes rich media.
+              </Text>
+            ) : (
+              <Text color="fg.muted" mb={3}>
+                Welcome to {group.title}.
+              </Text>
+            )}
+
+            {shouldShowReadMore && welcomePin.piece.slug ? (
+              <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
+                <Button size="xs" variant="outline">
+                  Read more
+                </Button>
+              </Link>
+            ) : null}
+          </Card.Body>
+        </Card.Root>
+      );
     }
 
-    const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
-    const text = collectNodeText(body).replace(/\s+/g, " ").trim();
-    const wordCount = text ? text.split(/\s+/).length : 0;
-    const hasImage = bodyHasImage(body);
-    const shouldShowReadMore = hasImage || wordCount > WELCOME_INLINE_WORD_LIMIT;
-    const excerptFallback = (welcomePin.display?.excerpt || welcomePin.piece.excerpt || "").trim();
-    const previewText = excerptFallback || truncateWordsAtBoundary(text, WELCOME_PREVIEW_WORD_LIMIT);
-
     return (
-      <Card.Root>
-        <Card.Body>
-          <Flex justify="space-between" align="flex-start" mb={3}>
-            <Heading size="md">
-              {welcomePin.display?.title || welcomePin.piece.title}
-            </Heading>
-            <Tooltip content="Minimize Welcome">
-              <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
-                <IconInfoCircle size={14} />
-              </IconButton>
-            </Tooltip>
-          </Flex>
-
-          {body && !shouldShowReadMore ? (
-            <Box mb={3}>
-              <TipTapRenderer content={body as { type: "doc"; [key: string]: unknown }} />
-            </Box>
-          ) : previewText ? (
-            <Text color="fg.muted" mb={3}>
-              {previewText}
-            </Text>
-          ) : hasImage ? (
-            <Text color="fg.muted" mb={3}>
-              This welcome note includes rich media.
-            </Text>
-          ) : (
-            <Text color="fg.muted" mb={3}>
-              Welcome to {group.title}.
-            </Text>
-          )}
-
-          {shouldShowReadMore && welcomePin.piece.slug ? (
-            <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
-              <Button size="xs" variant="outline">
-                Read more
-              </Button>
-            </Link>
-          ) : null}
-        </Card.Body>
-      </Card.Root>
+      <Box
+        style={{
+          overflow: "hidden",
+          maxHeight: isClosing ? "0px" : "600px",
+          opacity: isClosing ? 0 : 1,
+          marginBottom: isClosing ? "0px" : undefined,
+          transition: "max-height 0.35s ease, opacity 0.25s ease, margin-bottom 0.35s ease",
+        }}
+      >
+        {content}
+      </Box>
     );
   };
 
   const renderAnnouncementsBlock = () => {
-    if (isDismissed("announcements")) return null;
+    if (isDismissed("announcements") && !closingKeys.has("announcements")) return null;
+    const isClosing = closingKeys.has("announcements");
     return (
-      <Card.Root>
-        <Card.Header>
-          <Flex justify="space-between" align="center">
-            <Heading size="md">Announcements</Heading>
-            <Tooltip content="Dismiss Announcements">
-              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("announcements")}>
-                <IconX size={12} />
-              </IconButton>
-            </Tooltip>
-          </Flex>
-        </Card.Header>
-        <Card.Body>
-          <Text color="fg.muted">No announcements yet.</Text>
-        </Card.Body>
-      </Card.Root>
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "600px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+        <Card.Root>
+          <Card.Header>
+            <Flex justify="space-between" align="center">
+              <Heading size="md">Announcements</Heading>
+              <Tooltip content="Dismiss Announcements">
+                <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("announcements")}>
+                  <IconX size={12} />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+          </Card.Header>
+          <Card.Body>
+            <Text color="fg.muted">No announcements yet.</Text>
+          </Card.Body>
+        </Card.Root>
+      </Box>
     );
   };
 
   const renderRecentPostsBlock = () => null; // Hidden until wired up
 
   const renderMemberHighlightsBlock = () => {
-    if (isDismissed("member_highlights")) return null;
+    if (isDismissed("member_highlights") && !closingKeys.has("member_highlights")) return null;
+    const isClosing = closingKeys.has("member_highlights");
     return (
-    <Card.Root>
-      <Card.Header>
-        <Flex justify="space-between" align="center">
-          <Heading size="md">Members</Heading>
-          <Tooltip content="Dismiss Members">
-            <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("member_highlights")}>
-              <IconX size={12} />
-            </IconButton>
-          </Tooltip>
-        </Flex>
-      </Card.Header>
-      <Card.Body>
-        {membersLoading ? (
-          <Text color="fg.muted">Loading members…</Text>
-        ) : (
-          <Stack gap={3}>
-            <AvatarGroup gap={2}>
-              {activeMembers.slice(0, 12).map((member) => {
-                const displayName = member.display_name || member.username || "Member";
-                const initial = displayName.charAt(0).toUpperCase();
-                const memberHref = member.username ? `/members/${member.username}` : null;
-                return (
-                  memberHref ? (
-                    <Link as={NextLink} href={memberHref} key={member.member_id}>
-                      <Avatar.Root size="sm" cursor="pointer">
-                        {member.profile_image ? (
-                          <Avatar.Image src={member.profile_image} alt={displayName} />
-                        ) : (
-                          <Avatar.Fallback>{initial}</Avatar.Fallback>
-                        )}
-                      </Avatar.Root>
-                    </Link>
-                  ) : (
-                    <Avatar.Root key={member.member_id} size="sm">
-                      {member.profile_image ? (
-                        <Avatar.Image src={member.profile_image} alt={displayName} />
-                      ) : (
-                        <Avatar.Fallback>{initial}</Avatar.Fallback>
-                      )}
-                    </Avatar.Root>
-                  )
-                );
-              })}
-            </AvatarGroup>
-            <Text color="fg.muted">{group.member_count ?? activeMembers.length} members</Text>
-          </Stack>
-        )}
-      </Card.Body>
-    </Card.Root>
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+        <Card.Root>
+          <Card.Header>
+            <Flex justify="space-between" align="center">
+              <Heading
+                size="md"
+                cursor={onNavigateToTab ? "pointer" : undefined}
+                _hover={onNavigateToTab ? { textDecoration: "underline", color: "theme.accent" } : undefined}
+                onClick={onNavigateToTab ? () => onNavigateToTab("members") : undefined}
+              >
+                Members
+              </Heading>
+              <Tooltip content="Dismiss Members">
+                <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("member_highlights")}>
+                  <IconX size={12} />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+          </Card.Header>
+          <Card.Body>
+            {membersLoading ? (
+              <Text color="fg.muted">Loading members…</Text>
+            ) : (
+              <Stack gap={3}>
+                <AvatarGroup gap={2}>
+                  {activeMembers.slice(0, 12).map((member) => {
+                    const displayName = member.display_name || member.username || "Member";
+                    const initial = displayName.charAt(0).toUpperCase();
+                    const tooltip = member.quick_intro
+                      ? `${displayName}: ${member.quick_intro}`
+                      : displayName;
+                    return (
+                      <Tooltip key={member.member_id} content={tooltip}>
+                        <Avatar.Root
+                          size="sm"
+                          cursor={onNavigateToTab ? "pointer" : undefined}
+                          onClick={onNavigateToTab ? () => onNavigateToTab("members") : undefined}
+                        >
+                          {member.profile_image ? (
+                            <Avatar.Image src={member.profile_image} alt={displayName} />
+                          ) : (
+                            <Avatar.Fallback>{initial}</Avatar.Fallback>
+                          )}
+                        </Avatar.Root>
+                      </Tooltip>
+                    );
+                  })}
+                </AvatarGroup>
+                <Text color="fg.muted">{group.member_count ?? activeMembers.length} members</Text>
+              </Stack>
+            )}
+          </Card.Body>
+        </Card.Root>
+      </Box>
     );
   };
 
   const totalCollectionItems = collections?.reduce((sum, c) => sum + (c.item_count || 0), 0) ?? 0;
 
   const renderPinnedResourcesBlock = () => {
-    if (isDismissed("pinned_resources")) return null;
+    if (isDismissed("pinned_resources") && !closingKeys.has("pinned_resources")) return null;
+    const isClosing = closingKeys.has("pinned_resources");
     return (
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+
     <Card.Root>
       <Card.Header>
         <Flex justify="space-between" align="center">
@@ -273,7 +316,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
             <Heading size="md">Core Resources</Heading>
           </Flex>
           <Tooltip content="Dismiss Core Resources">
-            <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlock("pinned_resources")}>
+            <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("pinned_resources")}>
               <IconX size={12} />
             </IconButton>
           </Tooltip>
@@ -294,6 +337,7 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
         )}
       </Card.Body>
     </Card.Root>
+      </Box>
     );
   };
 
