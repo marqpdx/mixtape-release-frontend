@@ -1,4 +1,4 @@
-// app/welcome/agreements/page.tsx
+// apps/mixtape/app/welcome/agreements/page.tsx
 
 "use client";
 
@@ -207,8 +207,8 @@ export default function AgreementsPage() {
           </Heading>
           <Text color="theme.textSecondary">
             {groupName
-              ? `You're joining ${groupName}. Please read and accept the shared agreements.`
-              : "Please read and accept the shared agreements that keep Crossroads welcoming."}
+              ? `You're joining ${groupName}, which is part of the greater Crossroads. Please read and accept the shared agreements, that help keep Crossroads welcome and well. Thank you.`
+              : "Please read and accept the shared agreements that keep Crossroads welcoming. Thank you."}
           </Text>
         </VStack>
 
