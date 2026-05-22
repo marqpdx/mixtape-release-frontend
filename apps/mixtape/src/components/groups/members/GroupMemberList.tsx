@@ -31,6 +31,7 @@ import {
   IconPencil,
   IconMapPin,
   IconExternalLink,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AvatarGroup } from "@chakra-ui/react";
@@ -50,6 +51,7 @@ interface GroupMemberListProps {
   showPrivateInfo?: boolean;
   onMemberClick?: (membership: GroupMembership) => void;
   canEditMember?: (membership: GroupMembership) => boolean;
+  onRefresh?: () => void;
 }
 
 // Transform for UniversalDataTable
@@ -68,7 +70,8 @@ export function GroupMemberList({
   error = null,
   showPrivateInfo = false,
   onMemberClick,
-  canEditMember = () => false
+  canEditMember = () => false,
+  onRefresh,
 }: GroupMemberListProps) {
   const { user: identity } = useAuth();
   const queryClient = useQueryClient();
@@ -706,6 +709,19 @@ export function GroupMemberList({
         </VStack>
 
         <HStack>
+          {onRefresh && (
+            <IconButton
+              aria-label="Refresh members"
+              size="sm"
+              variant="ghost"
+              colorScheme="gray"
+              onClick={onRefresh}
+              loading={isLoading}
+            >
+              <IconRefresh size={16} />
+            </IconButton>
+          )}
+
           <IconButton
             aria-label="Grid view"
             size="sm"

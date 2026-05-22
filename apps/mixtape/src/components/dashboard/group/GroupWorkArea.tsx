@@ -386,6 +386,7 @@ export default function GroupWorkArea({
           showPrivateInfo={userRole === "admin"}
           onMemberClick={() => {}}
           canEditMember={canEditMember}
+          onRefresh={refetch}
         />
       </WorkAreaWrapper>
     );

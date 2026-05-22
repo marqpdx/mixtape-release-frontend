@@ -65,10 +65,14 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
   useEffect(() => {
     if (!shortcode) return;
     axiosInstance
-      .get<{ group: InviteInfoGroup }>(`/api/auth/invite-info/${shortcode}`)
-      .then((res) => setGroup(res.data.group))
-      .catch(() => {
-        // Non-fatal — form still works without group preview
+      .get<{ group: InviteInfoGroup & { name?: string } }>(`/api/auth/invite-info/${shortcode}`)
+      .then((res) => {
+        const g = res.data.group;
+        // Backend may return 'name' instead of 'title'
+        setGroup({ ...g, title: g.title || g.name || "" });
+      })
+      .catch((err) => {
+        console.warn("[AcceptInviteForm] invite-info fetch failed:", err?.response?.status, err?.message);
       })
       .finally(() => setGroupLoading(false));
   }, [shortcode]);
