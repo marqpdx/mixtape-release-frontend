@@ -30,7 +30,7 @@ export default function GroupPage() {
   const { group, isLoading, refetch } = useGroup(slugStr);
 
   // Fetch user's permissions for this group
-  const { data: myPermissions } = useMyPermissions(slugStr);
+  const { data: myPermissions, isLoading: permissionsLoading } = useMyPermissions(slugStr);
 
   const isMember = group ? isGroupMember(group) : false;
   const isAdminOrSteward = group ? canUserModerateGroup(group) : false;
@@ -138,6 +138,13 @@ export default function GroupPage() {
   const emblemUrl = getBestEmblemUrl(group.emblem) || undefined;
 
   if (showAdminDashboard) {
+    // Wait for permissions before building the menu — without them filterMenuByPermissions
+    // produces a sparse/empty menu that causes DashboardLayout's guard to reset activeSection
+    // to a hidden section not in SECTION_PERMISSIONS, producing an "Access Denied" flash.
+    if (permissionsLoading || !myPermissions) {
+      return <Box p={4}>Loading...</Box>;
+    }
+
     const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
 
     // Filter menu items based on user's permissions and group type

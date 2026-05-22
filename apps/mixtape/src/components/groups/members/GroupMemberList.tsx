@@ -187,6 +187,7 @@ export function GroupMemberList({
       await queryClient.invalidateQueries({
         queryKey: memberQueryKeys.lists(),
       });
+      onRefresh?.();
       toaster.create({
         title: `${displayName} was removed from ${group.title}.`,
         type: "success",

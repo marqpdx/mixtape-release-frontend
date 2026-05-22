@@ -6,12 +6,10 @@ import {
   Box,
   Heading,
   Text,
-  chakra,
   HStack,
 } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { IconSend, IconList } from "@tabler/icons-react";
 import GroupInvitations from "./GroupInvitations";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
@@ -40,8 +38,6 @@ export default function GroupInviteWorkArea({
   const [inviteStatusMessage, setInviteStatusMessage] = useState<string | null>(null);
   const [inviteStatusType, setInviteStatusType] = useState<"info" | "success" | "error" | null>(null);
   const [refreshInvitations, setRefreshInvitations] = useState(0);
-
-  const MotionBox = chakra(motion.div);
 
   // Poll invitation status
   useInvitationStatusPoll({
@@ -140,49 +136,40 @@ export default function GroupInviteWorkArea({
           />
 
           {/* Status Messages */}
-          <AnimatePresence>
-            {inviteStatusMessage && (
-              <MotionBox
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0, transition: { duration: 0.3 } }}
-                exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}
-                mb={4}
+          {inviteStatusMessage && (
+            <Box mt={4} mb={4}>
+              <Text
+                fontSize="sm"
+                fontWeight="medium"
+                p={3}
+                borderRadius="md"
+                bg={
+                  inviteStatusType === "error"
+                    ? "red.50"
+                    : inviteStatusType === "success"
+                    ? "green.50"
+                    : "blue.50"
+                }
+                color={
+                  inviteStatusType === "error"
+                    ? "red.600"
+                    : inviteStatusType === "success"
+                    ? "green.600"
+                    : "blue.600"
+                }
+                border="1px solid"
+                borderColor={
+                  inviteStatusType === "error"
+                    ? "red.200"
+                    : inviteStatusType === "success"
+                    ? "green.200"
+                    : "blue.200"
+                }
               >
-                <Box mt={4}>
-                  <Text
-                    fontSize="sm"
-                    fontWeight="medium"
-                    p={3}
-                    borderRadius="md"
-                    bg={
-                      inviteStatusType === "error"
-                        ? "red.50"
-                        : inviteStatusType === "success"
-                        ? "green.50"
-                        : "blue.50"
-                    }
-                    color={
-                      inviteStatusType === "error"
-                        ? "red.600"
-                        : inviteStatusType === "success"
-                        ? "green.600"
-                        : "blue.600"
-                    }
-                    border="1px solid"
-                    borderColor={
-                      inviteStatusType === "error"
-                        ? "red.200"
-                        : inviteStatusType === "success"
-                        ? "green.200"
-                        : "blue.200"
-                    }
-                  >
-                    {inviteStatusMessage}
-                  </Text>
-                </Box>
-              </MotionBox>
-            )}
-          </AnimatePresence>
+                {inviteStatusMessage}
+              </Text>
+            </Box>
+          )}
         </Tabs.Content>
 
         {/* Invitation History Tab */}
