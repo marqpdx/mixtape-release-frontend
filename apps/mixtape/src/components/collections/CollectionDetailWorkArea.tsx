@@ -291,39 +291,45 @@ export function CollectionDetailWorkArea({
                       <Text>files</Text>
                     </HStack>
 
-                    <HStack gap={2} color="gray.600">
-                      <IconCheck size={20} />
-                      <Text fontWeight="bold" fontSize="lg">
-                        {collection.ingestion_status.ready}
-                      </Text>
-                      <Text>ready</Text>
-                    </HStack>
+                    {collection.ingestion_status && (
+                      <HStack gap={2} color="gray.600">
+                        <IconCheck size={20} />
+                        <Text fontWeight="bold" fontSize="lg">
+                          {collection.ingestion_status.ready}
+                        </Text>
+                        <Text>ready</Text>
+                      </HStack>
+                    )}
                   </HStack>
 
                   {/* Ingestion Status - Subtle sparkle indicator */}
-                  <IndexingStatus ingestionStatus={collection.ingestion_status} />
+                  {collection.ingestion_status && (
+                    <IndexingStatus ingestionStatus={collection.ingestion_status} />
+                  )}
 
                   {/* Ingestion Status Badges (detailed view) */}
-                  <HStack gap={2}>
-                    <Badge colorPalette="green" size="sm">
-                      {collection.ingestion_status.ready} ready
-                    </Badge>
-                    {collection.ingestion_status.processing > 0 && (
-                      <Badge colorPalette="blue" size="sm">
-                        {collection.ingestion_status.processing} processing
+                  {collection.ingestion_status && (
+                    <HStack gap={2}>
+                      <Badge colorPalette="green" size="sm">
+                        {collection.ingestion_status.ready} ready
                       </Badge>
-                    )}
-                    {collection.ingestion_status.failed > 0 && (
-                      <Badge colorPalette="red" size="sm">
-                        {collection.ingestion_status.failed} failed
-                      </Badge>
-                    )}
-                    {collection.ingestion_status.pending > 0 && (
-                      <Badge colorPalette="gray" size="sm">
-                        {collection.ingestion_status.pending} pending
-                      </Badge>
-                    )}
-                  </HStack>
+                      {collection.ingestion_status.processing > 0 && (
+                        <Badge colorPalette="blue" size="sm">
+                          {collection.ingestion_status.processing} processing
+                        </Badge>
+                      )}
+                      {collection.ingestion_status.failed > 0 && (
+                        <Badge colorPalette="red" size="sm">
+                          {collection.ingestion_status.failed} failed
+                        </Badge>
+                      )}
+                      {collection.ingestion_status.pending > 0 && (
+                        <Badge colorPalette="gray" size="sm">
+                          {collection.ingestion_status.pending} pending
+                        </Badge>
+                      )}
+                    </HStack>
+                  )}
                 </>
               )}
             </VStack>
