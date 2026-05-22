@@ -108,7 +108,27 @@ export function GroupOverviewTab({ group }: GroupOverviewTabProps) {
 
   const renderWelcomeBlock = () => {
     if (isDismissed("welcome")) return null;
-    if (!welcomePin) return null;
+
+    // No welcome pin — show a default orienting block
+    if (!welcomePin) {
+      return (
+        <Card.Root>
+          <Card.Body>
+            <Flex justify="space-between" align="flex-start" mb={3}>
+              <Heading size="md">Welcome to {group.title}</Heading>
+              <Tooltip content="Minimize">
+                <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlock("welcome")}>
+                  <IconInfoCircle size={14} />
+                </IconButton>
+              </Tooltip>
+            </Flex>
+            <Text color="fg.muted">
+              This is your group&apos;s home on Mixtape. Explore the tabs above to see members, content, and more.
+            </Text>
+          </Card.Body>
+        </Card.Root>
+      );
+    }
 
     const body = (welcomePin.display?.body_json || welcomePin.piece.body_json) as TipTapLikeNode | undefined;
     const text = collectNodeText(body).replace(/\s+/g, " ").trim();

@@ -9,6 +9,7 @@ import {
   Heading,
   Image,
   Input,
+  Skeleton,
   Stack,
   Text,
 } from "@chakra-ui/react";
@@ -55,6 +56,7 @@ interface AcceptInviteFormProps {
 export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [group, setGroup] = useState<InviteInfoGroup | null>(null);
+  const [groupLoading, setGroupLoading] = useState(true);
   const router = useRouter();
 
   const NEXT_PUBLIC_ROOT_API_URL = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
@@ -67,7 +69,8 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       .then((res) => setGroup(res.data.group))
       .catch(() => {
         // Non-fatal — form still works without group preview
-      });
+      })
+      .finally(() => setGroupLoading(false));
   }, [shortcode]);
 
   const {
@@ -172,15 +175,19 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
 
           {/* Welcome text */}
           <Box textAlign={{ base: "center", md: "left" }}>
-            <Heading
-              as="h1"
-              size="2xl"
-              color="theme.text"
-              fontWeight="800"
-              lineHeight="1.15"
-            >
-              Welcome to {groupName}
-            </Heading>
+            {groupLoading ? (
+              <Skeleton height="48px" width="280px" borderRadius="md" />
+            ) : (
+              <Heading
+                as="h1"
+                size="2xl"
+                color="theme.text"
+                fontWeight="800"
+                lineHeight="1.15"
+              >
+                Welcome to {group?.title ?? "…"}
+              </Heading>
+            )}
             {!isDefaultGroup && (
               <Text
                 mt={1}
