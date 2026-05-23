@@ -10,12 +10,14 @@ import {
   HStack,
   Spinner,
   Icon,
+  IconButton,
 } from "@chakra-ui/react";
 import { useEffect, useState, useCallback } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { Tooltip } from "@components/ui/tooltip";
 import { GroupInvitation, invitationStatusIconMap } from "@mixtape/core/types/groupTypes";
+import { IconCopy } from "@tabler/icons-react";
 
 // import { GroupInvitation, invitationStatusIconMap } from "./interfaces";
 
@@ -53,7 +55,23 @@ export default function GroupInvitations({
     fetchInvitations();
   }, [fetchInvitations]);
 
-  console.log('invitations', invitations)
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      toaster.create({
+        title: "Link copied",
+        description: "Invite link copied to clipboard",
+        type: "success",
+        duration: 2500,
+      });
+    }).catch(() => {
+      toaster.create({
+        title: "Copy failed",
+        description: "Could not copy to clipboard",
+        type: "error",
+        duration: 3000,
+      });
+    });
+  };
 
   return (
     <Box>
@@ -74,10 +92,11 @@ export default function GroupInvitations({
           <Table.Root striped>
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>Email</Table.ColumnHeader>
+                <Table.ColumnHeader>Email / User</Table.ColumnHeader>
                 <Table.ColumnHeader>Status</Table.ColumnHeader>
                 <Table.ColumnHeader>Invited By</Table.ColumnHeader>
                 <Table.ColumnHeader>Created At</Table.ColumnHeader>
+                <Table.ColumnHeader>Link</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
 
@@ -120,6 +139,28 @@ export default function GroupInvitations({
 
                     <Table.Cell>
                       {new Date(invite.created_at).toLocaleDateString()}
+                    </Table.Cell>
+
+                    <Table.Cell>
+                      {invite.accept_url ? (
+                        <HStack gap={1}>
+                          <Text fontSize="xs" color="gray.500" maxW="160px" truncate>
+                            {invite.accept_url}
+                          </Text>
+                          <Tooltip content="Copy invite link" positioning={{ placement: "top" }} showArrow>
+                            <IconButton
+                              aria-label="Copy invite link"
+                              size="2xs"
+                              variant="ghost"
+                              onClick={() => handleCopyLink(invite.accept_url!)}
+                            >
+                              <IconCopy size={13} />
+                            </IconButton>
+                          </Tooltip>
+                        </HStack>
+                      ) : (
+                        <Text fontSize="xs" color="gray.400">—</Text>
+                      )}
                     </Table.Cell>
                   </Table.Row>
                 );

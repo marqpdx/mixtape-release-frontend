@@ -26,7 +26,6 @@ import {
   IconChevronDown,
   IconChevronUp,
 } from "@tabler/icons-react";
-import NextLink from "next/link";
 
 interface AgreementSection {
   id: string;
@@ -46,7 +45,7 @@ const AGREEMENTS: AgreementSection[] = [
     id: "respect",
     title: "Respect & Care",
     content:
-      "We speak to people, not about them. We assume good intent and repair harm when it occurs.",
+      "We believe every person matters, as do all beings, including this dear Earth we call home.",
   },
   {
     id: "consent",
@@ -58,7 +57,7 @@ const AGREEMENTS: AgreementSection[] = [
     id: "place",
     title: "Place & Belonging",
     content:
-      "We recognize place as more than coordinates. Local context, culture, and care for land and people come first.",
+      "We recognize place as more than coordinates. Local context, culture, and care for land and the living come first.",
   },
 ];
 
@@ -201,6 +200,12 @@ export default function AgreementsPage() {
             textTransform="uppercase"
           >
             Step 2 of 2
+          </Text>
+          <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
+            Welcome
+          </Heading>
+          <Text color="theme.textSecondary">
+            Crossroads is an intentional place. We believe in respect, and mutual flourishing. Please read the short tenets below, and if you agree, come on in.
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             Community Agreements

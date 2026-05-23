@@ -469,6 +469,7 @@ export interface GroupInvitation {
   invited_email?: string | null;
   invited_group?: GroupSummary | null;
   group_detail?: GroupSummary | null;
+  accept_url?: string | null;
   invited_by?: {
     id: number;
     username: string;

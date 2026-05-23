@@ -24,7 +24,7 @@ import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 // import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
 // import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
-import { Group, GroupFormData, GroupStatus, GroupType } from "@mixtape/core/types/groupTypes";
+import { Group, GroupFormData, GroupType } from "@mixtape/core/types/groupTypes";
 import { EmblemPicker } from "@components/emblems/EmblemPicker";
 import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
 import { EmblemInline } from "@mixtape/core/types/emblemTypes";
@@ -58,13 +58,6 @@ const displayLayoutCollection = createListCollection({
   ],
 });
 
-const statusCollection = createListCollection({
-  items: [
-    { label: "Draft", value: "draft" },
-    { label: "Published", value: "published" },
-    { label: "Archived", value: "archived" },
-  ],
-});
 
 interface GroupEditFormProps {
   group: Group | null;
@@ -123,8 +116,6 @@ export default function GroupEditForm({
     setValue("group_type", group.group_type || "community");
     setValue("visibility", group.visibility || "public");
     setValue("display_layout", group.display_layout || "classic");
-    setValue("status", group.status || "draft");
-
     // Image storage paths (what gets saved to DB)
     setValue("profile_image_path", group.profile_image_path);
     setValue("background_image_path", group.background_image_path);
@@ -481,41 +472,6 @@ export default function GroupEditForm({
           <Fieldset.Content>
             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
               <Field.Root>
-                <Field.Label>Status</Field.Label>
-                <Select.Root
-                  value={watch("status") ? [watch("status")] : undefined}
-                  defaultValue={["draft"]}
-                  onValueChange={({ value }) => {
-                    setValue("status", value[0] as GroupStatus);
-                  }}
-                  collection={statusCollection}
-                >
-                  <Select.HiddenSelect {...register("status")} />
-                  <Select.Control>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder="Select status..." />
-                    </Select.Trigger>
-                    <Select.IndicatorGroup>
-                      <Select.Indicator />
-                      <Select.ClearTrigger />
-                    </Select.IndicatorGroup>
-                  </Select.Control>
-                  <Portal>
-                    <Select.Positioner>
-                      <Select.Content>
-                        {statusCollection.items.map((item) => (
-                          <Select.Item item={item} key={item.value}>
-                            {item.label}
-                            <Select.ItemIndicator />
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select.Positioner>
-                  </Portal>
-                </Select.Root>
-              </Field.Root>
-
-              <Field.Root>
                 <Field.Label>Display Layout</Field.Label>
                 <Select.Root
                   value={watch("display_layout") ? [watch("display_layout")] : undefined}
@@ -551,21 +507,6 @@ export default function GroupEditForm({
               </Field.Root>
             </SimpleGrid>
 
-            {watch("status") === "published" && (
-              <Box mt={4} p={4} bg="green.50" border="1px solid" borderColor="green.200" rounded="md">
-                <Text fontSize="sm" color="green.700">
-                  This group will be publicly visible once saved.
-                </Text>
-              </Box>
-            )}
-
-            {watch("status") === "draft" && (
-              <Box mt={4} p={4} bg="orange.50" border="1px solid" borderColor="orange.200" rounded="md">
-                <Text fontSize="sm" color="orange.700">
-                  This group is saved as a draft and won't be visible to others yet.
-                </Text>
-              </Box>
-            )}
           </Fieldset.Content>
         </Fieldset.Root>
 

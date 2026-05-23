@@ -61,7 +61,7 @@ export function GroupLanding({
         />
       )}
 
-      <Container maxW="7xl" py={8}>
+      <Container maxW="7xl" pt={4} pb={8}>
         <GroupTabs
           group={group}
           viewingAsMember={viewingAsMember}

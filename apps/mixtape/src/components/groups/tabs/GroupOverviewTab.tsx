@@ -139,9 +139,18 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
                 </IconButton>
               </Tooltip>
             </Flex>
-            <Text color="fg.muted">
+            <Box color="fg.muted">
               This is your group&apos;s home on Mixtape. Explore the tabs above to see members, content, and more.
-            </Text>
+            </Box>
+            <Box color="fg.muted">
+              To share about yourself, click the "Me" button to the right of the tabs. Feel free to add a profile image, tell us about your work and intention, whatever feels comfortable to bring to the group.
+            </Box>
+            <Box color="fg.muted">
+              To access the group's primary assets, click into Core Resources on this, or the Content Collections tab.
+            </Box>
+            <Box color="fg.muted">
+              Finally, to hide this or any of the boxes in the Overview, click the X or (i) icon in the top right of any section, and it will be minimized. You can always bring it back.
+            </Box>
           </Card.Body>
         </Card.Root>
       );
@@ -313,7 +322,12 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
         <Flex justify="space-between" align="center">
           <Flex align="center" gap={2}>
             <IconFolder size={20} />
-            <Heading size="md">Core Resources</Heading>
+            <Heading
+              size="md"
+              cursor={onNavigateToTab ? "pointer" : undefined}
+              _hover={onNavigateToTab ? { textDecoration: "underline", color: "theme.accent" } : undefined}
+              onClick={onNavigateToTab ? () => onNavigateToTab("collections") : undefined}
+            >Core Resources</Heading>
           </Flex>
           <Tooltip content="Dismiss Core Resources">
             <IconButton aria-label="Dismiss" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("pinned_resources")}>
@@ -331,7 +345,13 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
               {collections.length} {collections.length === 1 ? "collection" : "collections"} with {totalCollectionItems} {totalCollectionItems === 1 ? "item" : "items"}
             </Text>
             {collections.slice(0, 3).map((c) => (
-              <Text key={c.id} fontWeight="medium">{c.title}</Text>
+              <Text
+                key={c.id}
+                fontWeight="medium"
+                cursor={onNavigateToTab ? "pointer" : undefined}
+                _hover={onNavigateToTab ? { textDecoration: "underline", color: "theme.accent" } : undefined}
+                onClick={onNavigateToTab ? () => onNavigateToTab("collections") : undefined}
+              >{c.title}</Text>
             ))}
           </Stack>
         )}
