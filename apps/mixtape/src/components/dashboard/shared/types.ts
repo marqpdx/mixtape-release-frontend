@@ -30,4 +30,5 @@ export interface DashboardLayoutProps {
   workAreaProps?: Record<string, unknown>;
   loading?: boolean;
   localStorageKey?: string;
+  constrainToViewport?: boolean;
 }

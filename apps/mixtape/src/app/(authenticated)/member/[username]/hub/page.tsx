@@ -145,12 +145,7 @@ export default function MemberHubPage() {
             switchToAdmin={switchToAdmin}
           />
         ) : (
-          <Box
-            css={{
-              "& .dashboard-layout": { minH: "auto" },
-              "& .dashboard-layout > div": { h: "calc(100vh - 320px)" },
-            }}
-          >
+          <Box>
             <DashboardLayout
               title={headerTitle}
               menuItems={MEMBER_HUB_CONFIG.menuItems}
@@ -159,6 +154,7 @@ export default function MemberHubPage() {
               WorkAreaComponent={WorkAreaWrapper}
               workAreaProps={{}}
               loading={identityLoading || groupsLoading}
+              constrainToViewport={false}
             />
           </Box>
         )}

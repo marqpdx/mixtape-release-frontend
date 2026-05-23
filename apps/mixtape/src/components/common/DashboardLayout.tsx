@@ -42,6 +42,7 @@ export default function DashboardLayout({
   workAreaProps = {},
   loading = false,
   localStorageKey = "dashboardActiveSection",
+  constrainToViewport = true,
 }: DashboardLayoutProps) {
   void title;
   void defaultOpenParentMap;
@@ -303,7 +304,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <Box className="dashboard-layout" bg="theme.bg" minH="100vh">
+    <Box
+      className="dashboard-layout"
+      bg="theme.bg"
+      minH={constrainToViewport ? "100vh" : "auto"}
+    >
       {header && <Box>{header}</Box>}
 
       {isMobile ? (
@@ -317,7 +322,12 @@ export default function DashboardLayout({
           header={header}
         />
       ) : (
-        <Flex h="100vh" minH="100vh" position="relative" overflow="hidden">
+        <Flex
+          h={constrainToViewport ? "100vh" : "auto"}
+          minH={constrainToViewport ? "100vh" : "auto"}
+          position="relative"
+          overflow={constrainToViewport ? "hidden" : "visible"}
+        >
           {showBubbleNote && (
             <Box
               position="absolute"
@@ -357,7 +367,7 @@ export default function DashboardLayout({
             borderRight="1px solid"
             borderColor={borderColor}
             transition="width 0.2s"
-            overflow="hidden"
+            overflow={constrainToViewport ? "hidden" : "visible"}
             display="flex"
             flexDirection="column"
           >
@@ -409,7 +419,12 @@ export default function DashboardLayout({
               </HStack>
             </Box>
 
-            <VStack align="stretch" gap={0} flex="1" overflowY="auto">
+            <VStack
+              align="stretch"
+              gap={0}
+              flex="1"
+              overflowY={constrainToViewport ? "auto" : "visible"}
+            >
               {visibleMenuItems.map((menuItem) => {
                 const filteredSubItems = menuItem.subItems;
 
@@ -512,7 +527,7 @@ export default function DashboardLayout({
             minH="0"
             p={0}
             overflowX="hidden"
-            overflowY="auto"
+            overflowY={constrainToViewport ? "auto" : "visible"}
           >
             <WorkAreaComponent
               section={activeSection}
