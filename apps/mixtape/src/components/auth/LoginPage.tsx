@@ -34,7 +34,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState<LoginFormProps>({
-    identifier: "",
+    identifier: searchParams.get("username") || "",
     password: "",
   });
 

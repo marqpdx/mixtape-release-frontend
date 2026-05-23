@@ -10,7 +10,6 @@ import {
   VStack,
   HStack,
   Button,
-  Link,
   Textarea,
   IconButton,
   Dialog,
@@ -25,8 +24,9 @@ import {
   IconPlus,
   IconChevronDown,
   IconChevronUp,
+  IconHelp,
 } from "@tabler/icons-react";
-import NextLink from "next/link";
+import HowItWorksContent from "@/content/HowItWorksContent";
 
 interface AgreementSection {
   id: string;
@@ -63,7 +63,6 @@ const AGREEMENTS: AgreementSection[] = [
 ];
 
 const STORAGE_NOTES_KEY = "agreements_sticky_notes";
-const STORAGE_ACCEPTED_KEY = "agreements_accepted";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -91,27 +90,30 @@ export default function AgreementsPage() {
   const router = useRouter();
 
   const [groupName, setGroupName] = useState("");
+  const [groupSlug, setGroupSlug] = useState("");
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [draftNote, setDraftNote] = useState("");
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
-  // Extract group name from query string client-side without useSearchParams
+  // Extract group name and slug from query string client-side without useSearchParams
   useEffect(() => {
     if (!isBrowser) return;
 
     try {
       const url = new URL(window.location.href);
-      const group = url.searchParams.get("group") || "";
-      setGroupName(group);
+      setGroupName(url.searchParams.get("group") || "");
+      setGroupSlug(url.searchParams.get("group_slug") || "");
     } catch {
       setGroupName("");
+      setGroupSlug("");
     }
   }, []);
 
-  // Load saved notes and acceptance from localStorage
+  // Load saved notes from localStorage (checkbox always starts unchecked)
   useEffect(() => {
     const rawNotes = safeGetItem(STORAGE_NOTES_KEY);
     if (rawNotes) {
@@ -122,9 +124,6 @@ export default function AgreementsPage() {
         // ignore parse errors, start fresh
       }
     }
-
-    const accepted = safeGetItem(STORAGE_ACCEPTED_KEY);
-    setAgreeChecked(accepted === "true");
   }, []);
 
   // Save notes to localStorage whenever they change
@@ -178,13 +177,11 @@ export default function AgreementsPage() {
     setNotes((prev) => prev.filter((n) => n.id !== id));
 
   const handleContinue = () => {
-    safeSetItem(STORAGE_ACCEPTED_KEY, agreeChecked ? "true" : "false");
-
-    const nextUrl =
-      "/welcome/finish" +
-      (groupName ? `?group=${encodeURIComponent(groupName)}` : "");
-
-    router.push(nextUrl);
+    if (groupSlug) {
+      window.location.href = `/app/groups/${groupSlug}`;
+    } else {
+      router.push("/member");
+    }
   };
 
   return (
@@ -340,15 +337,47 @@ export default function AgreementsPage() {
         </HStack>
 
         <HStack mt={6} gap={4} color="theme.textSecondary">
-          <Link
-            as={NextLink}
-            href="/about/how-it-works"
-            _hover={{ color: "theme.accent" }}
+          <Button
+            variant="ghost"
+            size="sm"
+            px={0}
+            color="theme.textSecondary"
+            _hover={{ color: "theme.accent", bg: "transparent" }}
+            onClick={() => setHowItWorksOpen(true)}
           >
+            <IconHelp size={16} />
             Why these agreements?
-          </Link>
+          </Button>
         </HStack>
       </Container>
+
+      {/* How It Works Dialog */}
+      <Dialog.Root open={howItWorksOpen} onOpenChange={({ open }: { open: boolean }) => setHowItWorksOpen(open)}>
+        <Dialog.Content
+          maxW="2xl"
+          bg="theme.surface"
+          borderRadius="xl"
+          border="1px solid"
+          borderColor="theme.border"
+          p={0}
+          maxH="80vh"
+          overflow="hidden"
+          display="flex"
+          flexDirection="column"
+        >
+          <Dialog.Header px={6} py={4} borderBottom="1px solid" borderColor="theme.border" flexShrink={0}>
+            <Dialog.Title fontSize="lg" fontWeight="700">How Crossroads Works</Dialog.Title>
+            <Dialog.CloseTrigger>
+              <IconButton aria-label="Close" variant="ghost" size="sm">
+                <IconX size={16} />
+              </IconButton>
+            </Dialog.CloseTrigger>
+          </Dialog.Header>
+          <Dialog.Body px={6} py={5} overflowY="auto">
+            <HowItWorksContent />
+          </Dialog.Body>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Note Dialog */}
       <Dialog.Root open={noteOpen} onOpenChange={({ open }: { open: boolean }) => setNoteOpen(open)}>
