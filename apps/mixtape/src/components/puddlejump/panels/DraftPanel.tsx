@@ -14,8 +14,9 @@ import {
   NativeSelect,
 } from '@chakra-ui/react';
 import { SparklesIcon, ClipboardDocumentIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { useDraft } from '@mixtape/api/hooks/switchboard';
-import type { DraftContentType, DraftTone, DraftLength } from '@mixtape/api/clients/switchboard/switchboardApi';
+import { useDraft, type ApprovalMode } from '@mixtape/api/hooks/switchboard';
+import { DraftApprovalModal } from '@components/switchboard/DraftApprovalModal';
+import type { DraftContentType, DraftTone, DraftLength, DraftAsyncRequest } from '@mixtape/api/clients/switchboard/switchboardApi';
 
 const CONTENT_TYPES: { value: DraftContentType; label: string }[] = [
   { value: 'email', label: 'Email' },
@@ -44,8 +45,18 @@ interface DraftPanelProps {
   surface?: 'console' | 'puddlejump';
 }
 
+const APPROVAL_MODES: { value: ApprovalMode; label: string }[] = [
+  { value: 'standard', label: 'Standard (review each)' },
+  { value: 'trusted_default', label: 'Trusted (auto-approve local)' },
+];
+
+function loadApprovalMode(): ApprovalMode {
+  if (typeof window === 'undefined') return 'standard';
+  return (localStorage.getItem('draft_approval_mode') as ApprovalMode) ?? 'standard';
+}
+
 export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) {
-  const { submit, isSubmitting, isPolling, result, error, reset } = useDraft();
+  const { submit, submitCloud, isSubmitting, isPolling, result, error, reset } = useDraft();
 
   const [contentType, setContentType] = useState<DraftContentType>('email');
   const [sourceText, setSourceText] = useState('');
@@ -53,18 +64,44 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
   const [targetLength, setTargetLength] = useState<DraftLength>('standard');
   const [copied, setCopied] = useState(false);
 
+  const [approvalMode, setApprovalMode] = useState<ApprovalMode>(loadApprovalMode);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isApprovingCloud, setIsApprovingCloud] = useState(false);
+
   const isWorking = isSubmitting || isPolling;
   const canSubmit = sourceText.trim().length > 0 && !isWorking;
 
-  function handleSubmit() {
-    if (!canSubmit) return;
-    submit({
+  function buildRequest(): DraftAsyncRequest {
+    return {
       content_type: contentType,
       source_text: sourceText.trim(),
       tone,
       target_length: targetLength,
       surface,
-    });
+    };
+  }
+
+  function handleSubmit() {
+    if (!canSubmit) return;
+    if (approvalMode === 'trusted_default') {
+      submit(buildRequest());
+    } else {
+      setModalOpen(true);
+    }
+  }
+
+  function handleApproveLocal() {
+    setModalOpen(false);
+    submit(buildRequest());
+  }
+
+  function handleApproveCloud() {
+    setModalOpen(false);
+    setIsApprovingCloud(true);
+    submitCloud(
+      { ...buildRequest(), approval_mode: approvalMode },
+      { onSettled: () => setIsApprovingCloud(false) }
+    );
   }
 
   function handleCopy() {
@@ -79,23 +116,33 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
     reset();
     setSourceText('');
     setCopied(false);
+    setIsApprovingCloud(false);
   }
 
   return (
+    <>
+    <DraftApprovalModal
+      open={modalOpen}
+      request={modalOpen ? buildRequest() : null}
+      onApproveLocal={handleApproveLocal}
+      onApproveCloud={handleApproveCloud}
+      onCancel={() => setModalOpen(false)}
+      isApprovingCloud={isApprovingCloud}
+    />
     <VStack gap={6} align="stretch">
       <Box>
         <Heading size="lg" color="theme.text" mb={1}>
           Draft
         </Heading>
         <Text color="theme.textSecondary" fontSize="sm">
-          Generate a draft from source context — runs locally via Inkwell
+          Generate a draft from source context — local or cloud
         </Text>
       </Box>
 
       {/* Form */}
       {!result && (
         <VStack gap={4} align="stretch">
-          {/* Content type + tone + length */}
+          {/* Content type + tone + length + approval mode */}
           <HStack gap={3} align="flex-start">
             <Box flex={1}>
               <Text fontSize="xs" color="theme.textSecondary" mb={1} fontWeight="medium">
@@ -143,6 +190,27 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
                   {LENGTHS.map((l) => (
                     <option key={l.value} value={l.value}>
                       {l.label}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+              </NativeSelect.Root>
+            </Box>
+            <Box flex={1}>
+              <Text fontSize="xs" color="theme.textSecondary" mb={1} fontWeight="medium">
+                Approval
+              </Text>
+              <NativeSelect.Root size="sm" disabled={isWorking}>
+                <NativeSelect.Field
+                  value={approvalMode}
+                  onChange={(e) => {
+                    const mode = e.currentTarget.value as ApprovalMode;
+                    setApprovalMode(mode);
+                    localStorage.setItem('draft_approval_mode', mode);
+                  }}
+                >
+                  {APPROVAL_MODES.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -288,10 +356,11 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
             Enter source context above to generate a draft
           </Text>
           <Text color="theme.textSecondary" fontSize="xs" mt={1}>
-            Runs locally via Inkwell · Cloud generation available in Phase 3
+            Local via Inkwell · Cloud generation available via approval modal
           </Text>
         </Box>
       )}
     </VStack>
+    </>
   );
 }

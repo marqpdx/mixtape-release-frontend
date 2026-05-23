@@ -15,14 +15,18 @@ interface DraftApprovalModalProps {
   open: boolean;
   request: DraftAsyncRequest | null;
   onApproveLocal: () => void;
+  onApproveCloud: () => void;
   onCancel: () => void;
+  isApprovingCloud?: boolean;
 }
 
 export function DraftApprovalModal({
   open,
   request,
   onApproveLocal,
+  onApproveCloud,
   onCancel,
+  isApprovingCloud = false,
 }: DraftApprovalModalProps) {
   if (!request) return null;
 
@@ -78,20 +82,14 @@ export function DraftApprovalModal({
 
               <Box
                 p={3}
-                bg="gray.50"
+                bg="purple.50"
                 borderRadius="md"
                 borderWidth="1px"
-                borderColor="gray.200"
-                opacity={0.6}
+                borderColor="purple.200"
               >
-                <HStack justify="space-between">
-                  <Text fontSize="xs" color="gray.500">
-                    Cloud generation — escalate to a cloud model for higher quality
-                  </Text>
-                  <Badge colorPalette="gray" variant="outline" fontSize="xs">
-                    Phase 3
-                  </Badge>
-                </HStack>
+                <Text fontSize="xs" color="purple.700">
+                  Cloud generation uses a higher-capacity model for improved quality and thoroughness.
+                </Text>
               </Box>
             </VStack>
           </Dialog.Body>
@@ -104,7 +102,12 @@ export function DraftApprovalModal({
               <Button colorPalette="blue" size="sm" onClick={onApproveLocal}>
                 Generate (Local)
               </Button>
-              <Button size="sm" disabled title="Cloud generation available in Phase 3">
+              <Button
+                colorPalette="purple"
+                size="sm"
+                onClick={onApproveCloud}
+                loading={isApprovingCloud}
+              >
                 Generate (Cloud)
               </Button>
             </HStack>

@@ -62,6 +62,7 @@ export interface DraftAsyncRequest {
   audience?: string;
   additional_context?: string;
   surface?: 'console' | 'puddlejump';
+  deferred?: boolean;
 }
 
 export interface DraftAsyncResponse {

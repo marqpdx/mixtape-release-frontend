@@ -11,8 +11,8 @@ import {
   type DraftAsyncRequest,
   type DraftActionResult,
 } from '../../clients/switchboard/switchboardApi';
+import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
-import type { ActionRun } from '../../clients/switchboard/actionRunApi';
 
 export type {
   ClassifyAsyncRequest,
@@ -20,6 +20,7 @@ export type {
   ContextShapeAsyncRequest,
   DraftAsyncRequest,
   DraftActionResult,
+  ApprovalMode,
 };
 
 function useAsyncAction<TPayload>(
@@ -70,8 +71,19 @@ export function useContextShape() {
 export function useDraft() {
   const [actionRunId, setActionRunId] = useState<string | null>(null);
 
-  const submit = useMutation({
+  const submitLocal = useMutation({
     mutationFn: submitDraftAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  // Cloud path: create deferred ActionRun, then approve to dispatch with cloud_mode=True
+  const submitCloudMutation = useMutation({
+    mutationFn: async (payload: DraftAsyncRequest & { approval_mode?: ApprovalMode }) => {
+      const { approval_mode = 'standard', ...draftPayload } = payload;
+      const { action_run_id } = await submitDraftAsync({ ...draftPayload, deferred: true });
+      await approveActionRun(action_run_id, { approval_mode });
+      return { action_run_id };
+    },
     onSuccess: (data) => setActionRunId(data.action_run_id),
   });
 
@@ -83,17 +95,23 @@ export function useDraft() {
       : null;
 
   return {
-    submit: submit.mutate,
-    submitAsync: submit.mutateAsync,
-    isSubmitting: submit.isPending,
+    submit: submitLocal.mutate,
+    submitAsync: submitLocal.mutateAsync,
+    submitCloud: submitCloudMutation.mutate,
+    submitCloudAsync: submitCloudMutation.mutateAsync,
+    isSubmitting: submitLocal.isPending || submitCloudMutation.isPending,
     actionRunId,
     actionRun: (poll.data ?? null) as ActionRun | null,
     isPolling: poll.isFetching && !!actionRunId,
     result,
-    error: submit.error ?? (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    error:
+      submitLocal.error ??
+      submitCloudMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
     reset: () => {
       setActionRunId(null);
-      submit.reset();
+      submitLocal.reset();
+      submitCloudMutation.reset();
     },
   };
 }
