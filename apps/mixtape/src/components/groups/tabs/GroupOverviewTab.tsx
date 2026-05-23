@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { IconShoppingBag, IconFolder, IconInfoCircle, IconSpeakerphone, IconUsers, IconX } from "@tabler/icons-react";
@@ -105,6 +105,19 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
   };
 
   const isDismissed = (key: DismissableKey) => dismissedBlocks.includes(key);
+
+  // Restore all blocks when arriving from the new-member onboarding flow
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new_member") === "1") {
+      setDismissedBlocks([]);
+      localStorage.removeItem(dismissStorageKey);
+    }
+  }, [dismissStorageKey]);
+
+  // Space between blocks — must match the gap removed from Stack/Grid below
+  const BLOCK_GAP = "24px";
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const description = group.summary?.trim() || group.description?.trim() || "No summary provided yet.";
@@ -213,8 +226,8 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
           overflow: "hidden",
           maxHeight: isClosing ? "0px" : "600px",
           opacity: isClosing ? 0 : 1,
-          marginBottom: isClosing ? "0px" : undefined,
-          transition: "max-height 0.35s ease, opacity 0.25s ease, margin-bottom 0.35s ease",
+          paddingBottom: isClosing ? "0px" : BLOCK_GAP,
+          transition: "max-height 0.35s ease, opacity 0.25s ease, padding-bottom 0.35s ease",
         }}
       >
         {content}
@@ -226,7 +239,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     if (isDismissed("announcements") && !closingKeys.has("announcements")) return null;
     const isClosing = closingKeys.has("announcements");
     return (
-      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "600px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "600px", opacity: isClosing ? 0 : 1, paddingBottom: isClosing ? "0px" : BLOCK_GAP, transition: "max-height 0.35s ease, opacity 0.25s ease, padding-bottom 0.35s ease" }}>
         <Card.Root>
           <Card.Header>
             <Flex justify="space-between" align="center">
@@ -252,7 +265,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     if (isDismissed("member_highlights") && !closingKeys.has("member_highlights")) return null;
     const isClosing = closingKeys.has("member_highlights");
     return (
-      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, paddingBottom: isClosing ? "0px" : BLOCK_GAP, transition: "max-height 0.35s ease, opacity 0.25s ease, padding-bottom 0.35s ease" }}>
         <Card.Root>
           <Card.Header>
             <Flex justify="space-between" align="center">
@@ -315,7 +328,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     if (isDismissed("pinned_resources") && !closingKeys.has("pinned_resources")) return null;
     const isClosing = closingKeys.has("pinned_resources");
     return (
-      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, transition: "max-height 0.35s ease, opacity 0.25s ease" }}>
+      <Box style={{ overflow: "hidden", maxHeight: isClosing ? "0px" : "400px", opacity: isClosing ? 0 : 1, paddingBottom: isClosing ? "0px" : BLOCK_GAP, transition: "max-height 0.35s ease, opacity 0.25s ease, padding-bottom 0.35s ease" }}>
 
     <Card.Root>
       <Card.Header>
@@ -402,26 +415,30 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
 
   const renderLegacyLayout = () => (
     <Grid templateColumns={{ base: "1fr", lg: "3fr 2fr" }} gap={6}>
-      <Stack gap={6}>
+      <Stack gap={0}>
         {renderWelcomeBlock()}
 
-        <Card.Root>
-          <Card.Header>
-            <Heading size="lg">Recent Activity</Heading>
-          </Card.Header>
-          <Card.Body>
-            <Text color="fg.muted">Recent activity is coming soon.</Text>
-          </Card.Body>
-        </Card.Root>
+        <Box pb={6}>
+          <Card.Root>
+            <Card.Header>
+              <Heading size="lg">Recent Activity</Heading>
+            </Card.Header>
+            <Card.Body>
+              <Text color="fg.muted">Recent activity is coming soon.</Text>
+            </Card.Body>
+          </Card.Root>
+        </Box>
 
-        <Card.Root>
-          <Card.Header>
-            <Heading size="md">Highlights</Heading>
-          </Card.Header>
-          <Card.Body>
-            <Text color="fg.muted">Highlights are coming soon.</Text>
-          </Card.Body>
-        </Card.Root>
+        <Box pb={6}>
+          <Card.Root>
+            <Card.Header>
+              <Heading size="md">Highlights</Heading>
+            </Card.Header>
+            <Card.Body>
+              <Text color="fg.muted">Highlights are coming soon.</Text>
+            </Card.Body>
+          </Card.Root>
+        </Box>
       </Stack>
 
       <Stack gap={6}>
@@ -526,7 +543,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
   };
 
   const renderBlocks = () => (
-    <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(12, 1fr)" }} gap={6}>
+    <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(12, 1fr)" }} gap={0}>
       {blocks.map((block) => (
         <GridItem key={block.id} colSpan={getColSpan(block)}>
           {renderBlock(block)}

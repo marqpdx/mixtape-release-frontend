@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -109,6 +110,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
     <Center minH="100vh">
       <Container
         maxW="md"
@@ -196,6 +198,7 @@ const LoginPage: React.FC = () => {
         </Stack>
       </Container>
     </Center>
+    </motion.div>
   );
 };
 

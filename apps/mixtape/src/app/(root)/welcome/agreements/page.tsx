@@ -10,7 +10,6 @@ import {
   VStack,
   HStack,
   Button,
-  Link,
   Textarea,
   IconButton,
   Dialog,
@@ -19,6 +18,8 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { WhyAgreementsModal } from "@/components/welcome/WhyAgreementsModal";
 import {
   IconNote,
   IconX,
@@ -93,6 +94,7 @@ export default function AgreementsPage() {
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [whyModalOpen, setWhyModalOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [draftNote, setDraftNote] = useState("");
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
@@ -177,13 +179,14 @@ export default function AgreementsPage() {
 
   const handleContinue = () => {
     if (groupSlug) {
-      window.location.href = `/app/groups/${groupSlug}`;
+      router.push(`/groups/${groupSlug}?new_member=1`);
     } else {
       router.push("/dashboard");
     }
   };
 
   return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
     <Box minH="100vh" bg="theme.bg" py={{ base: 10, md: 16 }} px={{ base: 6, md: 8 }}>
       <Container maxW="3xl" px={0}>
         <VStack align="start" gap={2} mb={6}>
@@ -342,14 +345,20 @@ export default function AgreementsPage() {
         </HStack>
 
         <HStack mt={6} gap={4} color="theme.textSecondary">
-          <Link
-            href="/about/how-it-works"
-            _hover={{ color: "theme.accent" }}
+          <Button
+            variant="ghost"
+            size="sm"
+            color="theme.textSecondary"
+            px={0}
+            _hover={{ color: "theme.accent", bg: "transparent" }}
+            onClick={() => setWhyModalOpen(true)}
           >
             Why these agreements?
-          </Link>
+          </Button>
         </HStack>
       </Container>
+
+      <WhyAgreementsModal open={whyModalOpen} onClose={() => setWhyModalOpen(false)} />
 
       {/* Note Dialog */}
       <Dialog.Root open={noteOpen} onOpenChange={({ open }: { open: boolean }) => setNoteOpen(open)}>
@@ -404,5 +413,6 @@ export default function AgreementsPage() {
         </Dialog.Content>
       </Dialog.Root>
     </Box>
+    </motion.div>
   );
 }

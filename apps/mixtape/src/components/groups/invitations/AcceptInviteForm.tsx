@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import { toaster } from "@mixtape/core/lib/toaster";
 import axios from "axios";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { motion } from "framer-motion";
 import { Filter } from "bad-words";
 import type { InviteInfoGroup } from "@mixtape/api/clients/public/publicApi";
 
@@ -145,6 +146,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
     .toUpperCase();
 
   return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
     <Box minH="100vh" bg="theme.bg" display="flex" alignItems="center" justifyContent="center" py={12} px={{ base: 6, md: 8 }}>
       <Box w="full" maxW="2xl">
         <Grid
@@ -295,5 +297,6 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         </Box>
       </Box>
     </Box>
+    </motion.div>
   );
 }

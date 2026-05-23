@@ -2,6 +2,7 @@
 
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Box, Container } from "@chakra-ui/react";
+import { motion } from "framer-motion";
 import { GroupMemberHeader } from "../headers/GroupMemberHeader";
 import { GroupPublicHeader } from "../headers/GroupPublicHeader";
 import { GroupTabs } from "../tabs/GroupTabs";
@@ -41,6 +42,7 @@ export function GroupLanding({
   const showRoleSwitcher = isMember;
 
   return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
     <Box className="group-landing" bg={bgColor} minH="100vh">
       {viewingAsMember ? (
         <GroupMemberHeader
@@ -70,5 +72,6 @@ export function GroupLanding({
         />
       </Container>
     </Box>
+    </motion.div>
   );
 }
