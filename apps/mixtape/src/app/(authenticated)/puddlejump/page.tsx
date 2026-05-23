@@ -37,6 +37,7 @@ const MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: 'draft', label: 'Draft' },
       { key: 'refine', label: 'Refine' },
+      { key: 'add', label: 'Add to list' },
     ],
   },
 ];

@@ -221,6 +221,15 @@ export default function ConsolePage() {
                 >
                   ✂ Refine
                 </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "add" ? "solid" : "outline"}
+                  colorPalette="green"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "add" ? "empty" : "add")}
+                >
+                  + Add to list
+                </Button>
               </VStack>
             </Box>
             <Box

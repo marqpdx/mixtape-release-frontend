@@ -6,6 +6,7 @@ import {
   submitContextShapeAsync,
   submitDraftAsync,
   submitRefineAsync,
+  submitAdd,
   type ClassifyAsyncRequest,
   type SummarizeAsyncRequest,
   type ContextShapeAsyncRequest,
@@ -13,6 +14,8 @@ import {
   type DraftActionResult,
   type RefineAsyncRequest,
   type RefineActionResult,
+  type AddRequest,
+  type AddResponse,
 } from '../../clients/switchboard/switchboardApi';
 import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
@@ -25,6 +28,8 @@ export type {
   DraftActionResult,
   RefineAsyncRequest,
   RefineActionResult,
+  AddRequest,
+  AddResponse,
   ApprovalMode,
 };
 
@@ -165,5 +170,20 @@ export function useDraft() {
       submitLocal.reset();
       submitCloudMutation.reset();
     },
+  };
+}
+
+export function useAdd() {
+  const mutation = useMutation<AddResponse, Error, AddRequest>({
+    mutationFn: submitAdd,
+  });
+
+  return {
+    submit: mutation.mutate,
+    submitAsync: mutation.mutateAsync,
+    isSubmitting: mutation.isPending,
+    result: mutation.data ?? null,
+    error: mutation.error,
+    reset: mutation.reset,
   };
 }

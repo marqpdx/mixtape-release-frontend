@@ -11,6 +11,7 @@ import GlossaryPanel from './panels/GlossaryPanel';
 import CanonicalPanel from './panels/CanonicalPanel';
 import SummariesPanel from './panels/SummariesPanel';
 import RestructurePanel from './panels/RestructurePanel';
+import AddPanel from './panels/AddPanel';
 import DraftPanel from './panels/DraftPanel';
 import RefinePanel from './panels/RefinePanel';
 import { HelpTip } from '@/components/help/HelpTip';
@@ -36,6 +37,7 @@ export default function PuddlejumpWorkArea({
       {section === 'canonical' && <CanonicalPanel {...panelProps} />}
       {section === 'summaries' && <SummariesPanel {...panelProps} />}
       {section === 'restructure' && <RestructurePanel {...panelProps} />}
+      {section === 'add' && <AddPanel surface="puddlejump" />}
       {section === 'draft' && <DraftPanel surface="puddlejump" />}
       {section === 'refine' && <RefinePanel surface="puddlejump" />}
     </Box>

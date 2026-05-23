@@ -121,3 +121,23 @@ export async function submitRefineAsync(
   const res = await axiosInstance.post("/api/switchboard/refine/async", payload);
   return res.data as RefineAsyncResponse;
 }
+
+export interface AddRequest {
+  list_title: string;
+  items: string[];
+  create_if_missing?: boolean;
+  surface?: 'mobile' | 'desktop';
+}
+
+export interface AddResponse {
+  id: string;
+  title: string;
+  body_text: string;
+  action_run_id: string;
+  items_added: number;
+}
+
+export async function submitAdd(payload: AddRequest): Promise<AddResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/add", payload);
+  return res.data as AddResponse;
+}
