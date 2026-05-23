@@ -49,3 +49,41 @@ export async function submitContextShapeAsync(
   const res = await axiosInstance.post("/api/switchboard/context-shape/async", payload);
   return res.data as ContextShapeAsyncResponse;
 }
+
+export type DraftContentType = 'email' | 'sop' | 'summary' | 'message' | 'document' | 'proposal';
+export type DraftTone = 'professional' | 'friendly' | 'direct' | 'formal' | 'casual';
+export type DraftLength = 'brief' | 'standard' | 'detailed';
+
+export interface DraftAsyncRequest {
+  content_type: DraftContentType;
+  source_text: string;
+  tone?: DraftTone;
+  target_length?: DraftLength;
+  audience?: string;
+  additional_context?: string;
+  surface?: 'console' | 'puddlejump';
+}
+
+export interface DraftAsyncResponse {
+  action_run_id: string;
+}
+
+export interface DraftActionResult {
+  status: 'SUCCEEDED';
+  tool: string;
+  content_type: DraftContentType;
+  draft_text: string;
+  tone: DraftTone | null;
+  target_length: DraftLength | null;
+  input_hash: string;
+  quality_signal: number | null;
+  model_used: string | null;
+  draft_refused: boolean;
+}
+
+export async function submitDraftAsync(
+  payload: DraftAsyncRequest
+): Promise<DraftAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/draft/async", payload);
+  return res.data as DraftAsyncResponse;
+}

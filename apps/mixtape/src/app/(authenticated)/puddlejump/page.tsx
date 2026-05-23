@@ -30,6 +30,14 @@ const MENU_ITEMS: MenuItem[] = [
       { key: 'restructure', label: 'Restructure' },
     ],
   },
+  {
+    key: 'generate',
+    label: 'Generate',
+    icon: '\u{2728}',
+    subItems: [
+      { key: 'draft', label: 'Draft' },
+    ],
+  },
 ];
 
 export default function PuddlejumpPage() {

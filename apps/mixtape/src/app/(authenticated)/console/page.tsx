@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, Container, Grid, GridItem, HStack, Text } from "@chakra-ui/react";
+import { Box, Button, Container, Grid, GridItem, HStack, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { StewardshipPanel } from "@components/console/StewardshipPanel";
@@ -192,6 +192,25 @@ export default function ConsolePage() {
             >
               <SectionHeading>Activity</SectionHeading>
               <ConsoleSidebar context={context} onInitiativeSelect={setContext} />
+            </Box>
+            <Box
+              bg={sidebarBg}
+              border="1px solid"
+              borderColor={sidebarBorder}
+              borderRadius="lg"
+              p={4}
+              mb={4}
+            >
+              <SectionHeading>Generate</SectionHeading>
+              <Button
+                size="sm"
+                variant={actionMode === "draft" ? "solid" : "outline"}
+                colorPalette="blue"
+                width="full"
+                onClick={() => setActionMode(actionMode === "draft" ? "empty" : "draft")}
+              >
+                ✨ Draft
+              </Button>
             </Box>
             <Box
               bg={sidebarBg}
