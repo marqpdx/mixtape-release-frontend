@@ -105,7 +105,7 @@ export const useMembers = (
     queryKey: memberQueryKeys.list(groupSlug || '', options),
     queryFn: () => fetchMembers(groupSlug!, options),
     enabled: !!groupSlug,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0,
     refetchOnWindowFocus: false,
   });
 
@@ -114,8 +114,6 @@ export const useMembers = (
     () => members.filter(m => m.is_active && !m.is_pending),
     [members]
   );
-
-  console.log('members aab ', members);
 
   const adminMembers = useMemo(
     () => members.filter(m => m.roles.includes('admin')),
