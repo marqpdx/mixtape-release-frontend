@@ -62,7 +62,6 @@ const AGREEMENTS: AgreementSection[] = [
 ];
 
 const STORAGE_NOTES_KEY = "agreements_sticky_notes";
-const STORAGE_ACCEPTED_KEY = "agreements_accepted";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -124,8 +123,6 @@ export default function AgreementsPage() {
       }
     }
 
-    const accepted = safeGetItem(STORAGE_ACCEPTED_KEY);
-    setAgreeChecked(accepted === "true");
   }, []);
 
   // Save notes to localStorage whenever they change
@@ -179,13 +176,11 @@ export default function AgreementsPage() {
     setNotes((prev) => prev.filter((n) => n.id !== id));
 
   const handleContinue = () => {
-    safeSetItem(STORAGE_ACCEPTED_KEY, agreeChecked ? "true" : "false");
-
-    const nextUrl = groupSlug
-      ? `/login?post_invite_group=${encodeURIComponent(groupSlug)}`
-      : "/login";
-
-    router.push(nextUrl);
+    if (groupSlug) {
+      window.location.href = `/app/groups/${groupSlug}`;
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
