@@ -88,3 +88,36 @@ export async function submitDraftAsync(
   const res = await axiosInstance.post("/api/switchboard/draft/async", payload);
   return res.data as DraftAsyncResponse;
 }
+
+export type RefineLength = 'preserve' | 'shorten' | 'expand';
+
+export interface RefineAsyncRequest {
+  source_text: string;
+  refinement_instruction: string;
+  target_length?: RefineLength;
+  additional_context?: string;
+  surface?: 'console' | 'puddlejump';
+  deferred?: boolean;
+}
+
+export interface RefineAsyncResponse {
+  action_run_id: string;
+}
+
+export interface RefineActionResult {
+  status: 'SUCCEEDED';
+  tool: string;
+  refined_text: string;
+  target_length: RefineLength | null;
+  input_hash: string;
+  quality_signal: number | null;
+  model_used: string | null;
+  refine_refused: boolean;
+}
+
+export async function submitRefineAsync(
+  payload: RefineAsyncRequest
+): Promise<RefineAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/refine/async", payload);
+  return res.data as RefineAsyncResponse;
+}

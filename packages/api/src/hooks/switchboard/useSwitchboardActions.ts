@@ -5,11 +5,14 @@ import {
   submitSummarizeAsync,
   submitContextShapeAsync,
   submitDraftAsync,
+  submitRefineAsync,
   type ClassifyAsyncRequest,
   type SummarizeAsyncRequest,
   type ContextShapeAsyncRequest,
   type DraftAsyncRequest,
   type DraftActionResult,
+  type RefineAsyncRequest,
+  type RefineActionResult,
 } from '../../clients/switchboard/switchboardApi';
 import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
@@ -20,6 +23,8 @@ export type {
   ContextShapeAsyncRequest,
   DraftAsyncRequest,
   DraftActionResult,
+  RefineAsyncRequest,
+  RefineActionResult,
   ApprovalMode,
 };
 
@@ -66,6 +71,53 @@ export function useSummarize() {
 
 export function useContextShape() {
   return useAsyncAction<ContextShapeAsyncRequest>(submitContextShapeAsync);
+}
+
+export function useRefine() {
+  const [actionRunId, setActionRunId] = useState<string | null>(null);
+
+  const submitLocal = useMutation({
+    mutationFn: submitRefineAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const submitCloudMutation = useMutation({
+    mutationFn: async (payload: RefineAsyncRequest & { approval_mode?: ApprovalMode }) => {
+      const { approval_mode = 'standard', ...refinePayload } = payload;
+      const { action_run_id } = await submitRefineAsync({ ...refinePayload, deferred: true });
+      await approveActionRun(action_run_id, { approval_mode });
+      return { action_run_id };
+    },
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const poll = useActionRun(actionRunId);
+
+  const result =
+    poll.data?.status === 'succeeded'
+      ? (poll.data.result_payload as unknown as RefineActionResult)
+      : null;
+
+  return {
+    submit: submitLocal.mutate,
+    submitAsync: submitLocal.mutateAsync,
+    submitCloud: submitCloudMutation.mutate,
+    submitCloudAsync: submitCloudMutation.mutateAsync,
+    isSubmitting: submitLocal.isPending || submitCloudMutation.isPending,
+    actionRunId,
+    actionRun: (poll.data ?? null) as ActionRun | null,
+    isPolling: poll.isFetching && !!actionRunId,
+    result,
+    error:
+      submitLocal.error ??
+      submitCloudMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    reset: () => {
+      setActionRunId(null);
+      submitLocal.reset();
+      submitCloudMutation.reset();
+    },
+  };
 }
 
 export function useDraft() {

@@ -13,10 +13,11 @@ import { useHandoverDraft } from "@mixtape/api/hooks/initiatives";
 import { createApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { ContextSummary } from "./ContextSummary";
 import DraftPanel from "@components/puddlejump/panels/DraftPanel";
+import RefinePanel from "@components/puddlejump/panels/RefinePanel";
 import type { WorkTableContext } from "./types";
 import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 
-export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover" | "draft";
+export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover" | "draft" | "refine";
 
 // ---------------------------------------------------------------------------
 // Shared header with back button
@@ -474,6 +475,7 @@ export function ActionPanel({
         <EmptyState context={context} />
       )}
       {mode === "draft" && <DraftPanel surface="console" />}
+      {mode === "refine" && <RefinePanel surface="console" />}
     </Box>
   );
 }

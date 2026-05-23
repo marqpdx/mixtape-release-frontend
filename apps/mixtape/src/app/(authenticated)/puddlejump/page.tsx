@@ -36,6 +36,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: '\u{2728}',
     subItems: [
       { key: 'draft', label: 'Draft' },
+      { key: 'refine', label: 'Refine' },
     ],
   },
 ];

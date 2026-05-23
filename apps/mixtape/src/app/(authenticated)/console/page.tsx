@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Container, Grid, GridItem, HStack, Text } from "@chakra-ui/react";
+import { Box, Button, Container, Grid, GridItem, HStack, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { StewardshipPanel } from "@components/console/StewardshipPanel";
@@ -202,15 +202,26 @@ export default function ConsolePage() {
               mb={4}
             >
               <SectionHeading>Generate</SectionHeading>
-              <Button
-                size="sm"
-                variant={actionMode === "draft" ? "solid" : "outline"}
-                colorPalette="blue"
-                width="full"
-                onClick={() => setActionMode(actionMode === "draft" ? "empty" : "draft")}
-              >
-                ✨ Draft
-              </Button>
+              <VStack gap={2} align="stretch">
+                <Button
+                  size="sm"
+                  variant={actionMode === "draft" ? "solid" : "outline"}
+                  colorPalette="blue"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "draft" ? "empty" : "draft")}
+                >
+                  ✨ Draft
+                </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "refine" ? "solid" : "outline"}
+                  colorPalette="purple"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "refine" ? "empty" : "refine")}
+                >
+                  ✂ Refine
+                </Button>
+              </VStack>
             </Box>
             <Box
               bg={sidebarBg}
