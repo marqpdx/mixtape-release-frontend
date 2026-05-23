@@ -8,7 +8,7 @@ routes:
   - /member/*/library
   - /member/*/profile
   - /member/*/settings
-  - /member/*/stall
+  - /groups/*/me
   - /settings/*
   - /settings/*/*
 workAreas: []

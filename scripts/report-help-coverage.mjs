@@ -8,6 +8,7 @@ const helpDir = path.join(repoRoot, "content", "help");
 const sourceDir = path.join(repoRoot, "apps", "mixtape", "src");
 
 const REQUIRED_FRONTMATTER_FIELDS = ["title", "subsystem", "area"];
+const failOnIssues = process.argv.includes("--fail-on-issues");
 
 function walk(dir, predicate) {
   const results = [];
@@ -295,6 +296,45 @@ function run() {
       console.log(`  - ${item.route} -> ${item.key} (${toRelativePath(item.filePath)})`);
     }
     console.log("");
+  }
+
+  if (!failOnIssues) return;
+
+  const failureMessages = [];
+  if (collisions.length > 0) {
+    failureMessages.push(
+      `${collisions.length} route collision(s) still need direct help disambiguation`,
+    );
+  }
+  if (unresolved.length > 0) {
+    failureMessages.push(
+      `${unresolved.length} authenticated route(s) still have no contextual help coverage`,
+    );
+  }
+  if (deadDeclaredWorkAreas.length > 0) {
+    failureMessages.push(
+      `${deadDeclaredWorkAreas.length} declared work area mapping(s) point to missing runtime registrations`,
+    );
+  }
+  if (unmappedRuntimeWorkAreas.length > 0) {
+    failureMessages.push(
+      `${unmappedRuntimeWorkAreas.length} runtime work area registration(s) have no mapped help content`,
+    );
+  }
+  if (skipped.length > 0) {
+    failureMessages.push(`${skipped.length} synced help file(s) would be skipped from the manifest`);
+  }
+  if (impossiblePatterns.length > 0) {
+    failureMessages.push(
+      `${impossiblePatterns.length} help route pattern(s) contain query strings and cannot match`,
+    );
+  }
+
+  if (failureMessages.length > 0) {
+    for (const message of failureMessages) {
+      console.error(`[help] ${message}`);
+    }
+    process.exitCode = 1;
   }
 }
 

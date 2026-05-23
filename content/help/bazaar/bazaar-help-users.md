@@ -6,6 +6,12 @@ excerpt: Bazaar is Mixtape's commerce surface for offers, checkout, orders, and 
 routes:
   - /bazaar
   - /bazaar/*
+  - /bazaar/checkout/*
+  - /bazaar/offering/*
+  - /bazaar/orders/*
+  - /bazaar/vendor/orders/*
+  - /groups/*/stall
+  - /member/*/stall
 workAreas: []
 tags:
   - bazaar
@@ -21,6 +27,7 @@ Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, r
 ## What you can do here
 
 - Browse available offerings
+- Open a group or member stall to browse a seller's offerings
 - Review a specific offering before purchase
 - Complete checkout for an order
 - Track your orders and open order details

@@ -251,8 +251,8 @@
       "area": "overview",
       "summary": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
       "excerpt": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
-      "plainText": "Bazaar Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment. What you can do here - Browse available offerings - Review a specific offering before purchase - Complete checkout for an order - Track your orders and open order details - If you are a vendor, manage vendor-side order views Key concepts Offering — A thing that can be purchased or claimed through Bazaar. Order — The record of a completed or in-progress transaction. Vendor view — The fulfillment-side perspective used by the party providing the offering. Common flows 1. Start at the Bazaar listing to browse what is available. 2. Open an offering to review details. 3. Continue to checkout when you are ready. 4. Revisit the orders area to confirm status, history, or fulfillment updates. Current limitations - Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views. - Certain pages are operational rather than polished storefront experiences, especially on the vendor side. Related features - Member — Your account and permissions shape what you can buy or manage. - Groups — Some Bazaar offerings may be tied to specific communities or roles.",
-      "html": "<h1 id=\"bazaar\">Bazaar</h1>\n<p>Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse available offerings</li>\n<li>Review a specific offering before purchase</li>\n<li>Complete checkout for an order</li>\n<li>Track your orders and open order details</li>\n<li>If you are a vendor, manage vendor-side order views</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — A thing that can be purchased or claimed through Bazaar.</p>\n<p><strong>Order</strong> — The record of a completed or in-progress transaction.</p>\n<p><strong>Vendor view</strong> — The fulfillment-side perspective used by the party providing the offering.</p>\n<h2 id=\"common-flows\">Common flows</h2>\n<ol>\n<li>Start at the Bazaar listing to browse what is available.</li>\n<li>Open an offering to review details.</li>\n<li>Continue to checkout when you are ready.</li>\n<li>Revisit the orders area to confirm status, history, or fulfillment updates.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views.</li>\n<li>Certain pages are operational rather than polished storefront experiences, especially on the vendor side.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member</strong> — Your account and permissions shape what you can buy or manage.</li>\n<li><strong>Groups</strong> — Some Bazaar offerings may be tied to specific communities or roles.</li>\n</ul>",
+      "plainText": "Bazaar Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment. What you can do here - Browse available offerings - Open a group or member stall to browse a seller's offerings - Review a specific offering before purchase - Complete checkout for an order - Track your orders and open order details - If you are a vendor, manage vendor-side order views Key concepts Offering — A thing that can be purchased or claimed through Bazaar. Order — The record of a completed or in-progress transaction. Vendor view — The fulfillment-side perspective used by the party providing the offering. Common flows 1. Start at the Bazaar listing to browse what is available. 2. Open an offering to review details. 3. Continue to checkout when you are ready. 4. Revisit the orders area to confirm status, history, or fulfillment updates. Current limitations - Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views. - Certain pages are operational rather than polished storefront experiences, especially on the vendor side. Related features - Member — Your account and permissions shape what you can buy or manage. - Groups — Some Bazaar offerings may be tied to specific communities or roles.",
+      "html": "<h1 id=\"bazaar\">Bazaar</h1>\n<p>Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse available offerings</li>\n<li>Open a group or member stall to browse a seller's offerings</li>\n<li>Review a specific offering before purchase</li>\n<li>Complete checkout for an order</li>\n<li>Track your orders and open order details</li>\n<li>If you are a vendor, manage vendor-side order views</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — A thing that can be purchased or claimed through Bazaar.</p>\n<p><strong>Order</strong> — The record of a completed or in-progress transaction.</p>\n<p><strong>Vendor view</strong> — The fulfillment-side perspective used by the party providing the offering.</p>\n<h2 id=\"common-flows\">Common flows</h2>\n<ol>\n<li>Start at the Bazaar listing to browse what is available.</li>\n<li>Open an offering to review details.</li>\n<li>Continue to checkout when you are ready.</li>\n<li>Revisit the orders area to confirm status, history, or fulfillment updates.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views.</li>\n<li>Certain pages are operational rather than polished storefront experiences, especially on the vendor side.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member</strong> — Your account and permissions shape what you can buy or manage.</li>\n<li><strong>Groups</strong> — Some Bazaar offerings may be tied to specific communities or roles.</li>\n</ul>",
       "headings": [
         {
           "depth": 2,
@@ -283,7 +283,13 @@
       "metadata": {},
       "routes": [
         "/bazaar",
-        "/bazaar/*"
+        "/bazaar/*",
+        "/bazaar/checkout/*",
+        "/bazaar/offering/*",
+        "/bazaar/orders/*",
+        "/bazaar/vendor/orders/*",
+        "/groups/*/stall",
+        "/member/*/stall"
       ],
       "workAreas": [],
       "tags": [
@@ -939,7 +945,7 @@
         "/member/*/library",
         "/member/*/profile",
         "/member/*/settings",
-        "/member/*/stall",
+        "/groups/*/me",
         "/settings/*",
         "/settings/*/*"
       ],
@@ -1328,7 +1334,10 @@
       "metadata": {},
       "routes": [
         "/workbench",
-        "/workbench/*"
+        "/workbench/*",
+        "/groups/*/workbench",
+        "/groups/*/workbench/*",
+        "/member/*/workbench"
       ],
       "workAreas": [
         "WorkbenchCurationWorkArea"
@@ -1524,5 +1533,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-05-23T04:13:01.628Z"
+  "generatedAt": "2026-05-23T17:40:24.299Z"
 }

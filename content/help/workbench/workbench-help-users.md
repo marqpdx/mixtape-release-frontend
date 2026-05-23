@@ -6,6 +6,9 @@ excerpt: The Workbench is where content goes from raw to ready — a triage and 
 routes:
   - /workbench
   - /workbench/*
+  - /groups/*/workbench
+  - /groups/*/workbench/*
+  - /member/*/workbench
 workAreas:
   - WorkbenchCurationWorkArea
 tags:
