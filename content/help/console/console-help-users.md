@@ -6,11 +6,7 @@ excerpt: Console is your personal re-entry surface — a quick-capture hub and d
 routes:
   - /console
   - /console/*
-  - /worktable
-  - /worktable/*
-workAreas:
-  - ConsoleWorkArea
-  - WorkTableWorkArea
+workAreas: []
 tags:
   - console
   - capture

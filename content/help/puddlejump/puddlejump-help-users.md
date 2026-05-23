@@ -6,7 +6,8 @@ excerpt: Puddlejump is Mixtape's canonical document library system. Curate, appr
 routes:
   - /puddlejump
   - /puddlejump/*
-workAreas: []
+workAreas:
+  - PuddlejumpWorkArea
 tags:
   - puddlejump
   - documents

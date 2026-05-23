@@ -3,9 +3,7 @@ title: Initiatives
 subsystem: initiatives
 area: overview
 excerpt: Initiatives are your group's long-running thinking threads — a place to capture, distill, and build on ideas across multiple sessions over time.
-routes:
-  - /groups/*/initiatives
-  - /groups/*?section=initiatives-landing
+routes: []
 workAreas:
   - InitiativesWorkArea
 tags:

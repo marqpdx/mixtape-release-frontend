@@ -7,7 +7,6 @@ routes:
   - /groups
   - /groups/*
 workAreas:
-  - GroupWorkArea
   - GroupOverview
 tags:
   - groups

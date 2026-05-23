@@ -4,8 +4,8 @@ subsystem: stackroom
 area: overview
 excerpt: Stackroom is a group's document library — upload documents and search them semantically, finding content by meaning rather than just keywords.
 routes:
-  - /groups/*/stackroom
-  - /groups/*?section=stackroom-landing
+  - /groups/*/library
+  - /stackroom/document/*
 workAreas:
   - StackroomWorkArea
 tags:

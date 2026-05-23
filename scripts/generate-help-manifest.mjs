@@ -11,17 +11,19 @@ const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "
 const helpDir = path.join(repoRoot, "content", "help");
 const manifestOut = path.join(repoRoot, "apps", "mixtape", "public", "help-manifest.json");
 const typesOut = path.join(repoRoot, "apps", "mixtape", "src", "types", "help-keys.ts");
+const appSourceDir = path.join(repoRoot, "apps", "mixtape", "src");
+const REQUIRED_FRONTMATTER_FIELDS = ["title", "subsystem", "area"];
 
-function walk(dir) {
+function walk(dir, predicate = (name) => name.endsWith("-help-users.md")) {
   const results = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const nextPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === "_deprecated" || entry.name === "_template") continue;
-      results.push(...walk(nextPath));
+      results.push(...walk(nextPath, predicate));
       continue;
     }
-    if (entry.isFile() && entry.name.endsWith("-help-users.md")) {
+    if (entry.isFile() && predicate(entry.name, nextPath)) {
       results.push(nextPath);
     }
   }
@@ -75,17 +77,41 @@ async function renderMarkdown(content) {
   return file.toString();
 }
 
+function loadRuntimeWorkAreas() {
+  const files = walk(
+    appSourceDir,
+    (name) => name.endsWith(".ts") || name.endsWith(".tsx"),
+  );
+  const matcher = /useHelpRegistration\(\s*["'`]([^"'`]+)["'`]\s*\)/g;
+  const workAreas = new Set();
+
+  for (const filePath of files) {
+    const raw = fs.readFileSync(filePath, "utf8");
+    for (const match of raw.matchAll(matcher)) {
+      workAreas.add(match[1]);
+    }
+  }
+
+  return workAreas;
+}
+
 async function run() {
   const files = walk(helpDir);
   const entries = {};
   const workAreaIndex = {};
   const subsystemIndex = {};
+  const manifestErrors = [];
+  const runtimeWorkAreas = loadRuntimeWorkAreas();
 
   for (const filePath of files) {
     const raw = fs.readFileSync(filePath, "utf8");
     const { data, content } = matter(raw);
-    if (!data.subsystem || !data.area || !data.title) {
-      console.warn(`[help] Skipping ${filePath}: missing subsystem, area, or title`);
+    const missingFields = REQUIRED_FRONTMATTER_FIELDS.filter((field) => !data[field]);
+
+    if (missingFields.length > 0) {
+      manifestErrors.push(
+        `[help] ${filePath}: missing required frontmatter fields: ${missingFields.join(", ")}`,
+      );
       continue;
     }
 
@@ -124,13 +150,41 @@ async function run() {
       tags: asStringArray(data.tags),
     };
 
+    const invalidRoutes = entries[key].routes.filter((route) => route.includes("?"));
+    if (invalidRoutes.length > 0) {
+      manifestErrors.push(
+        `[help] ${filePath}: route patterns must not include query strings: ${invalidRoutes.join(", ")}`,
+      );
+    }
+
     for (const workArea of entries[key].workAreas) {
+      if (!runtimeWorkAreas.has(workArea)) {
+        manifestErrors.push(
+          `[help] ${filePath}: work area "${workArea}" is not registered via useHelpRegistration()`,
+        );
+      }
       if (!workAreaIndex[workArea]) workAreaIndex[workArea] = [];
       if (!workAreaIndex[workArea].includes(key)) workAreaIndex[workArea].push(key);
     }
 
     if (!subsystemIndex[data.subsystem]) subsystemIndex[data.subsystem] = [];
     subsystemIndex[data.subsystem].push(key);
+  }
+
+  const unmappedRuntimeWorkAreas = Array.from(runtimeWorkAreas).filter(
+    (workArea) => !workAreaIndex[workArea],
+  );
+  for (const workArea of unmappedRuntimeWorkAreas) {
+    manifestErrors.push(
+      `[help] runtime work area "${workArea}" has no mapped help content in content/help`,
+    );
+  }
+
+  if (manifestErrors.length > 0) {
+    for (const error of manifestErrors) {
+      console.error(error);
+    }
+    throw new Error(`Help manifest validation failed with ${manifestErrors.length} issue(s)`);
   }
 
   const manifest = {

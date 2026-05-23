@@ -4,9 +4,12 @@ subsystem: writing
 area: overview
 excerpt: Mixtape's writing tools let you capture seeds, shape drafts, and publish deliberately without losing the thread of your work.
 routes:
-  - /app/dashboard
-  - /app/dashboard/*
-  - /groups/*
+  - /groups/*/writing
+  - /groups/*/writing/*
+  - /member/*/write
+  - /member/*/writing/*
+  - /member/*/writing/markers/*
+  - /seed
 workAreas:
   - DraftRoomWorkArea
 tags:

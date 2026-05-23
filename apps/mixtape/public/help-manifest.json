@@ -1,5 +1,55 @@
 {
   "entries": {
+    "admin-overview": {
+      "key": "admin-overview",
+      "slug": "admin",
+      "feature": "admin",
+      "title": "Admin",
+      "subsystem": "admin",
+      "area": "overview",
+      "summary": "Admin surfaces are where stewards and operators manage system settings, review queues, and privileged workflows that are not available in normal member navigation.",
+      "excerpt": "Admin surfaces are where stewards and operators manage system settings, review queues, and privileged workflows that are not available in normal member navigation.",
+      "plainText": "Admin Admin surfaces expose privileged tools for running Mixtape. These pages are for operators, stewards, and system managers who need to review internal state, manage settings, or advance workflows that affect other users. What you can do here - Open admin-only dashboards and operational views - Review restricted workflows such as writing-flow and sysadmin tools - Inspect and manage data that is not available from member-facing pages Key concepts Admin access — These pages are permission-gated. If you can open them, your account has elevated access for at least one operational area. Operational workflow — A flow that changes system behavior for other people, not just your own account. Restricted action — An action with broader impact than a normal member edit, such as approving, routing, or reconfiguring shared resources. Working safely in admin pages 1. Confirm which environment and surface you are on before making a change. 2. Read the page labels and notes carefully; many actions here have wider effects than member-facing actions. 3. If a page exposes review or approval actions, verify the target record before confirming. Current limitations - Admin surfaces are still unevenly documented; some pages remain closer to internal tooling than polished product surfaces. - Permission requirements differ by area, so access on one admin page does not imply access everywhere else. Related features - Groups — Many admin actions ultimately affect group-level permissions, content, or routing. - Writing — Writing-flow and editorial operations connect directly to the writing subsystem.",
+      "html": "<h1 id=\"admin\">Admin</h1>\n<p>Admin surfaces expose privileged tools for running Mixtape. These pages are for operators, stewards, and system managers who need to review internal state, manage settings, or advance workflows that affect other users.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Open admin-only dashboards and operational views</li>\n<li>Review restricted workflows such as writing-flow and sysadmin tools</li>\n<li>Inspect and manage data that is not available from member-facing pages</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Admin access</strong> — These pages are permission-gated. If you can open them, your account has elevated access for at least one operational area.</p>\n<p><strong>Operational workflow</strong> — A flow that changes system behavior for other people, not just your own account.</p>\n<p><strong>Restricted action</strong> — An action with broader impact than a normal member edit, such as approving, routing, or reconfiguring shared resources.</p>\n<h2 id=\"working-safely-in-admin-pages\">Working safely in admin pages</h2>\n<ol>\n<li>Confirm which environment and surface you are on before making a change.</li>\n<li>Read the page labels and notes carefully; many actions here have wider effects than member-facing actions.</li>\n<li>If a page exposes review or approval actions, verify the target record before confirming.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Admin surfaces are still unevenly documented; some pages remain closer to internal tooling than polished product surfaces.</li>\n<li>Permission requirements differ by area, so access on one admin page does not imply access everywhere else.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Many admin actions ultimately affect group-level permissions, content, or routing.</li>\n<li><strong>Writing</strong> — Writing-flow and editorial operations connect directly to the writing subsystem.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Working safely in admin pages",
+          "id": "working-safely-in-admin-pages"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/admin",
+        "/admin/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "admin",
+        "operations",
+        "governance"
+      ]
+    },
     "almanac-overview": {
       "key": "almanac-overview",
       "slug": "almanac",
@@ -67,6 +117,182 @@
         "calendar"
       ]
     },
+    "aperture-overview": {
+      "key": "aperture-overview",
+      "slug": "aperture",
+      "feature": "aperture",
+      "title": "Aperture",
+      "subsystem": "aperture",
+      "area": "overview",
+      "summary": "Aperture is a focused internal work surface for specialized flows that do not fit the main member dashboard.",
+      "excerpt": "Aperture is a focused internal work surface for specialized flows that do not fit the main member dashboard.",
+      "plainText": "Aperture Aperture is a focused work surface for specialized Mixtape flows. If you are here, you are likely using a targeted tool or internal workflow that sits outside the main member dashboard. What to expect - A narrow interface built for one operational task - Fewer navigation affordances than a general-purpose member page - Page-specific controls that assume you are already inside a defined workflow Working in Aperture 1. Treat the page title and visible controls as the source of truth for the specific task. 2. Complete or review the focused action the page is asking for. 3. Return to the broader member or admin surface when the task is done. Current limitations - Aperture is intentionally narrow and may not provide broad orientation or discovery cues. - Help coverage here starts at the subsystem level; page-specific instructions can be added later as the workflow stabilizes. Related features - Admin — Some Aperture flows may be operator-facing. - Dashboard — You will usually enter Aperture from another work surface rather than staying here full-time.",
+      "html": "<h1 id=\"aperture\">Aperture</h1>\n<p>Aperture is a focused work surface for specialized Mixtape flows. If you are here, you are likely using a targeted tool or internal workflow that sits outside the main member dashboard.</p>\n<h2 id=\"what-to-expect\">What to expect</h2>\n<ul>\n<li>A narrow interface built for one operational task</li>\n<li>Fewer navigation affordances than a general-purpose member page</li>\n<li>Page-specific controls that assume you are already inside a defined workflow</li>\n</ul>\n<h2 id=\"working-in-aperture\">Working in Aperture</h2>\n<ol>\n<li>Treat the page title and visible controls as the source of truth for the specific task.</li>\n<li>Complete or review the focused action the page is asking for.</li>\n<li>Return to the broader member or admin surface when the task is done.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Aperture is intentionally narrow and may not provide broad orientation or discovery cues.</li>\n<li>Help coverage here starts at the subsystem level; page-specific instructions can be added later as the workflow stabilizes.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Admin</strong> — Some Aperture flows may be operator-facing.</li>\n<li><strong>Dashboard</strong> — You will usually enter Aperture from another work surface rather than staying here full-time.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What to expect",
+          "id": "what-to-expect"
+        },
+        {
+          "depth": 2,
+          "text": "Working in Aperture",
+          "id": "working-in-aperture"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/aperture"
+      ],
+      "workAreas": [],
+      "tags": [
+        "aperture",
+        "internal",
+        "workflow"
+      ]
+    },
+    "atelier-overview": {
+      "key": "atelier-overview",
+      "slug": "atelier",
+      "feature": "atelier",
+      "title": "Atelier",
+      "subsystem": "atelier",
+      "area": "overview",
+      "summary": "Atelier is the shaping layer inside Draft Room where you prepare a piece for publication with tags, categories, summaries, and series placement.",
+      "excerpt": "Atelier is the shaping layer inside Draft Room where you prepare a piece for publication with tags, categories, summaries, and series placement.",
+      "plainText": "Atelier Atelier is the shaping layer between writing a piece and publishing it. It's where you prepare a piece for the world — adding tags, setting a category, writing summaries for different audiences, and placing the piece within a series. It lives inside the Draft Room as the \"Shape\" tab, so you never have to leave your writing context to use it. --- What you can do here - See at a glance how \"ready\" a piece is across five craft dimensions - Tag your piece for discovery and search - Set a primary category - Write and confirm summaries for three contexts: public readers, LinkedIn, and internal use - Assign the piece to a series --- Key concepts Craft readiness — A live indicator showing how complete a piece is across five dimensions: tags, category, summaries, series, and relations. Each dimension has a color: orange means untouched, yellow means started but not confirmed, green means confirmed, gray means deferred to a later phase. These indicators are informational — a piece can be published at any readiness level. Summaries — Three distinct short texts for different contexts. The public synopsis is what readers see before clicking in. The LinkedIn synopsis is post copy for social sharing. The internal abstract is a private note for your own reference or for collaborators. Each is saved independently and can be confirmed when you're satisfied with it. Confirmed — When you click \"Confirm\" on a summary, it's marked green in the readiness view. This is a signal to yourself (or collaborators) that this text is ready, not a gate on publishing. Series — A named sequence of related writing pieces. Assigning a piece to a series makes it discoverable in sequence alongside related work. --- How to open Atelier 1. Open the Draft Room from the writing section. 2. Select a piece from the list on the left. 3. In the right panel, click the Shape tab (next to Meta). The Shape tab loads immediately and shows the current readiness state of your piece. --- How to add tags 1. In the Shape tab, scroll to the Tags section. 2. Type a tag name into the input. Matching existing tags appear below — click one to add it, or press Enter to create a new one. 3. Tags save immediately. The craft readiness indicator updates within a second. You can add up to 10 tags per piece. --- How to set a category 1. Scroll to the Category section in the Shape tab. 2. Type to search existing categories and select one. A piece can have one primary category. This is used for organization and discovery, not for visibility gating. --- How to write and confirm a summary 1. Scroll to the Summaries section. 2. Click into any of the three text areas (Public synopsis, LinkedIn synopsis, Internal abstract) and write your text. 3. Click outside the text area to save. The indicator dot turns orange while unsaved changes are pending. 4. When you're satisfied with a summary, click Confirm. The dot turns green. Each summary type is saved and confirmed independently. You can return and edit them at any time — confirming again resets to confirmed. --- How to assign a piece to a series 1. Scroll to the Series section. 2. If no series is set, available series are listed below. Use the search box to filter. 3. Click a series name to assign the piece to it. 4. To remove the assignment, click Remove next to the current series name. Available series are scoped to the group or space the piece belongs to. --- Readiness and publishing When you click Publish, the publish dialog checks your craft readiness and shows a yellow notice if any dimensions are untouched. This is informational — you can publish regardless. Think of it as a pre-flight checklist, not a lock. --- Current limitations - Relations are not yet available. The \"relations\" dimension in the readiness view is always shown as gray (Phase 2). The ability to link pieces to each other with relationship types (e.g., \"responds to,\" \"expands on\") is planned for the next phase. - One category only. The category section accepts one primary category per piece. Multiple categories may be supported in Phase 2. - Series ordering. You can assign a piece to a series but cannot set its position within the series from Atelier yet. Series ordering is managed separately. --- Related features - Draft Room — Atelier lives inside the Draft Room as the Shape tab. The Meta tab (title, audience, save) is the other tab in the same panel. - Publish dialog — When you publish, the dialog surfaces any untouched Atelier dimensions as a pre-publish advisory. - Distribution — LinkedIn synopsis text from Atelier can be used as post copy in the publish dialog's LinkedIn distribution step. --- Roadmap - Phase 2 — Relations: Link pieces to each other with typed relationships (e.g., \"responds to,\" \"expands on,\" \"is part of\"). Bidirectional — linking from either piece reflects on both. - Phase 2 — AI suggestions: Atelier will be able to suggest tags, summaries, and series placement via the Inkwell suggestion pipeline. - Phase 2 — Discovery preview: See how a piece will appear in the public reading experience before publishing.",
+      "html": "<h1 id=\"atelier\">Atelier</h1>\n<p>Atelier is the shaping layer between writing a piece and publishing it. It's where you prepare a piece for the world — adding tags, setting a category, writing summaries for different audiences, and placing the piece within a series. It lives inside the Draft Room as the \"Shape\" tab, so you never have to leave your writing context to use it.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>See at a glance how \"ready\" a piece is across five craft dimensions</li>\n<li>Tag your piece for discovery and search</li>\n<li>Set a primary category</li>\n<li>Write and confirm summaries for three contexts: public readers, LinkedIn, and internal use</li>\n<li>Assign the piece to a series</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Craft readiness</strong> — A live indicator showing how complete a piece is across five dimensions: tags, category, summaries, series, and relations. Each dimension has a color: orange means untouched, yellow means started but not confirmed, green means confirmed, gray means deferred to a later phase. These indicators are informational — a piece can be published at any readiness level.</p>\n<p><strong>Summaries</strong> — Three distinct short texts for different contexts. The <strong>public synopsis</strong> is what readers see before clicking in. The <strong>LinkedIn synopsis</strong> is post copy for social sharing. The <strong>internal abstract</strong> is a private note for your own reference or for collaborators. Each is saved independently and can be confirmed when you're satisfied with it.</p>\n<p><strong>Confirmed</strong> — When you click \"Confirm\" on a summary, it's marked green in the readiness view. This is a signal to yourself (or collaborators) that this text is ready, not a gate on publishing.</p>\n<p><strong>Series</strong> — A named sequence of related writing pieces. Assigning a piece to a series makes it discoverable in sequence alongside related work.</p>\n<hr>\n<h2 id=\"how-to-open-atelier\">How to open Atelier</h2>\n<ol>\n<li>Open the Draft Room from the writing section.</li>\n<li>Select a piece from the list on the left.</li>\n<li>In the right panel, click the <strong>Shape</strong> tab (next to Meta).</li>\n</ol>\n<p>The Shape tab loads immediately and shows the current readiness state of your piece.</p>\n<hr>\n<h2 id=\"how-to-add-tags\">How to add tags</h2>\n<ol>\n<li>In the Shape tab, scroll to the <strong>Tags</strong> section.</li>\n<li>Type a tag name into the input. Matching existing tags appear below — click one to add it, or press Enter to create a new one.</li>\n<li>Tags save immediately. The craft readiness indicator updates within a second.</li>\n</ol>\n<p>You can add up to 10 tags per piece.</p>\n<hr>\n<h2 id=\"how-to-set-a-category\">How to set a category</h2>\n<ol>\n<li>Scroll to the <strong>Category</strong> section in the Shape tab.</li>\n<li>Type to search existing categories and select one.</li>\n</ol>\n<p>A piece can have one primary category. This is used for organization and discovery, not for visibility gating.</p>\n<hr>\n<h2 id=\"how-to-write-and-confirm-a-summary\">How to write and confirm a summary</h2>\n<ol>\n<li>Scroll to the <strong>Summaries</strong> section.</li>\n<li>Click into any of the three text areas (Public synopsis, LinkedIn synopsis, Internal abstract) and write your text.</li>\n<li>Click outside the text area to save. The indicator dot turns orange while unsaved changes are pending.</li>\n<li>When you're satisfied with a summary, click <strong>Confirm</strong>. The dot turns green.</li>\n</ol>\n<p>Each summary type is saved and confirmed independently. You can return and edit them at any time — confirming again resets to confirmed.</p>\n<hr>\n<h2 id=\"how-to-assign-a-piece-to-a-series\">How to assign a piece to a series</h2>\n<ol>\n<li>Scroll to the <strong>Series</strong> section.</li>\n<li>If no series is set, available series are listed below. Use the search box to filter.</li>\n<li>Click a series name to assign the piece to it.</li>\n<li>To remove the assignment, click <strong>Remove</strong> next to the current series name.</li>\n</ol>\n<p>Available series are scoped to the group or space the piece belongs to.</p>\n<hr>\n<h2 id=\"readiness-and-publishing\">Readiness and publishing</h2>\n<p>When you click <strong>Publish</strong>, the publish dialog checks your craft readiness and shows a yellow notice if any dimensions are untouched. This is informational — you can publish regardless. Think of it as a pre-flight checklist, not a lock.</p>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Relations are not yet available.</strong> The \"relations\" dimension in the readiness view is always shown as gray (Phase 2). The ability to link pieces to each other with relationship types (e.g., \"responds to,\" \"expands on\") is planned for the next phase.</li>\n<li><strong>One category only.</strong> The category section accepts one primary category per piece. Multiple categories may be supported in Phase 2.</li>\n<li><strong>Series ordering.</strong> You can assign a piece to a series but cannot set its position within the series from Atelier yet. Series ordering is managed separately.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Draft Room</strong> — Atelier lives inside the Draft Room as the Shape tab. The Meta tab (title, audience, save) is the other tab in the same panel.</li>\n<li><strong>Publish dialog</strong> — When you publish, the dialog surfaces any untouched Atelier dimensions as a pre-publish advisory.</li>\n<li><strong>Distribution</strong> — LinkedIn synopsis text from Atelier can be used as post copy in the publish dialog's LinkedIn distribution step.</li>\n</ul>\n<hr>\n<h2 id=\"roadmap\">Roadmap</h2>\n<ul>\n<li><strong>Phase 2 — Relations:</strong> Link pieces to each other with typed relationships (e.g., \"responds to,\" \"expands on,\" \"is part of\"). Bidirectional — linking from either piece reflects on both.</li>\n<li><strong>Phase 2 — AI suggestions:</strong> Atelier will be able to suggest tags, summaries, and series placement via the Inkwell suggestion pipeline.</li>\n<li><strong>Phase 2 — Discovery preview:</strong> See how a piece will appear in the public reading experience before publishing.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to open Atelier",
+          "id": "how-to-open-atelier"
+        },
+        {
+          "depth": 2,
+          "text": "How to add tags",
+          "id": "how-to-add-tags"
+        },
+        {
+          "depth": 2,
+          "text": "How to set a category",
+          "id": "how-to-set-a-category"
+        },
+        {
+          "depth": 2,
+          "text": "How to write and confirm a summary",
+          "id": "how-to-write-and-confirm-a-summary"
+        },
+        {
+          "depth": 2,
+          "text": "How to assign a piece to a series",
+          "id": "how-to-assign-a-piece-to-a-series"
+        },
+        {
+          "depth": 2,
+          "text": "Readiness and publishing",
+          "id": "readiness-and-publishing"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        },
+        {
+          "depth": 2,
+          "text": "Roadmap",
+          "id": "roadmap"
+        }
+      ],
+      "metadata": {},
+      "routes": [],
+      "workAreas": [
+        "DraftRoomWorkArea"
+      ],
+      "tags": [
+        "atelier",
+        "writing",
+        "shaping",
+        "summaries",
+        "series"
+      ]
+    },
+    "bazaar-overview": {
+      "key": "bazaar-overview",
+      "slug": "bazaar",
+      "feature": "bazaar",
+      "title": "Bazaar",
+      "subsystem": "bazaar",
+      "area": "overview",
+      "summary": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
+      "excerpt": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
+      "plainText": "Bazaar Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment. What you can do here - Browse available offerings - Review a specific offering before purchase - Complete checkout for an order - Track your orders and open order details - If you are a vendor, manage vendor-side order views Key concepts Offering — A thing that can be purchased or claimed through Bazaar. Order — The record of a completed or in-progress transaction. Vendor view — The fulfillment-side perspective used by the party providing the offering. Common flows 1. Start at the Bazaar listing to browse what is available. 2. Open an offering to review details. 3. Continue to checkout when you are ready. 4. Revisit the orders area to confirm status, history, or fulfillment updates. Current limitations - Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views. - Certain pages are operational rather than polished storefront experiences, especially on the vendor side. Related features - Member — Your account and permissions shape what you can buy or manage. - Groups — Some Bazaar offerings may be tied to specific communities or roles.",
+      "html": "<h1 id=\"bazaar\">Bazaar</h1>\n<p>Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse available offerings</li>\n<li>Review a specific offering before purchase</li>\n<li>Complete checkout for an order</li>\n<li>Track your orders and open order details</li>\n<li>If you are a vendor, manage vendor-side order views</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — A thing that can be purchased or claimed through Bazaar.</p>\n<p><strong>Order</strong> — The record of a completed or in-progress transaction.</p>\n<p><strong>Vendor view</strong> — The fulfillment-side perspective used by the party providing the offering.</p>\n<h2 id=\"common-flows\">Common flows</h2>\n<ol>\n<li>Start at the Bazaar listing to browse what is available.</li>\n<li>Open an offering to review details.</li>\n<li>Continue to checkout when you are ready.</li>\n<li>Revisit the orders area to confirm status, history, or fulfillment updates.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views.</li>\n<li>Certain pages are operational rather than polished storefront experiences, especially on the vendor side.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member</strong> — Your account and permissions shape what you can buy or manage.</li>\n<li><strong>Groups</strong> — Some Bazaar offerings may be tied to specific communities or roles.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Common flows",
+          "id": "common-flows"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/bazaar",
+        "/bazaar/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "bazaar",
+        "orders",
+        "checkout",
+        "vendor"
+      ]
+    },
     "chat-overview": {
       "key": "chat-overview",
       "slug": "chat",
@@ -131,6 +357,84 @@
         "real-time"
       ]
     },
+    "clients-overview": {
+      "key": "clients-overview",
+      "slug": "clients",
+      "feature": "clients",
+      "title": "Clients",
+      "subsystem": "clients",
+      "area": "overview",
+      "summary": "Clients is a focused management surface for client-related records and workflows.",
+      "excerpt": "Clients is a focused management surface for client-related records and workflows.",
+      "plainText": "Clients Clients is a focused management surface for client-related records and workflows. It is intended for people handling structured client data rather than general member browsing. What you can do here - Review client records presented by the page - Enter or update client-related workflow state - Use a narrower operational surface without leaving the authenticated app Current limitations - This area is still lightly documented and may expose workflow-specific language. - Some supporting context may still live in adjacent operational docs or team norms rather than on the page itself. Related features - Admin — Client pages may be used alongside operator-facing workflows. - Dashboard — You may enter Clients from a broader coordination surface.",
+      "html": "<h1 id=\"clients\">Clients</h1>\n<p>Clients is a focused management surface for client-related records and workflows. It is intended for people handling structured client data rather than general member browsing.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review client records presented by the page</li>\n<li>Enter or update client-related workflow state</li>\n<li>Use a narrower operational surface without leaving the authenticated app</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>This area is still lightly documented and may expose workflow-specific language.</li>\n<li>Some supporting context may still live in adjacent operational docs or team norms rather than on the page itself.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Admin</strong> — Client pages may be used alongside operator-facing workflows.</li>\n<li><strong>Dashboard</strong> — You may enter Clients from a broader coordination surface.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/clients"
+      ],
+      "workAreas": [],
+      "tags": [
+        "clients",
+        "records",
+        "operations"
+      ]
+    },
+    "community-hub-overview": {
+      "key": "community-hub-overview",
+      "slug": "community-hub",
+      "feature": "community-hub",
+      "title": "Community Hub",
+      "subsystem": "community-hub",
+      "area": "overview",
+      "summary": "Community Hub is a shared orientation surface for activity, coordination, and cross-community visibility.",
+      "excerpt": "Community Hub is a shared orientation surface for activity, coordination, and cross-community visibility.",
+      "plainText": "Community Hub Community Hub is a shared orientation surface for activity and coordination across communities. Use it when you need a broader view than a single group or a single personal workspace. What you can do here - Review shared activity and signals - Re-enter cross-community work from a common hub - Move from overview into more specific group or member surfaces Current limitations - This surface is still evolving and may not yet expose every community signal in one place. - Some actions still route you out to more specialized pages to complete the task. Related features - Groups — Group-specific work continues in the group surface. - Dashboard — Your personal re-entry flow may start elsewhere and then widen into Community Hub.",
+      "html": "<h1 id=\"community-hub\">Community Hub</h1>\n<p>Community Hub is a shared orientation surface for activity and coordination across communities. Use it when you need a broader view than a single group or a single personal workspace.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review shared activity and signals</li>\n<li>Re-enter cross-community work from a common hub</li>\n<li>Move from overview into more specific group or member surfaces</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>This surface is still evolving and may not yet expose every community signal in one place.</li>\n<li>Some actions still route you out to more specialized pages to complete the task.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Group-specific work continues in the group surface.</li>\n<li><strong>Dashboard</strong> — Your personal re-entry flow may start elsewhere and then widen into Community Hub.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/community-hub"
+      ],
+      "workAreas": [],
+      "tags": [
+        "community",
+        "coordination",
+        "hub"
+      ]
+    },
     "console-overview": {
       "key": "console-overview",
       "slug": "console",
@@ -192,20 +496,179 @@
       "metadata": {},
       "routes": [
         "/console",
-        "/console/*",
-        "/worktable",
-        "/worktable/*"
+        "/console/*"
       ],
-      "workAreas": [
-        "ConsoleWorkArea",
-        "WorkTableWorkArea"
-      ],
+      "workAreas": [],
       "tags": [
         "console",
         "capture",
         "hub",
         "worktable",
         "signals"
+      ]
+    },
+    "dashboard-overview": {
+      "key": "dashboard-overview",
+      "slug": "dashboard",
+      "feature": "dashboard",
+      "title": "Dashboard",
+      "subsystem": "dashboard",
+      "area": "overview",
+      "summary": "Dashboard is your authenticated home base for re-entry, recent activity, and navigation into the work that currently needs attention.",
+      "excerpt": "Dashboard is your authenticated home base for re-entry, recent activity, and navigation into the work that currently needs attention.",
+      "plainText": "Dashboard Dashboard is your authenticated home base. It is the place to re-enter Mixtape, see what has changed, and move into the work that currently needs your attention. What you can do here - See recent activity and items that need follow-up - Re-enter work you were already doing - Navigate into groups, writing, notifications, and other focused surfaces Key concepts Re-entry — Getting back into active work without having to rediscover context manually. Orientation — The combination of recent activity, signals, and navigation cues that help you decide what to do next. Current limitations - Dashboard is still a hub rather than a complete destination for every task. - Some panels may reflect only part of a larger workflow and send you elsewhere to complete it. Related features - Console — Personal capture and follow-up can feed your dashboard re-entry flow. - Notifications — Time-sensitive updates often continue in the notifications surface. - Groups — Group-specific work begins when you leave the dashboard and enter a group.",
+      "html": "<h1 id=\"dashboard\">Dashboard</h1>\n<p>Dashboard is your authenticated home base. It is the place to re-enter Mixtape, see what has changed, and move into the work that currently needs your attention.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>See recent activity and items that need follow-up</li>\n<li>Re-enter work you were already doing</li>\n<li>Navigate into groups, writing, notifications, and other focused surfaces</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Re-entry</strong> — Getting back into active work without having to rediscover context manually.</p>\n<p><strong>Orientation</strong> — The combination of recent activity, signals, and navigation cues that help you decide what to do next.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Dashboard is still a hub rather than a complete destination for every task.</li>\n<li>Some panels may reflect only part of a larger workflow and send you elsewhere to complete it.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Console</strong> — Personal capture and follow-up can feed your dashboard re-entry flow.</li>\n<li><strong>Notifications</strong> — Time-sensitive updates often continue in the notifications surface.</li>\n<li><strong>Groups</strong> — Group-specific work begins when you leave the dashboard and enter a group.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/dashboard"
+      ],
+      "workAreas": [],
+      "tags": [
+        "dashboard",
+        "re-entry",
+        "orientation"
+      ]
+    },
+    "demos-overview": {
+      "key": "demos-overview",
+      "slug": "demos",
+      "feature": "demos",
+      "title": "Demos",
+      "subsystem": "demos",
+      "area": "overview",
+      "summary": "Demo pages are internal showcase and reference surfaces used to preview UI patterns, experiments, and presentation variants inside the authenticated app.",
+      "excerpt": "Demo pages are internal showcase and reference surfaces used to preview UI patterns, experiments, and presentation variants inside the authenticated app.",
+      "plainText": "Demos Demo pages are showcase and reference surfaces for UI patterns, presentation experiments, and internal examples. They are not usually core production workflows, but they can be useful for reviewing patterns or testing how a concept is presented. What to expect - Focused examples rather than full product workflows - Isolated views that highlight a component, layout, or presentation style - Faster iteration and less user-facing framing than production pages Current limitations - Demo pages may change quickly and are not always documented to the same depth as stable product surfaces. - Actions on a demo page may not map directly to a production workflow. Related features - Help — Use Help Hub when you need to step out of a demo and review the broader product surface. - Dashboard — Demo pages are usually entered intentionally, not as a day-to-day home base.",
+      "html": "<h1 id=\"demos\">Demos</h1>\n<p>Demo pages are showcase and reference surfaces for UI patterns, presentation experiments, and internal examples. They are not usually core production workflows, but they can be useful for reviewing patterns or testing how a concept is presented.</p>\n<h2 id=\"what-to-expect\">What to expect</h2>\n<ul>\n<li>Focused examples rather than full product workflows</li>\n<li>Isolated views that highlight a component, layout, or presentation style</li>\n<li>Faster iteration and less user-facing framing than production pages</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Demo pages may change quickly and are not always documented to the same depth as stable product surfaces.</li>\n<li>Actions on a demo page may not map directly to a production workflow.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Help</strong> — Use Help Hub when you need to step out of a demo and review the broader product surface.</li>\n<li><strong>Dashboard</strong> — Demo pages are usually entered intentionally, not as a day-to-day home base.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What to expect",
+          "id": "what-to-expect"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/demos/*",
+        "/demos/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "demos",
+        "reference",
+        "ui"
+      ]
+    },
+    "dispatch-overview": {
+      "key": "dispatch-overview",
+      "slug": "dispatch",
+      "feature": "dispatch",
+      "title": "Dispatch",
+      "subsystem": "dispatch",
+      "area": "overview",
+      "summary": "Dispatch is the outbound communication and publishing surface for creating and preparing posts.",
+      "excerpt": "Dispatch is the outbound communication and publishing surface for creating and preparing posts.",
+      "plainText": "Dispatch Dispatch is the outbound communication surface for creating and preparing posts. Use it when you are assembling a message or publication artifact that is meant to be sent out rather than kept as an internal draft. What you can do here - Create a new post - Prepare content for outward communication - Move from internal drafting into a more distribution-oriented workflow Current limitations - Dispatch is still developing its longer-lived conventions and may feel closer to a specialized workflow than a polished publishing studio. - Related approval or distribution rules may still live in adjacent team process rather than on-page explanation. Related features - Writing — Many dispatchable artifacts begin life in the writing system. - Help — Use Help Hub when you need broader orientation across publishing-related surfaces.",
+      "html": "<h1 id=\"dispatch\">Dispatch</h1>\n<p>Dispatch is the outbound communication surface for creating and preparing posts. Use it when you are assembling a message or publication artifact that is meant to be sent out rather than kept as an internal draft.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Create a new post</li>\n<li>Prepare content for outward communication</li>\n<li>Move from internal drafting into a more distribution-oriented workflow</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Dispatch is still developing its longer-lived conventions and may feel closer to a specialized workflow than a polished publishing studio.</li>\n<li>Related approval or distribution rules may still live in adjacent team process rather than on-page explanation.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Writing</strong> — Many dispatchable artifacts begin life in the writing system.</li>\n<li><strong>Help</strong> — Use Help Hub when you need broader orientation across publishing-related surfaces.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/dispatch/*",
+        "/dispatch/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "dispatch",
+        "posts",
+        "publishing"
+      ]
+    },
+    "feedback-overview": {
+      "key": "feedback-overview",
+      "slug": "feedback",
+      "feature": "feedback",
+      "title": "Feedback",
+      "subsystem": "feedback",
+      "area": "overview",
+      "summary": "Feedback surfaces collect checklists, review input, and structured responses that help improve the product and its workflows.",
+      "excerpt": "Feedback surfaces collect checklists, review input, and structured responses that help improve the product and its workflows.",
+      "plainText": "Feedback Feedback surfaces collect structured input about the product and its workflows. Use them when you are reviewing a checklist, capturing issues, or giving targeted feedback rather than doing the primary work itself. What you can do here - Complete structured checklists - Record review input - Capture issues, questions, or follow-up items in a purpose-built form Current limitations - Feedback pages are often narrow by design and may not explain the wider workflow around them. - Some follow-up actions still happen in a different operational surface after the checklist is completed. Related features - Dashboard — You may discover feedback tasks from your main re-entry surface. - Help — Help Hub is the better place for broad orientation if the checklist itself is not enough.",
+      "html": "<h1 id=\"feedback\">Feedback</h1>\n<p>Feedback surfaces collect structured input about the product and its workflows. Use them when you are reviewing a checklist, capturing issues, or giving targeted feedback rather than doing the primary work itself.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Complete structured checklists</li>\n<li>Record review input</li>\n<li>Capture issues, questions, or follow-up items in a purpose-built form</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Feedback pages are often narrow by design and may not explain the wider workflow around them.</li>\n<li>Some follow-up actions still happen in a different operational surface after the checklist is completed.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Dashboard</strong> — You may discover feedback tasks from your main re-entry surface.</li>\n<li><strong>Help</strong> — Help Hub is the better place for broad orientation if the checklist itself is not enough.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/feedback/*",
+        "/feedback/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "feedback",
+        "checklist",
+        "review"
       ]
     },
     "groups-overview": {
@@ -267,7 +730,6 @@
         "/groups/*"
       ],
       "workAreas": [
-        "GroupWorkArea",
         "GroupOverview"
       ],
       "tags": [
@@ -275,6 +737,52 @@
         "community",
         "circles",
         "members"
+      ]
+    },
+    "help-overview": {
+      "key": "help-overview",
+      "slug": "help",
+      "feature": "help",
+      "title": "Help Hub",
+      "subsystem": "help",
+      "area": "overview",
+      "summary": "Help Hub is the place to browse product guidance directly, search for articles, and step out of narrow contextual help when you need broader orientation.",
+      "excerpt": "Help Hub is the place to browse product guidance directly, search for articles, and step out of narrow contextual help when you need broader orientation.",
+      "plainText": "Help Hub Help Hub is Mixtape's central documentation surface. Use it when the contextual drawer is not enough, when you want to browse articles directly, or when you are trying to orient across multiple subsystems at once. What you can do here - Browse help articles directly - Open a specific article by slug - Move from page-level context into broader product documentation Key concepts Contextual help — The article or set of articles chosen by the ? button from your current page context. Help Hub — The full browseable documentation surface, independent of where you started. Current limitations - Coverage is still being expanded across the full authenticated app. - Some pages currently inherit subsystem-level help before they get dedicated page-specific articles. Related features - Dashboard — Many people return to Help Hub from their normal working surfaces when they need broader orientation. - Admin — Admin and internal pages can also route here when they need system-level guidance.",
+      "html": "<h1 id=\"help-hub\">Help Hub</h1>\n<p>Help Hub is Mixtape's central documentation surface. Use it when the contextual drawer is not enough, when you want to browse articles directly, or when you are trying to orient across multiple subsystems at once.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse help articles directly</li>\n<li>Open a specific article by slug</li>\n<li>Move from page-level context into broader product documentation</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Contextual help</strong> — The article or set of articles chosen by the <code>?</code> button from your current page context.</p>\n<p><strong>Help Hub</strong> — The full browseable documentation surface, independent of where you started.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Coverage is still being expanded across the full authenticated app.</li>\n<li>Some pages currently inherit subsystem-level help before they get dedicated page-specific articles.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Dashboard</strong> — Many people return to Help Hub from their normal working surfaces when they need broader orientation.</li>\n<li><strong>Admin</strong> — Admin and internal pages can also route here when they need system-level guidance.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/help",
+        "/help/*",
+        "/help/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "help",
+        "support",
+        "documentation"
       ]
     },
     "initiatives-overview": {
@@ -341,10 +849,7 @@
         }
       ],
       "metadata": {},
-      "routes": [
-        "/groups/*/initiatives",
-        "/groups/*?section=initiatives-landing"
-      ],
+      "routes": [],
       "workAreas": [
         "InitiativesWorkArea"
       ],
@@ -353,6 +858,97 @@
         "sessions",
         "ai",
         "thinking"
+      ]
+    },
+    "living-books-overview": {
+      "key": "living-books-overview",
+      "slug": "living-books",
+      "feature": "living-books",
+      "title": "Living Books",
+      "subsystem": "living-books",
+      "area": "overview",
+      "summary": "Living Books is a reader-facing experience for opening, browsing, and reading long-form content inside the authenticated app.",
+      "excerpt": "Living Books is a reader-facing experience for opening, browsing, and reading long-form content inside the authenticated app.",
+      "plainText": "Living Books Living Books is a reader-facing experience for long-form content. Use it when you are opening, browsing, or reading a book-like artifact inside the authenticated app. What you can do here - Open a living book by identifier - Move from overview into active reading mode - Stay inside a focused reading surface instead of an authoring interface Current limitations - Living Books is a reading experience, not a writing or editorial one. - Some discovery, organization, or related-content affordances may still live outside the reading page itself. Related features - Writing — Long-form reading surfaces often connect back to authored content. - Help — Use Help Hub when you need broader documentation rather than focused reading.",
+      "html": "<h1 id=\"living-books\">Living Books</h1>\n<p>Living Books is a reader-facing experience for long-form content. Use it when you are opening, browsing, or reading a book-like artifact inside the authenticated app.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Open a living book by identifier</li>\n<li>Move from overview into active reading mode</li>\n<li>Stay inside a focused reading surface instead of an authoring interface</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Living Books is a reading experience, not a writing or editorial one.</li>\n<li>Some discovery, organization, or related-content affordances may still live outside the reading page itself.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Writing</strong> — Long-form reading surfaces often connect back to authored content.</li>\n<li><strong>Help</strong> — Use Help Hub when you need broader documentation rather than focused reading.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/living-books/*",
+        "/living-books/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "living-books",
+        "reading",
+        "library"
+      ]
+    },
+    "member-overview": {
+      "key": "member-overview",
+      "slug": "member",
+      "feature": "member",
+      "title": "Member Surfaces",
+      "subsystem": "member",
+      "area": "overview",
+      "summary": "Member surfaces are the personal pages tied to an account: hub, library, profile, settings, stall, and other views centered on one person rather than a group.",
+      "excerpt": "Member surfaces are the personal pages tied to an account: hub, library, profile, settings, stall, and other views centered on one person rather than a group.",
+      "plainText": "Member Surfaces Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group. What you can do here - Open a member hub or profile - Review a member's library or published work - Adjust account or profile settings - Move into personal work areas such as writing or workbench Key concepts Member hub — A personal orientation page for one account. Profile — The public or semi-public identity surface for a member. Personal surface — A page centered on one person rather than a shared group workflow. Current limitations - Not every member page has dedicated help yet; some currently inherit this overview intentionally. - Permissions still shape what you can see on a member page, especially when the page is not your own. Related features - Writing — Personal writing and published pieces often live under member surfaces. - Groups — Many member actions continue inside groups rather than on personal pages alone.",
+      "html": "<h1 id=\"member-surfaces\">Member Surfaces</h1>\n<p>Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Open a member hub or profile</li>\n<li>Review a member's library or published work</li>\n<li>Adjust account or profile settings</li>\n<li>Move into personal work areas such as writing or workbench</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Member hub</strong> — A personal orientation page for one account.</p>\n<p><strong>Profile</strong> — The public or semi-public identity surface for a member.</p>\n<p><strong>Personal surface</strong> — A page centered on one person rather than a shared group workflow.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Not every member page has dedicated help yet; some currently inherit this overview intentionally.</li>\n<li>Permissions still shape what you can see on a member page, especially when the page is not your own.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Writing</strong> — Personal writing and published pieces often live under member surfaces.</li>\n<li><strong>Groups</strong> — Many member actions continue inside groups rather than on personal pages alone.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/member/*/hub",
+        "/member/*/library",
+        "/member/*/profile",
+        "/member/*/settings",
+        "/member/*/stall",
+        "/settings/*",
+        "/settings/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "member",
+        "profile",
+        "account",
+        "personal"
       ]
     },
     "mobile-overview": {
@@ -438,6 +1034,45 @@
         "mobile",
         "pocket-notebook",
         "idea-studio"
+      ]
+    },
+    "notifications-overview": {
+      "key": "notifications-overview",
+      "slug": "notifications",
+      "feature": "notifications",
+      "title": "Notifications",
+      "subsystem": "notifications",
+      "area": "overview",
+      "summary": "Notifications is the surface for updates, alerts, and follow-up cues that need your attention across Mixtape.",
+      "excerpt": "Notifications is the surface for updates, alerts, and follow-up cues that need your attention across Mixtape.",
+      "plainText": "Notifications Notifications is the place to review updates, alerts, and follow-up cues from across Mixtape. It is where you catch up on what changed and decide which surface to enter next. What you can do here - Review recent updates - Open the item or workflow that generated the notification - Clear or move through time-sensitive follow-up cues Current limitations - Notifications may summarize an event but still require you to open another page to act on it. - Notification language can differ slightly depending on which subsystem produced the update. Related features - Dashboard — Dashboard gives broader re-entry context; notifications focus on discrete updates. - Groups — Many alerts lead back into a specific community workflow.",
+      "html": "<h1 id=\"notifications\">Notifications</h1>\n<p>Notifications is the place to review updates, alerts, and follow-up cues from across Mixtape. It is where you catch up on what changed and decide which surface to enter next.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review recent updates</li>\n<li>Open the item or workflow that generated the notification</li>\n<li>Clear or move through time-sensitive follow-up cues</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Notifications may summarize an event but still require you to open another page to act on it.</li>\n<li>Notification language can differ slightly depending on which subsystem produced the update.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Dashboard</strong> — Dashboard gives broader re-entry context; notifications focus on discrete updates.</li>\n<li><strong>Groups</strong> — Many alerts lead back into a specific community workflow.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/notifications"
+      ],
+      "workAreas": [],
+      "tags": [
+        "notifications",
+        "alerts",
+        "updates"
       ]
     },
     "projects-overview": {
@@ -550,7 +1185,9 @@
         "/puddlejump",
         "/puddlejump/*"
       ],
-      "workAreas": [],
+      "workAreas": [
+        "PuddlejumpWorkArea"
+      ],
       "tags": [
         "puddlejump",
         "documents",
@@ -602,8 +1239,8 @@
       ],
       "metadata": {},
       "routes": [
-        "/groups/*/stackroom",
-        "/groups/*?section=stackroom-landing"
+        "/groups/*/library",
+        "/stackroom/document/*"
       ],
       "workAreas": [
         "StackroomWorkArea"
@@ -762,9 +1399,12 @@
       ],
       "metadata": {},
       "routes": [
-        "/app/dashboard",
-        "/app/dashboard/*",
-        "/groups/*"
+        "/groups/*/writing",
+        "/groups/*/writing/*",
+        "/member/*/write",
+        "/member/*/writing/*",
+        "/member/*/writing/markers/*",
+        "/seed"
       ],
       "workAreas": [
         "DraftRoomWorkArea"
@@ -781,17 +1421,12 @@
     "AlmanacWorkArea": [
       "almanac-overview"
     ],
+    "DraftRoomWorkArea": [
+      "atelier-overview",
+      "writing-overview"
+    ],
     "MessageCenter": [
       "chat-overview"
-    ],
-    "ConsoleWorkArea": [
-      "console-overview"
-    ],
-    "WorkTableWorkArea": [
-      "console-overview"
-    ],
-    "GroupWorkArea": [
-      "groups-overview"
     ],
     "GroupOverview": [
       "groups-overview"
@@ -802,34 +1437,76 @@
     "ProjectsWorkArea": [
       "projects-overview"
     ],
+    "PuddlejumpWorkArea": [
+      "puddlejump-overview"
+    ],
     "StackroomWorkArea": [
       "stackroom-overview"
     ],
     "WorkbenchCurationWorkArea": [
       "workbench-overview"
-    ],
-    "DraftRoomWorkArea": [
-      "writing-overview"
     ]
   },
   "subsystemIndex": {
+    "admin": [
+      "admin-overview"
+    ],
     "almanac": [
       "almanac-overview"
+    ],
+    "aperture": [
+      "aperture-overview"
+    ],
+    "atelier": [
+      "atelier-overview"
+    ],
+    "bazaar": [
+      "bazaar-overview"
     ],
     "chat": [
       "chat-overview"
     ],
+    "clients": [
+      "clients-overview"
+    ],
+    "community-hub": [
+      "community-hub-overview"
+    ],
     "console": [
       "console-overview"
+    ],
+    "dashboard": [
+      "dashboard-overview"
+    ],
+    "demos": [
+      "demos-overview"
+    ],
+    "dispatch": [
+      "dispatch-overview"
+    ],
+    "feedback": [
+      "feedback-overview"
     ],
     "groups": [
       "groups-overview"
     ],
+    "help": [
+      "help-overview"
+    ],
     "initiatives": [
       "initiatives-overview"
     ],
+    "living-books": [
+      "living-books-overview"
+    ],
+    "member": [
+      "member-overview"
+    ],
     "mobile": [
       "mobile-overview"
+    ],
+    "notifications": [
+      "notifications-overview"
     ],
     "projects": [
       "projects-overview"
@@ -847,5 +1524,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-05-23T01:10:00.457Z"
+  "generatedAt": "2026-05-23T04:13:01.628Z"
 }

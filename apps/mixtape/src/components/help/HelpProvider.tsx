@@ -32,12 +32,21 @@ function dedupeKeys(keys: string[]): string[] {
   return Array.from(new Set(keys));
 }
 
+function sameStringArray(left: string[], right: string[]) {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
 export function HelpProvider({ children }: { children: React.ReactNode }) {
   const [manifest, setManifest] = useState<HelpManifest | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeHelpKey, setActiveHelpKey] = useState<string | null>(null);
   const [activeHelpKeys, setActiveHelpKeys] = useState<string[]>([]);
+  const [workAreaVersion, setWorkAreaVersion] = useState(0);
   const registeredWorkAreas = useRef<Set<string>>(new Set());
+  const lastRequestedHelpKey = useRef<string | undefined>(undefined);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -73,11 +82,14 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const registerWorkArea = useCallback((key: string) => {
+    if (registeredWorkAreas.current.has(key)) return;
     registeredWorkAreas.current.add(key);
+    setWorkAreaVersion((version) => version + 1);
   }, []);
 
   const unregisterWorkArea = useCallback((key: string) => {
-    registeredWorkAreas.current.delete(key);
+    if (!registeredWorkAreas.current.delete(key)) return;
+    setWorkAreaVersion((version) => version + 1);
   }, []);
 
   const resolveHelp = useCallback(
@@ -129,17 +141,29 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
     [manifest, pathname],
   );
 
-  const openDrawer = useCallback(
-    (helpKey?: string) => {
-      const resolved = resolveHelp(helpKey);
+  const setResolvedHelp = useCallback(
+    (resolved: ResolvedHelp | null, requestedHelpKey?: string) => {
       const nextEntries = resolved?.entries ?? [];
       const nextKeys = nextEntries.map((entry) => entry.key);
+      const nextActiveHelpKey =
+        requestedHelpKey && nextKeys.includes(requestedHelpKey)
+          ? requestedHelpKey
+          : nextKeys[0] ?? null;
 
       setActiveHelpKeys(nextKeys);
-      setActiveHelpKey(helpKey && nextKeys.includes(helpKey) ? helpKey : nextKeys[0] ?? null);
+      setActiveHelpKey(nextActiveHelpKey);
+    },
+    [],
+  );
+
+  const openDrawer = useCallback(
+    (helpKey?: string) => {
+      lastRequestedHelpKey.current = helpKey;
+      const resolved = resolveHelp(helpKey);
+      setResolvedHelp(resolved, helpKey);
       setIsDrawerOpen(true);
     },
-    [resolveHelp],
+    [resolveHelp, setResolvedHelp],
   );
 
   const closeDrawer = useCallback(() => {
@@ -152,6 +176,33 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
       .map((key) => manifest.entries[key])
       .filter((entry): entry is HelpEntry => Boolean(entry));
   }, [activeHelpKeys, manifest]);
+
+  useEffect(() => {
+    if (!isDrawerOpen || !manifest) return;
+
+    const resolved = resolveHelp(lastRequestedHelpKey.current);
+    const nextEntries = resolved?.entries ?? [];
+    const nextKeys = nextEntries.map((entry) => entry.key);
+    const nextActiveHelpKey =
+      lastRequestedHelpKey.current && nextKeys.includes(lastRequestedHelpKey.current)
+        ? lastRequestedHelpKey.current
+        : nextKeys[0] ?? null;
+
+    if (sameStringArray(activeHelpKeys, nextKeys) && activeHelpKey === nextActiveHelpKey) {
+      return;
+    }
+
+    setResolvedHelp(resolved, lastRequestedHelpKey.current);
+  }, [
+    activeHelpKey,
+    activeHelpKeys,
+    isDrawerOpen,
+    manifest,
+    pathname,
+    resolveHelp,
+    setResolvedHelp,
+    workAreaVersion,
+  ]);
 
   const value = useMemo<HelpContextValue>(
     () => ({

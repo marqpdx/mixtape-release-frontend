@@ -1,3 +1,19 @@
+---
+title: Atelier
+subsystem: atelier
+area: overview
+excerpt: Atelier is the shaping layer inside Draft Room where you prepare a piece for publication with tags, categories, summaries, and series placement.
+routes: []
+workAreas:
+  - DraftRoomWorkArea
+tags:
+  - atelier
+  - writing
+  - shaping
+  - summaries
+  - series
+---
+
 # Atelier
 
 Atelier is the shaping layer between writing a piece and publishing it. It's where you prepare a piece for the world — adding tags, setting a category, writing summaries for different audiences, and placing the piece within a series. It lives inside the Draft Room as the "Shape" tab, so you never have to leave your writing context to use it.
