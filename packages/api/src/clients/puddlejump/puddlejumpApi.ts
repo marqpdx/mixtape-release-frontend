@@ -13,6 +13,8 @@ import {
   CanonDiff,
   CanonApprovalResponse,
   VersionSubmitResponse,
+  RetrieveAsyncRequest,
+  AsyncActionResponse,
 } from '@mixtape/core/types/puddlejump';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
@@ -241,4 +243,20 @@ export async function checkPuddlejumpHealth(): Promise<{
 }> {
   const response = await axiosInstance.get('/api/puddlejump/health');
   return response.data;
+}
+
+// ─── Async retrieve / find ─────────────────────────────────────────────────────
+
+export async function submitRetrieveAsync(
+  payload: RetrieveAsyncRequest
+): Promise<AsyncActionResponse> {
+  const response = await axiosInstance.post('/api/puddlejump/retrieve/', payload);
+  return response.data as AsyncActionResponse;
+}
+
+export async function submitFindAsync(
+  payload: RetrieveAsyncRequest
+): Promise<AsyncActionResponse> {
+  const response = await axiosInstance.post('/api/puddlejump/find/', payload);
+  return response.data as AsyncActionResponse;
 }

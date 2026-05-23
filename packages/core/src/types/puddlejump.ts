@@ -464,3 +464,40 @@ export interface PersonalPuddlejump {
   created_at: string;
   updated_at: string;
 }
+
+// ─── Async action dispatch ─────────────────────────────────────────────────────
+
+export interface AsyncActionResponse {
+  action_run_id: string;
+}
+
+// ─── Retrieve / Find ───────────────────────────────────────────────────────────
+
+export interface RetrieveAsyncRequest {
+  query: string;
+  library_id?: string;
+  limit?: number;
+  score_threshold?: number;
+  source_file_ids?: string[];
+}
+
+export interface RetrieveChunk {
+  chunk_id: string;
+  source_file_id: string;
+  content: string;
+  score: number;
+  rank: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RetrieveActionResult {
+  status: 'SUCCEEDED';
+  tool: string;
+  query: string;
+  library_id: string;
+  result_count: number;
+  gap_signal: boolean;
+  score_threshold: number | null;
+  results: RetrieveChunk[];
+  timing_ms: number | null;
+}

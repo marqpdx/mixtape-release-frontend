@@ -32,3 +32,20 @@ export async function submitClassifyAsync(
   const res = await axiosInstance.post("/api/switchboard/classify/async", payload);
   return res.data as ClassifyAsyncResponse;
 }
+
+export interface ContextShapeAsyncRequest {
+  text: string;
+  group_context?: string;
+  surface?: string;
+}
+
+export interface ContextShapeAsyncResponse {
+  action_run_id: string;
+}
+
+export async function submitContextShapeAsync(
+  payload: ContextShapeAsyncRequest
+): Promise<ContextShapeAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/context-shape/async", payload);
+  return res.data as ContextShapeAsyncResponse;
+}
