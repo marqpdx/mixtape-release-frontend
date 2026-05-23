@@ -4,26 +4,31 @@
 
 import {
   Box,
+  Button,
   Container,
   Heading,
-  Text,
-  VStack,
   HStack,
-  Button,
+  Text,
   Textarea,
-  IconButton,
-  Dialog,
+  VStack,
   Checkbox,
   Collapsible,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { WhyAgreementsModal } from "@/components/welcome/WhyAgreementsModal";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import {
-  IconNote,
-  IconX,
-  IconPlus,
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogTitle,
+  DialogCloseTrigger,
+} from "@/components/ui/dialog";
+import {
   IconChevronDown,
   IconChevronUp,
 } from "@tabler/icons-react";
@@ -32,13 +37,6 @@ interface AgreementSection {
   id: string;
   title: string;
   content: string;
-}
-
-interface StickyNote {
-  id: string;
-  sectionId: string;
-  text: string;
-  createdAt: number;
 }
 
 const AGREEMENTS: AgreementSection[] = [
@@ -62,120 +60,53 @@ const AGREEMENTS: AgreementSection[] = [
   },
 ];
 
-const STORAGE_NOTES_KEY = "agreements_sticky_notes";
-
-const isBrowser = typeof window !== "undefined";
-
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-const safeGetItem = (key: string): string | null => {
-  if (!isBrowser) return null;
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
-const safeSetItem = (key: string, value: string) => {
-  if (!isBrowser) return;
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    // ignore
-  }
-};
-
 export default function AgreementsPage() {
   const router = useRouter();
 
   const [groupName, setGroupName] = useState("");
   const [groupSlug, setGroupSlug] = useState("");
-  const [notes, setNotes] = useState<StickyNote[]>([]);
   const [agreeChecked, setAgreeChecked] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(false);
   const [whyModalOpen, setWhyModalOpen] = useState(false);
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [draftNote, setDraftNote] = useState("");
+  const [sendNoteOpen, setSendNoteOpen] = useState(false);
+  const [sendNoteText, setSendNoteText] = useState("");
+  const [sendNoteSubmitting, setSendNoteSubmitting] = useState(false);
+  const [sendNoteSubmitted, setSendNoteSubmitted] = useState(false);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
-  // Extract group name from query string client-side without useSearchParams
   useEffect(() => {
-    if (!isBrowser) return;
-
+    if (typeof window === "undefined") return;
     try {
       const url = new URL(window.location.href);
-      const group = url.searchParams.get("group") || "";
-      setGroupName(group);
+      setGroupName(url.searchParams.get("group") || "");
       setGroupSlug(url.searchParams.get("group_slug") || "");
     } catch {
       setGroupName("");
     }
   }, []);
 
-  // Load saved notes and acceptance from localStorage
-  useEffect(() => {
-    const rawNotes = safeGetItem(STORAGE_NOTES_KEY);
-    if (rawNotes) {
-      try {
-        const parsed = JSON.parse(rawNotes) as StickyNote[];
-        setNotes(parsed);
-      } catch {
-        // ignore parse errors, start fresh
-      }
+  const handleSendNote = async () => {
+    if (!sendNoteText.trim()) return;
+    setSendNoteSubmitting(true);
+    try {
+      await axiosInstance.post("/api/feedback/items", {
+        beacon_key: "agreements_feedback",
+        kind: "idea",
+        message: sendNoteText.trim(),
+        page_url: typeof window !== "undefined" ? window.location.pathname : "/welcome/agreements",
+      });
+    } catch {
+      // quiet fail
+    } finally {
+      setSendNoteSubmitting(false);
+      setSendNoteSubmitted(true);
     }
-
-  }, []);
-
-  // Save notes to localStorage whenever they change
-  useEffect(() => {
-    if (!notes.length) {
-      // still persist empty to allow clearing
-      safeSetItem(STORAGE_NOTES_KEY, JSON.stringify([]));
-      return;
-    }
-    safeSetItem(STORAGE_NOTES_KEY, JSON.stringify(notes));
-  }, [notes]);
-
-  const sectionNotes = useMemo(() => {
-    const map: Record<string, StickyNote[]> = {};
-    for (const sec of AGREEMENTS) {
-      map[sec.id] = [];
-    }
-    for (const n of notes) {
-      if (!map[n.sectionId]) {
-        map[n.sectionId] = [];
-      }
-      map[n.sectionId].push(n);
-    }
-    // Sort notes newest-first per section for a nicer UX
-    for (const key of Object.keys(map)) {
-      map[key] = map[key].slice().sort((a, b) => b.createdAt - a.createdAt);
-    }
-    return map;
-  }, [notes]);
-
-  const openNoteDialog = (sectionId: string) => {
-    setActiveSectionId(sectionId);
-    setDraftNote("");
-    setNoteOpen(true);
   };
 
-  const saveNote = () => {
-    if (!activeSectionId || !draftNote.trim()) return;
-
-    const newNote: StickyNote = {
-      id: uid(),
-      sectionId: activeSectionId,
-      text: draftNote.trim(),
-      createdAt: Date.now(),
-    };
-    setNotes((prev) => [newNote, ...prev]);
-    setNoteOpen(false);
+  const closeSendNote = () => {
+    setSendNoteOpen(false);
+    setSendNoteText("");
+    setSendNoteSubmitted(false);
   };
-
-  const removeNote = (id: string) =>
-    setNotes((prev) => prev.filter((n) => n.id !== id));
 
   const handleContinue = () => {
     if (groupSlug) {
@@ -256,55 +187,6 @@ export default function AgreementsPage() {
                       <Text color="theme.text" lineHeight="1.8">
                         {sec.content}
                       </Text>
-
-                      <HStack mt={4} justify="space-between">
-                        <HStack gap={3} color="theme.textSecondary">
-                          <IconNote size={16} />
-                          <Text fontSize="sm">Leave a note or question</Text>
-                        </HStack>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openNoteDialog(sec.id)}
-                        >
-                          <IconPlus size={16} />
-                          Add note
-                        </Button>
-                      </HStack>
-
-                      {sectionNotes[sec.id]?.length ? (
-                        <VStack align="stretch" mt={3} gap={2}>
-                          {sectionNotes[sec.id].map((n) => (
-                            <Box
-                              key={n.id}
-                              bg="theme.border"
-                              borderRadius="md"
-                              p={3}
-                            >
-                              <HStack justify="space-between" align="start">
-                                <Text color="theme.text" whiteSpace="pre-wrap">
-                                  {n.text}
-                                </Text>
-                                <IconButton
-                                  aria-label="Remove note"
-                                  variant="ghost"
-                                  size="xs"
-                                  onClick={() => removeNote(n.id)}
-                                >
-                                  <IconX size={16} />
-                                </IconButton>
-                              </HStack>
-                              <Text
-                                mt={1}
-                                fontSize="xs"
-                                color="theme.textSecondary"
-                              >
-                                {new Date(n.createdAt).toLocaleString()}
-                              </Text>
-                            </Box>
-                          ))}
-                        </VStack>
-                      ) : null}
                     </Box>
                   </Collapsible.Content>
                 </Collapsible.Root>
@@ -344,7 +226,7 @@ export default function AgreementsPage() {
           </Button>
         </HStack>
 
-        <HStack mt={6} gap={4} color="theme.textSecondary">
+        <HStack mt={6} gap={6} color="theme.textSecondary" flexWrap="wrap">
           <Button
             variant="ghost"
             size="sm"
@@ -355,14 +237,23 @@ export default function AgreementsPage() {
           >
             Why these agreements?
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            color="theme.textSecondary"
+            px={0}
+            _hover={{ color: "theme.accent", bg: "transparent" }}
+            onClick={() => setSendNoteOpen(true)}
+          >
+            Send us a note or question about any of this
+          </Button>
         </HStack>
       </Container>
 
       <WhyAgreementsModal open={whyModalOpen} onClose={() => setWhyModalOpen(false)} />
 
-      {/* Note Dialog */}
-      <Dialog.Root open={noteOpen} onOpenChange={({ open }: { open: boolean }) => setNoteOpen(open)}>
-        <Dialog.Content
+      <DialogRoot open={sendNoteOpen} onOpenChange={({ open }) => { if (!open) closeSendNote(); }}>
+        <DialogContent
           maxW="lg"
           bg="theme.surface"
           borderRadius="xl"
@@ -370,48 +261,54 @@ export default function AgreementsPage() {
           borderColor="theme.border"
           p={0}
         >
-          <Dialog.Header px={6} py={4}>
-            <Dialog.Title>Add a note</Dialog.Title>
-            <Dialog.CloseTrigger>
-              <IconButton aria-label="Close" variant="ghost" size="sm">
-                <IconX size={16} />
-              </IconButton>
-            </Dialog.CloseTrigger>
-          </Dialog.Header>
+          <DialogHeader px={6} pt={5} pb={3}>
+            <DialogTitle>Send us a note</DialogTitle>
+            <DialogCloseTrigger onClick={closeSendNote} />
+          </DialogHeader>
 
-          <Dialog.Body px={6} pb={2}>
-            <Text mb={2} color="theme.textSecondary" fontSize="sm">
-              Your note will be reviewed by staff. Please be concise and
-              constructive.
-            </Text>
-            <Textarea
-              rows={5}
-              value={draftNote}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDraftNote(e.target.value)}
-              placeholder="Share your thoughts or questions..."
-              bg="theme.surface"
-              borderColor="theme.border"
-              _focus={{ borderColor: "theme.accent", boxShadow: "none" }}
-            />
-          </Dialog.Body>
+          <DialogBody px={6} pb={2}>
+            {sendNoteSubmitted ? (
+              <Text color="theme.textSecondary" lineHeight="1.8" py={2}>
+                Thanks — we&apos;ll read it. Feel free to close this and continue.
+              </Text>
+            ) : (
+              <>
+                <Text mb={3} color="theme.textSecondary" fontSize="sm">
+                  Questions, reactions, or anything you&apos;d like us to know about the Community Agreements — we read these.
+                </Text>
+                <Textarea
+                  rows={5}
+                  value={sendNoteText}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSendNoteText(e.target.value)}
+                  placeholder="Share your thoughts or questions..."
+                  bg="theme.surface"
+                  borderColor="theme.border"
+                  _focus={{ borderColor: "theme.accent", boxShadow: "none" }}
+                />
+              </>
+            )}
+          </DialogBody>
 
-          <Dialog.Footer px={6} py={4}>
+          <DialogFooter px={6} py={4}>
             <HStack justify="flex-end" w="full">
-              <Button variant="ghost" onClick={() => setNoteOpen(false)}>
-                Cancel
+              <Button variant="ghost" onClick={closeSendNote}>
+                {sendNoteSubmitted ? "Close" : "Cancel"}
               </Button>
-              <Button
-                bg="theme.accent"
-                color="white"
-                onClick={saveNote}
-                disabled={!draftNote.trim()}
-              >
-                Save note
-              </Button>
+              {!sendNoteSubmitted && (
+                <Button
+                  bg="theme.accent"
+                  color="white"
+                  onClick={handleSendNote}
+                  loading={sendNoteSubmitting}
+                  disabled={!sendNoteText.trim()}
+                >
+                  Send
+                </Button>
+              )}
             </HStack>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Root>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
     </Box>
     </motion.div>
   );

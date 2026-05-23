@@ -5,13 +5,18 @@
 import {
   Box,
   Button,
-  Dialog,
   Heading,
-  IconButton,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { IconX } from "@tabler/icons-react";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogTitle,
+  DialogCloseTrigger,
+} from "@/components/ui/dialog";
 
 interface WhyAgreementsModalProps {
   open: boolean;
@@ -20,8 +25,8 @@ interface WhyAgreementsModalProps {
 
 export function WhyAgreementsModal({ open, onClose }: WhyAgreementsModalProps) {
   return (
-    <Dialog.Root open={open} onOpenChange={({ open: next }) => { if (!next) onClose(); }}>
-      <Dialog.Content
+    <DialogRoot open={open} onOpenChange={({ open: next }) => { if (!next) onClose(); }}>
+      <DialogContent
         maxW="lg"
         bg="theme.surface"
         borderRadius="xl"
@@ -29,16 +34,12 @@ export function WhyAgreementsModal({ open, onClose }: WhyAgreementsModalProps) {
         borderColor="theme.border"
         p={0}
       >
-        <Dialog.Header px={6} pt={5} pb={3}>
-          <Dialog.Title>Why these agreements?</Dialog.Title>
-          <Dialog.CloseTrigger asChild>
-            <IconButton aria-label="Close" variant="ghost" size="sm" onClick={onClose}>
-              <IconX size={16} />
-            </IconButton>
-          </Dialog.CloseTrigger>
-        </Dialog.Header>
+        <DialogHeader px={6} pt={5} pb={3}>
+          <DialogTitle>Why these agreements?</DialogTitle>
+          <DialogCloseTrigger onClick={onClose} />
+        </DialogHeader>
 
-        <Dialog.Body px={6} pb={6}>
+        <DialogBody px={6} pb={6}>
           <VStack align="start" gap={4}>
             <Text color="theme.textSecondary" lineHeight="1.8">
               Crossroads is an intentional community platform. We believe that healthy spaces require shared commitments — not rules handed down from on high, but agreements we make together about how we want to show up.
@@ -79,8 +80,8 @@ export function WhyAgreementsModal({ open, onClose }: WhyAgreementsModalProps) {
               Got it
             </Button>
           </VStack>
-        </Dialog.Body>
-      </Dialog.Content>
-    </Dialog.Root>
+        </DialogBody>
+      </DialogContent>
+    </DialogRoot>
   );
 }
