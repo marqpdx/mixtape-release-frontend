@@ -17,6 +17,7 @@
   },
   "scripts": {
     "generate:help": "node ./scripts/generate-help-manifest.mjs",
+    "report:help": "node ./scripts/report-help-coverage.mjs",
     "dev": "yarn workspace @mixtape/app dev",
     "dev:crossroads": "yarn workspace @crossroads/app dev",
     "build": "yarn workspace @mixtape/app build",
