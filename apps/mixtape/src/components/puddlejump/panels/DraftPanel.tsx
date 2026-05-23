@@ -47,7 +47,8 @@ interface DraftPanelProps {
 
 const APPROVAL_MODES: { value: ApprovalMode; label: string }[] = [
   { value: 'standard', label: 'Standard (review each)' },
-  { value: 'trusted_default', label: 'Trusted (auto-approve local)' },
+  { value: 'reviewed_default', label: 'Reviewed (one-tap)' },
+  { value: 'trusted_default', label: 'Trusted (auto-approve)' },
 ];
 
 function loadApprovalMode(): ApprovalMode {
@@ -84,7 +85,7 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
   function handleSubmit() {
     if (!canSubmit) return;
     if (approvalMode === 'trusted_default') {
-      submit(buildRequest());
+      submitCloud({ ...buildRequest(), approval_mode: 'trusted_default' });
     } else {
       setModalOpen(true);
     }

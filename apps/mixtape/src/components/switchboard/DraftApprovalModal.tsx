@@ -88,7 +88,7 @@ export function DraftApprovalModal({
                 borderColor="purple.200"
               >
                 <Text fontSize="xs" color="purple.700">
-                  Cloud generation uses a higher-capacity model for improved quality and thoroughness.
+                  Cloud generation sends this context to an external model. Your data leaves the server — approve only what you intend to share.
                 </Text>
               </Box>
             </VStack>
