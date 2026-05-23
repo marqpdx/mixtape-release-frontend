@@ -1,17 +1,9 @@
 ---
-title: Bazaar
+title: Bazaar Overview
 subsystem: bazaar
 area: overview
-excerpt: Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.
-routes:
-  - /bazaar
-  - /bazaar/*
-  - /bazaar/checkout/*
-  - /bazaar/offering/*
-  - /bazaar/orders/*
-  - /bazaar/vendor/orders/*
-  - /groups/*/stall
-  - /member/*/stall
+excerpt: Bazaar is Mixtape's commerce surface as a whole, connecting storefront browsing, checkout, orders, and vendor fulfillment into one system.
+routes: []
 workAreas: []
 tags:
   - bazaar
@@ -20,18 +12,16 @@ tags:
   - vendor
 ---
 
-# Bazaar
+# Bazaar Overview
 
-Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment.
+Bazaar is Mixtape's commerce surface. It ties together the buyer-side storefront, checkout, order tracking, and the vendor-side fulfillment view.
 
 ## What you can do here
 
 - Browse available offerings
-- Open a group or member stall to browse a seller's offerings
-- Review a specific offering before purchase
-- Complete checkout for an order
-- Track your orders and open order details
-- If you are a vendor, manage vendor-side order views
+- Move from browsing into checkout
+- Track your orders after purchase
+- If you are a vendor, monitor and fulfill incoming orders
 
 ## Key concepts
 
@@ -41,17 +31,24 @@ Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, r
 
 **Vendor view** — The fulfillment-side perspective used by the party providing the offering.
 
-## Common flows
+## The three main parts of Bazaar
 
-1. Start at the Bazaar listing to browse what is available.
-2. Open an offering to review details.
-3. Continue to checkout when you are ready.
-4. Revisit the orders area to confirm status, history, or fulfillment updates.
+**Browsing** — finding offerings in Bazaar itself or on a group/member stall.
+
+**Orders** — paying for an offering and checking order status afterward.
+
+**Vendor operations** — managing fulfillment if you are the seller.
+
+## Where to go next
+
+- If you are browsing or comparing offers, use **Bazaar Browsing**
+- If you are paying or checking a placed order, use **Bazaar Checkout and Orders**
+- If you are fulfilling customer orders, use **Bazaar Vendor Operations**
 
 ## Current limitations
 
-- Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views.
-- Certain pages are operational rather than polished storefront experiences, especially on the vendor side.
+- Bazaar still reads as a working commerce system rather than a polished retail storefront.
+- Permissions and terminology continue to evolve across buyer and vendor views.
 
 ## Related features
 

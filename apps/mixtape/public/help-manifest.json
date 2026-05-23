@@ -242,18 +242,23 @@
         "series"
       ]
     },
-    "bazaar-overview": {
-      "key": "bazaar-overview",
-      "slug": "bazaar",
+    "bazaar-browse": {
+      "key": "bazaar-browse",
+      "slug": "bazaar-browse",
       "feature": "bazaar",
-      "title": "Bazaar",
+      "title": "Bazaar Browsing",
       "subsystem": "bazaar",
-      "area": "overview",
-      "summary": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
-      "excerpt": "Bazaar is Mixtape's commerce surface for offers, checkout, orders, and vendor-side fulfillment workflows.",
-      "plainText": "Bazaar Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment. What you can do here - Browse available offerings - Open a group or member stall to browse a seller's offerings - Review a specific offering before purchase - Complete checkout for an order - Track your orders and open order details - If you are a vendor, manage vendor-side order views Key concepts Offering — A thing that can be purchased or claimed through Bazaar. Order — The record of a completed or in-progress transaction. Vendor view — The fulfillment-side perspective used by the party providing the offering. Common flows 1. Start at the Bazaar listing to browse what is available. 2. Open an offering to review details. 3. Continue to checkout when you are ready. 4. Revisit the orders area to confirm status, history, or fulfillment updates. Current limitations - Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views. - Certain pages are operational rather than polished storefront experiences, especially on the vendor side. Related features - Member — Your account and permissions shape what you can buy or manage. - Groups — Some Bazaar offerings may be tied to specific communities or roles.",
-      "html": "<h1 id=\"bazaar\">Bazaar</h1>\n<p>Bazaar is Mixtape's commerce surface. It covers browsing offers, checking out, reviewing orders, and, when relevant, handling vendor-side fulfillment.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse available offerings</li>\n<li>Open a group or member stall to browse a seller's offerings</li>\n<li>Review a specific offering before purchase</li>\n<li>Complete checkout for an order</li>\n<li>Track your orders and open order details</li>\n<li>If you are a vendor, manage vendor-side order views</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — A thing that can be purchased or claimed through Bazaar.</p>\n<p><strong>Order</strong> — The record of a completed or in-progress transaction.</p>\n<p><strong>Vendor view</strong> — The fulfillment-side perspective used by the party providing the offering.</p>\n<h2 id=\"common-flows\">Common flows</h2>\n<ol>\n<li>Start at the Bazaar listing to browse what is available.</li>\n<li>Open an offering to review details.</li>\n<li>Continue to checkout when you are ready.</li>\n<li>Revisit the orders area to confirm status, history, or fulfillment updates.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some Bazaar flows are still consolidating terminology and permissions across buyer and vendor views.</li>\n<li>Certain pages are operational rather than polished storefront experiences, especially on the vendor side.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member</strong> — Your account and permissions shape what you can buy or manage.</li>\n<li><strong>Groups</strong> — Some Bazaar offerings may be tied to specific communities or roles.</li>\n</ul>",
+      "area": "browse",
+      "summary": "Bazaar browsing covers storefront pages: the main Bazaar listing, offering detail pages, and group or member stalls where you browse what a seller has published.",
+      "excerpt": "Bazaar browsing covers storefront pages: the main Bazaar listing, offering detail pages, and group or member stalls where you browse what a seller has published.",
+      "plainText": "Bazaar Browsing These pages are the storefront side of Bazaar. You use them to browse what is available, inspect a specific offering, and decide whether to place an order. What you are looking at - Bazaar listing shows the general marketplace - Offering detail shows one offer in full, including price, availability, fulfillment type, and seller - Group stall shows offerings published by one group - Member stall shows offerings published by one member What you can do here - Browse current offerings - Open a specific offering to review details - See who is providing the offering - Check whether the offer is free, paid, available, or unavailable - Start a purchase or claim flow from the offering page Key concepts Offering — The individual thing being sold or claimed. It may be a service, event, program, or product. Stall — A seller-specific storefront page. Some stalls belong to groups, others to individual members. Fulfillment type — How the offer is delivered after you order it. In the current UI this may be instant, manual, or external. Typical flow 1. Start in Bazaar or open a group/member stall. 2. Scan the available offerings. 3. Open the offering that looks relevant. 4. Review the summary, description, price, and fulfillment notes. 5. Use the purchase button if the offering is currently available. How to read the page On an offering page, the right-side purchase card is the action area: - It shows the current price or FREE - It shows whether the offer can be purchased now - It is where the checkout flow begins The main body explains what the offer is, who it comes from, and what kind of fulfillment to expect. Current limitations - Some storefront pages are functional before they are polished. Expect operational language in places. - Availability and fulfillment language is still being normalized across different offering types. Related features - Bazaar Checkout and Orders — what happens after you decide to buy or claim something - Bazaar Vendor Operations — the seller-side view of incoming orders",
+      "html": "<h1 id=\"bazaar-browsing\">Bazaar Browsing</h1>\n<p>These pages are the storefront side of Bazaar. You use them to browse what is available, inspect a specific offering, and decide whether to place an order.</p>\n<h2 id=\"what-you-are-looking-at\">What you are looking at</h2>\n<ul>\n<li><strong>Bazaar listing</strong> shows the general marketplace</li>\n<li><strong>Offering detail</strong> shows one offer in full, including price, availability, fulfillment type, and seller</li>\n<li><strong>Group stall</strong> shows offerings published by one group</li>\n<li><strong>Member stall</strong> shows offerings published by one member</li>\n</ul>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse current offerings</li>\n<li>Open a specific offering to review details</li>\n<li>See who is providing the offering</li>\n<li>Check whether the offer is free, paid, available, or unavailable</li>\n<li>Start a purchase or claim flow from the offering page</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — The individual thing being sold or claimed. It may be a service, event, program, or product.</p>\n<p><strong>Stall</strong> — A seller-specific storefront page. Some stalls belong to groups, others to individual members.</p>\n<p><strong>Fulfillment type</strong> — How the offer is delivered after you order it. In the current UI this may be instant, manual, or external.</p>\n<h2 id=\"typical-flow\">Typical flow</h2>\n<ol>\n<li>Start in Bazaar or open a group/member stall.</li>\n<li>Scan the available offerings.</li>\n<li>Open the offering that looks relevant.</li>\n<li>Review the summary, description, price, and fulfillment notes.</li>\n<li>Use the purchase button if the offering is currently available.</li>\n</ol>\n<h2 id=\"how-to-read-the-page\">How to read the page</h2>\n<p>On an offering page, the right-side purchase card is the action area:</p>\n<ul>\n<li>It shows the current price or <code>FREE</code></li>\n<li>It shows whether the offer can be purchased now</li>\n<li>It is where the checkout flow begins</li>\n</ul>\n<p>The main body explains what the offer is, who it comes from, and what kind of fulfillment to expect.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some storefront pages are functional before they are polished. Expect operational language in places.</li>\n<li>Availability and fulfillment language is still being normalized across different offering types.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Bazaar Checkout and Orders</strong> — what happens after you decide to buy or claim something</li>\n<li><strong>Bazaar Vendor Operations</strong> — the seller-side view of incoming orders</li>\n</ul>",
       "headings": [
+        {
+          "depth": 2,
+          "text": "What you are looking at",
+          "id": "what-you-are-looking-at"
+        },
         {
           "depth": 2,
           "text": "What you can do here",
@@ -266,8 +271,13 @@
         },
         {
           "depth": 2,
-          "text": "Common flows",
-          "id": "common-flows"
+          "text": "Typical flow",
+          "id": "typical-flow"
+        },
+        {
+          "depth": 2,
+          "text": "How to read the page",
+          "id": "how-to-read-the-page"
         },
         {
           "depth": 2,
@@ -283,20 +293,187 @@
       "metadata": {},
       "routes": [
         "/bazaar",
-        "/bazaar/*",
-        "/bazaar/checkout/*",
         "/bazaar/offering/*",
-        "/bazaar/orders/*",
-        "/bazaar/vendor/orders/*",
         "/groups/*/stall",
         "/member/*/stall"
       ],
       "workAreas": [],
       "tags": [
         "bazaar",
+        "offering",
+        "stall",
+        "storefront"
+      ]
+    },
+    "bazaar-overview": {
+      "key": "bazaar-overview",
+      "slug": "bazaar",
+      "feature": "bazaar",
+      "title": "Bazaar Overview",
+      "subsystem": "bazaar",
+      "area": "overview",
+      "summary": "Bazaar is Mixtape's commerce surface as a whole, connecting storefront browsing, checkout, orders, and vendor fulfillment into one system.",
+      "excerpt": "Bazaar is Mixtape's commerce surface as a whole, connecting storefront browsing, checkout, orders, and vendor fulfillment into one system.",
+      "plainText": "Bazaar Overview Bazaar is Mixtape's commerce surface. It ties together the buyer-side storefront, checkout, order tracking, and the vendor-side fulfillment view. What you can do here - Browse available offerings - Move from browsing into checkout - Track your orders after purchase - If you are a vendor, monitor and fulfill incoming orders Key concepts Offering — A thing that can be purchased or claimed through Bazaar. Order — The record of a completed or in-progress transaction. Vendor view — The fulfillment-side perspective used by the party providing the offering. The three main parts of Bazaar Browsing — finding offerings in Bazaar itself or on a group/member stall. Orders — paying for an offering and checking order status afterward. Vendor operations — managing fulfillment if you are the seller. Where to go next - If you are browsing or comparing offers, use Bazaar Browsing - If you are paying or checking a placed order, use Bazaar Checkout and Orders - If you are fulfilling customer orders, use Bazaar Vendor Operations Current limitations - Bazaar still reads as a working commerce system rather than a polished retail storefront. - Permissions and terminology continue to evolve across buyer and vendor views. Related features - Member — Your account and permissions shape what you can buy or manage. - Groups — Some Bazaar offerings may be tied to specific communities or roles.",
+      "html": "<h1 id=\"bazaar-overview\">Bazaar Overview</h1>\n<p>Bazaar is Mixtape's commerce surface. It ties together the buyer-side storefront, checkout, order tracking, and the vendor-side fulfillment view.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Browse available offerings</li>\n<li>Move from browsing into checkout</li>\n<li>Track your orders after purchase</li>\n<li>If you are a vendor, monitor and fulfill incoming orders</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Offering</strong> — A thing that can be purchased or claimed through Bazaar.</p>\n<p><strong>Order</strong> — The record of a completed or in-progress transaction.</p>\n<p><strong>Vendor view</strong> — The fulfillment-side perspective used by the party providing the offering.</p>\n<h2 id=\"the-three-main-parts-of-bazaar\">The three main parts of Bazaar</h2>\n<p><strong>Browsing</strong> — finding offerings in Bazaar itself or on a group/member stall.</p>\n<p><strong>Orders</strong> — paying for an offering and checking order status afterward.</p>\n<p><strong>Vendor operations</strong> — managing fulfillment if you are the seller.</p>\n<h2 id=\"where-to-go-next\">Where to go next</h2>\n<ul>\n<li>If you are browsing or comparing offers, use <strong>Bazaar Browsing</strong></li>\n<li>If you are paying or checking a placed order, use <strong>Bazaar Checkout and Orders</strong></li>\n<li>If you are fulfilling customer orders, use <strong>Bazaar Vendor Operations</strong></li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Bazaar still reads as a working commerce system rather than a polished retail storefront.</li>\n<li>Permissions and terminology continue to evolve across buyer and vendor views.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member</strong> — Your account and permissions shape what you can buy or manage.</li>\n<li><strong>Groups</strong> — Some Bazaar offerings may be tied to specific communities or roles.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "The three main parts of Bazaar",
+          "id": "the-three-main-parts-of-bazaar"
+        },
+        {
+          "depth": 2,
+          "text": "Where to go next",
+          "id": "where-to-go-next"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [],
+      "workAreas": [],
+      "tags": [
+        "bazaar",
         "orders",
         "checkout",
         "vendor"
+      ]
+    },
+    "bazaar-orders": {
+      "key": "bazaar-orders",
+      "slug": "bazaar-orders",
+      "feature": "bazaar",
+      "title": "Bazaar Checkout and Orders",
+      "subsystem": "bazaar",
+      "area": "orders",
+      "summary": "Bazaar checkout and order pages cover payment, order confirmation, order status, and buyer-side actions after an order has been created.",
+      "excerpt": "Bazaar checkout and order pages cover payment, order confirmation, order status, and buyer-side actions after an order has been created.",
+      "plainText": "Bazaar Checkout and Orders These pages cover the buyer side of Bazaar after you decide to get something. What you can do here - Review an order summary before paying - Complete payment through Stripe when payment is required - Skip straight to the order page when an offering is free - Track order status after payment - Cancel or complete an order when those actions are available Key concepts Pending order — An order has been created, but payment or confirmation is not finished yet. Confirmed order — Payment succeeded and the order is now being processed. Fulfillment — The period when the vendor is actively delivering what you ordered. The checkout page The checkout page is split into two parts: - Order Summary on the left shows what you are buying and the total - Payment on the right initializes Stripe and collects payment details If the order is free, the system skips card entry and sends you directly to the order page. The order detail page The order detail page is the place to revisit after checkout. It shows: - the current status - the offering you ordered - timeline milestones such as placed, confirmed, fulfilling, delivered, or completed - any actions you are still allowed to take Typical flow 1. Start from an offering page. 2. Create the order. 3. Complete checkout if payment is required. 4. Land on the order page with a success confirmation. 5. Revisit the order page later to check progress or take any remaining action. Current limitations - Some order actions are status-dependent and may disappear once the order moves forward. - The status language is clear enough to operate with, but still reads like a working internal commerce system rather than a finished consumer storefront. Related features - Bazaar Browsing — the storefront pages where an order begins - Bazaar Vendor Operations — the seller-side pages that handle fulfillment after your order is placed",
+      "html": "<h1 id=\"bazaar-checkout-and-orders\">Bazaar Checkout and Orders</h1>\n<p>These pages cover the buyer side of Bazaar after you decide to get something.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review an order summary before paying</li>\n<li>Complete payment through Stripe when payment is required</li>\n<li>Skip straight to the order page when an offering is free</li>\n<li>Track order status after payment</li>\n<li>Cancel or complete an order when those actions are available</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Pending order</strong> — An order has been created, but payment or confirmation is not finished yet.</p>\n<p><strong>Confirmed order</strong> — Payment succeeded and the order is now being processed.</p>\n<p><strong>Fulfillment</strong> — The period when the vendor is actively delivering what you ordered.</p>\n<h2 id=\"the-checkout-page\">The checkout page</h2>\n<p>The checkout page is split into two parts:</p>\n<ul>\n<li><strong>Order Summary</strong> on the left shows what you are buying and the total</li>\n<li><strong>Payment</strong> on the right initializes Stripe and collects payment details</li>\n</ul>\n<p>If the order is free, the system skips card entry and sends you directly to the order page.</p>\n<h2 id=\"the-order-detail-page\">The order detail page</h2>\n<p>The order detail page is the place to revisit after checkout. It shows:</p>\n<ul>\n<li>the current status</li>\n<li>the offering you ordered</li>\n<li>timeline milestones such as placed, confirmed, fulfilling, delivered, or completed</li>\n<li>any actions you are still allowed to take</li>\n</ul>\n<h2 id=\"typical-flow\">Typical flow</h2>\n<ol>\n<li>Start from an offering page.</li>\n<li>Create the order.</li>\n<li>Complete checkout if payment is required.</li>\n<li>Land on the order page with a success confirmation.</li>\n<li>Revisit the order page later to check progress or take any remaining action.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Some order actions are status-dependent and may disappear once the order moves forward.</li>\n<li>The status language is clear enough to operate with, but still reads like a working internal commerce system rather than a finished consumer storefront.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Bazaar Browsing</strong> — the storefront pages where an order begins</li>\n<li><strong>Bazaar Vendor Operations</strong> — the seller-side pages that handle fulfillment after your order is placed</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "The checkout page",
+          "id": "the-checkout-page"
+        },
+        {
+          "depth": 2,
+          "text": "The order detail page",
+          "id": "the-order-detail-page"
+        },
+        {
+          "depth": 2,
+          "text": "Typical flow",
+          "id": "typical-flow"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/bazaar/checkout/*",
+        "/bazaar/orders",
+        "/bazaar/orders/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "bazaar",
+        "checkout",
+        "orders",
+        "payment"
+      ]
+    },
+    "bazaar-vendor": {
+      "key": "bazaar-vendor",
+      "slug": "bazaar-vendor",
+      "feature": "bazaar",
+      "title": "Bazaar Vendor Operations",
+      "subsystem": "bazaar",
+      "area": "vendor",
+      "summary": "Bazaar vendor pages are the seller-side view for monitoring incoming orders, checking demand, and moving an order through fulfillment.",
+      "excerpt": "Bazaar vendor pages are the seller-side view for monitoring incoming orders, checking demand, and moving an order through fulfillment.",
+      "plainText": "Bazaar Vendor Operations These pages are the seller-side view of Bazaar. If you publish offerings, this is where you monitor demand and work orders through fulfillment. What you can do here - Review high-level vendor stats - Check which orders need attention - Open a specific vendor order - Add a vendor note - Advance an order through fulfillment steps What the dashboard is for The vendor dashboard is a quick operational summary. It shows: - total orders - active offerings - total offerings - orders that need attention The recent-orders area is the fastest way to spot work that needs handling now. What the vendor order page is for The vendor order page is the working surface for one order. It shows: - order status - order amount - the buyer's note, if they left one - a timeline of where the order is in fulfillment - actions you can take next Typical flow 1. Open the vendor dashboard. 2. Check the orders or attention counts. 3. Open an individual order. 4. Read the buyer note and the order details. 5. Add a vendor note if needed and move the order to its next status. Current limitations - Vendor actions are practical and operational, but not heavily guided yet. - Product and offering management still lives partly outside this dashboard, so you may need to return to a group or member surface for setup work. Related features - Bazaar Browsing — the buyer-facing storefront side - Bazaar Checkout and Orders — what the buyer sees after placing an order",
+      "html": "<h1 id=\"bazaar-vendor-operations\">Bazaar Vendor Operations</h1>\n<p>These pages are the seller-side view of Bazaar. If you publish offerings, this is where you monitor demand and work orders through fulfillment.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review high-level vendor stats</li>\n<li>Check which orders need attention</li>\n<li>Open a specific vendor order</li>\n<li>Add a vendor note</li>\n<li>Advance an order through fulfillment steps</li>\n</ul>\n<h2 id=\"what-the-dashboard-is-for\">What the dashboard is for</h2>\n<p>The vendor dashboard is a quick operational summary. It shows:</p>\n<ul>\n<li>total orders</li>\n<li>active offerings</li>\n<li>total offerings</li>\n<li>orders that need attention</li>\n</ul>\n<p>The recent-orders area is the fastest way to spot work that needs handling now.</p>\n<h2 id=\"what-the-vendor-order-page-is-for\">What the vendor order page is for</h2>\n<p>The vendor order page is the working surface for one order. It shows:</p>\n<ul>\n<li>order status</li>\n<li>order amount</li>\n<li>the buyer's note, if they left one</li>\n<li>a timeline of where the order is in fulfillment</li>\n<li>actions you can take next</li>\n</ul>\n<h2 id=\"typical-flow\">Typical flow</h2>\n<ol>\n<li>Open the vendor dashboard.</li>\n<li>Check the orders or attention counts.</li>\n<li>Open an individual order.</li>\n<li>Read the buyer note and the order details.</li>\n<li>Add a vendor note if needed and move the order to its next status.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Vendor actions are practical and operational, but not heavily guided yet.</li>\n<li>Product and offering management still lives partly outside this dashboard, so you may need to return to a group or member surface for setup work.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Bazaar Browsing</strong> — the buyer-facing storefront side</li>\n<li><strong>Bazaar Checkout and Orders</strong> — what the buyer sees after placing an order</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "What the dashboard is for",
+          "id": "what-the-dashboard-is-for"
+        },
+        {
+          "depth": 2,
+          "text": "What the vendor order page is for",
+          "id": "what-the-vendor-order-page-is-for"
+        },
+        {
+          "depth": 2,
+          "text": "Typical flow",
+          "id": "typical-flow"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/bazaar/vendor",
+        "/bazaar/vendor/orders/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "bazaar",
+        "vendor",
+        "fulfillment",
+        "orders"
       ]
     },
     "chat-overview": {
@@ -906,6 +1083,56 @@
         "library"
       ]
     },
+    "member-group-me": {
+      "key": "member-group-me",
+      "slug": "member-group-me",
+      "feature": "member",
+      "title": "Your Group Member Profile",
+      "subsystem": "member",
+      "area": "group-me",
+      "summary": "The group member profile page is the personal edit view you open from inside a group when you need to update your own profile details and then return to the group.",
+      "excerpt": "The group member profile page is the personal edit view you open from inside a group when you need to update your own profile details and then return to the group.",
+      "plainText": "Your Group Member Profile This page is your personal edit surface inside a group context. It is meant for updating your own member profile without leaving the group workflow entirely. What you can do here - Edit your own profile details - Make changes while staying anchored to the group you came from - Return directly to the group when you are finished How this page is different from the public profile This is an edit surface, not a public profile display page. It is for changing your own information. The public profile pages under /member/... are for viewing a member-facing presentation of that information. Typical flow 1. Open the page from inside a group. 2. Update the profile fields you need to change. 3. Save your changes. 4. Use the return button to go back to the group. Current limitations - The page is intentionally minimal. It is a utility surface wrapped around the profile editor rather than a full member dashboard. - Group-specific profile expectations are still shaped by the underlying member profile system, not by a separate group-only profile model. Related features - Member Surfaces — the broader personal pages for hub, profile, library, and settings - Groups — the community context you return to after editing",
+      "html": "<h1 id=\"your-group-member-profile\">Your Group Member Profile</h1>\n<p>This page is your personal edit surface inside a group context. It is meant for updating your own member profile without leaving the group workflow entirely.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Edit your own profile details</li>\n<li>Make changes while staying anchored to the group you came from</li>\n<li>Return directly to the group when you are finished</li>\n</ul>\n<h2 id=\"how-this-page-is-different-from-the-public-profile\">How this page is different from the public profile</h2>\n<p>This is an <strong>edit</strong> surface, not a public profile display page. It is for changing your own information. The public profile pages under <code>/member/...</code> are for viewing a member-facing presentation of that information.</p>\n<h2 id=\"typical-flow\">Typical flow</h2>\n<ol>\n<li>Open the page from inside a group.</li>\n<li>Update the profile fields you need to change.</li>\n<li>Save your changes.</li>\n<li>Use the return button to go back to the group.</li>\n</ol>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>The page is intentionally minimal. It is a utility surface wrapped around the profile editor rather than a full member dashboard.</li>\n<li>Group-specific profile expectations are still shaped by the underlying member profile system, not by a separate group-only profile model.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Member Surfaces</strong> — the broader personal pages for hub, profile, library, and settings</li>\n<li><strong>Groups</strong> — the community context you return to after editing</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "How this page is different from the public profile",
+          "id": "how-this-page-is-different-from-the-public-profile"
+        },
+        {
+          "depth": 2,
+          "text": "Typical flow",
+          "id": "typical-flow"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/groups/*/me"
+      ],
+      "workAreas": [],
+      "tags": [
+        "member",
+        "profile",
+        "group",
+        "settings"
+      ]
+    },
     "member-overview": {
       "key": "member-overview",
       "slug": "member",
@@ -915,8 +1142,8 @@
       "area": "overview",
       "summary": "Member surfaces are the personal pages tied to an account: hub, library, profile, settings, stall, and other views centered on one person rather than a group.",
       "excerpt": "Member surfaces are the personal pages tied to an account: hub, library, profile, settings, stall, and other views centered on one person rather than a group.",
-      "plainText": "Member Surfaces Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group. What you can do here - Open a member hub or profile - Review a member's library or published work - Adjust account or profile settings - Move into personal work areas such as writing or workbench Key concepts Member hub — A personal orientation page for one account. Profile — The public or semi-public identity surface for a member. Personal surface — A page centered on one person rather than a shared group workflow. Current limitations - Not every member page has dedicated help yet; some currently inherit this overview intentionally. - Permissions still shape what you can see on a member page, especially when the page is not your own. Related features - Writing — Personal writing and published pieces often live under member surfaces. - Groups — Many member actions continue inside groups rather than on personal pages alone.",
-      "html": "<h1 id=\"member-surfaces\">Member Surfaces</h1>\n<p>Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Open a member hub or profile</li>\n<li>Review a member's library or published work</li>\n<li>Adjust account or profile settings</li>\n<li>Move into personal work areas such as writing or workbench</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Member hub</strong> — A personal orientation page for one account.</p>\n<p><strong>Profile</strong> — The public or semi-public identity surface for a member.</p>\n<p><strong>Personal surface</strong> — A page centered on one person rather than a shared group workflow.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Not every member page has dedicated help yet; some currently inherit this overview intentionally.</li>\n<li>Permissions still shape what you can see on a member page, especially when the page is not your own.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Writing</strong> — Personal writing and published pieces often live under member surfaces.</li>\n<li><strong>Groups</strong> — Many member actions continue inside groups rather than on personal pages alone.</li>\n</ul>",
+      "plainText": "Member Surfaces Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group. What you can do here - Open a member hub or profile - Review a member's library or published work - Adjust account or profile settings - Move between the personal dashboard and admin tabs on your own hub Key concepts Member hub — The personal home surface for one account. In the current UI it includes a dashboard tab and an admin tab. Profile — The public or semi-public identity surface for a member. Personal surface — A page centered on one person rather than a shared group workflow. Current limitations - Permissions still shape what you can see on a member page, especially when the page is not your own. - Some member utilities still live on separate pages rather than inside one coherent personal workspace. Related features - Writing — Personal writing and published pieces often live under member surfaces. - Groups — Many member actions continue inside groups rather than on personal pages alone. - Your Group Member Profile — the small edit surface used when you update your profile from inside a group",
+      "html": "<h1 id=\"member-surfaces\">Member Surfaces</h1>\n<p>Member surfaces are the personal pages tied to one account. They cover your hub, public-facing profile, personal library, settings, and other views that are about a specific person rather than a whole group.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Open a member hub or profile</li>\n<li>Review a member's library or published work</li>\n<li>Adjust account or profile settings</li>\n<li>Move between the personal dashboard and admin tabs on your own hub</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Member hub</strong> — The personal home surface for one account. In the current UI it includes a dashboard tab and an admin tab.</p>\n<p><strong>Profile</strong> — The public or semi-public identity surface for a member.</p>\n<p><strong>Personal surface</strong> — A page centered on one person rather than a shared group workflow.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Permissions still shape what you can see on a member page, especially when the page is not your own.</li>\n<li>Some member utilities still live on separate pages rather than inside one coherent personal workspace.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Writing</strong> — Personal writing and published pieces often live under member surfaces.</li>\n<li><strong>Groups</strong> — Many member actions continue inside groups rather than on personal pages alone.</li>\n<li><strong>Your Group Member Profile</strong> — the small edit surface used when you update your profile from inside a group</li>\n</ul>",
       "headings": [
         {
           "depth": 2,
@@ -945,7 +1172,6 @@
         "/member/*/library",
         "/member/*/profile",
         "/member/*/settings",
-        "/groups/*/me",
         "/settings/*",
         "/settings/*/*"
       ],
@@ -1267,8 +1493,8 @@
       "area": "overview",
       "summary": "The Workbench is where content goes from raw to ready — a triage and routing surface for managing incoming submissions and deciding what moves forward.",
       "excerpt": "The Workbench is where content goes from raw to ready — a triage and routing surface for managing incoming submissions and deciding what moves forward.",
-      "plainText": "The Workbench The Workbench is where content goes from raw to ready. Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision. The Workbench is not a writing tool. It is a triage and routing surface. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside. --- The curation suite Mixtape has two surfaces that together handle the full journey from capture to publication: Workbench — triage, queue, routing Handles the question: \"Is this worth working on?\" You see candidates, review what they contain, and take an action. Draft Room — writing, editing, publishing Handles the question: \"Is this ready to publish?\" You write, revise, and publish finished pieces. The connection between them: when you promote a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally. --- Where to find it - Global Workbench — /workbench — everything across all sources, all groups - Group Workbench — /groups/[group-name]/workbench — scoped to one group The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content. --- The two queues Feedback tab Shows items submitted through Lighthouse (the floating feedback button) and other capture beacons. Each row shows: - The message the user submitted - Which beacon it came from (Lighthouse, inline beacon, etc.) - The kind (issue, bug, request, idea) - Current status - Who submitted it and when Actions on each feedback item: Action What it does --- --- Accept Marks the item as sent to agent — moves it to the AI workflow Archive Marks it as won't fix — keeps the record but removes it from the active queue Delete Permanently removes the item Use the kind and status filters at the top to narrow the list. The default view shows items with status new — the freshest unreviewed submissions. --- MillDrafts tab Shows MillDraft candidates — structured content suggestions from connected sources. Currently active sources: - Stackroom — documents uploaded to a library are automatically processed and appear here as candidates - Manual — drafts created directly in the Workbench compose panel Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions). Each row shows: - Title (derived from the source content) - Source (which system produced it) - Content profile (writing, event, etc.) - Current status in the lifecycle - Author and date The MillDraft lifecycle: Status Meaning --- --- candidate Arrived, not yet opened active Opened and being edited ready to promote Validated and staged promoted Promotion succeeded — a canonical object was created archived Set aside (recoverable) --- Taking action on a MillDraft When you select a MillDraft from the queue, you can take one of these actions: Open — moves the draft from candidate to active and opens it for editing. Use this when the content looks promising and you want to work on it. Approve for consideration — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet. Promote — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. (For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.) Promote + Publish — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this. Archive — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind. Reactivate — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow. Discard — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal. --- Compose The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically. --- Draft Room — what happens after promotion When you promote a MillDraft, Mixtape creates a WritingPiece (in draft status) and it appears in your Draft Room. Current limitation: After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2. From the Draft Room you can: - Edit the content in the full writing editor - Use the Copy Desk panel for AI-assisted editorial work - Use the Inspector to check readiness (title, excerpt, word count) - Publish when it's ready The Workbench does not delete the promoted MillDraft — it transitions to promoted status and stays in the system as a provenance record, showing where the content came from. --- Filters and navigation Both queues support filtering: - Feedback queue: filter by kind (issue / bug / request / idea / all) and status - MillDrafts queue: filter by status, content profile, and source type The Refresh button at the top right of each tab reloads the queue without a full page refresh. --- Who can use the Workbench Access is role-gated: Role What they see --- --- Superuser / Admin Global Workbench — all sources, all groups Group Admin / Steward Group Workbench — that group's queue only Member Personal view (own drafts and submissions) — coming in a future release --- What the Workbench is not - It is not a writing tool — for writing, use the Draft Room - It is not a publishing tool — publishing happens in the Draft Room via the Inspector - It is not a search interface — for retrieval from libraries, use the Stackroom --- Roadmap The Workbench will absorb more of the curation surface over time: - Phase 2 (next): Draft Room becomes a panel within the Workbench — edit without leaving triage - Phase 3: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing - Phase 4: Full promotion system — approve, promote, publish as governed actions with audit trail",
-      "html": "<h1 id=\"the-workbench\">The Workbench</h1>\n<p>The Workbench is where content goes from raw to ready.</p>\n<p>Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision.</p>\n<p>The Workbench is not a writing tool. It is a <strong>triage and routing surface</strong>. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside.</p>\n<hr>\n<h2 id=\"the-curation-suite\">The curation suite</h2>\n<p>Mixtape has two surfaces that together handle the full journey from capture to publication:</p>\n<p><strong>Workbench</strong> — triage, queue, routing\nHandles the question: <em>\"Is this worth working on?\"</em>\nYou see candidates, review what they contain, and take an action.</p>\n<p><strong>Draft Room</strong> — writing, editing, publishing\nHandles the question: <em>\"Is this ready to publish?\"</em>\nYou write, revise, and publish finished pieces.</p>\n<p>The connection between them: when you <strong>promote</strong> a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally.</p>\n<hr>\n<h2 id=\"where-to-find-it\">Where to find it</h2>\n<ul>\n<li><strong>Global Workbench</strong> — <code>/workbench</code> — everything across all sources, all groups</li>\n<li><strong>Group Workbench</strong> — <code>/groups/[group-name]/workbench</code> — scoped to one group</li>\n</ul>\n<p>The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content.</p>\n<hr>\n<h2 id=\"the-two-queues\">The two queues</h2>\n<h3 id=\"feedback-tab\">Feedback tab</h3>\n<p>Shows items submitted through <strong>Lighthouse</strong> (the floating feedback button) and other capture beacons.</p>\n<p>Each row shows:</p>\n<ul>\n<li>The message the user submitted</li>\n<li>Which beacon it came from (Lighthouse, inline beacon, etc.)</li>\n<li>The kind (issue, bug, request, idea)</li>\n<li>Current status</li>\n<li>Who submitted it and when</li>\n</ul>\n<p><strong>Actions on each feedback item:</strong></p>\n<table>\n<thead>\n<tr>\n<th>Action</th>\n<th>What it does</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Accept</td>\n<td>Marks the item as sent to agent — moves it to the AI workflow</td>\n</tr>\n<tr>\n<td>Archive</td>\n<td>Marks it as won't fix — keeps the record but removes it from the active queue</td>\n</tr>\n<tr>\n<td>Delete</td>\n<td>Permanently removes the item</td>\n</tr>\n</tbody>\n</table>\n<p>Use the <strong>kind</strong> and <strong>status</strong> filters at the top to narrow the list. The default view shows items with status <code>new</code> — the freshest unreviewed submissions.</p>\n<hr>\n<h3 id=\"milldrafts-tab\">MillDrafts tab</h3>\n<p>Shows <strong>MillDraft candidates</strong> — structured content suggestions from connected sources.</p>\n<p>Currently active sources:</p>\n<ul>\n<li><strong>Stackroom</strong> — documents uploaded to a library are automatically processed and appear here as candidates</li>\n<li><strong>Manual</strong> — drafts created directly in the Workbench compose panel</li>\n</ul>\n<p>Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions).</p>\n<p>Each row shows:</p>\n<ul>\n<li>Title (derived from the source content)</li>\n<li>Source (which system produced it)</li>\n<li>Content profile (writing, event, etc.)</li>\n<li>Current status in the lifecycle</li>\n<li>Author and date</li>\n</ul>\n<p><strong>The MillDraft lifecycle:</strong></p>\n<pre><code>candidate → active → ready to promote → promoted → (archived)\n</code></pre>\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>candidate</td>\n<td>Arrived, not yet opened</td>\n</tr>\n<tr>\n<td>active</td>\n<td>Opened and being edited</td>\n</tr>\n<tr>\n<td>ready to promote</td>\n<td>Validated and staged</td>\n</tr>\n<tr>\n<td>promoted</td>\n<td>Promotion succeeded — a canonical object was created</td>\n</tr>\n<tr>\n<td>archived</td>\n<td>Set aside (recoverable)</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"taking-action-on-a-milldraft\">Taking action on a MillDraft</h2>\n<p>When you select a MillDraft from the queue, you can take one of these actions:</p>\n<p><strong>Open</strong> — moves the draft from <code>candidate</code> to <code>active</code> and opens it for editing. Use this when the content looks promising and you want to work on it.</p>\n<p><strong>Approve for consideration</strong> — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet.</p>\n<p><strong>Promote</strong> — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. <em>(For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.)</em></p>\n<p><strong>Promote + Publish</strong> — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this.</p>\n<p><strong>Archive</strong> — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind.</p>\n<p><strong>Reactivate</strong> — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow.</p>\n<p><strong>Discard</strong> — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal.</p>\n<hr>\n<h2 id=\"compose\">Compose</h2>\n<p>The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically.</p>\n<hr>\n<h2 id=\"draft-room--what-happens-after-promotion\">Draft Room — what happens after promotion</h2>\n<p>When you promote a MillDraft, Mixtape creates a <strong>WritingPiece</strong> (in draft status) and it appears in your <strong>Draft Room</strong>.</p>\n<p><strong>Current limitation:</strong> After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2.</p>\n<p>From the Draft Room you can:</p>\n<ul>\n<li>Edit the content in the full writing editor</li>\n<li>Use the Copy Desk panel for AI-assisted editorial work</li>\n<li>Use the Inspector to check readiness (title, excerpt, word count)</li>\n<li>Publish when it's ready</li>\n</ul>\n<p>The Workbench does not delete the promoted MillDraft — it transitions to <code>promoted</code> status and stays in the system as a provenance record, showing where the content came from.</p>\n<hr>\n<h2 id=\"filters-and-navigation\">Filters and navigation</h2>\n<p>Both queues support filtering:</p>\n<ul>\n<li><strong>Feedback queue</strong>: filter by kind (issue / bug / request / idea / all) and status</li>\n<li><strong>MillDrafts queue</strong>: filter by status, content profile, and source type</li>\n</ul>\n<p>The Refresh button at the top right of each tab reloads the queue without a full page refresh.</p>\n<hr>\n<h2 id=\"who-can-use-the-workbench\">Who can use the Workbench</h2>\n<p>Access is role-gated:</p>\n<table>\n<thead>\n<tr>\n<th>Role</th>\n<th>What they see</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Superuser / Admin</td>\n<td>Global Workbench — all sources, all groups</td>\n</tr>\n<tr>\n<td>Group Admin / Steward</td>\n<td>Group Workbench — that group's queue only</td>\n</tr>\n<tr>\n<td>Member</td>\n<td>Personal view (own drafts and submissions) — coming in a future release</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"what-the-workbench-is-not\">What the Workbench is not</h2>\n<ul>\n<li>It is not a writing tool — for writing, use the Draft Room</li>\n<li>It is not a publishing tool — publishing happens in the Draft Room via the Inspector</li>\n<li>It is not a search interface — for retrieval from libraries, use the Stackroom</li>\n</ul>\n<hr>\n<h2 id=\"roadmap\">Roadmap</h2>\n<p>The Workbench will absorb more of the curation surface over time:</p>\n<ul>\n<li><strong>Phase 2</strong> (next): Draft Room becomes a panel within the Workbench — edit without leaving triage</li>\n<li><strong>Phase 3</strong>: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing</li>\n<li><strong>Phase 4</strong>: Full promotion system — approve, promote, publish as governed actions with audit trail</li>\n</ul>",
+      "plainText": "The Workbench The Workbench is where content goes from raw to ready. Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision. The Workbench is not a writing tool. It is a triage and routing surface. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside. --- The curation suite Mixtape has two surfaces that together handle the full journey from capture to publication: Workbench — triage, queue, routing Handles the question: \"Is this worth working on?\" You see candidates, review what they contain, and take an action. Draft Room — writing, editing, publishing Handles the question: \"Is this ready to publish?\" You write, revise, and publish finished pieces. The connection between them: when you promote a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally. --- Where to find it - Global Workbench — /workbench — everything across all sources, all groups - Group Workbench — /groups/[group-name]/workbench — scoped to one group The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content. In the current group workbench UI, the main tabs are: - Review Queue - Compose - My Drafts The dedicated queue route under /groups/[group-name]/workbench/queue is a narrower entry into the same review flow. --- The two queues Feedback tab Shows items submitted through Lighthouse (the floating feedback button) and other capture beacons. Each row shows: - The message the user submitted - Which beacon it came from (Lighthouse, inline beacon, etc.) - The kind (issue, bug, request, idea) - Current status - Who submitted it and when Actions on each feedback item: Action What it does --- --- Accept Marks the item as sent to agent — moves it to the AI workflow Archive Marks it as won't fix — keeps the record but removes it from the active queue Delete Permanently removes the item Use the kind and status filters at the top to narrow the list. The default view shows items with status new — the freshest unreviewed submissions. --- Review Queue and draft work Shows MillDraft candidates — structured content suggestions from connected sources. Currently active sources: - Stackroom — documents uploaded to a library are automatically processed and appear here as candidates - Manual — drafts created directly in the Workbench compose panel Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions). Each row shows: - Title (derived from the source content) - Source (which system produced it) - Content profile (writing, event, etc.) - Current status in the lifecycle - Author and date The MillDraft lifecycle: Status Meaning --- --- candidate Arrived, not yet opened active Opened and being edited ready to promote Validated and staged promoted Promotion succeeded — a canonical object was created archived Set aside (recoverable) --- Taking action on a MillDraft When you select a MillDraft from the queue, you can take one of these actions: Open — moves the draft from candidate to active and opens it for editing. Use this when the content looks promising and you want to work on it. Approve for consideration — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet. Promote — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. (For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.) Promote + Publish — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this. Archive — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind. Reactivate — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow. Discard — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal. --- Compose The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically. In the current group workbench page, creating a draft sends you to My Drafts so you can keep working on it immediately. --- Draft Room — what happens after promotion When you promote a MillDraft, Mixtape creates a WritingPiece (in draft status) and it appears in your Draft Room. Current limitation: After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2. From the Draft Room you can: - Edit the content in the full writing editor - Use the Copy Desk panel for AI-assisted editorial work - Use the Inspector to check readiness (title, excerpt, word count) - Publish when it's ready The Workbench does not delete the promoted MillDraft — it transitions to promoted status and stays in the system as a provenance record, showing where the content came from. Personal workbench note If you arrive via /member/[username]/workbench, the current app redirects you to /console. Treat that route as legacy entry rather than a separate personal workbench experience. --- Filters and navigation Both queues support filtering: - Feedback queue: filter by kind (issue / bug / request / idea / all) and status - MillDrafts queue: filter by status, content profile, and source type The Refresh button at the top right of each tab reloads the queue without a full page refresh. --- Who can use the Workbench Access is role-gated: Role What they see --- --- Superuser / Admin Global Workbench — all sources, all groups Group Admin / Steward Group Workbench — that group's queue only Member Personal view (own drafts and submissions) — coming in a future release --- What the Workbench is not - It is not a writing tool — for writing, use the Draft Room - It is not a publishing tool — publishing happens in the Draft Room via the Inspector - It is not a search interface — for retrieval from libraries, use the Stackroom --- Roadmap The Workbench will absorb more of the curation surface over time: - Phase 2 (next): Draft Room becomes a panel within the Workbench — edit without leaving triage - Phase 3: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing - Phase 4: Full promotion system — approve, promote, publish as governed actions with audit trail",
+      "html": "<h1 id=\"the-workbench\">The Workbench</h1>\n<p>The Workbench is where content goes from raw to ready.</p>\n<p>Every piece of content that enters Mixtape — whether someone submitted feedback through Lighthouse, a document was uploaded to a library, or you drafted something from scratch — eventually lands here as a candidate waiting for a decision.</p>\n<p>The Workbench is not a writing tool. It is a <strong>triage and routing surface</strong>. You look at what came in, decide what's worth pursuing, and either move it forward or set it aside.</p>\n<hr>\n<h2 id=\"the-curation-suite\">The curation suite</h2>\n<p>Mixtape has two surfaces that together handle the full journey from capture to publication:</p>\n<p><strong>Workbench</strong> — triage, queue, routing\nHandles the question: <em>\"Is this worth working on?\"</em>\nYou see candidates, review what they contain, and take an action.</p>\n<p><strong>Draft Room</strong> — writing, editing, publishing\nHandles the question: <em>\"Is this ready to publish?\"</em>\nYou write, revise, and publish finished pieces.</p>\n<p>The connection between them: when you <strong>promote</strong> a candidate in the Workbench, it becomes a WritingPiece in the Draft Room. From there you edit it and publish it normally.</p>\n<hr>\n<h2 id=\"where-to-find-it\">Where to find it</h2>\n<ul>\n<li><strong>Global Workbench</strong> — <code>/workbench</code> — everything across all sources, all groups</li>\n<li><strong>Group Workbench</strong> — <code>/groups/[group-name]/workbench</code> — scoped to one group</li>\n</ul>\n<p>The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content.</p>\n<p>In the current group workbench UI, the main tabs are:</p>\n<ul>\n<li><strong>Review Queue</strong></li>\n<li><strong>Compose</strong></li>\n<li><strong>My Drafts</strong></li>\n</ul>\n<p>The dedicated queue route under <code>/groups/[group-name]/workbench/queue</code> is a narrower entry into the same review flow.</p>\n<hr>\n<h2 id=\"the-two-queues\">The two queues</h2>\n<h3 id=\"feedback-tab\">Feedback tab</h3>\n<p>Shows items submitted through <strong>Lighthouse</strong> (the floating feedback button) and other capture beacons.</p>\n<p>Each row shows:</p>\n<ul>\n<li>The message the user submitted</li>\n<li>Which beacon it came from (Lighthouse, inline beacon, etc.)</li>\n<li>The kind (issue, bug, request, idea)</li>\n<li>Current status</li>\n<li>Who submitted it and when</li>\n</ul>\n<p><strong>Actions on each feedback item:</strong></p>\n<table>\n<thead>\n<tr>\n<th>Action</th>\n<th>What it does</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Accept</td>\n<td>Marks the item as sent to agent — moves it to the AI workflow</td>\n</tr>\n<tr>\n<td>Archive</td>\n<td>Marks it as won't fix — keeps the record but removes it from the active queue</td>\n</tr>\n<tr>\n<td>Delete</td>\n<td>Permanently removes the item</td>\n</tr>\n</tbody>\n</table>\n<p>Use the <strong>kind</strong> and <strong>status</strong> filters at the top to narrow the list. The default view shows items with status <code>new</code> — the freshest unreviewed submissions.</p>\n<hr>\n<h3 id=\"review-queue-and-draft-work\">Review Queue and draft work</h3>\n<p>Shows <strong>MillDraft candidates</strong> — structured content suggestions from connected sources.</p>\n<p>Currently active sources:</p>\n<ul>\n<li><strong>Stackroom</strong> — documents uploaded to a library are automatically processed and appear here as candidates</li>\n<li><strong>Manual</strong> — drafts created directly in the Workbench compose panel</li>\n</ul>\n<p>Coming soon: Concord (voice transcriptions), Grist Mill (manual grist authoring), Copy Desk (editorial suggestions).</p>\n<p>Each row shows:</p>\n<ul>\n<li>Title (derived from the source content)</li>\n<li>Source (which system produced it)</li>\n<li>Content profile (writing, event, etc.)</li>\n<li>Current status in the lifecycle</li>\n<li>Author and date</li>\n</ul>\n<p><strong>The MillDraft lifecycle:</strong></p>\n<pre><code>candidate → active → ready to promote → promoted → (archived)\n</code></pre>\n<table>\n<thead>\n<tr>\n<th>Status</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>candidate</td>\n<td>Arrived, not yet opened</td>\n</tr>\n<tr>\n<td>active</td>\n<td>Opened and being edited</td>\n</tr>\n<tr>\n<td>ready to promote</td>\n<td>Validated and staged</td>\n</tr>\n<tr>\n<td>promoted</td>\n<td>Promotion succeeded — a canonical object was created</td>\n</tr>\n<tr>\n<td>archived</td>\n<td>Set aside (recoverable)</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"taking-action-on-a-milldraft\">Taking action on a MillDraft</h2>\n<p>When you select a MillDraft from the queue, you can take one of these actions:</p>\n<p><strong>Open</strong> — moves the draft from <code>candidate</code> to <code>active</code> and opens it for editing. Use this when the content looks promising and you want to work on it.</p>\n<p><strong>Approve for consideration</strong> — marks the draft as reviewed without changing its state. Creates an audit record. Use this when you want to flag something as worth pursuing but aren't ready to open it yet.</p>\n<p><strong>Promote</strong> — runs validation and creates a canonical object (WritingPiece, etc.) from the draft. The resulting piece appears in the Draft Room as a draft ready for editing. <em>(For now, you'll need to open Draft Room separately and find the piece there — a direct link is coming.)</em></p>\n<p><strong>Promote + Publish</strong> — same as promote, but publishes immediately. Only available for content profiles that allow it (PSC-1). The system runs safety checks before allowing this.</p>\n<p><strong>Archive</strong> — sets the draft aside. It stays in the system as a record and can be reactivated later if you change your mind.</p>\n<p><strong>Reactivate</strong> — brings an archived draft back to active status. Use this if you archived something prematurely or want to revisit it. The draft re-enters the normal flow.</p>\n<p><strong>Discard</strong> — soft-deletes the draft. It's gone from the active queue but retained in the database for 90 days before permanent removal.</p>\n<hr>\n<h2 id=\"compose\">Compose</h2>\n<p>The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically.</p>\n<p>In the current group workbench page, creating a draft sends you to <strong>My Drafts</strong> so you can keep working on it immediately.</p>\n<hr>\n<h2 id=\"draft-room--what-happens-after-promotion\">Draft Room — what happens after promotion</h2>\n<p>When you promote a MillDraft, Mixtape creates a <strong>WritingPiece</strong> (in draft status) and it appears in your <strong>Draft Room</strong>.</p>\n<p><strong>Current limitation:</strong> After promotion, there is no direct link from the Workbench to the resulting WritingPiece. You need to open Draft Room separately and find it there. This is the primary navigation gap in the current release. A direct link is the first thing coming in Phase 2.</p>\n<p>From the Draft Room you can:</p>\n<ul>\n<li>Edit the content in the full writing editor</li>\n<li>Use the Copy Desk panel for AI-assisted editorial work</li>\n<li>Use the Inspector to check readiness (title, excerpt, word count)</li>\n<li>Publish when it's ready</li>\n</ul>\n<p>The Workbench does not delete the promoted MillDraft — it transitions to <code>promoted</code> status and stays in the system as a provenance record, showing where the content came from.</p>\n<h2 id=\"personal-workbench-note\">Personal workbench note</h2>\n<p>If you arrive via <code>/member/[username]/workbench</code>, the current app redirects you to <code>/console</code>. Treat that route as legacy entry rather than a separate personal workbench experience.</p>\n<hr>\n<h2 id=\"filters-and-navigation\">Filters and navigation</h2>\n<p>Both queues support filtering:</p>\n<ul>\n<li><strong>Feedback queue</strong>: filter by kind (issue / bug / request / idea / all) and status</li>\n<li><strong>MillDrafts queue</strong>: filter by status, content profile, and source type</li>\n</ul>\n<p>The Refresh button at the top right of each tab reloads the queue without a full page refresh.</p>\n<hr>\n<h2 id=\"who-can-use-the-workbench\">Who can use the Workbench</h2>\n<p>Access is role-gated:</p>\n<table>\n<thead>\n<tr>\n<th>Role</th>\n<th>What they see</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Superuser / Admin</td>\n<td>Global Workbench — all sources, all groups</td>\n</tr>\n<tr>\n<td>Group Admin / Steward</td>\n<td>Group Workbench — that group's queue only</td>\n</tr>\n<tr>\n<td>Member</td>\n<td>Personal view (own drafts and submissions) — coming in a future release</td>\n</tr>\n</tbody>\n</table>\n<hr>\n<h2 id=\"what-the-workbench-is-not\">What the Workbench is not</h2>\n<ul>\n<li>It is not a writing tool — for writing, use the Draft Room</li>\n<li>It is not a publishing tool — publishing happens in the Draft Room via the Inspector</li>\n<li>It is not a search interface — for retrieval from libraries, use the Stackroom</li>\n</ul>\n<hr>\n<h2 id=\"roadmap\">Roadmap</h2>\n<p>The Workbench will absorb more of the curation surface over time:</p>\n<ul>\n<li><strong>Phase 2</strong> (next): Draft Room becomes a panel within the Workbench — edit without leaving triage</li>\n<li><strong>Phase 3</strong>: Stackroom retrieval panel embedded in the Workbench — surface supporting material while editing</li>\n<li><strong>Phase 4</strong>: Full promotion system — approve, promote, publish as governed actions with audit trail</li>\n</ul>",
       "headings": [
         {
           "depth": 2,
@@ -1292,8 +1518,8 @@
         },
         {
           "depth": 3,
-          "text": "MillDrafts tab",
-          "id": "milldrafts-tab"
+          "text": "Review Queue and draft work",
+          "id": "review-queue-and-draft-work"
         },
         {
           "depth": 2,
@@ -1309,6 +1535,11 @@
           "depth": 2,
           "text": "Draft Room — what happens after promotion",
           "id": "draft-room-what-happens-after-promotion"
+        },
+        {
+          "depth": 2,
+          "text": "Personal workbench note",
+          "id": "personal-workbench-note"
         },
         {
           "depth": 2,
@@ -1470,7 +1701,10 @@
       "atelier-overview"
     ],
     "bazaar": [
-      "bazaar-overview"
+      "bazaar-browse",
+      "bazaar-overview",
+      "bazaar-orders",
+      "bazaar-vendor"
     ],
     "chat": [
       "chat-overview"
@@ -1509,6 +1743,7 @@
       "living-books-overview"
     ],
     "member": [
+      "member-group-me",
       "member-overview"
     ],
     "mobile": [
@@ -1533,5 +1768,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-05-23T17:40:24.299Z"
+  "generatedAt": "2026-05-23T17:51:50.757Z"
 }

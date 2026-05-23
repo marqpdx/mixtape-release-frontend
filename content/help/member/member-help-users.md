@@ -8,7 +8,6 @@ routes:
   - /member/*/library
   - /member/*/profile
   - /member/*/settings
-  - /groups/*/me
   - /settings/*
   - /settings/*/*
 workAreas: []
@@ -28,11 +27,11 @@ Member surfaces are the personal pages tied to one account. They cover your hub,
 - Open a member hub or profile
 - Review a member's library or published work
 - Adjust account or profile settings
-- Move into personal work areas such as writing or workbench
+- Move between the personal dashboard and admin tabs on your own hub
 
 ## Key concepts
 
-**Member hub** — A personal orientation page for one account.
+**Member hub** — The personal home surface for one account. In the current UI it includes a dashboard tab and an admin tab.
 
 **Profile** — The public or semi-public identity surface for a member.
 
@@ -40,10 +39,11 @@ Member surfaces are the personal pages tied to one account. They cover your hub,
 
 ## Current limitations
 
-- Not every member page has dedicated help yet; some currently inherit this overview intentionally.
 - Permissions still shape what you can see on a member page, especially when the page is not your own.
+- Some member utilities still live on separate pages rather than inside one coherent personal workspace.
 
 ## Related features
 
 - **Writing** — Personal writing and published pieces often live under member surfaces.
 - **Groups** — Many member actions continue inside groups rather than on personal pages alone.
+- **Your Group Member Profile** — the small edit surface used when you update your profile from inside a group

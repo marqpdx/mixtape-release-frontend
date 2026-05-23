@@ -50,6 +50,14 @@ The connection between them: when you **promote** a candidate in the Workbench, 
 
 The global Workbench is the right starting point for daily triage. Group workbenches are useful when you're focused on a specific group's content.
 
+In the current group workbench UI, the main tabs are:
+
+- **Review Queue**
+- **Compose**
+- **My Drafts**
+
+The dedicated queue route under `/groups/[group-name]/workbench/queue` is a narrower entry into the same review flow.
+
 ---
 
 ## The two queues
@@ -77,7 +85,7 @@ Use the **kind** and **status** filters at the top to narrow the list. The defau
 
 ---
 
-### MillDrafts tab
+### Review Queue and draft work
 
 Shows **MillDraft candidates** — structured content suggestions from connected sources.
 
@@ -134,6 +142,8 @@ When you select a MillDraft from the queue, you can take one of these actions:
 
 The Compose tab (inside group workbenches) lets you create a MillDraft from scratch — a blank slate that starts as a candidate in the queue, ready for the same triage flow as anything that came in automatically.
 
+In the current group workbench page, creating a draft sends you to **My Drafts** so you can keep working on it immediately.
+
 ---
 
 ## Draft Room — what happens after promotion
@@ -149,6 +159,10 @@ From the Draft Room you can:
 - Publish when it's ready
 
 The Workbench does not delete the promoted MillDraft — it transitions to `promoted` status and stays in the system as a provenance record, showing where the content came from.
+
+## Personal workbench note
+
+If you arrive via `/member/[username]/workbench`, the current app redirects you to `/console`. Treat that route as legacy entry rather than a separate personal workbench experience.
 
 ---
 
