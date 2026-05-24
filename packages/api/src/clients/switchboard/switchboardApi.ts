@@ -237,3 +237,55 @@ export async function submitPatternAsync(
   const res = await axiosInstance.post("/api/switchboard/agent/pattern", payload);
   return res.data as PatternAsyncResponse;
 }
+
+export interface SynthesizeAsyncRequest {
+  query: string;
+  library_id?: string;
+  max_sources?: number;
+  surface?: 'mobile' | 'desktop';
+}
+
+export interface SynthesizeAsyncResponse {
+  action_run_id: string;
+}
+
+export interface SynthesizeActionResult {
+  query: string;
+  key_points: string[];
+  tensions: string[];
+  synthesis_statement: string;
+  open_questions: string[];
+  sources_analyzed: number;
+  model_used: string | null;
+  synthesis_refused: boolean;
+}
+
+export async function submitSynthesizeAsync(
+  payload: SynthesizeAsyncRequest
+): Promise<SynthesizeAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/synthesize", payload);
+  return res.data as SynthesizeAsyncResponse;
+}
+
+export interface SynthesizeNarrativeRequest {
+  action_run_id: string;
+}
+
+export interface SynthesizeNarrativeResponse {
+  action_run_id: string;
+}
+
+export interface SynthesizeNarrativeActionResult {
+  query: string;
+  narrative: string;
+  word_count: number;
+  model_used: string | null;
+  narrative_refused: boolean;
+}
+
+export async function submitSynthesizeNarrativeAsync(
+  payload: SynthesizeNarrativeRequest
+): Promise<SynthesizeNarrativeResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/synthesize/narrative", payload);
+  return res.data as SynthesizeNarrativeResponse;
+}

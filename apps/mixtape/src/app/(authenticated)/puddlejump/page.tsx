@@ -41,6 +41,7 @@ const MENU_ITEMS: MenuItem[] = [
       { key: 'find', label: 'Find in library' },
       { key: 'research', label: 'Research' },
       { key: 'pattern', label: 'Pattern' },
+      { key: 'synthesize', label: 'Synthesize' },
     ],
   },
 ];

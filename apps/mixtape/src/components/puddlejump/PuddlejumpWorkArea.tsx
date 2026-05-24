@@ -15,6 +15,7 @@ import AddPanel from './panels/AddPanel';
 import FindPanel from './panels/FindPanel';
 import ResearchPanel from './panels/ResearchPanel';
 import PatternPanel from './panels/PatternPanel';
+import SynthesizePanel from './panels/SynthesizePanel';
 import DraftPanel from './panels/DraftPanel';
 import RefinePanel from './panels/RefinePanel';
 import { HelpTip } from '@/components/help/HelpTip';
@@ -44,6 +45,7 @@ export default function PuddlejumpWorkArea({
       {section === 'find' && <FindPanel surface="puddlejump" />}
       {section === 'research' && <ResearchPanel surface="puddlejump" />}
       {section === 'pattern' && <PatternPanel surface="puddlejump" />}
+      {section === 'synthesize' && <SynthesizePanel surface="puddlejump" />}
       {section === 'draft' && <DraftPanel surface="puddlejump" />}
       {section === 'refine' && <RefinePanel surface="puddlejump" />}
     </Box>

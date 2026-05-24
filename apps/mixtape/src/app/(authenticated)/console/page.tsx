@@ -257,6 +257,15 @@ export default function ConsolePage() {
                 >
                   ◎ Pattern
                 </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "synthesize" ? "solid" : "outline"}
+                  colorPalette="indigo"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "synthesize" ? "empty" : "synthesize")}
+                >
+                  ⊕ Synthesize
+                </Button>
               </VStack>
             </Box>
             <Box

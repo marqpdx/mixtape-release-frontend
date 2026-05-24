@@ -10,6 +10,8 @@ import {
   submitFind,
   submitResearchAsync,
   submitPatternAsync,
+  submitSynthesizeAsync,
+  submitSynthesizeNarrativeAsync,
   type ClassifyAsyncRequest,
   type SummarizeAsyncRequest,
   type ContextShapeAsyncRequest,
@@ -25,6 +27,10 @@ import {
   type ResearchActionResult,
   type PatternAsyncRequest,
   type PatternActionResult,
+  type SynthesizeAsyncRequest,
+  type SynthesizeActionResult,
+  type SynthesizeNarrativeRequest,
+  type SynthesizeNarrativeActionResult,
 } from '../../clients/switchboard/switchboardApi';
 import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
@@ -45,6 +51,10 @@ export type {
   ResearchActionResult,
   PatternAsyncRequest,
   PatternActionResult,
+  SynthesizeAsyncRequest,
+  SynthesizeActionResult,
+  SynthesizeNarrativeRequest,
+  SynthesizeNarrativeActionResult,
   ApprovalMode,
 };
 
@@ -264,6 +274,72 @@ export function useResearch() {
   const result =
     poll.data?.status === 'succeeded'
       ? (poll.data.result_payload as unknown as ResearchActionResult)
+      : null;
+
+  return {
+    submit: submitMutation.mutate,
+    submitAsync: submitMutation.mutateAsync,
+    isSubmitting: submitMutation.isPending,
+    actionRunId,
+    actionRun: (poll.data ?? null) as ActionRun | null,
+    isPolling: poll.isFetching && !!actionRunId,
+    result,
+    error:
+      submitMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    reset: () => {
+      setActionRunId(null);
+      submitMutation.reset();
+    },
+  };
+}
+
+export function useSynthesize() {
+  const [actionRunId, setActionRunId] = useState<string | null>(null);
+
+  const submitMutation = useMutation({
+    mutationFn: submitSynthesizeAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const poll = useActionRun(actionRunId);
+
+  const result =
+    poll.data?.status === 'succeeded'
+      ? (poll.data.result_payload as unknown as SynthesizeActionResult)
+      : null;
+
+  return {
+    submit: submitMutation.mutate,
+    submitAsync: submitMutation.mutateAsync,
+    isSubmitting: submitMutation.isPending,
+    actionRunId,
+    actionRun: (poll.data ?? null) as ActionRun | null,
+    isPolling: poll.isFetching && !!actionRunId,
+    result,
+    error:
+      submitMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    reset: () => {
+      setActionRunId(null);
+      submitMutation.reset();
+    },
+  };
+}
+
+export function useSynthesizeNarrative() {
+  const [actionRunId, setActionRunId] = useState<string | null>(null);
+
+  const submitMutation = useMutation({
+    mutationFn: submitSynthesizeNarrativeAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const poll = useActionRun(actionRunId);
+
+  const result =
+    poll.data?.status === 'succeeded'
+      ? (poll.data.result_payload as unknown as SynthesizeNarrativeActionResult)
       : null;
 
   return {
