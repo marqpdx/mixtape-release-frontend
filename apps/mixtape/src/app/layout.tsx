@@ -1,7 +1,7 @@
 import { Providers } from '@/components/providers';
 import { SkipLinks } from '@/components/accessibility';
 import {
-  Inter, DM_Serif_Display,
+  Inter, DM_Serif_Display, Source_Serif_4,
   Instrument_Serif, Instrument_Sans,
   Space_Grotesk, JetBrains_Mono,
   DM_Sans, Caprasimo,
@@ -63,6 +63,13 @@ const caprasimo = Caprasimo({
   display: 'swap',
 });
 
+const sourceSerif = Source_Serif_4({
+  weight: ['400', '600'],
+  subsets: ['latin'],
+  variable: '--font-source-serif',
+  display: 'swap',
+});
+
 const defaultGroupName =
   process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
   process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
@@ -79,7 +86,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Providers>
           <SkipLinks />

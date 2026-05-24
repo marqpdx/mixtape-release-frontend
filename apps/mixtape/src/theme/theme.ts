@@ -139,6 +139,7 @@ export const config = defineConfig({
       fonts: {
         body: { value: "var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif" },
         heading: { value: "var(--font-dm-serif), Georgia, 'Times New Roman', serif" },
+        serifBody: { value: "var(--font-source-serif), 'Source Serif 4', Georgia, 'Times New Roman', serif" },
         headingAdmin: { value: "'Joan', -apple-system, BlinkMacSystemFont, sans-serif" },
         mono: { value: "Menlo, Monaco, 'Courier New', monospace" },
       },

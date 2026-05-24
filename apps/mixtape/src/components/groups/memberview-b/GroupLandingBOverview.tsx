@@ -67,7 +67,7 @@ function Section({
         borderColor="theme.border"
         gap={4}
       >
-        <Text fontFamily="Georgia, 'Times New Roman', serif" fontSize="lg" color="theme.text">
+        <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
           {title}
         </Text>
         {meta ? (
@@ -77,6 +77,7 @@ function Section({
             letterSpacing="0.12em"
             textTransform="uppercase"
             color="theme.textSecondary"
+            opacity={0.6}
           >
             {meta}
           </Text>
@@ -116,7 +117,7 @@ export function GroupLandingBOverview({
       <SimpleGrid columns={{ base: 1, lg: 3 }} gap={{ base: 8, lg: 12 }}>
         <Section title="I · From the room" meta={welcomePin ? "WELCOME PINNED" : "GROUP SUMMARY"}>
           <Text
-            fontFamily="Georgia, 'Times New Roman', serif"
+            fontFamily="serifBody"
             fontSize={{ base: "md", md: "lg" }}
             lineHeight="1.75"
             color="theme.textSecondary"
@@ -136,7 +137,7 @@ export function GroupLandingBOverview({
           <Stack gap={5}>
             <Box>
               <Text
-                fontFamily="Georgia, 'Times New Roman', serif"
+                fontFamily="serifBody"
                 fontSize={{ base: "2xl", md: "3xl" }}
                 lineHeight="1.2"
                 color="theme.text"
@@ -163,17 +164,15 @@ export function GroupLandingBOverview({
               </Button>
             </HStack>
 
-            <Text
-              fontFamily="mono"
-              fontSize="11px"
-              letterSpacing="0.08em"
-              textTransform="uppercase"
-              color="theme.textSecondary"
-            >
-              {stall?.offerings_count
-                ? `${stall.offerings_count} bazaar offering${stall.offerings_count === 1 ? "" : "s"} live`
-                : "No bazaar offerings live right now"}
-            </Text>
+            {stall?.offerings_count ? (
+              <Text fontFamily="mono" fontSize="11px" letterSpacing="0.08em" textTransform="uppercase" color="theme.textSecondary">
+                {stall.offerings_count} bazaar offering{stall.offerings_count === 1 ? "" : "s"} live
+              </Text>
+            ) : (
+              <Text fontFamily="serifBody" fontSize="14px" fontStyle="italic" color="theme.textSecondary" opacity={0.6} lineHeight="1.5">
+                None this week. The board is clear.
+              </Text>
+            )}
           </Stack>
         </Section>
 
@@ -189,8 +188,8 @@ export function GroupLandingBOverview({
                   <Text color="theme.textSecondary" lineHeight="1.7">
                     {collections.length} collection{collections.length === 1 ? "" : "s"} holding {totalItems} item{totalItems === 1 ? "" : "s"}.
                   </Text>
-                  {collections.slice(0, 3).map((collection) => (
-                    <Text key={collection.id} fontFamily="Georgia, 'Times New Roman', serif" color="theme.text">
+                  {collections.slice().sort((a, b) => a.title === "Core Resources" ? -1 : b.title === "Core Resources" ? 1 : 0).slice(0, 3).map((collection) => (
+                    <Text key={collection.id} fontFamily="serifBody" color="theme.text">
                       {collection.title}
                     </Text>
                   ))}
@@ -203,7 +202,7 @@ export function GroupLandingBOverview({
             <Box>
               <HStack gap={2} mb={3} color="theme.text">
                 <IconUsers size={16} />
-                <Text fontWeight="600">Stewards</Text>
+                <Text fontWeight="600">Contributors</Text>
               </HStack>
               {membersLoading ? (
                 <Text color="theme.textSecondary">Loading contributors…</Text>
@@ -232,7 +231,7 @@ export function GroupLandingBOverview({
                   })}
                 </VStack>
               ) : (
-                <Text color="theme.textSecondary">No stewards are listed yet.</Text>
+                <Text color="theme.textSecondary">No contributors listed yet.</Text>
               )}
             </Box>
           </Stack>
@@ -263,7 +262,7 @@ export function GroupLandingBOverview({
               IV · Threads of intention
             </Text>
             <Text
-              fontFamily="Georgia, 'Times New Roman', serif"
+              fontFamily="serifBody"
               fontSize={{ base: "xl", md: "2xl" }}
               color="theme.text"
               lineHeight="1.35"

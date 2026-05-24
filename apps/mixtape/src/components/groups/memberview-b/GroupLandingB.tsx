@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Box, Button, Flex, Grid, HStack, Image, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, HStack, Image, Link, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import NextLink from "next/link";
 import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
@@ -83,7 +83,7 @@ export function GroupLandingB({
           isAdminOrSteward={isAdminOrSteward}
         >
           <Box borderBottomWidth="1px" borderColor="theme.border" bg="theme.bg">
-            <Box px={{ base: 5, md: 10, xl: 14 }} pt={{ base: 8, md: 12 }} pb={{ base: 10, md: 14 }}>
+            <Box px={{ base: 4, md: 8, xl: 12 }} pt={{ base: 6, md: 10 }} pb={{ base: 8, md: 12 }}>
               <Flex
                 direction={{ base: "column", md: "row" }}
                 justify="space-between"
@@ -101,7 +101,16 @@ export function GroupLandingB({
               >
                 <Text>{group.group_type} group</Text>
                 <Text>A member view on Mixtape</Text>
-                <Text>Founded {foundedLabel}</Text>
+                {onLayoutChange ? (
+                  <GroupLayoutSwitcher
+                    currentLayout={layoutVariant}
+                    onLayoutChange={onLayoutChange}
+                    ml={0}
+                    mb={0}
+                  />
+                ) : (
+                  <Text>Founded {foundedLabel}</Text>
+                )}
               </Flex>
 
               <Grid
@@ -115,7 +124,7 @@ export function GroupLandingB({
                       src={heroImage}
                       alt={`${group.title} cover`}
                       w="100%"
-                      h={{ base: "260px", md: "360px" }}
+                      h={{ base: "220px", md: "300px" }}
                       objectFit="cover"
                       objectPosition="center"
                       borderRadius="2px"
@@ -123,7 +132,7 @@ export function GroupLandingB({
                     />
                   ) : (
                     <Flex
-                      h={{ base: "260px", md: "360px" }}
+                      h={{ base: "220px", md: "300px" }}
                       borderWidth="1px"
                       borderStyle="dashed"
                       borderColor="theme.border"
@@ -163,7 +172,7 @@ export function GroupLandingB({
                     <Text
                       as="h1"
                       fontFamily="heading"
-                      fontSize={{ base: "5xl", md: "7xl", xl: "8xl" }}
+                      fontSize={{ base: "4xl", md: "6xl", xl: "7xl" }}
                       lineHeight="0.95"
                       letterSpacing="-0.03em"
                       color="theme.text"
@@ -172,7 +181,7 @@ export function GroupLandingB({
                       {group.title}
                     </Text>
                     <Text
-                      fontFamily="Georgia, 'Times New Roman', serif"
+                      fontFamily="serifBody"
                       fontSize={{ base: "xl", md: "2xl", xl: "3xl" }}
                       fontStyle="italic"
                       lineHeight="1.45"
@@ -213,33 +222,27 @@ export function GroupLandingB({
                         >
                           {label}
                         </Text>
-                        <Text fontFamily="Georgia, 'Times New Roman', serif" fontSize={{ base: "xl", md: "2xl" }} color="theme.text">
+                        <Text fontFamily="serifBody" fontSize={{ base: "xl", md: "2xl" }} color="theme.text">
                           {value}
                         </Text>
                       </Box>
                     ))}
                   </Grid>
 
-                  <Stack direction={{ base: "column", sm: "row" }} gap={3} justify="flex-start" pt={1}>
-                    <Link as={NextLink} href={`/groups/${group.slug}/me`}>
-                      <Button size="lg">Open my member page</Button>
-                    </Link>
-                    {stall?.offerings_count ? (
+                  {stall?.offerings_count ? (
+                    <Box pt={1}>
                       <Link as={NextLink} href={`/groups/${group.slug}/stall`}>
                         <Button size="lg" variant="outline">Visit bazaar stall</Button>
                       </Link>
-                    ) : null}
-                  </Stack>
+                    </Box>
+                  ) : null}
                 </Flex>
               </Grid>
             </Box>
           </Box>
         </GroupHeaderWrapper>
 
-        <Box px={{ base: 5, md: 10, xl: 14 }} pt={6} pb={12}>
-          {onLayoutChange ? (
-            <GroupLayoutSwitcher currentLayout={layoutVariant} onLayoutChange={onLayoutChange} mb={6} />
-          ) : null}
+        <Box px={{ base: 4, md: 8, xl: 12 }} pt={5} pb={10}>
           <GroupLandingBTabs group={group} />
         </Box>
       </Box>
