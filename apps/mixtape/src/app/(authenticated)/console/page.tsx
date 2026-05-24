@@ -248,6 +248,15 @@ export default function ConsolePage() {
                 >
                   🌐 Research
                 </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "pattern" ? "solid" : "outline"}
+                  colorPalette="cyan"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "pattern" ? "empty" : "pattern")}
+                >
+                  ◎ Pattern
+                </Button>
               </VStack>
             </Box>
             <Box

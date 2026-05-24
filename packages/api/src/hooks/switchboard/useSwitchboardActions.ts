@@ -9,6 +9,7 @@ import {
   submitAdd,
   submitFind,
   submitResearchAsync,
+  submitPatternAsync,
   type ClassifyAsyncRequest,
   type SummarizeAsyncRequest,
   type ContextShapeAsyncRequest,
@@ -22,6 +23,8 @@ import {
   type FindResponse,
   type ResearchAsyncRequest,
   type ResearchActionResult,
+  type PatternAsyncRequest,
+  type PatternActionResult,
 } from '../../clients/switchboard/switchboardApi';
 import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
@@ -40,6 +43,8 @@ export type {
   FindResponse,
   ResearchAsyncRequest,
   ResearchActionResult,
+  PatternAsyncRequest,
+  PatternActionResult,
   ApprovalMode,
 };
 
@@ -210,6 +215,39 @@ export function useFind() {
     result: mutation.data ?? null,
     error: mutation.error,
     reset: mutation.reset,
+  };
+}
+
+export function usePattern() {
+  const [actionRunId, setActionRunId] = useState<string | null>(null);
+
+  const submitMutation = useMutation({
+    mutationFn: submitPatternAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const poll = useActionRun(actionRunId);
+
+  const result =
+    poll.data?.status === 'succeeded'
+      ? (poll.data.result_payload as unknown as PatternActionResult)
+      : null;
+
+  return {
+    submit: submitMutation.mutate,
+    submitAsync: submitMutation.mutateAsync,
+    isSubmitting: submitMutation.isPending,
+    actionRunId,
+    actionRun: (poll.data ?? null) as ActionRun | null,
+    isPolling: poll.isFetching && !!actionRunId,
+    result,
+    error:
+      submitMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    reset: () => {
+      setActionRunId(null);
+      submitMutation.reset();
+    },
   };
 }
 

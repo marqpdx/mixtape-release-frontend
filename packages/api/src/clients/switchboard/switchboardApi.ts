@@ -197,3 +197,43 @@ export async function submitResearchAsync(
   const res = await axiosInstance.post("/api/switchboard/agent/research", payload);
   return res.data as ResearchAsyncResponse;
 }
+
+export interface PatternAsyncRequest {
+  query: string;
+  library_id?: string;
+  max_sources?: number;
+  surface?: 'mobile' | 'desktop';
+}
+
+export interface PatternAsyncResponse {
+  action_run_id: string;
+}
+
+export interface PatternTheme {
+  theme: string;
+  description: string;
+  frequency: 'high' | 'medium' | 'low';
+}
+
+export interface PatternCluster {
+  cluster_name: string;
+  description: string;
+}
+
+export interface PatternActionResult {
+  pattern_summary: string;
+  themes: PatternTheme[];
+  style_observations: string[];
+  content_gaps: string[];
+  content_clusters: PatternCluster[];
+  sources_analyzed: number;
+  model_used: string | null;
+  pattern_refused: boolean;
+}
+
+export async function submitPatternAsync(
+  payload: PatternAsyncRequest
+): Promise<PatternAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/pattern", payload);
+  return res.data as PatternAsyncResponse;
+}

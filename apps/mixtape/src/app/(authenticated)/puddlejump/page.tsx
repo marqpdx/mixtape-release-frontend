@@ -40,6 +40,7 @@ const MENU_ITEMS: MenuItem[] = [
       { key: 'add', label: 'Add to list' },
       { key: 'find', label: 'Find in library' },
       { key: 'research', label: 'Research' },
+      { key: 'pattern', label: 'Pattern' },
     ],
   },
 ];
