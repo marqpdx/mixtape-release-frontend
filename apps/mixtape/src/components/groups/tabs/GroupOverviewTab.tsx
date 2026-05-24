@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
 import { IconShoppingBag, IconFolder, IconInfoCircle, IconSpeakerphone, IconUsers, IconX } from "@tabler/icons-react";
+import { InfoBlockModal } from "@/components/groups/InfoBlockModal";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
@@ -64,6 +65,20 @@ type DismissableKey = (typeof DISMISSABLE_BLOCKS)[number]["key"];
 
 export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabProps) {
   const dismissStorageKey = `group:${group.slug}:dismissed-blocks`;
+  const infoStorageKey = `group:${group.slug}:info-dismissed`;
+
+  const [infoDismissed, setInfoDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return localStorage.getItem(`group:${group.slug}:info-dismissed`) === "1"; } catch { return false; }
+  });
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
+  const dismissInfo = () => {
+    setInfoModalOpen(false);
+    setInfoDismissed(true);
+    try { localStorage.setItem(infoStorageKey, "1"); } catch {}
+  };
+
   const [dismissedBlocks, setDismissedBlocks] = useState<DismissableKey[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -106,15 +121,18 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
 
   const isDismissed = (key: DismissableKey) => dismissedBlocks.includes(key);
 
-  // Restore all blocks when arriving from the new-member onboarding flow
+  // Restore all blocks and open info modal when arriving from the new-member onboarding flow
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("new_member") === "1") {
       setDismissedBlocks([]);
       localStorage.removeItem(dismissStorageKey);
+      setInfoDismissed(false);
+      try { localStorage.removeItem(infoStorageKey); } catch {}
+      setInfoModalOpen(true);
     }
-  }, [dismissStorageKey]);
+  }, [dismissStorageKey, infoStorageKey]);
 
   // Space between blocks — must match the gap removed from Stack/Grid below
   const BLOCK_GAP = "24px";
@@ -553,13 +571,30 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
   );
 
   const dismissedMeta = DISMISSABLE_BLOCKS.filter((b) => dismissedBlocks.includes(b.key));
+  const showRestoreBar = dismissedMeta.length > 0 || infoDismissed;
 
   return (
     <Stack gap={6}>
-      {/* Restore bar — shows icons for any dismissed blocks */}
-      {dismissedMeta.length > 0 && (
+      <InfoBlockModal open={infoModalOpen} onClose={dismissInfo} />
+
+      {/* Restore bar — shows icons for any dismissed blocks plus info (i) when dismissed */}
+      {showRestoreBar && (
         <Flex align="center" gap={2} justify="flex-end" flexWrap="wrap">
           <Text fontSize="xs" color="fg.muted">Minimized:</Text>
+          {infoDismissed && (
+            <Tooltip content="View getting-started guide">
+              <IconButton
+                aria-label="View getting-started guide"
+                size="xs"
+                variant="outline"
+                color="blue.500"
+                borderColor="blue.500"
+                onClick={() => setInfoModalOpen(true)}
+              >
+                <IconInfoCircle size={14} />
+              </IconButton>
+            </Tooltip>
+          )}
           {dismissedMeta.map(({ key, label, icon: Icon }) => (
             <Tooltip key={key} content={`Restore ${label}`}>
               <IconButton
@@ -572,9 +607,11 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
               </IconButton>
             </Tooltip>
           ))}
-          <Button size="xs" variant="ghost" onClick={restoreAll}>
-            Restore all
-          </Button>
+          {dismissedMeta.length > 0 && (
+            <Button size="xs" variant="ghost" onClick={restoreAll}>
+              Restore all
+            </Button>
+          )}
         </Flex>
       )}
 
