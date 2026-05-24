@@ -141,3 +141,59 @@ export async function submitAdd(payload: AddRequest): Promise<AddResponse> {
   const res = await axiosInstance.post("/api/switchboard/agent/add", payload);
   return res.data as AddResponse;
 }
+
+export interface FindResult {
+  text: string;
+  score: number;
+  artifact_type: string;
+  artifact_id: string;
+  source_file_id: string;
+}
+
+export interface FindRequest {
+  query: string;
+  library_id?: string;
+  limit?: number;
+  score_threshold?: number;
+  surface?: 'mobile' | 'desktop';
+}
+
+export interface FindResponse {
+  results: FindResult[];
+  query: string;
+  library_id: string;
+  result_count: number;
+  action_run_id: string;
+}
+
+export async function submitFind(payload: FindRequest): Promise<FindResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/find", payload);
+  return res.data as FindResponse;
+}
+
+export interface ResearchAsyncRequest {
+  query: string;
+  max_sources?: number;
+  surface?: 'mobile' | 'desktop';
+}
+
+export interface ResearchAsyncResponse {
+  action_run_id: string;
+}
+
+export interface ResearchActionResult {
+  research_summary: string;
+  key_points: string[];
+  sources_used: string[];
+  source_urls: string[];
+  source_count: number;
+  model_used: string | null;
+  research_refused: boolean;
+}
+
+export async function submitResearchAsync(
+  payload: ResearchAsyncRequest
+): Promise<ResearchAsyncResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/research", payload);
+  return res.data as ResearchAsyncResponse;
+}

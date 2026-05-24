@@ -13,12 +13,14 @@ import { useHandoverDraft } from "@mixtape/api/hooks/initiatives";
 import { createApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { ContextSummary } from "./ContextSummary";
 import AddPanel from "@components/puddlejump/panels/AddPanel";
+import FindPanel from "@components/puddlejump/panels/FindPanel";
+import ResearchPanel from "@components/puddlejump/panels/ResearchPanel";
 import DraftPanel from "@components/puddlejump/panels/DraftPanel";
 import RefinePanel from "@components/puddlejump/panels/RefinePanel";
 import type { WorkTableContext } from "./types";
 import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 
-export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover" | "draft" | "refine" | "add";
+export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover" | "draft" | "refine" | "add" | "find" | "research";
 
 // ---------------------------------------------------------------------------
 // Shared header with back button
@@ -476,6 +478,8 @@ export function ActionPanel({
         <EmptyState context={context} />
       )}
       {mode === "add" && <AddPanel surface="console" />}
+      {mode === "find" && <FindPanel surface="console" />}
+      {mode === "research" && <ResearchPanel surface="console" />}
       {mode === "draft" && <DraftPanel surface="console" />}
       {mode === "refine" && <RefinePanel surface="console" />}
     </Box>

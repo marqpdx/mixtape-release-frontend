@@ -38,6 +38,8 @@ const MENU_ITEMS: MenuItem[] = [
       { key: 'draft', label: 'Draft' },
       { key: 'refine', label: 'Refine' },
       { key: 'add', label: 'Add to list' },
+      { key: 'find', label: 'Find in library' },
+      { key: 'research', label: 'Research' },
     ],
   },
 ];

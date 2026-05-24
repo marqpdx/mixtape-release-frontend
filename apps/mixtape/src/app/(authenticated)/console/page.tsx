@@ -230,6 +230,24 @@ export default function ConsolePage() {
                 >
                   + Add to list
                 </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "find" ? "solid" : "outline"}
+                  colorPalette="teal"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "find" ? "empty" : "find")}
+                >
+                  🔍 Find in library
+                </Button>
+                <Button
+                  size="sm"
+                  variant={actionMode === "research" ? "solid" : "outline"}
+                  colorPalette="orange"
+                  width="full"
+                  onClick={() => setActionMode(actionMode === "research" ? "empty" : "research")}
+                >
+                  🌐 Research
+                </Button>
               </VStack>
             </Box>
             <Box
