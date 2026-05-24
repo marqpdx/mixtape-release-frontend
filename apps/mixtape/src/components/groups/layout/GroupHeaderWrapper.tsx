@@ -39,7 +39,7 @@ export function GroupHeaderWrapper({
       )}
 
       {/* Header content (varies by type - Admin/Member/Public) */}
-      <Box className="whatho" textAlign={'center'}>{children}</Box>
+      <Box className="whatho" w="full">{children}</Box>
     </Box>
   );
 }

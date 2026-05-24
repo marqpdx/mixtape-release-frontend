@@ -13,11 +13,13 @@ import DashboardLayout from "@components/common/DashboardLayout";
 import { canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { GroupLanding } from "@/components/groups/layout/GroupLanding";
+import { GroupLandingB } from "@/components/groups/memberview-b/GroupLandingB";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 import { canAccessSection } from "@/config/groupSectionPermissions";
+import type { GroupLayoutVariant } from "@/components/groups/GroupLayoutSwitcher";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -26,6 +28,7 @@ export default function GroupPage() {
   const slugStr = Array.isArray(slug) ? slug[0] : (slug as string);
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view") as ViewRole | null;
+  const urlLayout = searchParams.get("layout") as GroupLayoutVariant | null;
 
   const { group, isLoading, refetch } = useGroup(slugStr);
 
@@ -47,14 +50,20 @@ export default function GroupPage() {
     () => (group ? `group-${group.slug}-view` : null),
     [group]
   );
+  const layoutStorageKey = useMemo(
+    () => (group ? `group-${group.slug}-member-layout` : null),
+    [group]
+  );
 
   // console.log("aaa GroupPage debug:", { slugStr, group, isMember, isAdmin, isSteward, primaryRole, roles });
 
   // UI state: what view to render as
   const [testRole, setTestRole] = useState<ViewRole>("public");
+  const [layoutVariant, setLayoutVariant] = useState<GroupLayoutVariant>("a");
 
   // Flag to prevent the "early overwrite" of localStorage
   const [didInit, setDidInit] = useState(false);
+  const [didInitLayout, setDidInitLayout] = useState(false);
 
   // Helper: validate a candidate view for current permissions
   const clampViewToPermissions = useCallback((candidate: ViewRole): ViewRole => {
@@ -62,6 +71,9 @@ export default function GroupPage() {
     if (isMember) return candidate === "admin" ? "member" : candidate; // members: no admin
     return "public"; // public: only public
   }, [canUseAdminView, isMember]);
+  const clampLayoutVariant = useCallback((candidate: GroupLayoutVariant): GroupLayoutVariant => {
+    return candidate === "b" ? "b" : "a";
+  }, []);
 
   // Decide initial view (reads localStorage *after* group is available)
   useEffect(() => {
@@ -94,6 +106,30 @@ export default function GroupPage() {
     setDidInit(true); // allow subsequent saves
   }, [group, canUseAdminView, isMember, storageKey, urlView, clampViewToPermissions]);
 
+  useEffect(() => {
+    if (!group) return;
+
+    const fromUrl =
+      urlLayout && ["a", "b"].includes(urlLayout)
+        ? (urlLayout as GroupLayoutVariant)
+        : null;
+
+    let fromStorage: GroupLayoutVariant | null = null;
+    if (layoutStorageKey && typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(layoutStorageKey);
+        if (raw === "a" || raw === "b") {
+          fromStorage = raw;
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    setLayoutVariant(clampLayoutVariant(fromUrl ?? fromStorage ?? "a"));
+    setDidInitLayout(true);
+  }, [group, layoutStorageKey, urlLayout, clampLayoutVariant]);
+
   // Persist preference only *after* initialization
   useEffect(() => {
     if (!didInit || !storageKey) return;
@@ -103,6 +139,15 @@ export default function GroupPage() {
       // ignore storage errors
     }
   }, [didInit, storageKey, testRole]);
+
+  useEffect(() => {
+    if (!didInitLayout || !layoutStorageKey) return;
+    try {
+      localStorage.setItem(layoutStorageKey, layoutVariant);
+    } catch {
+      // ignore storage errors
+    }
+  }, [didInitLayout, layoutStorageKey, layoutVariant]);
 
   const handleJoinGroup = async () => {
     try {
@@ -122,6 +167,7 @@ export default function GroupPage() {
 
   const viewingAsAdmin = testRole === "admin";
   const showAdminDashboard = canUseAdminView && viewingAsAdmin;
+  const viewingAsMember = testRole === "member" || testRole === "admin";
 
   // Circle parent context bar (shown for all views)
   const circleBar = <CircleParentBar group={group} />;
@@ -184,6 +230,18 @@ export default function GroupPage() {
         isMember={isMember}
       />
       {circleBar}
+      {viewingAsMember && layoutVariant === "b" ? (
+        <GroupLandingB
+          group={group}
+          testRole={testRole}
+          onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
+          isMember={isMember}
+          isAdminOrSteward={canUseAdminView}
+          canEditGroup={canEditGroup}
+          layoutVariant={layoutVariant}
+          onLayoutChange={(next) => setLayoutVariant(clampLayoutVariant(next))}
+        />
+      ) : (
         <GroupLanding
           group={group}
           userRole={primaryRole}
@@ -193,7 +251,10 @@ export default function GroupPage() {
           isMember={isMember}
           isAdminOrSteward={canUseAdminView}
           canEditGroup={canEditGroup}
+          layoutVariant={layoutVariant}
+          onLayoutChange={viewingAsMember ? (next) => setLayoutVariant(clampLayoutVariant(next)) : undefined}
         />
+      )}
       </Box>
   );
 }
