@@ -82,7 +82,7 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
                   >
                     {tab.numeral}
                   </Text>
-                  <Text fontFamily="Georgia, 'Times New Roman', serif" fontSize="md">
+                  <Text fontFamily="serifBody" fontSize="md">
                     {tab.label}
                   </Text>
                 </HStack>
