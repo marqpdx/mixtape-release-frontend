@@ -4,13 +4,10 @@
 
 import { useState } from 'react';
 import {
-  Container,
   VStack,
   HStack,
-  Heading,
   Text,
   Box,
-  Card,
   Button,
   Badge,
   Spinner,
@@ -26,7 +23,6 @@ import {
   IconX,
   IconFolder,
   IconFile,
-  IconFolderPlus,
 } from '@tabler/icons-react';
 import {
   useCollection,
@@ -41,11 +37,13 @@ import { toaster } from '@/components/ui/toaster';
 interface CollectionDetailWorkAreaProps {
   collectionId: string;
   onBack?: () => void;
+  canEdit?: boolean;
 }
 
 export function CollectionDetailWorkArea({
   collectionId,
   onBack,
+  canEdit = false,
 }: CollectionDetailWorkAreaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -107,14 +105,6 @@ export function CollectionDetailWorkArea({
     setEditSummary('');
   };
 
-  const handleCreateFolder = async () => {
-    toaster.create({
-      title: 'Folders not ready',
-      description: 'Folder creation is coming soon. Use tags or notes for now.',
-      type: 'warning',
-    });
-  };
-
   const handleDelete = async () => {
     if (!confirm('Delete this collection? This action cannot be undone.')) {
       return;
@@ -142,287 +132,250 @@ export function CollectionDetailWorkArea({
 
   if (isLoading) {
     return (
-      <Container maxWidth="1200px" py={8}>
-        <Box textAlign="center" py={20}>
-          <Spinner size="xl" />
-          <Text mt={4} color="gray.600">
-            Loading collection...
-          </Text>
-        </Box>
-      </Container>
+      <Box py={16} textAlign="center">
+        <Spinner size="lg" color="theme.accent" />
+        <Text mt={4} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase" color="theme.textSecondary">
+          Loading collection…
+        </Text>
+      </Box>
     );
   }
 
   if (!collection) {
     return (
-      <Container maxWidth="1200px" py={8}>
-        <Box textAlign="center" py={20}>
-          <Text fontSize="xl" fontWeight="bold" color="red.500" mb={4}>
-            Collection not found
-          </Text>
-          {onBack && (
-            <Button onClick={onBack} size="sm">
-              <HStack gap={2}>
-                <IconArrowLeft size={16} />
-                <Text>Go Back</Text>
-              </HStack>
-            </Button>
-          )}
-        </Box>
-      </Container>
+      <Box py={16} textAlign="center">
+        <Text color="theme.textSecondary" mb={4}>Collection not found.</Text>
+        {onBack && (
+          <Button variant="outline" size="sm" onClick={onBack}>
+            <IconArrowLeft size={14} />
+            Go back
+          </Button>
+        )}
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="1200px" py={8}>
-      <VStack gap={6} align="stretch">
-        {/* Header with Back Button */}
-        {onBack && (
+    <VStack gap={0} align="stretch">
+      {/* Back nav */}
+      {onBack && (
+        <Box pb={5}>
           <Button
             variant="ghost"
-            onClick={onBack}
             size="sm"
-            alignSelf="flex-start"
+            onClick={onBack}
+            color="theme.textSecondary"
+            px={0}
+            _hover={{ color: "theme.text" }}
           >
-            <HStack gap={2}>
-              <IconArrowLeft size={16} />
-              <Text>Back to Collections</Text>
-            </HStack>
+            <IconArrowLeft size={14} />
+            <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+              All collections
+            </Text>
           </Button>
-        )}
+        </Box>
+      )}
 
-        {/* Collection Header */}
-        <Card.Root>
-          <Card.Body>
-            <VStack align="stretch" gap={4}>
-              {isEditing ? (
-                // Edit Mode
-                <>
-                  <Box>
-                    <Text fontSize="sm" fontWeight="medium" mb={2}>
-                      Title
+      {/* Collection header */}
+      <Box
+        pb={6}
+        mb={6}
+        borderBottom="1px solid"
+        borderColor="theme.border"
+      >
+        {isEditing ? (
+          <VStack align="stretch" gap={4} maxW="600px">
+            <Box>
+              <Text fontFamily="mono" fontSize="10px" letterSpacing="0.12em" textTransform="uppercase" color="theme.textSecondary" mb={2}>
+                Title
+              </Text>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                size="md"
+                fontFamily="serifBody"
+                fontSize="lg"
+              />
+            </Box>
+            <Box>
+              <Text fontFamily="mono" fontSize="10px" letterSpacing="0.12em" textTransform="uppercase" color="theme.textSecondary" mb={2}>
+                Summary
+              </Text>
+              <Textarea
+                value={editSummary}
+                onChange={(e) => setEditSummary(e.target.value)}
+                size="md"
+                rows={3}
+                fontFamily="serifBody"
+              />
+            </Box>
+            <HStack gap={2}>
+              <Button
+                size="sm"
+                onClick={handleSaveEdit}
+                loading={updateMutation.isPending}
+                bg="theme.text"
+                color="theme.bg"
+                _hover={{ opacity: 0.88 }}
+              >
+                <IconCheck size={14} />
+                Save
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                <IconX size={14} />
+                Cancel
+              </Button>
+            </HStack>
+          </VStack>
+        ) : (
+          <HStack justify="space-between" align="start" gap={4}>
+            <Box>
+              <Text
+                fontFamily="heading"
+                fontSize={{ base: "2xl", md: "3xl" }}
+                lineHeight="1.1"
+                letterSpacing="-0.02em"
+                color="theme.text"
+                mb={collection.summary ? 2 : 0}
+              >
+                {collection.title}
+              </Text>
+              {collection.summary && (
+                <Text
+                  fontFamily="serifBody"
+                  fontSize={{ base: "md", md: "lg" }}
+                  fontStyle="italic"
+                  lineHeight="1.6"
+                  color="theme.textSecondary"
+                  maxW="48rem"
+                >
+                  {collection.summary}
+                </Text>
+              )}
+              <HStack gap={6} mt={3}>
+                <HStack gap={1.5} color="theme.textSecondary">
+                  <IconFile size={14} />
+                  <Text fontFamily="mono" fontSize="11px" letterSpacing="0.08em">
+                    {collection.item_count} items
+                  </Text>
+                </HStack>
+                {collection.file_count > 0 && (
+                  <HStack gap={1.5} color="theme.textSecondary">
+                    <IconFolder size={14} />
+                    <Text fontFamily="mono" fontSize="11px" letterSpacing="0.08em">
+                      {collection.file_count} files
                     </Text>
-                    <Input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      size="md"
-                    />
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="medium" mb={2}>
-                      Summary
-                    </Text>
-                    <Textarea
-                      value={editSummary}
-                      onChange={(e) => setEditSummary(e.target.value)}
-                      size="md"
-                      rows={3}
-                    />
-                  </Box>
-
-                  <HStack>
-                    <Button
-                      colorPalette="blue"
-                      onClick={handleSaveEdit}
-                      loading={updateMutation.isPending}
-                      size="sm"
-                    >
-                      <HStack gap={2}>
-                        <IconCheck size={16} />
-                        <Text>Save</Text>
-                      </HStack>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={handleCancelEdit}
-                      size="sm"
-                    >
-                      <HStack gap={2}>
-                        <IconX size={16} />
-                        <Text>Cancel</Text>
-                      </HStack>
-                    </Button>
                   </HStack>
-                </>
-              ) : (
-                // View Mode
-                <>
-                  <HStack justify="space-between" align="start">
-                    <HStack gap={3}>
-                      <IconFolder size={32} color="var(--chakra-colors-blue-500)" />
-                      <Box>
-                        <Heading size="lg">{collection.title}</Heading>
-                        {collection.summary && (
-                          <Text color="gray.600" mt={1}>
-                            {collection.summary}
-                          </Text>
-                        )}
-                      </Box>
-                    </HStack>
-
-                    <HStack gap={2}>
-                      <IconButton
-                        aria-label="Edit collection"
-                        variant="ghost"
-                        onClick={handleStartEdit}
-                        size="sm"
-                      >
-                        <IconPencil size={20} />
-                      </IconButton>
-                    </HStack>
-                  </HStack>
-
-                  {/* Stats */}
-                  <HStack gap={8} fontSize="sm">
-                    <HStack gap={2} color="gray.600">
-                      <IconFile size={20} />
-                      <Text fontWeight="bold" fontSize="lg">
-                        {collection.item_count}
-                      </Text>
-                      <Text>items</Text>
-                    </HStack>
-
-                    <HStack gap={2} color="gray.600">
-                      <IconFolder size={20} />
-                      <Text fontWeight="bold" fontSize="lg">
-                        {collection.file_count}
-                      </Text>
-                      <Text>files</Text>
-                    </HStack>
-
-                    {collection.ingestion_status && (
-                      <HStack gap={2} color="gray.600">
-                        <IconCheck size={20} />
-                        <Text fontWeight="bold" fontSize="lg">
-                          {collection.ingestion_status.ready}
-                        </Text>
-                        <Text>ready</Text>
-                      </HStack>
+                )}
+                {collection.ingestion_status && (
+                  <HStack gap={2}>
+                    <Badge size="sm" variant="outline">
+                      {collection.ingestion_status.ready} indexed
+                    </Badge>
+                    {collection.ingestion_status.processing > 0 && (
+                      <Badge size="sm" colorPalette="blue" variant="outline">
+                        {collection.ingestion_status.processing} processing
+                      </Badge>
+                    )}
+                    {collection.ingestion_status.failed > 0 && (
+                      <Badge size="sm" colorPalette="red" variant="outline">
+                        {collection.ingestion_status.failed} failed
+                      </Badge>
                     )}
                   </HStack>
-
-                  {/* Ingestion Status - Subtle sparkle indicator */}
-                  {collection.ingestion_status && (
-                    <IndexingStatus ingestionStatus={collection.ingestion_status} />
-                  )}
-
-                  {/* Ingestion Status Badges (detailed view) */}
-                  {collection.ingestion_status && (
-                    <HStack gap={2}>
-                      <Badge colorPalette="green" size="sm">
-                        {collection.ingestion_status.ready} ready
-                      </Badge>
-                      {collection.ingestion_status.processing > 0 && (
-                        <Badge colorPalette="blue" size="sm">
-                          {collection.ingestion_status.processing} processing
-                        </Badge>
-                      )}
-                      {collection.ingestion_status.failed > 0 && (
-                        <Badge colorPalette="red" size="sm">
-                          {collection.ingestion_status.failed} failed
-                        </Badge>
-                      )}
-                      {collection.ingestion_status.pending > 0 && (
-                        <Badge colorPalette="gray" size="sm">
-                          {collection.ingestion_status.pending} pending
-                        </Badge>
-                      )}
-                    </HStack>
-                  )}
-                </>
+                )}
+              </HStack>
+              {collection.ingestion_status && (
+                <Box mt={2}>
+                  <IndexingStatus ingestionStatus={collection.ingestion_status} />
+                </Box>
               )}
-            </VStack>
-          </Card.Body>
-        </Card.Root>
+            </Box>
+            {canEdit && (
+              <IconButton
+                aria-label="Edit collection"
+                variant="ghost"
+                size="sm"
+                color="theme.textSecondary"
+                _hover={{ color: "theme.text" }}
+                onClick={handleStartEdit}
+                flexShrink={0}
+              >
+                <IconPencil size={16} />
+              </IconButton>
+            )}
+          </HStack>
+        )}
+      </Box>
 
-        {/* Two-Pane Layout: Collection Items (60%) | Available Items (40%) */}
-        <Grid
-          templateColumns={{ base: '1fr', lg: '60fr 40fr' }}
-          gap={6}
-          alignItems="start"
-        >
-          {/* Left Pane: This Collection */}
-          <Card.Root>
-            <Card.Header>
-              <HStack gap={2} justify="space-between" width="100%">
-                <HStack gap={2}>
-                  <IconFile size={24} />
-                  <Heading size="md">This Collection</Heading>
-                  <Badge colorPalette="blue" size="sm">
-                    {collection.item_count} items
-                  </Badge>
-                </HStack>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCreateFolder}
-                  colorPalette="blue"
-                >
-                  <IconFolderPlus size={18} />
-                  New Folder
-                </Button>
-              </HStack>
-            </Card.Header>
-            <Card.Body>
-              <CollectionItemsList
-                collectionId={collectionId}
-                onEditItem={(itemId) => {
-                  console.log('Edit item:', itemId);
-                  // TODO: Implement edit modal
-                }}
-              />
-            </Card.Body>
-          </Card.Root>
+      {/* Two-pane layout: items (wider) | add items (narrower, admin only) */}
+      <Grid
+        templateColumns={{ base: "1fr", lg: canEdit ? "3fr 2fr" : "1fr" }}
+        gap={8}
+        alignItems="start"
+      >
+        {/* Items */}
+        <Box>
+          <Box
+            pb={3}
+            mb={4}
+            borderBottom="1px solid"
+            borderColor="theme.border"
+          >
+            <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
+              Items in this collection
+            </Text>
+          </Box>
+          <CollectionItemsList
+            collectionId={collectionId}
+            onEditItem={canEdit ? (itemId) => { console.log('Edit item:', itemId); } : undefined}
+          />
+        </Box>
 
-          {/* Right Pane: Available Items */}
-          <Card.Root>
-            <Card.Header>
-              <HStack gap={2}>
-                <IconFolder size={24} />
-                <Heading size="md">Add to Collection</Heading>
-              </HStack>
-              <Text color="gray.600" fontSize="sm" mt={2}>
-                Browse and add files, documents, or link other collections
+        {/* Add to collection — admin/steward only */}
+        {canEdit && (
+          <Box>
+            <Box
+              pb={3}
+              mb={4}
+              borderBottom="1px solid"
+              borderColor="theme.border"
+            >
+              <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
+                Add to collection
               </Text>
-            </Card.Header>
-            <Card.Body>
-              <CollectionBrowser
-                collectionId={collectionId}
-                onItemAdded={() => {
-                  refetch();
-                }}
-              />
-            </Card.Body>
-          </Card.Root>
-        </Grid>
+            </Box>
+            <Text fontFamily="serifBody" fontSize="sm" fontStyle="italic" color="theme.textSecondary" mb={4} lineHeight="1.6">
+              Browse files and documents to add to this collection.
+            </Text>
+            <CollectionBrowser
+              collectionId={collectionId}
+              onItemAdded={() => { refetch(); }}
+            />
+          </Box>
+        )}
+      </Grid>
 
-        {/* Danger Zone */}
-        <Card.Root borderColor="red.300" bg="red.50">
-          <Card.Body>
-            <VStack align="stretch" gap={3}>
-              <Heading size="sm" color="red.700">
-                Danger Zone
-              </Heading>
-              <Text fontSize="sm" color="red.600">
-                Deleting a collection will remove all items from it, but will
-                not delete the underlying files or documents.
-              </Text>
-              <Box>
-                <Button
-                  colorPalette="red"
-                  variant="outline"
-                  onClick={handleDelete}
-                  loading={deleteMutation.isPending}
-                  size="sm"
-                >
-                  Delete Collection
-                </Button>
-              </Box>
-            </VStack>
-          </Card.Body>
-        </Card.Root>
-      </VStack>
-    </Container>
+      {/* Danger zone — admin/steward only */}
+      {canEdit && (
+        <Box mt={10} pt={6} borderTop="1px solid" borderColor="theme.border">
+          <Text fontFamily="mono" fontSize="10px" letterSpacing="0.12em" textTransform="uppercase" color="theme.textSecondary" mb={3}>
+            Delete collection
+          </Text>
+          <Text fontSize="sm" color="theme.textSecondary" mb={4} lineHeight="1.6">
+            Removes all items from this collection. The underlying files and documents are not deleted.
+          </Text>
+          <Button
+            variant="outline"
+            size="sm"
+            colorPalette="red"
+            onClick={handleDelete}
+            loading={deleteMutation.isPending}
+          >
+            Delete collection
+          </Button>
+        </Box>
+      )}
+    </VStack>
   );
 }
