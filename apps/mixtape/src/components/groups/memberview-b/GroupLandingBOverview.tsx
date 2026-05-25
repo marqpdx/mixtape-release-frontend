@@ -14,9 +14,10 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { IconArrowRight, IconFolder, IconShoppingBag } from "@tabler/icons-react";
+import { IconArrowRight, IconShoppingBag } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
-import { useGroupWelcomePin, useMembers } from "@mixtape/api/hooks";
+import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
+import { useMembers } from "@mixtape/api/hooks";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 
@@ -24,28 +25,6 @@ interface GroupLandingBOverviewProps {
   group: Group;
   onNavigateToTab?: (tab: string) => void;
   onOpenCollection?: (collectionId: string) => void;
-}
-
-type TipTapLikeNode = {
-  text?: string;
-  content?: TipTapLikeNode[];
-};
-
-function collectNodeText(node: TipTapLikeNode | null | undefined): string {
-  if (!node) return "";
-  let out = node.text || "";
-  if (node.content && Array.isArray(node.content)) {
-    for (const child of node.content) {
-      out += ` ${collectNodeText(child)}`;
-    }
-  }
-  return out;
-}
-
-function truncateWords(input: string, limit: number): string {
-  const words = input.trim().split(/\s+/).filter(Boolean);
-  if (words.length <= limit) return input.trim();
-  return `${words.slice(0, limit).join(" ")}...`;
 }
 
 function Section({
@@ -103,18 +82,12 @@ export function GroupLandingBOverview({
   onNavigateToTab,
   onOpenCollection,
 }: GroupLandingBOverviewProps) {
-  const { pin: welcomePin } = useGroupWelcomePin(group.slug);
   const { adminMembers, stewardMembers, isLoading: membersLoading } = useMembers(group.slug);
   const { collections } = useCollections({ sponsor_type: "group", sponsor_id: group.id });
   const { stall } = useStall("group", group.id);
+  const isAdminOrSteward = canUserModerateGroup(group);
 
-  const welcomeText = useMemo(() => {
-    const body = welcomePin?.display?.body_json || welcomePin?.piece.body_json;
-    const extracted = collectNodeText(body as TipTapLikeNode | undefined).replace(/\s+/g, " ").trim();
-    const excerpt = welcomePin?.display?.excerpt?.trim() || welcomePin?.piece.excerpt?.trim();
-    const summary = group.summary?.trim() || group.description?.trim();
-    return truncateWords(excerpt || extracted || summary || "This group is still writing its welcome note.", 85);
-  }, [group.description, group.summary, welcomePin]);
+  const aboutText = group.body?.trim() || group.description?.trim() || "";
 
   const leaders = useMemo(() => {
     const stewards = stewardMembers.filter((member) => !member.roles.includes("admin"));
@@ -133,38 +106,51 @@ export function GroupLandingBOverview({
   return (
     <Stack gap={12}>
       <SimpleGrid columns={{ base: 1, lg: 3 }} gap={{ base: 8, lg: 10, xl: 12 }} alignItems="start">
+        {/* I · About Us */}
         <Section title="I · About us">
           <Text
             fontFamily="serifBody"
             fontSize={{ base: "md", md: "lg" }}
             lineHeight="1.8"
             color="theme.textSecondary"
+            whiteSpace="pre-wrap"
             _firstLetter={{
-              fontSize: { base: "3xl", md: "5xl" },
-              lineHeight: "0.9",
+              fontSize: { base: "4rem", md: "6rem" },
+              lineHeight: "1",
               fontWeight: "600",
-              mr: "0.12em",
+              mr: "0.1em",
+              mt: "0.25em",
               float: "left",
               color: "theme.text",
             }}
           >
-            {welcomeText}
+            {aboutText || "This group is still writing its introduction."}
           </Text>
-          {welcomePin?.piece.slug ? (
-            <Link as={NextLink} href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
-              <Button mt={5} variant="outline" size="sm">
-                Read full welcome
-              </Button>
-            </Link>
-          ) : null}
+          {(group.author_name || group.submitted_by_username) && (
+            <Text
+              fontFamily="mono"
+              fontSize="10px"
+              letterSpacing="0.1em"
+              textTransform="uppercase"
+              color="theme.textSecondary"
+              mt={5}
+            >
+              {group.author_name || group.submitted_by_username}
+              {group.submitted_by_username && group.author_name
+                ? ` — ${group.submitted_by_username}`
+                : ""}
+              {" · group steward"}
+            </Text>
+          )}
         </Section>
 
         <Stack gap={8}>
+          {/* II · Open Question */}
           <Section title="II · Open question">
             <Stack gap={5}>
               <Text
                 fontFamily="serifBody"
-                fontSize={{ base: "xl", md: "2xl" }}
+                fontSize={{ base: "lg", md: "xl" }}
                 lineHeight="1.4"
                 color="theme.text"
                 fontStyle="italic"
@@ -173,17 +159,8 @@ export function GroupLandingBOverview({
               </Text>
 
               <HStack gap={3} flexWrap="wrap">
-                <Button size="sm" variant="outline">
-                  Submit a note
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => onNavigateToTab?.("threadworks")}
-                  bg="theme.text"
-                  color="theme.bg"
-                  _hover={{ opacity: 0.9 }}
-                >
-                  Open conversations
+                <Button size="xs" variant="outline">
+                  Submit a reply
                 </Button>
               </HStack>
 
@@ -216,10 +193,11 @@ export function GroupLandingBOverview({
         </Stack>
 
         <Stack gap={8}>
+          {/* III · Library */}
           <Section title="III · Library">
             <Stack gap={5}>
               {orderedCollections.length > 0 ? (
-                <VStack align="stretch" gap={5}>
+                <VStack align="stretch" gap={4}>
                   {orderedCollections.map((collection) => (
                     <Box key={collection.id}>
                       <Box
@@ -230,32 +208,59 @@ export function GroupLandingBOverview({
                         <button
                           type="button"
                           onClick={() => onOpenCollection?.(String(collection.id))}
-                          style={{
-                            width: "100%",
-                            textAlign: "left",
-                          }}
+                          style={{ width: "100%", textAlign: "left" }}
                         >
-                        <HStack gap={2} align="baseline" mb={1} color="theme.text">
-                          <IconFolder size={15} />
-                          <Text
-                            fontFamily="serifBody"
-                            fontWeight="700"
-                            fontSize={{ base: "lg", md: "xl" }}
-                            lineHeight="1.2"
-                            textDecoration={onOpenCollection ? "underline" : "none"}
-                            textUnderlineOffset="0.16em"
-                          >
-                            {collection.title}
-                          </Text>
-                        </HStack>
-                        <Text
-                          pl={6}
-                          color="theme.textSecondary"
-                          lineHeight="1.7"
-                          fontSize={{ base: "sm", md: "md" }}
-                        >
-                          {collection.summary?.trim() || "No summary has been added for this collection yet."}
-                        </Text>
+                          <HStack gap={3} align="start">
+                            {/* Item count — left column */}
+                            <Text
+                              fontFamily="mono"
+                              fontSize="10px"
+                              letterSpacing="0.08em"
+                              color="theme.textSecondary"
+                              flexShrink={0}
+                              minW="28px"
+                              textAlign="right"
+                              pt="3px"
+                            >
+                              {collection.item_count ?? 0}
+                            </Text>
+                            {/* Title + summary — right column */}
+                            <Box flex="1">
+                              <Text
+                                fontFamily="serifBody"
+                                fontWeight="600"
+                                fontSize={{ base: "md", md: "md" }}
+                                lineHeight="1.3"
+                                color="theme.text"
+                                mb={collection.summary ? 1 : 0}
+                              >
+                                {collection.title}
+                              </Text>
+                              {collection.summary?.trim() ? (
+                                <Text
+                                  fontFamily="serifBody"
+                                  fontSize="sm"
+                                  fontStyle="italic"
+                                  color="theme.textSecondary"
+                                  lineHeight="1.6"
+                                  opacity={0.8}
+                                >
+                                  {collection.summary.trim()}
+                                </Text>
+                              ) : isAdminOrSteward ? (
+                                <Text
+                                  fontFamily="mono"
+                                  fontSize="10px"
+                                  letterSpacing="0.08em"
+                                  textTransform="uppercase"
+                                  color="theme.accent"
+                                  opacity={0.7}
+                                >
+                                  Add summary
+                                </Text>
+                              ) : null}
+                            </Box>
+                          </HStack>
                         </button>
                       </Box>
                     </Box>
@@ -305,6 +310,7 @@ export function GroupLandingBOverview({
         </Stack>
       </SimpleGrid>
 
+      {/* IV · Threads of intention */}
       <Box
         borderTop="1px solid"
         borderBottom="1px solid"
