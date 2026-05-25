@@ -2,15 +2,37 @@
 
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
 import { CollectionsWorkArea, CollectionDetailWorkArea } from "@/components/collections";
 
-export function CollectionsTab({ group }: { group: Group }) {
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+interface CollectionsTabProps {
+  group: Group;
+  selectedCollectionId?: string | null;
+  onSelectedCollectionIdChange?: (collectionId: string | null) => void;
+  detailBackNav?: ReactNode;
+}
+
+export function CollectionsTab({
+  group,
+  selectedCollectionId: controlledSelectedCollectionId,
+  onSelectedCollectionIdChange,
+  detailBackNav,
+}: CollectionsTabProps) {
+  const [internalSelectedCollectionId, setInternalSelectedCollectionId] = useState<string | null>(null);
   const isAdminOrSteward = canUserModerateGroup(group);
+  const selectedCollectionId =
+    controlledSelectedCollectionId !== undefined ? controlledSelectedCollectionId : internalSelectedCollectionId;
+
+  const setSelectedCollectionId = (collectionId: string | null) => {
+    if (controlledSelectedCollectionId === undefined) {
+      setInternalSelectedCollectionId(collectionId);
+    }
+    onSelectedCollectionIdChange?.(collectionId);
+  };
 
   return (
     <Box position="relative">
@@ -31,6 +53,7 @@ export function CollectionsTab({ group }: { group: Group }) {
             collectionId={selectedCollectionId}
             onBack={() => setSelectedCollectionId(null)}
             canEdit={isAdminOrSteward}
+            backNav={detailBackNav}
           />
         )}
       </Box>

@@ -3,6 +3,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   VStack,
   HStack,
@@ -38,12 +39,14 @@ interface CollectionDetailWorkAreaProps {
   collectionId: string;
   onBack?: () => void;
   canEdit?: boolean;
+  backNav?: ReactNode;
 }
 
 export function CollectionDetailWorkArea({
   collectionId,
   onBack,
   canEdit = false,
+  backNav,
 }: CollectionDetailWorkAreaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -158,7 +161,9 @@ export function CollectionDetailWorkArea({
   return (
     <VStack gap={0} align="stretch">
       {/* Back nav */}
-      {onBack && (
+      {backNav ? (
+        <Box pb={5}>{backNav}</Box>
+      ) : onBack ? (
         <Box pb={5}>
           <Button
             variant="ghost"
@@ -174,7 +179,7 @@ export function CollectionDetailWorkArea({
             </Text>
           </Button>
         </Box>
-      )}
+      ) : null}
 
       {/* Collection header */}
       <Box

@@ -11,6 +11,7 @@ import {
   Input,
   Spinner,
   Badge,
+  type BadgeProps,
 } from '@chakra-ui/react';
 import { MagnifyingGlassCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { usePattern } from '@mixtape/api/hooks/switchboard';
@@ -26,7 +27,10 @@ const FREQUENCY_PALETTE: Record<PatternTheme['frequency'], string> = {
   low: 'gray',
 };
 
-const FREQUENCY_VARIANT: Record<PatternTheme['frequency'], string> = {
+const FREQUENCY_VARIANT: Record<
+  PatternTheme['frequency'],
+  NonNullable<BadgeProps['variant']>
+> = {
   high: 'subtle',
   medium: 'outline',
   low: 'outline',

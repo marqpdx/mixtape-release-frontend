@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, HStack, Image, Link, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, Image, Link, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupLandingBOverview } from "./GroupLandingBOverview";
@@ -26,6 +27,8 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
   const { user } = useAuth();
   const storageKey = `groupTab_${group.slug}_member`;
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [collectionDetailSource, setCollectionDetailSource] = useState<"collections" | "overview">("collections");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -41,6 +44,62 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
       localStorage.setItem(storageKey, value);
     }
   };
+
+  const handleOpenCollectionFromOverview = (collectionId: string) => {
+    setCollectionDetailSource("overview");
+    setSelectedCollectionId(collectionId);
+    handleTabChange("collections");
+  };
+
+  const handleSelectedCollectionChange = (collectionId: string | null) => {
+    setSelectedCollectionId(collectionId);
+    if (!collectionId) {
+      setCollectionDetailSource("collections");
+    }
+  };
+
+  const handleReturnToOverview = () => {
+    setSelectedCollectionId(null);
+    setCollectionDetailSource("overview");
+    handleTabChange("overview");
+  };
+
+  const handleShowAllCollections = () => {
+    setSelectedCollectionId(null);
+    setCollectionDetailSource("collections");
+    handleTabChange("collections");
+  };
+
+  const detailBackNav =
+    selectedCollectionId && collectionDetailSource === "overview" ? (
+      <HStack gap={2} flexWrap="wrap">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleReturnToOverview}
+          color="theme.textSecondary"
+          px={0}
+          _hover={{ color: "theme.text" }}
+        >
+          <IconArrowLeft size={14} />
+          <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+            Return to overview
+          </Text>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleShowAllCollections}
+          color="theme.textSecondary"
+          px={0}
+          _hover={{ color: "theme.text" }}
+        >
+          <Text fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+            Show all collections
+          </Text>
+        </Button>
+      </HStack>
+    ) : undefined;
 
   return (
     <Tabs.Root
@@ -134,7 +193,11 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
       </Box>
 
       <Tabs.Content value="overview">
-        <GroupLandingBOverview group={group} onNavigateToTab={handleTabChange} />
+        <GroupLandingBOverview
+          group={group}
+          onNavigateToTab={handleTabChange}
+          onOpenCollection={handleOpenCollectionFromOverview}
+        />
       </Tabs.Content>
       <Tabs.Content value="members">
         <MembersTab group={group} />
@@ -143,7 +206,12 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
         <ThreadworksTab group={group} />
       </Tabs.Content>
       <Tabs.Content value="collections">
-        <CollectionsTab group={group} />
+        <CollectionsTab
+          group={group}
+          selectedCollectionId={selectedCollectionId}
+          onSelectedCollectionIdChange={handleSelectedCollectionChange}
+          detailBackNav={detailBackNav}
+        />
       </Tabs.Content>
     </Tabs.Root>
   );
