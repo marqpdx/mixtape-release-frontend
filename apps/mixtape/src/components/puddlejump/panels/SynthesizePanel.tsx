@@ -20,6 +20,7 @@ interface SynthesizePanelProps {
 }
 
 export default function SynthesizePanel({ surface = 'puddlejump' }: SynthesizePanelProps) {
+  void surface;
   const synthesize = useSynthesize();
   const narrative = useSynthesizeNarrative();
 
