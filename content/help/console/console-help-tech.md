@@ -69,7 +69,7 @@ All endpoints require `IsAuthenticated`. Superuser is required for Switchboard-p
 
 ### Switchboard-proxied operations (superuser only)
 
-These live in `switchboard/api/views.py` but act on console data. All now produce ActionRun records.
+These live in `switchboard/api/views.py` but act on console data. All produce ActionRun records.
 
 | Method | Route | Tool name | ActionRun |
 |--------|-------|-----------|-----------|
@@ -77,6 +77,22 @@ These live in `switchboard/api/views.py` but act on console data. All now produc
 | POST | `/api/switchboard/agent/remind` | `agent.remind` | Yes (Phase 0) |
 | POST | `/api/switchboard/agent/task` | `agent.task` | Yes (Phase 0) |
 | POST | `/api/switchboard/agent/parse` | — | No ActionRun |
+
+### Switchboard Generate endpoints (authenticated users)
+
+Phase 3 verbs are available to all authenticated users from the Console Generate sidebar. All produce ActionRun records. Cloud paths require the `initiatives.approve_cloud_dispatch` permission.
+
+| Method | Route | Tool name | Local | Cloud | Notes |
+|--------|-------|-----------|-------|-------|-------|
+| POST | `/api/switchboard/draft` | `console.draft` | IsAuthenticated | `approve_cloud_dispatch` | Content type, tone, length, approval mode in payload |
+| POST | `/api/switchboard/refine` | `console.refine` | IsAuthenticated | `approve_cloud_dispatch` | Input text + style instruction |
+| POST | `/api/switchboard/add` | `console.add` | IsAuthenticated | — | Synchronous; no LLM |
+| POST | `/api/switchboard/find` | `console.find` | IsAuthenticated | — | Semantic IR; synchronous |
+| POST | `/api/switchboard/research` | `console.research` | IsAuthenticated | — | Always LOCAL; external sources |
+| POST | `/api/switchboard/pattern` | `console.pattern` | IsAuthenticated | — | Pattern detection across inputs |
+| POST | `/api/switchboard/synthesize` | `console.synthesize` | IsAuthenticated | — | Multi-input narrative merge |
+
+`tool_name` surface prefix is `console` when triggered from Console; same verbs triggered from Puddlejump use `puddlejump` as the prefix. This lets signals distinguish origin surface in `on_action_run_saved`.
 
 ---
 
@@ -145,14 +161,23 @@ Defined in `console/signals.py`. The marker registry maps single-character keys 
 
 ## Switchboard integration — current state
 
-Console is designed to route all AI operations through Switchboard's typed-operation policy. Current state:
+Console routes all AI operations through Switchboard's typed-operation policy.
 
-- `agent.note`, `agent.remind`, `agent.task` — wired through Switchboard proxy endpoints; now produce ActionRun records (Phase 0).
-- `agent.parse` — calls Inkwell parse service synchronously; no ActionRun yet.
-- `console.transcribe` — Celery task, now produces ActionRun (Phase 0); routes local (Concord/Whisper).
-- `classify`, `context_shape`, `draft`, `summarize` — planned for Phase 1 (see `planning/switchboard/tooling-buildout-plan.md`).
+| Verb | Phase | Status | Route |
+|------|-------|--------|-------|
+| `agent.note`, `agent.remind`, `agent.task` | 0 | Live | Superuser only via proxy endpoints |
+| `agent.parse` | 0 | Live | Synchronous; no ActionRun yet |
+| `console.transcribe` | 0 | Live | LOCAL; Concord/Whisper; ActionRun produced |
+| `classify`, `context_shape`, `summarize` | 1a | Live | Available via Switchboard queue |
+| `console.draft` | 1c / Phase 3 | Live | LOCAL default; cloud with `approve_cloud_dispatch` |
+| `console.refine` | Phase 3 | Live | LOCAL default; cloud with `approve_cloud_dispatch` |
+| `console.add` | Phase 3 | Live | LOCAL; synchronous |
+| `console.find` | Phase 3 | Live | LOCAL; synchronous IR |
+| `console.research` | Phase 3 | Live | Always LOCAL |
+| `console.pattern` | Phase 3 | Live | LOCAL |
+| `console.synthesize` | Phase 3 | Live | LOCAL |
 
-**Action routing policy:** Console operations declare what verb is needed; Switchboard dispatches to local (Inkwell) or cloud. Cloud operations require human approval before dispatch (standard mode by default). See `features/console/switchboard-routing-addenda.md` for the full routing policy.
+**Approval modes:** The frontend persists the user's choice (`standard`, `reviewed_default`, `trusted_default`) in `localStorage` under the key `draft_approval_mode`. The selected mode is passed to the backend in the request payload; the backend enforces it against the user's permission level. See ADR-0045 §6 for the full permission table.
 
 ---
 

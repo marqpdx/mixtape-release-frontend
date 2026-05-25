@@ -49,16 +49,51 @@ Think of it as your home base: you arrive here, you know what's open, and you le
 
 ---
 
+## Layout
+
+Console uses a two-column layout:
+
+**Main column** — The command field at the top, followed by a two-pane work surface: the left pane holds the active AI panel (when a Generate tool is open), and the right pane shows your activity stream. A collapsed orientation strip sits below.
+
+**Right sidebar** — Three boxes: Activity (recent captures and initiative activity), Generate (the AI tools), and Stewardship (items needing a decision).
+
+---
+
 ## What you can do
 
 ### Capture something quickly
 
 1. Open Console from the navigation.
-2. Type in the capture field and choose a kind (note, fix, need more, remind).
-3. For reminders, set a time.
-4. Submit — your capture lands in your personal queue.
+2. Type in the command field. Console auto-detects what kind of capture you're making based on how you phrase it:
+   - "Fix the login page timeout" → `fix`
+   - "Need more context on this" → `need_more`
+   - "Remind me to follow up Monday" → `remind`
+   - Anything else → `note`
+3. Submit — your capture lands in your personal queue.
 
 You can also capture by voice: tap the microphone icon, speak, and Console will transcribe and parse what you said into one or more captures automatically.
+
+### Use the command field slash syntax
+
+The command field understands several `/` shortcuts when you're working in an initiative context:
+
+| Shorthand | What it does |
+|-----------|-------------|
+| `//[name]` | Switch context to an initiative (search by name) |
+| `/.` | Return to personal context |
+| `/log [text]` | Post a prose log entry to the initiative's aperture log |
+| `/handoff [text]` | Post a handoff entry to the log |
+| `/emph [text]` | Post an emphasis note to the log |
+| `/n [title]` | Create a new initiative with that title |
+
+### Switch context between personal and initiative
+
+The context switcher at the top of the main column lets you toggle between your personal workspace and any initiative you're a member of. When you switch to an initiative:
+
+- The stream switches from your personal DigestStream to the initiative's ApertureLog
+- Captures and log entries you write go to the initiative
+
+Use `//[initiative name]` in the command field to switch by typing, or `/. ` to return to personal.
 
 ### Use signals
 
@@ -72,15 +107,39 @@ Signals surface in your Console view under the Signals panel, so you can find ev
 
 ### See what needs your attention
 
-Console organizes your workspace into four panels:
+The Activity sidebar panel shows recent captures and initiative events.
 
-**Re-entry** — Recent items you were working on. Picks up where you left off: open drafts, recent reads, things you touched but didn't finish. Maximum 7 items.
+**Stewardship** — Items that need a decision: drafts you haven't touched in 30+ days, overdue reminders, and open questions with no resolution.
 
-**Signals** — Everything you've flagged with `/!`, `/~`, `/?`, or `/@`. Also surfaces any content you've flagged for re-reading.
+**Orientation** (collapsed strip in main column) — Your active initiatives and group memberships, with a capture count for each.
 
-**Orientation** — Your active initiatives and group memberships, with a capture count for each. Helps you see where your attention is distributed across projects.
+### Use the Generate tools
 
-**Stewardship** — The items that need a decision: drafts you haven't touched in 30+ days, overdue reminders, and open questions with no resolution. These are the things that silently wait.
+The Generate section in the right sidebar gives you access to Switchboard's AI verbs directly from Console. Click any tool to open it in the left pane of the work surface:
+
+| Tool | What it does |
+|------|-------------|
+| **Draft** | Generate a first draft from a prompt. Choose content type (email, message, SOP, document, proposal, summary), tone, and length. Runs locally by default; cloud requires approval. |
+| **Refine** | Polish or restructure existing text. Paste content in, describe the change you want, and choose a style. |
+| **Add to list** | Add a batch of items to an existing library list using natural language input. |
+| **Find in library** | Semantic search across your Puddlejump library. Enter a question or phrase; returns ranked matches with relevance scores. |
+| **Research** | Look up information from external sources and get a structured response. Always runs locally — no cloud dispatch. |
+| **Pattern** | Identify recurring themes, structures, or gaps across a set of text inputs. |
+| **Synthesize** | Combine multiple inputs into a single coherent output with a narrative structure. |
+
+Clicking a tool a second time closes it and returns the work surface to empty.
+
+### Approval modes for cloud operations
+
+Draft and Refine can run in cloud mode for higher-quality output. When cloud dispatch is required, you'll see an approval prompt with three modes:
+
+| Mode | Behavior |
+|------|---------|
+| **Standard** | Review and approve before each cloud dispatch |
+| **Reviewed** | One-tap approval; you confirm but don't review the full payload |
+| **Trusted** | Auto-approve; dispatches without pause |
+
+Your approval mode preference is saved per browser.
 
 ### Promote a capture
 

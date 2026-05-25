@@ -86,7 +86,42 @@ Bundle constraints: max 50MB total, 5MB per file, 300 files, Markdown only. SHA-
 
 ---
 
+## Switchboard Generate endpoints (authenticated users)
+
+Phase 3 verbs are available from the Puddlejump Generate sidebar. All produce ActionRun records. Cloud paths require the `initiatives.approve_cloud_dispatch` permission.
+
+| Method | Route | Tool name | Local | Cloud | Notes |
+|--------|-------|-----------|-------|-------|-------|
+| POST | `/api/switchboard/draft` | `puddlejump.draft` | IsAuthenticated | `approve_cloud_dispatch` | Content type, tone, length, approval mode in payload |
+| POST | `/api/switchboard/refine` | `puddlejump.refine` | IsAuthenticated | `approve_cloud_dispatch` | Input text + style instruction |
+| POST | `/api/switchboard/add` | `puddlejump.add` | IsAuthenticated | — | Synchronous; no LLM |
+| POST | `/api/switchboard/find` | `puddlejump.find` | IsAuthenticated | — | Semantic IR; synchronous |
+| POST | `/api/switchboard/research` | `puddlejump.research` | IsAuthenticated | — | Always LOCAL |
+| POST | `/api/switchboard/pattern` | `puddlejump.pattern` | IsAuthenticated | — | Pattern detection |
+| POST | `/api/switchboard/synthesize` | `puddlejump.synthesize` | IsAuthenticated | — | Multi-input narrative merge |
+
+`tool_name` surface prefix distinguishes Puddlejump-triggered calls from the same verbs triggered by Console (`console.*`). The backend uses the surface prefix to route `on_action_run_saved` writeback correctly.
+
+---
+
+## Utilities endpoints
+
+Utilities are read-only analysis tools. All require authentication; access is restricted to library members.
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/puddlejump/utilities/duplicates/{library_id}/` | Similarity analysis across library files |
+| GET | `/api/puddlejump/utilities/glossary/{library_id}/` | Term extraction across library files |
+| GET | `/api/puddlejump/utilities/canonical/{library_id}/` | Canon-readiness candidates |
+| POST | `/api/puddlejump/utilities/summaries/{library_id}/` | AI-assisted summary suggestions |
+| GET | `/api/puddlejump/utilities/restructure/{library_id}/` | Reorganization suggestions |
+
+Utilities do not write to library documents. They return suggestion payloads only.
+
+---
+
 ## Related services
 
 - **Stackroom ingestion** — Canon exports feed the Stackroom processing pipeline. Ingestion is triggered automatically on Canon approval.
 - **Identity** — The `canApproveCanon` permission is managed via Mixtape's identity/permissions system.
+- **Switchboard** — Generate verbs route through the Switchboard worker queue (`switchboard` queue). See ADR-0045 §6 for the full permission table and approval mode policy.
