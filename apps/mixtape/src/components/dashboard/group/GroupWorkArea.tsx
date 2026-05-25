@@ -269,6 +269,7 @@ export default function GroupWorkArea({
         <CollectionDetailWorkArea
           collectionId={collectionId}
           onBack={() => setActiveSection('collections-landing')}
+          canEdit={true}
         />
       </WorkAreaWrapper>
     );
