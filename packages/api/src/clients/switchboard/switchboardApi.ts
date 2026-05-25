@@ -289,3 +289,28 @@ export async function submitSynthesizeNarrativeAsync(
   const res = await axiosInstance.post("/api/switchboard/agent/synthesize/narrative", payload);
   return res.data as SynthesizeNarrativeResponse;
 }
+
+export interface SynopsisLinkedInRequest {
+  piece_id: string;
+  surface?: 'console' | 'puddlejump' | 'writing';
+}
+
+export interface SynopsisLinkedInResponse {
+  action_run_id: string;
+}
+
+export interface SynopsisLinkedInActionResult {
+  hook: string;
+  short_synopsis: string;
+  one_line_takeaway: string;
+  alt_hook: string;
+  model_used: string | null;
+  refused: boolean;
+}
+
+export async function submitSynopsisLinkedInAsync(
+  payload: SynopsisLinkedInRequest
+): Promise<SynopsisLinkedInResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/synopsis/linkedin", payload);
+  return res.data as SynopsisLinkedInResponse;
+}
