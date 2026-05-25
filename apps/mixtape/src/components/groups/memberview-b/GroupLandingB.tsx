@@ -172,7 +172,7 @@ export function GroupLandingB({
                     <Text
                       as="h1"
                       fontFamily="heading"
-                      fontSize={{ base: "4xl", md: "6xl", xl: "7xl" }}
+                      fontSize={{ base: "3xl", md: "5xl", xl: "6xl" }}
                       lineHeight="0.95"
                       letterSpacing="-0.03em"
                       color="theme.text"
@@ -182,7 +182,7 @@ export function GroupLandingB({
                     </Text>
                     <Text
                       fontFamily="serifBody"
-                      fontSize={{ base: "xl", md: "2xl", xl: "3xl" }}
+                      fontSize={{ base: "lg", md: "xl", xl: "2xl" }}
                       fontStyle="italic"
                       lineHeight="1.45"
                       color="theme.textSecondary"
@@ -207,7 +207,7 @@ export function GroupLandingB({
                     ].map(([label, value], index, arr) => (
                       <Box
                         key={label}
-                        py={{ base: 4, md: 5 }}
+                        py={{ base: 3, md: 4 }}
                         px={{ base: 3, md: 4, xl: 5 }}
                         borderRight={index < arr.length - 1 ? "1px solid" : "none"}
                         borderColor="theme.border"
