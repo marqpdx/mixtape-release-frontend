@@ -218,6 +218,7 @@ export type LibraryItem =
 export interface LibraryItemCreateRequest {
   content_type: 'source_file' | 'writing_piece' | 'dispatch_post' | 'collection';
   content_id: string;
+  title?: string;
   order_index?: number; // Auto if not provided
   folder_path?: string;
   tags?: string[];

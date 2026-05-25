@@ -10,9 +10,8 @@ import {
   HStack,
   VStack,
   Button,
-  Separator,
 } from '@chakra-ui/react';
-import { IconFile, IconFileText, IconFolders } from '@tabler/icons-react';
+import { IconUpload, IconFileText, IconFolders } from '@tabler/icons-react';
 import { useAvailableFiles, useAvailableDocuments, useCreateLibraryItem } from '@mixtape/api/hooks/stackroom/useCollections';
 import { AvailableFilesList } from './AvailableFilesList';
 import { AvailableDocumentsList } from './AvailableDocumentsList';
@@ -25,41 +24,53 @@ interface CollectionBrowserProps {
   onItemAdded?: () => void;
 }
 
-type FilterType = 'files' | 'documents' | 'collections';
+type TopFilter = 'upload' | 'writing' | 'collections';
+type UploadSubFilter = 'browse' | 'new';
+
+const TOP_FILTERS: { id: TopFilter; label: string; icon: React.ReactNode; help: string }[] = [
+  {
+    id: 'upload',
+    label: 'Upload',
+    icon: <IconUpload size={16} />,
+    help: 'Add files from your library — PDFs, docs, markdown — or upload something new.',
+  },
+  {
+    id: 'writing',
+    label: 'Writing',
+    icon: <IconFileText size={16} />,
+    help: 'Add published writing pieces or dispatch posts from this group.',
+  },
+  {
+    id: 'collections',
+    label: 'Collections',
+    icon: <IconFolders size={16} />,
+    help: 'Link another collection or copy all its items into this one.',
+  },
+];
 
 export function CollectionBrowser({
   collectionId,
   onItemAdded,
 }: CollectionBrowserProps) {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('files');
-  const [showUpload, setShowUpload] = useState(false);
+  const [activeTop, setActiveTop] = useState<TopFilter>('upload');
+  const [uploadSub, setUploadSub] = useState<UploadSubFilter>('browse');
 
   const { files, isLoading: filesLoading } = useAvailableFiles(collectionId);
   const { documents, isLoading: docsLoading } = useAvailableDocuments(collectionId);
   const createMutation = useCreateLibraryItem();
 
-  const handleAddFile = async (fileId: string) => {
+  const handleAddFile = async (fileId: string, filename: string) => {
     try {
       await createMutation.mutateAsync({
         collectionId,
-        data: {
-          content_type: 'source_file',
-          content_id: fileId,
-        },
+        data: { content_type: 'source_file', content_id: fileId, title: filename },
       });
-
-      toaster.create({
-        title: 'File added',
-        description: 'File has been added to the collection',
-        type: 'success',
-      });
-
+      toaster.create({ title: 'File added', type: 'success' });
       onItemAdded?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add file to collection';
       toaster.create({
         title: 'Error adding file',
-        description: errorMessage,
+        description: error instanceof Error ? error.message : 'Failed to add file',
         type: 'error',
       });
     }
@@ -69,54 +80,32 @@ export function CollectionBrowser({
     try {
       await createMutation.mutateAsync({
         collectionId,
-        data: {
-          content_type: docType,
-          content_id: documentId,
-        },
+        data: { content_type: docType, content_id: documentId },
       });
-
-      toaster.create({
-        title: 'Document added',
-        description: 'Document has been added to the collection',
-        type: 'success',
-      });
-
+      toaster.create({ title: 'Document added', type: 'success' });
       onItemAdded?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add document to collection';
       toaster.create({
         title: 'Error adding document',
-        description: errorMessage,
+        description: error instanceof Error ? error.message : 'Failed to add document',
         type: 'error',
       });
     }
   };
 
-  const handleUploadComplete = async (fileId: string) => {
-    // Automatically add the uploaded file to the collection
+  const handleUploadComplete = async (fileId: string, filename: string) => {
     try {
       await createMutation.mutateAsync({
         collectionId,
-        data: {
-          content_type: 'source_file',
-          content_id: fileId,
-        },
+        data: { content_type: 'source_file', content_id: fileId, title: filename },
       });
-
-      toaster.create({
-        title: 'File uploaded and added',
-        description: 'File has been uploaded and added to the collection',
-        type: 'success',
-      });
-
-      // Hide upload and refresh
-      setShowUpload(false);
+      toaster.create({ title: 'File uploaded and added', type: 'success' });
+      setUploadSub('browse');
       onItemAdded?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'File was uploaded but could not be added to collection';
       toaster.create({
         title: 'Upload succeeded but failed to add',
-        description: errorMessage,
+        description: error instanceof Error ? error.message : 'File was uploaded but could not be added',
         type: 'error',
       });
     }
@@ -126,24 +115,14 @@ export function CollectionBrowser({
     try {
       await createMutation.mutateAsync({
         collectionId,
-        data: {
-          content_type: 'collection',
-          content_id: linkedCollectionId,
-        },
+        data: { content_type: 'collection', content_id: linkedCollectionId },
       });
-
-      toaster.create({
-        title: 'Collection linked',
-        description: 'Collection has been linked. Updates will sync automatically.',
-        type: 'success',
-      });
-
+      toaster.create({ title: 'Collection linked', type: 'success' });
       onItemAdded?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to link collection';
       toaster.create({
         title: 'Error linking collection',
-        description: errorMessage,
+        description: error instanceof Error ? error.message : 'Failed to link collection',
         type: 'error',
       });
     }
@@ -153,170 +132,133 @@ export function CollectionBrowser({
     try {
       const response = await fetch(
         `/api/collections/${collectionId}/items/copy-from/${sourceCollectionId}/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
       );
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to copy items');
       }
-
       const data = await response.json();
-
       toaster.create({
         title: 'Items copied',
         description: `Copied ${data.copied_count} items from source collection`,
         type: 'success',
       });
-
       onItemAdded?.();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to copy items from collection';
       toaster.create({
         title: 'Error copying items',
-        description: errorMessage,
+        description: error instanceof Error ? error.message : 'Failed to copy items',
         type: 'error',
       });
     }
   };
 
+  const activeTopMeta = TOP_FILTERS.find((f) => f.id === activeTop)!;
+
   const renderContent = () => {
-    // Show upload form if toggled
-    if (showUpload && activeFilter === 'files') {
+    if (activeTop === 'upload') {
       return (
-        <Box>
-          <Text fontSize="sm" color="gray.600" mb={4}>
-            Upload files to add them directly to this collection.
-            Files will be automatically added after successful upload.
-          </Text>
-          <FileUpload
-            libraryId={collectionId}
-            mode="collection"
-            onUploadComplete={handleUploadComplete}
-            onUploadError={(error) => {
-              toaster.create({
-                title: 'Upload failed',
-                description: error,
-                type: 'error',
-              });
-            }}
-          />
-        </Box>
+        <VStack align="stretch" gap={4}>
+          {/* Upload sub-tabs */}
+          <HStack gap={2}>
+            <Button
+              size="xs"
+              variant={uploadSub === 'browse' ? 'solid' : 'outline'}
+              colorPalette={uploadSub === 'browse' ? 'blue' : 'gray'}
+              onClick={() => setUploadSub('browse')}
+            >
+              Previously Uploaded
+              {!filesLoading && (
+                <Badge size="xs" colorPalette="gray" ml={1}>
+                  {files.length}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              size="xs"
+              variant={uploadSub === 'new' ? 'solid' : 'outline'}
+              colorPalette={uploadSub === 'new' ? 'green' : 'gray'}
+              onClick={() => setUploadSub('new')}
+            >
+              Upload New
+            </Button>
+          </HStack>
+
+          {uploadSub === 'browse' ? (
+            <AvailableFilesList
+              files={files}
+              onAddFile={handleAddFile}
+              isLoading={filesLoading}
+            />
+          ) : (
+            <Box>
+              <Text fontSize="sm" color="gray.600" mb={4}>
+                Files are added to your group&apos;s library and then automatically
+                attached to this collection.
+              </Text>
+              <FileUpload
+                libraryId={collectionId}
+                mode="collection"
+                onUploadComplete={handleUploadComplete}
+                onUploadError={(error) => {
+                  toaster.create({ title: 'Upload failed', description: error, type: 'error' });
+                }}
+              />
+            </Box>
+          )}
+        </VStack>
       );
     }
 
-    // Show appropriate list based on active filter
-    switch (activeFilter) {
-      case 'files':
-        return (
-          <AvailableFilesList
-            files={files}
-            onAddFile={handleAddFile}
-            isLoading={filesLoading}
-          />
-        );
-      case 'documents':
-        return (
-          <AvailableDocumentsList
-            documents={documents}
-            onAddDocument={handleAddDocument}
-            isLoading={docsLoading}
-          />
-        );
-      case 'collections':
-        return (
-          <AvailableCollectionsList
-            currentCollectionId={collectionId}
-            onLinkCollection={handleLinkCollection}
-            onAddAllItems={handleAddAllItems}
-          />
-        );
-      default:
-        return null;
+    if (activeTop === 'writing') {
+      return (
+        <AvailableDocumentsList
+          documents={documents}
+          onAddDocument={handleAddDocument}
+          isLoading={docsLoading}
+        />
+      );
     }
+
+    return (
+      <AvailableCollectionsList
+        currentCollectionId={collectionId}
+        onLinkCollection={handleLinkCollection}
+        onAddAllItems={handleAddAllItems}
+      />
+    );
   };
 
   return (
     <VStack align="stretch" gap={4}>
-      {/* Filter Buttons */}
-      <HStack gap={2} flexWrap="wrap">
-        <Button
-          size="sm"
-          variant={activeFilter === 'files' ? 'solid' : 'outline'}
-          colorPalette={activeFilter === 'files' ? 'blue' : 'gray'}
-          onClick={() => {
-            setActiveFilter('files');
-            setShowUpload(false);
-          }}
-        >
-          <HStack gap={2}>
-            <IconFile size={16} />
-            <Text>Previously Uploaded</Text>
-            {!filesLoading && (
-              <Badge size="xs" colorPalette="gray">
-                {files.length}
-              </Badge>
-            )}
-          </HStack>
-        </Button>
-
-        <Button
-          size="sm"
-          variant={activeFilter === 'documents' ? 'solid' : 'outline'}
-          colorPalette={activeFilter === 'documents' ? 'blue' : 'gray'}
-          onClick={() => {
-            setActiveFilter('documents');
-            setShowUpload(false);
-          }}
-        >
-          <HStack gap={2}>
-            <IconFileText size={16} />
-            <Text>Internal Docs</Text>
-            {!docsLoading && (
-              <Badge size="xs" colorPalette="gray">
-                {documents.length}
-              </Badge>
-            )}
-          </HStack>
-        </Button>
-
-        <Button
-          size="sm"
-          variant={activeFilter === 'collections' ? 'solid' : 'outline'}
-          colorPalette={activeFilter === 'collections' ? 'blue' : 'gray'}
-          onClick={() => {
-            setActiveFilter('collections');
-            setShowUpload(false);
-          }}
-        >
-          <HStack gap={2}>
-            <IconFolders size={16} />
-            <Text>Existing Collections</Text>
-          </HStack>
-        </Button>
-
-        {/* Upload Toggle (only show for files filter) */}
-        {activeFilter === 'files' && (
-          <>
-            <Separator orientation="vertical" height="24px" />
-            <Button
-              size="sm"
-              variant={showUpload ? 'solid' : 'outline'}
-              colorPalette={showUpload ? 'green' : 'gray'}
-              onClick={() => setShowUpload(!showUpload)}
-            >
-              {showUpload ? 'Browse Files' : 'Upload New'}
-            </Button>
-          </>
-        )}
+      {/* Top-level filter buttons */}
+      <HStack gap={2}>
+        {TOP_FILTERS.map(({ id, label, icon }) => (
+          <Button
+            key={id}
+            size="sm"
+            variant={activeTop === id ? 'solid' : 'outline'}
+            colorPalette={activeTop === id ? 'blue' : 'gray'}
+            onClick={() => {
+              setActiveTop(id);
+              if (id === 'upload') setUploadSub('browse');
+            }}
+          >
+            <HStack gap={2}>
+              {icon}
+              <Text>{label}</Text>
+            </HStack>
+          </Button>
+        ))}
       </HStack>
 
-      {/* Content Area */}
+      {/* Help text */}
+      <Text fontSize="xs" color="gray.500">
+        {activeTopMeta.help}
+      </Text>
+
+      {/* Content */}
       <Box>{renderContent()}</Box>
     </VStack>
   );

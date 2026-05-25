@@ -27,7 +27,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface AvailableFilesListProps {
   files: SourceFileMinimal[];
-  onAddFile: (fileId: string) => void;
+  onAddFile: (fileId: string, filename: string) => void;
   isLoading?: boolean;
 }
 
@@ -90,12 +90,8 @@ export function AvailableFilesList({
                       <IconFile size={24} />
                     </Box>
                     <VStack align="start" gap={1} flex={1}>
-                      <Text
-                        fontWeight="medium"
-                        fontSize="sm"
-                        color={file.in_collection ? "gray.400" : "inherit"}
-                      >
-                        {file.filename}
+                      <Text fontWeight="medium" fontSize="sm">
+                        {file.filename || '(unnamed file)'}
                       </Text>
                       <HStack gap={2} fontSize="xs" color="gray.600">
                         <Badge colorPalette="gray" size="xs">
@@ -125,7 +121,7 @@ export function AvailableFilesList({
                       size="sm"
                       variant="solid"
                       colorPalette="blue"
-                      onClick={() => onAddFile(file.id)}
+                      onClick={() => onAddFile(file.id, file.filename)}
                     >
                       <IconPlus size={20} />
                     </IconButton>

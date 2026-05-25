@@ -23,7 +23,7 @@ import { uploadFile, uploadToCollection } from '@mixtape/api/clients/stackroom/s
 
 interface FileUploadProps {
   libraryId: string;
-  onUploadComplete?: (fileId: string) => void;
+  onUploadComplete?: (fileId: string, filename: string) => void;
   onUploadError?: (error: string) => void;
   acceptedFileTypes?: string[];
   maxFileSizeMB?: number;
@@ -95,7 +95,8 @@ export function FileUpload({
         )
       );
 
-      onUploadComplete?.(response.source_file_id);
+      const filename = 'filename' in response ? response.filename : '';
+      onUploadComplete?.(response.source_file_id, filename);
     } catch (err) {
       // Type-safe error handling
       const error = err as { isDuplicate?: boolean; source_file_id?: string; message?: string };
@@ -390,7 +391,7 @@ export function FileUpload({
 
 // interface FileUploadProps {
 //   libraryId: string;
-//   onUploadComplete?: (fileId: string) => void;
+//   onUploadComplete?: (fileId: string, filename: string) => void;
 //   onUploadError?: (error: string) => void;
 //   acceptedFileTypes?: string[];
 //   maxFileSizeMB?: number;
