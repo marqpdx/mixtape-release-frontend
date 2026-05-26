@@ -16,6 +16,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import NextLink from "next/link";
+import { GroupDispatchEditor } from "@components/crossroads/GroupDispatchEditor";
 
 const ADMISSION_OPTIONS = [
   { value: "open", label: "Open to All", description: "Anyone can join immediately." },
@@ -162,6 +163,8 @@ export default function GroupSettingsPage() {
       >
         {saving ? "Saving..." : "Save Changes"}
       </Button>
+
+      <GroupDispatchEditor slug={slug} />
     </Box>
   );
 }
