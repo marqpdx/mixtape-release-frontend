@@ -1,14 +1,16 @@
-// apps/mixtape/src/app/(authenticated)/studio/[groupSlug]/page.tsx
-
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Box, Container, HStack, Heading, Skeleton, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Spinner, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
+import { ScopeBar } from "@/components/studio/ScopeBar";
+import { GroupStudioHeader } from "@/components/studio/GroupStudioHeader";
+import { WorkAreaChipStrip } from "@/components/studio/WorkAreaChipStrip";
+import { GroupStudioTabs, StudioTabSkeleton, type StudioTab } from "@/components/studio/GroupStudioTabs";
 
 export default function GroupStudioPage() {
   const { groupSlug } = useParams<{ groupSlug: string }>();
@@ -17,24 +19,19 @@ export default function GroupStudioPage() {
   const { group, isLoading: groupLoading } = useGroup(groupSlug);
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
-  const cardBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const chipBg = useColorModeValue("gray.100", "gray.700");
 
   const isAdmin = group ? canUserModerateGroup(group) : false;
-  const isSuperadmin = user?.is_staff || user?.is_superuser;
+  const isSuperadmin = !!(user?.is_staff || user?.is_superuser);
   const canAccess = isAdmin || isSuperadmin;
   const isReady = !authLoading && !groupLoading;
 
-  // Non-admins redirect to Personal Studio
+  const [activeTab, setActiveTab] = useState<StudioTab>("pulse");
+
   useEffect(() => {
     if (!isReady) return;
-    if (group && !canAccess) {
-      router.replace("/studio");
-    }
+    if (group && !canAccess) router.replace("/studio");
   }, [isReady, group, canAccess, router]);
 
-  // Loading state — while auth or group resolves
   if (!isReady || (group && !canAccess)) {
     return (
       <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -43,7 +40,6 @@ export default function GroupStudioPage() {
     );
   }
 
-  // Group not found
   if (!group) {
     return (
       <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -52,98 +48,32 @@ export default function GroupStudioPage() {
     );
   }
 
+  const chips = [
+    { label: "Library", href: `/groups/${group.slug}/library`, active: false },
+    { label: "Threads", href: `/groups/${group.slug}`, active: false },
+    { label: "Loom", href: `/groups/${group.slug}/loom`, active: false },
+  ];
+
   return (
     <Box bg={bgColor} minH="100vh">
       <Container maxW="5xl" py={8}>
 
-        {/* Scope bar — always visible in Group Studio */}
-        <HStack mb={6} gap={2} fontSize="sm" color="gray.500">
-          <Text
-            as="button"
-            _hover={{ color: "blue.500" }}
-            onClick={() => router.push("/studio")}
-          >
-            Studio
-          </Text>
-          <Text>/</Text>
-          <Text fontWeight="medium" color="gray.700">{group.title}</Text>
-        </HStack>
+        <ScopeBar items={[
+          { label: "Studio", href: "/studio" },
+          { label: group.title },
+        ]} />
 
-        {/* Group header */}
-        <Box mb={6}>
-          <Heading size="lg" mb={1}>{group.title}</Heading>
-          <Text fontSize="sm" color="gray.500">Group Studio</Text>
-        </Box>
+        <GroupStudioHeader title={group.title} />
 
-        {/* Work area chip strip skeleton */}
-        <HStack mb={6} gap={2} flexWrap="wrap">
-          {[1, 2, 3].map((i) => (
-            <Box
-              key={i}
-              bg={chipBg}
-              borderRadius="full"
-              px={3}
-              py={1}
-            >
-              <Skeleton height="14px" width="60px" borderRadius="full" />
-            </Box>
-          ))}
-        </HStack>
+        <WorkAreaChipStrip chips={chips} />
 
-        {/* Tab navigation skeleton */}
-        <HStack mb={6} gap={0} borderBottom="1px solid" borderColor={borderColor}>
-          {["Pulse", "Canon", "Command"].map((tab) => (
-            <Box
-              key={tab}
-              px={4}
-              py={2}
-              fontSize="sm"
-              fontWeight="medium"
-              color="gray.400"
-              borderBottom="2px solid transparent"
-            >
-              {tab}
-            </Box>
-          ))}
-        </HStack>
-
-        {/* Tab content skeleton (Pulse) */}
-        <VStack gap={4} align="stretch">
-          {/* Metric strip */}
-          <HStack gap={4}>
-            {[1, 2, 3, 4].map((i) => (
-              <Box
-                key={i}
-                flex="1"
-                bg={cardBg}
-                border="1px solid"
-                borderColor={borderColor}
-                borderRadius="lg"
-                p={4}
-              >
-                <Skeleton height="24px" mb={1} />
-                <Skeleton height="12px" width="60%" />
-              </Box>
-            ))}
-          </HStack>
-
-          {/* Activity feed */}
-          <Box
-            bg={cardBg}
-            border="1px solid"
-            borderColor={borderColor}
-            borderRadius="lg"
-            p={5}
-          >
-            <Text fontWeight="semibold" mb={4}>Activity</Text>
-            <VStack gap={3} align="stretch">
-              <Skeleton height="36px" borderRadius="md" />
-              <Skeleton height="36px" borderRadius="md" />
-              <Skeleton height="36px" borderRadius="md" />
-              <Skeleton height="36px" borderRadius="md" />
-            </VStack>
-          </Box>
-        </VStack>
+        <GroupStudioTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isSuperadmin={isSuperadmin}
+        >
+          <StudioTabSkeleton />
+        </GroupStudioTabs>
 
       </Container>
     </Box>
