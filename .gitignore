@@ -20,6 +20,7 @@
 *.pem
 .claude*
 apps/mixtape/latest_state.md
+zzz*
 
 # debug
 npm-debug.log*
