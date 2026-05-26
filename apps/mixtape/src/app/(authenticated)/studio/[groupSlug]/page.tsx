@@ -10,7 +10,10 @@ import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
 import { ScopeBar } from "@/components/studio/ScopeBar";
 import { GroupStudioHeader } from "@/components/studio/GroupStudioHeader";
 import { WorkAreaChipStrip } from "@/components/studio/WorkAreaChipStrip";
-import { GroupStudioTabs, StudioTabSkeleton, type StudioTab } from "@/components/studio/GroupStudioTabs";
+import { GroupStudioTabs, type StudioTab } from "@/components/studio/GroupStudioTabs";
+import { PulseTab } from "@/components/studio/PulseTab";
+import { CanonTab } from "@/components/studio/CanonTab";
+import { CommandTab } from "@/components/studio/CommandTab";
 
 export default function GroupStudioPage() {
   const { groupSlug } = useParams<{ groupSlug: string }>();
@@ -72,7 +75,9 @@ export default function GroupStudioPage() {
           onTabChange={setActiveTab}
           isSuperadmin={isSuperadmin}
         >
-          <StudioTabSkeleton />
+          {activeTab === "pulse" && <PulseTab groupSlug={group.slug} />}
+          {activeTab === "canon" && <CanonTab groupSlug={group.slug} />}
+          {activeTab === "command" && <CommandTab groupSlug={group.slug} />}
         </GroupStudioTabs>
 
       </Container>
