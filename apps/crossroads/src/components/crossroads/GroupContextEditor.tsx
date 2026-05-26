@@ -20,6 +20,9 @@ interface GroupContextData {
   outward_feel: string;
   context_health_score: number;
   updated_at: string | null;
+  dispatch_policy: 'cloud_default' | 'local_preferred' | 'local_only' | 'local_strict';
+  local_model_tier: 'standard' | 'high';
+  local_verb_overrides: string[];
 }
 
 const EMPTY: GroupContextData = {
@@ -29,6 +32,9 @@ const EMPTY: GroupContextData = {
   outward_feel: "",
   context_health_score: 0,
   updated_at: null,
+  dispatch_policy: 'cloud_default',
+  local_model_tier: 'standard',
+  local_verb_overrides: [],
 };
 
 const FIELDS: { key: keyof Pick<GroupContextData, "founding_story" | "voice_description" | "outward_feel">; label: string; hint: string }[] = [
