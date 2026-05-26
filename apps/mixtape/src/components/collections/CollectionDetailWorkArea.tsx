@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import {
   VStack,
@@ -40,6 +40,7 @@ interface CollectionDetailWorkAreaProps {
   onBack?: () => void;
   canEdit?: boolean;
   backNav?: ReactNode;
+  groupSlug?: string;
 }
 
 export function CollectionDetailWorkArea({
@@ -47,12 +48,19 @@ export function CollectionDetailWorkArea({
   onBack,
   canEdit = false,
   backNav,
+  groupSlug,
 }: CollectionDetailWorkAreaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editSummary, setEditSummary] = useState('');
+  const [itemsRefreshKey, setItemsRefreshKey] = useState(0);
 
   const { collection, isLoading, refetch } = useCollection(collectionId);
+
+  const handleItemAdded = useCallback(() => {
+    refetch();
+    setItemsRefreshKey((k) => k + 1);
+  }, [refetch]);
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
 
@@ -334,6 +342,9 @@ export function CollectionDetailWorkArea({
           <CollectionItemsList
             collectionId={collectionId}
             onEditItem={canEdit ? (itemId) => { console.log('Edit item:', itemId); } : undefined}
+            canReorder={canEdit}
+            groupSlug={groupSlug}
+            refreshTrigger={itemsRefreshKey}
           />
         </Box>
 
@@ -355,7 +366,7 @@ export function CollectionDetailWorkArea({
             </Text>
             <CollectionBrowser
               collectionId={collectionId}
-              onItemAdded={() => { refetch(); }}
+              onItemAdded={handleItemAdded}
             />
           </Box>
         )}

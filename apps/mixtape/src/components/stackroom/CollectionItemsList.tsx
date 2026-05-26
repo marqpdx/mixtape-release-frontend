@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -48,6 +48,9 @@ import { createListCollection } from '@chakra-ui/react';
 interface CollectionItemsListProps {
   collectionId: string;
   onEditItem?: (itemId: string) => void;
+  canReorder?: boolean;
+  groupSlug?: string;
+  refreshTrigger?: number;
 }
 
 const SORT_OPTIONS = createListCollection({
@@ -62,6 +65,9 @@ const SORT_OPTIONS = createListCollection({
 export function CollectionItemsList({
   collectionId,
   onEditItem,
+  canReorder = false,
+  groupSlug,
+  refreshTrigger,
 }: CollectionItemsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchWithinDocs, setSearchWithinDocs] = useState(false);
@@ -73,6 +79,12 @@ export function CollectionItemsList({
   const updateMutation = useUpdateLibraryItem();
   const deleteMutation = useDeleteLibraryItem();
   const reorderMutation = useReorderLibraryItems();
+
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      refetch();
+    }
+  }, [refreshTrigger]);
 
   // Configure drag-and-drop sensors
   const sensors = useSensors(
@@ -317,6 +329,8 @@ export function CollectionItemsList({
               onToggleExpand={toggleFolder}
               isExpanded={isExpanded}
               hasChildren={hasChildren}
+              canReorder={canReorder}
+              groupSlug={groupSlug}
             />
           </Box>
 
@@ -481,8 +495,8 @@ export function CollectionItemsList({
             </EmptyState.Description>
           </EmptyState.Content>
         </EmptyState.Root>
-      ) : sortBy === 'order' ? (
-        // Drag-and-drop enabled with tree view (only when sorting by order)
+      ) : canReorder && sortBy === 'order' ? (
+        // Drag-and-drop enabled — only for admins/stewards sorting by order
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -496,7 +510,7 @@ export function CollectionItemsList({
           </SortableContext>
         </DndContext>
       ) : (
-        // Drag-and-drop disabled with tree view (when sorting by other criteria)
+        // No drag-and-drop (non-admin or sorting by other criteria)
         <Stack gap={3}>{renderTreeItems()}</Stack>
       )}
 

@@ -54,6 +54,7 @@ export function CollectionsTab({
             onBack={() => setSelectedCollectionId(null)}
             canEdit={isAdminOrSteward}
             backNav={detailBackNav}
+            groupSlug={group.slug}
           />
         )}
       </Box>
