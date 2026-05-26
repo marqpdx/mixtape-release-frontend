@@ -91,9 +91,9 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
       _last={{ border: "none" }}
     >
       <VStack align="start" gap={0} flex={1} minW={0}>
-        <Text fontSize="sm" fontWeight="medium" noOfLines={1}>{item.verb}</Text>
+        <Text fontSize="sm" fontWeight="medium" lineClamp={1}>{item.verb}</Text>
         {item.summary && (
-          <Text fontSize="xs" color="gray.500" noOfLines={1}>{item.summary}</Text>
+          <Text fontSize="xs" color="gray.500" lineClamp={1}>{item.summary}</Text>
         )}
       </VStack>
       <Text fontSize="xs" color="gray.400" flexShrink={0} ml={2}>

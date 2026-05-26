@@ -62,9 +62,9 @@ function DocRow({ item }: { item: CanonDocItem }) {
       _last={{ border: "none" }}
     >
       <VStack align="start" gap={0} flex={1} minW={0}>
-        <Text fontSize="sm" fontWeight="medium" noOfLines={1}>{item.title}</Text>
+        <Text fontSize="sm" fontWeight="medium" lineClamp={1}>{item.title}</Text>
         {item.folder_path && (
-          <Text fontSize="xs" color="gray.500" noOfLines={1}>{item.folder_path}</Text>
+          <Text fontSize="xs" color="gray.500" lineClamp={1}>{item.folder_path}</Text>
         )}
       </VStack>
       <Text

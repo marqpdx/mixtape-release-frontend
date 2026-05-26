@@ -79,10 +79,10 @@ function OpRow({ op }: { op: ActiveOp }) {
       align="start"
     >
       <VStack align="start" gap={0.5} flex={1} minW={0}>
-        <Text fontSize="sm" fontWeight="medium" noOfLines={1}>{op.verb}</Text>
-        <Text fontSize="xs" color={monoColor} fontFamily="mono" noOfLines={1}>{op.tool_name}</Text>
+        <Text fontSize="sm" fontWeight="medium" lineClamp={1}>{op.verb}</Text>
+        <Text fontSize="xs" color={monoColor} fontFamily="mono" lineClamp={1}>{op.tool_name}</Text>
         {op.description && (
-          <Text fontSize="xs" color="gray.500" noOfLines={1}>{op.description}</Text>
+          <Text fontSize="xs" color="gray.500" lineClamp={1}>{op.description}</Text>
         )}
       </VStack>
       <VStack align="end" gap={0.5} flexShrink={0} ml={3}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, HStack, Skeleton, Text, VStack } from "@chakra-ui/react";
+import { HStack, Skeleton, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { usePersonalStudio } from "@mixtape/api/hooks/studio";
 import type { StudioContentItem } from "@mixtape/api/clients/studio/studioApi";
@@ -21,7 +21,7 @@ function ContentRow({ item }: { item: StudioContentItem }) {
       borderColor={borderColor}
       _last={{ border: "none" }}
     >
-      <Text fontSize="sm" fontWeight="medium" noOfLines={1} flex={1} minW={0}>
+      <Text fontSize="sm" fontWeight="medium" lineClamp={1} flex={1} minW={0}>
         {item.title}
       </Text>
       <Text

@@ -13,7 +13,6 @@ import {
   VStack,
   IconButton,
   Group,
-  Button,
 } from '@chakra-ui/react';
 import {
   IconFile,
@@ -42,6 +41,7 @@ interface CollectionItemCardProps {
   onEdit?: (itemId: string) => void;
   onRemove?: (itemId: string) => void;
   onToggleFeatured?: (itemId: string) => void;
+  onOpen?: (item: LibraryItem) => void;
   onToggleExpand?: (itemId: string) => void;
   isExpanded?: boolean;
   hasChildren?: boolean;
@@ -49,11 +49,21 @@ interface CollectionItemCardProps {
   groupSlug?: string;
 }
 
+type SourceFileLikeContent = {
+  id?: string;
+  filename?: string;
+  content_type?: string;
+  size_bytes?: number;
+  origin?: string;
+  created_at?: string;
+} | null;
+
 export function CollectionItemCard({
   item,
   onEdit,
   onRemove,
   onToggleFeatured,
+  onOpen,
   onToggleExpand,
   isExpanded = false,
   hasChildren = false,
@@ -78,6 +88,23 @@ export function CollectionItemCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const isSourceFileLikeItem =
+    !item.is_folder && (!item.content_type || item.content_type === 'source_file');
+
+  const getSourceFileContent = (): SourceFileLikeContent =>
+    ((item as { content?: SourceFileLikeContent }).content ?? null);
+
+  const getSourceFileTitle = () => ('title' in item ? item.title : '');
+
+  const openItem = () => {
+    onOpen?.(item);
+  };
+
+  const getSourceFileDisplayName = () => {
+    if (!isSourceFileLikeItem) return '';
+    return getSourceFileContent()?.filename || getSourceFileTitle() || 'Untitled file';
   };
 
   // Type-specific rendering
@@ -119,9 +146,10 @@ export function CollectionItemCard({
         </VStack>
       );
     }
-    if (item.content_type === 'source_file') {
-      const { content } = item;
-      const fileTypeInfo = getFileTypeInfo(content.filename, content.content_type);
+    if (isSourceFileLikeItem) {
+      const content = getSourceFileContent();
+      const displayName = getSourceFileDisplayName();
+      const fileTypeInfo = getFileTypeInfo(displayName, content?.content_type);
       const FileIcon = fileTypeInfo.icon;
 
       return (
@@ -130,7 +158,13 @@ export function CollectionItemCard({
           gap={2}
           flex={1}
           cursor="pointer"
-          onClick={() => setFileInfoOpen(true)}
+          onClick={() => {
+            if (onOpen) {
+              openItem();
+              return;
+            }
+            setFileInfoOpen(true);
+          }}
           _hover={{ opacity: 0.8 }}
         >
           <HStack>
@@ -138,22 +172,28 @@ export function CollectionItemCard({
               <FileIcon size={20} />
             </Box>
             <Text fontWeight="medium" fontSize="md">
-              {content.filename}
+              {displayName}
             </Text>
           </HStack>
           <HStack gap={2} fontSize="sm" color="gray.600">
             <Badge colorPalette={fileTypeInfo.colorScheme} size="sm">
               {fileTypeInfo.label}
             </Badge>
-            <Badge colorPalette="gray" size="sm">
-              {formatBytes(content.size_bytes)}
-            </Badge>
-            <Badge colorPalette="blue" size="sm">
-              {content.origin}
-            </Badge>
-            <Text fontSize="xs">
-              Added {formatDistanceToNow(new Date(content.created_at), { addSuffix: true })}
-            </Text>
+            {typeof content?.size_bytes === 'number' && (
+              <Badge colorPalette="gray" size="sm">
+                {formatBytes(content.size_bytes)}
+              </Badge>
+            )}
+            {content?.origin && (
+              <Badge colorPalette="blue" size="sm">
+                {content.origin}
+              </Badge>
+            )}
+            {content?.created_at && (
+              <Text fontSize="xs">
+                Added {formatDistanceToNow(new Date(content.created_at), { addSuffix: true })}
+              </Text>
+            )}
           </HStack>
         </VStack>
       );
@@ -172,9 +212,15 @@ export function CollectionItemCard({
           align="start"
           gap={2}
           flex={1}
-          cursor={href ? 'pointer' : 'default'}
-          onClick={href ? () => router.push(href) : undefined}
-          _hover={href ? { opacity: 0.8 } : undefined}
+          cursor={onOpen || href ? 'pointer' : 'default'}
+          onClick={
+            onOpen
+              ? openItem
+              : href
+              ? () => router.push(href)
+              : undefined
+          }
+          _hover={onOpen || href ? { opacity: 0.8 } : undefined}
         >
           <HStack>
             <Box color="gray.500">
@@ -360,22 +406,28 @@ export function CollectionItemCard({
       </Card.Root>
 
       {/* File info dialog — source_file only */}
-      {item.content_type === 'source_file' && (
+      {isSourceFileLikeItem && (
         <DialogRoot open={fileInfoOpen} onOpenChange={(e) => setFileInfoOpen(e.open)} size="md">
           <DialogContent>
             <DialogHeader>
-              <Text fontWeight="semibold">{item.content.filename}</Text>
+              <Text fontWeight="semibold">{getSourceFileDisplayName()}</Text>
             </DialogHeader>
             <DialogBody pb={6}>
               <VStack align="start" gap={3}>
                 <HStack gap={2} flexWrap="wrap">
-                  <Badge colorPalette="gray">{item.content.content_type || 'unknown type'}</Badge>
-                  <Badge colorPalette="gray">{formatBytes(item.content.size_bytes)}</Badge>
-                  <Badge colorPalette="blue">{item.content.origin}</Badge>
+                  <Badge colorPalette="gray">{item.content?.content_type || 'uploaded file'}</Badge>
+                  {typeof item.content?.size_bytes === 'number' && (
+                    <Badge colorPalette="gray">{formatBytes(item.content.size_bytes)}</Badge>
+                  )}
+                  {item.content?.origin && (
+                    <Badge colorPalette="blue">{item.content.origin}</Badge>
+                  )}
                 </HStack>
-                <Text fontSize="sm" color="gray.600">
-                  Added {formatDistanceToNow(new Date(item.content.created_at), { addSuffix: true })}
-                </Text>
+                {item.content?.created_at && (
+                  <Text fontSize="sm" color="gray.600">
+                    Added {formatDistanceToNow(new Date(item.content.created_at), { addSuffix: true })}
+                  </Text>
+                )}
                 <Box
                   p={4}
                   bg="gray.50"

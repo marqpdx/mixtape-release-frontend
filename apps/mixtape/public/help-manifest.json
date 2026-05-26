@@ -1519,6 +1519,53 @@
         "search"
       ]
     },
+    "studio-overview": {
+      "key": "studio-overview",
+      "slug": "studio",
+      "feature": "studio",
+      "title": "Studio",
+      "subsystem": "studio",
+      "area": "overview",
+      "summary": "Studio is the focused workspace for a group or circle, where members move from broad community context into the more intimate surface for that specific space.",
+      "excerpt": "Studio is the focused workspace for a group or circle, where members move from broad community context into the more intimate surface for that specific space.",
+      "plainText": "Studio Studio is a focused workspace inside Mixtape. It gives a group or circle a more intimate surface for shared context, participation, and ongoing work without sending you back through broader navigation every time. What you can do here - Enter a group or circle workspace directly - Rejoin the current conversation and shared context for that space - Move between the parent group view and the more focused studio view Key concepts Studio — A focused workspace for a specific community space. Circle studio — The studio view for a nested circle inside a group, with a tighter scope than the parent group. Current limitations - Studio help is currently an overview. Some tasks inside studio may still rely on help from the related group, writing, or library surfaces. Related features - Groups — Studio lives alongside the broader group surface. - Writing — Writing and publishing flows may continue from within a studio context. - Stackroom — Shared files and collection work may still send you into library surfaces.",
+      "html": "<h1 id=\"studio\">Studio</h1>\n<p>Studio is a focused workspace inside Mixtape. It gives a group or circle a more intimate surface for shared context, participation, and ongoing work without sending you back through broader navigation every time.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Enter a group or circle workspace directly</li>\n<li>Rejoin the current conversation and shared context for that space</li>\n<li>Move between the parent group view and the more focused studio view</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Studio</strong> — A focused workspace for a specific community space.</p>\n<p><strong>Circle studio</strong> — The studio view for a nested circle inside a group, with a tighter scope than the parent group.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Studio help is currently an overview. Some tasks inside studio may still rely on help from the related group, writing, or library surfaces.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Groups</strong> — Studio lives alongside the broader group surface.</li>\n<li><strong>Writing</strong> — Writing and publishing flows may continue from within a studio context.</li>\n<li><strong>Stackroom</strong> — Shared files and collection work may still send you into library surfaces.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/studio",
+        "/studio/*",
+        "/studio/*/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "studio",
+        "groups",
+        "circles",
+        "workspace"
+      ]
+    },
     "workbench-overview": {
       "key": "workbench-overview",
       "slug": "workbench",
@@ -1796,6 +1843,9 @@
     "stackroom": [
       "stackroom-overview"
     ],
+    "studio": [
+      "studio-overview"
+    ],
     "workbench": [
       "workbench-overview"
     ],
@@ -1803,5 +1853,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-05-25T22:09:05.572Z"
+  "generatedAt": "2026-05-26T04:44:38.985Z"
 }

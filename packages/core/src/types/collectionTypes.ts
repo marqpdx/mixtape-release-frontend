@@ -98,11 +98,11 @@ export interface SourceFileMinimal {
 // SourceFile content
 export interface SourceFileContent {
   id: string;
-  filename: string;
-  content_type: string;
-  size_bytes: number;
-  origin: 'upload' | 'git' | 'external' | 'audio';
-  created_at: string;
+  filename?: string;
+  content_type?: string;
+  size_bytes?: number;
+  origin?: 'upload' | 'git' | 'external' | 'audio';
+  created_at?: string;
 }
 
 // WritingPiece content

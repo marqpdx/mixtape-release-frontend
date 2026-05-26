@@ -27,5 +27,6 @@ export type HelpKey =
   | "projects-overview"
   | "puddlejump-overview"
   | "stackroom-overview"
+  | "studio-overview"
   | "workbench-overview"
   | "writing-overview";

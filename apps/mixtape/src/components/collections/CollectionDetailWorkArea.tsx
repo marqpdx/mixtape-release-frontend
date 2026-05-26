@@ -34,6 +34,8 @@ import { CollectionItemsList } from '@/components/stackroom/CollectionItemsList'
 import { CollectionBrowser } from '@/components/stackroom/CollectionBrowser';
 import { IndexingStatus } from '@/components/stackroom/IndexingStatus';
 import { toaster } from '@/components/ui/toaster';
+import { CollectionItemReader } from './CollectionItemReader';
+import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 
 interface CollectionDetailWorkAreaProps {
   collectionId: string;
@@ -54,6 +56,7 @@ export function CollectionDetailWorkArea({
   const [editTitle, setEditTitle] = useState('');
   const [editSummary, setEditSummary] = useState('');
   const [itemsRefreshKey, setItemsRefreshKey] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
 
   const { collection, isLoading, refetch } = useCollection(collectionId);
 
@@ -61,6 +64,13 @@ export function CollectionDetailWorkArea({
     refetch();
     setItemsRefreshKey((k) => k + 1);
   }, [refetch]);
+  const handleOpenItem = useCallback((item: LibraryItem) => {
+    setSelectedItem(item);
+  }, []);
+  const handleCloseItem = useCallback(() => {
+    setSelectedItem(null);
+    setItemsRefreshKey((k) => k + 1);
+  }, []);
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
 
@@ -321,35 +331,19 @@ export function CollectionDetailWorkArea({
         )}
       </Box>
 
-      {/* Two-pane layout: items (wider) | add items (narrower, admin only) */}
-      <Grid
-        templateColumns={{ base: "1fr", lg: canEdit ? "3fr 2fr" : "1fr" }}
-        gap={8}
-        alignItems="start"
-      >
-        {/* Items */}
-        <Box>
-          <Box
-            pb={3}
-            mb={4}
-            borderBottom="1px solid"
-            borderColor="theme.border"
-          >
-            <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
-              Items in this collection
-            </Text>
-          </Box>
-          <CollectionItemsList
-            collectionId={collectionId}
-            onEditItem={canEdit ? (itemId) => { console.log('Edit item:', itemId); } : undefined}
-            canReorder={canEdit}
-            groupSlug={groupSlug}
-            refreshTrigger={itemsRefreshKey}
-          />
-        </Box>
-
-        {/* Add to collection — admin/steward only */}
-        {canEdit && (
+      {selectedItem ? (
+        <CollectionItemReader
+          item={selectedItem}
+          onBack={handleCloseItem}
+          groupSlug={groupSlug}
+        />
+      ) : (
+        <Grid
+          templateColumns={{ base: "1fr", lg: canEdit ? "3fr 2fr" : "1fr" }}
+          gap={8}
+          alignItems="start"
+        >
+          {/* Items */}
           <Box>
             <Box
               pb={3}
@@ -358,22 +352,46 @@ export function CollectionDetailWorkArea({
               borderColor="theme.border"
             >
               <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
-                Add to collection
+                Items in this collection
               </Text>
             </Box>
-            <Text fontFamily="serifBody" fontSize="sm" fontStyle="italic" color="theme.textSecondary" mb={4} lineHeight="1.6">
-              Browse files and documents to add to this collection.
-            </Text>
-            <CollectionBrowser
+            <CollectionItemsList
               collectionId={collectionId}
-              onItemAdded={handleItemAdded}
+              onEditItem={canEdit ? (itemId) => { console.log('Edit item:', itemId); } : undefined}
+              onOpenItem={handleOpenItem}
+              canReorder={canEdit}
+              groupSlug={groupSlug}
+              refreshTrigger={itemsRefreshKey}
             />
           </Box>
-        )}
-      </Grid>
+
+          {/* Add to collection — admin/steward only */}
+          {canEdit && (
+            <Box>
+              <Box
+                pb={3}
+                mb={4}
+                borderBottom="1px solid"
+                borderColor="theme.border"
+              >
+                <Text fontFamily="mono" fontSize="10px" letterSpacing="2px" textTransform="uppercase" color="theme.textSecondary">
+                  Add to collection
+                </Text>
+              </Box>
+              <Text fontFamily="serifBody" fontSize="sm" fontStyle="italic" color="theme.textSecondary" mb={4} lineHeight="1.6">
+                Browse files and documents to add to this collection.
+              </Text>
+              <CollectionBrowser
+                collectionId={collectionId}
+                onItemAdded={handleItemAdded}
+              />
+            </Box>
+          )}
+        </Grid>
+      )}
 
       {/* Danger zone — admin/steward only */}
-      {canEdit && (
+      {canEdit && !selectedItem && (
         <Box mt={10} pt={6} borderTop="1px solid" borderColor="theme.border">
           <Text fontFamily="mono" fontSize="10px" letterSpacing="0.12em" textTransform="uppercase" color="theme.textSecondary" mb={3}>
             Delete collection

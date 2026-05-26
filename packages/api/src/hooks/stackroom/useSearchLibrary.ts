@@ -187,6 +187,36 @@ export const useArtifactContent = (artifactId: string | null) => {
 };
 
 /**
+ * Hook to fetch source file content (full extracted text)
+ */
+export const useSourceFileContent = (sourceFileId: string | null) => {
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: sourceFileId
+      ? [...stackroomQueryKeys.all, 'source-file', sourceFileId, 'content']
+      : ['stackroom', 'empty'],
+    queryFn: () => {
+      if (!sourceFileId) return Promise.resolve({ text: '' });
+      return stackroomApi.fetchSourceFileContent(sourceFileId);
+    },
+    enabled: !!sourceFileId,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    text: data?.text || '',
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
  * Hook to create a new library
  */
 export const useCreateLibrary = () => {

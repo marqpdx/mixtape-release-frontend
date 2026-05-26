@@ -44,14 +44,20 @@ import {
 import { CollectionItemCard } from './CollectionItemCard';
 import { toaster } from '../ui/toaster';
 import { createListCollection } from '@chakra-ui/react';
+import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 
 interface CollectionItemsListProps {
   collectionId: string;
   onEditItem?: (itemId: string) => void;
+  onOpenItem?: (item: LibraryItem) => void;
   canReorder?: boolean;
   groupSlug?: string;
   refreshTrigger?: number;
 }
+
+type SourceFileLikeContent = {
+  filename?: string;
+} | null;
 
 const SORT_OPTIONS = createListCollection({
   items: [
@@ -65,6 +71,7 @@ const SORT_OPTIONS = createListCollection({
 export function CollectionItemsList({
   collectionId,
   onEditItem,
+  onOpenItem,
   canReorder = false,
   groupSlug,
   refreshTrigger,
@@ -80,11 +87,37 @@ export function CollectionItemsList({
   const deleteMutation = useDeleteLibraryItem();
   const reorderMutation = useReorderLibraryItems();
 
+  const getSourceFileTitle = (item: (typeof items)[number]) => ('title' in item ? item.title : '');
+
+  const getItemDisplayName = (item: (typeof items)[number]) => {
+    const isSourceFileLikeItem =
+      !item.is_folder && (!item.content_type || item.content_type === 'source_file');
+
+    if (isSourceFileLikeItem) {
+      const content = (item as { content?: SourceFileLikeContent }).content ?? null;
+      return content?.filename || getSourceFileTitle(item) || 'Untitled file';
+    }
+
+    if (item.content_type === 'writing_piece') {
+      return item.content.title;
+    }
+
+    if (item.content_type === 'collection') {
+      return item.content.title;
+    }
+
+    if (item.content_type === 'folder') {
+      return item.title || 'Untitled';
+    }
+
+    return 'Untitled';
+  };
+
   useEffect(() => {
     if (refreshTrigger !== undefined && refreshTrigger > 0) {
       refetch();
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, refetch]);
 
   // Configure drag-and-drop sensors
   const sensors = useSensors(
@@ -241,9 +274,11 @@ export function CollectionItemsList({
         if (!searchQuery) return true;
 
         const searchLower = searchQuery.toLowerCase();
+        const isSourceFileLikeItem =
+          !item.is_folder && (!item.content_type || item.content_type === 'source_file');
 
-        if (item.content_type === 'source_file') {
-          return item.content.filename.toLowerCase().includes(searchLower);
+        if (isSourceFileLikeItem) {
+          return getItemDisplayName(item).toLowerCase().includes(searchLower);
         }
 
         if (item.content_type === 'writing_piece') {
@@ -268,26 +303,8 @@ export function CollectionItemsList({
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
       case 'name':
-        const aName =
-          a.content_type === 'source_file'
-            ? a.content.filename
-            : a.content_type === 'writing_piece'
-            ? a.content.title
-            : a.content_type === 'collection'
-            ? a.content.title
-            : a.content_type === 'folder'
-            ? a.title || 'Untitled'
-            : 'Untitled';
-        const bName =
-          b.content_type === 'source_file'
-            ? b.content.filename
-            : b.content_type === 'writing_piece'
-            ? b.content.title
-            : b.content_type === 'collection'
-            ? b.content.title
-            : b.content_type === 'folder'
-            ? b.title || 'Untitled'
-            : 'Untitled';
+        const aName = getItemDisplayName(a);
+        const bName = getItemDisplayName(b);
         return aName.localeCompare(bName);
       case 'order':
       default:
@@ -326,6 +343,7 @@ export function CollectionItemsList({
               onEdit={onEditItem}
               onRemove={handleRemove}
               onToggleFeatured={handleToggleFeatured}
+              onOpen={onOpenItem}
               onToggleExpand={toggleFolder}
               isExpanded={isExpanded}
               hasChildren={hasChildren}
