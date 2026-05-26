@@ -66,7 +66,10 @@ export default function GroupStudioPage() {
           { label: group.title },
         ]} />
 
-        <GroupStudioHeader title={group.title} />
+        <GroupStudioHeader
+          title={group.title}
+          groupContext={{ id: group.id, slug: group.slug, title: group.title }}
+        />
 
         <WorkAreaChipStrip chips={chips} />
 
