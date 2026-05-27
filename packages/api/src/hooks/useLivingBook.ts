@@ -29,12 +29,12 @@ export function useLivingBookAccumulated(id: string | null) {
 
 export function useContextNeighbors(
   livingBookId: string | null,
-  pieceSlug: string | null
+  pieceId: string | null
 ) {
   return useQuery({
-    queryKey: ["living-book-context", livingBookId, pieceSlug],
-    queryFn: () => api.getContextNeighbors(livingBookId!, pieceSlug!),
-    enabled: !!livingBookId && !!pieceSlug,
+    queryKey: ["living-book-context", livingBookId, pieceId],
+    queryFn: () => api.getContextNeighbors(livingBookId!, pieceId!),
+    enabled: !!livingBookId && !!pieceId,
     staleTime: 60 * 1000,
   });
 }
@@ -64,12 +64,13 @@ export function useLivingBookMutations(id: string) {
   });
 
   const removeNode = useMutation({
-    mutationFn: (payload: api.RemoveNodePayload) => api.removeNode(id, payload),
+    mutationFn: (pieceId: string) => api.removeNode(id, pieceId),
     onSuccess: invalidateTree,
   });
 
   const reorderNodes = useMutation({
-    mutationFn: (payload: api.ReorderPayload) => api.reorderNodes(id, payload),
+    mutationFn: (payload: api.ReorderPayload) =>
+      api.reorderNodes(id, payload.parent_id, payload.ordered_piece_ids),
     onSuccess: invalidateTree,
   });
 

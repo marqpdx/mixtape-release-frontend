@@ -195,7 +195,7 @@ export default function MemberWritingPiecePage() {
 
           {/* LB-7: Living Book breadcrumb + prev/next (shows only when ?lb= is present) */}
           <Suspense>
-            <LivingBookBreadcrumb pieceSlug={pieceSlug} username={usernameParam} />
+            <LivingBookBreadcrumb pieceSlug={pieceSlug} pieceId={piece.id} username={usernameParam} />
           </Suspense>
 
           {/* Article container */}
@@ -314,7 +314,7 @@ export default function MemberWritingPiecePage() {
 
           {/* LB-8: Context Flow Mode (shows only when ?lb= is present) */}
           <Suspense>
-            <ContextFlowPanel pieceSlug={pieceSlug} username={usernameParam} />
+            <ContextFlowPanel pieceSlug={pieceSlug} pieceId={piece.id} username={usernameParam} />
           </Suspense>
 
           {/* Bottom back link */}
@@ -338,7 +338,7 @@ export default function MemberWritingPiecePage() {
       {/* LB-6: Promotion dialog */}
       {isOwner && piece && (
         <PromotionDialog
-          pieceId={piece.id}
+          pieceSlug={piece.slug}
           pieceTitle={piece.title}
           open={promotionOpen}
           onClose={() => setPromotionOpen(false)}

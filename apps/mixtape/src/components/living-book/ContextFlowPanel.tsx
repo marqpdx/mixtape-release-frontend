@@ -23,6 +23,7 @@ import { useLivingBook, useContextNeighbors } from "@hooks/useLivingBook"
 
 interface ContextFlowPanelProps {
   pieceSlug: string
+  pieceId: string
   username?: string
 }
 
@@ -73,13 +74,13 @@ function ContextCard({ title, excerpt, href, direction }: ContextCardProps) {
   )
 }
 
-export function ContextFlowPanel({ pieceSlug, username }: ContextFlowPanelProps) {
+export function ContextFlowPanel({ pieceSlug, pieceId, username }: ContextFlowPanelProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
   const [collapsed, setCollapsed] = useState(false)
 
   const { data: book } = useLivingBook(livingBookId)
-  const { data: neighbors, isLoading } = useContextNeighbors(livingBookId, pieceSlug)
+  const { data: neighbors, isLoading } = useContextNeighbors(livingBookId, pieceId)
 
   const borderColor = useColorModeValue("gray.200", "gray.700")
   const headerBg = useColorModeValue("gray.50", "gray.850")

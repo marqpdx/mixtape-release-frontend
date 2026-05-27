@@ -68,7 +68,7 @@ function SortableNode({
 }: SortableNodeProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: node.obj.id,
+    id: node.id,
   })
 
   const draftColor = useColorModeValue("orange.500", "orange.300")
@@ -81,7 +81,7 @@ function SortableNode({
   }
 
   const pieceHref = username
-    ? `/member/${username}/writing/${node.obj.slug}?lb=${livingBookId}`
+    ? `/member/${username}/writing/${node.slug}?lb=${livingBookId}`
     : `#`
 
   const indentPx = node.depth * 16
@@ -131,7 +131,7 @@ function SortableNode({
             lineClamp={1}
             color={!node.is_published && isEditor ? draftColor : undefined}
           >
-            {node.obj.title || "Untitled"}
+            {node.title || "Untitled"}
             {!node.is_published && isEditor && (
               <Text as="span" fontSize="xs" ml={1} opacity={0.7}>
                 draft
@@ -147,7 +147,7 @@ function SortableNode({
                 aria-label="Add child node"
                 size="xs"
                 variant="ghost"
-                onClick={() => onAddChild(node.obj.id)}
+                onClick={() => onAddChild(node.id)}
               >
                 <IconPlus size={12} />
               </IconButton>
@@ -157,7 +157,7 @@ function SortableNode({
               size="xs"
               variant="ghost"
               colorPalette="red"
-              onClick={() => onRemove(node.obj.id)}
+              onClick={() => onRemove(node.id)}
             >
               <IconTrash size={12} />
             </IconButton>
@@ -190,10 +190,10 @@ export function StructurePanel({ livingBookId, isEditor, username }: StructurePa
     const siblings = nodes.filter(
       (n) =>
         n.depth ===
-        (nodes.find((x) => x.obj.id === String(active.id))?.depth ?? 0)
+        (nodes.find((x) => x.id === String(active.id))?.depth ?? 0)
     )
-    const oldIndex = siblings.findIndex((n) => n.obj.id === active.id)
-    const newIndex = siblings.findIndex((n) => n.obj.id === over.id)
+    const oldIndex = siblings.findIndex((n) => n.id === active.id)
+    const newIndex = siblings.findIndex((n) => n.id === over.id)
     if (oldIndex === -1 || newIndex === -1) return
 
     const reordered = [...siblings]
@@ -202,12 +202,12 @@ export function StructurePanel({ livingBookId, isEditor, username }: StructurePa
 
     reorderNodes.mutate({
       parent_id: parentId,
-      ordered_piece_ids: reordered.map((n) => n.obj.id),
+      ordered_piece_ids: reordered.map((n) => n.id),
     })
   }
 
   const handleRemove = (pieceId: string) => {
-    removeNode.mutate({ piece_id: pieceId })
+    removeNode.mutate(pieceId)
   }
 
   const handleAddChild = (parentId: string) => {
@@ -271,13 +271,13 @@ export function StructurePanel({ livingBookId, isEditor, username }: StructurePa
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={nodes.map((n) => n.obj.id)}
+            items={nodes.map((n) => n.id)}
             strategy={verticalListSortingStrategy}
           >
             <VStack gap={0} align="stretch">
               {nodes.map((node) => (
                 <SortableNode
-                  key={node.obj.id}
+                  key={node.id}
                   node={node}
                   livingBookId={livingBookId}
                   isEditor={isEditor}

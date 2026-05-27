@@ -25,14 +25,14 @@ import { useMutation } from "@tanstack/react-query"
 import { promoteLivingBook } from "@mixtape/api/clients/livingBook/livingBookApi"
 
 interface PromotionDialogProps {
-  pieceId: string
+  pieceSlug: string
   pieceTitle: string
   open: boolean
   onClose: () => void
 }
 
 export function PromotionDialog({
-  pieceId,
+  pieceSlug,
   pieceTitle,
   open,
   onClose,
@@ -53,7 +53,7 @@ export function PromotionDialog({
     }
     setError(null)
     promote.mutate(
-      { piece_id: pieceId, title: title.trim(), description: description.trim() },
+      { piece_slug: pieceSlug, title: title.trim(), description: description.trim() },
       {
         onSuccess: (book) => {
           onClose()

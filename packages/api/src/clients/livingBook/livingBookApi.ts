@@ -10,19 +10,17 @@ export interface LivingBook {
   trunk_id: string;
   trunk_slug: string;
   trunk_title: string;
+  sponsor_type: "member" | "group" | null;
+  group_slug: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface LivingBookNode {
-  obj: {
-    id: string;
-    slug: string;
-    title: string;
-    status: string;
-    excerpt: string | null;
-  };
+  id: string;
+  slug: string;
+  title: string;
   depth: number;
   position: number;
   relationship_id: string;
@@ -46,13 +44,14 @@ export interface AccumulatedNode {
 }
 
 export interface PromotePayload {
-  piece_id: string;
+  piece_slug: string;
   title: string;
   description?: string;
+  group_slug?: string;
 }
 
 export interface AddNodePayload {
-  piece_id: string;
+  piece_slug: string;
   parent_id?: string;
   position?: number;
 }
@@ -68,12 +67,8 @@ export interface ReorderPayload {
   ordered_piece_ids: string[];
 }
 
-export interface RemoveNodePayload {
-  piece_id: string;
-}
-
 export async function promoteLivingBook(payload: PromotePayload): Promise<LivingBook> {
-  const res = await axiosInstance.post<LivingBook>("/api/living-books/promote/", payload);
+  const res = await axiosInstance.post<LivingBook>("/api/living-books/", payload);
   return res.data;
 }
 
@@ -101,7 +96,7 @@ export async function getAccumulatedView(id: string): Promise<AccumulatedNode[]>
 }
 
 export async function addNode(id: string, payload: AddNodePayload): Promise<LivingBookNode> {
-  const res = await axiosInstance.post<LivingBookNode>(`/api/living-books/${id}/nodes/add/`, payload);
+  const res = await axiosInstance.post<LivingBookNode>(`/api/living-books/${id}/nodes/`, payload);
   return res.data;
 }
 
@@ -109,24 +104,31 @@ export async function createAddNode(
   id: string,
   payload: CreateAddNodePayload
 ): Promise<{ piece: { id: string; slug: string; title: string }; relationship: any }> {
-  const res = await axiosInstance.post(`/api/living-books/${id}/nodes/create-add/`, payload);
+  const res = await axiosInstance.post(`/api/living-books/${id}/nodes/create/`, payload);
   return res.data;
 }
 
-export async function reorderNodes(id: string, payload: ReorderPayload): Promise<void> {
-  await axiosInstance.post(`/api/living-books/${id}/nodes/reorder/`, payload);
+export async function reorderNodes(
+  id: string,
+  parentId: string | null,
+  orderedPieceIds: string[]
+): Promise<void> {
+  const url = parentId
+    ? `/api/living-books/${id}/nodes/${parentId}/reorder/`
+    : `/api/living-books/${id}/nodes/reorder/`;
+  await axiosInstance.patch(url, { ordered_piece_ids: orderedPieceIds });
 }
 
-export async function removeNode(id: string, payload: RemoveNodePayload): Promise<void> {
-  await axiosInstance.delete(`/api/living-books/${id}/nodes/remove/`, { data: payload });
+export async function removeNode(id: string, pieceId: string): Promise<void> {
+  await axiosInstance.delete(`/api/living-books/${id}/nodes/${pieceId}/`);
 }
 
 export async function getContextNeighbors(
   id: string,
-  pieceSlug: string
+  pieceId: string
 ): Promise<ContextNeighbors> {
   const res = await axiosInstance.get<ContextNeighbors>(
-    `/api/living-books/${id}/context/${pieceSlug}/`
+    `/api/living-books/${id}/context/${pieceId}/`
   );
   return res.data;
 }

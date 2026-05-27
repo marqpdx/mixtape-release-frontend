@@ -12,15 +12,16 @@ import { useLivingBook, useContextNeighbors } from "@hooks/useLivingBook"
 
 interface LivingBookBreadcrumbProps {
   pieceSlug: string
+  pieceId: string
   username?: string
 }
 
-export function LivingBookBreadcrumb({ pieceSlug, username }: LivingBookBreadcrumbProps) {
+export function LivingBookBreadcrumb({ pieceSlug, pieceId, username }: LivingBookBreadcrumbProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
 
   const { data: book } = useLivingBook(livingBookId)
-  const { data: neighbors } = useContextNeighbors(livingBookId, pieceSlug)
+  const { data: neighbors } = useContextNeighbors(livingBookId, pieceId)
 
   const borderColor = useColorModeValue("gray.200", "gray.700")
   const bgColor = useColorModeValue("gray.50", "gray.800")
