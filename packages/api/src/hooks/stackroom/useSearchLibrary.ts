@@ -197,10 +197,20 @@ export const useSourceFileContent = (sourceFileId: string | null) => {
     refetch,
   } = useQuery({
     queryKey: sourceFileId
-      ? [...stackroomQueryKeys.all, 'source-file', sourceFileId, 'content']
+      ? [...stackroomQueryKeys.all, 'source-file', sourceFileId, 'readable']
       : ['stackroom', 'empty'],
     queryFn: () => {
-      if (!sourceFileId) return Promise.resolve({ text: '' });
+      if (!sourceFileId) {
+        return Promise.resolve({
+          source_file_id: '',
+          filename: '',
+          content_type: '',
+          artifact_id: null,
+          artifact_type: 'extracted_text',
+          ingestion_status: 'failed' as const,
+          text: '',
+        });
+      }
       return stackroomApi.fetchSourceFileContent(sourceFileId);
     },
     enabled: !!sourceFileId,
@@ -209,7 +219,9 @@ export const useSourceFileContent = (sourceFileId: string | null) => {
   });
 
   return {
+    readable: data ?? null,
     text: data?.text || '',
+    ingestionStatus: data?.ingestion_status ?? null,
     isLoading,
     error: error as Error | null,
     refetch,

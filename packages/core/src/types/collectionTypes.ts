@@ -102,7 +102,18 @@ export interface SourceFileContent {
   content_type?: string;
   size_bytes?: number;
   origin?: 'upload' | 'git' | 'external' | 'audio';
+  ingestion_status?: 'pending' | 'processing' | 'complete' | 'failed' | 'unsupported';
   created_at?: string;
+}
+
+export interface SourceFileReadable {
+  source_file_id: string;
+  filename: string;
+  content_type: string;
+  artifact_id: string | null;
+  artifact_type: string;
+  ingestion_status: 'pending' | 'processing' | 'complete' | 'failed' | 'unsupported';
+  text?: string;
 }
 
 // WritingPiece content

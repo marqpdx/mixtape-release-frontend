@@ -11,6 +11,7 @@ import {
   SourceFile,
   EmbeddingModel,
 } from '@mixtape/core/types/stackroomTypes';
+import type { SourceFileReadable } from '@mixtape/core/types/collectionTypes';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 
 // ============================================================================
@@ -194,11 +195,11 @@ export async function fetchSourceFiles(libraryId: string): Promise<SourceFile[]>
 }
 
 /**
- * Fetch full content of a source file
+ * Fetch readable extracted text for a source file
  */
-export async function fetchSourceFileContent(sourceFileId: string): Promise<{ text: string }> {
-  const response = await axiosInstance.get<{ text: string }>(
-    `/api/stackroom/source-files/${sourceFileId}/content`
+export async function fetchSourceFileContent(sourceFileId: string): Promise<SourceFileReadable> {
+  const response = await axiosInstance.get<SourceFileReadable>(
+    `/api/stackroom/source-files/${sourceFileId}/readable`
   );
   return response.data;
 }

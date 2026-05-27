@@ -9,7 +9,7 @@ import {
   VStack,
   Badge,
 } from '@chakra-ui/react';
-import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
+import { IconArrowLeft, IconDownload, IconExternalLink } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { useSourceFileContent } from '@mixtape/api/hooks';
 import { useWritingPiece } from '@mixtape/api/hooks/useWriting';
@@ -66,7 +66,8 @@ function isWordDoc(filename: string) {
 function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => void }) {
   const sourceFileId = getSourceFileContent(item)?.id || null;
   const filename = getDisplayName(item);
-  const { text, isLoading, error } = useSourceFileContent(sourceFileId);
+  const { text, ingestionStatus, isLoading, error } = useSourceFileContent(sourceFileId);
+  const originalUrl = sourceFileId ? `/api/stackroom/source-files/${sourceFileId}/download` : '';
 
   const markdownLike = isMarkdownLike(filename);
   const pdfFile = isPdf(filename);
@@ -75,19 +76,42 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
   return (
     <VStack align="stretch" gap={0}>
       <Box pb={5}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          color="theme.textSecondary"
-          px={0}
-          _hover={{ color: 'theme.text' }}
-        >
-          <IconArrowLeft size={14} />
-          <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
-            Back to collection
-          </Text>
-        </Button>
+        <HStack justify="space-between" align="center" flexWrap="wrap" gap={3}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            color="theme.textSecondary"
+            px={0}
+            _hover={{ color: 'theme.text' }}
+          >
+            <IconArrowLeft size={14} />
+            <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+              Back to collection
+            </Text>
+          </Button>
+
+          {sourceFileId && (
+            <HStack gap={2}>
+              <Box asChild>
+                <a href={originalUrl} target="_blank" rel="noreferrer">
+                  <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: 'theme.text' }}>
+                    <IconExternalLink size={14} />
+                    <Text ml={1}>Open original</Text>
+                  </Button>
+                </a>
+              </Box>
+              <Box asChild>
+                <a href={originalUrl} download>
+                  <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: 'theme.text' }}>
+                    <IconDownload size={14} />
+                    <Text ml={1}>Download original</Text>
+                  </Button>
+                </a>
+              </Box>
+            </HStack>
+          )}
+        </HStack>
       </Box>
 
       <Box pb={6} mb={6} borderBottom="1px solid" borderColor="theme.border">
@@ -108,6 +132,11 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
               Reading extracted text
             </Badge>
           )}
+          {ingestionStatus && ingestionStatus !== 'complete' && (
+            <Badge colorPalette={ingestionStatus === 'failed' ? 'red' : 'yellow'} variant="subtle">
+              {ingestionStatus}
+            </Badge>
+          )}
         </HStack>
       </Box>
 
@@ -121,6 +150,19 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
           <Text color="red.500" mb={3}>This document could not be loaded.</Text>
           <Text color="theme.textSecondary" fontSize="sm">
             {error.message}
+          </Text>
+        </Box>
+      ) : ingestionStatus && ingestionStatus !== 'complete' ? (
+        <Box py={12}>
+          <Text color="theme.text" mb={3}>
+            {ingestionStatus === 'unsupported'
+              ? 'Readable text is not available for this file type.'
+              : ingestionStatus === 'failed'
+              ? 'Readable text could not be extracted from this file.'
+              : 'Readable text is still being prepared.'}
+          </Text>
+          <Text color="theme.textSecondary" fontSize="sm">
+            The original file is still available from the actions above.
           </Text>
         </Box>
       ) : (
