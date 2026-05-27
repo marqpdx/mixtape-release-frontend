@@ -12,10 +12,10 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { IconArrowLeft, IconDownload, IconExternalLink, IconEye } from "@tabler/icons-react";
+import { IconArrowLeft, IconDownload, IconExternalLink, IconEye, IconTrash } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { fetchGroupFiles, uploadGroupFile } from "@mixtape/api/clients/group/groupApi";
+import { fetchGroupFiles, uploadGroupFile, deleteGroupFile } from "@mixtape/api/clients/group/groupApi";
 import type { GroupFile } from "@mixtape/api/clients/group/groupApi";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { canUserAdminGroup } from "@mixtape/core/types/groupTypes";
@@ -107,6 +107,7 @@ function GroupFilePdfReader({
 export function FilesTab({ group }: { group: Group }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingFile, setViewingFile] = useState<GroupFile | null>(null);
 
   const isEditor = canUserAdminGroup(group);
@@ -143,6 +144,20 @@ export function FilesTab({ group }: { group: Group }) {
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (file: GroupFile) => {
+    if (!window.confirm(`Delete "${file.filename}"? This cannot be undone.`)) return;
+    setDeletingId(file.id);
+    try {
+      await deleteGroupFile(group.slug, file.id);
+      await refetch();
+      toaster.success({ title: "File deleted", description: file.filename });
+    } catch {
+      toaster.error({ title: "Delete failed", description: "Could not delete file." });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -261,6 +276,18 @@ export function FilesTab({ group }: { group: Group }) {
                     </Button>
                   </a>
                 </Box>
+                {isEditor && (
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="red.400"
+                    _hover={{ color: "red.600" }}
+                    loading={deletingId === file.id}
+                    onClick={() => handleDelete(file)}
+                  >
+                    <IconTrash size={14} />
+                  </Button>
+                )}
               </HStack>
             </HStack>
           ))}

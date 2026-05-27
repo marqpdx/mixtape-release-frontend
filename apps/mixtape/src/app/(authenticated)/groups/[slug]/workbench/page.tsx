@@ -9,6 +9,7 @@ import { useGroup } from '@mixtape/api/hooks/groups';
 import { ReviewQueueList } from '@/components/workbench/ReviewQueueList';
 import { ComposeTab } from '@/components/workbench/ComposeTab';
 import { MyDraftsTab } from '@/components/workbench/MyDraftsTab';
+import { FilesTab } from '@/components/groups/tabs/FilesTab';
 
 export default function WorkbenchPage() {
   const { slug } = useParams();
@@ -66,6 +67,7 @@ export default function WorkbenchPage() {
             <Tabs.Trigger value="queue">Review Queue</Tabs.Trigger>
             <Tabs.Trigger value="compose">Compose</Tabs.Trigger>
             <Tabs.Trigger value="my-drafts">My Drafts</Tabs.Trigger>
+            <Tabs.Trigger value="files">Files</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content value="queue">
@@ -78,6 +80,10 @@ export default function WorkbenchPage() {
 
           <Tabs.Content value="my-drafts">
             <MyDraftsTab groupId={group.id} editingDraftId={editingDraftId} />
+          </Tabs.Content>
+
+          <Tabs.Content value="files">
+            <FilesTab group={group} />
           </Tabs.Content>
         </Tabs.Root>
       </VStack>
