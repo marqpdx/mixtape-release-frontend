@@ -12,12 +12,15 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { IconArrowLeft, IconDownload, IconExternalLink, IconEye } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { fetchGroupFiles, uploadGroupFile } from "@mixtape/api/clients/group/groupApi";
+import type { GroupFile } from "@mixtape/api/clients/group/groupApi";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { canUserAdminGroup } from "@mixtape/core/types/groupTypes";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import { PdfDocumentViewer } from "@components/collections/PdfDocumentViewer";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -33,9 +36,78 @@ function formatDate(isoString: string): string {
   });
 }
 
+function GroupFilePdfReader({
+  file,
+  groupSlug,
+  onBack,
+}: {
+  file: GroupFile;
+  groupSlug: string;
+  onBack: () => void;
+}) {
+  const downloadUrl = `/api/groups/${groupSlug}/files/${file.id}/download/`;
+
+  return (
+    <VStack align="stretch" gap={0}>
+      <Box pb={5}>
+        <HStack justify="space-between" align="center" flexWrap="wrap" gap={3}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            color="theme.textSecondary"
+            px={0}
+            _hover={{ color: "theme.text" }}
+          >
+            <IconArrowLeft size={14} />
+            <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+              Back to files
+            </Text>
+          </Button>
+
+          <HStack gap={2}>
+            <Box asChild>
+              <a href={downloadUrl} target="_blank" rel="noreferrer">
+                <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: "theme.text" }}>
+                  <IconExternalLink size={14} />
+                  <Text ml={1}>Open original</Text>
+                </Button>
+              </a>
+            </Box>
+            <Box asChild>
+              <a href={downloadUrl} download>
+                <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: "theme.text" }}>
+                  <IconDownload size={14} />
+                  <Text ml={1}>Download original</Text>
+                </Button>
+              </a>
+            </Box>
+          </HStack>
+        </HStack>
+      </Box>
+
+      <Box pb={6} mb={6} borderBottom="1px solid" borderColor="theme.border">
+        <Text fontFamily="heading" fontSize={{ base: "2xl", md: "3xl" }} lineHeight="1.1" letterSpacing="-0.02em" color="theme.text" mb={3}>
+          {file.filename}
+        </Text>
+        <Badge colorPalette="red" variant="subtle">PDF</Badge>
+      </Box>
+
+      <Box maxW="860px">
+        <PdfDocumentViewer
+          filename={file.filename}
+          sourceFileId={file.id}
+          downloadUrl={downloadUrl}
+        />
+      </Box>
+    </VStack>
+  );
+}
+
 export function FilesTab({ group }: { group: Group }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [viewingFile, setViewingFile] = useState<GroupFile | null>(null);
 
   const isEditor = canUserAdminGroup(group);
 
@@ -70,10 +142,19 @@ export function FilesTab({ group }: { group: Group }) {
       }
     } finally {
       setIsUploading(false);
-      // Reset so the same file can be re-selected after an error
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  if (viewingFile) {
+    return (
+      <GroupFilePdfReader
+        file={viewingFile}
+        groupSlug={group.slug}
+        onBack={() => setViewingFile(null)}
+      />
+    );
+  }
 
   return (
     <Box>
@@ -152,6 +233,34 @@ export function FilesTab({ group }: { group: Group }) {
                 <Text fontSize="xs" color="gray.400">
                   {formatDate(file.created_at)}
                 </Text>
+                {file.content_type === "application/pdf" && (
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="theme.textSecondary"
+                    _hover={{ color: "theme.text" }}
+                    onClick={() => setViewingFile(file)}
+                  >
+                    <IconEye size={14} />
+                    <Text ml={1}>View</Text>
+                  </Button>
+                )}
+                <Box asChild>
+                  <a
+                    href={`/api/groups/${group.slug}/files/${file.id}/download/`}
+                    download={file.filename}
+                  >
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      color="theme.textSecondary"
+                      _hover={{ color: "theme.text" }}
+                    >
+                      <IconDownload size={14} />
+                      <Text ml={1}>Download</Text>
+                    </Button>
+                  </a>
+                </Box>
               </HStack>
             </HStack>
           ))}
