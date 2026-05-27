@@ -17,11 +17,36 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { fetchGroupFiles, uploadGroupFile, deleteGroupFile } from "@mixtape/api/clients/group/groupApi";
 import type { GroupFile } from "@mixtape/api/clients/group/groupApi";
-import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { canUserAdminGroup } from "@mixtape/core/types/groupTypes";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { PdfDocumentViewer } from "@components/collections/PdfDocumentViewer";
+
+async function triggerBlobDownload(groupSlug: string, fileId: string, filename: string) {
+  const response = await axiosInstance.get(
+    `/api/groups/${groupSlug}/files/${fileId}/download/`,
+    { responseType: "blob" }
+  );
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function openBlobInTab(groupSlug: string, fileId: string) {
+  const response = await axiosInstance.get(
+    `/api/groups/${groupSlug}/files/${fileId}/download/`,
+    { responseType: "blob" }
+  );
+  const url = URL.createObjectURL(response.data);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -46,8 +71,6 @@ function GroupFilePdfReader({
   groupSlug: string;
   onBack: () => void;
 }) {
-  const downloadUrl = buildApiUrl(`/api/groups/${groupSlug}/files/${file.id}/download/`);
-
   return (
     <VStack align="stretch" gap={0}>
       <Box pb={5}>
@@ -67,22 +90,26 @@ function GroupFilePdfReader({
           </Button>
 
           <HStack gap={2}>
-            <Box asChild>
-              <a href={downloadUrl} target="_blank" rel="noreferrer">
-                <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: "theme.text" }}>
-                  <IconExternalLink size={14} />
-                  <Text ml={1}>Open original</Text>
-                </Button>
-              </a>
-            </Box>
-            <Box asChild>
-              <a href={downloadUrl} download>
-                <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: "theme.text" }}>
-                  <IconDownload size={14} />
-                  <Text ml={1}>Download original</Text>
-                </Button>
-              </a>
-            </Box>
+            <Button
+              variant="ghost"
+              size="sm"
+              color="theme.textSecondary"
+              _hover={{ color: "theme.text" }}
+              onClick={() => openBlobInTab(groupSlug, file.id)}
+            >
+              <IconExternalLink size={14} />
+              <Text ml={1}>Open original</Text>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              color="theme.textSecondary"
+              _hover={{ color: "theme.text" }}
+              onClick={() => triggerBlobDownload(groupSlug, file.id, file.filename)}
+            >
+              <IconDownload size={14} />
+              <Text ml={1}>Download original</Text>
+            </Button>
           </HStack>
         </HStack>
       </Box>
@@ -98,7 +125,7 @@ function GroupFilePdfReader({
         <PdfDocumentViewer
           filename={file.filename}
           sourceFileId={file.id}
-          downloadUrl={downloadUrl}
+          downloadUrl={`/api/groups/${groupSlug}/files/${file.id}/download/`}
         />
       </Box>
     </VStack>
@@ -261,22 +288,16 @@ export function FilesTab({ group }: { group: Group }) {
                     <Text ml={1}>View</Text>
                   </Button>
                 )}
-                <Box asChild>
-                  <a
-                    href={buildApiUrl(`/api/groups/${group.slug}/files/${file.id}/download/`)}
-                    download={file.filename}
-                  >
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      color="theme.textSecondary"
-                      _hover={{ color: "theme.text" }}
-                    >
-                      <IconDownload size={14} />
-                      <Text ml={1}>Download</Text>
-                    </Button>
-                  </a>
-                </Box>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  color="theme.textSecondary"
+                  _hover={{ color: "theme.text" }}
+                  onClick={() => triggerBlobDownload(group.slug, file.id, file.filename)}
+                >
+                  <IconDownload size={14} />
+                  <Text ml={1}>Download</Text>
+                </Button>
                 {isEditor && (
                   <Button
                     size="xs"
