@@ -340,6 +340,38 @@ export async function fetchGroupCircles(
 // EXPORT API OBJECT (alternative pattern)
 // ============================================================================
 
+// ============================================================================
+// GROUP FILE API FUNCTIONS
+// ============================================================================
+
+export interface GroupFile {
+  id: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  origin: string;
+  created_at: string;
+}
+
+export async function fetchGroupFiles(groupSlug: string): Promise<GroupFile[]> {
+  const response = await axiosInstance.get(`/api/groups/${groupSlug}/files/`);
+  return response.data;
+}
+
+export async function uploadGroupFile(
+  groupSlug: string,
+  file: File
+): Promise<{ source_file_id: string; filename: string; status: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await axiosInstance.post(
+    `/api/groups/${groupSlug}/files/upload/`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+  return response.data;
+}
+
 export const groupApi = {
   // Groups
   fetchGroups,
@@ -365,4 +397,8 @@ export const groupApi = {
   // Join Requests
   fetchJoinRequests,
   respondToJoinRequest,
+
+  // Files
+  fetchGroupFiles,
+  uploadGroupFile,
 };

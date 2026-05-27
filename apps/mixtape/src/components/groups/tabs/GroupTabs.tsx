@@ -11,6 +11,7 @@ import {
   IconMessages,
   IconUsers,
   IconFolder,
+  IconFiles,
 } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { OverviewTab } from "./OverviewTab";
@@ -19,6 +20,7 @@ import { MembersTab } from "./MembersTab";
 import { CollectionsTab } from "./CollectionsTab";
 import { LandingTab } from "./LandingTab";
 // import { JoiningTab } from "./JoiningTab";
+import { FilesTab } from "./FilesTab";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -34,6 +36,7 @@ const memberTabs = [
   { key: 'members', label: 'Group Members', icon: IconUsers },
   { key: 'threadworks', label: 'Conversations', icon: IconMessages },
   { key: 'collections', label: 'Content Collections', icon: IconFolder },
+  { key: 'files', label: 'Files', icon: IconFiles },
 ];
 
 const publicTabs = [
@@ -192,6 +195,9 @@ export function GroupTabs({
             </Tabs.Content>
             <Tabs.Content value="members" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
               <MembersTab group={group} />
+            </Tabs.Content>
+            <Tabs.Content value="files" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
+              <FilesTab group={group} />
             </Tabs.Content>
           </>
         )}
