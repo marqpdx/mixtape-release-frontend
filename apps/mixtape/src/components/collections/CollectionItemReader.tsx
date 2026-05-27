@@ -16,6 +16,7 @@ import { buildApiUrl } from '@mixtape/api/lib/axiosInstance';
 import { useWritingPiece } from '@mixtape/api/hooks/useWriting';
 import { TipTapRenderer } from '@components/tiptap/TipTapRenderer';
 import type { TipTapDocument } from '@components/tiptap/TipTapRenderer';
+import { PdfDocumentViewer } from './PdfDocumentViewer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -143,7 +144,11 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
         </HStack>
       </Box>
 
-      {isLoading ? (
+      {pdfFile && sourceFileId ? (
+        <Box maxW="960px">
+          <PdfDocumentViewer filename={filename} sourceFileId={sourceFileId} />
+        </Box>
+      ) : isLoading ? (
         <Box py={16} textAlign="center">
           <Spinner size="lg" color="theme.accent" />
           <Text mt={4} color="theme.textSecondary">Loading document…</Text>
@@ -200,18 +205,6 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
         >
           {markdownLike ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-          ) : pdfFile && originalUrl ? (
-            <Box
-              as="iframe"
-              src={originalUrl}
-              title={filename}
-              width="100%"
-              minH={{ base: '70vh', md: '78vh' }}
-              border="1px solid"
-              borderColor="theme.border"
-              borderRadius="8px"
-              bg="white"
-            />
           ) : (
             <>
               {wordDoc && (

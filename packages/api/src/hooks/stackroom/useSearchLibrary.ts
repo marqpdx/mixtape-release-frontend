@@ -215,6 +215,10 @@ export const useSourceFileContent = (sourceFileId: string | null) => {
     },
     enabled: !!sourceFileId,
     staleTime: 10 * 60 * 1000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.ingestion_status;
+      return status && !['complete', 'failed', 'unsupported'].includes(status) ? 2000 : false;
+    },
     refetchOnWindowFocus: false,
   });
 

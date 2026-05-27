@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -18,10 +18,8 @@ import {
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { Document, Page, pdfjs } from 'react-pdf';
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+const pdfWorkerSrc = '/app/pdfjs/pdf.worker.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
 interface PdfDocumentViewerProps {
   filename: string;
@@ -30,9 +28,11 @@ interface PdfDocumentViewerProps {
 }
 
 export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDocumentViewerProps) {
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(760);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -56,22 +56,20 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
   const resolvedDownloadUrl = downloadUrl ?? `/api/stackroom/source-files/${sourceFileId}/download`;
 
   useEffect(() => {
-    let objectUrl: string | null = null;
     let cancelled = false;
 
-    setPdfUrl(null);
+    setPdfData(null);
     setLoadError(null);
     setNumPages(null);
     setPageNumber(1);
 
     axiosInstance
       .get(resolvedDownloadUrl, {
-        responseType: 'blob',
+        responseType: 'arraybuffer',
       })
       .then((response) => {
         if (cancelled) return;
-        objectUrl = URL.createObjectURL(response.data);
-        setPdfUrl(objectUrl);
+        setPdfData(new Uint8Array(response.data));
       })
       .catch((error) => {
         if (cancelled) return;
@@ -80,13 +78,11 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
 
     return () => {
       cancelled = true;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
     };
   }, [resolvedDownloadUrl]);
 
   const pageWidth = Math.min(containerWidth, 920) * scale;
+  const pdfFile = useMemo(() => (pdfData ? { data: pdfData } : null), [pdfData]);
 
   return (
     <VStack ref={containerRef} align="stretch" gap={4} maxW="960px">
@@ -155,7 +151,7 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
         minH={{ base: '70vh', md: '78vh' }}
         p={{ base: 2, md: 5 }}
       >
-        {!pdfUrl ? (
+        {!pdfData ? (
           <Box py={16} textAlign="center">
             {loadError ? (
               <>
@@ -169,10 +165,10 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
               </>
             )}
           </Box>
-        ) : (
+        ) : pdfFile ? (
           <Box display="inline-block" minW="100%">
             <Document
-              file={pdfUrl}
+              file={pdfFile}
               loading={
                 <Box py={16} textAlign="center">
                   <Spinner size="lg" color="theme.accent" />
@@ -203,7 +199,7 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
               </Box>
             </Document>
           </Box>
-        )}
+        ) : null}
       </Box>
 
       <Text color="theme.textSecondary" fontSize="xs">
