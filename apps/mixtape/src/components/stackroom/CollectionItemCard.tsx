@@ -16,7 +16,6 @@ import {
 } from '@chakra-ui/react';
 import {
   IconFile,
-  IconTrash,
   IconPencil,
   IconStar,
   IconStarFilled,
@@ -25,6 +24,7 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconLink,
+  IconUnlink,
   IconExternalLink,
 } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -369,10 +369,9 @@ export function CollectionItemCard({
                   aria-label="Remove from collection"
                   size="sm"
                   variant="ghost"
-                  colorPalette="red"
                   onClick={(e) => { e.stopPropagation(); onRemove(item.id); }}
                 >
-                  <IconTrash size={20} />
+                  <IconUnlink size={20} />
                 </IconButton>
               )}
             </Group>
