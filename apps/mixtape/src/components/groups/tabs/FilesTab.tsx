@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { fetchGroupFiles, uploadGroupFile, deleteGroupFile } from "@mixtape/api/clients/group/groupApi";
 import type { GroupFile } from "@mixtape/api/clients/group/groupApi";
+import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { canUserAdminGroup } from "@mixtape/core/types/groupTypes";
 import type { Group } from "@mixtape/core/types/groupTypes";
@@ -45,7 +46,7 @@ function GroupFilePdfReader({
   groupSlug: string;
   onBack: () => void;
 }) {
-  const downloadUrl = `/api/groups/${groupSlug}/files/${file.id}/download/`;
+  const downloadUrl = buildApiUrl(`/api/groups/${groupSlug}/files/${file.id}/download/`);
 
   return (
     <VStack align="stretch" gap={0}>
@@ -262,7 +263,7 @@ export function FilesTab({ group }: { group: Group }) {
                 )}
                 <Box asChild>
                   <a
-                    href={`/api/groups/${group.slug}/files/${file.id}/download/`}
+                    href={buildApiUrl(`/api/groups/${group.slug}/files/${file.id}/download/`)}
                     download={file.filename}
                   >
                     <Button
