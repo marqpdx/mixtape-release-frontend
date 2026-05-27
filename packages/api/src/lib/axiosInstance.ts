@@ -14,6 +14,12 @@ const getApiBaseUrl = () => {
   return process.env.NEXT_PUBLIC_ROOT_API_URL || 'http://127.0.0.1:8010';
 };
 
+export const buildApiUrl = (path: string) => {
+  const baseUrl = getApiBaseUrl();
+  if (!baseUrl) return path;
+  return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+};
+
 export const axiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   headers: {

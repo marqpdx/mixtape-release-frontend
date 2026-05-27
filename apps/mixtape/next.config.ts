@@ -56,6 +56,20 @@ const connectSrc = Array.from(
   ])
 ).join(' ');
 
+const frameSrc = Array.from(
+  new Set([
+    "'self'",
+    "https://api.crossroads.place",
+    ...(!isProd
+      ? [
+          "http://localhost:8010",
+          "http://127.0.0.1:8010",
+        ]
+      : []),
+    ...envConnectOrigins.filter((origin) => origin.startsWith("http")),
+  ])
+).join(' ');
+
 // If you load Google Fonts, uncomment these two lines:
 // const styleSrc = "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com";
 // const fontSrc  = "font-src 'self' data: https://fonts.gstatic.com";
@@ -73,6 +87,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       `connect-src ${connectSrc}`,
+      `frame-src ${frameSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self' https://api.crossroads.place",

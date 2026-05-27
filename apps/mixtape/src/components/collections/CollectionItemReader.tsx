@@ -12,6 +12,7 @@ import {
 import { IconArrowLeft, IconDownload, IconExternalLink } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { useSourceFileContent } from '@mixtape/api/hooks';
+import { buildApiUrl } from '@mixtape/api/lib/axiosInstance';
 import { useWritingPiece } from '@mixtape/api/hooks/useWriting';
 import { TipTapRenderer } from '@components/tiptap/TipTapRenderer';
 import type { TipTapDocument } from '@components/tiptap/TipTapRenderer';
@@ -67,7 +68,9 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
   const sourceFileId = getSourceFileContent(item)?.id || null;
   const filename = getDisplayName(item);
   const { text, ingestionStatus, isLoading, error } = useSourceFileContent(sourceFileId);
-  const originalUrl = sourceFileId ? `/api/stackroom/source-files/${sourceFileId}/download` : '';
+  const originalUrl = sourceFileId
+    ? buildApiUrl(`/api/stackroom/source-files/${sourceFileId}/download`)
+    : '';
 
   const markdownLike = isMarkdownLike(filename);
   const pdfFile = isPdf(filename);
@@ -124,7 +127,7 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
           </Badge>
           {pdfFile && (
             <Badge colorPalette="gray" variant="outline">
-              Reading extracted text
+              Original PDF
             </Badge>
           )}
           {wordDoc && (
@@ -197,9 +200,21 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
         >
           {markdownLike ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+          ) : pdfFile && originalUrl ? (
+            <Box
+              as="iframe"
+              src={originalUrl}
+              title={filename}
+              width="100%"
+              minH={{ base: '70vh', md: '78vh' }}
+              border="1px solid"
+              borderColor="theme.border"
+              borderRadius="8px"
+              bg="white"
+            />
           ) : (
             <>
-              {(pdfFile || wordDoc) && (
+              {wordDoc && (
                 <Text mb={6} color="theme.textSecondary" fontStyle="italic">
                   This inline view is showing extracted readable text from the uploaded file.
                 </Text>
