@@ -72,10 +72,14 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
   const originalUrl = sourceFileId
     ? buildApiUrl(`/api/stackroom/source-files/${sourceFileId}/download`)
     : '';
+  const previewUrl = sourceFileId
+    ? `/api/stackroom/source-files/${sourceFileId}/preview.pdf`
+    : '';
 
   const markdownLike = isMarkdownLike(filename);
   const pdfFile = isPdf(filename);
   const wordDoc = isWordDoc(filename);
+  const previewableDocument = pdfFile || wordDoc;
 
   return (
     <VStack align="stretch" gap={0}>
@@ -133,7 +137,7 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
           )}
           {wordDoc && (
             <Badge colorPalette="gray" variant="outline">
-              Reading extracted text
+              PDF preview
             </Badge>
           )}
           {ingestionStatus && ingestionStatus !== 'complete' && (
@@ -144,9 +148,13 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
         </HStack>
       </Box>
 
-      {pdfFile && sourceFileId ? (
+      {previewableDocument && sourceFileId ? (
         <Box maxW="960px">
-          <PdfDocumentViewer filename={filename} sourceFileId={sourceFileId} />
+          <PdfDocumentViewer
+            filename={filename}
+            sourceFileId={sourceFileId}
+            downloadUrl={wordDoc ? previewUrl : undefined}
+          />
         </Box>
       ) : isLoading ? (
         <Box py={16} textAlign="center">
