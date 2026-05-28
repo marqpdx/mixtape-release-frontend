@@ -13,6 +13,8 @@ import {
   createRecurringAction,
   updateRecurringAction,
   deleteRecurringAction,
+  fetchBerylSession,
+  updateBerylScrap,
   type PersonalStudioResponse,
   type PersonalGroupItem,
   type GroupPulseResponse,
@@ -23,6 +25,9 @@ import {
   type RecurringActionItem,
   type RecurringActionCreateInput,
   type RecurringActionUpdateInput,
+  type BerylSessionResponse,
+  type ScrapItem,
+  type ScrapUpdateInput,
 } from "../../clients/studio/studioApi";
 
 // ============================================================================
@@ -41,6 +46,8 @@ export const studioQueryKeys = {
   groupCommand: (slug: string) => [...studioQueryKeys.group(slug), "command"] as const,
   groupClients: (slug: string) => [...studioQueryKeys.group(slug), "clients"] as const,
   groupRecurringActions: (slug: string) => [...studioQueryKeys.group(slug), "recurring-actions"] as const,
+
+  berylSession: (ctx: string) => [...studioQueryKeys.all, "beryl", "session", ctx] as const,
 };
 
 // ============================================================================
@@ -159,6 +166,38 @@ export function useDeleteRecurringAction(groupSlug: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupRecurringActions(groupSlug) });
       queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupPulse(groupSlug) });
+    },
+  });
+}
+
+// ============================================================================
+// Beryl session
+// ============================================================================
+
+export function useBerylSession(ctx: string) {
+  return useQuery<BerylSessionResponse>({
+    queryKey: studioQueryKeys.berylSession(ctx),
+    queryFn: () => fetchBerylSession(ctx),
+    enabled: !!ctx,
+    staleTime: 0,
+  });
+}
+
+export function useUpdateBerylScrap() {
+  const queryClient = useQueryClient();
+  return useMutation<ScrapItem, Error, { id: string; input: ScrapUpdateInput }>({
+    mutationFn: ({ id, input }) => updateBerylScrap(id, input),
+    onSuccess: (_data, { id }) => {
+      queryClient.setQueriesData<BerylSessionResponse>(
+        { queryKey: [...studioQueryKeys.all, "beryl", "session"] },
+        (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            scraps: prev.scraps.map((s) => (s.id === id ? _data : s)),
+          };
+        },
+      );
     },
   });
 }

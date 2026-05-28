@@ -10,5 +10,7 @@ export {
   useCreateRecurringAction,
   useUpdateRecurringAction,
   useDeleteRecurringAction,
+  useBerylSession,
+  useUpdateBerylScrap,
   studioQueryKeys,
 } from "./useStudio";

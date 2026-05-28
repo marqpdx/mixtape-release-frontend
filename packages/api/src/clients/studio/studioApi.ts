@@ -75,6 +75,35 @@ export interface RecurringActionCreateInput {
 
 export type RecurringActionUpdateInput = Partial<RecurringActionCreateInput>;
 
+export const INTENT_TAGS = [
+  "reminder", "recipe", "contact", "reference", "list",
+  "idea", "link", "question", "note",
+] as const;
+
+export type IntentTag = typeof INTENT_TAGS[number];
+
+export interface ScrapItem {
+  id: string;
+  body: string;
+  intent_tag: IntentTag;
+  labels: string[];
+  status: "raw" | "reviewed" | "promoted" | "archived";
+  remind_at: string | null;
+  created_at: string | null;
+}
+
+export interface BerylSessionResponse {
+  scraps: ScrapItem[];
+  context: string;
+}
+
+export interface ScrapUpdateInput {
+  intent_tag?: IntentTag;
+  labels?: string[];
+  status?: "reviewed" | "archived";
+  remind_at?: string;
+}
+
 export interface GroupPulseResponse {
   metrics: GroupPulseMetrics;
   activity: StudioActivityItem[];
@@ -224,4 +253,19 @@ export async function updateRecurringAction(
 
 export async function deleteRecurringAction(groupSlug: string, id: string): Promise<void> {
   await axiosInstance.delete(`/api/studio/groups/${groupSlug}/recurring-actions/${id}`);
+}
+
+// ============================================================================
+// Beryl session
+// ============================================================================
+
+export async function fetchBerylSession(ctx: string): Promise<BerylSessionResponse> {
+  const params = new URLSearchParams({ ctx });
+  const { data } = await axiosInstance.get(`/api/studio/beryl/session?${params.toString()}`);
+  return data;
+}
+
+export async function updateBerylScrap(id: string, input: ScrapUpdateInput): Promise<ScrapItem> {
+  const { data } = await axiosInstance.patch(`/api/studio/beryl/scraps/${id}`, input);
+  return data;
 }
