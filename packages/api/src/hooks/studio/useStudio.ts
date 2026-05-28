@@ -9,6 +9,10 @@ import {
   fetchGroupCommand,
   fetchGroupClients,
   dismissBerylPrompt,
+  fetchGroupRecurringActions,
+  createRecurringAction,
+  updateRecurringAction,
+  deleteRecurringAction,
   type PersonalStudioResponse,
   type PersonalGroupItem,
   type GroupPulseResponse,
@@ -16,6 +20,9 @@ import {
   type GroupCommandResponse,
   type GroupClientsResponse,
   type BerylDismissMode,
+  type RecurringActionItem,
+  type RecurringActionCreateInput,
+  type RecurringActionUpdateInput,
 } from "../../clients/studio/studioApi";
 
 // ============================================================================
@@ -33,6 +40,7 @@ export const studioQueryKeys = {
   groupCanon: (slug: string) => [...studioQueryKeys.group(slug), "canon"] as const,
   groupCommand: (slug: string) => [...studioQueryKeys.group(slug), "command"] as const,
   groupClients: (slug: string) => [...studioQueryKeys.group(slug), "clients"] as const,
+  groupRecurringActions: (slug: string) => [...studioQueryKeys.group(slug), "recurring-actions"] as const,
 };
 
 // ============================================================================
@@ -106,5 +114,51 @@ export function useGroupClients(groupSlug: string) {
     queryFn: () => fetchGroupClients(groupSlug),
     enabled: !!groupSlug,
     staleTime: 5 * 60_000,
+  });
+}
+
+// ============================================================================
+// RecurringAction CRUD
+// ============================================================================
+
+export function useGroupRecurringActions(groupSlug: string) {
+  return useQuery<RecurringActionItem[]>({
+    queryKey: studioQueryKeys.groupRecurringActions(groupSlug),
+    queryFn: () => fetchGroupRecurringActions(groupSlug),
+    enabled: !!groupSlug,
+    staleTime: 60_000,
+  });
+}
+
+export function useCreateRecurringAction(groupSlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation<RecurringActionItem, Error, RecurringActionCreateInput>({
+    mutationFn: (input) => createRecurringAction(groupSlug, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupRecurringActions(groupSlug) });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupPulse(groupSlug) });
+    },
+  });
+}
+
+export function useUpdateRecurringAction(groupSlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation<RecurringActionItem, Error, { id: string; input: RecurringActionUpdateInput }>({
+    mutationFn: ({ id, input }) => updateRecurringAction(groupSlug, id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupRecurringActions(groupSlug) });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupPulse(groupSlug) });
+    },
+  });
+}
+
+export function useDeleteRecurringAction(groupSlug: string) {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: (id) => deleteRecurringAction(groupSlug, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupRecurringActions(groupSlug) });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupPulse(groupSlug) });
+    },
   });
 }

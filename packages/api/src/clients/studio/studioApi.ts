@@ -51,9 +51,34 @@ export interface GroupPulseMetrics {
   loom_ops_in_flight: number;
 }
 
+export interface RecurringActionItem {
+  id: string;
+  title: string;
+  description: string;
+  recurrence_rule: string;
+  next_due_at: string;
+  last_triggered_at: string | null;
+  suggested_verb: string;
+  suggested_label: string;
+  is_active?: boolean;
+  is_overdue?: boolean;
+}
+
+export interface RecurringActionCreateInput {
+  title: string;
+  description?: string;
+  recurrence_rule: string;
+  next_due_at: string;
+  suggested_verb?: string;
+  suggested_label?: string;
+}
+
+export type RecurringActionUpdateInput = Partial<RecurringActionCreateInput>;
+
 export interface GroupPulseResponse {
   metrics: GroupPulseMetrics;
   activity: StudioActivityItem[];
+  recurring_actions: RecurringActionItem[];
 }
 
 export interface CanonMetrics {
@@ -169,4 +194,34 @@ export async function fetchGroupCommand(groupSlug: string): Promise<GroupCommand
 export async function fetchGroupClients(groupSlug: string): Promise<GroupClientsResponse> {
   const { data } = await axiosInstance.get(`/api/studio/groups/${groupSlug}/clients`);
   return data;
+}
+
+// ============================================================================
+// RecurringAction CRUD
+// ============================================================================
+
+export async function fetchGroupRecurringActions(groupSlug: string): Promise<RecurringActionItem[]> {
+  const { data } = await axiosInstance.get(`/api/studio/groups/${groupSlug}/recurring-actions`);
+  return data;
+}
+
+export async function createRecurringAction(
+  groupSlug: string,
+  input: RecurringActionCreateInput,
+): Promise<RecurringActionItem> {
+  const { data } = await axiosInstance.post(`/api/studio/groups/${groupSlug}/recurring-actions`, input);
+  return data;
+}
+
+export async function updateRecurringAction(
+  groupSlug: string,
+  id: string,
+  input: RecurringActionUpdateInput,
+): Promise<RecurringActionItem> {
+  const { data } = await axiosInstance.patch(`/api/studio/groups/${groupSlug}/recurring-actions/${id}`, input);
+  return data;
+}
+
+export async function deleteRecurringAction(groupSlug: string, id: string): Promise<void> {
+  await axiosInstance.delete(`/api/studio/groups/${groupSlug}/recurring-actions/${id}`);
 }
