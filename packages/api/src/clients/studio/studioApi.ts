@@ -21,9 +21,19 @@ export interface StudioContentItem {
   updated_at: string | null;
 }
 
+export type BerylDismissMode = "session" | "permanent" | "remind_later";
+
+export interface BerylPrompt {
+  message: string;
+  action_label: string;
+  action_context: string;
+  dismissible: true;
+}
+
 export interface PersonalStudioResponse {
   activity: StudioActivityItem[];
   my_content: StudioContentItem[];
+  beryl_prompt: BerylPrompt | null;
 }
 
 export interface PersonalGroupItem {
@@ -131,6 +141,10 @@ export async function fetchPersonalStudio(): Promise<PersonalStudioResponse> {
 export async function fetchPersonalGroups(): Promise<PersonalGroupItem[]> {
   const { data } = await axiosInstance.get("/api/studio/personal/groups");
   return data;
+}
+
+export async function dismissBerylPrompt(mode: BerylDismissMode): Promise<void> {
+  await axiosInstance.post("/api/studio/personal/beryl/dismiss", { mode });
 }
 
 // ============================================================================

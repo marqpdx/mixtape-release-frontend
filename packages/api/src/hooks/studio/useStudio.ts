@@ -1,6 +1,6 @@
 // packages/api/src/hooks/studio/useStudio.ts
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPersonalStudio,
   fetchPersonalGroups,
@@ -8,12 +8,14 @@ import {
   fetchGroupCanon,
   fetchGroupCommand,
   fetchGroupClients,
+  dismissBerylPrompt,
   type PersonalStudioResponse,
   type PersonalGroupItem,
   type GroupPulseResponse,
   type GroupCanonResponse,
   type GroupCommandResponse,
   type GroupClientsResponse,
+  type BerylDismissMode,
 } from "../../clients/studio/studioApi";
 
 // ============================================================================
@@ -50,6 +52,16 @@ export function usePersonalGroups() {
     queryKey: studioQueryKeys.personalGroups(),
     queryFn: fetchPersonalGroups,
     staleTime: 60_000,
+  });
+}
+
+export function useBerylDismiss() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, BerylDismissMode>({
+    mutationFn: (mode) => dismissBerylPrompt(mode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personal() });
+    },
   });
 }
 
