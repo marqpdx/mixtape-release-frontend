@@ -25,6 +25,7 @@ interface ContextFlowPanelProps {
   pieceSlug: string
   pieceId: string
   username?: string
+  groupSlug?: string
 }
 
 interface ContextCardProps {
@@ -74,7 +75,7 @@ function ContextCard({ title, excerpt, href, direction }: ContextCardProps) {
   )
 }
 
-export function ContextFlowPanel({ pieceSlug, pieceId, username }: ContextFlowPanelProps) {
+export function ContextFlowPanel({ pieceSlug, pieceId, username, groupSlug }: ContextFlowPanelProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
   const [collapsed, setCollapsed] = useState(false)
@@ -90,7 +91,9 @@ export function ContextFlowPanel({ pieceSlug, pieceId, username }: ContextFlowPa
   if (!isLoading && !neighbors?.prev && !neighbors?.next) return null
 
   const makePieceHref = (slug: string) =>
-    username
+    groupSlug
+      ? `/groups/${groupSlug}/writing/${slug}?lb=${livingBookId}`
+      : username
       ? `/member/${username}/writing/${slug}?lb=${livingBookId}`
       : `#`
 

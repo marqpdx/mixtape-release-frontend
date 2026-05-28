@@ -19,6 +19,7 @@ import { useParams } from "next/navigation"
 import { IconBook, IconArrowLeft, IconList } from "@tabler/icons-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useLivingBook, useLivingBookTree } from "@hooks/useLivingBook"
+import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions"
 import { StructurePanel } from "@components/living-book/StructurePanel"
 
 export default function LivingBookPage() {
@@ -28,6 +29,7 @@ export default function LivingBookPage() {
   const { user: identity } = useAuth()
   const { data: book, isLoading: bookLoading, error: bookError } = useLivingBook(id)
   const { data: nodes = [], isLoading: treeLoading } = useLivingBookTree(id)
+  const { isAdmin: isGroupAdmin } = useGroupPermissions(book?.group_slug || "")
 
   const bgColor = useColorModeValue("gray.50", "gray.900")
   const cardBg = useColorModeValue("white", "gray.800")
@@ -38,7 +40,7 @@ export default function LivingBookPage() {
   const isEditor = Boolean(
     identity &&
       book &&
-      (identity.is_superuser || identity.username === book.created_by)
+      (identity.is_superuser || (book.sponsor_type === "group" && isGroupAdmin))
   )
 
   const publishedCount = nodes.filter((n) => n.is_published).length
@@ -137,7 +139,13 @@ export default function LivingBookPage() {
                     </Button>
                   </Link>
                   {book?.trunk_slug && (
-                    <Link href={`/member/${book.created_by}/writing/${book.trunk_slug}?lb=${id}`}>
+                    <Link
+                      href={
+                        book.sponsor_type === "group" && book.group_slug
+                          ? `/groups/${book.group_slug}/writing/${book.trunk_slug}?lb=${id}`
+                          : `/living-books/${id}/`
+                      }
+                    >
                       <Button size="sm" variant="outline" gap={2}>
                         Open Trunk Piece
                       </Button>
@@ -152,7 +160,7 @@ export default function LivingBookPage() {
             <StructurePanel
               livingBookId={id}
               isEditor={isEditor}
-              username={book?.created_by}
+              groupSlug={book?.group_slug ?? undefined}
             />
           )}
         </VStack>

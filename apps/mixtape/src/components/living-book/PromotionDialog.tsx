@@ -29,6 +29,7 @@ interface PromotionDialogProps {
   pieceTitle: string
   open: boolean
   onClose: () => void
+  groupSlug?: string
 }
 
 export function PromotionDialog({
@@ -36,6 +37,7 @@ export function PromotionDialog({
   pieceTitle,
   open,
   onClose,
+  groupSlug,
 }: PromotionDialogProps) {
   const router = useRouter()
   const [title, setTitle] = useState(pieceTitle)
@@ -53,7 +55,12 @@ export function PromotionDialog({
     }
     setError(null)
     promote.mutate(
-      { piece_slug: pieceSlug, title: title.trim(), description: description.trim() },
+      {
+        piece_slug: pieceSlug,
+        title: title.trim(),
+        description: description.trim(),
+        ...(groupSlug ? { group_slug: groupSlug } : {}),
+      },
       {
         onSuccess: (book) => {
           onClose()
@@ -64,7 +71,7 @@ export function PromotionDialog({
           const msg =
             axiosErr?.response?.data?.detail ||
             axiosErr?.response?.data?.error ||
-            "Could not promote this piece. Make sure it has an active Dispatch."
+            "Could not create this Living Book."
           setError(msg)
         },
       }

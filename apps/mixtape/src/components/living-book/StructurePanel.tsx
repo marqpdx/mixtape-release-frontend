@@ -47,6 +47,7 @@ interface StructurePanelProps {
   livingBookId: string
   isEditor: boolean
   username?: string
+  groupSlug?: string
 }
 
 interface SortableNodeProps {
@@ -54,6 +55,7 @@ interface SortableNodeProps {
   livingBookId: string
   isEditor: boolean
   username?: string
+  groupSlug?: string
   onRemove: (pieceId: string) => void
   onAddChild: (parentId: string) => void
 }
@@ -63,6 +65,7 @@ function SortableNode({
   livingBookId,
   isEditor,
   username,
+  groupSlug,
   onRemove,
   onAddChild,
 }: SortableNodeProps) {
@@ -80,7 +83,9 @@ function SortableNode({
     transition,
   }
 
-  const pieceHref = username
+  const pieceHref = groupSlug
+    ? `/groups/${groupSlug}/writing/${node.slug}?lb=${livingBookId}`
+    : username
     ? `/member/${username}/writing/${node.slug}?lb=${livingBookId}`
     : `#`
 
@@ -168,7 +173,7 @@ function SortableNode({
   )
 }
 
-export function StructurePanel({ livingBookId, isEditor, username }: StructurePanelProps) {
+export function StructurePanel({ livingBookId, isEditor, username, groupSlug }: StructurePanelProps) {
   const { data: nodes = [], isLoading } = useLivingBookTree(livingBookId)
   const { removeNode, reorderNodes, createAddNode } = useLivingBookMutations(livingBookId)
   const [addingToParent, setAddingToParent] = useState<string | null>(null)
@@ -282,6 +287,7 @@ export function StructurePanel({ livingBookId, isEditor, username }: StructurePa
                   livingBookId={livingBookId}
                   isEditor={isEditor}
                   username={username}
+                  groupSlug={groupSlug}
                   onRemove={handleRemove}
                   onAddChild={handleAddChild}
                 />

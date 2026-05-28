@@ -14,9 +14,10 @@ interface LivingBookBreadcrumbProps {
   pieceSlug: string
   pieceId: string
   username?: string
+  groupSlug?: string
 }
 
-export function LivingBookBreadcrumb({ pieceSlug, pieceId, username }: LivingBookBreadcrumbProps) {
+export function LivingBookBreadcrumb({ pieceSlug, pieceId, username, groupSlug }: LivingBookBreadcrumbProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
 
@@ -31,7 +32,9 @@ export function LivingBookBreadcrumb({ pieceSlug, pieceId, username }: LivingBoo
   if (!livingBookId || !book) return null
 
   const makePieceHref = (slug: string) =>
-    username
+    groupSlug
+      ? `/groups/${groupSlug}/writing/${slug}?lb=${livingBookId}`
+      : username
       ? `/member/${username}/writing/${slug}?lb=${livingBookId}`
       : `#`
 

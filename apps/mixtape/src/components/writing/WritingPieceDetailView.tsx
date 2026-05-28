@@ -2,6 +2,7 @@
 
 'use client'
 
+import { Suspense, useState } from 'react'
 import {
   Box,
   Container,
@@ -13,7 +14,7 @@ import {
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import Link from 'next/link'
-import { IconArrowLeft, IconClock, IconPencil } from '@tabler/icons-react'
+import { IconArrowLeft, IconBook, IconClock, IconPencil } from '@tabler/icons-react'
 import { format } from 'date-fns'
 
 import { useGroup } from '@mixtape/api/hooks/groups/useGroups'
@@ -23,6 +24,9 @@ import { GroupMemberHeader } from '@components/groups/headers/GroupMemberHeader'
 import { GroupPublicHeader } from '@components/groups/headers/GroupPublicHeader'
 import { TipTapRenderer } from '@components/tiptap/TipTapRenderer'
 import type { TipTapDocument } from '@components/tiptap/TipTapRenderer'
+import { LivingBookBreadcrumb } from '@components/living-book/LivingBookBreadcrumb'
+import { ContextFlowPanel } from '@components/living-book/ContextFlowPanel'
+import { PromotionDialog } from '@components/living-book/PromotionDialog'
 
 interface WritingPieceDetailViewProps {
   groupSlug: string
@@ -35,6 +39,8 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
   const excerptColor = useColorModeValue('gray.600', 'gray.300')
   const seriesColor = useColorModeValue('blue.600', 'blue.300')
   const dividerColor = useColorModeValue('gray.200', 'gray.700')
+
+  const [promotionOpen, setPromotionOpen] = useState(false)
 
   const { group, isLoading: groupLoading } = useGroup(groupSlug)
   const { isAdmin, hasDecorator } = useGroupPermissions(groupSlug)
@@ -93,17 +99,36 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
             </HStack>
           </Link>
           {canEdit && piece?.id && (
-            <Link
-              href={`/groups/${groupSlug}?view=admin&section=write&piece=${piece.id}`}
-              style={{ color: 'inherit', textDecoration: 'none' }}
-            >
-              <HStack gap={1} color={metaColor} _hover={{ color: 'inherit' }}>
-                <IconPencil size={14} />
-                <Text fontSize="sm">Edit</Text>
+            <HStack gap={4}>
+              <Link
+                href={`/groups/${groupSlug}?view=admin&section=write&piece=${piece.id}`}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                <HStack gap={1} color={metaColor} _hover={{ color: 'inherit' }}>
+                  <IconPencil size={14} />
+                  <Text fontSize="sm">Edit</Text>
+                </HStack>
+              </Link>
+              <HStack
+                gap={1}
+                color={metaColor}
+                cursor="pointer"
+                _hover={{ color: 'inherit' }}
+                onClick={() => setPromotionOpen(true)}
+              >
+                <IconBook size={14} />
+                <Text fontSize="sm">Make Living Book</Text>
               </HStack>
-            </Link>
+            </HStack>
           )}
         </HStack>
+
+        {/* LB breadcrumb + prev/next (shows only when ?lb= is present) */}
+        {piece?.id && (
+          <Suspense>
+            <LivingBookBreadcrumb pieceSlug={pieceSlug} pieceId={piece.id} groupSlug={groupSlug} />
+          </Suspense>
+        )}
 
         {/* Series breadcrumb */}
         {piece.series && (
@@ -183,7 +208,24 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
           </Link>
         </Box>
 
+        {/* LB context flow panel (shows only when ?lb= is present) */}
+        {piece?.id && (
+          <Suspense>
+            <ContextFlowPanel pieceSlug={pieceSlug} pieceId={piece.id} groupSlug={groupSlug} />
+          </Suspense>
+        )}
+
       </Container>
+
+      {canEdit && piece && (
+        <PromotionDialog
+          pieceSlug={pieceSlug}
+          pieceTitle={piece.title}
+          open={promotionOpen}
+          onClose={() => setPromotionOpen(false)}
+          groupSlug={groupSlug}
+        />
+      )}
     </Box>
   )
 }
