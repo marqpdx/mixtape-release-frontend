@@ -71,6 +71,7 @@ export interface RecurringActionCreateInput {
   next_due_at: string;
   suggested_verb?: string;
   suggested_label?: string;
+  suggested_context?: Record<string, string>;
 }
 
 export type RecurringActionUpdateInput = Partial<RecurringActionCreateInput>;

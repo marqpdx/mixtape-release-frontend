@@ -176,6 +176,268 @@ const RECURRENCE_OPTIONS = [
   { value: "monthly", label: "Monthly" },
 ];
 
+// ---------------------------------------------------------------------------
+// Verb picker — guided suggested_verb / suggested_context builder
+//
+// GUIDED_VERBS is a typed constant that mirrors the shape a future backend
+// endpoint (e.g. GET /api/studio/verbs?group=<slug>) would return. When that
+// endpoint exists, replace this constant with a useGroupVerbs(groupSlug) hook
+// result and no structural changes to VerbPicker are needed.
+// ---------------------------------------------------------------------------
+
+interface ContextFieldConfig {
+  key: string;
+  label: string;
+  type: "text" | "select";
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+}
+
+interface VerbConfig {
+  verb_id: string;
+  label: string;
+  description: string;
+  context_fields: ContextFieldConfig[];
+  label_formula: (fields: Record<string, string>) => string;
+}
+
+const GUIDED_VERBS: VerbConfig[] = [
+  {
+    verb_id: "draft",
+    label: "Draft",
+    description: "Compose a text artifact (email, announcement, etc.)",
+    context_fields: [
+      {
+        key: "persona_context",
+        label: "Voice or persona",
+        type: "text",
+        placeholder: "e.g. facilitator, newsletter voice (optional)",
+      },
+      {
+        key: "recipient_context",
+        label: "Who this is for",
+        type: "text",
+        placeholder: "e.g. group members, new subscribers (optional)",
+      },
+    ],
+    label_formula: (f) =>
+      f.recipient_context ? `Draft for ${f.recipient_context}` : "Draft",
+  },
+  {
+    verb_id: "summarize",
+    label: "Summarize",
+    description: "Produce a summary of recent content or activity",
+    context_fields: [
+      {
+        key: "content_type",
+        label: "What to summarize",
+        type: "select",
+        options: [
+          { value: "recent_activity", label: "Recent activity" },
+          { value: "recent_documents", label: "Recent documents" },
+          { value: "member_contributions", label: "Member contributions" },
+        ],
+      },
+    ],
+    label_formula: (f) => {
+      const scopes: Record<string, string> = {
+        recent_activity: "recent activity",
+        recent_documents: "recent documents",
+        member_contributions: "member contributions",
+      };
+      return `Summarize ${scopes[f.content_type] ?? "content"}`;
+    },
+  },
+  {
+    verb_id: "synthesize",
+    label: "Synthesize",
+    description: "Combine and distill member inputs into a unified view",
+    context_fields: [
+      {
+        key: "focus",
+        label: "Focus",
+        type: "text",
+        placeholder: "e.g. member ideas on onboarding (optional)",
+      },
+    ],
+    label_formula: (f) =>
+      f.focus ? `Synthesize — ${f.focus}` : "Synthesize contributions",
+  },
+  {
+    verb_id: "retrieve",
+    label: "Retrieve",
+    description: "Surface relevant records or discussions from the group",
+    context_fields: [
+      {
+        key: "query",
+        label: "What to look for",
+        type: "text",
+        placeholder: "e.g. recent discussions about reading selections",
+      },
+    ],
+    label_formula: (f) =>
+      f.query ? `Retrieve — ${f.query}` : "Retrieve",
+  },
+  {
+    verb_id: "curate",
+    label: "Curate",
+    description: "Collect and surface content for the group to review",
+    context_fields: [
+      {
+        key: "content_type",
+        label: "Content type",
+        type: "select",
+        options: [
+          { value: "articles", label: "Articles" },
+          { value: "member_posts", label: "Member posts" },
+          { value: "library_items", label: "Library items" },
+        ],
+      },
+    ],
+    label_formula: (f) => {
+      const types: Record<string, string> = {
+        articles: "articles",
+        member_posts: "member posts",
+        library_items: "library items",
+      };
+      return `Curate ${types[f.content_type] ?? "content"}`;
+    },
+  },
+];
+
+function buildSuggestedContext(verbConfig: VerbConfig, fields: Record<string, string>): Record<string, string> {
+  const ctx: Record<string, string> = {};
+  for (const field of verbConfig.context_fields) {
+    const val = fields[field.key];
+    if (val) ctx[field.key] = val;
+  }
+  return ctx;
+}
+
+function defaultFieldValues(verbConfig: VerbConfig): Record<string, string> {
+  const defaults: Record<string, string> = {};
+  for (const field of verbConfig.context_fields) {
+    if (field.type === "select" && field.options && field.options.length > 0) {
+      defaults[field.key] = field.options[0].value;
+    } else {
+      defaults[field.key] = "";
+    }
+  }
+  return defaults;
+}
+
+interface VerbPickerProps {
+  verbId: string;
+  fieldValues: Record<string, string>;
+  suggestedLabel: string;
+  onVerbChange: (verbId: string, newFieldValues: Record<string, string>, newLabel: string) => void;
+  onFieldChange: (key: string, value: string) => void;
+  onLabelChange: (label: string) => void;
+}
+
+function VerbPicker({
+  verbId,
+  fieldValues,
+  suggestedLabel,
+  onVerbChange,
+  onFieldChange,
+  onLabelChange,
+}: VerbPickerProps) {
+  const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const sectionBg = useColorModeValue("gray.50", "gray.750");
+  const sectionBorder = useColorModeValue("gray.100", "gray.700");
+
+  const selectedVerb = GUIDED_VERBS.find((v) => v.verb_id === verbId) ?? null;
+
+  const handleVerbSelect = (newVerbId: string) => {
+    if (!newVerbId) {
+      onVerbChange("", {}, "");
+      return;
+    }
+    const config = GUIDED_VERBS.find((v) => v.verb_id === newVerbId);
+    if (!config) return;
+    const newFields = defaultFieldValues(config);
+    const newLabel = config.label_formula(newFields);
+    onVerbChange(newVerbId, newFields, newLabel);
+  };
+
+  const handleFieldChange = (key: string, value: string) => {
+    onFieldChange(key, value);
+    if (selectedVerb) {
+      const updatedFields = { ...fieldValues, [key]: value };
+      onLabelChange(selectedVerb.label_formula(updatedFields));
+    }
+  };
+
+  return (
+    <VStack gap={3} align="stretch">
+      <Box>
+        <Text fontSize="xs" color={mutedColor} mb={1}>Suggested action (optional)</Text>
+        <NativeSelect.Root size="sm">
+          <NativeSelect.Field
+            value={verbId}
+            onChange={(e) => handleVerbSelect(e.currentTarget.value)}
+          >
+            <option value="">— None —</option>
+            {GUIDED_VERBS.map((v) => (
+              <option key={v.verb_id} value={v.verb_id}>{v.label}</option>
+            ))}
+          </NativeSelect.Field>
+        </NativeSelect.Root>
+        {selectedVerb && (
+          <Text fontSize="xs" color={mutedColor} mt={1}>{selectedVerb.description}</Text>
+        )}
+      </Box>
+
+      {selectedVerb && (
+        <Box
+          bg={sectionBg}
+          border="1px solid"
+          borderColor={sectionBorder}
+          borderRadius="md"
+          p={3}
+        >
+          <VStack gap={2} align="stretch">
+            {selectedVerb.context_fields.map((field) => (
+              <Box key={field.key}>
+                <Text fontSize="xs" color={mutedColor} mb={1}>{field.label}</Text>
+                {field.type === "select" ? (
+                  <NativeSelect.Root size="sm">
+                    <NativeSelect.Field
+                      value={fieldValues[field.key] ?? ""}
+                      onChange={(e) => handleFieldChange(field.key, e.currentTarget.value)}
+                    >
+                      {field.options?.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                ) : (
+                  <Input
+                    size="sm"
+                    placeholder={field.placeholder}
+                    value={fieldValues[field.key] ?? ""}
+                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                  />
+                )}
+              </Box>
+            ))}
+            <Box>
+              <Text fontSize="xs" color={mutedColor} mb={1}>Action label</Text>
+              <Input
+                size="sm"
+                value={suggestedLabel}
+                onChange={(e) => onLabelChange(e.target.value)}
+                placeholder="Label shown on the digest item"
+              />
+            </Box>
+          </VStack>
+        </Box>
+      )}
+    </VStack>
+  );
+}
+
 function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -191,7 +453,8 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
   const [description, setDescription] = useState("");
   const [recurrenceRule, setRecurrenceRule] = useState("weekly");
   const [nextDueAt, setNextDueAt] = useState("");
-  const [suggestedVerb, setSuggestedVerb] = useState("");
+  const [verbId, setVerbId] = useState("");
+  const [verbFields, setVerbFields] = useState<Record<string, string>>({});
   const [suggestedLabel, setSuggestedLabel] = useState("");
 
   const resetForm = () => {
@@ -199,21 +462,34 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
     setDescription("");
     setRecurrenceRule("weekly");
     setNextDueAt("");
-    setSuggestedVerb("");
+    setVerbId("");
+    setVerbFields({});
     setSuggestedLabel("");
     setShowForm(false);
   };
 
+  const handleVerbChange = (newVerbId: string, newFields: Record<string, string>, newLabel: string) => {
+    setVerbId(newVerbId);
+    setVerbFields(newFields);
+    setSuggestedLabel(newLabel);
+  };
+
+  const handleFieldChange = (key: string, value: string) => {
+    setVerbFields((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleCreate = () => {
     if (!title.trim() || !nextDueAt) return;
+    const verbConfig = GUIDED_VERBS.find((v) => v.verb_id === verbId);
     create(
       {
         title: title.trim(),
         description: description.trim() || undefined,
         recurrence_rule: recurrenceRule,
         next_due_at: new Date(nextDueAt).toISOString(),
-        suggested_verb: suggestedVerb.trim() || undefined,
+        suggested_verb: verbId || undefined,
         suggested_label: suggestedLabel.trim() || undefined,
+        suggested_context: verbConfig ? buildSuggestedContext(verbConfig, verbFields) : undefined,
       },
       { onSuccess: resetForm },
     );
@@ -263,17 +539,13 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
                 onChange={(e) => setNextDueAt(e.target.value)}
               />
             </Box>
-            <Input
-              size="sm"
-              placeholder="Suggested verb (optional, e.g. draft)"
-              value={suggestedVerb}
-              onChange={(e) => setSuggestedVerb(e.target.value)}
-            />
-            <Input
-              size="sm"
-              placeholder="Suggested label (optional)"
-              value={suggestedLabel}
-              onChange={(e) => setSuggestedLabel(e.target.value)}
+            <VerbPicker
+              verbId={verbId}
+              fieldValues={verbFields}
+              suggestedLabel={suggestedLabel}
+              onVerbChange={handleVerbChange}
+              onFieldChange={handleFieldChange}
+              onLabelChange={setSuggestedLabel}
             />
             <Button
               size="sm"
@@ -307,7 +579,12 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
             >
               <VStack align="start" gap={0} flex={1} minW={0}>
                 <Text fontSize="sm" fontWeight="medium" lineClamp={1}>{item.title}</Text>
-                <Text fontSize="xs" color={mutedColor} textTransform="capitalize">{item.recurrence_rule}</Text>
+                <HStack gap={2}>
+                  <Text fontSize="xs" color={mutedColor} textTransform="capitalize">{item.recurrence_rule}</Text>
+                  {item.suggested_label && (
+                    <Text fontSize="xs" color={mutedColor}>· {item.suggested_label}</Text>
+                  )}
+                </HStack>
               </VStack>
               <Button
                 size="xs"
