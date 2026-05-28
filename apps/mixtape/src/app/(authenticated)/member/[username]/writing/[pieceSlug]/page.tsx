@@ -17,7 +17,7 @@ import {
 import { useColorModeValue } from "@components/ui/color-mode"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { IconArrowLeft, IconBook, IconClock, IconEye } from "@tabler/icons-react"
+import { IconArrowLeft, IconClock, IconEye } from "@tabler/icons-react"
 import { formatDistanceToNow } from "date-fns"
 
 import { useAuth } from "@/lib/auth/AuthContext"
@@ -30,7 +30,6 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance"
 import { DartOverlay } from "@components/reading/DartOverlay"
 import { LivingBookBreadcrumb } from "@components/living-book/LivingBookBreadcrumb"
 import { ContextFlowPanel } from "@components/living-book/ContextFlowPanel"
-import { PromotionDialog } from "@components/living-book/PromotionDialog"
 
 interface AffirmedMarker {
   id: string
@@ -52,7 +51,6 @@ export default function MemberWritingPiecePage() {
   const markerBorder = useColorModeValue("gray.200", "gray.700")
 
   const [affirmedMarkers, setAffirmedMarkers] = useState<AffirmedMarker[]>([])
-  const [promotionOpen, setPromotionOpen] = useState(false)
   const articleRef = useRef<HTMLElement | null>(null)
 
   const { user: identity, isLoading: identityLoading } = useAuth()
@@ -165,32 +163,21 @@ export default function MemberWritingPiecePage() {
 
           {/* Edit button for owner */}
           {isOwner && piece?.id && (
-            <HStack gap={2} flexWrap="wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                justifyContent="flex-start"
-                w="fit-content"
-                colorScheme="green"
+            <Button
+              variant="outline"
+              size="sm"
+              justifyContent="flex-start"
+              w="fit-content"
+              colorScheme="green"
+            >
+              <Link
+                href={`/member/${usernameParam}/hub?section=write&piece=${piece.id}`}
               >
-                <Link
-                  href={`/member/${usernameParam}/hub?section=write&piece=${piece.id}`}
-                >
-                  <HStack>
-                    <Text>Edit</Text>
-                  </HStack>
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                gap={1}
-                onClick={() => setPromotionOpen(true)}
-              >
-                <IconBook size={14} />
-                Make Living Book
-              </Button>
-            </HStack>
+                <HStack>
+                  <Text>Edit</Text>
+                </HStack>
+              </Link>
+            </Button>
           )}
 
           {/* LB-7: Living Book breadcrumb + prev/next (shows only when ?lb= is present) */}
@@ -334,16 +321,6 @@ export default function MemberWritingPiecePage() {
           </VStack>
         </VStack>
       </Container>
-
-      {/* LB-6: Promotion dialog */}
-      {isOwner && piece && (
-        <PromotionDialog
-          pieceSlug={piece.slug}
-          pieceTitle={piece.title}
-          open={promotionOpen}
-          onClose={() => setPromotionOpen(false)}
-        />
-      )}
 
       {piece && identity && (
         <DartOverlay
