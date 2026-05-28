@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Box,
   Button,
@@ -12,14 +13,15 @@ import {
 import { useColorModeValue } from '@components/ui/color-mode'
 import { useLeafClusters, useDetachLeafCluster } from '@mixtape/api/hooks/useBranches'
 import { VoiceLeafCluster } from './VoiceLeafCluster'
+import { AttachLeafClusterDialog } from './AttachLeafClusterDialog'
 import type { LeafCluster } from '@mixtape/api/clients/livingBook/branchApi'
 
 interface LeafClusterPanelProps {
   lbId: string
   branchId: string
   currentUserId: string
+  sponsor: { type: 'group' | 'member'; slug: string }
   onClose: () => void
-  onAttach: () => void
   onNavigateToPiece: (piece: { slug: string }) => void
 }
 
@@ -27,13 +29,15 @@ export function LeafClusterPanel({
   lbId,
   branchId,
   currentUserId,
+  sponsor,
   onClose,
-  onAttach,
   onNavigateToPiece,
 }: LeafClusterPanelProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const bg = useColorModeValue('white', 'gray.800')
   const rowBg = useColorModeValue('gray.50', 'gray.750')
+
+  const [attachOpen, setAttachOpen] = useState(false)
 
   const { data: leafClusters = [], isLoading } = useLeafClusters(lbId, branchId)
   const detach = useDetachLeafCluster(lbId, branchId)
@@ -54,7 +58,7 @@ export function LeafClusterPanel({
         <HStack justify="space-between">
           <Text fontSize="sm" fontWeight="semibold">Leaf Clusters</Text>
           <HStack gap={2}>
-            <Button size="xs" colorPalette="teal" variant="outline" onClick={onAttach}>
+            <Button size="xs" colorPalette="teal" variant="outline" onClick={() => setAttachOpen(true)}>
               + Attach
             </Button>
             <Button size="xs" variant="ghost" onClick={onClose}>✕</Button>
@@ -112,6 +116,17 @@ export function LeafClusterPanel({
           </Box>
         ))}
       </VStack>
+
+      {attachOpen && (
+        <Box position="absolute" top={0} left="calc(100% + 8px)" zIndex={10}>
+          <AttachLeafClusterDialog
+            lbId={lbId}
+            branchId={branchId}
+            sponsor={sponsor}
+            onClose={() => setAttachOpen(false)}
+          />
+        </Box>
+      )}
     </Box>
   )
 }

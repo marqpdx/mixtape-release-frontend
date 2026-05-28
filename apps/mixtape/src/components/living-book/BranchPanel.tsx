@@ -16,23 +16,27 @@ import {
   useDeleteBranch,
   useLeafClusters,
 } from '@mixtape/api/hooks/useBranches'
+import { LeafClusterPanel } from './LeafClusterPanel'
 import type { Branch } from '@mixtape/api/clients/livingBook/branchApi'
 
 interface BranchPanelProps {
   branch: Branch
   lbId: string
   collaboratorCount: number
+  currentUserId: string
+  sponsor: { type: 'group' | 'member'; slug: string }
   onClose: () => void
-  onViewLeafClusters: () => void
 }
 
 export function BranchPanel({
   branch,
   lbId,
   collaboratorCount,
+  currentUserId,
+  sponsor,
   onClose,
-  onViewLeafClusters,
 }: BranchPanelProps) {
+  const [leafPanelOpen, setLeafPanelOpen] = useState(false)
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const bg = useColorModeValue('white', 'gray.800')
 
@@ -122,11 +126,11 @@ export function BranchPanel({
           </Button>
         )}
 
-        {leafClusters.length > 0 && (
-          <Button size="sm" variant="outline" onClick={onViewLeafClusters}>
-            View {leafClusters.length} response{leafClusters.length !== 1 ? 's' : ''}
-          </Button>
-        )}
+        <Button size="sm" variant="outline" onClick={() => setLeafPanelOpen(true)}>
+          {leafClusters.length > 0
+            ? `View ${leafClusters.length} response${leafClusters.length !== 1 ? 's' : ''}`
+            : 'Attach a piece'}
+        </Button>
 
         <Text
           fontSize="xs"
@@ -140,6 +144,19 @@ export function BranchPanel({
             : 'Delete branch'}
         </Text>
       </VStack>
+
+      {leafPanelOpen && (
+        <Box position="absolute" top={0} left="calc(100% + 8px)" zIndex={10}>
+          <LeafClusterPanel
+            lbId={lbId}
+            branchId={branch.id}
+            currentUserId={currentUserId}
+            sponsor={sponsor}
+            onClose={() => setLeafPanelOpen(false)}
+            onNavigateToPiece={() => {}}
+          />
+        </Box>
+      )}
     </Box>
   )
 }

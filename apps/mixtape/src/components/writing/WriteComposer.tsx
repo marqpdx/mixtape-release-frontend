@@ -782,8 +782,13 @@ export default function WriteComposer({
                             (dispatchContent?.editor_count ?? 0) +
                             (dispatchContent?.commenter_count ?? 0)
                           }
+                          currentUserId={
+                            (() => {
+                              try { return JSON.parse(localStorage.getItem('user_identity') ?? '{}').id ?? '' } catch { return '' }
+                            })()
+                          }
+                          sponsor={{ type: sponsor.type as 'group' | 'member', slug: sponsor.slug ?? '' }}
                           onClose={() => setActiveBranch(null)}
-                          onViewLeafClusters={() => {}}
                         />
                       </Box>
                     )}
