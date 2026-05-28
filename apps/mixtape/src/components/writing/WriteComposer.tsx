@@ -31,7 +31,12 @@ import { WordCountDisplay } from "./composer/WordCountDisplay";
 import { StatusMessage } from "./composer/StatusMessage";
 import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { PromotionDialog } from "@components/living-book/PromotionDialog";
+import { BranchPanel } from "@components/living-book/BranchPanel";
+import { BranchReconciliationPanel } from "@components/living-book/BranchReconciliationPanel";
 import { useCollaboration } from "@hooks/useCollaboration";
+import { useLivingBookForPiece } from "@mixtape/api/hooks/useLivingBook";
+import { useBranches, useCreateBranch } from "@mixtape/api/hooks/useBranches";
+import type { Branch } from "@mixtape/api/clients/livingBook/branchApi";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
 import { Divider } from "../common/Divider";
@@ -167,6 +172,43 @@ export default function WriteComposer({
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
   const [lbDialogOpen, setLbDialogOpen] = useState(false);
+
+  // Branch state
+  const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
+  const [showReconciliation, setShowReconciliation] = useState(false);
+
+  // Living Book + branch data (only relevant when piece is an LB trunk)
+  const { data: livingBook } = useLivingBookForPiece(
+    typeof (initialPiece as { slug?: string }).slug === 'string'
+      ? (initialPiece as { slug?: string }).slug
+      : undefined
+  );
+  const lbId = livingBook?.id ?? null;
+  const { data: branches = [] } = useBranches(lbId ?? '');
+  const createBranch = useCreateBranch(lbId ?? '');
+  const hasDetachedBranches = branches.some((b: Branch) => b.is_detached);
+
+  const handleAddBranch = useCallback(() => {
+    if (!lbId || !editorRef.current) return;
+    const anchorId = crypto.randomUUID();
+    editorRef.current.commands.insertLbAnchor(anchorId);
+    createBranch.mutate(
+      { anchor_node_id: anchorId },
+      {
+        onSuccess: (branch: Branch) => setActiveBranch(branch),
+      }
+    );
+  }, [lbId, createBranch]);
+
+  // Click delegation — open BranchPanel when an lb-anchor glyph is clicked
+  const handleEditorAreaClick = useCallback((e: React.MouseEvent) => {
+    const target = (e.target as HTMLElement).closest('[data-lb-anchor]') as HTMLElement | null;
+    if (!target || !lbId) return;
+    const anchorId = target.getAttribute('data-lb-anchor');
+    if (!anchorId) return;
+    const branch = branches.find((b: Branch) => b.anchor_node_id === anchorId) ?? null;
+    setActiveBranch(branch);
+  }, [branches, lbId]);
 
   // LinkedIn copy state (Copy Desk agent)
   const [linkedinCopy, setLinkedinCopy] = useState('');
@@ -674,6 +716,30 @@ export default function WriteComposer({
                         📖 Living Book
                       </Button>
 
+                      {lbId && isCollaborative && (
+                        <>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            colorScheme="teal"
+                            onClick={handleAddBranch}
+                            disabled={createBranch.isPending}
+                          >
+                            🌿 Add Branch
+                          </Button>
+                          {hasDetachedBranches && (
+                            <Button
+                              size="xs"
+                              variant="solid"
+                              colorScheme="orange"
+                              onClick={() => setShowReconciliation(true)}
+                            >
+                              ⚠ Detached
+                            </Button>
+                          )}
+                        </>
+                      )}
+
                       {isCollaborative && dispatchContent && (
                         <HStack gap={1} fontSize="xs" color="gray.600">
                           <Text>{dispatchContent.editor_count} editors</Text>
@@ -705,6 +771,34 @@ export default function WriteComposer({
                         onClose={() => setLbDialogOpen(false)}
                         groupSlug={sponsor.slug}
                       />
+                    )}
+
+                    {activeBranch && lbId && (
+                      <Box position="fixed" right="24px" top="80px" zIndex={1000}>
+                        <BranchPanel
+                          branch={activeBranch}
+                          lbId={lbId}
+                          collaboratorCount={
+                            (dispatchContent?.editor_count ?? 0) +
+                            (dispatchContent?.commenter_count ?? 0)
+                          }
+                          onClose={() => setActiveBranch(null)}
+                          onViewLeafClusters={() => {}}
+                        />
+                      </Box>
+                    )}
+
+                    {showReconciliation && lbId && (
+                      <Box position="fixed" right="24px" top="80px" zIndex={1000}>
+                        <BranchReconciliationPanel
+                          lbId={lbId}
+                          onReattach={(anchorId) => {
+                            editorRef.current?.commands.insertLbAnchor(anchorId);
+                            setShowReconciliation(false);
+                          }}
+                          onClose={() => setShowReconciliation(false)}
+                        />
+                      </Box>
                     )}
                   </Box>
                 )}
@@ -746,7 +840,7 @@ export default function WriteComposer({
               </Box>
             )}
 
-            <Box position="relative" w="100%">
+            <Box position="relative" w="100%" onClick={handleEditorAreaClick}>
               <MainEditor
                 key={collabKey}
                 ref={editorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any

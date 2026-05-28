@@ -2,6 +2,22 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@mixtape/api/clients/livingBook/livingBookApi";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+
+/** Returns the LivingBook for which this piece is the trunk, or null if none. */
+export function useLivingBookForPiece(pieceSlug: string | null | undefined) {
+  return useQuery<api.LivingBook | null>({
+    queryKey: ["living-book-for-piece", pieceSlug],
+    queryFn: async () => {
+      const res = await axiosInstance.get<api.LivingBook[]>(
+        `/api/living-books/?trunk_slug=${pieceSlug}`
+      );
+      return res.data[0] ?? null;
+    },
+    enabled: !!pieceSlug,
+    staleTime: 60 * 1000,
+  });
+}
 
 export function useLivingBook(id: string | null) {
   return useQuery({

@@ -23,6 +23,7 @@ import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapToolbar from "./TipTapToolbar";
+import { LbAnchor } from "./extensions/LbAnchor";
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -90,6 +91,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
       return [
         CollabStarterKit,
         CustomParagraph,
+        LbAnchor,
         Collaboration.configure({
           document: ydoc,
           field: "default",

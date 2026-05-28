@@ -26,6 +26,7 @@ import { Prose } from "@components/ui/prose";
 import { Awareness } from "y-protocols/awareness.js";
 import { BlockId } from "./extensions/BlockId";
 import { OutlineMarker } from "./extensions/OutlineMarker";
+import { LbAnchor } from "./extensions/LbAnchor";
 import TipTapToolbar from "./TipTapToolbar";
 import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
@@ -331,6 +332,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     }),
     BlockId,
     OutlineMarker,
+    LbAnchor,
     BlockRouting.configure(routingOpts),
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
