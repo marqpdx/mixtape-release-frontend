@@ -11,8 +11,8 @@ import {
   VStack,
   Button,
 } from '@chakra-ui/react';
-import { IconUpload, IconFileText, IconFolders } from '@tabler/icons-react';
-import { useAvailableFiles, useAvailableDocuments, useCreateLibraryItem } from '@mixtape/api/hooks/stackroom/useCollections';
+import { IconFiles, IconFileText, IconFolders, IconUpload } from '@tabler/icons-react';
+import { useAvailableFiles, useAvailableDocuments, useCollections, useCreateLibraryItem } from '@mixtape/api/hooks/stackroom/useCollections';
 import { AvailableFilesList } from './AvailableFilesList';
 import { AvailableDocumentsList } from './AvailableDocumentsList';
 import { AvailableCollectionsList } from './AvailableCollectionsList';
@@ -24,15 +24,14 @@ interface CollectionBrowserProps {
   onItemAdded?: () => void;
 }
 
-type TopFilter = 'upload' | 'writing' | 'collections';
-type UploadSubFilter = 'browse' | 'new';
+type TopFilter = 'upload' | 'writing' | 'collections' | 'uploaded';
 
 const TOP_FILTERS: { id: TopFilter; label: string; icon: React.ReactNode; help: string }[] = [
   {
     id: 'upload',
     label: 'Upload',
     icon: <IconUpload size={16} />,
-    help: 'Add files from your library — PDFs, docs, markdown — or upload something new.',
+    help: 'Upload PDFs, docs, markdown files.',
   },
   {
     id: 'writing',
@@ -42,9 +41,15 @@ const TOP_FILTERS: { id: TopFilter; label: string; icon: React.ReactNode; help: 
   },
   {
     id: 'collections',
-    label: 'Collections',
+    label: 'Colls',
     icon: <IconFolders size={16} />,
-    help: 'Link another collection or copy all its items into this one.',
+    help: 'Link another Collection or copy all its items into this one.',
+  },
+  {
+    id: 'uploaded',
+    label: 'Uploaded',
+    icon: <IconFiles size={16} />,
+    help: 'Add previously uploaded files from your library.',
   },
 ];
 
@@ -53,11 +58,14 @@ export function CollectionBrowser({
   onItemAdded,
 }: CollectionBrowserProps) {
   const [activeTop, setActiveTop] = useState<TopFilter>('upload');
-  const [uploadSub, setUploadSub] = useState<UploadSubFilter>('browse');
 
-  const { files, isLoading: filesLoading } = useAvailableFiles(collectionId);
+  const { files, isLoading: filesLoading, refetch: refetchFiles } = useAvailableFiles(collectionId);
   const { documents, isLoading: docsLoading } = useAvailableDocuments(collectionId);
+  const { collections, isLoading: collectionsLoading } = useCollections();
   const createMutation = useCreateLibraryItem();
+  const availableCollectionsCount = collections.filter(
+    (collection) => collection.id !== collectionId
+  ).length;
 
   const handleAddFile = async (fileId: string, filename: string) => {
     try {
@@ -100,7 +108,7 @@ export function CollectionBrowser({
         data: { content_type: 'source_file', content_id: fileId, title: filename },
       });
       toaster.create({ title: 'File uploaded and added', type: 'success' });
-      setUploadSub('browse');
+      await refetchFiles();
       onItemAdded?.();
     } catch (error: unknown) {
       toaster.create({
@@ -159,55 +167,20 @@ export function CollectionBrowser({
   const renderContent = () => {
     if (activeTop === 'upload') {
       return (
-        <VStack align="stretch" gap={4}>
-          {/* Upload sub-tabs */}
-          <HStack gap={2}>
-            <Button
-              size="xs"
-              variant={uploadSub === 'browse' ? 'solid' : 'outline'}
-              colorPalette={uploadSub === 'browse' ? 'blue' : 'gray'}
-              onClick={() => setUploadSub('browse')}
-            >
-              Previously Uploaded
-              {!filesLoading && (
-                <Badge size="xs" colorPalette="gray" ml={1}>
-                  {files.length}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              size="xs"
-              variant={uploadSub === 'new' ? 'solid' : 'outline'}
-              colorPalette={uploadSub === 'new' ? 'green' : 'gray'}
-              onClick={() => setUploadSub('new')}
-            >
-              Upload New
-            </Button>
-          </HStack>
-
-          {uploadSub === 'browse' ? (
-            <AvailableFilesList
-              files={files}
-              onAddFile={handleAddFile}
-              isLoading={filesLoading}
-            />
-          ) : (
-            <Box>
-              <Text fontSize="sm" color="gray.600" mb={4}>
-                Files are added to your group&apos;s library and then automatically
-                attached to this collection.
-              </Text>
-              <FileUpload
-                libraryId={collectionId}
-                mode="collection"
-                onUploadComplete={handleUploadComplete}
-                onUploadError={(error) => {
-                  toaster.create({ title: 'Upload failed', description: error, type: 'error' });
-                }}
-              />
-            </Box>
-          )}
-        </VStack>
+        <Box>
+          <Text fontSize="sm" color="gray.600" mb={4}>
+            Files are added to your group&apos;s library and then automatically
+            attached to this collection.
+          </Text>
+          <FileUpload
+            libraryId={collectionId}
+            mode="collection"
+            onUploadComplete={handleUploadComplete}
+            onUploadError={(error) => {
+              toaster.create({ title: 'Upload failed', description: error, type: 'error' });
+            }}
+          />
+        </Box>
       );
     }
 
@@ -217,6 +190,16 @@ export function CollectionBrowser({
           documents={documents}
           onAddDocument={handleAddDocument}
           isLoading={docsLoading}
+        />
+      );
+    }
+
+    if (activeTop === 'uploaded') {
+      return (
+        <AvailableFilesList
+          files={files}
+          onAddFile={handleAddFile}
+          isLoading={filesLoading}
         />
       );
     }
@@ -233,24 +216,39 @@ export function CollectionBrowser({
   return (
     <VStack align="stretch" gap={4}>
       {/* Top-level filter buttons */}
-      <HStack gap={2}>
-        {TOP_FILTERS.map(({ id, label, icon }) => (
-          <Button
-            key={id}
-            size="sm"
-            variant={activeTop === id ? 'solid' : 'outline'}
-            colorPalette={activeTop === id ? 'blue' : 'gray'}
-            onClick={() => {
-              setActiveTop(id);
-              if (id === 'upload') setUploadSub('browse');
-            }}
-          >
-            <HStack gap={2}>
-              {icon}
-              <Text>{label}</Text>
-            </HStack>
-          </Button>
-        ))}
+      <HStack gap={2} flexWrap="wrap">
+        {TOP_FILTERS.map(({ id, label, icon }) => {
+          const count = id === 'collections'
+            ? availableCollectionsCount
+            : id === 'uploaded'
+            ? files.length
+            : null;
+          const isCountLoading = id === 'collections'
+            ? collectionsLoading
+            : id === 'uploaded'
+            ? filesLoading
+            : false;
+
+          return (
+            <Button
+              key={id}
+              size="sm"
+              variant={activeTop === id ? 'solid' : 'outline'}
+              colorPalette={activeTop === id ? 'blue' : 'gray'}
+              onClick={() => setActiveTop(id)}
+            >
+              <HStack gap={2}>
+                {icon}
+                <Text>{label}</Text>
+                {count !== null && !isCountLoading && (
+                  <Badge size="xs" colorPalette={activeTop === id ? 'blue' : 'gray'}>
+                    {count}
+                  </Badge>
+                )}
+              </HStack>
+            </Button>
+          );
+        })}
       </HStack>
 
       {/* Help text */}

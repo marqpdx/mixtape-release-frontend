@@ -62,7 +62,29 @@ function formatDate(isoString: string): string {
   });
 }
 
-function GroupFilePdfReader({
+function getFilenameExtension(filename: string) {
+  return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+function isPdfFile(file: GroupFile) {
+  return file.content_type === "application/pdf" || getFilenameExtension(file.filename) === "pdf";
+}
+
+function isWordFile(file: GroupFile) {
+  const ext = getFilenameExtension(file.filename);
+  return (
+    ext === "doc" ||
+    ext === "docx" ||
+    file.content_type === "application/msword" ||
+    file.content_type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  );
+}
+
+function canPreviewFile(file: GroupFile) {
+  return isPdfFile(file) || isWordFile(file);
+}
+
+function GroupFileReader({
   file,
   groupSlug,
   onBack,
@@ -71,6 +93,10 @@ function GroupFilePdfReader({
   groupSlug: string;
   onBack: () => void;
 }) {
+  const wordFile = isWordFile(file);
+  const previewUrl = `/api/groups/${groupSlug}/files/${file.id}/preview.pdf`;
+  const downloadUrl = `/api/groups/${groupSlug}/files/${file.id}/download/`;
+
   return (
     <VStack align="stretch" gap={0}>
       <Box pb={5}>
@@ -118,14 +144,23 @@ function GroupFilePdfReader({
         <Text fontFamily="heading" fontSize={{ base: "2xl", md: "3xl" }} lineHeight="1.1" letterSpacing="-0.02em" color="theme.text" mb={3}>
           {file.filename}
         </Text>
-        <Badge colorPalette="red" variant="subtle">PDF</Badge>
+        <HStack gap={2} flexWrap="wrap">
+          <Badge colorPalette={wordFile ? "blue" : "red"} variant="subtle">
+            {wordFile ? "Word document" : "PDF"}
+          </Badge>
+          {wordFile && (
+            <Badge colorPalette="gray" variant="outline">
+              PDF preview
+            </Badge>
+          )}
+        </HStack>
       </Box>
 
-      <Box maxW="860px">
+      <Box maxW="960px">
         <PdfDocumentViewer
           filename={file.filename}
           sourceFileId={file.id}
-          downloadUrl={`/api/groups/${groupSlug}/files/${file.id}/download/`}
+          downloadUrl={wordFile ? previewUrl : downloadUrl}
         />
       </Box>
     </VStack>
@@ -191,7 +226,7 @@ export function FilesTab({ group }: { group: Group }) {
 
   if (viewingFile) {
     return (
-      <GroupFilePdfReader
+      <GroupFileReader
         file={viewingFile}
         groupSlug={group.slug}
         onBack={() => setViewingFile(null)}
@@ -263,9 +298,9 @@ export function FilesTab({ group }: { group: Group }) {
                 <Text fontSize="sm" fontWeight="medium" truncate>
                   {file.filename}
                 </Text>
-                {file.content_type === "application/pdf" && (
-                  <Badge colorScheme="red" size="sm" flexShrink={0}>
-                    PDF
+                {canPreviewFile(file) && (
+                  <Badge colorScheme={isWordFile(file) ? "blue" : "red"} size="sm" flexShrink={0}>
+                    {isWordFile(file) ? "Word" : "PDF"}
                   </Badge>
                 )}
               </HStack>
@@ -276,7 +311,7 @@ export function FilesTab({ group }: { group: Group }) {
                 <Text fontSize="xs" color="gray.400">
                   {formatDate(file.created_at)}
                 </Text>
-                {file.content_type === "application/pdf" && (
+                {canPreviewFile(file) && (
                   <Button
                     size="xs"
                     variant="ghost"
