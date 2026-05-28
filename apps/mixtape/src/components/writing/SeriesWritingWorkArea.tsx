@@ -9,7 +9,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { PromotionDialog } from '@components/living-book/PromotionDialog'
 import {
   Box,
   HStack,
@@ -97,7 +96,6 @@ export default function SeriesWritingWorkArea({
   const railBg = useColorModeValue('gray.50', 'gray.850')
 
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined)
-  const [promotingPiece, setPromotingPiece] = useState<{ slug: string; title: string } | null>(null)
   const queryClient = useQueryClient()
 
   // ── Data ────────────────────────────────────────────────────────────────
@@ -163,7 +161,6 @@ export default function SeriesWritingWorkArea({
   }
 
   return (
-    <>
     <Box h="full" display="flex" flexDir="column" gap={0}>
       {/* Header */}
       <Box px={6} py={4} borderBottomWidth="1px" borderColor={borderColor}>
@@ -235,7 +232,6 @@ export default function SeriesWritingWorkArea({
             drafts={typedDrafts}
             onEdit={onNavigateToEditor}
             onDetail={(slug) => onNavigateToDetail({ id: '', slug })}
-            onPromote={(piece) => setPromotingPiece(piece)}
             groupId={sponsor.id}
             allSeries={seriesList}
             filterSeriesKey={selectedSeriesKey}
@@ -245,16 +241,5 @@ export default function SeriesWritingWorkArea({
         </Box>
       </HStack>
     </Box>
-
-    {promotingPiece && (
-      <PromotionDialog
-        pieceSlug={promotingPiece.slug}
-        pieceTitle={promotingPiece.title}
-        open={true}
-        onClose={() => setPromotingPiece(null)}
-        groupSlug={sponsor.slug}
-      />
-    )}
-    </>
   )
 }

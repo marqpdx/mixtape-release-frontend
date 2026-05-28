@@ -30,7 +30,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { IconGripVertical, IconPencil, IconFileText, IconCheck, IconPlus, IconBook } from '@tabler/icons-react'
+import { IconGripVertical, IconPencil, IconFileText, IconCheck, IconPlus } from '@tabler/icons-react'
 import { toaster } from '@mixtape/core/lib/toaster'
 import * as writingApi from '@mixtape/api/clients/writing/writingApi'
 import type { FlattenedPlacement, WorkingDocument, WritingSeries } from '@mixtape/core/types/writingTypes'
@@ -109,7 +109,6 @@ function SortableRow({
   allSeries,
   onEdit,
   onDetail,
-  onPromote,
   onChangeSeries,
   borderColor,
   metaColor,
@@ -118,7 +117,6 @@ function SortableRow({
   allSeries?: WritingSeries[]
   onEdit: (pieceId: string) => void
   onDetail?: (pieceSlug: string) => void
-  onPromote?: (piece: { slug: string; title: string }) => void
   onChangeSeries?: (pieceId: string, seriesId: string | null) => void
   borderColor: string
   metaColor: string
@@ -237,18 +235,6 @@ function SortableRow({
           >
             <IconPencil size={14} />
           </Box>
-          {onPromote && (
-            <Box
-              as="button"
-              p={1}
-              color={metaColor}
-              _hover={{ color: 'inherit' }}
-              onClick={() => onPromote({ slug: item.pieceSlug, title: item.title })}
-              title="Make Living Book"
-            >
-              <IconBook size={14} />
-            </Box>
-          )}
         </HStack>
       </HStack>
     </Box>
@@ -319,7 +305,6 @@ interface SeriesGroupViewProps {
   drafts: WorkingDocument[]
   onEdit: (pieceId: string) => void
   onDetail?: (pieceSlug: string) => void
-  onPromote?: (piece: { slug: string; title: string }) => void
   /** Group UUID — enables inline series creation */
   groupId?: string
   /** Full series list for assignment dropdowns */
@@ -342,7 +327,6 @@ export function SeriesGroupView({
   drafts,
   onEdit,
   onDetail,
-  onPromote,
   groupId,
   allSeries,
   filterSeriesKey,
@@ -562,7 +546,6 @@ export function SeriesGroupView({
                     allSeries={allSeries}
                     onEdit={onEdit}
                     onDetail={onDetail}
-                    onPromote={onPromote}
                     onChangeSeries={allSeries ? handleChangeSeries : undefined}
                     borderColor={borderColor}
                     metaColor={metaColor}

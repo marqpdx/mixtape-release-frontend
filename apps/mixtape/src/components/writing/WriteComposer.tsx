@@ -30,6 +30,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { WordCountDisplay } from "./composer/WordCountDisplay";
 import { StatusMessage } from "./composer/StatusMessage";
 import { CollaborationDialog } from "./composer/CollaborationDialog";
+import { PromotionDialog } from "@components/living-book/PromotionDialog";
 import { useCollaboration } from "@hooks/useCollaboration";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
@@ -165,6 +166,7 @@ export default function WriteComposer({
 
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
+  const [lbDialogOpen, setLbDialogOpen] = useState(false);
 
   // LinkedIn copy state (Copy Desk agent)
   const [linkedinCopy, setLinkedinCopy] = useState('');
@@ -662,6 +664,16 @@ export default function WriteComposer({
                         {isCollaborative ? "👥 Collaborative" : "+ Add Collaborators"}
                       </Button>
 
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorScheme="teal"
+                        disabled={!isCollaborative}
+                        onClick={() => isCollaborative && setLbDialogOpen(true)}
+                      >
+                        📖 Living Book
+                      </Button>
+
                       {isCollaborative && dispatchContent && (
                         <HStack gap={1} fontSize="xs" color="gray.600">
                           <Text>{dispatchContent.editor_count} editors</Text>
@@ -684,6 +696,16 @@ export default function WriteComposer({
                       loading={collaborationLoading}
                       canBeRescinded={canBeRescinded}
                     />
+
+                    {lbDialogOpen && sponsor.slug && (
+                      <PromotionDialog
+                        pieceSlug={initialPiece.slug}
+                        pieceTitle={initialPiece.title}
+                        open={lbDialogOpen}
+                        onClose={() => setLbDialogOpen(false)}
+                        groupSlug={sponsor.slug}
+                      />
+                    )}
                   </Box>
                 )}
 

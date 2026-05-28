@@ -34,6 +34,7 @@ import {
   IconUser,
   IconTrash,
   IconMapPin,
+  IconBook,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { SeriesGroupView } from "./SeriesGroupView";
@@ -515,6 +516,15 @@ export default function WritingListWrapper({
           <IconUsersGroup size={18} color="purple" />
         ) : (
           <IconUser size={18} color="gray" />
+        )}
+
+        {/* LB eligibility indicator (group only) */}
+        {sponsor.type === "group" && (
+          <IconBook
+            size={16}
+            color={isCollab ? "#3182ce" : "#CBD5E0"}
+            style={{ flexShrink: 0 }}
+          />
         )}
 
         <Text fontWeight="semibold" fontSize="md" color="gray.900" _dark={{ color: "white" }} lineClamp={1}>
@@ -1268,7 +1278,7 @@ export default function WritingListWrapper({
                               variant: "ghost",
                               colorScheme: "green",
                             },
-                            {
+                                        {
                               label: "Delete Draft",
                               icon: <IconTrash size={16} />,
                               onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1319,6 +1329,13 @@ export default function WritingListWrapper({
                         variant: "ghost",
                         colorScheme: "green",
                       },
+                      ...(sponsor.type === "group" ? [{
+                        label: "Make Living Book",
+                        icon: <IconBook size={16} />,
+                        onClick: ((draft: WorkingDocument) => setPromotingPiece({ slug: draft.piece.slug, title: draft.title || draft.piece.title || "Untitled" })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        variant: "ghost",
+                        colorScheme: "blue",
+                      }] : []),
                       {
                         label: "Delete Draft",
                         icon: <IconTrash size={16} />,
@@ -1386,7 +1403,7 @@ export default function WritingListWrapper({
                               variant: "ghost",
                               colorScheme: "green",
                             },
-                            {
+                                        {
                               label: "Delete Draft",
                               icon: <IconTrash size={16} />,
                               onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1412,6 +1429,7 @@ export default function WritingListWrapper({
           )}
         </Tabs.Content>
       </Tabs.Root>
+
     </Box>
   );
 }
