@@ -20,9 +20,9 @@ import {
   DialogCloseTrigger,
 } from "@components/ui/dialog"
 import { useColorModeValue } from "@components/ui/color-mode"
-import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
 import { promoteLivingBook } from "@mixtape/api/clients/livingBook/livingBookApi"
+import type { LivingBook } from "@mixtape/api/clients/livingBook/livingBookApi"
 
 interface PromotionDialogProps {
   pieceSlug: string
@@ -30,6 +30,7 @@ interface PromotionDialogProps {
   open: boolean
   onClose: () => void
   groupSlug?: string
+  onSuccess?: (book: LivingBook) => void
 }
 
 export function PromotionDialog({
@@ -38,8 +39,8 @@ export function PromotionDialog({
   open,
   onClose,
   groupSlug,
+  onSuccess,
 }: PromotionDialogProps) {
-  const router = useRouter()
   const [title, setTitle] = useState(pieceTitle)
   const [description, setDescription] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -64,7 +65,7 @@ export function PromotionDialog({
       {
         onSuccess: (book) => {
           onClose()
-          router.push(`/living-books/${book.id}/`)
+          onSuccess?.(book)
         },
         onError: (err: unknown) => {
           const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } };

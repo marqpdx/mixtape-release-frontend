@@ -31,6 +31,7 @@ import { WordCountDisplay } from "./composer/WordCountDisplay";
 import { StatusMessage } from "./composer/StatusMessage";
 import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { PromotionDialog } from "@components/living-book/PromotionDialog";
+import { LbDesk } from "@components/living-book/LbDesk";
 import { BranchPanel } from "@components/living-book/BranchPanel";
 import { BranchReconciliationPanel } from "@components/living-book/BranchReconciliationPanel";
 import { useCollaboration } from "@hooks/useCollaboration";
@@ -154,6 +155,7 @@ export default function WriteComposer({
 
   // UI state
   const [workspaceOpen, setWorkspaceOpen] = useState(defaultWorkspaceOpen);
+  const [lbDeskOpen, setLbDeskOpen] = useState(false);
   const [workspaceWidth] = useState("360px");
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
@@ -606,7 +608,7 @@ export default function WriteComposer({
     }
   }, [pieceId]);
 
-  const contentWidth = workspaceOpen ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
+  const contentWidth = (workspaceOpen || lbDeskOpen) ? `calc(100% - ${workspaceWidth} - 1rem)` : "100%";
 
   // ✅ Hard remount key prevents cached editor instances from persisting across open/close
   const collabKey = `${pieceId}:${editorMode}:${dispatchContent?.yjs_document_id ?? "no-yjs"}`;
@@ -659,30 +661,32 @@ export default function WriteComposer({
                   <Box fontSize="sm" color="gray.600">
                     Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
                   </Box>
-                  {sponsor.type === "member" && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      colorScheme="gray"
-                      onClick={() => {
-                        if (onBack) {
-                          onBack();
-                          return;
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    colorScheme="gray"
+                    onClick={() => {
+                      if (onBack) {
+                        onBack();
+                        return;
+                      }
+                      if (sponsor.type === "group" && sponsor.slug) {
+                        window.location.href = `/app/writing?group=${sponsor.slug}`;
+                        return;
+                      }
+                      if (typeof window !== "undefined") {
+                        try {
+                          window.localStorage.setItem("writing_active_tab", "drafts");
+                          window.localStorage.setItem("memberDashboard", "writing");
+                        } catch (error) {
+                          console.warn("Failed to set writing tab:", error);
                         }
-                        if (typeof window !== "undefined") {
-                          try {
-                            window.localStorage.setItem("writing_active_tab", "drafts");
-                            window.localStorage.setItem("memberDashboard", "writing");
-                          } catch (error) {
-                            console.warn("Failed to set writing tab:", error);
-                          }
-                        }
-                        window.location.href = "/app/dashboard";
-                      }}
-                    >
-                      Return to drafts list
-                    </Button>
-                  )}
+                      }
+                      window.location.href = "/app/dashboard";
+                    }}
+                  >
+                    ← Back to drafts
+                  </Button>
                 </HStack>
 
                 {allowCollab && (
@@ -770,6 +774,10 @@ export default function WriteComposer({
                         open={lbDialogOpen}
                         onClose={() => setLbDialogOpen(false)}
                         groupSlug={sponsor.slug}
+                        onSuccess={() => {
+                          queryClient.invalidateQueries({ queryKey: ["living-book-for-piece", initialPieceSlug] });
+                          setLbDeskOpen(true);
+                        }}
                       />
                     )}
 
@@ -1014,7 +1022,29 @@ export default function WriteComposer({
           />
         )}
 
-        <WorkspaceToggle workspaceOpen={workspaceOpen} onToggle={() => setWorkspaceOpen(true)} />
+        <WorkspaceToggle
+          workspaceOpen={workspaceOpen}
+          onToggle={() => { setWorkspaceOpen(true); setLbDeskOpen(false); }}
+          isLb={!!lbId}
+          lbDeskOpen={lbDeskOpen}
+          onLbToggle={() => { setLbDeskOpen(true); setWorkspaceOpen(false); }}
+        />
+
+        {lbId && livingBook && (
+          <LbDesk
+            isOpen={lbDeskOpen}
+            onClose={() => setLbDeskOpen(false)}
+            width={workspaceWidth}
+            lbId={lbId}
+            livingBook={livingBook}
+            collaboratorCount={(dispatchContent?.editor_count ?? 0) + (dispatchContent?.commenter_count ?? 0)}
+            currentUserId={""}
+            sponsor={{ type: sponsor.type, slug: sponsor.slug ?? "" }}
+            onInsertAnchor={(anchorId) => {
+              editorRef.current?.commands.insertLbAnchor(anchorId);
+            }}
+          />
+        )}
 
         <CopyDesk
           isOpen={workspaceOpen}
