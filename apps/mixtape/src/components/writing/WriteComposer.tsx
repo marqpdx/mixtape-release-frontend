@@ -95,7 +95,7 @@ export default function WriteComposer({
   pieceId,
   initialPiece,
   sponsor,
-  defaultWorkspaceOpen = true,
+  defaultWorkspaceOpen = false,
   autosaveDebounceMs = 2500,
   showPublishingControls = true,
   onPublished,
