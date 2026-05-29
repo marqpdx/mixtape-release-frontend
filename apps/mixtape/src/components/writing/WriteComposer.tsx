@@ -762,7 +762,7 @@ export default function WriteComposer({
                       canBeRescinded={canBeRescinded}
                     />
 
-                    {lbDialogOpen && sponsor.slug && initialPieceSlug && (
+                    {sponsor.slug && initialPieceSlug && (
                       <PromotionDialog
                         pieceSlug={initialPieceSlug}
                         pieceTitle={initialPiece.title || title}

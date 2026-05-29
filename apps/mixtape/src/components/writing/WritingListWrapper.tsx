@@ -1432,10 +1432,10 @@ export default function WritingListWrapper({
         </Tabs.Content>
       </Tabs.Root>
 
-      {promotingPiece && sponsor.type === "group" && (
+      {sponsor.type === "group" && (
         <PromotionDialog
-          pieceSlug={promotingPiece.slug}
-          pieceTitle={promotingPiece.title}
+          pieceSlug={promotingPiece?.slug ?? ""}
+          pieceTitle={promotingPiece?.title ?? ""}
           open={!!promotingPiece}
           onClose={() => setPromotingPiece(null)}
           groupSlug={sponsor.slug}

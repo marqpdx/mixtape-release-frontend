@@ -50,8 +50,7 @@ export function WorkspaceToggle({
             100% { transform: translateX(-50%) scale(1.0);  box-shadow: 0 0 0 0   rgba(49,151,149,0); opacity: 1; }
           }
           .lb-btn-arrive {
-            animation: lb-arrive 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards,
-                       lb-arrive 0.9s cubic-bezier(0.34,1.56,0.64,1) 1.1s forwards;
+            animation: lb-arrive 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
           }
         `}</style>
       )}
