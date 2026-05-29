@@ -707,7 +707,9 @@ export default function WriteComposer({
                         colorScheme={isCollaborative ? "blue" : "gray"}
                         onClick={() => setCollaborationDialogOpen(true)}
                       >
-                        {isCollaborative ? "👥 Collaborative" : "+ Add Collaborators"}
+                        {isCollaborative
+                          ? `Collab (${dispatchContent?.editor_count ?? 0}|${dispatchContent?.commenter_count ?? 0})`
+                          : "+ Add Collaborators"}
                       </Button>
 
                       <Button
@@ -744,13 +746,6 @@ export default function WriteComposer({
                         </>
                       )}
 
-                      {isCollaborative && dispatchContent && (
-                        <HStack gap={1} fontSize="xs" color="gray.600">
-                          <Text>{dispatchContent.editor_count} editors</Text>
-                          <Text>•</Text>
-                          <Text>{dispatchContent.commenter_count} reviewers</Text>
-                        </HStack>
-                      )}
                     </HStack>
 
                     <CollaborationDialog
@@ -770,13 +765,12 @@ export default function WriteComposer({
                     {lbDialogOpen && sponsor.slug && initialPieceSlug && (
                       <PromotionDialog
                         pieceSlug={initialPieceSlug}
-                        pieceTitle={initialPiece.title ?? title}
+                        pieceTitle={initialPiece.title || title}
                         open={lbDialogOpen}
                         onClose={() => setLbDialogOpen(false)}
                         groupSlug={sponsor.slug}
                         onSuccess={() => {
                           queryClient.invalidateQueries({ queryKey: ["living-book-for-piece", initialPieceSlug] });
-                          setLbDeskOpen(true);
                         }}
                       />
                     )}
@@ -1030,13 +1024,13 @@ export default function WriteComposer({
           onLbToggle={() => { setLbDeskOpen(true); setWorkspaceOpen(false); }}
         />
 
-        {lbId && livingBook && (
+        {lbId && (
           <LbDesk
             isOpen={lbDeskOpen}
             onClose={() => setLbDeskOpen(false)}
             width={workspaceWidth}
             lbId={lbId}
-            livingBook={livingBook}
+            livingBook={livingBook ?? null}
             collaboratorCount={(dispatchContent?.editor_count ?? 0) + (dispatchContent?.commenter_count ?? 0)}
             currentUserId={""}
             sponsor={{ type: sponsor.type, slug: sponsor.slug ?? "" }}

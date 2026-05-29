@@ -28,7 +28,7 @@ interface LbDeskProps {
   onClose: () => void
   width: string
   lbId: string
-  livingBook: LivingBook
+  livingBook: LivingBook | null
   collaboratorCount: number
   currentUserId: string
   sponsor: { type: 'group' | 'member'; slug: string }
@@ -97,9 +97,11 @@ export function LbDesk({
               <Text fontSize="sm" fontWeight="bold" color="teal.700">
                 Living Book
               </Text>
-              <Text fontSize="xs" color="gray.500" noOfLines={1}>
-                {livingBook.title}
-              </Text>
+              {livingBook && (
+                <Text fontSize="xs" color="gray.500" noOfLines={1}>
+                  {livingBook.title}
+                </Text>
+              )}
             </Box>
           </HStack>
           <IconButton
