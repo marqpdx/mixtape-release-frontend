@@ -127,6 +127,11 @@ export default function WritingListWrapper({
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");
   const [promotingPiece, setPromotingPiece] = useState<{ slug: string; title: string } | null>(null);
+  // null = not yet loaded from storage (use default); string[] = explicit user state
+  const [pubTagAcc, setPubTagAcc] = useState<string[] | null>(null);
+  const [pubWhereAcc, setPubWhereAcc] = useState<string[] | null>(null);
+  const [draftTagAcc, setDraftTagAcc] = useState<string[] | null>(null);
+  const [draftWhereAcc, setDraftWhereAcc] = useState<string[] | null>(null);
   // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
@@ -168,9 +173,21 @@ export default function WritingListWrapper({
       ) {
         setGroupingMode(savedGroupingMode);
       }
+      const loadAcc = (key: string) => {
+        const v = window.localStorage.getItem(key);
+        return v ? JSON.parse(v) as string[] : null;
+      };
+      setPubTagAcc(loadAcc("writing_acc_pub_tag"));
+      setPubWhereAcc(loadAcc("writing_acc_pub_where"));
+      setDraftTagAcc(loadAcc("writing_acc_draft_tag"));
+      setDraftWhereAcc(loadAcc("writing_acc_draft_where"));
     } catch (error) {
       console.warn("Failed to load saved writing tab:", error);
     }
+  }, []);
+
+  const saveAcc = useCallback((key: string, value: string[]) => {
+    try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
   }, []);
 
   // Save tab to localStorage when it changes
@@ -966,7 +983,8 @@ export default function WritingListWrapper({
               <Accordion.Root
                 collapsible
                 multiple
-                defaultValue={tagGroups.defaultOpen ? [tagGroups.defaultOpen] : []}
+                value={pubTagAcc ?? (tagGroups.defaultOpen ? [tagGroups.defaultOpen] : [])}
+                onValueChange={(e) => { setPubTagAcc(e.value); saveAcc("writing_acc_pub_tag", e.value); }}
               >
                 {tagGroups.groups.map((group) => (
                   <Accordion.Item key={group.tag} value={group.tag}>
@@ -1042,7 +1060,12 @@ export default function WritingListWrapper({
               <Heading size="md" color={textSecondary} mb={3}>
                 By Where
               </Heading>
-              <Accordion.Root collapsible multiple defaultValue={publishedWhereGroups[0] ? [publishedWhereGroups[0].sponsor.key] : []}>
+              <Accordion.Root
+                collapsible
+                multiple
+                value={pubWhereAcc ?? (publishedWhereGroups[0] ? [publishedWhereGroups[0].sponsor.key] : [])}
+                onValueChange={(e) => { setPubWhereAcc(e.value); saveAcc("writing_acc_pub_where", e.value); }}
+              >
                 {publishedWhereGroups.map((group) => (
                   <Accordion.Item key={group.sponsor.key} value={group.sponsor.key}>
                     <Accordion.ItemTrigger>
@@ -1230,7 +1253,8 @@ export default function WritingListWrapper({
               <Accordion.Root
                 collapsible
                 multiple
-                defaultValue={draftTagGroups.defaultOpen ? [draftTagGroups.defaultOpen] : []}
+                value={draftTagAcc ?? (draftTagGroups.defaultOpen ? [draftTagGroups.defaultOpen] : [])}
+                onValueChange={(e) => { setDraftTagAcc(e.value); saveAcc("writing_acc_draft_tag", e.value); }}
               >
                 {draftTagGroups.groups.map((group) => (
                   <Accordion.Item key={group.tag} value={group.tag}>
@@ -1363,7 +1387,12 @@ export default function WritingListWrapper({
               <Heading size="md" color={textSecondary} mb={3}>
                 By Where
               </Heading>
-              <Accordion.Root collapsible multiple defaultValue={draftWhereGroups[0] ? [draftWhereGroups[0].sponsor.key] : []}>
+              <Accordion.Root
+                collapsible
+                multiple
+                value={draftWhereAcc ?? (draftWhereGroups[0] ? [draftWhereGroups[0].sponsor.key] : [])}
+                onValueChange={(e) => { setDraftWhereAcc(e.value); saveAcc("writing_acc_draft_where", e.value); }}
+              >
                 {draftWhereGroups.map((group) => (
                   <Accordion.Item key={group.sponsor.key} value={group.sponsor.key}>
                     <Accordion.ItemTrigger>
