@@ -120,8 +120,7 @@ function RecurringActionDigest({ items }: { items: RecurringActionItem[] }) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const itemBorder = useColorModeValue("gray.100", "gray.700");
-  const overdueBg = useColorModeValue("red.50", "red.900");
-  const dueBg = useColorModeValue("yellow.50", "yellow.900");
+  const suggestedVerbBg = useColorModeValue("blue.50", "blue.900");
 
   if (items.length === 0) return null;
 
@@ -143,7 +142,7 @@ function RecurringActionDigest({ items }: { items: RecurringActionItem[] }) {
               <HStack gap={2}>
                 <Text fontSize="xs" color="gray.500" textTransform="capitalize">{item.recurrence_rule}</Text>
                 {item.suggested_verb && (
-                  <Text fontSize="xs" bg={useColorModeValue("blue.50", "blue.900")} px={1.5} borderRadius="sm" color="blue.500">
+                  <Text fontSize="xs" bg={suggestedVerbBg} px={1.5} borderRadius="sm" color="blue.500">
                     {item.suggested_verb}
                   </Text>
                 )}

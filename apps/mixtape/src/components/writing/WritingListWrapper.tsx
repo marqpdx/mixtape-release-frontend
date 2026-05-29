@@ -38,6 +38,7 @@ import {
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { SeriesGroupView } from "./SeriesGroupView";
+import { PromotionDialog } from "@components/living-book/PromotionDialog";
 import { useColorModeValue } from "@components/ui/color-mode";
 import UniversalDataTable from "@components/common/UniversalDataTable";
 import { formatDistanceToNow } from "date-fns";
@@ -125,6 +126,7 @@ export default function WritingListWrapper({
   const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");
+  const [promotingPiece, setPromotingPiece] = useState<{ slug: string; title: string } | null>(null);
   // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
@@ -1326,21 +1328,21 @@ export default function WritingListWrapper({
                         label: "Edit Draft",
                         icon: <IconEdit size={16} />,
                         onClick: handleDraftClick as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        variant: "ghost",
+                        variant: "ghost" as const,
                         colorScheme: "green",
                       },
                       ...(sponsor.type === "group" ? [{
                         label: "Make Living Book",
                         icon: <IconBook size={16} />,
                         onClick: ((draft: WorkingDocument) => setPromotingPiece({ slug: draft.piece.slug, title: draft.title || draft.piece.title || "Untitled" })) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        variant: "ghost",
+                        variant: "ghost" as const,
                         colorScheme: "blue",
                       }] : []),
                       {
                         label: "Delete Draft",
                         icon: <IconTrash size={16} />,
                         onClick: handleDeleteDraft as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        variant: "ghost",
+                        variant: "ghost" as const,
                         colorScheme: "red",
                       },
                     ]}
@@ -1429,6 +1431,16 @@ export default function WritingListWrapper({
           )}
         </Tabs.Content>
       </Tabs.Root>
+
+      {promotingPiece && sponsor.type === "group" && (
+        <PromotionDialog
+          pieceSlug={promotingPiece.slug}
+          pieceTitle={promotingPiece.title}
+          open={!!promotingPiece}
+          onClose={() => setPromotingPiece(null)}
+          groupSlug={sponsor.slug}
+        />
+      )}
 
     </Box>
   );

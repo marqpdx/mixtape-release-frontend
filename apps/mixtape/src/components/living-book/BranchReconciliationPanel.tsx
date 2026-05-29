@@ -9,7 +9,7 @@ import {
   Badge,
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
-import { useBranches, useUpdateBranch, useDeleteBranch } from '@mixtape/api/hooks/useBranches'
+import { useBranches, useDeleteBranch } from '@mixtape/api/hooks/useBranches'
 import type { Branch } from '@mixtape/api/clients/livingBook/branchApi'
 
 interface BranchReconciliationPanelProps {
@@ -25,7 +25,6 @@ export function BranchReconciliationPanel({
   onReattach,
   onClose,
 }: BranchReconciliationPanelProps) {
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
   const bg = useColorModeValue('white', 'gray.800')
   const rowBg = useColorModeValue('orange.50', 'orange.900')
 

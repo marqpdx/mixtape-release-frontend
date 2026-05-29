@@ -17,7 +17,7 @@ interface LivingBookBreadcrumbProps {
   groupSlug?: string
 }
 
-export function LivingBookBreadcrumb({ pieceSlug, pieceId, username, groupSlug }: LivingBookBreadcrumbProps) {
+export function LivingBookBreadcrumb({ pieceId, username, groupSlug }: LivingBookBreadcrumbProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
 

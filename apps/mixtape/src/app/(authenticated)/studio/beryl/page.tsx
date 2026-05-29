@@ -91,13 +91,12 @@ function ScrapCard({
 
       <HStack gap={2} flexWrap="wrap" mb={3}>
         {retagging ? (
-          <NativeSelect.Root size="xs" w="auto" minW="120px">
+          <NativeSelect.Root size="xs" w="auto" minW="120px" disabled={isPending}>
             <NativeSelect.Field
               value={scrap.intent_tag}
               onChange={(e) => handleRetag(e.currentTarget.value)}
               onBlur={() => setRetagging(false)}
               autoFocus
-              disabled={isPending}
             >
               {INTENT_TAGS.map((t) => (
                 <option key={t} value={t}>{t}</option>

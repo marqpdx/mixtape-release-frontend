@@ -75,7 +75,7 @@ function ContextCard({ title, excerpt, href, direction }: ContextCardProps) {
   )
 }
 
-export function ContextFlowPanel({ pieceSlug, pieceId, username, groupSlug }: ContextFlowPanelProps) {
+export function ContextFlowPanel({ pieceId, username, groupSlug }: ContextFlowPanelProps) {
   const searchParams = useSearchParams()
   const livingBookId = searchParams.get("lb")
   const [collapsed, setCollapsed] = useState(false)

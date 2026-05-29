@@ -63,12 +63,15 @@ interface DocumentJSON {
 // Writing piece type (minimal shape based on usage)
 interface WritingPiece {
   id: string;
+  slug?: string;
   title?: string;
   body_json?: DocumentJSON;
   excerpt?: string;
   is_empty?: boolean;
+  status?: string;
   target_wordcount?: number | null;
   suggest_splits?: boolean;
+  enable_outline?: boolean;
   [key: string]: unknown;
 }
 
@@ -176,13 +179,10 @@ export default function WriteComposer({
   // Branch state
   const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
   const [showReconciliation, setShowReconciliation] = useState(false);
+  const initialPieceSlug = typeof initialPiece.slug === "string" ? initialPiece.slug : undefined;
 
   // Living Book + branch data (only relevant when piece is an LB trunk)
-  const { data: livingBook } = useLivingBookForPiece(
-    typeof (initialPiece as { slug?: string }).slug === 'string'
-      ? (initialPiece as { slug?: string }).slug
-      : undefined
-  );
+  const { data: livingBook } = useLivingBookForPiece(initialPieceSlug);
   const lbId = livingBook?.id ?? null;
   const { data: branches = [] } = useBranches(lbId ?? '');
   const createBranch = useCreateBranch(lbId ?? '');
@@ -763,10 +763,10 @@ export default function WriteComposer({
                       canBeRescinded={canBeRescinded}
                     />
 
-                    {lbDialogOpen && sponsor.slug && (
+                    {lbDialogOpen && sponsor.slug && initialPieceSlug && (
                       <PromotionDialog
-                        pieceSlug={initialPiece.slug}
-                        pieceTitle={initialPiece.title}
+                        pieceSlug={initialPieceSlug}
+                        pieceTitle={initialPiece.title ?? title}
                         open={lbDialogOpen}
                         onClose={() => setLbDialogOpen(false)}
                         groupSlug={sponsor.slug}
