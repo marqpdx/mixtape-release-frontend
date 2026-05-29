@@ -22,6 +22,14 @@ import {
   WrapItem,
   Button,
 } from "@chakra-ui/react";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogCloseTrigger,
+} from "@components/ui/dialog";
 import { Tooltip } from "@components/ui/tooltip";
 import { useCallback, useState, useEffect, useMemo } from "react";
 import {
@@ -127,6 +135,7 @@ export default function WritingListWrapper({
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");
   const [promotingPiece, setPromotingPiece] = useState<{ slug: string; title: string } | null>(null);
+  const [deletingDraft, setDeletingDraft] = useState<WorkingDocument | null>(null);
   // null = not yet loaded from storage (use default); string[] = explicit user state
   const [pubTagAcc, setPubTagAcc] = useState<string[] | null>(null);
   const [pubWhereAcc, setPubWhereAcc] = useState<string[] | null>(null);
@@ -293,12 +302,8 @@ export default function WritingListWrapper({
   );
 
   const handleDeleteDraft = useCallback(
-    (draft: WorkingDocument) => {
-      const title = draft.title || "Untitled draft";
-      if (!confirm(`Delete "${title}"? This action cannot be undone.`)) return;
-      deleteDraft.mutate(draft.id as string);
-    },
-    [deleteDraft]
+    (draft: WorkingDocument) => { setDeletingDraft(draft); },
+    []
   );
 
   const handleStartWriting = useCallback(() => {
@@ -1460,6 +1465,30 @@ export default function WritingListWrapper({
           )}
         </Tabs.Content>
       </Tabs.Root>
+
+      <DialogRoot open={!!deletingDraft} onOpenChange={({ open: o }) => !o && setDeletingDraft(null)}>
+        <DialogContent>
+          <DialogHeader>Delete draft?</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody>
+            <Text>
+              Delete &ldquo;{deletingDraft?.title || "Untitled draft"}&rdquo;? This action cannot be undone.
+            </Text>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeletingDraft(null)}>Cancel</Button>
+            <Button
+              colorPalette="red"
+              onClick={() => {
+                if (deletingDraft) deleteDraft.mutate(deletingDraft.id as string);
+                setDeletingDraft(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
 
       {sponsor.type === "group" && (
         <PromotionDialog
