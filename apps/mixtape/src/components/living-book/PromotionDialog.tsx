@@ -2,7 +2,7 @@
 
 // LB-6: Promotion UI — "Make this a Living Book" flow
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Box,
   Button,
@@ -44,6 +44,14 @@ export function PromotionDialog({
   const [title, setTitle] = useState(pieceTitle)
   const [description, setDescription] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setTitle(pieceTitle)
+      setDescription("")
+      setError(null)
+    }
+  }, [open, pieceTitle])
 
   const mutedColor = useColorModeValue("gray.500", "gray.400")
 

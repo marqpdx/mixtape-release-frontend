@@ -714,10 +714,14 @@ export default function WriteComposer({
 
                       <Button
                         size="xs"
-                        variant="outline"
-                        colorScheme="teal"
-                        disabled={!isCollaborative}
-                        onClick={() => isCollaborative && setLbDialogOpen(true)}
+                        variant={lbId ? "solid" : "outline"}
+                        colorPalette={lbId ? "teal" : undefined}
+                        colorScheme={lbId ? undefined : "teal"}
+                        disabled={!lbId && !isCollaborative}
+                        onClick={() => {
+                          if (lbId) { setLbDeskOpen(true); setWorkspaceOpen(false); }
+                          else if (isCollaborative) setLbDialogOpen(true);
+                        }}
                       >
                         📖 Living Book
                       </Button>
