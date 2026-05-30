@@ -32,6 +32,7 @@ import { StatusMessage } from "./composer/StatusMessage";
 import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { PromotionDialog } from "@components/living-book/PromotionDialog";
 import { LbDesk } from "@components/living-book/LbDesk";
+import { FloatingBranchButton } from "@components/living-book/FloatingBranchButton";
 import { BranchPanel } from "@components/living-book/BranchPanel";
 import { BranchReconciliationPanel } from "@components/living-book/BranchReconciliationPanel";
 import { useCollaboration } from "@hooks/useCollaboration";
@@ -104,6 +105,7 @@ export default function WriteComposer({
   onBack,
 }: WriteComposerProps) {
   const editorRef = useRef<Editor | null>(null);
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
 
   // Local state for editing
   const [title, setTitle] = useState<string>(initialPiece?.title || "");
@@ -835,7 +837,7 @@ export default function WriteComposer({
               </Box>
             )}
 
-            <Box position="relative" w="100%" onClick={handleEditorAreaClick}>
+            <Box ref={editorWrapperRef} position="relative" w="100%" onClick={handleEditorAreaClick}>
               <MainEditor
                 key={collabKey}
                 ref={editorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -857,6 +859,14 @@ export default function WriteComposer({
                 gristMode={wantsCollab ? undefined : true}
                 onCollabEditorReady={wantsCollab ? handleCollabEditorReady : undefined}
               />
+              {lbId && collabEditor && (
+                <FloatingBranchButton
+                  editor={collabEditor}
+                  containerRef={editorWrapperRef}
+                  onAddBranch={handleAddBranch}
+                  isPending={createBranch.isPending}
+                />
+              )}
             </Box>
 
             <HStack align="flex-start" gap={3} w="100%" mt={-8}>
