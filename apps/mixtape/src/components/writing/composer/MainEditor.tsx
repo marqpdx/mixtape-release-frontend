@@ -1,6 +1,7 @@
 // src/components/write/composer/MainEditor.tsx
 
 import React, { forwardRef } from "react";
+import type { Editor } from "@tiptap/react";
 import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
@@ -60,6 +61,9 @@ export interface MainEditorProps {
   /** Only meaningful in collab mode */
   collabReady?: boolean;
 
+  /** Called when the collab editor instance becomes available or null */
+  onCollabEditorReady?: (editor: Editor | null) => void;
+
   /** Optional: used only for dev overlay */
   debugId?: string;
 
@@ -91,6 +95,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       debugId,
       streamMode,
       gristMode,
+      onCollabEditorReady,
     },
     ref
   ) => {
@@ -145,7 +150,10 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
     const handleEditorRef = React.useCallback((instance: EditorInstance | null) => {
       editorRef.current = instance ?? null;
       setEditorInstance((prev) => (prev === instance ? prev : instance));
-    }, []);
+      if (wantsCollab) {
+        onCollabEditorReady?.(instance as Editor | null);
+      }
+    }, [wantsCollab, onCollabEditorReady]);
 
     // Update parent ref whenever editor instance changes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -346,19 +346,12 @@ export default function WriteComposer({
     editorRef,
   });
 
-  // Track editor instance for collab autosave
+  // Track editor instance for collab autosave — set via onCollabEditorReady callback from MainEditor
   const [collabEditor, setCollabEditor] = useState<Editor | null>(null);
 
-  // Update collab editor when ref changes
-  // Check on every render since refs don't trigger re-renders
-  useEffect(() => {
-    if (wantsCollab && editorRef.current && editorRef.current !== collabEditor) {
-      console.log('📝 [WriteComposer] Setting collab editor from ref');
-      setCollabEditor(editorRef.current);
-    } else if (!wantsCollab && collabEditor) {
-      setCollabEditor(null);
-    }
-  }, [wantsCollab, collabEditor]);
+  const handleCollabEditorReady = useCallback((editor: Editor | null) => {
+    setCollabEditor(editor);
+  }, []);
 
   // Collaborative autosave (when in collab mode)
   const collabAutosaveEnabled = collabReady && wantsCollab && !!collabEditor;
@@ -372,19 +365,6 @@ export default function WriteComposer({
     editor: collabEditor,
     enabled: collabAutosaveEnabled,
   });
-
-  // Debug: Log autosave status
-  useEffect(() => {
-    console.log('🔍 [WriteComposer] Collab autosave status:', {
-      collabReady,
-      wantsCollab,
-      hasCollabEditor: !!collabEditor,
-      hasYdoc: !!ydoc,
-      enabled: collabAutosaveEnabled,
-      editorInstance: collabEditor,
-      dispatchContentId: dispatchContent?.id,
-    });
-  }, [collabReady, wantsCollab, collabEditor, ydoc, collabAutosaveEnabled, dispatchContent?.id]);
 
   // Unified save status - use collab status when in collab mode, solo otherwise
   const saveStatus = wantsCollab ? collabSaveStatus : soloSaveStatus;
@@ -524,8 +504,12 @@ export default function WriteComposer({
 
   useEffect(() => {
     if (saveStatus !== "saved") return;
-    setSummaryWordCount(computeWordCountFromDoc(docJSONRef.current ?? docJSON));
-  }, [saveStatus, computeWordCountFromDoc, docJSON]);
+    if (wantsCollab && collabEditor) {
+      setSummaryWordCount(computeWordCountFromDoc(collabEditor.getJSON() as DocumentJSON));
+    } else {
+      setSummaryWordCount(computeWordCountFromDoc(docJSONRef.current ?? docJSON));
+    }
+  }, [saveStatus, wantsCollab, collabEditor, computeWordCountFromDoc, docJSON]);
 
   const handleSelectionChange = useCallback((newSelection: TextSelection | null) => {
     setSelection(newSelection);
@@ -871,6 +855,7 @@ export default function WriteComposer({
                 debugId={collabKey}
                 streamMode={wantsCollab ? undefined : streamMode}
                 gristMode={wantsCollab ? undefined : true}
+                onCollabEditorReady={wantsCollab ? handleCollabEditorReady : undefined}
               />
             </Box>
 

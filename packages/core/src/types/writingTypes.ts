@@ -165,6 +165,7 @@ export interface WorkingDocument {
   // Collaboration fields
   is_collaborative: boolean
   collaborator_count: number
+  living_book_id?: string | null
   collaborators: Array<{
     id: number
     user: {

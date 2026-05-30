@@ -43,6 +43,7 @@ import {
   IconTrash,
   IconMapPin,
   IconBook,
+  IconBook2,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { SeriesGroupView } from "./SeriesGroupView";
@@ -542,12 +543,21 @@ export default function WritingListWrapper({
           <IconUser size={18} color="gray" />
         )}
 
-        {/* LB eligibility indicator (group only) */}
-        {sponsor.type === "group" && (
+        {/* Living Book / collab-eligible indicator (group only) */}
+        {sponsor.type === "group" && draft.living_book_id && (
+          <IconBook2
+            size={16}
+            color="#319795"
+            style={{ flexShrink: 0 }}
+            title="Living Book"
+          />
+        )}
+        {sponsor.type === "group" && !draft.living_book_id && isCollab && (
           <IconBook
             size={16}
-            color={isCollab ? "#3182ce" : "#CBD5E0"}
+            color="#3182ce"
             style={{ flexShrink: 0 }}
+            title="Collaborative — LB eligible"
           />
         )}
 

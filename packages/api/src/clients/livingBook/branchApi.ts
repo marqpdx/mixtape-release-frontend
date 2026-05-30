@@ -9,6 +9,7 @@ export interface Branch {
   prompt_text: string | null
   due_date: string | null
   is_detached: boolean
+  invitation_sent?: boolean
   created_by: string | null
   created_at: string
   updated_at: string

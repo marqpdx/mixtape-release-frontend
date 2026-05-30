@@ -56,7 +56,8 @@ export function LbDesk({
   const activeBranches = branches.filter((b: Branch) => !b.is_detached)
 
   const handleAddBranch = () => {
-    createBranch.mutate(undefined, {
+    const anchor_node_id = crypto.randomUUID()
+    createBranch.mutate({ anchor_node_id }, {
       onSuccess: (branch: Branch) => {
         onInsertAnchor(branch.id)
       },
@@ -98,7 +99,7 @@ export function LbDesk({
                 Living Book
               </Text>
               {livingBook && (
-                <Text fontSize="xs" color="gray.500" noOfLines={1}>
+                <Text fontSize="xs" color="gray.500" lineClamp={1}>
                   {livingBook.title}
                 </Text>
               )}
@@ -289,7 +290,7 @@ function DetachedBranchRow({ branch, lbId, onReattach }: DetachedBranchRowProps)
 
   return (
     <HStack justify="space-between" fontSize="xs" py={1}>
-      <Text color="orange.700" noOfLines={1} flex="1">
+      <Text color="orange.700" lineClamp={1} flex="1">
         {branch.prompt_text?.slice(0, 40) || 'No prompt'}
       </Text>
       <HStack gap={1}>
