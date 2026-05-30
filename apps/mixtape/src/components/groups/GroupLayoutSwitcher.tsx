@@ -1,8 +1,12 @@
 "use client";
 
 import { Button, HStack, Text, type StackProps } from "@chakra-ui/react";
+import {
+  GROUP_MEMBER_VIEW_DEFINITIONS,
+  type GroupMemberViewId,
+} from "./member-views/registry";
 
-export type GroupLayoutVariant = "a" | "b";
+export type GroupLayoutVariant = GroupMemberViewId;
 
 interface GroupLayoutSwitcherProps extends StackProps {
   currentLayout: GroupLayoutVariant;
@@ -37,22 +41,18 @@ export function GroupLayoutSwitcher({
       >
         Layout
       </Text>
-      <Button
-        size="xs"
-        borderRadius="full"
-        variant={currentLayout === "a" ? "solid" : "ghost"}
-        onClick={() => onLayoutChange("a")}
-      >
-        A
-      </Button>
-      <Button
-        size="xs"
-        borderRadius="full"
-        variant={currentLayout === "b" ? "solid" : "ghost"}
-        onClick={() => onLayoutChange("b")}
-      >
-        B
-      </Button>
+      {GROUP_MEMBER_VIEW_DEFINITIONS.map((view) => (
+        <Button
+          key={view.id}
+          size="xs"
+          borderRadius="full"
+          variant={currentLayout === view.id ? "solid" : "ghost"}
+          onClick={() => onLayoutChange(view.id)}
+          title={view.description}
+        >
+          {view.label}
+        </Button>
+      ))}
     </HStack>
   );
 }

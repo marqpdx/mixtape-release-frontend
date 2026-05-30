@@ -12,14 +12,17 @@ import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConf
 import DashboardLayout from "@components/common/DashboardLayout";
 import { canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
-import { GroupLanding } from "@/components/groups/layout/GroupLanding";
-import { GroupLandingB } from "@/components/groups/memberview-b/GroupLandingB";
+import { GroupMemberViewRenderer } from "@/components/groups/member-views/GroupMemberViewRenderer";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 import { canAccessSection } from "@/config/groupSectionPermissions";
 import type { GroupLayoutVariant } from "@/components/groups/GroupLayoutSwitcher";
+import {
+  isGroupMemberViewId,
+  normalizeGroupMemberViewId,
+} from "@/components/groups/member-views/registry";
 
 type ViewRole = "admin" | "member" | "public";
 
@@ -71,8 +74,8 @@ export default function GroupPage() {
     if (isMember) return candidate === "admin" ? "member" : candidate; // members: no admin
     return "public"; // public: only public
   }, [canUseAdminView, isMember]);
-  const clampLayoutVariant = useCallback((candidate: GroupLayoutVariant): GroupLayoutVariant => {
-    return candidate === "b" ? "b" : "a";
+  const clampLayoutVariant = useCallback((candidate: unknown): GroupLayoutVariant => {
+    return normalizeGroupMemberViewId(candidate);
   }, []);
 
   // Decide initial view (reads localStorage *after* group is available)
@@ -110,7 +113,7 @@ export default function GroupPage() {
     if (!group) return;
 
     const fromUrl =
-      urlLayout && ["a", "b"].includes(urlLayout)
+      urlLayout && isGroupMemberViewId(urlLayout)
         ? (urlLayout as GroupLayoutVariant)
         : null;
 
@@ -118,7 +121,7 @@ export default function GroupPage() {
     if (layoutStorageKey && typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(layoutStorageKey);
-        if (raw === "a" || raw === "b") {
+        if (isGroupMemberViewId(raw)) {
           fromStorage = raw;
         }
       } catch {
@@ -230,31 +233,18 @@ export default function GroupPage() {
         isMember={isMember}
       />
       {circleBar}
-      {viewingAsMember && layoutVariant === "b" ? (
-        <GroupLandingB
-          group={group}
-          testRole={testRole}
-          onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
-          isMember={isMember}
-          isAdminOrSteward={canUseAdminView}
-          canEditGroup={canEditGroup}
-          layoutVariant={layoutVariant}
-          onLayoutChange={(next) => setLayoutVariant(clampLayoutVariant(next))}
-        />
-      ) : (
-        <GroupLanding
-          group={group}
-          userRole={primaryRole}
-          onJoinGroup={handleJoinGroup}
-          testRole={testRole}
-          onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
-          isMember={isMember}
-          isAdminOrSteward={canUseAdminView}
-          canEditGroup={canEditGroup}
-          layoutVariant={layoutVariant}
-          onLayoutChange={viewingAsMember ? (next) => setLayoutVariant(clampLayoutVariant(next)) : undefined}
-        />
-      )}
+      <GroupMemberViewRenderer
+        group={group}
+        userRole={primaryRole}
+        onJoinGroup={handleJoinGroup}
+        testRole={testRole}
+        onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
+        isMember={isMember}
+        isAdminOrSteward={canUseAdminView}
+        canEditGroup={canEditGroup}
+        layoutVariant={layoutVariant}
+        onLayoutChange={viewingAsMember ? (next) => setLayoutVariant(clampLayoutVariant(next)) : undefined}
+      />
       </Box>
   );
 }

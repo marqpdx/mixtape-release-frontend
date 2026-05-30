@@ -1,17 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import { Box, Button, Flex, Grid, HStack, Image, Link, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import NextLink from "next/link";
 import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
-import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import type { Group } from "@mixtape/core/types/groupTypes";
-import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
-import { useMembers } from "@mixtape/api/hooks";
-import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 import { GroupLayoutSwitcher, type GroupLayoutVariant } from "../GroupLayoutSwitcher";
+import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
 import { GroupLandingBTabs } from "./GroupLandingBTabs";
 
 const GROUP_TYPE_ICONS = {
@@ -32,17 +28,6 @@ interface GroupLandingBProps {
   onLayoutChange?: (layout: GroupLayoutVariant) => void;
 }
 
-function formatFoundedDate(input?: string): string {
-  if (!input) return "Recently founded";
-  const parsed = new Date(input);
-  if (Number.isNaN(parsed.getTime())) return "Recently founded";
-  return parsed.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export function GroupLandingB({
   group,
   testRole,
@@ -53,25 +38,9 @@ export function GroupLandingB({
   layoutVariant = "b",
   onLayoutChange,
 }: GroupLandingBProps) {
+  const viewData = useGroupMemberViewData(group);
   const GroupTypeIcon =
     GROUP_TYPE_ICONS[group.group_type as keyof typeof GROUP_TYPE_ICONS] || IconBuildingCommunity;
-  const heroImage =
-    group.profile_image_url ||
-    group.background_image_url ||
-    getBestEmblemUrl(group.emblem);
-  const foundedLabel = useMemo(() => formatFoundedDate(group.created_at), [group.created_at]);
-  const summary = group.summary?.trim() || group.description?.trim() || "This group is still shaping its public summary.";
-  const { activeMembers, adminMembers, stewardMembers } = useMembers(group.slug);
-  const { collections } = useCollections({ sponsor_type: "group", sponsor_id: group.id });
-  const { stall } = useStall("group", group.id);
-
-  const leaderCount = useMemo(() => {
-    const stewardsOnly = stewardMembers.filter((member) => !member.roles.includes("admin"));
-    return adminMembers.length + stewardsOnly.length;
-  }, [adminMembers, stewardMembers]);
-
-  const collectionCount = collections?.length ?? 0;
-  const totalItems = collections?.reduce((sum, collection) => sum + (collection.item_count || 0), 0) ?? 0;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
@@ -99,7 +68,7 @@ export function GroupLandingB({
                 letterSpacing="0.12em"
                 textTransform="uppercase"
               >
-                <Text>{group.group_type} group</Text>
+                <Text>{viewData.identity.type} group</Text>
                 <Text>A member view on Mixtape</Text>
                 {onLayoutChange ? (
                   <GroupLayoutSwitcher
@@ -109,7 +78,7 @@ export function GroupLandingB({
                     mb={0}
                   />
                 ) : (
-                  <Text>Founded {foundedLabel}</Text>
+                  <Text>Founded {viewData.identity.foundedLabel}</Text>
                 )}
               </Flex>
 
@@ -119,9 +88,9 @@ export function GroupLandingB({
                 alignItems="start"
               >
                 <Box>
-                  {heroImage ? (
+                  {viewData.media.heroImage ? (
                     <Image
-                      src={heroImage}
+                      src={viewData.media.heroImage}
                       alt={`${group.title} cover`}
                       w="100%"
                       h={{ base: "220px", md: "300px" }}
@@ -166,7 +135,7 @@ export function GroupLandingB({
                         letterSpacing="0.12em"
                         textTransform="uppercase"
                       >
-                        {group.group_type}
+                        {viewData.identity.type}
                       </Text>
                     </HStack>
                     <Text
@@ -178,7 +147,7 @@ export function GroupLandingB({
                       color="theme.text"
                       mb={5}
                     >
-                      {group.title}
+                      {viewData.identity.title}
                     </Text>
                     <Text
                       fontFamily="serifBody"
@@ -188,7 +157,7 @@ export function GroupLandingB({
                       color="theme.textSecondary"
                       maxW="40rem"
                     >
-                      {summary}
+                      {viewData.copy.summary}
                     </Text>
                   </Box>
 
@@ -200,10 +169,10 @@ export function GroupLandingB({
                     borderColor="theme.border"
                   >
                     {[
-                      ["Members", String(group.member_count || activeMembers.length || 0)],
-                      ["Collections", String(collectionCount)],
-                      ["Artifacts", String(totalItems)],
-                      ["Stewards", String(leaderCount)],
+                      ["Members", String(viewData.members.memberCount)],
+                      ["Collections", String(viewData.collections.count)],
+                      ["Artifacts", String(viewData.collections.totalItems)],
+                      ["Stewards", String(viewData.members.leaderCount)],
                     ].map(([label, value], index, arr) => (
                       <Box
                         key={label}
@@ -229,7 +198,7 @@ export function GroupLandingB({
                     ))}
                   </Grid>
 
-                  {stall?.offerings_count ? (
+                  {viewData.bazaar.offeringsCount ? (
                     <Box pt={1}>
                       <Link as={NextLink} href={`/groups/${group.slug}/stall`}>
                         <Button size="lg" variant="outline">Visit bazaar stall</Button>
@@ -243,7 +212,7 @@ export function GroupLandingB({
         </GroupHeaderWrapper>
 
         <Box px={{ base: 4, md: 8, xl: 12 }} pt={5} pb={10}>
-          <GroupLandingBTabs group={group} />
+          <GroupLandingBTabs group={group} viewData={viewData} />
         </Box>
       </Box>
     </motion.div>

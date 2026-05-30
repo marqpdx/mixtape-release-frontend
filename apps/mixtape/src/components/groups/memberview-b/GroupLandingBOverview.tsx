@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   Avatar,
   Box,
@@ -15,14 +14,10 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { IconArrowRight, IconShoppingBag } from "@tabler/icons-react";
-import type { Group } from "@mixtape/core/types/groupTypes";
-import { canUserModerateGroup } from "@mixtape/core/types/groupTypes";
-import { useMembers } from "@mixtape/api/hooks";
-import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
-import { useStall } from "@mixtape/api/hooks/useBazaar";
+import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 
 interface GroupLandingBOverviewProps {
-  group: Group;
+  viewData: GroupMemberViewData;
   onNavigateToTab?: (tab: string) => void;
   onOpenCollection?: (collectionId: string) => void;
 }
@@ -78,30 +73,15 @@ function Section({
 }
 
 export function GroupLandingBOverview({
-  group,
+  viewData,
   onNavigateToTab,
   onOpenCollection,
 }: GroupLandingBOverviewProps) {
-  const { adminMembers, stewardMembers, isLoading: membersLoading } = useMembers(group.slug);
-  const { collections } = useCollections({ sponsor_type: "group", sponsor_id: group.id });
-  const { stall } = useStall("group", group.id);
-  const isAdminOrSteward = canUserModerateGroup(group);
-
-  const aboutText = group.body?.trim() || group.description?.trim() || "";
-
-  const leaders = useMemo(() => {
-    const stewards = stewardMembers.filter((member) => !member.roles.includes("admin"));
-    return [...adminMembers, ...stewards].slice(0, 5);
-  }, [adminMembers, stewardMembers]);
-
-  const orderedCollections = useMemo(() => {
-    if (!collections) return [];
-    return [...collections].sort((a, b) => {
-      if (a.title === "Core Resources") return -1;
-      if (b.title === "Core Resources") return 1;
-      return a.title.localeCompare(b.title);
-    });
-  }, [collections]);
+  const { group } = viewData;
+  const aboutText = viewData.copy.about;
+  const leaders = viewData.members.leaders;
+  const orderedCollections = viewData.collections.ordered;
+  const isAdminOrSteward = viewData.permissions.canModerateGroup;
 
   return (
     <Stack gap={12}>
@@ -126,7 +106,7 @@ export function GroupLandingBOverview({
           >
             {aboutText || "This group is still writing its introduction."}
           </Text>
-          {(group.author_name || group.submitted_by_username) && (
+          {viewData.copy.authorLabel && (
             <Text
               fontFamily="mono"
               fontSize="10px"
@@ -135,11 +115,7 @@ export function GroupLandingBOverview({
               color="theme.textSecondary"
               mt={5}
             >
-              {group.author_name || group.submitted_by_username}
-              {group.submitted_by_username && group.author_name
-                ? ` — ${group.submitted_by_username}`
-                : ""}
-              {" · group steward"}
+              {viewData.copy.authorLabel}
             </Text>
           )}
         </Section>
@@ -164,7 +140,7 @@ export function GroupLandingBOverview({
                 </Button>
               </HStack>
 
-              {stall?.offerings_count ? (
+              {viewData.bazaar.offeringsCount ? (
                 <Text
                   fontFamily="mono"
                   fontSize="11px"
@@ -172,7 +148,7 @@ export function GroupLandingBOverview({
                   textTransform="uppercase"
                   color="theme.textSecondary"
                 >
-                  {stall.offerings_count} bazaar offering{stall.offerings_count === 1 ? "" : "s"} live
+                  {viewData.bazaar.offeringsCount} bazaar offering{viewData.bazaar.offeringsCount === 1 ? "" : "s"} live
                 </Text>
               ) : null}
             </Stack>
@@ -274,7 +250,7 @@ export function GroupLandingBOverview({
 
           <Section title="Contributors" variant="sub">
             <Box>
-              {membersLoading ? (
+              {viewData.members.isLoading ? (
                 <Text color="theme.textSecondary">Loading contributors…</Text>
               ) : leaders.length > 0 ? (
                 <VStack align="stretch" gap={4}>
@@ -347,7 +323,7 @@ export function GroupLandingBOverview({
             <Button onClick={() => onNavigateToTab?.("threadworks")}>
               Open conversations
             </Button>
-            {stall?.offerings_count ? (
+            {viewData.bazaar.offeringsCount ? (
               <Link as={NextLink} href={`/groups/${group.slug}/stall`}>
                 <Button variant="outline">
                   <IconShoppingBag size={16} />

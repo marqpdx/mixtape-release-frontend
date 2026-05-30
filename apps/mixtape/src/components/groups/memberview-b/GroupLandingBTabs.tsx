@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Box, Button, HStack, Image, Link, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
+import { useGroupMemberTabs } from "../member-views/useGroupMemberTabs";
 import { GroupLandingBOverview } from "./GroupLandingBOverview";
 import { MembersTab } from "../tabs/MembersTab";
 import { ThreadworksTab } from "../tabs/ThreadworksTab";
@@ -14,61 +15,24 @@ import { CollectionsTab } from "../tabs/CollectionsTab";
 
 interface GroupLandingBTabsProps {
   group: Group;
+  viewData: GroupMemberViewData;
 }
 
-const memberTabs = [
-  { key: "overview", numeral: "I.", label: "Overview" },
-  { key: "members", numeral: "II.", label: "Members" },
-  { key: "threadworks", numeral: "III.", label: "Conversations" },
-  { key: "collections", numeral: "IV.", label: "Collections" },
-] as const;
-
-export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
+export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
   const { user } = useAuth();
-  const storageKey = `groupTab_${group.slug}_member`;
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-  const [collectionDetailSource, setCollectionDetailSource] = useState<"collections" | "overview">("collections");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem(storageKey);
-    setActiveTab(saved || memberTabs[0].key);
-  }, [storageKey]);
+  const {
+    tabs,
+    activeTab,
+    selectedCollectionId,
+    collectionDetailSource,
+    handleTabChange,
+    openCollectionFromOverview,
+    setSelectedCollection,
+    returnToOverview,
+    showAllCollections,
+  } = useGroupMemberTabs(group.slug);
 
   if (!activeTab) return null;
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, value);
-    }
-  };
-
-  const handleOpenCollectionFromOverview = (collectionId: string) => {
-    setCollectionDetailSource("overview");
-    setSelectedCollectionId(collectionId);
-    handleTabChange("collections");
-  };
-
-  const handleSelectedCollectionChange = (collectionId: string | null) => {
-    setSelectedCollectionId(collectionId);
-    if (!collectionId) {
-      setCollectionDetailSource("collections");
-    }
-  };
-
-  const handleReturnToOverview = () => {
-    setSelectedCollectionId(null);
-    setCollectionDetailSource("overview");
-    handleTabChange("overview");
-  };
-
-  const handleShowAllCollections = () => {
-    setSelectedCollectionId(null);
-    setCollectionDetailSource("collections");
-    handleTabChange("collections");
-  };
 
   const detailBackNav =
     selectedCollectionId && collectionDetailSource === "overview" ? (
@@ -76,7 +40,7 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleReturnToOverview}
+          onClick={returnToOverview}
           color="theme.textSecondary"
           px={0}
           _hover={{ color: "theme.text" }}
@@ -89,7 +53,7 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleShowAllCollections}
+          onClick={showAllCollections}
           color="theme.textSecondary"
           px={0}
           _hover={{ color: "theme.text" }}
@@ -117,7 +81,7 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
       >
         <HStack align="center" justify="space-between" gap={4} flexWrap="wrap">
           <Tabs.List border="none" bg="transparent" p={0} gap={{ base: 3, md: 6 }} flexWrap="wrap">
-            {memberTabs.map((tab) => (
+            {tabs.map((tab) => (
               <Tabs.Trigger
                 key={tab.key}
                 value={tab.key}
@@ -194,9 +158,9 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
 
       <Tabs.Content value="overview">
         <GroupLandingBOverview
-          group={group}
+          viewData={viewData}
           onNavigateToTab={handleTabChange}
-          onOpenCollection={handleOpenCollectionFromOverview}
+          onOpenCollection={openCollectionFromOverview}
         />
       </Tabs.Content>
       <Tabs.Content value="members">
@@ -209,7 +173,7 @@ export function GroupLandingBTabs({ group }: GroupLandingBTabsProps) {
         <CollectionsTab
           group={group}
           selectedCollectionId={selectedCollectionId}
-          onSelectedCollectionIdChange={handleSelectedCollectionChange}
+          onSelectedCollectionIdChange={setSelectedCollection}
           detailBackNav={detailBackNav}
         />
       </Tabs.Content>
