@@ -34,18 +34,21 @@ export function FloatingBranchButton({
       const container = containerRef.current
       if (!container) return
 
+      // Hide immediately from current position
+      setVisible(false)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+
       try {
         const { from } = editor.state.selection
         const coords = editor.view.coordsAtPos(from)
         const rect = container.getBoundingClientRect()
-        // Mid-line Y relative to container, accounting for scroll
         const relY = coords.top - rect.top + container.scrollTop + (coords.bottom - coords.top) / 2
 
-        setY(relY)
-        setVisible(false)
-
-        if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(() => setVisible(true), 800)
+        // Only update position + show together after debounce — no intermediate flash
+        debounceRef.current = setTimeout(() => {
+          setY(relY)
+          setVisible(true)
+        }, 800)
       } catch {
         // editor may not be ready yet
       }

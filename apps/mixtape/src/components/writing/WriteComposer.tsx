@@ -33,6 +33,7 @@ import { CollaborationDialog } from "./composer/CollaborationDialog";
 import { PromotionDialog } from "@components/living-book/PromotionDialog";
 import { LbDesk } from "@components/living-book/LbDesk";
 import { FloatingBranchButton } from "@components/living-book/FloatingBranchButton";
+import { CreateBranchDialog } from "@components/living-book/CreateBranchDialog";
 import { BranchPanel } from "@components/living-book/BranchPanel";
 import { BranchReconciliationPanel } from "@components/living-book/BranchReconciliationPanel";
 import { useCollaboration } from "@hooks/useCollaboration";
@@ -179,6 +180,7 @@ export default function WriteComposer({
   // Collaboration dialog state
   const [collaborationDialogOpen, setCollaborationDialogOpen] = useState(false);
   const [lbDialogOpen, setLbDialogOpen] = useState(false);
+  const [branchDialogOpen, setBranchDialogOpen] = useState(false);
 
   // Branch state
   const [activeBranch, setActiveBranch] = useState<Branch | null>(null);
@@ -718,8 +720,7 @@ export default function WriteComposer({
                             size="xs"
                             variant="outline"
                             colorScheme="teal"
-                            onClick={handleAddBranch}
-                            disabled={createBranch.isPending}
+                            onClick={() => setBranchDialogOpen(true)}
                           >
                             🌿 Add Branch
                           </Button>
@@ -863,8 +864,8 @@ export default function WriteComposer({
                 <FloatingBranchButton
                   editor={collabEditor}
                   containerRef={editorWrapperRef}
-                  onAddBranch={handleAddBranch}
-                  isPending={createBranch.isPending}
+                  onAddBranch={() => setBranchDialogOpen(true)}
+                  isPending={false}
                 />
               )}
             </Box>
@@ -1036,6 +1037,19 @@ export default function WriteComposer({
             onInsertAnchor={(anchorId) => {
               editorRef.current?.commands.insertLbAnchor(anchorId);
             }}
+            onRequestBranch={() => setBranchDialogOpen(true)}
+          />
+        )}
+
+        {lbId && (
+          <CreateBranchDialog
+            isOpen={branchDialogOpen}
+            onClose={() => setBranchDialogOpen(false)}
+            lbId={lbId}
+            onInsertAnchor={(anchorId) => {
+              editorRef.current?.commands.insertLbAnchor(anchorId);
+            }}
+            onBranchCreated={(branch) => setActiveBranch(branch)}
           />
         )}
 

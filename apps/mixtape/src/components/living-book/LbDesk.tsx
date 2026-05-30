@@ -33,6 +33,7 @@ interface LbDeskProps {
   currentUserId: string
   sponsor: { type: 'group' | 'member'; slug: string }
   onInsertAnchor: (anchorId: string) => void
+  onRequestBranch?: () => void
 }
 
 export function LbDesk({
@@ -45,6 +46,7 @@ export function LbDesk({
   currentUserId,
   sponsor,
   onInsertAnchor,
+  onRequestBranch,
 }: LbDeskProps) {
   const bg = useColorModeValue('gray.50', 'gray.800')
   const border = useColorModeValue('gray.200', 'gray.600')
@@ -125,8 +127,8 @@ export function LbDesk({
           size="sm"
           colorPalette="teal"
           variant="outline"
-          onClick={handleAddBranch}
-          loading={createBranch.isPending}
+          onClick={onRequestBranch ?? handleAddBranch}
+          loading={!onRequestBranch && createBranch.isPending}
         >
           🌿 Add Branch
         </Button>
