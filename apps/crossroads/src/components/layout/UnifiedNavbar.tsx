@@ -86,7 +86,7 @@ const NAV_ITEMS: NavItem[] = [
 
   // Authenticated section (members + admins)
   { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", memberOnly: true, shortLabel: "Story" },
-  { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  { key: "dashboard", label: "Dashboard", href: "/app/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
   { key: "help", label: "Help", href: "/app/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
   { key: "constellation", label: "Constellation", href: "/demos/constellation", section: "authenticated", memberOnly: true, shortLabel: "Cons" },
   // { key: "threadworks", label: "Threadworks", href: "/threadworks", section: "authenticated", memberOnly: true, shortLabel: "Threads" },
@@ -128,11 +128,16 @@ export default function UnifiedNavbar({
       ? "http://127.0.0.1:3011/app/login"
       : "/app/login";
 
-  // Auto-detect section if not provided
+  // Auto-detect section if not provided.
+  // Straddle paths (/members/, /group/) show authenticated nav for logged-in users
+  // so they can navigate back to their home base without losing context.
   const detectedSection: NavSection =
     section ||
     (identity && (pathname.startsWith("/dashboard") ||
                   pathname.startsWith("/groups") ||
+                  pathname.startsWith("/members/") ||
+                  pathname.startsWith("/member/") ||
+                  pathname.startsWith("/group/") ||
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||
                   pathname.startsWith("/loom-and-codex") ||
