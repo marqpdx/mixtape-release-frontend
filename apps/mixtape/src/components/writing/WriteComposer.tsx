@@ -38,7 +38,7 @@ import { BranchPanel } from "@components/living-book/BranchPanel";
 import { BranchReconciliationPanel } from "@components/living-book/BranchReconciliationPanel";
 import { useCollaboration } from "@hooks/useCollaboration";
 import { useLivingBookForPiece } from "@mixtape/api/hooks/useLivingBook";
-import { useBranches, useCreateBranch } from "@mixtape/api/hooks/useBranches";
+import { useBranches } from "@mixtape/api/hooks/useBranches";
 import type { Branch } from "@mixtape/api/clients/livingBook/branchApi";
 import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
@@ -191,20 +191,7 @@ export default function WriteComposer({
   const { data: livingBook } = useLivingBookForPiece(initialPieceSlug);
   const lbId = livingBook?.id ?? null;
   const { data: branches = [] } = useBranches(lbId ?? '');
-  const createBranch = useCreateBranch(lbId ?? '');
   const hasDetachedBranches = branches.some((b: Branch) => b.is_detached);
-
-  const handleAddBranch = useCallback(() => {
-    if (!lbId || !editorRef.current) return;
-    const anchorId = crypto.randomUUID();
-    editorRef.current.commands.insertLbAnchor(anchorId);
-    createBranch.mutate(
-      { anchor_node_id: anchorId },
-      {
-        onSuccess: (branch: Branch) => setActiveBranch(branch),
-      }
-    );
-  }, [lbId, createBranch]);
 
   // Click delegation — open BranchPanel when an lb-anchor glyph is clicked
   const handleEditorAreaClick = useCallback((e: React.MouseEvent) => {
