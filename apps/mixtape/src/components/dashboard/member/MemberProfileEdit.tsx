@@ -54,7 +54,12 @@ interface ProfileFormData {
  * Allows the current user to edit their member profile.
  * Editable fields: display_name, quick_intro, avatar_url, profile_image, background_image, bio_json
  */
-export default function MemberProfileEdit() {
+interface MemberProfileEditProps {
+  onSave?: () => void;
+  onCancel?: () => void;
+}
+
+export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEditProps = {}) {
   const { member, isLoading, error, refetch: refetchMember } = useMyMemberProfile();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [voiceUploading, setVoiceUploading] = useState(false);
@@ -156,6 +161,7 @@ export default function MemberProfileEdit() {
         type: "success",
         duration: 3000,
       });
+      onSave?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update profile";
       setSaveError(message);
@@ -651,6 +657,15 @@ export default function MemberProfileEdit() {
 
         {/* Form Actions */}
         <Flex justify="flex-end" gap={4}>
+          {onCancel && (
+            <Button
+              variant="ghost"
+              disabled={isUpdating}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
             variant="outline"
             disabled={isUpdating}

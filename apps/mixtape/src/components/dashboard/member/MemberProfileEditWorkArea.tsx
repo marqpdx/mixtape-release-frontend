@@ -5,10 +5,17 @@
 import { Box } from "@chakra-ui/react";
 import MemberProfileEdit from "./MemberProfileEdit";
 
-export default function MemberProfileEditWorkArea() {
+interface Props {
+  setActiveSection: (section: string) => void;
+}
+
+export default function MemberProfileEditWorkArea({ setActiveSection }: Props) {
   return (
     <Box w="100%">
-      <MemberProfileEdit />
+      <MemberProfileEdit
+        onSave={() => setActiveSection("profile")}
+        onCancel={() => setActiveSection("profile")}
+      />
     </Box>
   );
 }

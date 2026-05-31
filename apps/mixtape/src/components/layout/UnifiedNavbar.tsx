@@ -25,7 +25,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
@@ -99,6 +99,7 @@ export default function UnifiedNavbar({
   extraCompact = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
   const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
   // const { groups: userGroups = [] } = useUserGroups();
@@ -397,11 +398,24 @@ export default function UnifiedNavbar({
 
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
-                    <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={getMemberProfileHref()} display="flex" gap={2}>
+                    <MenuItem
+                      value="profile"
+                      onClick={() => {
+                        if (detectedSection === "authenticated") {
+                          window.dispatchEvent(new CustomEvent("mixtape:nav-profile"));
+                          if (!pathname.startsWith("/dashboard")) {
+                            localStorage.setItem("memberDashboard", "profile");
+                            router.push("/dashboard");
+                          }
+                        } else {
+                          router.push(getMemberProfileHref());
+                        }
+                      }}
+                    >
+                      <Flex gap={2} align="center">
                         <IconUser size={16} />
                         Profile
-                      </Link>
+                      </Flex>
                     </MenuItem>
                     <MenuItem value="dashboard" asChild>
                       <Link as={NextLink} href="/dashboard" display="flex" gap={2}>

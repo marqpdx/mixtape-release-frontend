@@ -2,7 +2,9 @@
 
 "use client";
 
-import { Box, Text, VStack, HStack, Heading, Badge } from "@chakra-ui/react";
+import NextLink from "next/link";
+import { Box, Text, VStack, HStack, Heading, Badge, Button, Link } from "@chakra-ui/react";
+import { IconArrowLeft, IconExternalLink } from "@tabler/icons-react";
 import { useMyMemberProfile } from "@hooks/member/useMemberProfile";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
@@ -16,7 +18,13 @@ function splitProfileList(value?: string | null): string[] {
     .filter(Boolean);
 }
 
-export default function MemberProfileViewWorkArea() {
+interface Props {
+  setActiveSection: (section: string, params?: Record<string, string>) => void;
+  sectionParams?: Record<string, string>;
+  username: string;
+}
+
+export default function MemberProfileViewWorkArea({ setActiveSection, sectionParams, username }: Props) {
   const { member, isLoading, error } = useMyMemberProfile();
   const muted = useColorModeValue("gray.600", "gray.400");
   const cardBg = useColorModeValue("white", "gray.800");
@@ -49,9 +57,35 @@ export default function MemberProfileViewWorkArea() {
   const displayName = member.display_name || member.username;
   const skills = splitProfileList(member.skills);
   const workAreas = splitProfileList(member.work_areas);
+  const returnTo = sectionParams?.returnTo || "overview";
 
   return (
     <VStack gap={6} align="stretch">
+      {/* Top chrome */}
+      <HStack justify="space-between" align="center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setActiveSection(returnTo)}
+        >
+          <IconArrowLeft size={15} />
+          return
+        </Button>
+        <HStack gap={3}>
+          <Link as={NextLink} href={`/members/${username}`} display="flex" alignItems="center" gap={1} fontSize="sm" color={muted}>
+            Full Profile
+            <IconExternalLink size={14} />
+          </Link>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setActiveSection("edit-profile")}
+          >
+            Edit Profile
+          </Button>
+        </HStack>
+      </HStack>
+
       <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="xl" p={6}>
         <HStack justify="space-between" align="start" flexWrap="wrap" gap={4}>
           <Box>

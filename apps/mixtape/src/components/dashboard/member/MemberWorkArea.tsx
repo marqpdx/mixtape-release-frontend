@@ -117,7 +117,11 @@ export default function MemberWorkArea({
   if (section === "profile") {
     return (
       <WorkAreaWrapper>
-        <MemberProfileViewWorkArea />
+        <MemberProfileViewWorkArea
+          setActiveSection={setActiveSection}
+          sectionParams={sectionParams}
+          username={identity.username}
+        />
       </WorkAreaWrapper>
     );
   }
@@ -133,7 +137,7 @@ export default function MemberWorkArea({
   if (section === "edit-profile") {
     return (
       <WorkAreaWrapper>
-        <MemberProfileEditWorkArea />
+        <MemberProfileEditWorkArea setActiveSection={setActiveSection} />
       </WorkAreaWrapper>
     );
   }

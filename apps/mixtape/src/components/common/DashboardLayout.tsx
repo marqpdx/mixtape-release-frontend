@@ -225,6 +225,14 @@ export default function DashboardLayout({
   }, [sidebarCollapsed]);
 
   useEffect(() => {
+    const handleNavProfile = () => {
+      handleSetActiveSection("profile", { returnTo: activeSection });
+    };
+    window.addEventListener("mixtape:nav-profile", handleNavProfile);
+    return () => window.removeEventListener("mixtape:nav-profile", handleNavProfile);
+  }, [activeSection, handleSetActiveSection]);
+
+  useEffect(() => {
     if (!urlSection) return;
 
     const params: Record<string, string> = {};
