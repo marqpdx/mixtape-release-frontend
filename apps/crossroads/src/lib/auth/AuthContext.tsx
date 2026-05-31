@@ -3,7 +3,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { UserIdentity, LoginCredentials, RegisterData } from '@mixtape/core/types/auth';
+import { UserIdentity, LoginCredentials } from '@mixtape/core/types/auth';
 import * as authApi from '@mixtape/api/clients/auth/api';
 import { useRouter } from 'next/navigation';
 
@@ -12,7 +12,6 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
@@ -94,16 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (data: RegisterData) => {
-    try {
-      await authApi.register(data);
-      // After successful registration, redirect to login
-      router.push('/login?registered=true');
-    } catch (error) {
-      throw error;
-    }
-  }, [router]);
-
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -175,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAuthenticated: !!user,
     login,
-    register,
     logout,
     refreshUser,
     refreshPermissions,
