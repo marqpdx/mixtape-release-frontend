@@ -21,6 +21,7 @@ import {
 } from "@tabler/icons-react";
 import NextLink from "next/link";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
+import type { GroupMemberViewId } from "../member-views/registry";
 
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
@@ -42,6 +43,8 @@ interface GroupMemberHeaderProps {
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isAdminOrSteward?: boolean;
   canEditGroup?: boolean;
+  layoutVariant?: GroupMemberViewId;
+  onLayoutChange?: (layout: GroupMemberViewId) => void;
 }
 
 export function GroupMemberHeader({
@@ -50,6 +53,8 @@ export function GroupMemberHeader({
   onRoleChange,
   isAdminOrSteward = false,
   canEditGroup = false,
+  layoutVariant,
+  onLayoutChange,
 }: GroupMemberHeaderProps) {
   const cardBg = "theme.bgSecondary";
   const borderColor = "theme.border";
@@ -66,6 +71,8 @@ export function GroupMemberHeader({
       testRole={testRole}
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
+      layoutVariant={layoutVariant}
+      onLayoutChange={onLayoutChange}
     >
       <Box minW="100vw" bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
         <Container maxW="7xl">

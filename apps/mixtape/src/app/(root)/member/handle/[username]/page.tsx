@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchPublicProfile } from '@/features/profile-revamp/api/client';
 import Profile from '@/features/profile-revamp/components/Profile';
+import { ProfileViewTracker } from '@/features/profile-revamp/components/ProfileViewTracker';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://127.0.0.1:3011';
 
@@ -40,5 +41,10 @@ export default async function PublicProfilePage({ params }: { params: Params }) 
   } catch {
     notFound();
   }
-  return <Profile profile={profile} />;
+  return (
+    <>
+      <ProfileViewTracker username={username} />
+      <Profile profile={profile} />
+    </>
+  );
 }

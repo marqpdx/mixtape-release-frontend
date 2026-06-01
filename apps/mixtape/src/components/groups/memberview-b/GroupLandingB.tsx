@@ -6,7 +6,7 @@ import NextLink from "next/link";
 import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
-import { GroupLayoutSwitcher, type GroupLayoutVariant } from "../GroupLayoutSwitcher";
+import type { GroupLayoutVariant } from "../GroupLayoutSwitcher";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
 import { GroupLandingBTabs } from "./GroupLandingBTabs";
 
@@ -50,6 +50,8 @@ export function GroupLandingB({
           testRole={testRole}
           onRoleChange={onRoleChange}
           isAdminOrSteward={isAdminOrSteward}
+          layoutVariant={layoutVariant}
+          onLayoutChange={onLayoutChange}
         >
           <Box borderBottomWidth="1px" borderColor="theme.border" bg="theme.bg">
             <Box px={{ base: 4, md: 8, xl: 12 }} pt={{ base: 6, md: 10 }} pb={{ base: 8, md: 12 }}>
@@ -70,16 +72,7 @@ export function GroupLandingB({
               >
                 <Text>{viewData.identity.type} group</Text>
                 <Text>A member view on Mixtape</Text>
-                {onLayoutChange ? (
-                  <GroupLayoutSwitcher
-                    currentLayout={layoutVariant}
-                    onLayoutChange={onLayoutChange}
-                    ml={0}
-                    mb={0}
-                  />
-                ) : (
-                  <Text>Founded {viewData.identity.foundedLabel}</Text>
-                )}
+                <Text>Founded {viewData.identity.foundedLabel}</Text>
               </Flex>
 
               <Grid

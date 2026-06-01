@@ -1,6 +1,6 @@
 import type { ProfileDTO, SectionId } from '../api/types';
 import { computeAccentInk } from '../lib/contrast';
-import { FONT_PAIRS, ROW_GAP } from '../lib/themes';
+import { THEMES, FONT_PAIRS, ROW_GAP } from '../lib/themes';
 import ProfileHeader from './ProfileHeader';
 import PinnedShowcase from './PinnedShowcase';
 import NowPlaying from './NowPlaying';
@@ -52,8 +52,9 @@ export default function Profile({ profile, isEditor, onPatch }: Props) {
   const fontPair = FONT_PAIRS[font ?? 'editorial'];
 
   const cssVars: Record<string, string> = {
-    '--profile-accent':     accent,
-    '--profile-accent-ink': computeAccentInk(accent),
+    ...THEMES[theme ?? 'paper'].tokens,
+    '--accent':       accent,
+    '--accent-ink':   computeAccentInk(accent),
     '--font-display': fontPair.display,
     '--font-body':    fontPair.body,
   };

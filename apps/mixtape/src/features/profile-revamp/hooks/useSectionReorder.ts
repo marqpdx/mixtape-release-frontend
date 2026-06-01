@@ -1,5 +1,6 @@
 'use client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { trackEvent } from '@/components/analytics';
 import { putSections } from '../api/client';
 import type { ProfileDTO, SectionEntry } from '../api/types';
 
@@ -23,6 +24,20 @@ export function useSectionReorder() {
       if (ctx?.previous) {
         qc.setQueryData(['profile-revamp', 'me'], ctx.previous);
       }
+    },
+    onSuccess: (_data, layout, ctx) => {
+      const prev = (ctx as { previous?: ProfileDTO } | undefined)?.previous?.sectionLayout ?? [];
+      layout.forEach((entry, newIdx) => {
+        const prevEntry = prev.find(p => p.id === entry.id);
+        if (!prevEntry) return;
+        const oldIdx = prev.indexOf(prevEntry);
+        if (oldIdx !== newIdx) {
+          trackEvent('profile_revamp.section_reordered', { id: entry.id, fromIdx: oldIdx, toIdx: newIdx });
+        }
+        if (prevEntry.visible !== entry.visible) {
+          trackEvent('profile_revamp.section_toggled', { id: entry.id, visible: entry.visible });
+        }
+      });
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['profile-revamp', 'me'] });

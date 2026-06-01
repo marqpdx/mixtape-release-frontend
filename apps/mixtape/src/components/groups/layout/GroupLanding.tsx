@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { GroupMemberHeader } from "../headers/GroupMemberHeader";
 import { GroupPublicHeader } from "../headers/GroupPublicHeader";
 import { GroupTabs } from "../tabs/GroupTabs";
-import { GroupLayoutSwitcher, type GroupLayoutVariant } from "../GroupLayoutSwitcher";
+import type { GroupLayoutVariant } from "../GroupLayoutSwitcher";
 import type { Group } from "@mixtape/core/types/groupTypes";
 
 interface GroupLandingProps {
@@ -56,6 +56,8 @@ export function GroupLanding({
           onRoleChange={showRoleSwitcher ? onRoleChange : undefined}
           isAdminOrSteward={isAdminOrSteward}
           canEditGroup={canEditGroup}
+          layoutVariant={layoutVariant}
+          onLayoutChange={viewingAsMember ? onLayoutChange : undefined}
         />
       ) : (
         <GroupPublicHeader
@@ -69,13 +71,6 @@ export function GroupLanding({
       )}
 
       <Container maxW="7xl" pt={4} pb={8}>
-        {viewingAsMember && onLayoutChange ? (
-          <GroupLayoutSwitcher
-            currentLayout={layoutVariant}
-            onLayoutChange={onLayoutChange}
-            mb={4}
-          />
-        ) : null}
         <GroupTabs
           group={group}
           viewingAsMember={viewingAsMember}

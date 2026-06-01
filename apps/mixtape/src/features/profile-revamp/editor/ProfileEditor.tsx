@@ -1,5 +1,6 @@
 'use client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { trackEvent } from '@/components/analytics';
 import { useMyProfile } from '../hooks/useProfile';
 import { useProfilePatch } from '../hooks/useProfilePatch';
 import { useSectionReorder } from '../hooks/useSectionReorder';
@@ -17,7 +18,10 @@ export default function ProfileEditor() {
 
   const publishMutation = useMutation({
     mutationFn: publishProfile,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-revamp', 'me'] }),
+    onSuccess: () => {
+      trackEvent('profile_revamp.published');
+      qc.invalidateQueries({ queryKey: ['profile-revamp', 'me'] });
+    },
   });
 
   if (isLoading) {

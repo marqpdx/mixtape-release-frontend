@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
       try {
         const groups = await fetchUserGroups();
         if (groups.length === 1) {
-          router.push(`/groups/${groups[0].slug}/members`);
+          router.push(`/groups/${groups[0].slug}`);
           return;
         }
       } catch {
