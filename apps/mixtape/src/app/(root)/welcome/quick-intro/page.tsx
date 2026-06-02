@@ -16,11 +16,19 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { IconArrowRight } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 const MAX_INTRO_LENGTH = 300;
 
 export default function QuickIntroPage() {
+  return (
+    <Suspense fallback={null}>
+      <QuickIntroContent />
+    </Suspense>
+  );
+}
+
+function QuickIntroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading, refreshUser } = useAuth();
