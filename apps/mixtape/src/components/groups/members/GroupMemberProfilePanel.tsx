@@ -303,6 +303,7 @@ export function GroupMemberProfilePanel({
               </Box>
             )}
 
+            {/* @deprecated — voice note now rendered in ProfileHeader (profile-revamp). Remove once GroupMemberProfilePanel is replaced by ProfileDrawer. */}
             {profile?.intro_voice_url && (
               <Box mt={4}>
                 <Text fontSize="xs" fontWeight="semibold" color={muted} mb={2} textTransform="uppercase" letterSpacing="wide">

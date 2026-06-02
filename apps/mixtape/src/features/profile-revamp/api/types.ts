@@ -82,6 +82,8 @@ export interface ProfileDTO {
   status: string;
   avatarUrl: string | null;
   backgroundImageUrl: string | null;
+  introVoiceUrl: string | null;
+  introVoiceTranscript: string;
   avatarSticker: string;
   theme: ThemeKey;
   accent: string;

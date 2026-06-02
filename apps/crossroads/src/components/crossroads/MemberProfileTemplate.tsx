@@ -180,6 +180,7 @@ export default function MemberProfileTemplate({
             </VStack>
           )}
 
+          {/* @deprecated — voice note now rendered in ProfileHeader (profile-revamp). Remove once crossroads MemberProfileTemplate is replaced or retired. */}
           {profile.intro_voice_url && (
             <Box>
               <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb={2}>

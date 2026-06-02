@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import type { ProfileDTO } from '../api/types';
 import EditableText from '../editor/inline/EditableText';
@@ -9,7 +12,8 @@ interface Props {
 }
 
 export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
-  const { displayName, role, bio, status, avatarUrl, backgroundImageUrl, avatarSticker, stats, avatarShape } = profile;
+  const { displayName, role, bio, status, avatarUrl, backgroundImageUrl, introVoiceUrl, introVoiceTranscript, avatarSticker, stats, avatarShape } = profile;
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   function commit(field: string, value: string) {
     onPatch?.({ [field]: value } as Partial<ProfileDTO>);
@@ -94,6 +98,31 @@ export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
                 <EditableText value={bio || ''} field="bio" maxLength={2000} multiline onCommit={commit} />
               ) : bio}
             </p>
+          )}
+
+          {introVoiceUrl && (
+            <div style={{ marginTop: 12 }}>
+              <audio
+                controls
+                src={introVoiceUrl}
+                style={{ width: '100%', maxWidth: 340, height: 36, accentColor: 'var(--accent)' }}
+              />
+              {introVoiceTranscript && (
+                <div style={{ marginTop: 4 }}>
+                  <button
+                    onClick={() => setTranscriptOpen(o => !o)}
+                    style={{ fontSize: 12, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                  >
+                    {transcriptOpen ? 'Hide transcript' : 'Show transcript'}
+                  </button>
+                  {transcriptOpen && (
+                    <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                      {introVoiceTranscript}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
