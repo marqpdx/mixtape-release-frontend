@@ -3,9 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/AuthContext";
 import MyCrossroadsLayout from "@/components/crossroads/MyCrossroadsLayout";
-import WritingSection from "@/components/crossroads/WritingSection";
-import ComposerPane from "@/components/crossroads/ComposerPane";
-import { ComposerProvider } from "@/components/crossroads/ComposerContext";
+import { WritingSection, ComposerPane, ComposerProvider } from "@mixtape/ui";
+import { Beacon } from "@/components/crossroads/Beacon";
 import { fetchPublicMemberProfile } from "@mixtape/api/clients/public/publicApi";
 
 interface StorylineExperienceProps {
@@ -32,7 +31,7 @@ export default function StorylineExperience({ username }: StorylineExperiencePro
       showStreams={isOwner}
       showFollowButton={!isOwner && !!user}
       userId={profile?.user_id}
-      beaconKey={writingBeaconKey}
+      beacon={writingBeaconKey ? <Beacon beaconKey={writingBeaconKey} areaLabel="Writing" /> : undefined}
       isOwner={isOwner}
       currentUsername={user?.username}
     />

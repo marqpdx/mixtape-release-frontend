@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/LeafCard.tsx
 
 'use client';
 
 import { Box, VStack, HStack, Text, Badge, Image, IconButton } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { IconMessageCircle, IconLink, IconMicrophone, IconTrash } from '@tabler/icons-react';
 import type { Leaf } from '@mixtape/core/types/leaf';
 import NextLink from 'next/link';

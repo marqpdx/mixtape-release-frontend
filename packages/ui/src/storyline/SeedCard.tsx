@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/SeedCard.tsx
 
 'use client';
 
 import { Box, HStack, Text, Button, Badge, IconButton } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { IconArrowUpRight, IconTrash, IconLeaf, IconSeedlingFilled } from '@tabler/icons-react';
 import { usePromoteSeedToLeaf, useDeleteSeed } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { WritingSection, ComposerProvider, ComposerPane } from '@mixtape/ui';
+import { useAuth } from '@/lib/auth/AuthContext';
 import type { ProfileDTO, SectionId } from '../api/types';
 import { computeAccentInk } from '../lib/contrast';
 import { THEMES, FONT_PAIRS, ROW_GAP } from '../lib/themes';
@@ -17,9 +19,6 @@ import GridBg from './backgrounds/GridBg';
 import LeavesBg from './backgrounds/LeavesBg';
 import SunsetBg from './backgrounds/SunsetBg';
 import HalftoneBg from './backgrounds/HalftoneBg';
-
-// Future tab slots — Storyline and Writing will replace these stubs
-// when those components are ported from crossroads / packages/api hooks are wired.
 
 export type ProfileTabId = 'storyline' | 'profile' | 'writing';
 
@@ -58,6 +57,8 @@ interface Props {
 
 export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
   const [tab, setTab] = useState<ProfileTabId>(initialTab);
+  const { user } = useAuth();
+  const isOwner = user?.username === profile.username;
 
   const { theme, accent, font, background, density, sectionLayout } = profile;
   const BgComp = BG_COMPONENTS[background ?? 'none'];
@@ -123,12 +124,17 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
         <div style={{ padding: '28px 20px 48px', display: 'flex', flexDirection: 'column', gap: rowGap }}>
 
           {tab === 'storyline' && (
-            // @stub — will mount WritingSection (StorylineFeed + StreamsFeed + ComposerPane)
-            // once crossroads Storyline components are lifted into a shared location.
-            <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--ink-soft)', fontSize: 15 }}>
-              <p style={{ margin: 0, fontWeight: 600 }}>Storyline</p>
-              <p style={{ margin: '8px 0 0', fontSize: 13 }}>Coming soon — Leaf posts and Streams will appear here.</p>
-            </div>
+            <ComposerProvider>
+              <WritingSection
+                isOwner={isOwner}
+                showStreams={isOwner}
+                showFollowButton={!isOwner && !!user}
+                userId={profile.username}
+                currentUsername={user?.username}
+              />
+              {/* ComposerPane only shown to owner — sits below the feed */}
+              {isOwner && <ComposerPane />}
+            </ComposerProvider>
           )}
 
           {tab === 'profile' && profileSections.map(entry => (

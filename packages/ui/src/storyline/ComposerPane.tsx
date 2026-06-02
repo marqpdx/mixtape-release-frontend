@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/ComposerPane.tsx
 
 'use client';
 
 import { Tabs, Text, VStack } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import Composer from './Composer';
 import FollowingList from './FollowingList';
 

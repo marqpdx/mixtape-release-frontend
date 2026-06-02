@@ -18,6 +18,7 @@
     "@mixtape/api": "*",
     "@mixtape/content": "*",
     "@mixtape/core": "*",
+    "@mixtape/ui": "*",
     "@mixtape/ui-tokens": "*",
     "@tanstack/react-query": "5.100.1",
     "@xyflow/react": "^12.10.2",

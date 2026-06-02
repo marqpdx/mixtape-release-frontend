@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // apps/crossroads/src/components/crossroads/FeedToggle.tsx
 
 'use client';
 
 import { Box, HStack, Text, Button } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 
 export type FeedMode = 'storyline' | 'streams';
 

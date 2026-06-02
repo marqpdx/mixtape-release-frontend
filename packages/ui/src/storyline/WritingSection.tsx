@@ -1,24 +1,26 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
-// components/crossroads/WritingSection.tsx
+// @mixtape/ui — shared canonical Storyline component.
+// Moved from apps/crossroads/src/components/crossroads/WritingSection.tsx.
+// Beacon removed from this component — pass it via the `beacon` prop from the
+// consuming app so this package has no crossroads-specific dependency.
 
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { VStack, HStack, Text, Button } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { IconPencilPlus } from '@tabler/icons-react';
 import NextLink from 'next/link';
 import FeedToggle, { type FeedMode } from './FeedToggle';
 import StorylineFeed from './StorylineFeed';
 import StreamsFeed from './StreamsFeed';
 import FollowButton from './FollowButton';
-import { Beacon } from './Beacon';
 
 interface WritingSectionProps {
   showStreams?: boolean;
   showFollowButton?: boolean;
   userId?: string;
-  beaconKey?: string;
+  /** Optional slot — consuming app can pass <Beacon /> or any node here. */
+  beacon?: ReactNode;
   isOwner?: boolean;
   currentUsername?: string;
 }
@@ -27,7 +29,7 @@ export default function WritingSection({
   showStreams = true,
   showFollowButton = false,
   userId,
-  beaconKey,
+  beacon,
   isOwner = true,
   currentUsername,
 }: WritingSectionProps) {
@@ -77,9 +79,7 @@ export default function WritingSection({
       ) : (
         <StorylineFeed />
       )}
-      {beaconKey && (
-        <Beacon beaconKey={beaconKey} areaLabel="Writing" />
-      )}
+      {beacon}
     </VStack>
   );
 }

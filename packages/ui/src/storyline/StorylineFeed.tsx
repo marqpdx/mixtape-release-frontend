@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/StorylineFeed.tsx
 
 'use client';
 
 import { Box, VStack, Text, Spinner, Badge, HStack, Image } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { useStoryline, useDeleteLeaf } from '@mixtape/api/hooks/useLeaf';
 import { useComposerDraft } from './ComposerContext';
 import LeafCard from './LeafCard';

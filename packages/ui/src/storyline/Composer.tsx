@@ -1,4 +1,3 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/Composer.tsx
 
 'use client';
@@ -16,7 +15,7 @@ import {
   Image,
   IconButton,
 } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import {
   IconMicrophone,
   IconPlayerStop,

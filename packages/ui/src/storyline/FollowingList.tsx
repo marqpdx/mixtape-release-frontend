@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/FollowingList.tsx
 
 'use client';
 
 import { Box, VStack, HStack, Text, Button, Spinner } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { IconUserMinus } from '@tabler/icons-react';
 import { useFollowingList, useUnfollowUser } from '@mixtape/api/hooks/useFollow';
 import NextLink from 'next/link';

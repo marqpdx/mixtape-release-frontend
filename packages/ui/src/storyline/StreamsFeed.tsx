@@ -1,10 +1,9 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/StreamsFeed.tsx
 
 'use client';
 
 import { Box, VStack, Text, Spinner } from '@chakra-ui/react';
-import { useColorModeValue } from '@components/ui/color-mode';
+import { useColorModeValue } from '@mixtape/core';
 import { useStreams } from '@mixtape/api/hooks/useFollow';
 import type { Leaf } from '@mixtape/core/types/leaf';
 import LeafCard from './LeafCard';

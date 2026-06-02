@@ -1,4 +1,3 @@
-// @deprecated — canonical version moved to packages/ui/src/storyline/. Do not add features here; update the shared package instead.
 // components/crossroads/FollowButton.tsx
 
 'use client';
