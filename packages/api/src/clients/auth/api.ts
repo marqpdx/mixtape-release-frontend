@@ -378,6 +378,7 @@ export async function fetchUserIdentity(token?: string): Promise<UserIdentity> {
     headers: {
       'Authorization': `Bearer ${accessToken}`,
     },
+    credentials: 'include',
   });
 
   logAuthDebug('User identity response received', {
