@@ -155,7 +155,7 @@ export function GroupMemberList({
 
   const handleViewComplete = useCallback((username: string) => {
     openProfileDrawer(username);
-  }, []);
+  }, [openProfileDrawer]);
 
   // Escape key closes the panel
   useEffect(() => {

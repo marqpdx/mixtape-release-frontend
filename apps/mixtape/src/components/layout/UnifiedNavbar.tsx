@@ -25,7 +25,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
@@ -99,7 +99,6 @@ export default function UnifiedNavbar({
   extraCompact = true,
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user: identity, logout, isLoading, can, canInGroup } = useAuth();
   const { isAdmin, isSteward } = usePermissions({ user: identity, can, canInGroup });
   // const { groups: userGroups = [] } = useUserGroups();
@@ -121,18 +120,6 @@ export default function UnifiedNavbar({
   const { unreads: messageUnreads } = useChatUnread();
   const { openDrawer } = useHelp();
   const messageUnreadCount = Object.values(messageUnreads).reduce((sum, n) => sum + n, 0);
-  const getMemberProfileHref = () => {
-    if (!identity?.username) return resolveHref('/members/{username}');
-    let href = resolveHref('/members/{username}');
-    if (typeof window !== 'undefined') {
-      const storedTab = window.localStorage.getItem(`member_profile_last_tab:${identity.username}`);
-      if (storedTab) {
-        href = `${href}?tab=${encodeURIComponent(storedTab)}`;
-      }
-    }
-    return href;
-  };
-
   // Auto-detect section if not provided
   const detectedSection: NavSection =
     section ||
