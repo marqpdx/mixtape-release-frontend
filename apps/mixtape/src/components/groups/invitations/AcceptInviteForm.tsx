@@ -153,7 +153,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
           templateColumns={{ base: "1fr", md: "200px 1fr" }}
           gap={{ base: 6, md: 10 }}
           mb={5}
-          alignItems="start"
+          alignItems="stretch"
         >
           {/* Group image */}
           <Box
@@ -184,7 +184,12 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
           </Box>
 
           {/* Welcome text */}
-          <Box textAlign={{ base: "center", md: "left" }}>
+          <Box
+            textAlign={{ base: "center", md: "left" }}
+            display="flex"
+            flexDirection="column"
+            minH={{ base: "auto", md: "200px" }}
+          >
             {groupLoading ? (
               <Skeleton height="48px" width="280px" borderRadius="md" />
             ) : (
@@ -210,6 +215,11 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
                     at {DEFAULT_GROUP_NAME}
                   </Text>
                 )}
+                <Text mt="auto" pt={3} color="theme.textSecondary">
+                  {isNewUser
+                    ? "Set your username and password to activate and log in to your account."
+                    : "Click below to accept this invitation and join the group."}
+                </Text>
               </>
             )}
           </Box>
@@ -223,12 +233,6 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
           borderRadius="2xl"
           p={{ base: 6, md: 8 }}
         >
-          <Text color="theme.textSecondary" mb={5}>
-            {isNewUser
-              ? "Set your username and password to activate and log in to your account."
-              : "Click below to accept this invitation and join the group."}
-          </Text>
-
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack gap={4}>
               {isNewUser && (
