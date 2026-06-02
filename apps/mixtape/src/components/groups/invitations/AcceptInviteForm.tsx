@@ -152,7 +152,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         <Grid
           templateColumns={{ base: "1fr", md: "200px 1fr" }}
           gap={{ base: 6, md: 10 }}
-          mb={8}
+          mb={5}
           alignItems="start"
         >
           {/* Group image */}
@@ -188,25 +188,29 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
             {groupLoading ? (
               <Skeleton height="48px" width="280px" borderRadius="md" />
             ) : (
-              <Heading
-                as="h1"
-                size="2xl"
-                color="theme.text"
-                fontWeight="800"
-                lineHeight="1.15"
-              >
-                Welcome to {group?.title ?? "…"}
-              </Heading>
-            )}
-            {!isDefaultGroup && (
-              <Text
-                mt={1}
-                fontSize="lg"
-                color="theme.textSecondary"
-                fontWeight="500"
-              >
-                at {DEFAULT_GROUP_NAME}
-              </Text>
+              <>
+                <Text fontSize="lg" color="theme.textSecondary" fontWeight="500" lineHeight="1.4">
+                  Welcome to
+                </Text>
+                <Heading
+                  as="h1"
+                  size="2xl"
+                  color="theme.text"
+                  fontWeight="800"
+                  lineHeight="1.15"
+                >
+                  {group?.title ?? "…"}
+                </Heading>
+                {!isDefaultGroup && (
+                  <Text
+                    fontSize="lg"
+                    color="theme.textSecondary"
+                    fontWeight="500"
+                  >
+                    at {DEFAULT_GROUP_NAME}
+                  </Text>
+                )}
+              </>
             )}
           </Box>
         </Grid>
@@ -286,7 +290,8 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
                 loading={submitting}
                 bg="theme.accent"
                 color="white"
-                size="lg"
+                size="md"
+                alignSelf="flex-start"
                 borderRadius="xl"
                 _hover={{ transform: "translateY(-2px)", shadow: "lg" }}
               >

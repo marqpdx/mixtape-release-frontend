@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Flex, Grid, HStack, Image, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, Image, Link, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import NextLink from "next/link";
 import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
@@ -55,26 +55,6 @@ export function GroupLandingB({
         >
           <Box borderBottomWidth="1px" borderColor="theme.border" bg="theme.bg">
             <Box px={{ base: 4, md: 8, xl: 12 }} pt={{ base: 6, md: 10 }} pb={{ base: 8, md: 12 }}>
-              <Flex
-                direction={{ base: "column", md: "row" }}
-                justify="space-between"
-                align={{ base: "flex-start", md: "center" }}
-                gap={3}
-                pb={4}
-                mb={8}
-                borderBottom="1px solid"
-                borderColor="theme.text"
-                color="theme.textSecondary"
-                fontFamily="mono"
-                fontSize="11px"
-                letterSpacing="0.12em"
-                textTransform="uppercase"
-              >
-                <Text>{viewData.identity.type} group</Text>
-                <Text>A member view on Mixtape</Text>
-                <Text>Founded {viewData.identity.foundedLabel}</Text>
-              </Flex>
-
               <Grid
                 templateColumns={{ base: "1fr", md: "320px minmax(0, 1fr)" }}
                 gap={{ base: 8, md: 12 }}
@@ -120,17 +100,6 @@ export function GroupLandingB({
 
                 <Flex direction="column" justify="space-between" gap={{ base: 8, xl: 10 }} minW={0}>
                   <Box textAlign="left">
-                    <HStack gap={2} mb={4} color="theme.textSecondary">
-                      <GroupTypeIcon size={18} />
-                      <Text
-                        fontFamily="mono"
-                        fontSize="11px"
-                        letterSpacing="0.12em"
-                        textTransform="uppercase"
-                      >
-                        {viewData.identity.type}
-                      </Text>
-                    </HStack>
                     <Text
                       as="h1"
                       fontFamily="heading"

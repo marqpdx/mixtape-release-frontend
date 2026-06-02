@@ -13,22 +13,9 @@ import {
   Image,
   Link,
 } from "@chakra-ui/react";
-import {
-  IconBuildingCommunity,
-  IconCircleDot,
-  IconUserCircle,
-  IconNetwork,
-} from "@tabler/icons-react";
 import NextLink from "next/link";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 import type { GroupMemberViewId } from "../member-views/registry";
-
-const GROUP_TYPE_ICONS = {
-  community: IconBuildingCommunity,
-  circle: IconCircleDot,
-  persona: IconUserCircle,
-  coalition: IconNetwork,
-};
 
 interface GroupMemberHeaderProps {
   group: {
@@ -59,7 +46,6 @@ export function GroupMemberHeader({
   const cardBg = "theme.bgSecondary";
   const borderColor = "theme.border";
 
-  const GroupTypeIcon = GROUP_TYPE_ICONS[group.group_type as keyof typeof GROUP_TYPE_ICONS] || IconBuildingCommunity;
   const emblemSrc =
     group.emblem?.size_96_url?.trim() ||
     group.emblem?.url?.trim() ||
@@ -115,12 +101,9 @@ export function GroupMemberHeader({
             </Flex>
 
             <Box flex="1">
-              <Flex alignItems="center" gap={2} mb={2}>
-                <GroupTypeIcon size={24} style={{ color: "var(--theme-text-secondary)" }} />
-                <Heading size="2xl">
-                  {group.title}
-                </Heading>
-              </Flex>
+              <Heading size="2xl" mb={2}>
+                {group.title}
+              </Heading>
               <Flex alignItems="center" gap={4}>
                 <Text color="theme.textSecondary" fontSize="lg">
                   {group.member_count || 0} members

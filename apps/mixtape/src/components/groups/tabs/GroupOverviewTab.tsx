@@ -131,6 +131,10 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
       setInfoDismissed(false);
       try { localStorage.removeItem(infoStorageKey); } catch {}
       setInfoModalOpen(true);
+      // Remove the param so re-mounting on A/B switch doesn't reopen the modal
+      params.delete("new_member");
+      const newSearch = params.toString();
+      window.history.replaceState(null, "", newSearch ? `?${newSearch}` : window.location.pathname);
     }
   }, [dismissStorageKey, infoStorageKey]);
 

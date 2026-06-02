@@ -2,6 +2,8 @@
 
 "use client";
 
+import React from "react";
+
 import {
   Box,
   Button,
@@ -27,6 +29,7 @@ interface InviteFormProps {
   allSiteMembers?: UserProfile[];
   siteMembersLoading?: boolean;
   parentGroupName?: string;
+  statusNode?: React.ReactNode;
 }
 
 interface UserSuggestion {
@@ -273,6 +276,7 @@ export const GroupInviteForm = ({
   allSiteMembers = [],
   siteMembersLoading = false,
   parentGroupName,
+  statusNode,
 }: InviteFormProps) => {
   void siteMembersLoading;
   const { handleSubmit, reset, control, setValue, watch } = useForm({
@@ -651,9 +655,12 @@ export const GroupInviteForm = ({
           />
         </Box>
 
-        <Button data-testid="send-invite-button" type="submit" size="lg" colorScheme="green">
-          Send Invitation{inviteeValue?.includes(',') ? 's' : ''}
-        </Button>
+        <HStack gap={3} align="center">
+          <Button data-testid="send-invite-button" type="submit" size="md" colorScheme="green">
+            Send Invitation{inviteeValue?.includes(',') ? 's' : ''}
+          </Button>
+          {statusNode}
+        </HStack>
       </VStack>
 
       {/* Member Selector Modal */}

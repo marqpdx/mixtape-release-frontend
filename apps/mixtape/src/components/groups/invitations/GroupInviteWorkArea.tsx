@@ -133,43 +133,34 @@ export default function GroupInviteWorkArea({
             allSiteMembers={allSiteMembers}
             siteMembersLoading={siteMembersLoading}
             parentGroupName={parentGroupName}
-          />
-
-          {/* Status Messages */}
-          {inviteStatusMessage && (
-            <Box mt={4} mb={4}>
+            statusNode={inviteStatusMessage ? (
               <Text
                 fontSize="sm"
                 fontWeight="medium"
-                p={3}
+                px={3}
+                py={2}
                 borderRadius="md"
                 bg={
-                  inviteStatusType === "error"
-                    ? "red.50"
-                    : inviteStatusType === "success"
-                    ? "green.50"
-                    : "blue.50"
+                  inviteStatusType === "error" ? "red.50"
+                  : inviteStatusType === "success" ? "green.50"
+                  : "blue.50"
                 }
                 color={
-                  inviteStatusType === "error"
-                    ? "red.600"
-                    : inviteStatusType === "success"
-                    ? "green.600"
-                    : "blue.600"
+                  inviteStatusType === "error" ? "red.600"
+                  : inviteStatusType === "success" ? "green.600"
+                  : "blue.600"
                 }
                 border="1px solid"
                 borderColor={
-                  inviteStatusType === "error"
-                    ? "red.200"
-                    : inviteStatusType === "success"
-                    ? "green.200"
-                    : "blue.200"
+                  inviteStatusType === "error" ? "red.200"
+                  : inviteStatusType === "success" ? "green.200"
+                  : "blue.200"
                 }
               >
                 {inviteStatusMessage}
               </Text>
-            </Box>
-          )}
+            ) : undefined}
+          />
         </Tabs.Content>
 
         {/* Invitation History Tab */}

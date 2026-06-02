@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Text, HStack, Box, Avatar, Image, Button, VStack, IconButton, Menu, Portal } from "@chakra-ui/react";
+import { Text, HStack, Box, Avatar, Button, VStack, IconButton, Menu, Portal } from "@chakra-ui/react";
 import type { ComponentType } from "react";
 import { Icons } from "@components/icons/IconMap";
 import UniversalDataTable from "@components/common/UniversalDataTable";
@@ -325,7 +325,6 @@ export default function GroupsTable({
   if (viewMode === 'flat') {
     return (
       <Box>
-        <Image src="/images/groups-header.png" alt="Groups Header" mb={4} />
         <HStack justify="space-between" mb={4}>
           <Text fontSize="2xl" fontWeight="bold">Groups</Text>
           <HStack gap={2}>
@@ -394,7 +393,6 @@ export default function GroupsTable({
   // Hierarchical view
   return (
     <Box>
-      <Image src="/images/groups-header.png" alt="Groups Header" mb={4} />
       <HStack justify="space-between" mb={4}>
         <Text fontSize="2xl" fontWeight="bold">Groups</Text>
         <HStack gap={2}>
