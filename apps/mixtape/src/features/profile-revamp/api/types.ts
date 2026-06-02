@@ -81,6 +81,7 @@ export interface ProfileDTO {
   bio: string;
   status: string;
   avatarUrl: string | null;
+  backgroundImageUrl: string | null;
   avatarSticker: string;
   theme: ThemeKey;
   accent: string;
