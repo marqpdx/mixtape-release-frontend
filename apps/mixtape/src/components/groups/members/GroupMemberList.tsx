@@ -42,6 +42,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { memberQueryKeys } from "@mixtape/api/hooks/useMembers";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useProfileDrawer } from "@/features/profile-revamp/stores/profileDrawerStore";
 
 interface GroupMemberListProps {
   group: Group;
@@ -75,6 +76,7 @@ export function GroupMemberList({
 }: GroupMemberListProps) {
   const { user: identity } = useAuth();
   const queryClient = useQueryClient();
+  const openProfileDrawer = useProfileDrawer(s => s.open);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -152,14 +154,8 @@ export function GroupMemberList({
   const handleReturn = useCallback(() => setSelectedIndex(null), []);
 
   const handleViewComplete = useCallback((username: string) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(
-        "memberProfileReturn",
-        JSON.stringify({ slug: group.slug, title: group.title })
-      );
-      window.location.href = `/members/${username}`;
-    }
-  }, [group.slug, group.title]);
+    openProfileDrawer(username);
+  }, []);
 
   // Escape key closes the panel
   useEffect(() => {

@@ -72,7 +72,7 @@ export default function MemberProfileViewWorkArea({ setActiveSection, sectionPar
           return
         </Button>
         <HStack gap={3}>
-          <Link as={NextLink} href={`/members/${username}`} display="flex" alignItems="center" gap={1} fontSize="sm" color={muted}>
+          <Link as={NextLink} href={`/member/handle/${username}`} display="flex" alignItems="center" gap={1} fontSize="sm" color={muted}>
             Full Profile
             <IconExternalLink size={14} />
           </Link>

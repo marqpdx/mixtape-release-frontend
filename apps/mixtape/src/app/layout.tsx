@@ -1,5 +1,6 @@
 import { Providers } from '@/components/providers';
 import { SkipLinks } from '@/components/accessibility';
+import { ProfileDrawer } from '@/features/profile-revamp/components/ProfileDrawer';
 import {
   Inter, DM_Serif_Display, Source_Serif_4,
   Instrument_Serif, Instrument_Sans,
@@ -91,6 +92,7 @@ export default function RootLayout({
         <Providers>
           <SkipLinks />
           {children}
+          <ProfileDrawer />
         </Providers>
       </body>
     </html>

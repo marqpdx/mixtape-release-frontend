@@ -31,7 +31,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconLogout, IconMessageCircle, IconLayoutDashboard, IconPencil } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
@@ -398,25 +398,23 @@ export default function UnifiedNavbar({
 
                 <MenuPositioner zIndex={1100}>
                   <MenuContent>
-                    <MenuItem
-                      value="profile"
-                      onClick={() => {
-                        if (detectedSection === "authenticated") {
-                          window.dispatchEvent(new CustomEvent("mixtape:nav-profile"));
-                          if (!pathname.startsWith("/dashboard")) {
-                            localStorage.setItem("memberDashboard", "profile");
-                            router.push("/dashboard");
-                          }
-                        } else {
-                          router.push(getMemberProfileHref());
-                        }
-                      }}
-                    >
-                      <Flex gap={2} align="center">
-                        <IconUser size={16} />
-                        Profile
-                      </Flex>
-                    </MenuItem>
+                    {identity?.username && (
+                      <MenuItem value="my-profile" asChild>
+                        <Link as={NextLink} href={`/member/handle/${identity.username}`} display="flex" gap={2}>
+                          <IconUser size={16} />
+                          My profile
+                        </Link>
+                      </MenuItem>
+                    )}
+                    {identity?.username && (
+                      <MenuItem value="edit-profile" asChild>
+                        <Link as={NextLink} href="/settings/profile/new" display="flex" gap={2}>
+                          <IconPencil size={16} />
+                          Edit profile
+                        </Link>
+                      </MenuItem>
+                    )}
+                    <MenuSeparator />
                     <MenuItem value="dashboard" asChild>
                       <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
                         <IconLayoutDashboard size={16} />

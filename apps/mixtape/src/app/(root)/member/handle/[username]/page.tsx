@@ -6,12 +6,21 @@ import { notFound } from 'next/navigation';
 import { fetchPublicProfile } from '@/features/profile-revamp/api/client';
 import Profile from '@/features/profile-revamp/components/Profile';
 import { ProfileViewTracker } from '@/features/profile-revamp/components/ProfileViewTracker';
+import { ProfileBackLink } from '@/features/profile-revamp/components/ProfileBackLink';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://127.0.0.1:3011';
 
 export const revalidate = 60;
 
 type Params = Promise<{ username: string }>;
+type SearchParams = Promise<{ from?: string }>;
+
+function validateFrom(raw: string | undefined): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith('/')) return null;
+  if (raw.includes('://')) return null;
+  return raw;
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { username } = await params;
@@ -33,8 +42,17 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
 }
 
-export default async function PublicProfilePage({ params }: { params: Params }) {
+export default async function PublicProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const { username } = await params;
+  const { from: rawFrom } = await searchParams;
+  const from = validateFrom(rawFrom);
+
   let profile;
   try {
     profile = await fetchPublicProfile(username);
@@ -44,6 +62,11 @@ export default async function PublicProfilePage({ params }: { params: Params }) 
   return (
     <>
       <ProfileViewTracker username={username} />
+      {from && (
+        <div style={{ padding: '0.5rem 1.5rem' }}>
+          <ProfileBackLink from={from} />
+        </div>
+      )}
       <Profile profile={profile} />
     </>
   );
