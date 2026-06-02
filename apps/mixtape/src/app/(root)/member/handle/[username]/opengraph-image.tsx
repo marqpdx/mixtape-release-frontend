@@ -72,6 +72,7 @@ export default async function ProfileOGImage({ params }: { params: Params }) {
         {avatarUrl && (
           <img
             src={avatarUrl}
+            alt=""
             width={96}
             height={96}
             style={{
