@@ -5,6 +5,8 @@ export type { ThemeKey, FontKey, BgKey, SectionId, AvatarShape, Density };
 export interface SectionEntry {
   id: SectionId;
   visible: boolean;
+  /** Controls audience. Enforced client-side; backend stores layout JSON as-is. */
+  visibility?: 'public' | 'members';
 }
 
 export interface PinnedTrackDTO {

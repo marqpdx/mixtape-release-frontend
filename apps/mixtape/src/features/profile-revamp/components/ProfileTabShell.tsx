@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { WritingSection, ComposerProvider, ComposerPane } from '@mixtape/ui';
 import { useAuth } from '@/lib/auth/AuthContext';
-import type { ProfileDTO, SectionId } from '../api/types';
+import type { ProfileDTO, SectionId, SectionEntry } from '../api/types';
 import { computeAccentInk } from '../lib/contrast';
 import { THEMES, FONT_PAIRS, ROW_GAP } from '../lib/themes';
 import ProfileHeader from './ProfileHeader';
@@ -19,6 +20,9 @@ import GridBg from './backgrounds/GridBg';
 import LeavesBg from './backgrounds/LeavesBg';
 import SunsetBg from './backgrounds/SunsetBg';
 import HalftoneBg from './backgrounds/HalftoneBg';
+import { useProfilePatch } from '../hooks/useProfilePatch';
+import { useSectionReorder } from '../hooks/useSectionReorder';
+import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi';
 
 export type ProfileTabId = 'storyline' | 'profile' | 'writing';
 
@@ -50,6 +54,97 @@ function SectionContent({ id, profile }: { id: SectionId; profile: ProfileDTO })
   }
 }
 
+// ── Writing tab ──────────────────────────────────────────────────────────────
+
+function WritingTab({ username }: { username: string }) {
+  const { data: shelves = [], isLoading } = useQuery({
+    queryKey: ['stackroom', 'libraries', 'public', username],
+    queryFn: () => stackroomApi.fetchPublicLibrariesByUsername(username, 'writing'),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-soft)', fontSize: 14 }}>
+        Loading writing…
+      </div>
+    );
+  }
+
+  if (!shelves.length) {
+    return (
+      <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--ink-soft)', fontSize: 15 }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>Nothing published yet.</p>
+        <p style={{ margin: '8px 0 0', fontSize: 13 }}>Check back later for published writing and shelves.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {shelves.map(shelf => (
+        <a
+          key={shelf.id}
+          href={`/member/${username}/library/${shelf.slug}`}
+          style={{
+            display: 'block',
+            padding: '14px 18px',
+            borderRadius: 8,
+            border: '1px solid var(--rule)',
+            background: 'var(--surface)',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'border-color 0.15s',
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{shelf.title}</div>
+          {shelf.summary && (
+            <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4, lineHeight: 1.45 }}>
+              {shelf.summary}
+            </div>
+          )}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+// ── Visibility badge (owner-only) ────────────────────────────────────────────
+
+function VisibilityBadge({
+  entry,
+  onToggle,
+}: {
+  entry: SectionEntry;
+  onToggle: (id: string, next: 'public' | 'members') => void;
+}) {
+  const v = entry.visibility ?? 'public';
+  return (
+    <button
+      onClick={() => onToggle(entry.id, v === 'public' ? 'members' : 'public')}
+      title={
+        v === 'public'
+          ? 'Public — click to restrict to members only'
+          : 'Members only — click to make public'
+      }
+      style={{
+        fontSize: 11,
+        padding: '2px 8px',
+        borderRadius: 10,
+        border: '1px solid var(--rule)',
+        background: v === 'members' ? 'var(--surface)' : 'transparent',
+        color: 'var(--ink-soft)',
+        cursor: 'pointer',
+        fontFamily: 'var(--font-body)',
+      }}
+    >
+      {v === 'public' ? '🌐 Public' : '🔒 Members'}
+    </button>
+  );
+}
+
+// ── Shell ────────────────────────────────────────────────────────────────────
+
 interface Props {
   profile: ProfileDTO;
   initialTab?: ProfileTabId;
@@ -60,7 +155,38 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
   const { user } = useAuth();
   const isOwner = user?.username === profile.username;
 
-  const { theme, accent, font, background, density, sectionLayout } = profile;
+  // Local layout state — lets visibility toggles reflect immediately without a page reload.
+  const [localLayout, setLocalLayout] = useState<SectionEntry[]>(profile.sectionLayout ?? []);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null);
+
+  const patchMutation = useProfilePatch();
+  const reorderMutation = useSectionReorder();
+
+  function handlePatch(patch: Partial<ProfileDTO>) {
+    patchMutation.mutate(patch as Parameters<typeof patchMutation.mutate>[0], {
+      onSuccess: () => {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus(null), 2000);
+      },
+      onError: () => {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus(null), 3000);
+      },
+    });
+  }
+
+  function handleVisibilityToggle(id: string, next: 'public' | 'members') {
+    const updated = localLayout.map(s => s.id === id ? { ...s, visibility: next } : s);
+    setLocalLayout(updated);
+    reorderMutation.mutate(updated, {
+      onSuccess: () => {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus(null), 2000);
+      },
+    });
+  }
+
+  const { theme, accent, font, background, density } = profile;
   const BgComp = BG_COMPONENTS[background ?? 'none'];
   const rowGap = ROW_GAP[density ?? 'cozy'];
   const fontPair = FONT_PAIRS[font ?? 'editorial'];
@@ -73,7 +199,13 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
     '--font-body':    fontPair.body,
   };
 
-  const profileSections = (sectionLayout ?? []).filter(s => s.visible && s.id !== 'header');
+  // Determine which sections to show based on auth + ownership
+  const visibleSections = localLayout.filter(s => {
+    if (!s.visible || s.id === 'header') return false;
+    if (isOwner) return true;
+    if (s.visibility === 'members') return !!user; // authenticated members only
+    return true; // 'public' or undefined
+  });
 
   return (
     <div
@@ -93,10 +225,14 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto' }}>
 
         {/* Identity card — always visible above tabs */}
-        <ProfileHeader profile={profile} />
+        <ProfileHeader
+          profile={profile}
+          isEditor={isOwner}
+          onPatch={isOwner ? handlePatch : undefined}
+        />
 
-        {/* Tab navigation */}
-        <div style={{ borderBottom: '1px solid var(--rule)', display: 'flex', paddingLeft: 8 }}>
+        {/* Tab navigation + save indicator */}
+        <div style={{ borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', paddingLeft: 8 }}>
           {TABS.map(t => (
             <button
               key={t.id}
@@ -118,6 +254,19 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
               {t.label}
             </button>
           ))}
+          {saveStatus && (
+            <span
+              style={{
+                marginLeft: 'auto',
+                marginRight: 12,
+                fontSize: 12,
+                color: saveStatus === 'saved' ? 'var(--accent)' : '#c0392b',
+                transition: 'opacity 0.3s',
+              }}
+            >
+              {saveStatus === 'saved' ? '✓ Saved' : '✗ Error saving'}
+            </span>
+          )}
         </div>
 
         {/* Tab content */}
@@ -132,22 +281,22 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
                 userId={profile.username}
                 currentUsername={user?.username}
               />
-              {/* ComposerPane only shown to owner — sits below the feed */}
               {isOwner && <ComposerPane />}
             </ComposerProvider>
           )}
 
-          {tab === 'profile' && profileSections.map(entry => (
-            <SectionContent key={entry.id} id={entry.id as SectionId} profile={profile} />
+          {tab === 'profile' && visibleSections.map(entry => (
+            <div key={entry.id}>
+              {isOwner && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                  <VisibilityBadge entry={entry} onToggle={handleVisibilityToggle} />
+                </div>
+              )}
+              <SectionContent id={entry.id as SectionId} profile={profile} />
+            </div>
           ))}
 
-          {tab === 'writing' && (
-            // @stub — will mount the member's published writing list (WritingPiece, shelves).
-            <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--ink-soft)', fontSize: 15 }}>
-              <p style={{ margin: 0, fontWeight: 600 }}>Writing</p>
-              <p style={{ margin: '8px 0 0', fontSize: 13 }}>Published pieces and shelves will appear here.</p>
-            </div>
-          )}
+          {tab === 'writing' && <WritingTab username={profile.username} />}
 
         </div>
       </div>
