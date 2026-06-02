@@ -128,7 +128,7 @@ export default function AgreementsPage() {
             letterSpacing="0.08em"
             textTransform="uppercase"
           >
-            Step 2 of 2
+            Step 3 of 3
           </Text>
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             Welcome

@@ -23,6 +23,7 @@ const ME_URL = `${API_BASE}/api/auth/me`;
 const ASSUME_URL = `${API_BASE}/api/auth/assume`;
 const ASSUME_EXIT_URL = `${API_BASE}/api/auth/assume/exit`;
 const REGISTER_URL = `${API_BASE}/api/auth/register`;
+const ACCEPT_INVITE_URL = `${API_BASE}/api/auth/accept-invite`;
 const CSRF_URL = `${API_BASE}/api/csrf/`;
 const PERMISSIONS_REFRESH_URL = `${API_BASE}/api/auth/permissions/refresh`;
 const PASSWORD_RESET_URL = `${API_BASE}/api/auth/password-reset`;
@@ -477,13 +478,46 @@ export async function refreshPermissions(): Promise<PermissionsData> {
   return permissions;
 }
 
-function applyAuthResponseToSession(data: AuthResponse): void {
+export function applyAuthResponseToSession(data: AuthResponse): void {
   if (!data.access || !data.access_expires) {
     throw new Error("Invalid token response from server");
   }
 
   const expiresAt = data.access_expires * 1000;
   setAccessToken(data.access, expiresAt);
+}
+
+export async function activateInviteSession(data: AuthResponse): Promise<UserIdentity> {
+  applyAuthResponseToSession(data);
+  return fetchUserIdentity(data.access);
+}
+
+export async function acceptInvite(payload: {
+  shortcode: string;
+  username?: string;
+  password?: string;
+}): Promise<AuthResponse & {
+  user_was_new?: boolean;
+  group?: {
+    id: string;
+    title: string;
+    slug: string;
+    profile_image_url?: string | null;
+  };
+}> {
+  const response = await fetch(ACCEPT_INVITE_URL, {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+  if (!response.ok || data.success === false) {
+    throw new Error(data.detail || data.error || "Could not accept invitation.");
+  }
+
+  return data;
 }
 
 export async function assumeUser(username: string): Promise<UserIdentity> {

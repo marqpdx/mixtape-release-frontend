@@ -17,11 +17,12 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toaster } from "@mixtape/core/lib/toaster";
-import axios from "axios";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import * as authApi from "@mixtape/api/clients/auth/api";
 import { motion } from "framer-motion";
 import { Filter } from "bad-words";
 import type { InviteInfoGroup } from "@mixtape/api/clients/public/publicApi";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const filter = new Filter();
 
@@ -59,9 +60,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
   const [group, setGroup] = useState<InviteInfoGroup | null>(null);
   const [groupLoading, setGroupLoading] = useState(true);
   const router = useRouter();
-
-  const NEXT_PUBLIC_ROOT_API_URL = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
-  const acceptInviteUrl = `${NEXT_PUBLIC_ROOT_API_URL}/api/auth/accept-invite`;
+  const { refreshUser } = useAuth();
 
   useEffect(() => {
     if (!shortcode) return;
@@ -96,38 +95,39 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         payload.password = data.password;
       }
 
-      const res = isNewUser
-        ? await axios.post(acceptInviteUrl, payload)
-        : await axiosInstance.post(acceptInviteUrl, payload);
+      const inviteResult = isNewUser
+        ? await authApi.acceptInvite(payload)
+        : (await axiosInstance.post("/api/auth/accept-invite", payload)).data;
 
       toaster.success({
         title: isNewUser ? "Welcome!" : "Success!",
         description: isNewUser
           ? "Your account has been activated."
-          : `You've joined ${res.data.group?.title || "the group"}!`,
+          : `You've joined ${inviteResult.group?.title || "the group"}!`,
       });
 
-      const groupSlug = res.data.group?.slug;
-      const groupTitle = res.data.group?.title;
+      const groupSlug = inviteResult.group?.slug;
+      const groupTitle = inviteResult.group?.title;
       if (isNewUser) {
-        const agreementsParams = new URLSearchParams();
-        if (groupSlug) agreementsParams.set("group_slug", groupSlug);
-        if (groupTitle) agreementsParams.set("group", groupTitle);
-        const redirectTarget = `/welcome/agreements?${agreementsParams.toString()}`;
-        const loginParams = new URLSearchParams();
-        if (data.username) loginParams.set("username", String(data.username));
-        loginParams.set("redirect", redirectTarget);
-        router.push(`/login?${loginParams.toString()}`);
+        await authApi.activateInviteSession(inviteResult);
+        await refreshUser();
+
+        const introParams = new URLSearchParams();
+        if (groupSlug) introParams.set("group_slug", groupSlug);
+        if (groupTitle) introParams.set("group", groupTitle);
+        router.push(`/welcome/quick-intro?${introParams.toString()}`);
       } else {
         router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }
     } catch (error) {
       const response = (error as { response?: { data?: { error?: string; detail?: string } } }).response;
+      const message = error instanceof Error ? error.message : undefined;
       toaster.error({
         title: "Invalid or expired invite",
         description:
           response?.data?.error ||
           response?.data?.detail ||
+          message ||
           "Could not accept invitation.",
       });
     } finally {
@@ -221,7 +221,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         >
           <Text color="theme.textSecondary" mb={5}>
             {isNewUser
-              ? "Set your username and password to activate your account and join the group."
+              ? "Set your username and password to activate and log in to your account."
               : "Click below to accept this invitation and join the group."}
           </Text>
 
@@ -290,7 +290,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
                 borderRadius="xl"
                 _hover={{ transform: "translateY(-2px)", shadow: "lg" }}
               >
-                {isNewUser ? "Activate Account" : "Accept Invitation"}
+                {isNewUser ? "Activate and Log In" : "Accept Invitation"}
               </Button>
             </Stack>
           </form>
