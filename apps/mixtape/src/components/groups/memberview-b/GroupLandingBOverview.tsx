@@ -22,6 +22,11 @@ interface GroupLandingBOverviewProps {
   onOpenCollection?: (collectionId: string) => void;
 }
 
+function parseSectionTitle(title: string): [string | null, string] {
+  const m = title.match(/^([IVX]+\s·)\s*(.+)$/i);
+  return m ? [m[1], m[2]] : [null, title];
+}
+
 function Section({
   title,
   meta,
@@ -33,6 +38,7 @@ function Section({
   variant?: "primary" | "sub";
   children: React.ReactNode;
 }) {
+  const [numeral, rest] = parseSectionTitle(title);
   return (
     <Box>
       <Flex
@@ -46,13 +52,23 @@ function Section({
         borderBottomWidth={variant === "primary" ? "1px" : "0.5px"}
       >
         <Text
+          as="span"
           fontFamily="mono"
           fontSize="10px"
-          letterSpacing={variant === "primary" ? "2px" : "0.12em"}
           textTransform="uppercase"
-          color="theme.textSecondary"
         >
-          {title}
+          {numeral && (
+            <Box as="span" color="theme.accent" letterSpacing="1.2px">
+              {numeral}{" "}
+            </Box>
+          )}
+          <Box
+            as="span"
+            color="theme.textMuted"
+            letterSpacing={variant === "primary" ? "1.2px" : "0.12em"}
+          >
+            {rest}
+          </Box>
         </Text>
         {meta ? (
           <Text
@@ -60,8 +76,7 @@ function Section({
             fontSize="10px"
             letterSpacing="0.12em"
             textTransform="uppercase"
-            color="theme.textSecondary"
-            opacity={0.6}
+            color="theme.textMuted"
           >
             {meta}
           </Text>
@@ -83,6 +98,8 @@ export function GroupLandingBOverview({
   const orderedCollections = viewData.collections.ordered;
   const isAdminOrSteward = viewData.permissions.canModerateGroup;
 
+  const showDropCap = Boolean(aboutText && aboutText.length >= 100);
+
   return (
     <Stack className="glbo-root" gap={12}>
       <SimpleGrid className="glbo-grid" columns={{ base: 1, lg: 3 }} gap={{ base: 8, lg: 10, xl: 12 }} alignItems="start">
@@ -90,19 +107,20 @@ export function GroupLandingBOverview({
         <Section title="I · About us">
           <Text
             fontFamily="serifBody"
-            fontSize={{ base: "md", md: "lg" }}
-            lineHeight="1.8"
-            color="theme.textSecondary"
+            fontSize="17px"
+            lineHeight="1.65"
+            color="theme.text"
+            maxW="64ch"
             whiteSpace="pre-wrap"
-            _firstLetter={{
-              fontSize: { base: "4rem", md: "6rem" },
-              lineHeight: "1",
+            _firstLetter={showDropCap ? {
+              fontSize: "56px",
+              lineHeight: "0.82",
               fontWeight: "600",
-              mr: "0.1em",
+              mr: "0.15em",
               mt: "0.25em",
               float: "left",
               color: "theme.text",
-            }}
+            } : undefined}
           >
             {aboutText || "This group is still writing its introduction."}
           </Text>
@@ -135,7 +153,12 @@ export function GroupLandingBOverview({
               </Text>
 
               <HStack gap={3} flexWrap="wrap">
-                <Button size="xs" variant="outline">
+                <Button
+                  size="xs"
+                  bg="theme.text"
+                  color="theme.bg"
+                  _hover={{ opacity: 0.88 }}
+                >
                   Submit a reply
                 </Button>
               </HStack>
@@ -146,7 +169,7 @@ export function GroupLandingBOverview({
                   fontSize="11px"
                   letterSpacing="0.08em"
                   textTransform="uppercase"
-                  color="theme.textSecondary"
+                  color="theme.textMuted"
                 >
                   {viewData.bazaar.offeringsCount} bazaar offering{viewData.bazaar.offeringsCount === 1 ? "" : "s"} live
                 </Text>
@@ -159,9 +182,8 @@ export function GroupLandingBOverview({
               fontFamily="serifBody"
               fontSize="14px"
               fontStyle="italic"
-              color="theme.textSecondary"
-              opacity={0.6}
-              lineHeight="1.5"
+              color="theme.textMuted"
+              lineHeight="1.55"
             >
               None this week. The board is clear.
             </Text>
@@ -187,12 +209,11 @@ export function GroupLandingBOverview({
                           style={{ width: "100%", textAlign: "left" }}
                         >
                           <HStack gap={3} align="start">
-                            {/* Item count — left column */}
                             <Text
                               fontFamily="mono"
                               fontSize="10px"
                               letterSpacing="0.08em"
-                              color="theme.textSecondary"
+                              color="theme.textFaint"
                               flexShrink={0}
                               minW="28px"
                               textAlign="right"
@@ -200,7 +221,6 @@ export function GroupLandingBOverview({
                             >
                               {collection.item_count ?? 0}
                             </Text>
-                            {/* Title + summary — right column */}
                             <Box flex="1">
                               <Text
                                 fontFamily="serifBody"
@@ -219,7 +239,6 @@ export function GroupLandingBOverview({
                                   fontStyle="italic"
                                   color="theme.textSecondary"
                                   lineHeight="1.6"
-                                  opacity={0.8}
                                 >
                                   {collection.summary.trim()}
                                 </Text>
@@ -243,7 +262,14 @@ export function GroupLandingBOverview({
                   ))}
                 </VStack>
               ) : (
-                <Text color="theme.textSecondary">No collections have been pinned here yet.</Text>
+                <Text
+                  fontFamily="serifBody"
+                  fontSize="14px"
+                  fontStyle="italic"
+                  color="theme.textMuted"
+                >
+                  No collections have been pinned here yet.
+                </Text>
               )}
             </Stack>
           </Section>
@@ -251,7 +277,14 @@ export function GroupLandingBOverview({
           <Section title="Contributors" variant="sub">
             <Box>
               {viewData.members.isLoading ? (
-                <Text color="theme.textSecondary">Loading contributors…</Text>
+                <Text
+                  fontFamily="serifBody"
+                  fontSize="14px"
+                  fontStyle="italic"
+                  color="theme.textMuted"
+                >
+                  Loading contributors…
+                </Text>
               ) : leaders.length > 0 ? (
                 <VStack align="stretch" gap={4}>
                   {leaders.map((member) => {
@@ -270,7 +303,7 @@ export function GroupLandingBOverview({
                           <Text color="theme.text" fontFamily="serifBody" fontWeight="600">
                             {displayName}
                           </Text>
-                          <Text fontSize="xs" color="theme.textSecondary">
+                          <Text fontSize="xs" color="theme.textMuted">
                             {role}
                           </Text>
                         </Box>
@@ -279,7 +312,14 @@ export function GroupLandingBOverview({
                   })}
                 </VStack>
               ) : (
-                <Text color="theme.textSecondary">No contributors listed yet.</Text>
+                <Text
+                  fontFamily="serifBody"
+                  fontSize="14px"
+                  fontStyle="italic"
+                  color="theme.textMuted"
+                >
+                  No contributors listed yet.
+                </Text>
               )}
             </Box>
           </Section>
@@ -304,7 +344,7 @@ export function GroupLandingBOverview({
             <Text
               fontFamily="mono"
               fontSize="10px"
-              letterSpacing="0.12em"
+              letterSpacing="1.2px"
               textTransform="uppercase"
               color="theme.accent"
               mb={2}
@@ -320,19 +360,35 @@ export function GroupLandingBOverview({
               Continue into the live conversation space, or move sideways into the group&apos;s shared library and member roster.
             </Text>
           </Box>
-          <Stack direction={{ base: "column", sm: "row" }} gap={3}>
-            <Button onClick={() => onNavigateToTab?.("threadworks")}>
+          <Stack direction={{ base: "column", sm: "row" }} gap={3} flexShrink={0}>
+            <Button
+              bg="theme.accent"
+              color="white"
+              _hover={{ opacity: 0.9 }}
+              onClick={() => onNavigateToTab?.("threadworks")}
+            >
               Open conversations
             </Button>
             {viewData.bazaar.offeringsCount ? (
               <Link as={NextLink} href={`/groups/${group.slug}/stall`}>
-                <Button variant="outline">
+                <Button
+                  variant="outline"
+                  borderColor="theme.border"
+                  color="theme.textSecondary"
+                  _hover={{ bg: "theme.bgSubtle" }}
+                >
                   <IconShoppingBag size={16} />
                   View stall
                 </Button>
               </Link>
             ) : (
-              <Button variant="outline" onClick={() => onNavigateToTab?.("members")}>
+              <Button
+                variant="outline"
+                borderColor="theme.border"
+                color="theme.textSecondary"
+                _hover={{ bg: "theme.bgSubtle" }}
+                onClick={() => onNavigateToTab?.("members")}
+              >
                 Meet members
                 <IconArrowRight size={16} />
               </Button>

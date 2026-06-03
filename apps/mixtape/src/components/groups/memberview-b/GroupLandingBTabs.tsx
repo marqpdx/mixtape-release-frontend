@@ -84,36 +84,42 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
       >
         <HStack align="center" justify="space-between" gap={4} flexWrap="wrap">
           <Tabs.List border="none" bg="transparent" p={0} gap={{ base: 3, md: 6 }} flexWrap="wrap">
-            {tabs.map((tab) => (
-              <Tabs.Trigger
-                key={tab.key}
-                value={tab.key}
-                px={0}
-                py={2}
-                borderRadius="0"
-                color="theme.textSecondary"
-                _selected={{
-                  color: "theme.text",
-                  borderBottom: "2px solid",
-                  borderBottomColor: "theme.text",
-                }}
-              >
-                <HStack gap={2} align="baseline">
-                  <Text
-                    fontFamily="mono"
-                    fontSize="10px"
-                    letterSpacing="0.12em"
-                    textTransform="uppercase"
-                    color="inherit"
-                  >
-                    {tab.numeral}
-                  </Text>
-                  <Text fontFamily="serifBody" fontSize="md">
-                    {tab.label}
-                  </Text>
-                </HStack>
-              </Tabs.Trigger>
-            ))}
+            {tabs.map((tab) => {
+              const isActive = tab.key === activeTab;
+              return (
+                <Tabs.Trigger
+                  key={tab.key}
+                  value={tab.key}
+                  px={0}
+                  py={2}
+                  borderRadius="0"
+                  _selected={{
+                    borderBottom: "2px solid",
+                    borderBottomColor: "theme.accent",
+                  }}
+                >
+                  <HStack gap={2} align="baseline">
+                    <Text
+                      fontFamily="mono"
+                      fontSize="10px"
+                      letterSpacing="0.12em"
+                      textTransform="uppercase"
+                      color={isActive ? "theme.accent" : "theme.textFaint"}
+                    >
+                      {tab.numeral}
+                    </Text>
+                    <Text
+                      fontFamily="serifBody"
+                      fontSize="md"
+                      color={isActive ? "theme.accent" : "theme.textSecondary"}
+                      fontWeight={isActive ? "600" : "400"}
+                    >
+                      {tab.label}
+                    </Text>
+                  </HStack>
+                </Tabs.Trigger>
+              );
+            })}
           </Tabs.List>
 
           {user?.username ? (

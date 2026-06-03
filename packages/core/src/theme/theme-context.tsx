@@ -176,14 +176,20 @@ export function ThemeProvider({
       `color-mix(in srgb, ${colors.bg} 70%, ${colors.surface} 30%)`;
 
     const bgSubtle = `color-mix(in srgb, ${colors.bg} 60%, ${colors.border} 40%)`;
+    const textMuted = `color-mix(in srgb, ${colors.text} 45%, ${colors.bg} 55%)`;
+    const textFaint = `color-mix(in srgb, ${colors.text} 22%, ${colors.bg} 78%)`;
+    const accentSoft = `color-mix(in srgb, ${colors.accent} 12%, ${colors.bg} 88%)`;
 
     root.style.setProperty("--theme-bg", colors.bg);
     root.style.setProperty("--theme-bg-secondary", bgSecondary);
     root.style.setProperty("--theme-bg-subtle", bgSubtle);
     root.style.setProperty("--theme-surface", colors.surface);
     root.style.setProperty("--theme-accent", colors.accent);
+    root.style.setProperty("--theme-accent-soft", accentSoft);
     root.style.setProperty("--theme-text", colors.text);
     root.style.setProperty("--theme-text-secondary", colors.textSecondary);
+    root.style.setProperty("--theme-text-muted", textMuted);
+    root.style.setProperty("--theme-text-faint", textFaint);
     root.style.setProperty("--theme-border", colors.border);
 
     const transitionDuration = reducedMotion ? "0s" : "0.3s";

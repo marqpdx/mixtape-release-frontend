@@ -226,8 +226,11 @@ export const config = defineConfig({
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
+          accentSoft: { value: "var(--theme-accent-soft, #F0FFF4)" },
           text: { value: "var(--theme-text, #2D3748)" },
           textSecondary: { value: "var(--theme-text-secondary, #4A5568)" },
+          textMuted: { value: "var(--theme-text-muted, #718096)" },
+          textFaint: { value: "var(--theme-text-faint, #A0AEC0)" },
         },
       },
     },
@@ -314,11 +317,20 @@ export const config = defineConfig({
         "theme.accent": {
           value: "{colors.userTheme.accent}",
         },
+        "theme.accentSoft": {
+          value: "{colors.userTheme.accentSoft}",
+        },
         "theme.text": {
           value: "{colors.userTheme.text}",
         },
         "theme.textSecondary": {
           value: "{colors.userTheme.textSecondary}",
+        },
+        "theme.textMuted": {
+          value: "{colors.userTheme.textMuted}",
+        },
+        "theme.textFaint": {
+          value: "{colors.userTheme.textFaint}",
         },
 
         // Focus indicators (accessible)
