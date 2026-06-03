@@ -71,7 +71,9 @@ export default function AgreementsPage() {
   const [sendNoteText, setSendNoteText] = useState("");
   const [sendNoteSubmitting, setSendNoteSubmitting] = useState(false);
   const [sendNoteSubmitted, setSendNoteSubmitted] = useState(false);
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(AGREEMENTS.map((s) => [s.id, true]))
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;

@@ -67,11 +67,14 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
 
   return (
     <Tabs.Root
+      className="glbt-root"
       value={activeTab}
       onValueChange={(event) => handleTabChange(event.value as string)}
       variant="plain"
+      bg="theme.bgSubtle"
     >
       <Box
+        className="glbt-nav"
         borderTop="1px solid"
         borderBottom="1px solid"
         borderColor="theme.border"
@@ -120,13 +123,14 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
               _hover={{ textDecoration: "none" }}
             >
               <HStack
+                className="glbt-me-pill"
                 gap={2}
                 px={3}
                 py={2}
                 borderRadius="full"
                 borderWidth="1px"
                 borderColor="theme.border"
-                bg="theme.surface"
+                bg="theme.bg"
               >
                 {user.profile?.avatar_url ? (
                   <Box w="20px" h="20px" borderRadius="full" overflow="hidden" flexShrink={0}>
@@ -156,20 +160,20 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
         </HStack>
       </Box>
 
-      <Tabs.Content value="overview">
+      <Tabs.Content className="glbt-content-overview" value="overview" px="10px" pt={0}>
         <GroupLandingBOverview
           viewData={viewData}
           onNavigateToTab={handleTabChange}
           onOpenCollection={openCollectionFromOverview}
         />
       </Tabs.Content>
-      <Tabs.Content value="members">
+      <Tabs.Content className="glbt-content-members" value="members" pt={0}>
         <MembersTab group={group} />
       </Tabs.Content>
-      <Tabs.Content value="threadworks">
+      <Tabs.Content className="glbt-content-threadworks" value="threadworks" pt={0}>
         <ThreadworksTab group={group} />
       </Tabs.Content>
-      <Tabs.Content value="collections">
+      <Tabs.Content className="glbt-content-collections" value="collections" pt={0}>
         <CollectionsTab
           group={group}
           selectedCollectionId={selectedCollectionId}

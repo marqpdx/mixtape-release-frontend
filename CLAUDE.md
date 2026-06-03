@@ -10,6 +10,24 @@ When implementation work in this repo is governed by an ADR: read `{adr-name}-st
 
 ---
 
+## className Convention
+
+Add `className` to weight-bearing Chakra layout components: page roots, section
+containers, grids, nav bars, tab roots, tab content areas. Skip leaf nodes
+(Text, Button, Icon) unless they are a specific targeting need.
+
+**Naming:** short prefix scoped to the component file + semantic name.
+Format: `prefix-semantic-name` (e.g. `glb-header`, `glbt-nav`, `glbo-root`).
+Prefix: 3–4 chars derived from the component name (GroupLandingB → `glb-`).
+
+**Add classNames when the component is first written**, not retrofitted later.
+
+**Why:** lets CSS and layout instructions reference components by stable name
+instead of describing nested structure. A instruction like "add padding to
+`.glbt-nav`" is unambiguous; "the Box inside the Tabs.Root" is not.
+
+---
+
 ## Commit Handoff
 
 Every unit of work — including ad hoc changes — should produce a named git

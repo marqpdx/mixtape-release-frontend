@@ -175,8 +175,11 @@ export function ThemeProvider({
       colors.bgSecondary ??
       `color-mix(in srgb, ${colors.bg} 70%, ${colors.surface} 30%)`;
 
+    const bgSubtle = `color-mix(in srgb, ${colors.bg} 60%, ${colors.border} 40%)`;
+
     root.style.setProperty("--theme-bg", colors.bg);
     root.style.setProperty("--theme-bg-secondary", bgSecondary);
+    root.style.setProperty("--theme-bg-subtle", bgSubtle);
     root.style.setProperty("--theme-surface", colors.surface);
     root.style.setProperty("--theme-accent", colors.accent);
     root.style.setProperty("--theme-text", colors.text);

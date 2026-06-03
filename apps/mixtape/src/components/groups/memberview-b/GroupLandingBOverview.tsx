@@ -84,8 +84,8 @@ export function GroupLandingBOverview({
   const isAdminOrSteward = viewData.permissions.canModerateGroup;
 
   return (
-    <Stack gap={12}>
-      <SimpleGrid columns={{ base: 1, lg: 3 }} gap={{ base: 8, lg: 10, xl: 12 }} alignItems="start">
+    <Stack className="glbo-root" gap={12}>
+      <SimpleGrid className="glbo-grid" columns={{ base: 1, lg: 3 }} gap={{ base: 8, lg: 10, xl: 12 }} alignItems="start">
         {/* I · About Us */}
         <Section title="I · About us">
           <Text
@@ -120,7 +120,7 @@ export function GroupLandingBOverview({
           )}
         </Section>
 
-        <Stack gap={8}>
+        <Stack className="glbo-middle-col" gap={8}>
           {/* II · Open Question */}
           <Section title="II · Open question">
             <Stack gap={5}>
@@ -168,7 +168,7 @@ export function GroupLandingBOverview({
           </Section>
         </Stack>
 
-        <Stack gap={8}>
+        <Stack className="glbo-right-col" gap={8}>
           {/* III · Library */}
           <Section title="III · Library">
             <Stack gap={5}>
@@ -288,6 +288,7 @@ export function GroupLandingBOverview({
 
       {/* IV · Threads of intention */}
       <Box
+        className="glbo-threads"
         borderTop="1px solid"
         borderBottom="1px solid"
         borderColor="theme.border"

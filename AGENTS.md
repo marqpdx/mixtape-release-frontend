@@ -21,6 +21,14 @@ Purpose: conservative operating guide for agents working in this monorepo.
 - For new frontend tests requested by the user, stage work under `pre-tests/` first unless told otherwise.
 - Document assumptions and required env/services before attempting to run tests.
 
+## className Convention
+- Add `className` to weight-bearing Chakra layout components: page roots, section containers, grids, nav bars, tab roots, and tab content areas.
+- Skip leaf nodes such as `Text`, `Button`, and `Icon` unless there is a specific targeting need.
+- Naming format is `prefix-semantic-name`, using a short 3-4 character prefix derived from the component name plus a semantic name.
+- Examples: `glb-header`, `glbt-nav`, `glbo-root`.
+- Add classNames when a component is first written or materially edited, not as a later retrofit.
+- The purpose is stable targeting for CSS and layout instructions, so future edits can reference `.glbt-nav` instead of describing nested structure like "the second Box inside the Grid".
+
 ## Change Hygiene
 - Before editing: summarize intended edits and target files.
 - After editing: summarize exactly what changed and any follow-up verification steps.

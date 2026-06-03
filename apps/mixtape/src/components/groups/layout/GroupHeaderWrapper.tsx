@@ -74,7 +74,7 @@ export function GroupHeaderWrapper({
       )}
 
       {/* Header content (varies by type - Admin/Member/Public) */}
-      <Box className="whatho" w="full">{children}</Box>
+      <Box className="group-header-wrapper" w="full">{children}</Box>
     </Box>
   );
 }

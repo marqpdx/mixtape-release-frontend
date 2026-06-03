@@ -60,7 +60,7 @@ export function GroupMemberHeader({
       layoutVariant={layoutVariant}
       onLayoutChange={onLayoutChange}
     >
-      <Box minW="100vw" bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
+      <Box className="group-header-wrapper-member-bozo" minW="100vw" bg={cardBg} borderBottomWidth="1px" borderColor={borderColor} py={6}>
         <Container maxW="7xl">
           <Flex alignItems="center" gap={6}>
 

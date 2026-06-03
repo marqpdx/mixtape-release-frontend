@@ -222,6 +222,7 @@ export const config = defineConfig({
         userTheme: {
           bg: { value: "var(--theme-bg, #F7FAFC)" },
           bgSecondary: { value: "var(--theme-bg-secondary, #F1F3F6)" },
+          bgSubtle: { value: "var(--theme-bg-subtle, #EAEDF1)" },
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
@@ -300,6 +301,9 @@ export const config = defineConfig({
         },
         "theme.bgSecondary": {
           value: "{colors.userTheme.bgSecondary}",
+        },
+        "theme.bgSubtle": {
+          value: "{colors.userTheme.bgSubtle}",
         },
         "theme.surface": {
           value: "{colors.userTheme.surface}",

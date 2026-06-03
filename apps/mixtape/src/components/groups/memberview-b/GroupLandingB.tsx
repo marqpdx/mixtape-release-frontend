@@ -44,7 +44,7 @@ export function GroupLandingB({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
-      <Box bg="theme.bg" minH="100vh">
+      <Box className="glb-root" bg="theme.bg" minH="100vh">
         <GroupHeaderWrapper
           showRoleSwitcher={isMember}
           testRole={testRole}
@@ -53,14 +53,15 @@ export function GroupLandingB({
           layoutVariant={layoutVariant}
           onLayoutChange={onLayoutChange}
         >
-          <Box borderBottomWidth="1px" borderColor="theme.border" bg="theme.bg">
-            <Box px={{ base: 4, md: 8, xl: 12 }} pt={{ base: 6, md: 10 }} pb={{ base: 8, md: 12 }}>
+          <Box className="glb-header" borderBottomWidth="1px" borderColor="theme.border" bg="theme.bg">
+            <Box className="glb-header-inner" px={{ base: 4, md: 8, xl: 12 }} pt={5} pb={6}>
               <Grid
+                className="glb-header-grid"
                 templateColumns={{ base: "1fr", md: "320px minmax(0, 1fr)" }}
                 gap={{ base: 8, md: 12 }}
                 alignItems="start"
               >
-                <Box>
+                <Box className="glb-header-image-col">
                   {viewData.media.heroImage ? (
                     <Image
                       src={viewData.media.heroImage}
@@ -98,7 +99,7 @@ export function GroupLandingB({
                   )}
                 </Box>
 
-                <Flex direction="column" justify="space-between" gap={{ base: 8, xl: 10 }} minW={0}>
+                <Flex className="glb-header-content-col" direction="column" justify="space-between" gap={{ base: 8, xl: 10 }} minW={0}>
                   <Box textAlign="left">
                     <Text
                       as="h1"
@@ -124,6 +125,7 @@ export function GroupLandingB({
                   </Box>
 
                   <Grid
+                    className="glb-header-stats"
                     templateColumns={{ base: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" }}
                     gap={0}
                     borderTop="1px solid"
@@ -173,7 +175,7 @@ export function GroupLandingB({
           </Box>
         </GroupHeaderWrapper>
 
-        <Box px={{ base: 4, md: 8, xl: 12 }} pt={5} pb={10}>
+        <Box className="glb-body" px={{ base: 4, md: 8, xl: 12 }} pt={5} pb={10}>
           <GroupLandingBTabs group={group} viewData={viewData} />
         </Box>
       </Box>
