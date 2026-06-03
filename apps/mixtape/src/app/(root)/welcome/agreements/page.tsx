@@ -44,19 +44,19 @@ const AGREEMENTS: AgreementSection[] = [
     id: "respect",
     title: "Respect & Care",
     content:
-      "We believe every person matters, as do all beings, including this dear Earth we call home.",
+      "We believe every person matters, as do all beings, including this dear Earth we are blessed to call home.",
   },
   {
     id: "consent",
     title: "Consent & Privacy",
     content:
-      "We honor personal boundaries. Ask before DM'ing sensitive topics. Do not share private posts outside their context.",
+      "We honor personal boundaries. Ask before DM'ing sensitive topics. Do not share private posts outside their context. Use and build common sense.",
   },
   {
     id: "place",
     title: "Place & Belonging",
     content:
-      "We recognize place as more than coordinates. Local context, culture, and care for land and the living come first.",
+      "We welcome everyone who recognizes recognize place as more than coordinates, and accepts responsibility to help keep our commons safe and healthy. Local context, culture, and care for land and the living matter deeply.",
   },
 ];
 
@@ -133,17 +133,21 @@ export default function AgreementsPage() {
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             Welcome
           </Heading>
+
           <Text color="theme.textSecondary">
-            Crossroads is an intentional place. We believe in respect, and mutual flourishing. Please read the short tenets below, and if you agree, come on in.
+            {groupName
+              ? `You're joining ${groupName}, which is part of the greater Crossroads. Crossroads is an intentional place, and we believe in respect, truth, and mutual flourishing.`
+              : "Please read and accept the shared agreements that keep Crossroads welcoming. Thank you."}
           </Text>
+
           <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
             Community Agreements
           </Heading>
+
           <Text color="theme.textSecondary">
-            {groupName
-              ? `You're joining ${groupName}, which is part of the greater Crossroads. Please read and accept the shared agreements, that help keep Crossroads welcome and well. Thank you.`
-              : "Please read and accept the shared agreements that keep Crossroads welcoming. Thank you."}
+            Please read the short tenets below, and if you agree, come on in.
           </Text>
+
         </VStack>
 
         <VStack align="stretch" gap={4}>
