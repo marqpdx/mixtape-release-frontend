@@ -81,6 +81,7 @@ export function GroupMemberList({
   const [nameFilter, setNameFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textSecondary = useColorModeValue('gray.600', 'gray.300');
@@ -712,8 +713,15 @@ export function GroupMemberList({
               size="sm"
               variant="ghost"
               colorScheme="gray"
-              onClick={onRefresh}
-              loading={isLoading}
+              onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.resolve(onRefresh());
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }}
+              loading={isRefreshing}
             >
               <IconRefresh size={16} />
             </IconButton>

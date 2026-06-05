@@ -1,9 +1,10 @@
 "use client";
 
-import { Box, Button, HStack, Image, Link, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, IconButton, Image, Link, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconInfoCircle } from "@tabler/icons-react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -12,6 +13,8 @@ import { GroupLandingBOverview } from "./GroupLandingBOverview";
 import { MembersTab } from "../tabs/MembersTab";
 import { ThreadworksTab } from "../tabs/ThreadworksTab";
 import { CollectionsTab } from "../tabs/CollectionsTab";
+import { InfoBlockModal } from "@/components/groups/InfoBlockModal";
+import { Tooltip } from "@components/ui/tooltip";
 
 interface GroupLandingBTabsProps {
   group: Group;
@@ -20,6 +23,7 @@ interface GroupLandingBTabsProps {
 
 export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
   const { user } = useAuth();
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
   const {
     tabs,
     activeTab,
@@ -122,6 +126,19 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
             })}
           </Tabs.List>
 
+          <HStack gap={2}>
+          <Tooltip content="Getting around Crossroads" positioning={{ placement: "bottom" }} showArrow>
+            <IconButton
+              aria-label="Getting around Crossroads"
+              size="xs"
+              variant="ghost"
+              onClick={() => setInfoModalOpen(true)}
+              color="theme.textFaint"
+              _hover={{ color: "theme.textSecondary" }}
+            >
+              <IconInfoCircle size={14} />
+            </IconButton>
+          </Tooltip>
           {user?.username ? (
             <Link
               as={NextLink}
@@ -163,8 +180,11 @@ export function GroupLandingBTabs({ group, viewData }: GroupLandingBTabsProps) {
               </HStack>
             </Link>
           ) : null}
+          </HStack>
         </HStack>
       </Box>
+
+      <InfoBlockModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
 
       <Tabs.Content className="glbt-content-overview" value="overview" px="10px" pt={0}>
         <GroupLandingBOverview

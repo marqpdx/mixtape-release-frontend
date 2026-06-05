@@ -58,7 +58,7 @@ export function GroupHeaderWrapper({
                       showArrow
                     >
                       <Button
-                        size="sm"
+                        size="xs"
                         borderRadius="full"
                         variant={layoutVariant === view.id ? "solid" : "ghost"}
                         onClick={() => onLayoutChange(view.id)}

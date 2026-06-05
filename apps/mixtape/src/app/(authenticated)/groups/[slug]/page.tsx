@@ -168,6 +168,21 @@ export default function GroupPage() {
     }
   };
 
+  const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
+  const menuItems = useMemo(
+    () =>
+      group && myPermissions
+        ? getFilteredGroupMenuItems(
+            effectiveRole,
+            myPermissions.roles || [],
+            myPermissions.decorators || [],
+            group.group_type || "community"
+          )
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveRole, myPermissions, group?.group_type, group?.slug]
+  );
+
   if (isLoading) return <Box p={4}>Loading group...</Box>;
   if (!group) return <Box p={4}>Group not found.</Box>;
 
@@ -187,16 +202,6 @@ export default function GroupPage() {
     if (permissionsLoading || !myPermissions) {
       return <Box p={4}>Loading...</Box>;
     }
-
-    const effectiveRole: "admin" | "member" = testRole === "admin" ? "admin" : "member";
-
-    // Filter menu items based on user's permissions and group type
-    const menuItems = getFilteredGroupMenuItems(
-      effectiveRole,
-      myPermissions?.roles || [],
-      myPermissions?.decorators || [],
-      group.group_type || 'community'
-    );
 
     return (
       <Box className="sixty-box" pt={0} px={2}>

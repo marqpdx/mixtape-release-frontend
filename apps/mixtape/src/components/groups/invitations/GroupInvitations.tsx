@@ -18,6 +18,7 @@ import { toaster } from "@mixtape/core/lib/toaster";
 import { Tooltip } from "@components/ui/tooltip";
 import { GroupInvitation, invitationStatusIconMap } from "@mixtape/core/types/groupTypes";
 import { IconCopy, IconTrash } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // import { GroupInvitation, invitationStatusIconMap } from "./interfaces";
 
@@ -31,6 +32,7 @@ export default function GroupInvitations({
   const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const fetchInvitations = useCallback(async () => {
     setLoading(true);
@@ -57,7 +59,6 @@ export default function GroupInvitations({
   }, [fetchInvitations]);
 
   const handleDeleteInvite = async (inviteId: number) => {
-    if (!window.confirm("Delete this invitation?")) return;
     setDeletingId(inviteId);
     try {
       await axiosInstance.delete(`/api/groups/${slug}/invitations/${inviteId}`);
@@ -98,6 +99,21 @@ export default function GroupInvitations({
   };
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmDeleteId !== null}
+      onClose={() => setConfirmDeleteId(null)}
+      onConfirm={() => {
+        if (confirmDeleteId !== null) {
+          handleDeleteInvite(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }
+      }}
+      title="Delete invitation?"
+      message="This will permanently remove the invitation. The recipient will no longer be able to use the invite link."
+      confirmLabel="Delete"
+      isLoading={deletingId === confirmDeleteId}
+    />
     <Box>
       <Heading size="md" mb={4}>
         Group Invitations
@@ -197,7 +213,7 @@ export default function GroupInvitations({
                             variant="ghost"
                             colorScheme="red"
                             loading={deletingId === invite.id}
-                            onClick={() => handleDeleteInvite(invite.id)}
+                            onClick={() => setConfirmDeleteId(invite.id)}
                           >
                             <IconTrash size={13} />
                           </IconButton>
@@ -213,5 +229,6 @@ export default function GroupInvitations({
         </Box>
       )}
     </Box>
+    </>
   );
 }

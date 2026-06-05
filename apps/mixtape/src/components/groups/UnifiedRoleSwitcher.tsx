@@ -34,7 +34,7 @@ export function UnifiedRoleSwitcher({
           <Tooltip content="View as Admin">
             <IconButton
               aria-label="Admin view"
-              size="sm"
+              size="xs"
               variant={testRole === 'admin' ? 'solid' : 'ghost'}
               colorScheme={testRole === 'admin' ? 'green' : 'gray'}
               onClick={() => onRoleChange('admin')}
@@ -48,7 +48,7 @@ export function UnifiedRoleSwitcher({
         <Tooltip content="View as Member">
           <IconButton
             aria-label="Member view"
-            size="sm"
+            size="xs"
             variant={testRole === 'member' ? 'solid' : 'ghost'}
             colorScheme={testRole === 'member' ? 'green' : 'gray'}
             onClick={() => onRoleChange('member')}
@@ -61,7 +61,7 @@ export function UnifiedRoleSwitcher({
         <Tooltip content="View as Public (Non-member)">
           <IconButton
             aria-label="Public view"
-            size="sm"
+            size="xs"
             variant={testRole === 'public' ? 'solid' : 'ghost'}
             colorScheme={testRole === 'public' ? 'green' : 'gray'}
             onClick={() => onRoleChange('public')}

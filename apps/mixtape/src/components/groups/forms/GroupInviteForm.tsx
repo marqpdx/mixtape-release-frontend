@@ -505,12 +505,6 @@ export const GroupInviteForm = ({
       reset();
 
       if (created > 0) {
-        toaster.create({
-          title: "Invitation sent",
-          description: `${created} invitation${created !== 1 ? "s" : ""} sent successfully.`,
-          type: "success",
-          duration: 5000,
-        });
         const firstInvitationId = res.data.invitations?.[0]?.id || res.data.id;
         if (firstInvitationId && onSuccess) {
           onSuccess(firstInvitationId, {

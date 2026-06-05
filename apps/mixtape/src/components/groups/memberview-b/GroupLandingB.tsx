@@ -59,7 +59,7 @@ export function GroupLandingB({
                 className="glb-header-grid"
                 templateColumns={{ base: "1fr", md: "320px minmax(0, 1fr)" }}
                 gap={{ base: 8, md: 12 }}
-                alignItems="start"
+                alignItems="stretch"
               >
                 <Box className="glb-header-image-col">
                   {viewData.media.heroImage ? (
@@ -99,7 +99,7 @@ export function GroupLandingB({
                   )}
                 </Box>
 
-                <Flex className="glb-header-content-col" direction="column" justify="space-between" gap={{ base: 8, xl: 10 }} minW={0}>
+                <Flex className="glb-header-content-col" direction="column" justify="space-between" gap={0} minW={0}>
                   <Box textAlign="left">
                     <Text
                       as="h1"
@@ -114,7 +114,7 @@ export function GroupLandingB({
                     </Text>
                     <Text
                       fontFamily="serifBody"
-                      fontSize={{ base: "lg", md: "xl", xl: "2xl" }}
+                      fontSize={{ base: "md", md: "lg", xl: "xl" }}
                       fontStyle="italic"
                       lineHeight="1.45"
                       color="theme.textSecondary"

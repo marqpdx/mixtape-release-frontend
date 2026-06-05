@@ -34,6 +34,7 @@ export default function GroupInviteWorkArea({
   siteMembersLoading,
   parentGroupName,
 }: GroupInviteWorkAreaProps) {
+  const tabStorageKey = `groupInviteTab_${groupSlug}`;
   const [pollInvitationId, setPollInvitationId] = useState<number | null>(null);
   const [inviteStatusMessage, setInviteStatusMessage] = useState<string | null>(null);
   const [inviteStatusType, setInviteStatusType] = useState<"info" | "success" | "error" | null>(null);
@@ -100,7 +101,13 @@ export default function GroupInviteWorkArea({
         Group Invitations
       </Heading>
 
-      <Tabs.Root defaultValue="send" variant="enclosed">
+      <Tabs.Root
+        defaultValue={typeof window !== "undefined" ? (localStorage.getItem(tabStorageKey) ?? "send") : "send"}
+        onValueChange={(e) => {
+          try { localStorage.setItem(tabStorageKey, e.value); } catch {}
+        }}
+        variant="enclosed"
+      >
         <Tabs.List mb={4}>
           <Tabs.Trigger value="send">
             <HStack>
