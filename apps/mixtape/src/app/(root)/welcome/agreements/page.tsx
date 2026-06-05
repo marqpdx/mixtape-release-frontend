@@ -50,13 +50,13 @@ const AGREEMENTS: AgreementSection[] = [
     id: "consent",
     title: "Consent & Privacy",
     content:
-      "We honor personal boundaries. Ask before DM'ing sensitive topics. Do not share private posts outside their context. Use and build common sense.",
+      "We honor personal boundaries. Ask before DM'ing sensitive topics. Do not share private posts outside their context. Please use and build common sense.",
   },
   {
     id: "place",
     title: "Place & Belonging",
     content:
-      "We welcome everyone who recognizes recognize place as more than coordinates, and accepts responsibility to help keep our commons safe and healthy. Local context, culture, and care for land and the living matter deeply.",
+      "We recognize recognize place as more than coordinates, and value the responsibility needed to keep our shared spaces safe and healthy. Local context, culture, and care for land and the living matter deeply.",
   },
 ];
 
