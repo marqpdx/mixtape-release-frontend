@@ -200,12 +200,12 @@ export default function GroupInvitations({
                           </Tooltip>
                         </HStack>
                       ) : (
-                        <Text fontSize="xs" color="gray.400">—</Text>
+                        <Box w="24px" />
                       )}
                     </Table.Cell>
 
                     <Table.Cell>
-                      {invite.invitation_status !== "joined" && (
+                      {invite.invitation_status !== "joined" ? (
                         <Tooltip content="Delete invitation" positioning={{ placement: "top" }} showArrow>
                           <IconButton
                             aria-label="Delete invitation"
@@ -218,6 +218,8 @@ export default function GroupInvitations({
                             <IconTrash size={13} />
                           </IconButton>
                         </Tooltip>
+                      ) : (
+                        <Box w="24px" />
                       )}
                     </Table.Cell>
                   </Table.Row>
