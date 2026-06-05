@@ -17,7 +17,7 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { Tooltip } from "@components/ui/tooltip";
 import { GroupInvitation, invitationStatusIconMap } from "@mixtape/core/types/groupTypes";
-import { IconCopy } from "@tabler/icons-react";
+import { IconCopy, IconTrash } from "@tabler/icons-react";
 
 // import { GroupInvitation, invitationStatusIconMap } from "./interfaces";
 
@@ -30,6 +30,7 @@ export default function GroupInvitations({
 }: GroupInvitationsProps) {
   const [invitations, setInvitations] = useState<GroupInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchInvitations = useCallback(async () => {
     setLoading(true);
@@ -54,6 +55,29 @@ export default function GroupInvitations({
   useEffect(() => {
     fetchInvitations();
   }, [fetchInvitations]);
+
+  const handleDeleteInvite = async (inviteId: number) => {
+    if (!window.confirm("Delete this invitation?")) return;
+    setDeletingId(inviteId);
+    try {
+      await axiosInstance.delete(`/api/groups/${slug}/invitations/${inviteId}`);
+      toaster.create({
+        title: "Invitation deleted",
+        type: "success",
+        duration: 3000,
+      });
+      await fetchInvitations();
+    } catch {
+      toaster.create({
+        title: "Error",
+        description: "Failed to delete invitation.",
+        type: "error",
+        duration: 5000,
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
@@ -97,6 +121,7 @@ export default function GroupInvitations({
                 <Table.ColumnHeader>Invited By</Table.ColumnHeader>
                 <Table.ColumnHeader>Created At</Table.ColumnHeader>
                 <Table.ColumnHeader>Link</Table.ColumnHeader>
+                <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
 
@@ -160,6 +185,23 @@ export default function GroupInvitations({
                         </HStack>
                       ) : (
                         <Text fontSize="xs" color="gray.400">—</Text>
+                      )}
+                    </Table.Cell>
+
+                    <Table.Cell>
+                      {invite.invitation_status !== "joined" && (
+                        <Tooltip content="Delete invitation" positioning={{ placement: "top" }} showArrow>
+                          <IconButton
+                            aria-label="Delete invitation"
+                            size="2xs"
+                            variant="ghost"
+                            colorScheme="red"
+                            loading={deletingId === invite.id}
+                            onClick={() => handleDeleteInvite(invite.id)}
+                          >
+                            <IconTrash size={13} />
+                          </IconButton>
+                        </Tooltip>
                       )}
                     </Table.Cell>
                   </Table.Row>

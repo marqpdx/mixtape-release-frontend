@@ -2,7 +2,8 @@
 
 "use client";
 
-import { Box, Button, HStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Text } from "@chakra-ui/react";
+import { Tooltip } from "@components/ui/tooltip";
 import { UnifiedRoleSwitcher } from "../UnifiedRoleSwitcher";
 import { GROUP_MEMBER_VIEW_DEFINITIONS, type GroupMemberViewId } from "../member-views/registry";
 
@@ -46,18 +47,26 @@ export function GroupHeaderWrapper({
                 boxShadow="sm"
               >
                 <HStack gap={1}>
+                  <Text fontSize="xs" color="theme.textSecondary" px={1} userSelect="none">
+                    View:
+                  </Text>
                   {GROUP_MEMBER_VIEW_DEFINITIONS.map((view) => (
-                    <Button
+                    <Tooltip
                       key={view.id}
-                      size="xs"
-                      borderRadius="full"
-                      variant={layoutVariant === view.id ? "solid" : "ghost"}
-                      onClick={() => onLayoutChange(view.id)}
-                      title={view.description}
-                      px={2}
+                      content="Choose your view anytime"
+                      positioning={{ placement: "top" }}
+                      showArrow
                     >
-                      {view.label}
-                    </Button>
+                      <Button
+                        size="sm"
+                        borderRadius="full"
+                        variant={layoutVariant === view.id ? "solid" : "ghost"}
+                        onClick={() => onLayoutChange(view.id)}
+                        px={2}
+                      >
+                        {view.label}
+                      </Button>
+                    </Tooltip>
                   ))}
                 </HStack>
               </Box>

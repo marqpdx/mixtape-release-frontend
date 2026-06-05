@@ -1,22 +1,24 @@
-// src/app/(auth)/invitations/accept/[inviteInfo]/new/page.tsx
+// src/app/(auth)/invitations/accept/[inviteInfo]/page.tsx
 
 "use client";
 
 import { AcceptInviteForm } from "@/components/groups/invitations/AcceptInviteForm";
 import { useParams } from "next/navigation";
-// import { AcceptInviteForm } from "@components/invitations/AcceptInviteForm";
+import { useAuth } from "@/lib/auth/AuthContext";
 
-export default function NewUserAcceptInvitePage() {
+export default function AcceptInvitePage() {
   const params = useParams();
   const shortcode = (params.inviteInfo as string) || "";
+  const { user, isLoading } = useAuth();
 
   if (!shortcode) {
-    return (
-      <div>Invalid invitation link</div>
-    );
+    return <div>Invalid invitation link</div>;
   }
 
-  return <AcceptInviteForm shortcode={shortcode} isNewUser={false} />;
+  if (isLoading) return null;
+
+  // Logged-in users just accept the invite; unauthenticated users register first
+  return <AcceptInviteForm shortcode={shortcode} isNewUser={!user} />;
 }
 
 
