@@ -43,6 +43,7 @@ import { memberQueryKeys } from "@mixtape/api/hooks/useMembers";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useProfileDrawer } from "@/features/profile-revamp/stores/profileDrawerStore";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface GroupMemberListProps {
   group: Group;
@@ -81,6 +82,7 @@ export function GroupMemberList({
   const [nameFilter, setNameFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<GroupMembership | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -171,30 +173,25 @@ export function GroupMemberList({
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedIndex, filteredMembers.length]);
 
-  const handleRemoveMember = async (membership: GroupMembership) => {
+  const handleRemoveMember = (membership: GroupMembership) => {
     if (removingMemberId === membership.member_id) return;
+    setConfirmTarget(membership);
+  };
 
+  const executeRemove = async () => {
+    if (!confirmTarget) return;
+    const membership = confirmTarget;
     const displayName = getDisplayName(membership);
-    const confirmed = window.confirm(`Remove ${displayName} from ${group.title}?`);
-    if (!confirmed) return;
-
+    setConfirmTarget(null);
     try {
       setRemovingMemberId(membership.member_id);
       await groupApi.removeGroupMember(group.slug, membership.member_id);
-      await queryClient.invalidateQueries({
-        queryKey: memberQueryKeys.lists(),
-      });
+      await queryClient.invalidateQueries({ queryKey: memberQueryKeys.lists() });
       onRefresh?.();
-      toaster.create({
-        title: `${displayName} was removed from ${group.title}.`,
-        type: "success",
-      });
-    } catch (error) {
-      console.error("Failed to remove member:", error);
-      toaster.create({
-        title: `Could not remove ${displayName}.`,
-        type: "error",
-      });
+      toaster.create({ title: `${displayName} was removed from ${group.title}.`, type: "success" });
+    } catch (err) {
+      console.error("Failed to remove member:", err);
+      toaster.create({ title: `Could not remove ${displayName}.`, type: "error" });
     } finally {
       setRemovingMemberId(null);
     }
@@ -663,6 +660,16 @@ export function GroupMemberList({
 
   return (
     <Box position="relative">
+      <ConfirmDialog
+        open={!!confirmTarget}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={executeRemove}
+        title="Remove member?"
+        message={confirmTarget ? `Remove ${getDisplayName(confirmTarget)} from ${group.title}? This cannot be undone.` : undefined}
+        confirmLabel="Remove"
+        isLoading={!!removingMemberId}
+      />
+
       {/* In-page member profile panel */}
       <Box
         position={selectedMember ? "relative" : "absolute"}

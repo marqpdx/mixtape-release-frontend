@@ -1,6 +1,6 @@
 // apps/mixtape/src/components/dashboard/group/GroupWorkArea.tsx
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { VStack, Text, Spinner, Box, Heading } from "@chakra-ui/react";
 
 import { WorkAreaProps } from "@components/dashboard/shared/types";
@@ -61,6 +61,13 @@ export default function GroupWorkArea({
   const { user: identity } = useAuth();
 
   const { members: groupMembers, isLoading: groupMembersLoading, error, refetch } = useMembers(group.slug);
+
+  // Refresh member list whenever the user arrives at the members section
+  useEffect(() => {
+    if (section === "members-roles" || section === "members-permissions") {
+      refetch();
+    }
+  }, [section]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // For circles, fetch parent group members for invitation restrictions
   const isCircle = group.group_type === 'circle';
