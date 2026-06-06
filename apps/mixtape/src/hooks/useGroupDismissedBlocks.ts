@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { IconInfoCircle, IconSpeakerphone, IconFolder, IconUsers } from '@tabler/icons-react';
 import type { FC } from 'react';
 

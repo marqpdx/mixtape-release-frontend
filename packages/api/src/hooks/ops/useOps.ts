@@ -1,13 +1,20 @@
 // packages/api/src/hooks/ops/useOps.ts
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchBuildLogEntries, fetchOpsSummary, fetchOpsTiles, fetchOpsSnapshot } from "../../clients/ops/opsApi";
+import {
+  fetchBuildLogEntries,
+  fetchOpsSummary,
+  fetchOpsTiles,
+  fetchOpsSnapshot,
+  fetchProjectStatus,
+} from "../../clients/ops/opsApi";
 import type {
   BuildLogListParams,
   BuildLogListResponse,
   OpsSummaryResponse,
   OpsTilesResponse,
   OpsHealthSnapshotResponse,
+  ProjectStatusResponse,
 } from "../../clients/ops/opsApi";
 
 export const opsQueryKeys = {
@@ -16,6 +23,7 @@ export const opsQueryKeys = {
   tiles: () => [opsQueryKeys.all, "tiles"] as const,
   snapshot: () => [opsQueryKeys.all, "snapshot"] as const,
   buildLog: (params: BuildLogListParams) => [opsQueryKeys.all, "build-log", params] as const,
+  projectStatus: () => [opsQueryKeys.all, "project-status"] as const,
 };
 
 interface OpsQueryOptions {
@@ -63,6 +71,17 @@ export const useBuildLogEntries = (
   return useQuery<BuildLogListResponse>({
     queryKey: opsQueryKeys.buildLog(params),
     queryFn: () => fetchBuildLogEntries(params),
+    enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+  });
+};
+
+export const useProjectStatus = (options: OpsQueryOptions = {}) => {
+  const { enabled = true } = options;
+  return useQuery<ProjectStatusResponse>({
+    queryKey: opsQueryKeys.projectStatus(),
+    queryFn: fetchProjectStatus,
     enabled,
     refetchOnWindowFocus: false,
     staleTime: 0,

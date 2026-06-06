@@ -22,6 +22,8 @@ import {
   Separator,
   Flex,
   Grid,
+  Progress,
+  Tabs,
 } from "@chakra-ui/react";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import type {
@@ -31,8 +33,10 @@ import type {
   OpsBackupsDetailSection,
   OpsLivewireDetailSection,
   OpsPostgresDetailSection,
+  ProjectStatusDecision,
+  ProjectStatusTimelineEntry,
 } from "@mixtape/api/clients/ops/opsApi";
-import { useBuildLogEntries, useOpsSummary, useOpsSnapshot } from "@mixtape/api/hooks/ops/useOps";
+import { useBuildLogEntries, useOpsSummary, useOpsSnapshot, useProjectStatus } from "@mixtape/api/hooks/ops/useOps";
 
 interface SysadminWorkAreaProps extends WorkAreaProps {
   identity: UserIdentity;
@@ -86,6 +90,12 @@ interface QuickListItem {
 }
 
 const BUILD_LOG_PAGE_SIZE = 25;
+const PROJECT_STATUS_QUEUE_ORDER: Record<string, number> = {
+  blocked: 0,
+  in_progress: 1,
+  pending: 2,
+  complete: 3,
+};
 
 // Helper to format bytes
 function formatBytes(bytes: number | undefined | null): string {
@@ -181,6 +191,39 @@ function formatDateTime(value: string | undefined | null): string {
 function formatDate(value: string | undefined | null): string {
   if (!value) return "—";
   return new Date(`${value}T00:00:00`).toLocaleDateString();
+}
+
+function formatQueueState(value: string | undefined): string {
+  if (!value) return "Pending";
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getQueueStateColor(value: string | undefined): string {
+  if (value === "complete") return "green";
+  if (value === "in_progress") return "orange";
+  if (value === "blocked") return "red";
+  return "gray";
+}
+
+function getCheckpointPercent(decision: ProjectStatusDecision): number {
+  const total = decision.checkpoint_counts.total;
+  if (!total) return 0;
+  return Math.round((decision.checkpoint_counts.done / total) * 100);
+}
+
+function formatTimelineSource(value: string | undefined): string {
+  if (value === "build_log") return "Build log";
+  if (value === "inbox") return "Inbox";
+  return value || "Unknown";
+}
+
+function getTimelineSourceColor(value: string | undefined): string {
+  if (value === "build_log") return "teal";
+  if (value === "inbox") return "orange";
+  return "gray";
 }
 
 // Emoji map for tiles
@@ -353,10 +396,25 @@ export default function SysadminWorkArea({
   const [buildLogRepo, setBuildLogRepo] = useState("");
   const [buildLogOffset, setBuildLogOffset] = useState(0);
   const [expandedEntryId, setExpandedEntryId] = useState<number | null>(null);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectQueueState, setProjectQueueState] = useState("");
+  const [projectTimelineSearch, setProjectTimelineSearch] = useState("");
+  const [projectTimelineRepo, setProjectTimelineRepo] = useState("");
+  const [projectTimelineWorkEffort, setProjectTimelineWorkEffort] = useState("");
+  const [projectTimelineSource, setProjectTimelineSource] = useState("");
   const deferredBuildLogSearch = useDeferredValue(buildLogSearch);
+  const deferredProjectSearch = useDeferredValue(projectSearch);
+  const deferredProjectTimelineSearch = useDeferredValue(projectTimelineSearch);
   const { data: summary, isLoading, error, refetch: refetchSummary, isFetching } =
     useOpsSummary({ enabled: isSuperuser });
   const { data: snapshot, refetch: refetchSnapshot } = useOpsSnapshot({ enabled: isSuperuser });
+  const {
+    data: projectStatus,
+    isLoading: projectStatusLoading,
+    isFetching: projectStatusFetching,
+    error: projectStatusError,
+    refetch: refetchProjectStatus,
+  } = useProjectStatus({ enabled: isSuperuser });
   const {
     data: buildLogData,
     isLoading: buildLogLoading,
@@ -381,6 +439,10 @@ export default function SysadminWorkArea({
   const handleRefreshBuildLog = useCallback(() => {
     refetchBuildLog();
   }, [refetchBuildLog]);
+
+  const handleRefreshProjectStatus = useCallback(() => {
+    refetchProjectStatus();
+  }, [refetchProjectStatus]);
 
   const handleDownloadSnapshot = useCallback(() => {
     if (!snapshot) return;
@@ -487,6 +549,70 @@ export default function SysadminWorkArea({
   const buildLogCount = buildLogData?.count || 0;
   const buildLogPageStart = buildLogCount === 0 ? 0 : buildLogOffset + 1;
   const buildLogPageEnd = Math.min(buildLogOffset + buildLogEntries.length, buildLogCount);
+
+  const projectDecisions = useMemo(() => {
+    const search = deferredProjectSearch.trim().toLowerCase();
+    return (projectStatus?.decisions || [])
+      .filter((decision) => {
+        if (projectQueueState && decision.queue_state !== projectQueueState) return false;
+        if (!search) return true;
+        return [
+          decision.name,
+          decision.path,
+          decision.class,
+          decision.status,
+          decision.library,
+        ].some((value) => value.toLowerCase().includes(search));
+      })
+      .sort((a, b) => {
+        const queueDelta = (PROJECT_STATUS_QUEUE_ORDER[a.queue_state] ?? 99) - (PROJECT_STATUS_QUEUE_ORDER[b.queue_state] ?? 99);
+        if (queueDelta !== 0) return queueDelta;
+        return a.path.localeCompare(b.path);
+      });
+  }, [deferredProjectSearch, projectQueueState, projectStatus?.decisions]);
+
+  const projectQueueChoices = useMemo(() => {
+    return Array.from(new Set((projectStatus?.decisions || []).map((decision) => decision.queue_state))).sort(
+      (a, b) => (PROJECT_STATUS_QUEUE_ORDER[a] ?? 99) - (PROJECT_STATUS_QUEUE_ORDER[b] ?? 99),
+    );
+  }, [projectStatus?.decisions]);
+
+  const projectTimelineRepoChoices = useMemo(() => {
+    return Array.from(new Set((projectStatus?.timeline || []).map((entry) => entry.repo))).sort();
+  }, [projectStatus?.timeline]);
+
+  const projectTimelineWorkEffortChoices = useMemo(() => {
+    return Array.from(new Set((projectStatus?.timeline || []).map((entry) => entry.work_effort).filter(Boolean))).sort();
+  }, [projectStatus?.timeline]);
+
+  const projectTimelineEntries = useMemo(() => {
+    const search = deferredProjectTimelineSearch.trim().toLowerCase();
+    return (projectStatus?.timeline || []).filter((entry) => {
+      if (projectTimelineRepo && entry.repo !== projectTimelineRepo) return false;
+      if (projectTimelineWorkEffort && entry.work_effort !== projectTimelineWorkEffort) return false;
+      if (projectTimelineSource && entry.source !== projectTimelineSource) return false;
+      if (!search) return true;
+      return [
+        entry.repo,
+        entry.commit_hash,
+        entry.commit_message,
+        entry.work_effort,
+        entry.body,
+        formatTimelineSource(entry.source),
+        entry.source_filename,
+      ].some((value) => value.toLowerCase().includes(search));
+    });
+  }, [
+    deferredProjectTimelineSearch,
+    projectStatus?.timeline,
+    projectTimelineRepo,
+    projectTimelineSource,
+    projectTimelineWorkEffort,
+  ]);
+
+  const projectTimelineSourceChoices = useMemo(() => {
+    return Array.from(new Set((projectStatus?.timeline || []).map((entry) => entry.source))).sort();
+  }, [projectStatus?.timeline]);
 
   const overviewTiles = useMemo(() => {
     if (!summary) return [];
@@ -1986,6 +2112,245 @@ export default function SysadminWorkArea({
     );
   }
 
+  if (section === "puddlejump-status") {
+    return (
+      <WorkAreaWrapper>
+        <VStack className="swa-project-status-root" align="stretch" gap={6}>
+          <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+            <VStack align="stretch" gap={1}>
+              <Text fontSize="2xl" fontWeight="bold">Project Status</Text>
+              <Text fontSize="sm" color="gray.500">
+                Local Puddlejump decision records, build plans, checkpoint state, and canonical build-log timeline.
+              </Text>
+            </VStack>
+            <Button size="sm" onClick={handleRefreshProjectStatus} loading={projectStatusFetching}>
+              Refresh
+            </Button>
+          </HStack>
+
+          {projectStatusError && <Text color="red.500">Unable to load project status.</Text>}
+          {projectStatusLoading && <Text>Loading project status...</Text>}
+
+          {!projectStatusLoading && !projectStatusError && projectStatus && !projectStatus.available && (
+            <Card.Root>
+              <Card.Body>
+                <VStack align="stretch" gap={2}>
+                  <Text fontWeight="semibold">Puddlejump path is not configured.</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    {projectStatus.reason || "Set PUDDLEJUMP_PATH in local Django settings to enable this view."}
+                  </Text>
+                </VStack>
+              </Card.Body>
+            </Card.Root>
+          )}
+
+          {!projectStatusLoading && !projectStatusError && projectStatus?.available && (
+            <Tabs.Root className="swa-project-status-tabs" defaultValue="checkpoints">
+              <Tabs.List mb={4}>
+                <Tabs.Trigger value="checkpoints">Checkpoint Dashboard</Tabs.Trigger>
+                <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
+                <Tabs.Indicator />
+              </Tabs.List>
+
+              <Tabs.Content className="swa-project-status-checkpoints" value="checkpoints">
+                <VStack align="stretch" gap={4}>
+                  <Card.Root>
+                    <Card.Body>
+                      <Grid className="swa-project-status-filters" templateColumns={{ base: "1fr", md: "minmax(0, 2fr) 220px" }} gap={4}>
+                        <Field.Root>
+                          <Field.Label>Search</Field.Label>
+                          <Input
+                            placeholder="Name, path, class, status, or library"
+                            value={projectSearch}
+                            onChange={(event) => setProjectSearch(event.target.value)}
+                          />
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Queue State</Field.Label>
+                          <NativeSelect.Root>
+                            <NativeSelect.Field
+                              value={projectQueueState}
+                              onChange={(event) => setProjectQueueState(event.target.value)}
+                            >
+                              <option value="">All states</option>
+                              {projectQueueChoices.map((state) => (
+                                <option key={state} value={state}>
+                                  {formatQueueState(state)}
+                                </option>
+                              ))}
+                            </NativeSelect.Field>
+                          </NativeSelect.Root>
+                        </Field.Root>
+                      </Grid>
+                    </Card.Body>
+                  </Card.Root>
+
+                  <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+                    <Text fontSize="sm" color="gray.500">
+                      Showing {projectDecisions.length} of {projectStatus.decisions.length} decision records and build plans.
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      Generated at: {formatDateTime(projectStatus.generated_at)}
+                    </Text>
+                  </HStack>
+
+                  <Card.Root>
+                    <Card.Body overflowX="auto">
+                      <Table.Root size="sm">
+                        <Table.Header>
+                          <Table.Row>
+                            <Table.ColumnHeader>Name</Table.ColumnHeader>
+                            <Table.ColumnHeader>Class</Table.ColumnHeader>
+                            <Table.ColumnHeader>Status</Table.ColumnHeader>
+                            <Table.ColumnHeader>Queue</Table.ColumnHeader>
+                            <Table.ColumnHeader>Checkpoints</Table.ColumnHeader>
+                          </Table.Row>
+                        </Table.Header>
+                        <Table.Body>
+                          {projectDecisions.map((decision) => {
+                            const percent = getCheckpointPercent(decision);
+                            const checkpointLabel = decision.checkpoint_counts.total
+                              ? `${decision.checkpoint_counts.done}/${decision.checkpoint_counts.total}`
+                              : "none";
+                            return (
+                              <Table.Row key={decision.path}>
+                                <Table.Cell minW="260px">
+                                  <VStack align="stretch" gap={1}>
+                                    <Text fontWeight="semibold">{decision.name}</Text>
+                                    <Text fontSize="xs" color="gray.500">{decision.path}</Text>
+                                  </VStack>
+                                </Table.Cell>
+                                <Table.Cell>
+                                  <Badge colorPalette="blue" variant="subtle">
+                                    {decision.class || "unknown"}
+                                  </Badge>
+                                </Table.Cell>
+                                <Table.Cell maxW="280px">
+                                  <Text fontSize="sm">{decision.status || "—"}</Text>
+                                </Table.Cell>
+                                <Table.Cell>
+                                  <Badge colorPalette={getQueueStateColor(decision.queue_state)} variant="subtle">
+                                    {formatQueueState(decision.queue_state)}
+                                  </Badge>
+                                </Table.Cell>
+                                <Table.Cell minW="190px">
+                                  <VStack align="stretch" gap={1}>
+                                    <HStack justify="space-between">
+                                      <Text fontSize="xs" color="gray.500">{checkpointLabel}</Text>
+                                      {decision.checkpoint_counts.in_progress > 0 && (
+                                        <Text fontSize="xs" color="orange.500">
+                                          {decision.checkpoint_counts.in_progress} active
+                                        </Text>
+                                      )}
+                                    </HStack>
+                                    <Progress.Root value={percent} size="sm">
+                                      <Progress.Track>
+                                        <Progress.Range />
+                                      </Progress.Track>
+                                    </Progress.Root>
+                                  </VStack>
+                                </Table.Cell>
+                              </Table.Row>
+                            );
+                          })}
+                        </Table.Body>
+                      </Table.Root>
+                    </Card.Body>
+                  </Card.Root>
+                </VStack>
+              </Tabs.Content>
+
+              <Tabs.Content className="swa-project-status-timeline" value="timeline">
+                <VStack align="stretch" gap={4}>
+                  <Card.Root>
+                    <Card.Body>
+                      <Grid className="swa-project-timeline-filters" templateColumns={{ base: "1fr", md: "minmax(0, 2fr) 1fr 1fr 180px" }} gap={4}>
+                        <Field.Root>
+                          <Field.Label>Search</Field.Label>
+                          <Input
+                            placeholder="Commit, repo, work effort, source, or summary"
+                            value={projectTimelineSearch}
+                            onChange={(event) => setProjectTimelineSearch(event.target.value)}
+                          />
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Repo</Field.Label>
+                          <NativeSelect.Root>
+                            <NativeSelect.Field
+                              value={projectTimelineRepo}
+                              onChange={(event) => setProjectTimelineRepo(event.target.value)}
+                            >
+                              <option value="">All repos</option>
+                              {projectTimelineRepoChoices.map((repo) => (
+                                <option key={repo} value={repo}>
+                                  {repo}
+                                </option>
+                              ))}
+                            </NativeSelect.Field>
+                          </NativeSelect.Root>
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Work Effort</Field.Label>
+                          <NativeSelect.Root>
+                            <NativeSelect.Field
+                              value={projectTimelineWorkEffort}
+                              onChange={(event) => setProjectTimelineWorkEffort(event.target.value)}
+                            >
+                              <option value="">All work efforts</option>
+                              {projectTimelineWorkEffortChoices.map((workEffort) => (
+                                <option key={workEffort} value={workEffort}>
+                                  {workEffort}
+                                </option>
+                              ))}
+                            </NativeSelect.Field>
+                          </NativeSelect.Root>
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Source</Field.Label>
+                          <NativeSelect.Root>
+                            <NativeSelect.Field
+                              value={projectTimelineSource}
+                              onChange={(event) => setProjectTimelineSource(event.target.value)}
+                            >
+                              <option value="">All sources</option>
+                              {projectTimelineSourceChoices.map((source) => (
+                                <option key={source} value={source}>
+                                  {formatTimelineSource(source)}
+                                </option>
+                              ))}
+                            </NativeSelect.Field>
+                          </NativeSelect.Root>
+                        </Field.Root>
+                      </Grid>
+                    </Card.Body>
+                  </Card.Root>
+
+                  <HStack justify="space-between" align={{ base: "stretch", md: "center" }} flexDirection={{ base: "column", md: "row" }}>
+                    <Text fontSize="sm" color="gray.500">
+                      Showing {projectTimelineEntries.length} of {projectStatus.timeline.length} canonical and unswept build-log entries.
+                    </Text>
+                    <Badge colorPalette={projectStatus.unprocessed_inbox_count > 0 ? "orange" : "gray"} variant="subtle" alignSelf={{ base: "flex-start", md: "center" }}>
+                      {projectStatus.unprocessed_inbox_count} unprocessed inbox entries
+                    </Badge>
+                  </HStack>
+
+                  <VStack align="stretch" gap={4}>
+                    {projectTimelineEntries.map((entry) => (
+                      <ProjectTimelineEntryCard key={`${entry.repo}-${entry.commit_hash}-${entry.source}`} entry={entry} />
+                    ))}
+                    {projectTimelineEntries.length === 0 && (
+                      <Text color="gray.500">No timeline entries match the current filters.</Text>
+                    )}
+                  </VStack>
+                </VStack>
+              </Tabs.Content>
+            </Tabs.Root>
+          )}
+        </VStack>
+      </WorkAreaWrapper>
+    );
+  }
+
   if (section === "diag-build-log") {
     return (
       <WorkAreaWrapper>
@@ -2092,6 +2457,42 @@ export default function SysadminWorkArea({
         <Text>This sysadmin section is under development.</Text>
       </VStack>
     </WorkAreaWrapper>
+  );
+}
+
+function ProjectTimelineEntryCard({ entry }: { entry: ProjectStatusTimelineEntry }) {
+  return (
+    <Card.Root borderLeftWidth="4px" borderLeftColor="teal.500">
+      <Card.Header>
+        <Flex justify="space-between" gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
+          <VStack align="stretch" gap={1} flex="1">
+            <HStack gap={2} flexWrap="wrap">
+              <Badge colorPalette="teal">{entry.repo}</Badge>
+              <Badge colorPalette={getTimelineSourceColor(entry.source)} variant="subtle">
+                {formatTimelineSource(entry.source)}
+              </Badge>
+              <Text fontSize="sm" color="gray.500">{formatDate(entry.date)}</Text>
+              <Text fontSize="sm" fontFamily="mono">{entry.commit_hash}</Text>
+            </HStack>
+            <Text fontWeight="semibold">{entry.commit_message || "No commit message recorded."}</Text>
+          </VStack>
+          {entry.work_effort && (
+            <Badge colorPalette="gray" variant="outline">
+              {entry.work_effort}
+            </Badge>
+          )}
+        </Flex>
+      </Card.Header>
+      <Card.Body>
+        <VStack align="stretch" gap={3}>
+          <Text whiteSpace="pre-wrap">{entry.body || "No build summary recorded."}</Text>
+          <Separator />
+          <Text fontSize="xs" color="gray.500">
+            Source file: {entry.source_filename || "—"}
+          </Text>
+        </VStack>
+      </Card.Body>
+    </Card.Root>
   );
 }
 

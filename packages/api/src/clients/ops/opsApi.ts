@@ -49,6 +49,43 @@ export interface BuildLogListParams {
   offset?: number;
 }
 
+export interface ProjectStatusDecision {
+  path: string;
+  name: string;
+  class: string;
+  status: string;
+  library: string;
+  last_updated: string;
+  checkpoint_counts: {
+    total: number;
+    done: number;
+    in_progress: number;
+    pending: number;
+  };
+  queue_state: "complete" | "in_progress" | "pending" | "blocked" | string;
+}
+
+export interface ProjectStatusTimelineEntry {
+  date: string;
+  repo: string;
+  commit_hash: string;
+  commit_message: string;
+  work_effort: string;
+  body: string;
+  source: "build_log" | "inbox" | string;
+  source_filename: string;
+}
+
+export interface ProjectStatusResponse {
+  available: boolean;
+  generated_at: string;
+  reason?: string;
+  root?: string;
+  decisions: ProjectStatusDecision[];
+  timeline: ProjectStatusTimelineEntry[];
+  unprocessed_inbox_count: number;
+}
+
 export interface OpsPostgresDetailSection {
   status?: "healthy" | "degraded" | "critical" | "stale" | "unavailable" | string;
   latency_ms?: number;
@@ -287,4 +324,9 @@ export async function fetchBuildLogEntries(params: BuildLogListParams = {}): Pro
     params: queryParams,
   });
   return res.data as BuildLogListResponse;
+}
+
+export async function fetchProjectStatus(): Promise<ProjectStatusResponse> {
+  const res = await axiosInstance.get(cacheBust("/api/ops/project-status"));
+  return res.data as ProjectStatusResponse;
 }
