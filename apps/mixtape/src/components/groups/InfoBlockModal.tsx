@@ -32,63 +32,54 @@ export function InfoBlockModal({ open, onClose }: InfoBlockModalProps) {
         p={0}
       >
         <DialogHeader px={6} pt={5} pb={3}>
-          <DialogTitle>Getting around Crossroads</DialogTitle>
+          <DialogTitle>Welcome to Crossroads</DialogTitle>
           <DialogCloseTrigger onClick={onClose} />
         </DialogHeader>
 
         <DialogBody px={6} pb={6} overflowY="auto" maxH="70vh">
           <VStack align="start" gap={5}>
             <Text color="theme.textSecondary" lineHeight="1.8">
-              Welcome. Here&apos;s a quick look at how to find your way around your group.
+              Glad you&apos;re here. Here&apos;s a quick orientation so you can find your footing.
             </Text>
 
-            {/* Screenshot slot: Overview tab */}
-            {/* <Image src="/onboarding/screen-overview.png" alt="Group overview" borderRadius="lg" w="full" /> */}
-
             <Box>
               <Heading as="h4" size="sm" color="theme.text" mb={1}>
-                The Overview tab
+                Overview — your home base
               </Heading>
               <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
-                This is your group&apos;s home. You&apos;ll see the Welcome message, member highlights, pinned resources, and announcements. Each block can be minimized with the &times; or (i) in its corner and brought back at any time.
-              </Text>
-            </Box>
-
-            {/* Screenshot slot: Members tab */}
-            {/* <Image src="/onboarding/screen-members.png" alt="Members tab" borderRadius="lg" w="full" /> */}
-
-            <Box>
-              <Heading as="h4" size="sm" color="theme.text" mb={1}>
-                Members
-              </Heading>
-              <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
-                Visit the Members tab to see who else is here. Click any member to read their profile and find ways to connect.
-              </Text>
-            </Box>
-
-            {/* Screenshot slot: Me / profile */}
-            {/* <Image src="/onboarding/screen-profile.png" alt="Your profile" borderRadius="lg" w="full" /> */}
-
-            <Box>
-              <Heading as="h4" size="sm" color="theme.text" mb={1}>
-                Your profile
-              </Heading>
-              <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
-                Click &ldquo;Me&rdquo; next to the navigation tabs to set up your group profile — a photo, a short intro, your intention. It&apos;s how others get to know you here.
+                The Overview tab is where your group gathers. You&apos;ll find the welcome message, member highlights, and pinned resources here. Any block can be minimized with &times; and restored later from the tab bar.
               </Text>
             </Box>
 
             <Box>
               <Heading as="h4" size="sm" color="theme.text" mb={1}>
-                Core Resources &amp; Collections
+                Members — who&apos;s here
               </Heading>
               <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
-                Materials, links, and files your group has gathered are organized into collections. Find them in the Core Resources and Collections tabs.
+                Open the Members tab to see who else is in the group. Click any member to read their profile, learn what they&apos;re working on, and find ways to connect.
               </Text>
             </Box>
 
-            <Text color="theme.textSecondary" fontSize="xs" lineHeight="1.8" fontStyle="italic">
-              You can return to this guide anytime by clicking the blue (i) icon at the top of the Overview.
+            <Box>
+              <Heading as="h4" size="sm" color="theme.text" mb={1}>
+                Your profile — the &ldquo;Me&rdquo; button
+              </Heading>
+              <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
+                Click <Text as="span" fontWeight="600" color="theme.text">Me</Text> in the tab bar to set up your group profile. A photo, a short intro, your intention — that&apos;s how others here get to know you. Take a few minutes when you&apos;re ready.
+              </Text>
+            </Box>
+
+            <Box>
+              <Heading as="h4" size="sm" color="theme.text" mb={1}>
+                Content Collections
+              </Heading>
+              <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.8">
+                Materials, links, and files the group has gathered live in the Content Collections tab. Browse, preview, or download anything there.
+              </Text>
+            </Box>
+
+            <Text color="theme.textFaint" fontSize="xs" lineHeight="1.8" fontStyle="italic">
+              You can bring this guide back anytime by clicking the (i) icon in the tab bar.
             </Text>
           </VStack>
         </DialogBody>

@@ -112,7 +112,7 @@ export default function AgreementsPage() {
 
   const handleContinue = () => {
     if (groupSlug) {
-      router.push(`/groups/${groupSlug}?new_member=1`);
+      router.push(`/groups/${groupSlug}?new_member=1&layout=a&view=member`);
     } else {
       router.push("/dashboard");
     }

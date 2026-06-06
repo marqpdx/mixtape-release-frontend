@@ -3,20 +3,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton } from "@chakra-ui/react";
+import { Avatar, AvatarGroup, Box, Button, Card, Flex, Heading, Stack, Text, Badge, Grid, Link, GridItem, IconButton, VStack } from "@chakra-ui/react";
 import { Tooltip } from "@components/ui/tooltip";
-import { IconShoppingBag, IconFolder, IconInfoCircle, IconSpeakerphone, IconUsers, IconX } from "@tabler/icons-react";
-import { InfoBlockModal } from "@/components/groups/InfoBlockModal";
+import { IconShoppingBag, IconFolder, IconX } from "@tabler/icons-react";
 import NextLink from "next/link";
 import type { Group, GroupOverviewBlock } from "@mixtape/core/types/groupTypes";
 import { useGroupWelcomePin, useMembers, useGroupOverviewLayout } from "@mixtape/api/hooks";
 import { useStall } from "@mixtape/api/hooks/useBazaar";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
+import { useGroupDismissedBlocks, type DismissableKey } from "@/hooks/useGroupDismissedBlocks";
 
 interface GroupOverviewTabProps {
   group: Group;
   onNavigateToTab?: (tab: string) => void;
+  onOpenInfoModal?: () => void;
 }
 
 const WELCOME_INLINE_WORD_LIMIT = 55;
@@ -54,49 +55,15 @@ function truncateWordsAtBoundary(input: string, limit: number): string {
   return `${words.slice(0, limit).join(" ")}...`;
 }
 
-const DISMISSABLE_BLOCKS = [
-  { key: "welcome", label: "Welcome", icon: IconInfoCircle },
-  { key: "announcements", label: "Announcements", icon: IconSpeakerphone },
-  { key: "pinned_resources", label: "Core Resources", icon: IconFolder },
-  { key: "member_highlights", label: "Members", icon: IconUsers },
-] as const;
-
-type DismissableKey = (typeof DISMISSABLE_BLOCKS)[number]["key"];
-
-export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabProps) {
-  const dismissStorageKey = `group:${group.slug}:dismissed-blocks`;
-  const infoStorageKey = `group:${group.slug}:info-dismissed`;
-
-  const [infoDismissed, setInfoDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try { return localStorage.getItem(`group:${group.slug}:info-dismissed`) === "1"; } catch { return false; }
-  });
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
-
-  const dismissInfo = () => {
-    setInfoModalOpen(false);
-    setInfoDismissed(true);
-    try { localStorage.setItem(infoStorageKey, "1"); } catch {}
-  };
-
-  const [dismissedBlocks, setDismissedBlocks] = useState<DismissableKey[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(dismissStorageKey);
-      return raw ? (JSON.parse(raw) as DismissableKey[]) : [];
-    } catch {
-      return [];
-    }
-  });
+export function GroupOverviewTab({ group, onNavigateToTab, onOpenInfoModal }: GroupOverviewTabProps) {
+  const {
+    dismissed: dismissedBlocks,
+    dismissBlock,
+    resetForNewMember,
+  } = useGroupDismissedBlocks(group.slug);
 
   const [closingKeys, setClosingKeys] = useState<Set<DismissableKey>>(new Set());
   const closingTimers = useRef<Map<DismissableKey, ReturnType<typeof setTimeout>>>(new Map());
-
-  const dismissBlock = (key: DismissableKey) => {
-    const next = [...dismissedBlocks, key];
-    setDismissedBlocks(next);
-    localStorage.setItem(dismissStorageKey, JSON.stringify(next));
-  };
 
   const dismissBlockAnimated = (key: DismissableKey) => {
     setClosingKeys((prev) => new Set([...prev, key]));
@@ -108,17 +75,6 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     closingTimers.current.set(key, timer);
   };
 
-  const restoreBlock = (key: DismissableKey) => {
-    const next = dismissedBlocks.filter((k) => k !== key);
-    setDismissedBlocks(next);
-    localStorage.setItem(dismissStorageKey, JSON.stringify(next));
-  };
-
-  const restoreAll = () => {
-    setDismissedBlocks([]);
-    localStorage.removeItem(dismissStorageKey);
-  };
-
   const isDismissed = (key: DismissableKey) => dismissedBlocks.includes(key);
 
   // Restore all blocks and open info modal when arriving from the new-member onboarding flow
@@ -126,17 +82,15 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("new_member") === "1") {
-      setDismissedBlocks([]);
-      localStorage.removeItem(dismissStorageKey);
-      setInfoDismissed(false);
-      try { localStorage.removeItem(infoStorageKey); } catch {}
-      setInfoModalOpen(true);
+      resetForNewMember();
+      onOpenInfoModal?.();
       // Remove the param so re-mounting on A/B switch doesn't reopen the modal
       params.delete("new_member");
       const newSearch = params.toString();
       window.history.replaceState(null, "", newSearch ? `?${newSearch}` : window.location.pathname);
     }
-  }, [dismissStorageKey, infoStorageKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Space between blocks — must match the gap removed from Stack/Grid below
   const BLOCK_GAP = "24px";
@@ -166,26 +120,28 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
       content = (
         <Card.Root>
           <Card.Body>
-            <Flex justify="space-between" align="flex-start" mb={3}>
-              <Heading size="md">Welcome to {group.title}</Heading>
+            <Flex justify="space-between" align="flex-start" mb={4}>
+              <Heading size="md" color="theme.text">Welcome to {group.title}</Heading>
               <Tooltip content="Minimize">
-                <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("welcome")}>
-                  <IconInfoCircle size={14} />
+                <IconButton aria-label="Minimize" size="2xs" variant="ghost" color="theme.accent" onClick={() => dismissBlockAnimated("welcome")}>
+                  <IconX size={14} />
                 </IconButton>
               </Tooltip>
             </Flex>
-            <Box color="fg.muted">
-              This is your group&apos;s home on Mixtape. Explore the tabs above to see members, content, and more.
-            </Box>
-            <Box color="fg.muted">
-              To share about yourself, click the "Me" button to the right of the tabs. Feel free to add a profile image, tell us about your work and intention, whatever feels comfortable to bring to the group.
-            </Box>
-            <Box color="fg.muted">
-              To access the group's primary assets, click into Core Resources on this, or the Content Collections tab.
-            </Box>
-            <Box color="fg.muted">
-              Finally, to hide this or any of the boxes in the Overview, click the X or (i) icon in the top right of any section, and it will be minimized. You can always bring it back.
-            </Box>
+            <VStack align="start" gap={3}>
+              <Text color="theme.textSecondary" lineHeight="1.75">
+                This is your group&apos;s home. Use the tabs above to browse members, conversations, and content.
+              </Text>
+              <Text color="theme.textSecondary" lineHeight="1.75">
+                Click <Text as="span" fontWeight="600" color="theme.text">Me</Text> in the tab bar to set up your group profile — a photo, a short intro, your intention. It&apos;s how other members get to know you here.
+              </Text>
+              <Text color="theme.textSecondary" lineHeight="1.75">
+                The <Text as="span" fontWeight="600" color="theme.text">Content Collections</Text> tab holds the group&apos;s materials, links, and files.
+              </Text>
+              <Text color="theme.textSecondary" fontSize="sm" lineHeight="1.75" fontStyle="italic">
+                To tidy things up, click &times; on any block to minimize it — you can always restore it from the tab bar.
+              </Text>
+            </VStack>
           </Card.Body>
         </Card.Root>
       );
@@ -207,7 +163,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
               </Heading>
               <Tooltip content="Minimize Welcome">
                 <IconButton aria-label="Minimize" size="2xs" variant="ghost" onClick={() => dismissBlockAnimated("welcome")}>
-                  <IconInfoCircle size={14} />
+                  <IconX size={14} />
                 </IconButton>
               </Tooltip>
             </Flex>
@@ -565,7 +521,7 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
   };
 
   const renderBlocks = () => (
-    <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(12, 1fr)" }} gap={0}>
+    <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(12, 1fr)" }} gap={6}>
       {blocks.map((block) => (
         <GridItem key={block.id} colSpan={getColSpan(block)}>
           {renderBlock(block)}
@@ -574,51 +530,8 @@ export function GroupOverviewTab({ group, onNavigateToTab }: GroupOverviewTabPro
     </Grid>
   );
 
-  const dismissedMeta = DISMISSABLE_BLOCKS.filter((b) => dismissedBlocks.includes(b.key));
-  const showRestoreBar = dismissedMeta.length > 0 || infoDismissed;
-
   return (
     <Stack gap={6}>
-      <InfoBlockModal open={infoModalOpen} onClose={dismissInfo} />
-
-      {/* Restore bar — shows icons for any dismissed blocks plus info (i) when dismissed */}
-      {showRestoreBar && (
-        <Flex align="center" gap={2} justify="flex-end" flexWrap="wrap">
-          <Text fontSize="xs" color="fg.muted">Minimized:</Text>
-          {infoDismissed && (
-            <Tooltip content="View getting-started guide">
-              <IconButton
-                aria-label="View getting-started guide"
-                size="xs"
-                variant="outline"
-                color="blue.500"
-                borderColor="blue.500"
-                onClick={() => setInfoModalOpen(true)}
-              >
-                <IconInfoCircle size={14} />
-              </IconButton>
-            </Tooltip>
-          )}
-          {dismissedMeta.map(({ key, label, icon: Icon }) => (
-            <Tooltip key={key} content={`Restore ${label}`}>
-              <IconButton
-                aria-label={`Restore ${label}`}
-                size="xs"
-                variant="outline"
-                onClick={() => restoreBlock(key as DismissableKey)}
-              >
-                <Icon size={14} />
-              </IconButton>
-            </Tooltip>
-          ))}
-          {dismissedMeta.length > 0 && (
-            <Button size="xs" variant="ghost" onClick={restoreAll}>
-              Restore all
-            </Button>
-          )}
-        </Flex>
-      )}
-
       {layoutLoading && (
         <Card.Root>
           <Card.Body>

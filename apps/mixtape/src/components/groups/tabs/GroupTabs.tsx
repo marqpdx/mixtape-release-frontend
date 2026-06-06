@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, HStack, Image, Link, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, IconButton, Image, Link, Text } from "@chakra-ui/react";
 import { Tabs } from "@chakra-ui/react";
 import NextLink from "next/link";
 import {
@@ -21,6 +21,9 @@ import { LandingTab } from "./LandingTab";
 // import { JoiningTab } from "./JoiningTab";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { Tooltip } from "@components/ui/tooltip";
+import { InfoBlockModal } from "@/components/groups/InfoBlockModal";
+import { useGroupDismissedBlocks, DISMISSABLE_BLOCKS } from "@/hooks/useGroupDismissedBlocks";
 
 interface GroupTabsProps {
   group: Group;
@@ -58,6 +61,18 @@ export function GroupTabs({
   const storageKey = `groupTab_${group.slug}_${viewingAsMember ? 'member' : 'public'}`;
 
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
+  const {
+    dismissed: dismissedBlocks,
+    infoDismissed,
+    restoreBlock,
+    restoreAll,
+    restoreInfo,
+  } = useGroupDismissedBlocks(group.slug);
+
+  const dismissedMeta = DISMISSABLE_BLOCKS.filter(b => dismissedBlocks.includes(b.key));
+  const showRestoreBar = viewingAsMember && (dismissedMeta.length > 0 || infoDismissed);
 
   // ✅ Load from storage on mount and when view changes
   useEffect(() => {
@@ -85,6 +100,11 @@ export function GroupTabs({
       borderRadius="xl"
       p={{ base: 2, md: 3 }}
     >
+      <InfoBlockModal
+        open={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
+      />
+
       <Tabs.Root
         value={activeTab}
         onValueChange={(e) => handleTabChange(e.value as string)}
@@ -128,61 +148,111 @@ export function GroupTabs({
             <Tabs.Indicator />
           </Tabs.List>
 
-          {/* Me button — visible to members only */}
-          {viewingAsMember && user?.username && (
-            <Link
-              as={NextLink}
-              href={`/groups/${group.slug}/me`}
-              title="About Me"
-              _hover={{ textDecoration: "none" }}
-              flexShrink={0}
-              mr={1}
-            >
+          {/* Right side: restore bar + Me button */}
+          <HStack gap={1} flexShrink={0}>
+            {/* Minimized blocks restore bar */}
+            {showRestoreBar && (
               <HStack
-                gap={1.5}
-                px={2.5}
-                py={1.5}
-                borderRadius="full"
+                gap={1}
+                px={2}
+                py={1}
+                borderRadius="md"
                 border="1px solid"
                 borderColor={tabBorderColor}
                 bg={tabActiveBg}
-                fontSize="sm"
-                fontWeight="500"
-                color={tabTextColor}
-                _hover={{ borderColor: "gray.400" }}
-                transition="all 0.15s"
               >
-                {user.profile?.avatar_url ? (
-                  <Box w="18px" h="18px" borderRadius="full" overflow="hidden" flexShrink={0}>
-                    <Image src={user.profile.avatar_url} alt="me" w="full" h="full" objectFit="cover" />
-                  </Box>
-                ) : (
-                  <Box
-                    w="18px"
-                    h="18px"
-                    borderRadius="full"
-                    bg="gray.300"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    fontSize="2xs"
-                    color="gray.600"
-                    flexShrink={0}
-                  >
-                    {user.username.charAt(0).toUpperCase()}
-                  </Box>
+                <Text fontSize="xs" color={tabTextColor} userSelect="none" pr={0.5}>
+                  Minimized:
+                </Text>
+                {infoDismissed && (
+                  <Tooltip content="View getting-started guide">
+                    <IconButton
+                      aria-label="View getting-started guide"
+                      size="2xs"
+                      variant="ghost"
+                      color="theme.accent"
+                      onClick={() => { restoreInfo(); setInfoModalOpen(true); }}
+                    >
+                      <IconInfoHexagon size={14} />
+                    </IconButton>
+                  </Tooltip>
                 )}
-                <Text>Me</Text>
+                {dismissedMeta.map(({ key, label, icon: Icon }) => (
+                  <Tooltip key={key} content={`Restore ${label}`}>
+                    <IconButton
+                      aria-label={`Restore ${label}`}
+                      size="2xs"
+                      variant="ghost"
+                      color={tabTextColor}
+                      onClick={() => restoreBlock(key)}
+                    >
+                      <Icon size={14} />
+                    </IconButton>
+                  </Tooltip>
+                ))}
+                {dismissedMeta.length > 1 && (
+                  <Button size="2xs" variant="ghost" color={tabTextColor} onClick={restoreAll} px={1}>
+                    All
+                  </Button>
+                )}
               </HStack>
-            </Link>
-          )}
+            )}
+
+            {/* Me button — visible to members only */}
+            {viewingAsMember && user?.username && (
+              <Link
+                as={NextLink}
+                href={`/groups/${group.slug}/me`}
+                title="About Me"
+                _hover={{ textDecoration: "none" }}
+                mr={1}
+              >
+                <HStack
+                  gap={1.5}
+                  px={2.5}
+                  py={1.5}
+                  borderRadius="full"
+                  border="1px solid"
+                  borderColor={tabBorderColor}
+                  bg={tabActiveBg}
+                  fontSize="sm"
+                  fontWeight="500"
+                  color={tabTextColor}
+                  _hover={{ borderColor: "gray.400" }}
+                  transition="all 0.15s"
+                >
+                  {user.profile?.avatar_url ? (
+                    <Box w="18px" h="18px" borderRadius="full" overflow="hidden" flexShrink={0}>
+                      <Image src={user.profile.avatar_url} alt="me" w="full" h="full" objectFit="cover" />
+                    </Box>
+                  ) : (
+                    <Box
+                      w="18px"
+                      h="18px"
+                      borderRadius="full"
+                      bg="gray.300"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize="2xs"
+                      color="gray.600"
+                      flexShrink={0}
+                    >
+                      {user.username.charAt(0).toUpperCase()}
+                    </Box>
+                  )}
+                  <Text>Me</Text>
+                </HStack>
+              </Link>
+            )}
+          </HStack>
         </HStack>
 
         {/* Member Tabs */}
         {viewingAsMember && (
           <>
             <Tabs.Content value="overview" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
-              <OverviewTab group={group} onNavigateToTab={handleTabChange} />
+              <OverviewTab group={group} onNavigateToTab={handleTabChange} onOpenInfoModal={() => setInfoModalOpen(true)} />
             </Tabs.Content>
             <Tabs.Content value="threadworks" bg={tabContentBg} borderRadius="lg" p={{ base: 3, md: 4 }}>
               <ThreadworksTab group={group} />
