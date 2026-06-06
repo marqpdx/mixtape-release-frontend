@@ -730,6 +730,8 @@ function FileRow({ item, onPreview }: FileRowProps) {
       transition="background 0.1s"
       _hover={{ bg: hoverBg }}
       role="group"
+      cursor="pointer"
+      onClick={onPreview}
     >
       <HStack gap={3} minW={0}>
         <FileChip type={ft} size={34} />
@@ -792,6 +794,8 @@ function FileCard({ item, onPreview }: FileRowProps) {
       transition="box-shadow 0.12s"
       _hover={{ boxShadow: 'sm' }}
       role="group"
+      cursor="pointer"
+      onClick={onPreview}
     >
       <FileChip type={ft} size={40} />
       <Box flex={1} minW={0}>
