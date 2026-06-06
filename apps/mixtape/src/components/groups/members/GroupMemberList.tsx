@@ -19,7 +19,7 @@ import {
   Avatar,
   Input,
 } from "@chakra-ui/react";
-import { MouseEvent, useEffect, useMemo, useState, useCallback } from "react";
+import { MouseEvent, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { GroupMemberProfilePanel } from "./GroupMemberProfilePanel";
 import Image from "next/image";
 import {
@@ -145,33 +145,59 @@ export function GroupMemberList({
     };
   };
 
+  const pushedHistoryRef = useRef(false);
+
   const handleMemberClick = useCallback((membership: GroupMembership) => {
     const idx = filteredMembers.findIndex((m) => m.member_id === membership.member_id);
     if (idx !== -1) {
+      history.pushState({ memberPanel: true }, '');
+      pushedHistoryRef.current = true;
       setSelectedIndex(idx);
     } else {
       onMemberClick?.(membership);
     }
   }, [filteredMembers, onMemberClick]);
 
-  const handleReturn = useCallback(() => setSelectedIndex(null), []);
+  const handleReturn = useCallback(() => {
+    if (pushedHistoryRef.current) {
+      pushedHistoryRef.current = false;
+      history.back();
+    } else {
+      setSelectedIndex(null);
+    }
+  }, []);
 
   const handleViewComplete = useCallback((username: string) => {
     openProfileDrawer(username);
   }, [openProfileDrawer]);
 
+  // Browser back button collapses the panel instead of navigating away
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      if (!e.state?.memberPanel && pushedHistoryRef.current) {
+        pushedHistoryRef.current = false;
+        setSelectedIndex(null);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   // Escape key closes the panel
   useEffect(() => {
     if (selectedIndex === null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedIndex(null);
+      if (e.key === "Escape") {
+        handleReturn();
+        return;
+      }
       if (e.key === "ArrowLeft" && selectedIndex > 0) setSelectedIndex((i) => (i ?? 0) - 1);
       if (e.key === "ArrowRight" && selectedIndex < filteredMembers.length - 1)
         setSelectedIndex((i) => (i ?? 0) + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedIndex, filteredMembers.length]);
+  }, [selectedIndex, filteredMembers.length, handleReturn]);
 
   const handleRemoveMember = (membership: GroupMembership) => {
     if (removingMemberId === membership.member_id) return;

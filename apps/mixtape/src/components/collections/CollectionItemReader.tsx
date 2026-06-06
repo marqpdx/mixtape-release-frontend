@@ -12,7 +12,7 @@ import {
 import { IconArrowLeft, IconDownload, IconExternalLink } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { useSourceFileContent } from '@mixtape/api/hooks';
-import { buildApiUrl } from '@mixtape/api/lib/axiosInstance';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { useWritingPiece } from '@mixtape/api/hooks/useWriting';
 import { TipTapRenderer } from '@components/tiptap/TipTapRenderer';
 import type { TipTapDocument } from '@components/tiptap/TipTapRenderer';
@@ -65,13 +65,35 @@ function isWordDoc(filename: string) {
   return ext === 'doc' || ext === 'docx';
 }
 
+async function downloadSourceFile(sourceFileId: string, filename: string) {
+  const response = await axiosInstance.get(
+    `/api/stackroom/source-files/${sourceFileId}/download`,
+    { responseType: 'blob' }
+  );
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function openSourceFileInTab(sourceFileId: string) {
+  const response = await axiosInstance.get(
+    `/api/stackroom/source-files/${sourceFileId}/download`,
+    { responseType: 'blob' }
+  );
+  const url = URL.createObjectURL(response.data);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => void }) {
   const sourceFileId = getSourceFileContent(item)?.id || null;
   const filename = getDisplayName(item);
   const { text, ingestionStatus, isLoading, error } = useSourceFileContent(sourceFileId);
-  const originalUrl = sourceFileId
-    ? buildApiUrl(`/api/stackroom/source-files/${sourceFileId}/download`)
-    : '';
   const previewUrl = sourceFileId
     ? `/api/stackroom/source-files/${sourceFileId}/preview.pdf`
     : '';
@@ -101,22 +123,26 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
 
           {sourceFileId && (
             <HStack gap={2}>
-              <Box asChild>
-                <a href={originalUrl} target="_blank" rel="noreferrer">
-                  <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: 'theme.text' }}>
-                    <IconExternalLink size={14} />
-                    <Text ml={1}>Open original</Text>
-                  </Button>
-                </a>
-              </Box>
-              <Box asChild>
-                <a href={originalUrl} download>
-                  <Button variant="ghost" size="sm" color="theme.textSecondary" _hover={{ color: 'theme.text' }}>
-                    <IconDownload size={14} />
-                    <Text ml={1}>Download original</Text>
-                  </Button>
-                </a>
-              </Box>
+              <Button
+                variant="ghost"
+                size="sm"
+                color="theme.textSecondary"
+                _hover={{ color: 'theme.text' }}
+                onClick={() => openSourceFileInTab(sourceFileId)}
+              >
+                <IconExternalLink size={14} />
+                <Text ml={1}>Open original</Text>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                color="theme.textSecondary"
+                _hover={{ color: 'theme.text' }}
+                onClick={() => downloadSourceFile(sourceFileId, filename)}
+              >
+                <IconDownload size={14} />
+                <Text ml={1}>Download original</Text>
+              </Button>
             </HStack>
           )}
         </HStack>
