@@ -314,7 +314,7 @@ export default function DashboardLayout({
   return (
     <Box
       className="dashboard-layout"
-      bg="theme.bg"
+      bg="theme.surface"
       minH={constrainToViewport ? "100vh" : "auto"}
     >
       {header && <Box>{header}</Box>}
@@ -534,6 +534,7 @@ export default function DashboardLayout({
             minW="0"
             minH="0"
             p={0}
+            bg="theme.bgSubtle"
             overflowX="hidden"
             overflowY={constrainToViewport ? "auto" : "visible"}
           >
