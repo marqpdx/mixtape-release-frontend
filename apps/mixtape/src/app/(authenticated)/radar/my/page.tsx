@@ -22,7 +22,6 @@ import {
   useCreateRadarInitiative,
   useUpdateRadarInitiative,
   useArchiveRadarInitiative,
-  useReorderRadarInitiatives,
 } from "@mixtape/api/hooks/radar";
 import type { RadarInitiative } from "@mixtape/api/clients/radar/radarApi";
 

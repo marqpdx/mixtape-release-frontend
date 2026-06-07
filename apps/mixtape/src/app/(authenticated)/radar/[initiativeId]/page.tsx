@@ -59,7 +59,6 @@ function NarrativeZone({
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const mutedColor = useColorModeValue("gray.400", "gray.500");
   const bgColor = useColorModeValue("white", "gray.800");
-  const zoneBg = useColorModeValue("gray.50", "gray.850");
 
   const handleBlur = () => {
     if (value !== initiative.narrative) {
