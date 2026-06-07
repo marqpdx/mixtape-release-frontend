@@ -65,7 +65,7 @@ export default function GroupPage() {
 
   // UI state: what view to render as
   const [testRole, setTestRole] = useState<ViewRole>("public");
-  const [layoutVariant, setLayoutVariant] = useState<GroupLayoutVariant>("a");
+  const [layoutVariant, setLayoutVariant] = useState<GroupLayoutVariant>("c");
 
   // Flag to prevent the "early overwrite" of localStorage
   const [didInit, setDidInit] = useState(false);
@@ -132,7 +132,7 @@ export default function GroupPage() {
       }
     }
 
-    setLayoutVariant(clampLayoutVariant(fromUrl ?? fromStorage ?? "a"));
+    setLayoutVariant(clampLayoutVariant(fromUrl ?? fromStorage ?? "c"));
     setDidInitLayout(true);
   }, [group, layoutStorageKey, urlLayout, clampLayoutVariant]);
 

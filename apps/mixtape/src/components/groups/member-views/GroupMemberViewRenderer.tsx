@@ -2,7 +2,7 @@
 
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupLanding } from "../layout/GroupLanding";
-import { GroupLandingB } from "../memberview-b/GroupLandingB";
+import { GroupLandingC } from "../memberview-c/GroupLandingC";
 import type { GroupLayoutVariant } from "../GroupLayoutSwitcher";
 
 interface GroupMemberViewRendererProps {
@@ -32,17 +32,17 @@ export function GroupMemberViewRenderer({
 }: GroupMemberViewRendererProps) {
   const viewingAsMember = testRole === "member" || testRole === "admin";
 
-  if (viewingAsMember && layoutVariant === "b") {
+  // C is the unified, only member view now — A/B stay registered as references
+  // but are no longer reachable from here (see member-views/registry.ts).
+  if (viewingAsMember) {
     return (
-      <GroupLandingB
+      <GroupLandingC
         group={group}
         testRole={testRole}
         onRoleChange={onRoleChange}
         isMember={isMember}
         isAdminOrSteward={isAdminOrSteward}
         canEditGroup={canEditGroup}
-        layoutVariant={layoutVariant}
-        onLayoutChange={onLayoutChange}
       />
     );
   }
@@ -58,7 +58,7 @@ export function GroupMemberViewRenderer({
       isAdminOrSteward={isAdminOrSteward}
       canEditGroup={canEditGroup}
       layoutVariant={layoutVariant}
-      onLayoutChange={viewingAsMember ? onLayoutChange : undefined}
+      onLayoutChange={onLayoutChange}
     />
   );
 }

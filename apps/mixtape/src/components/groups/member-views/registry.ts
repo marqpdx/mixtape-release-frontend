@@ -1,6 +1,6 @@
 "use client";
 
-export type GroupMemberViewId = "a" | "b";
+export type GroupMemberViewId = "a" | "b" | "c";
 
 export interface GroupMemberViewDefinition {
   id: GroupMemberViewId;
@@ -9,6 +9,10 @@ export interface GroupMemberViewDefinition {
   reference?: boolean;
 }
 
+// "C" unifies the prior A/B exploration into a single member view and is now
+// the only layout members are routed to (see GroupMemberViewRenderer). A and B
+// are kept registered — not deleted — as references should a future redesign
+// need them again.
 export const GROUP_MEMBER_VIEW_DEFINITIONS: GroupMemberViewDefinition[] = [
   {
     id: "a",
@@ -18,7 +22,12 @@ export const GROUP_MEMBER_VIEW_DEFINITIONS: GroupMemberViewDefinition[] = [
   {
     id: "b",
     label: "B",
-    description: "Editorial member view used as the current reference for new skins.",
+    description: "Editorial member view explored as a reference for new skins.",
+  },
+  {
+    id: "c",
+    label: "C",
+    description: "Unified member view — anchored header with calm card structure. Default and only view shown to members.",
     reference: true,
   },
 ];
@@ -32,5 +41,5 @@ export function isGroupMemberViewId(value: unknown): value is GroupMemberViewId 
 }
 
 export function normalizeGroupMemberViewId(value: unknown): GroupMemberViewId {
-  return isGroupMemberViewId(value) ? value : "a";
+  return isGroupMemberViewId(value) ? value : "c";
 }
