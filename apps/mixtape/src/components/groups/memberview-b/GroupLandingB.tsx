@@ -1,3 +1,5 @@
+// apps/mixtape/src/components/groups/membershipview-b/GroupLandingB.tsx
+
 "use client";
 
 import { Box, Button, Flex, Grid, Image, Link, Text } from "@chakra-ui/react";
