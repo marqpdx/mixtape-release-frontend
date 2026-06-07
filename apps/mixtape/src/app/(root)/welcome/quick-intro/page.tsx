@@ -103,10 +103,10 @@ function QuickIntroContent() {
               Step 2 of 3
             </Text>
             <Heading as="h1" size="xl" color="theme.text" fontWeight="800">
-              Tell us about yourself
+              We'd love to hear about you
             </Heading>
             <Text color="theme.textSecondary">
-              Share a short intro for the people you are joining. You can change this later.
+              Please feel free to share a short intro for the people you are joining. You can easily change this later.
             </Text>
           </VStack>
 
@@ -129,7 +129,7 @@ function QuickIntroContent() {
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setQuickIntro(e.target.value)
                   }
-                  placeholder="A few words about who you are, what brings you here, or what you are exploring."
+                  placeholder="A few words about who you are, what brings you here, or maybe one interesting thing you are exploring."
                   bg="theme.surface"
                   borderColor={remaining < 0 ? "red.400" : "theme.border"}
                   _focus={{
