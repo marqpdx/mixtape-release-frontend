@@ -173,6 +173,10 @@ export function GroupMemberList({
   useEffect(() => {
     if (selectedIndex === null) return;
     const onKey = (e: KeyboardEvent) => {
+      // Ignore modified arrows — Cmd/Ctrl/Alt+Left/Right are browser
+      // back/forward shortcuts and must reach useBackNavigableDetail's
+      // popstate handler, not be intercepted as member-stepping.
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowLeft" && selectedIndex > 0) setSelectedIndex((i) => (i ?? 0) - 1);
       if (e.key === "ArrowRight" && selectedIndex < filteredMembers.length - 1)
         setSelectedIndex((i) => (i ?? 0) + 1);

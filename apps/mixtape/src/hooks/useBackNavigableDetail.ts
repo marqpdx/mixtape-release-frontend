@@ -46,7 +46,10 @@ export function useBackNavigableDetail({
 
   const exit = useCallback(() => {
     if (pushedHistoryRef.current) {
-      pushedHistoryRef.current = false;
+      // Leave the ref set — the popstate handler below clears it and calls
+      // onClose once the synthetic entry actually pops. Clearing it here first
+      // makes the handler's guard fail, so the resulting popstate is ignored
+      // and onClose only fires on a *second* exit() call.
       history.back();
     } else {
       onClose();
