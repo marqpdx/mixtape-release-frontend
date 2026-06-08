@@ -94,7 +94,7 @@ const LoginPage: React.FC = () => {
         // Fall through to dashboard on any fetch error
       }
 
-      router.push("/dashboard");
+      router.push("/atrium");
 
       console.log("LoginPage login successful");
 
