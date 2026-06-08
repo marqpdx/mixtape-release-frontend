@@ -6,6 +6,7 @@ import { AtriumHeader } from "@/components/atrium/AtriumHeader";
 import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
+import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -41,8 +42,10 @@ export default function AtriumPage() {
             <AtriumInitiationCard />
           </Box>
 
-          {/* Zone E — AtriumCommunityPulse (AT-6), ~55% */}
-          <Box flex="55" />
+          {/* Zone E — AtriumCommunityPulse, ~55% */}
+          <Box flex="55">
+            <AtriumCommunityPulse />
+          </Box>
         </Flex>
 
         {/* Zone F — GristCommandBar (AT-7) */}
