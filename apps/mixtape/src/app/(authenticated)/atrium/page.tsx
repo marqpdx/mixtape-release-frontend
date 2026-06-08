@@ -5,6 +5,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { AtriumHeader } from "@/components/atrium/AtriumHeader";
 import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
+import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -35,8 +36,10 @@ export default function AtriumPage() {
           gap={6}
           align="stretch"
         >
-          {/* Zone D — AtriumInitiationCard (AT-5), ~45% */}
-          <Box flex="45" />
+          {/* Zone D — AtriumInitiationCard, ~45% */}
+          <Box flex="45">
+            <AtriumInitiationCard />
+          </Box>
 
           {/* Zone E — AtriumCommunityPulse (AT-6), ~55% */}
           <Box flex="55" />
