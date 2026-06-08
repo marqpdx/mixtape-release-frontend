@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
+import { useBackNavigableDetail } from '@/hooks/useBackNavigableDetail';
 import {
   Box,
   Flex,
@@ -1217,10 +1218,37 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
     return found && found.is_folder ? found : null;
   }, [activeItems, nav.folderId]);
 
-  const go = (next: ExplorerNav) => {
+  const go = useCallback((next: ExplorerNav) => {
     setNav(next);
     setQ('');
-  };
+  }, []);
+
+  // Browser back / Escape from inside a collection returns to the collections list
+  const detailNav = useBackNavigableDetail({
+    isOpen: nav.collectionId !== null,
+    onClose: () => {
+      setPreviewItem(null);
+      go({ collectionId: null, folderId: null });
+    },
+    tagKey: 'collectionDetail',
+  });
+
+  // Routes collection-level entry/exit through detailNav so the synthetic
+  // history entry stays in sync; folder navigation within a collection passes through untouched.
+  const goNav = useCallback(
+    (next: ExplorerNav) => {
+      const enteringCollection = next.collectionId !== null && nav.collectionId === null;
+      const leavingCollection = next.collectionId === null && nav.collectionId !== null;
+      if (enteringCollection) {
+        detailNav.enter(() => go(next));
+      } else if (leavingCollection) {
+        detailNav.exit();
+      } else {
+        go(next);
+      }
+    },
+    [nav.collectionId, go, detailNav]
+  );
 
   const panelBg = useColorModeValue('bg.surface', 'bg.surface');
   const borderColor = useColorModeValue('border.default', 'border.default');
@@ -1266,7 +1294,7 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
           collections={sponsorCollections}
           nav={nav}
           folderItems={activeItems}
-          onNav={go}
+          onNav={goNav}
         />
 
         {/* Main area */}
@@ -1276,7 +1304,7 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
             nav={nav}
             collection={activeCollection}
             folder={activeFolder}
-            onNav={go}
+            onNav={goNav}
             mode={mode}
             onModeChange={setMode}
             q={q}
@@ -1317,7 +1345,7 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
                     collections={sponsorCollections}
                     mode={mode}
                     q={q}
-                    onOpen={(id) => go({ collectionId: id, folderId: null })}
+                    onOpen={(id) => goNav({ collectionId: id, folderId: null })}
                   />
                 )}
 
