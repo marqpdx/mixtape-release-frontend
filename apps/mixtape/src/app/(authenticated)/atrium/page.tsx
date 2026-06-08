@@ -7,6 +7,7 @@ import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
+import { GristCommandBar } from "@/components/grist/GristCommandBar";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -48,8 +49,10 @@ export default function AtriumPage() {
           </Box>
         </Flex>
 
-        {/* Zone F — GristCommandBar (AT-7) */}
-        <Box mt={6} />
+        {/* Zone F — GristCommandBar */}
+        <Box mt={6}>
+          <GristCommandBar />
+        </Box>
 
       </Container>
     </Box>
