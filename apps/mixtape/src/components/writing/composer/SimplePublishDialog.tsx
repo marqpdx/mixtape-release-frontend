@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   VStack,
@@ -27,6 +27,7 @@ import { axiosInstance } from '@mixtape/api/lib/axiosInstance'
 import { useWritingMutations } from '@hooks/useWriting'
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi'
 import * as writingApi from '@mixtape/api/clients/writing/writingApi'
+import * as groupApi from '@mixtape/api/clients/group/groupApi'
 import {
   fetchDistributionSources,
   distributePiece,
@@ -143,6 +144,38 @@ export function SimplePublishDialog({
     },
     enabled: isOpen && !!pieceSlug,
   })
+
+  // Fetch existing placements and welcome pin to pre-populate the dialog on republish
+  const { data: existingPlacements } = useQuery({
+    queryKey: ['writing', 'placements', 'piece-restore', sponsorType, sponsorSlug],
+    queryFn: () => writingApi.fetchPlacements(sponsorType, sponsorSlug!),
+    enabled: isOpen && isUpdate && !!sponsorSlug,
+  })
+
+  const { data: existingWelcomePin } = useQuery({
+    queryKey: ['groups', 'welcome-pin', sponsorSlug],
+    queryFn: () => groupApi.fetchGroupWelcomePin(sponsorSlug!),
+    enabled: isOpen && isUpdate && sponsorType === 'group' && !!sponsorSlug,
+  })
+
+  // Seed audience + destination checkboxes from prior publish when dialog opens for an update
+  useEffect(() => {
+    if (!isOpen || !isUpdate || !existingPlacements) return
+    const piecePlacements = existingPlacements.filter((p) => p.piece_id === piece.id)
+    if (piecePlacements.length > 0) {
+      setAudience('readers')
+      if (sponsorType === 'group') setPostToGroup(true)
+    }
+  }, [isOpen, isUpdate, existingPlacements, piece.id, sponsorType])
+
+  useEffect(() => {
+    if (!isOpen || !isUpdate || existingWelcomePin === undefined) return
+    if (existingWelcomePin?.piece.id === piece.id) {
+      setAudience('readers')
+      setPostToGroup(true)
+      setPinAsWelcome(true)
+    }
+  }, [isOpen, isUpdate, existingWelcomePin, piece.id])
 
   const linkedinShareUrl = shareResults?.find((r) => r.source_kind === 'linkedin')?.channel_response?.linkedin_share_url as string | undefined
 
