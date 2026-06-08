@@ -10,6 +10,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { IconChevronRight, IconFolder, IconPin } from "@tabler/icons-react";
+import Link from "next/link";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 import type { TipTapDocument } from "@components/tiptap/TipTapRenderer";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -19,6 +20,41 @@ interface GroupLandingCOverviewProps {
   viewData: GroupMemberViewData;
   onNavigateToTab?: (tab: string) => void;
   onOpenCollection?: (collectionId: string) => void;
+}
+
+const WELCOME_INLINE_WORD_LIMIT = 55;
+const WELCOME_PREVIEW_WORD_LIMIT = 55;
+
+type TipTapLikeNode = {
+  type?: string;
+  text?: string;
+  content?: TipTapLikeNode[];
+};
+
+function collectNodeText(node: TipTapLikeNode | null | undefined): string {
+  if (!node) return "";
+  let out = node.text || "";
+  if (node.content && Array.isArray(node.content)) {
+    for (const child of node.content) {
+      out += ` ${collectNodeText(child)}`;
+    }
+  }
+  return out;
+}
+
+function bodyHasImage(node: TipTapLikeNode | null | undefined): boolean {
+  if (!node) return false;
+  if (node.type === "image") return true;
+  if (node.content && Array.isArray(node.content)) {
+    return node.content.some((child) => bodyHasImage(child));
+  }
+  return false;
+}
+
+function truncateWordsAtBoundary(input: string, limit: number): string {
+  const words = input.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= limit) return input.trim();
+  return `${words.slice(0, limit).join(" ")}...`;
 }
 
 function Kicker({ children }: { children: React.ReactNode }) {
@@ -124,11 +160,17 @@ export function GroupLandingCOverview({
 }: GroupLandingCOverviewProps) {
   const { group } = viewData;
   const welcomePin = viewData.overview.welcomePin;
-  const welcomeTitle = welcomePin?.display?.title || welcomePin?.piece.title || `Welcome to ${group.title}`;
+  const welcomeTitle = welcomePin?.display?.title || welcomePin?.piece.title;
   const welcomeBody = (welcomePin?.display?.body_json || welcomePin?.piece.body_json) as
-    | TipTapDocument
+    | TipTapLikeNode
     | undefined;
-  const welcomeExcerpt = (welcomePin?.display?.excerpt || welcomePin?.piece.excerpt || "").trim();
+  const welcomeText = collectNodeText(welcomeBody).replace(/\s+/g, " ").trim();
+  const welcomeWordCount = welcomeText ? welcomeText.split(/\s+/).length : 0;
+  const welcomeHasImage = bodyHasImage(welcomeBody);
+  const welcomeShouldShowReadMore = welcomeHasImage || welcomeWordCount > WELCOME_INLINE_WORD_LIMIT;
+  const welcomeExcerptFallback = (welcomePin?.display?.excerpt || welcomePin?.piece.excerpt || "").trim();
+  const welcomePreviewText =
+    welcomeExcerptFallback || truncateWordsAtBoundary(welcomeText, WELCOME_PREVIEW_WORD_LIMIT);
 
   const aboutText = viewData.copy.about;
   const members = viewData.members.active.length ? viewData.members.active : viewData.members.all;
@@ -144,48 +186,78 @@ export function GroupLandingCOverview({
       alignItems="start"
     >
       <Stack className="glco-col-main" gap="20px">
-        {/* Pinned welcome — system/steward onboarding copy */}
+        {/* Pinned welcome — the group's actual pinned writing piece, when one exists */}
         <Card accentRail>
-          <HStack gap="10px" mb="10px" align="center">
-            <Kicker>Welcome</Kicker>
-            <HStack
-              gap="4px"
-              align="center"
-              bg="theme.accentSoft"
-              color="theme.accent"
-              borderRadius="full"
-              px="8px"
-              py="2px"
-              fontSize="11px"
-              fontWeight="600"
-            >
-              <IconPin size={11} />
-              <Text as="span">Pinned</Text>
-            </HStack>
-          </HStack>
-          <Text fontFamily="serifBody" fontWeight="600" fontSize="19px" color="theme.text" mb={3}>
-            {welcomeTitle}
-          </Text>
-          {welcomeBody ? (
-            <TipTapRenderer content={welcomeBody} />
-          ) : welcomeExcerpt ? (
-            <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
-              {welcomeExcerpt}
-            </Text>
+          {welcomePin ? (
+            <>
+              <HStack gap="10px" mb="10px" align="center">
+                <Kicker>Welcome</Kicker>
+                <HStack
+                  gap="4px"
+                  align="center"
+                  bg="theme.accentSoft"
+                  color="theme.accent"
+                  borderRadius="full"
+                  px="8px"
+                  py="2px"
+                  fontSize="11px"
+                  fontWeight="600"
+                >
+                  <IconPin size={11} />
+                  <Text as="span">Pinned</Text>
+                </HStack>
+              </HStack>
+              <Text fontFamily="serifBody" fontWeight="600" fontSize="19px" color="theme.text" mb={3}>
+                {welcomeTitle}
+              </Text>
+
+              {welcomeBody && !welcomeShouldShowReadMore ? (
+                <TipTapRenderer content={welcomeBody as TipTapDocument} />
+              ) : welcomePreviewText ? (
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  {welcomePreviewText}
+                </Text>
+              ) : welcomeHasImage ? (
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  This welcome note includes rich media.
+                </Text>
+              ) : (
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  Welcome to {group.title}.
+                </Text>
+              )}
+
+              {welcomeShouldShowReadMore && welcomePin.piece.slug && (
+                <Box asChild mt={3} _hover={{ opacity: 0.8 }} transition="opacity 0.15s ease">
+                  <Link href={`/groups/${group.slug}/writing/${welcomePin.piece.slug}`}>
+                    <HStack gap="2px" align="center">
+                      <Kicker>Read more</Kicker>
+                      <IconChevronRight size={13} style={{ color: "var(--theme-text-faint)" }} />
+                    </HStack>
+                  </Link>
+                </Box>
+              )}
+            </>
           ) : (
-            <VStack align="stretch" gap={3}>
-              <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
-                This is the group&apos;s home. <Text as="span" fontWeight="600" color="theme.text">About</Text> below
-                is who we are; <Text as="span" fontWeight="600" color="theme.text">Collections</Text> holds the
-                group&apos;s shared materials; <Text as="span" fontWeight="600" color="theme.text">Conversations</Text> is
-                where members talk.
+            <>
+              <Kicker>Welcome</Kicker>
+              <Text fontFamily="serifBody" fontWeight="600" fontSize="19px" color="theme.text" mt="12px" mb={3}>
+                Welcome to {group.title}
               </Text>
-              <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
-                New here? Add a photo and a line about yourself under{" "}
-                <Text as="span" fontWeight="600" color="theme.text">Me</Text> — it&apos;s how the rest of us put a
-                face to the name.
-              </Text>
-            </VStack>
+              <VStack align="stretch" gap={3}>
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  This is your group&apos;s home. Use the tabs above to browse members, conversations, and content.
+                </Text>
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  Click <Text as="span" fontWeight="600" color="theme.text">Me</Text> in the tab bar to set up your
+                  group profile — a photo, a short intro, your intention. It&apos;s how other members get to know you here.
+                </Text>
+                <Text fontSize="15.5px" lineHeight="1.65" color="theme.textSecondary">
+                  The <Text as="span" fontWeight="600" color="theme.text">Collections</Text> tab holds the
+                  group&apos;s materials, links, and files.
+                </Text>
+              </VStack>
+            </>
           )}
         </Card>
 
