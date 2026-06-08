@@ -1,54 +1,47 @@
+import type { ComponentType } from 'react';
+import { IconFile, IconLink } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
+import { getFileTypeInfo } from '@/components/stackroom/utils/fileTypeHelpers';
+import { getWritingKindInfo } from '@/components/stackroom/utils/writingKindHelpers';
 
-export type FileDisplayType = 'pdf' | 'doc' | 'img' | 'video' | 'audio' | 'sheet' | 'md';
-
-interface FileTypeConfig {
+export interface ItemTypeInfo {
+  icon: ComponentType<{ size?: number; className?: string }>;
+  colorScheme: string;
   label: string;
-  kind: string;
-  color: string;
 }
 
-export const FILE_TYPES: Record<FileDisplayType, FileTypeConfig> = {
-  pdf:   { label: 'PDF', kind: 'PDF Document',    color: '#D7443E' },
-  doc:   { label: 'DOC', kind: 'Word Document',   color: '#2B6CB0' },
-  img:   { label: 'IMG', kind: 'Image',            color: '#7C3AED' },
-  video: { label: 'MP4', kind: 'Video',            color: '#DB2777' },
-  audio: { label: 'MP3', kind: 'Audio',            color: '#C77216' },
-  sheet: { label: 'XLS', kind: 'Spreadsheet',     color: '#2F855A' },
-  md:    { label: 'MD',  kind: 'Markdown',         color: '#566173' },
-};
-
-export function detectFileType(item: LibraryItem): FileDisplayType {
-  if (item.content_type === 'writing_piece') return 'doc';
-  if (item.content_type === 'collection') return 'doc';
-  if (item.content_type === 'source_file') {
-    const mime = item.content?.content_type || '';
-    const filename = (item.content?.filename || '').toLowerCase();
-    const ext = filename.split('.').pop() || '';
-    if (mime.startsWith('image/')) return 'img';
-    if (mime.startsWith('video/')) return 'video';
-    if (mime.startsWith('audio/')) return 'audio';
-    if (mime === 'application/pdf' || ext === 'pdf') return 'pdf';
-    if (ext === 'md' || ext === 'markdown') return 'md';
-    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'sheet';
-    return 'doc';
-  }
-  return 'doc';
+function getSourceFileTitle(item: LibraryItem): string {
+  return 'title' in item ? (item as { title?: string }).title || '' : '';
 }
 
 export function getItemDisplayName(item: LibraryItem): string {
   if (item.is_folder) return item.title;
   if (item.content_type === 'writing_piece') return item.content.title;
   if (item.content_type === 'source_file') {
-    return item.content?.filename || 'Untitled';
+    return item.content?.filename || getSourceFileTitle(item) || 'Untitled file';
   }
   if (item.content_type === 'collection') return item.content.title;
   return 'Untitled';
 }
 
-export function getItemKind(item: LibraryItem): string {
-  if (item.is_folder) return 'Folder';
-  return FILE_TYPES[detectFileType(item)]?.kind || 'File';
+/**
+ * Icon / color / label for a file-list item — mirrors the admin collection
+ * detail view (CollectionItemCard) so members see the same chip and pill
+ * per file type, just inside the member explorer's row/card layout.
+ */
+export function getItemTypeInfo(item: LibraryItem): ItemTypeInfo {
+  if (item.content_type === 'source_file') {
+    const info = getFileTypeInfo(getItemDisplayName(item), item.content?.content_type);
+    return { icon: info.icon, colorScheme: info.colorScheme, label: info.label };
+  }
+  if (item.content_type === 'writing_piece') {
+    const info = getWritingKindInfo(item.content.writing_kind);
+    return { icon: info.icon, colorScheme: info.colorScheme, label: info.label };
+  }
+  if (item.content_type === 'collection') {
+    return { icon: IconLink, colorScheme: 'blue', label: 'Collection' };
+  }
+  return { icon: IconFile, colorScheme: 'gray', label: 'File' };
 }
 
 export function formatBytes(bytes: number | undefined): string {

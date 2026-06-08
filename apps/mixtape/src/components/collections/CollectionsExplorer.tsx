@@ -33,12 +33,11 @@ import { useColorModeValue } from '@components/ui/color-mode';
 import { useViewMode } from './explorer/useViewMode';
 import { hueForName, coverGradient } from './explorer/coverUtils';
 import {
-  FILE_TYPES,
-  detectFileType,
   getItemDisplayName,
-  getItemKind,
+  getItemTypeInfo,
   getItemSize,
 } from './explorer/fileTypeUtils';
+import type { ItemTypeInfo } from './explorer/fileTypeUtils';
 import { CollectionItemReader } from './CollectionItemReader';
 import type { CollectionListItem, LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { formatDistanceToNow } from 'date-fns';
@@ -71,36 +70,22 @@ function relativeTime(iso: string): string {
   }
 }
 
-// ---- file type chip ---------------------------------------------------------
+// ---- file type icon + pill (matches admin CollectionItemCard styling) ------
 
-function FileChip({ type, size = 38 }: { type: ReturnType<typeof detectFileType>; size?: number }) {
-  const t = FILE_TYPES[type];
-  const fontSize = Math.round(size * 0.26);
-  const radius = Math.round(size * 0.22);
+function FileTypeIcon({ info, size = 20 }: { info: ItemTypeInfo; size?: number }) {
+  const Icon = info.icon;
   return (
-    <Box
-      className="cex-chip"
-      flexShrink={0}
-      w={`${size}px`}
-      h={`${size}px`}
-      borderRadius={`${radius}px`}
-      border="1px solid"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      fontSize={`${fontSize}px`}
-      fontFamily="mono"
-      fontWeight="700"
-      letterSpacing="0.02em"
-      lineHeight={1}
-      style={{
-        color: t.color,
-        background: `color-mix(in oklab, ${t.color} 12%, #fff)`,
-        borderColor: `color-mix(in oklab, ${t.color} 24%, transparent)`,
-      }}
-    >
-      {t.label}
+    <Box className="cex-chip" color={`var(--chakra-colors-${info.colorScheme}-500)`} flexShrink={0}>
+      <Icon size={size} />
     </Box>
+  );
+}
+
+function FileTypePill({ info }: { info: ItemTypeInfo }) {
+  return (
+    <Badge colorPalette={info.colorScheme} size="sm">
+      {info.label}
+    </Badge>
   );
 }
 
@@ -711,9 +696,8 @@ interface FileRowProps {
 }
 
 function FileRow({ item, onPreview }: FileRowProps) {
-  const ft = detectFileType(item);
+  const typeInfo = getItemTypeInfo(item);
   const name = getItemDisplayName(item);
-  const kind = getItemKind(item);
   const size = getItemSize(item);
   const borderColor = useColorModeValue('border.default', 'border.default');
   const hoverBg = useColorModeValue('bg.subtle', 'bg.subtle');
@@ -735,11 +719,11 @@ function FileRow({ item, onPreview }: FileRowProps) {
       onClick={onPreview}
     >
       <HStack gap={3} minW={0}>
-        <FileChip type={ft} size={34} />
+        <FileTypeIcon info={typeInfo} size={20} />
         <Text fontSize="13px" color="theme.text" lineClamp={1}>{name}</Text>
       </HStack>
 
-      <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{kind}</Text>
+      <FileTypePill info={typeInfo} />
       <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{size}</Text>
 
       <HStack
@@ -776,9 +760,8 @@ function FileRow({ item, onPreview }: FileRowProps) {
 // ---- file card (grid view) --------------------------------------------------
 
 function FileCard({ item, onPreview }: FileRowProps) {
-  const ft = detectFileType(item);
+  const typeInfo = getItemTypeInfo(item);
   const name = getItemDisplayName(item);
-  const kind = getItemKind(item);
   const size = getItemSize(item);
 
   return (
@@ -798,10 +781,15 @@ function FileCard({ item, onPreview }: FileRowProps) {
       cursor="pointer"
       onClick={onPreview}
     >
-      <FileChip type={ft} size={40} />
+      <FileTypeIcon info={typeInfo} size={26} />
       <Box flex={1} minW={0}>
-        <Text fontSize="13px" fontWeight="500" color="theme.text" lineClamp={1}>{name}</Text>
-        <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{kind}{size && ` · ${size}`}</Text>
+        <Text fontSize="13px" fontWeight="500" color="theme.text" lineClamp={1} mb={1}>{name}</Text>
+        <HStack gap={2}>
+          <FileTypePill info={typeInfo} />
+          {size && (
+            <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{size}</Text>
+          )}
+        </HStack>
       </Box>
       <HStack
         gap={1}
