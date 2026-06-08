@@ -2,6 +2,7 @@
 
 import { Box, Container, Flex } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { AtriumHeader } from "@/components/atrium/AtriumHeader";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -10,8 +11,8 @@ export default function AtriumPage() {
     <Box bg={bgColor} minH="100vh">
       <Container maxW="860px" px={6} pt={10} pb={12}>
 
-        {/* Zone A — AtriumHeader (AT-2) */}
-        <Box h="56px" />
+        {/* Zone A — AtriumHeader */}
+        <AtriumHeader />
 
         {/* Zone B — AtriumResumeCard (AT-3) */}
         <Box mt={6} />
