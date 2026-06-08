@@ -4,6 +4,7 @@ import { Box, Container, Flex } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AtriumHeader } from "@/components/atrium/AtriumHeader";
 import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
+import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -20,8 +21,10 @@ export default function AtriumPage() {
           <AtriumResumeCard />
         </Box>
 
-        {/* Zone C — AtriumOrientationPanel (AT-4) */}
-        <Box mt={5} />
+        {/* Zone C — AtriumOrientationPanel */}
+        <Box mt={5}>
+          <AtriumOrientationPanel />
+        </Box>
 
         {/* Zone B/C → Beryl cross-zone slot (AT-8) */}
 
