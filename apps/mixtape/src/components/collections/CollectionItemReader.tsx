@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -9,6 +10,7 @@ import {
   VStack,
   Badge,
 } from '@chakra-ui/react';
+import Link from 'next/link';
 import { IconArrowLeft, IconDownload, IconExternalLink } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { useSourceFileContent } from '@mixtape/api/hooks';
@@ -80,20 +82,60 @@ async function downloadSourceFile(sourceFileId: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-async function openSourceFileInTab(sourceFileId: string) {
+async function openSourceFileInTab(sourceFileId: string, filename: string) {
   const response = await axiosInstance.get(
     `/api/stackroom/source-files/${sourceFileId}/download`,
     { responseType: 'blob' }
   );
-  const url = URL.createObjectURL(response.data);
+  // Markdown/text downloads often come back with a generic or octet-stream
+  // content type, which makes the browser hand the blob to an external
+  // document-management helper instead of rendering it. Re-tag plain-text
+  // files as text/plain so "Open original" opens inline in a new tab.
+  const blob = isMarkdownLike(filename)
+    ? new Blob([response.data], { type: 'text/plain;charset=utf-8' })
+    : response.data;
+  const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/**
+ * Markdown/plain-text files are already readable as-is — fetch the raw bytes
+ * directly instead of waiting on the server-side extraction pipeline, which
+ * can fail or stall indefinitely for these formats (they need no extraction).
+ */
+function useRawTextContent(sourceFileId: string | null, enabled: boolean) {
+  const [text, setText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!enabled || !sourceFileId) return;
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    axiosInstance
+      .get(`/api/stackroom/source-files/${sourceFileId}/download`, { responseType: 'text' })
+      .then((response) => {
+        if (!cancelled) setText(typeof response.data === 'string' ? response.data : '');
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err as Error);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceFileId, enabled]);
+
+  return { text, isLoading, error };
 }
 
 function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => void }) {
   const sourceFileId = getSourceFileContent(item)?.id || null;
   const filename = getDisplayName(item);
-  const { text, ingestionStatus, isLoading, error } = useSourceFileContent(sourceFileId);
   const previewUrl = sourceFileId
     ? `/api/stackroom/source-files/${sourceFileId}/preview.pdf`
     : '';
@@ -102,6 +144,16 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
   const pdfFile = isPdf(filename);
   const wordDoc = isWordDoc(filename);
   const previewableDocument = pdfFile || wordDoc;
+
+  // Markdown/plain text needs no server-side extraction — read it straight from
+  // the source file instead of the extraction pipeline (which can fail or stall
+  // on these formats even though the text is already perfectly readable).
+  const extracted = useSourceFileContent(markdownLike ? null : sourceFileId);
+  const raw = useRawTextContent(sourceFileId, markdownLike);
+  const text = markdownLike ? raw.text : extracted.text;
+  const isLoading = markdownLike ? raw.isLoading : extracted.isLoading;
+  const error = markdownLike ? raw.error : extracted.error;
+  const ingestionStatus = markdownLike ? null : extracted.ingestionStatus;
 
   return (
     <VStack align="stretch" gap={0}>
@@ -128,7 +180,7 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
                 size="sm"
                 color="theme.textSecondary"
                 _hover={{ color: 'theme.text' }}
-                onClick={() => openSourceFileInTab(sourceFileId)}
+                onClick={() => openSourceFileInTab(sourceFileId, filename)}
               >
                 <IconExternalLink size={14} />
                 <Text ml={1}>Open original</Text>
@@ -164,11 +216,6 @@ function SourceFileReader({ item, onBack }: { item: LibraryItem; onBack: () => v
           {wordDoc && (
             <Badge colorPalette="gray" variant="outline">
               PDF preview
-            </Badge>
-          )}
-          {ingestionStatus && ingestionStatus !== 'complete' && (
-            <Badge colorPalette={ingestionStatus === 'failed' ? 'red' : 'yellow'} variant="subtle">
-              {ingestionStatus}
             </Badge>
           )}
         </HStack>
@@ -286,7 +333,7 @@ function WritingPieceReader({
 
           {groupSlug && pieceSlug && (
             <Box asChild>
-              <a href={`/groups/${groupSlug}/writing/${pieceSlug}`}>
+              <Link href={`/groups/${groupSlug}/writing/${pieceSlug}`}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -296,7 +343,7 @@ function WritingPieceReader({
                   <IconExternalLink size={14} />
                   <Text ml={1}>Open full page</Text>
                 </Button>
-              </a>
+              </Link>
             </Box>
           )}
         </HStack>
@@ -329,6 +376,8 @@ function WritingPieceReader({
 
           <Box
             maxW="760px"
+            px={{ base: 4, md: 6 }}
+            py={4}
             fontSize="md"
             lineHeight="1.85"
             css={{

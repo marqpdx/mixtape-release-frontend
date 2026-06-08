@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useBackNavigableDetail } from '@/hooks/useBackNavigableDetail';
 import {
   Box,
@@ -1180,11 +1180,47 @@ function CollectionHeader({ collection, folder, allItems }: CollectionHeaderProp
 
 // ---- main shell ------------------------------------------------------------
 
+// Remembers where the member last was within a sponsor's collections —
+// collection, folder, and the file/post they had open — so returning to the
+// tab picks up where they left off instead of always landing on "All Collections".
+function lastNavStorageKey(sponsor: SponsorInfo) {
+  return `mixtape:collections:lastNav:${sponsor.type}:${sponsor.id}`;
+}
+
+interface StoredNav {
+  collectionId: string | null;
+  folderId: string | null;
+  previewItemId: string | null;
+}
+
+function readStoredNav(sponsor: SponsorInfo): StoredNav | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(lastNavStorageKey(sponsor));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredNav>;
+    return {
+      collectionId: parsed.collectionId ?? null,
+      folderId: parsed.folderId ?? null,
+      previewItemId: parsed.previewItemId ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
-  const [nav, setNav] = useState<ExplorerNav>({ collectionId: null, folderId: null });
+  const [nav, setNav] = useState<ExplorerNav>(() => {
+    const stored = readStoredNav(sponsor);
+    return stored ? { collectionId: stored.collectionId, folderId: stored.folderId } : { collectionId: null, folderId: null };
+  });
   const [q, setQ] = useState('');
   const [previewItem, setPreviewItem] = useState<LibraryItem | null>(null);
   const [mode, setMode] = useViewMode();
+
+  // The previewed item's id can only be resolved once its collection's items
+  // have loaded, so the restore happens in an effect keyed off activeItems below.
+  const pendingPreviewIdRef = useRef<string | null>(readStoredNav(sponsor)?.previewItemId ?? null);
 
   const { collections, isLoading: collectionsLoading } = useCollections({
     sponsor_type: sponsor.type,
@@ -1205,6 +1241,31 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
     const found = activeItems.find((i) => i.is_folder && i.id === nav.folderId);
     return found && found.is_folder ? found : null;
   }, [activeItems, nav.folderId]);
+
+  // Resolve a restored "last open file" id into the actual item once its
+  // collection's items have loaded, then drop into preview just like a click would.
+  useEffect(() => {
+    const pendingId = pendingPreviewIdRef.current;
+    if (!pendingId || activeItems.length === 0) return;
+    pendingPreviewIdRef.current = null;
+    const found = activeItems.find((i) => i.id === pendingId);
+    if (found && !found.is_folder) setPreviewItem(found);
+  }, [activeItems]);
+
+  // Persist collection / folder / open-item so returning to this tab resumes here.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const toStore: StoredNav = {
+        collectionId: nav.collectionId,
+        folderId: nav.folderId,
+        previewItemId: previewItem?.id ?? null,
+      };
+      window.localStorage.setItem(lastNavStorageKey(sponsor), JSON.stringify(toStore));
+    } catch {
+      // localStorage unavailable (private mode, quota) — resume position is best-effort.
+    }
+  }, [sponsor, nav, previewItem]);
 
   const go = useCallback((next: ExplorerNav) => {
     setNav(next);
@@ -1243,7 +1304,7 @@ export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
 
   if (previewItem) {
     return (
-      <Box>
+      <Box p={5}>
         <CollectionItemReader
           item={previewItem}
           onBack={() => setPreviewItem(null)}
