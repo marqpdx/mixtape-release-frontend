@@ -1558,6 +1558,8 @@
       ],
       "metadata": {},
       "routes": [
+        "/atrium",
+        "/atrium/*",
         "/studio",
         "/studio/*",
         "/studio/*/*"
@@ -1857,5 +1859,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-06-07T18:44:41.635Z"
+  "generatedAt": "2026-06-08T20:46:59.280Z"
 }
