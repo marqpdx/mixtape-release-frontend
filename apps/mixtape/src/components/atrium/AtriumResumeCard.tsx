@@ -5,6 +5,7 @@ import { IconTarget } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useRadarInitiatives } from "@mixtape/api/hooks/radar";
+import { BerylWelcomeCard } from "@/components/atrium/BerylWelcomeCard";
 
 function relativeTime(iso: string | null): string {
   if (!iso) return "";
@@ -35,7 +36,7 @@ export function AtriumResumeCard() {
   }
 
   const initiative = data?.[0];
-  if (!initiative) return null;
+  if (!initiative) return <BerylWelcomeCard />;
 
   return (
     <Box

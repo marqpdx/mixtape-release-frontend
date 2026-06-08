@@ -8,6 +8,7 @@ import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPan
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
+import { BerylPresence } from "@/components/atrium/BerylPresence";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -29,7 +30,10 @@ export default function AtriumPage() {
           <AtriumOrientationPanel />
         </Box>
 
-        {/* Zone B/C → Beryl cross-zone slot (AT-8) */}
+        {/* Beryl cross-zone slot — between C and D+E */}
+        <Box mt={5}>
+          <BerylPresence />
+        </Box>
 
         {/* Zones D + E — two-column lower zone */}
         <Flex
