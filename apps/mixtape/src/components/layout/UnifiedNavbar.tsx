@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import {
   Box,
   Container,
@@ -37,6 +38,8 @@ import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
 import { useHelp } from "@components/help/useHelp";
+import { RadarOverlay } from "@components/radar/RadarOverlay";
+import { IconRadar } from "@tabler/icons-react";
 
 // Navigation item types
 type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
@@ -104,6 +107,7 @@ export default function UnifiedNavbar({
   // const { groups: userGroups = [] } = useUserGroups();
   const { group: defaultGroup } = useDefaultGroup();
   const { open, onOpen, onClose } = useDisclosure();
+  const [radarOpen, setRadarOpen] = useState(false);
   const logoColor = useColorModeValue('black', 'white');
   const publicSiteBase =
     process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
@@ -401,6 +405,15 @@ export default function UnifiedNavbar({
                         </Link>
                       </MenuItem>
                     )}
+                    <MenuItem
+                      value="radar"
+                      onClick={() => setRadarOpen(true)}
+                      display="flex"
+                      gap={2}
+                    >
+                      <IconRadar size={16} />
+                      Radar
+                    </MenuItem>
                     <MenuSeparator />
                     <MenuItem value="dashboard" asChild>
                       <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
@@ -526,6 +539,9 @@ export default function UnifiedNavbar({
         </Drawer.Positioner>
       </Drawer.Root>
 
+      {identity && (
+        <RadarOverlay open={radarOpen} onClose={() => setRadarOpen(false)} />
+      )}
     </Box>
   );
 }
