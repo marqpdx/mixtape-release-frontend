@@ -92,8 +92,6 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
   const { user } = useAuth();
   const isOwner = user?.username === profile.username;
 
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null);
-
   const { density } = profile;
   const rowGap = ROW_GAP[density ?? 'cozy'];
 
@@ -168,11 +166,6 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
               {t.label}
             </button>
           ))}
-          {saveStatus && (
-            <span style={{ marginLeft: 'auto', marginRight: 12, fontSize: 12, color: saveStatus === 'saved' ? 'var(--accent)' : '#c0392b' }}>
-              {saveStatus === 'saved' ? '✓ Saved' : '✗ Error saving'}
-            </span>
-          )}
         </div>
 
         {/* Tab content */}
