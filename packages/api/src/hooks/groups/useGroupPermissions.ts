@@ -430,7 +430,7 @@ export function useHasPermission(groupSlug: string, permission: string) {
   const { data: myPerms } = useMyPermissions(groupSlug);
 
   // Admins have all permissions
-  if (myPerms?.is_admin) return true;
+  if (myPerms?.roles?.includes('admin')) return true;
 
   // Check if user has the specific decorator
   return myPerms?.decorators?.includes(permission) || false;

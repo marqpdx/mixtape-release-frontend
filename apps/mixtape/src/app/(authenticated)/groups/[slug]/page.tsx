@@ -41,8 +41,9 @@ export default function GroupPage() {
   const isMember = group ? isGroupMember(group) : false;
   const isAdminOrSteward =
     (group ? canUserModerateGroup(group) : false) ||
-    (myPermissions?.is_admin ?? false) ||
-    (myPermissions?.is_steward ?? false);
+    (myPermissions?.roles?.includes('admin') ?? false) ||
+    (myPermissions?.roles?.includes('steward') ?? false) ||
+    ((myPermissions?.decorators?.length ?? 0) > 0);
   const primaryRole = group ? getPrimaryRole(group) : null;
   const canEditGroup = canAccessSection(
     "edit-group",
