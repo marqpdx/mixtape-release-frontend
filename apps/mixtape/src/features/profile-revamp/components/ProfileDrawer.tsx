@@ -9,6 +9,7 @@ import PinnedShowcase from './PinnedShowcase';
 import FeaturedLinks from './FeaturedLinks';
 import { THEMES } from '../lib/themes';
 import { computeAccentInk } from '../lib/contrast';
+import { AppThemeBridgeProvider } from '@mixtape/ui-tokens';
 
 function DrawerContent({ username }: { username: string }) {
   const { data: profile, isLoading, isError } = useQuery({
@@ -28,19 +29,20 @@ function DrawerContent({ username }: { username: string }) {
     );
   }
 
-  const tokens = THEMES[profile.theme ?? 'paper'].tokens;
+  const themeTokens = THEMES[profile.theme ?? 'paper'].tokens;
   const accent = profile.accent ?? '#c2410c';
   const cssVars: Record<string, string> = {
-    ...tokens,
-    '--accent': accent,
-    '--accent-ink': computeAccentInk(accent),
+    '--accent':        accent,
+    '--accent-ink':    computeAccentInk(accent),
+    '--avatar-radius': themeTokens['--avatar-radius'],
+    '--btn-radius':    themeTokens['--btn-radius'],
   };
 
   const pinnedSection = profile.sectionLayout?.find(s => s.id === 'pinned');
   const linksSection  = profile.sectionLayout?.find(s => s.id === 'links');
 
   return (
-    <div
+    <AppThemeBridgeProvider
       data-theme={profile.theme ?? 'paper'}
       style={{ ...(cssVars as React.CSSProperties), display: 'flex', flexDirection: 'column', gap: 20, padding: 24, flex: 1, overflowY: 'auto' }}
     >
@@ -62,7 +64,7 @@ function DrawerContent({ username }: { username: string }) {
           Open full profile →
         </Link>
       </div>
-    </div>
+    </AppThemeBridgeProvider>
   );
 }
 

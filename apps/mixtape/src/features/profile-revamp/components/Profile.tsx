@@ -1,6 +1,7 @@
 import type { ProfileDTO, SectionId } from '../api/types';
 import { computeAccentInk } from '../lib/contrast';
 import { THEMES, FONT_PAIRS, ROW_GAP } from '../lib/themes';
+import { AppThemeBridgeProvider } from '@mixtape/ui-tokens';
 import ProfileHeader from './ProfileHeader';
 import PinnedShowcase from './PinnedShowcase';
 import NowPlaying from './NowPlaying';
@@ -51,10 +52,13 @@ export default function Profile({ profile, isEditor, onPatch }: Props) {
   const rowGap = ROW_GAP[density ?? 'cozy'];
   const fontPair = FONT_PAIRS[font ?? 'editorial'];
 
+  // Base vars (--bg, --surface, --ink, --ink-soft, --rule) come from AppThemeBridgeProvider.
+  // Only user-controlled surface vars are set here.
   const cssVars: Record<string, string> = {
-    ...THEMES[theme ?? 'paper'].tokens,
     '--accent':       accent,
     '--accent-ink':   computeAccentInk(accent),
+    '--avatar-radius': THEMES[theme ?? 'paper'].tokens['--avatar-radius'],
+    '--btn-radius':    THEMES[theme ?? 'paper'].tokens['--btn-radius'],
     '--font-display': fontPair.display,
     '--font-body':    fontPair.body,
   };
@@ -62,7 +66,7 @@ export default function Profile({ profile, isEditor, onPatch }: Props) {
   const visibleSections = (sectionLayout ?? []).filter(s => s.visible);
 
   return (
-    <div
+    <AppThemeBridgeProvider
       data-theme={theme}
       data-font={font}
       data-density={density}
@@ -82,6 +86,6 @@ export default function Profile({ profile, isEditor, onPatch }: Props) {
           <SectionComponent key={entry.id} id={entry.id} profile={profile} isEditor={isEditor} onPatch={onPatch} />
         ))}
       </div>
-    </div>
+    </AppThemeBridgeProvider>
   );
 }
