@@ -401,7 +401,7 @@ export default function UnifiedNavbar({
                     )}
                     {identity?.username && (
                       <MenuItem value="edit-profile" asChild>
-                        <Link as={NextLink} href="/settings/profile/new" display="flex" gap={2}>
+                        <Link as={NextLink} href="/dashboard?section=edit-profile" display="flex" gap={2}>
                           <IconPencil size={16} />
                           Edit profile
                         </Link>

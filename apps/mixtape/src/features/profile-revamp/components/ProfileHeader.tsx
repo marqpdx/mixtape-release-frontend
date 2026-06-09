@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import NextLink from 'next/link';
 import type { ProfileDTO } from '../api/types';
 import EditableText from '../editor/inline/EditableText';
 
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
-  const { displayName, role, bio, status, avatarUrl, backgroundImageUrl, introVoiceUrl, introVoiceTranscript, avatarSticker, stats, avatarShape } = profile;
+  const { displayName, role, bio, status, avatarUrl, backgroundImageUrl, introVoiceUrl, introVoiceTranscript, avatarSticker, avatarShape } = profile;
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   function commit(field: string, value: string) {
@@ -32,7 +33,7 @@ export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
       <div
         style={{
           width: '100%',
-          height: 160,
+          height: 240,
           background: backgroundImageUrl ? undefined : 'var(--surface)',
           borderBottom: backgroundImageUrl ? 'none' : '1px solid var(--rule)',
           position: 'relative',
@@ -125,38 +126,48 @@ export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
-            {[
-              { label: 'followers', value: stats.followers },
-              { label: 'following', value: stats.following },
-              { label: 'mixtapes',  value: String(stats.mixtapes) },
-              { label: 'joined',    value: stats.joined },
-            ].map(stat => (
-              <div key={stat.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{stat.value}</span>
-                <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{stat.label}</span>
-              </div>
-            ))}
-          </div>
-
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button
-              style={{
-                padding: '8px 20px',
-                borderRadius: 'var(--btn-radius)',
-                background: 'var(--accent)',
-                color: 'var(--accent-ink)',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: 'pointer',
-                minWidth: 44, minHeight: 44,
-              }}
-            >
-              Follow
-            </button>
-            <button style={{ padding: '8px 20px', borderRadius: 'var(--btn-radius)', background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--rule)', fontWeight: 600, fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>Message</button>
-            <button style={{ padding: '8px 16px', borderRadius: 'var(--btn-radius)', background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--rule)', fontWeight: 600, fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>Share</button>
+            {isEditor ? (
+              <NextLink
+                href="/dashboard?section=edit-profile"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '8px 20px',
+                  borderRadius: 'var(--btn-radius)',
+                  background: 'transparent',
+                  color: 'var(--ink)',
+                  border: '1.5px solid var(--rule)',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  textDecoration: 'none',
+                  minWidth: 44,
+                  minHeight: 44,
+                }}
+              >
+                Edit profile
+              </NextLink>
+            ) : (
+              <>
+                <button
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: 'var(--btn-radius)',
+                    background: 'var(--accent)',
+                    color: 'var(--accent-ink)',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    minWidth: 44, minHeight: 44,
+                  }}
+                >
+                  Follow
+                </button>
+                <button style={{ padding: '8px 20px', borderRadius: 'var(--btn-radius)', background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--rule)', fontWeight: 600, fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>Message</button>
+                <button style={{ padding: '8px 16px', borderRadius: 'var(--btn-radius)', background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--rule)', fontWeight: 600, fontSize: 14, cursor: 'pointer', minWidth: 44, minHeight: 44 }}>Share</button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 import type { TipTapDocument } from "@components/tiptap/TipTapRenderer";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 import type { GroupMembership } from "@mixtape/core/types/groupTypes";
+import { useQuery } from "@tanstack/react-query";
+import { groupPermsApi } from "@mixtape/api/clients/group/groupPermsApi";
 
 interface GroupLandingCOverviewProps {
   viewData: GroupMemberViewData;
@@ -111,15 +113,19 @@ function Card({
   );
 }
 
-function memberRoleLabel(member: GroupMembership): { label: string; isSteward: boolean } {
+function memberRoleLabel(
+  member: GroupMembership,
+  decoratorUsers: Set<string>,
+): { label: string; isSteward: boolean } {
   if (member.roles.includes("admin")) return { label: "Admin", isSteward: true };
   if (member.roles.includes("steward")) return { label: "Member · Steward", isSteward: true };
+  if (member.username && decoratorUsers.has(member.username)) return { label: "Member · Steward", isSteward: true };
   return { label: "Member", isSteward: false };
 }
 
-function MemberRow({ member }: { member: GroupMembership }) {
+function MemberRow({ member, decoratorUsers }: { member: GroupMembership; decoratorUsers: Set<string> }) {
   const displayName = member.display_name || member.username || "Member";
-  const { label, isSteward } = memberRoleLabel(member);
+  const { label, isSteward } = memberRoleLabel(member, decoratorUsers);
   return (
     <HStack className="glco-member-row" gap={3} align="center" py="8px">
       <Avatar.Root size="sm" w="34px" h="34px" bg="theme.border">
@@ -159,6 +165,22 @@ export function GroupLandingCOverview({
   onOpenCollection,
 }: GroupLandingCOverviewProps) {
   const { group } = viewData;
+
+  // Fetch member permissions to identify decorator-based stewards.
+  // Only fires when the viewer can moderate; non-moderators get an empty set.
+  const canModerate = viewData.permissions.canModerateGroup;
+  const { data: memberPerms = [] } = useQuery({
+    queryKey: ["permissions", "members", group.slug],
+    queryFn: () => groupPermsApi.getMemberPermissions(group.slug),
+    enabled: canModerate,
+    staleTime: 1000 * 30,
+  });
+  const decoratorUsers = new Set(
+    memberPerms
+      .filter(mp => (mp.decorators?.length ?? 0) > 0)
+      .map(mp => mp.user?.username)
+      .filter((u): u is string => !!u)
+  );
   const welcomePin = viewData.overview.welcomePin;
   const welcomeTitle = welcomePin?.display?.title || welcomePin?.piece.title;
   const welcomeBody = (welcomePin?.display?.body_json || welcomePin?.piece.body_json) as
@@ -290,7 +312,7 @@ export function GroupLandingCOverview({
           ) : visibleMembers.length > 0 ? (
             <VStack align="stretch" gap={0}>
               {visibleMembers.map((member) => (
-                <MemberRow key={member.member_id} member={member} />
+                <MemberRow key={member.member_id} member={member} decoratorUsers={decoratorUsers} />
               ))}
             </VStack>
           ) : (

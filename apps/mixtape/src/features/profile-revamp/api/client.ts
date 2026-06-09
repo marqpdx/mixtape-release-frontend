@@ -9,7 +9,16 @@ export async function fetchPublicProfile(username: string): Promise<ProfileDTO> 
     next: { revalidate: 60 },
   } as RequestInit);
   if (!res.ok) throw new Error(`${res.status}`);
-  return res.json() as Promise<ProfileDTO>;
+  // Backend may return snake_case — normalise image fields so ProfileHeader renders them
+  const raw = await res.json() as Record<string, unknown>;
+  return {
+    ...raw,
+    avatarUrl:           raw.avatarUrl           ?? raw.avatar_url           ?? null,
+    backgroundImageUrl:  raw.backgroundImageUrl  ?? raw.background_image_url ?? null,
+    introVoiceUrl:       raw.introVoiceUrl        ?? raw.intro_voice_url      ?? null,
+    introVoiceTranscript: raw.introVoiceTranscript ?? raw.intro_voice_transcript ?? '',
+    displayName:         raw.displayName          ?? raw.display_name         ?? '',
+  } as ProfileDTO;
 }
 
 // All owner-write calls go through axiosInstance (handles Bearer token + refresh)
