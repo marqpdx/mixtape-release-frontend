@@ -202,18 +202,18 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
               {profile.introVoiceUrl && (
                 <VoicePlayer200 src={profile.introVoiceUrl} displayName={profile.displayName} />
               )}
-              {(profile.skills.length > 0 || profile.workAreas.length > 0) && (
+              {((profile.skills?.length ?? 0) > 0 || (profile.workAreas?.length ?? 0) > 0) && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 22 }}>
-                  {profile.skills.length    > 0 && <TagCloud heading="Skills"      tags={profile.skills} />}
-                  {profile.workAreas.length > 0 && <TagCloud heading="Focus areas" tags={profile.workAreas} />}
+                  {(profile.skills?.length ?? 0)    > 0 && <TagCloud heading="Skills"      tags={profile.skills} />}
+                  {(profile.workAreas?.length ?? 0) > 0 && <TagCloud heading="Focus areas" tags={profile.workAreas} />}
                 </div>
               )}
               {(profile.whoAreYou || profile.whyAreYouHere) && (
                 <PromptCards whoAreYou={profile.whoAreYou} whyAreYouHere={profile.whyAreYouHere} />
               )}
               {profile.bio && <FullBio bio={profile.bio} />}
-              {(profile.links.length > 0 || profile.quickLink) && (
-                <QuickLinks200 links={profile.links} quickLink={profile.quickLink || undefined} />
+              {((profile.links?.length ?? 0) > 0 || profile.quickLink) && (
+                <QuickLinks200 links={profile.links ?? []} quickLink={profile.quickLink || undefined} />
               )}
             </div>
           )}
