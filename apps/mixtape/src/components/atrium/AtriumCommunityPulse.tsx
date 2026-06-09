@@ -3,6 +3,7 @@
 import { Box, Flex, NativeSelect, Skeleton, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { usePersonalGroups, useStudioGroupPulse } from "@mixtape/api/hooks/studio";
 import type { StudioActivityItem } from "@mixtape/api/clients/studio/studioApi";
 
@@ -33,10 +34,16 @@ function ActivityRow({ item }: { item: StudioActivityItem }) {
 }
 
 export function AtriumCommunityPulse() {
+  const { user: identity } = useAuth();
   const { data: groups, isLoading: groupsLoading } = usePersonalGroups();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
-  const activeSlug = selectedSlug ?? groups?.[0]?.slug ?? null;
+  const defaultSlug = process.env.NEXT_PUBLIC_DEFAULT_GROUP_SLUG ?? "crossroads";
+  const visibleGroups = identity?.is_superuser
+    ? (groups ?? [])
+    : (groups ?? []).filter((g) => g.slug !== defaultSlug);
+
+  const activeSlug = selectedSlug ?? visibleGroups[0]?.slug ?? null;
   const { data: pulse, isLoading: pulseLoading } = useStudioGroupPulse(activeSlug ?? "");
 
   const bgColor = useColorModeValue("white", "gray.800");
@@ -57,7 +64,7 @@ export function AtriumCommunityPulse() {
     );
   }
 
-  if (!groups || groups.length === 0) {
+  if (visibleGroups.length === 0) {
     return (
       <Box bg={bgColor} borderWidth="1px" borderColor={borderColor} borderRadius="md" py={5} px={5} h="100%">
         <Text fontSize="sm" color={headerColor}>
@@ -68,7 +75,7 @@ export function AtriumCommunityPulse() {
     );
   }
 
-  const activeGroup = groups.find((g) => g.slug === activeSlug) ?? groups[0];
+  const activeGroup = visibleGroups.find((g) => g.slug === activeSlug) ?? visibleGroups[0];
   const items = pulse?.activity?.slice(0, 7) ?? [];
 
   return (
@@ -79,13 +86,13 @@ export function AtriumCommunityPulse() {
           {activeGroup.name}
         </Text>
 
-        {groups.length > 1 && (
+        {visibleGroups.length > 1 && (
           <NativeSelect.Root size="xs" width="auto">
             <NativeSelect.Field
               value={activeSlug ?? ""}
               onChange={(e) => setSelectedSlug(e.target.value)}
             >
-              {groups.map((g) => (
+              {visibleGroups.map((g) => (
                 <option key={g.slug} value={g.slug}>{g.name}</option>
               ))}
             </NativeSelect.Field>

@@ -2,6 +2,7 @@
 
 import { use, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import NextLink from "next/link";
 import {
   Badge,
   Box,
@@ -464,7 +465,7 @@ function MetaZone({
   const isPaused = initiative.status === "paused";
 
   const handleArchive = () => {
-    archive(initiativeId, { onSuccess: () => router.push("/radar/my") });
+    archive(initiativeId, { onSuccess: () => router.push("/atrium") });
   };
 
   return (
@@ -567,8 +568,8 @@ export default function RadarWorkspacePage({
       <Box bg={bgColor} minH="100vh">
         <Container maxW="2xl" py={8}>
           <Text color="red.400" fontSize="sm">Initiative not found.</Text>
-          <Link href="/radar/my" fontSize="sm" color={mutedColor} mt={2} display="block">
-            ← Back to radar
+          <Link as={NextLink} href="/atrium" fontSize="sm" color={mutedColor} mt={2} display="block">
+            ← Return
           </Link>
         </Container>
       </Box>
@@ -581,8 +582,8 @@ export default function RadarWorkspacePage({
 
         {/* Header */}
         <Box className="riw-header" mb={8}>
-          <Link href="/radar/my" fontSize="sm" color={mutedColor} mb={3} display="block">
-            ← Radar
+          <Link as={NextLink} href="/atrium" fontSize="sm" color={mutedColor} mb={3} display="block">
+            ← Return
           </Link>
           <HStack gap={3} align="center">
             <Heading size="lg">{initiative.title}</Heading>

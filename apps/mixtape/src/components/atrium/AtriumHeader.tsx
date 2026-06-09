@@ -28,8 +28,8 @@ export function AtriumHeader() {
       {/* Right — user avatar linking to profile */}
       <NextLink href={identity?.username ? `/member/${identity.username}` : "/settings"}>
         <Avatar.Root size="sm" cursor="pointer">
+          <Avatar.Image src={avatarUrl} alt={identity?.username || "avatar"} />
           <Avatar.Fallback>{initials}</Avatar.Fallback>
-          {avatarUrl && <Avatar.Image src={avatarUrl} alt={identity?.username || "avatar"} />}
         </Avatar.Root>
       </NextLink>
     </Flex>

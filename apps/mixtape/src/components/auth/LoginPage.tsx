@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login({
+      const userData = await login({
         identifier: formData.identifier,
         password: formData.password,
       });
@@ -82,19 +82,26 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      // Single-group redirect: if the user belongs to exactly one group,
-      // drop them directly into its members tab.
+      // Superuser always goes to Atrium.
+      if (userData.is_superuser) {
+        router.push("/atrium");
+        return;
+      }
+
+      // Non-superuser: route based on non-default group membership.
       try {
         const groups = await fetchUserGroups();
-        if (groups.length === 1) {
-          router.push(`/groups/${groups[0].slug}`);
+        const defaultSlug = process.env.NEXT_PUBLIC_DEFAULT_GROUP_SLUG ?? "crossroads";
+        const nonDefaultGroups = groups.filter((g) => g.slug !== defaultSlug);
+        if (nonDefaultGroups.length === 1) {
+          router.push(`/groups/${nonDefaultGroups[0].slug}`);
           return;
         }
       } catch {
         // Fall through to dashboard on any fetch error
       }
 
-      router.push("/atrium");
+      router.push("/dashboard");
 
       console.log("LoginPage login successful");
 

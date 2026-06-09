@@ -130,6 +130,8 @@ export default function UnifiedNavbar({
     (pathname.startsWith("/about") ? "about" :
      identity && (pathname.startsWith("/dashboard") ||
                   pathname.startsWith("/groups") ||
+                  pathname.startsWith("/atrium") ||
+                  pathname.startsWith("/radar") ||
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||
                   pathname.startsWith("/loom-and-codex") ||
