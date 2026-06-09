@@ -1,6 +1,6 @@
 "use client";
 
-export type GroupMemberViewId = "a" | "b" | "c";
+export type GroupMemberViewId = "a" | "b" | "c" | "d";
 
 export interface GroupMemberViewDefinition {
   id: GroupMemberViewId;
@@ -9,10 +9,8 @@ export interface GroupMemberViewDefinition {
   reference?: boolean;
 }
 
-// "C" unifies the prior A/B exploration into a single member view and is now
-// the only layout members are routed to (see GroupMemberViewRenderer). A and B
-// are kept registered — not deleted — as references should a future redesign
-// need them again.
+// "D" is the current live member view — left-nav layout per design handoff GroupLeftNav.zip.
+// A, B, C are kept registered as references; only D is shown to members.
 export const GROUP_MEMBER_VIEW_DEFINITIONS: GroupMemberViewDefinition[] = [
   {
     id: "a",
@@ -27,7 +25,12 @@ export const GROUP_MEMBER_VIEW_DEFINITIONS: GroupMemberViewDefinition[] = [
   {
     id: "c",
     label: "C",
-    description: "Unified member view — anchored header with calm card structure. Default and only view shown to members.",
+    description: "Unified member view — anchored header with calm card structure.",
+  },
+  {
+    id: "d",
+    label: "D",
+    description: "Left-nav layout — compact header, three-section navigation, contextual right rail. Default live view.",
     reference: true,
   },
 ];
@@ -41,5 +44,5 @@ export function isGroupMemberViewId(value: unknown): value is GroupMemberViewId 
 }
 
 export function normalizeGroupMemberViewId(value: unknown): GroupMemberViewId {
-  return isGroupMemberViewId(value) ? value : "c";
+  return isGroupMemberViewId(value) ? value : "d";
 }
