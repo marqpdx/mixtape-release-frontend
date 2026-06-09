@@ -81,7 +81,13 @@ export interface ProfileDTO {
   displayName: string;
   role: string;
   bio: string;
+  quickIntro: string;
   status: string;
+  skills: string[];
+  workAreas: string[];
+  whoAreYou: string;
+  whyAreYouHere: string;
+  quickLink: string;
   avatarUrl: string | null;
   backgroundImageUrl: string | null;
   introVoiceUrl: string | null;
