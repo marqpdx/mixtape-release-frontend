@@ -113,7 +113,7 @@ function Card({
 
 function memberRoleLabel(member: GroupMembership): { label: string; isSteward: boolean } {
   if (member.roles.includes("admin")) return { label: "Admin", isSteward: true };
-  if (member.roles.includes("steward")) return { label: "Steward", isSteward: true };
+  if (member.roles.includes("steward")) return { label: "Member · Steward", isSteward: true };
   return { label: "Member", isSteward: false };
 }
 
@@ -329,6 +329,7 @@ export function GroupLandingCOverview({
                   borderTopWidth={index > 0 ? "1px" : 0}
                   borderColor="theme.border"
                   py="12px"
+                  cursor="pointer"
                   _hover={{ opacity: 0.82 }}
                   transition="opacity 0.15s ease"
                 >

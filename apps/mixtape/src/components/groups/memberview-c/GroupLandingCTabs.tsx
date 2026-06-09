@@ -4,7 +4,7 @@ import { Box, Button, HStack, IconButton, Image, Link, Text } from "@chakra-ui/r
 import { Tabs } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { IconArrowLeft, IconInfoCircle } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -35,6 +35,18 @@ export function GroupLandingCTabs({ group, viewData }: GroupLandingCTabsProps) {
     returnToOverview,
     showAllCollections,
   } = useGroupMemberTabs(group.slug);
+
+  // Cmd+Left (Mac) / Alt+Left (Win/Linux) → browser back, which popstate restores the previous tab
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.altKey) && e.key === "ArrowLeft") {
+        e.preventDefault();
+        window.history.back();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   if (!activeTab) return null;
 

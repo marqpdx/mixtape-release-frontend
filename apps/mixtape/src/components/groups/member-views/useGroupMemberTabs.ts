@@ -26,7 +26,25 @@ export function useGroupMemberTabs(groupSlug: string) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem(storageKey);
-    setActiveTab(saved && isGroupMemberTabKey(saved) ? saved : GROUP_MEMBER_TABS[0].key);
+    const initial = saved && isGroupMemberTabKey(saved) ? saved : GROUP_MEMBER_TABS[0].key;
+    setActiveTab(initial);
+    // Stamp the current history entry with the initial tab so back navigation works
+    history.replaceState({ ...history.state, glbTab: initial }, "");
+  }, [storageKey]);
+
+  // Sync tab when the user navigates back/forward (browser back button, Cmd+Left, Alt+Left)
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      const tab = e.state?.glbTab;
+      if (tab && isGroupMemberTabKey(tab)) {
+        setActiveTab(tab);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(storageKey, tab);
+        }
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [storageKey]);
 
   const handleTabChange = (value: string) => {
@@ -34,6 +52,8 @@ export function useGroupMemberTabs(groupSlug: string) {
     setActiveTab(next);
     if (typeof window !== "undefined") {
       localStorage.setItem(storageKey, next);
+      // Push a history entry so browser back / Cmd+Left returns to the previous tab
+      history.pushState({ ...history.state, glbTab: next }, "");
     }
   };
 
