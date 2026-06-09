@@ -23,6 +23,13 @@ import HalftoneBg from './backgrounds/HalftoneBg';
 import { useProfilePatch } from '../hooks/useProfilePatch';
 import { useSectionReorder } from '../hooks/useSectionReorder';
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi';
+import { AboutSection }       from './profile200/AboutSection';
+import { RightNowSection }    from './profile200/RightNowSection';
+import { VoicePlayer200 }     from './profile200/VoicePlayer200';
+import { TagCloud }           from './profile200/TagCloud';
+import { PromptCards }        from './profile200/PromptCards';
+import { FullBio }            from './profile200/FullBio';
+import { QuickLinks200 }      from './profile200/QuickLinks200';
 
 export type ProfileTabId = 'storyline' | 'profile' | 'writing';
 
@@ -222,7 +229,7 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
       }}
     >
       {BgComp && <BgComp />}
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto' }}>
 
         {/* Identity card — always visible above tabs */}
         <ProfileHeader
@@ -285,16 +292,49 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
             </ComposerProvider>
           )}
 
-          {tab === 'profile' && visibleSections.map(entry => (
-            <div key={entry.id}>
-              {isOwner && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
-                  <VisibilityBadge entry={entry} onToggle={handleVisibilityToggle} />
+          {tab === 'profile' && (
+            <div
+              className="p200-content-root"
+              style={{
+                '--bg':       '#e8eadf',
+                '--ink':      '#1b2a20',
+                '--ink-2':    '#3f5246',
+                '--ink-3':    '#6f7d72',
+                '--surface':  '#f4f5ec',
+                '--surface-2':'#edefe3',
+                '--line':     'color-mix(in oklab, #1b2a20 13%, transparent)',
+                '--accent':   '#b4561f',
+                '--warm':     '#f4ecd6',
+                '--radius':   '16px',
+                background:   'var(--bg)',
+                maxWidth:     664,
+                margin:       '0 auto',
+                padding:      '32px 0 64px',
+                display:      'flex',
+                flexDirection:'column',
+                gap:          30,
+              } as React.CSSProperties}
+            >
+              {profile.quickIntro   && <AboutSection quickIntro={profile.quickIntro} />}
+              {profile.status       && <RightNowSection status={profile.status} />}
+              {profile.introVoiceUrl && (
+                <VoicePlayer200 src={profile.introVoiceUrl} displayName={profile.displayName} />
+              )}
+              {(profile.skills.length > 0 || profile.workAreas.length > 0) && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 22 }}>
+                  {profile.skills.length     > 0 && <TagCloud heading="Skills"       tags={profile.skills} />}
+                  {profile.workAreas.length  > 0 && <TagCloud heading="Focus areas"  tags={profile.workAreas} />}
                 </div>
               )}
-              <SectionContent id={entry.id as SectionId} profile={profile} />
+              {(profile.whoAreYou || profile.whyAreYouHere) && (
+                <PromptCards whoAreYou={profile.whoAreYou} whyAreYouHere={profile.whyAreYouHere} />
+              )}
+              {profile.bio && <FullBio bio={profile.bio} />}
+              {(profile.links.length > 0 || profile.quickLink) && (
+                <QuickLinks200 links={profile.links} quickLink={profile.quickLink || undefined} />
+              )}
             </div>
-          ))}
+          )}
 
           {tab === 'writing' && <WritingTab username={profile.username} />}
 
