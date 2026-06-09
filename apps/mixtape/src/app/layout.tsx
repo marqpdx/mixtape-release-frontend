@@ -5,7 +5,7 @@ import {
   Inter, DM_Serif_Display, Source_Serif_4,
   Instrument_Serif, Instrument_Sans,
   Space_Grotesk, JetBrains_Mono,
-  DM_Sans, Caprasimo, Newsreader,
+  DM_Sans, Caprasimo, Newsreader, Hanken_Grotesk,
 } from 'next/font/google';
 
 const inter = Inter({
@@ -79,6 +79,13 @@ const newsreader = Newsreader({
   display: 'swap',
 });
 
+const hankenGrotesk = Hanken_Grotesk({
+  weight: ['500', '600', '700', '800'],
+  subsets: ['latin'],
+  variable: '--font-head',
+  display: 'swap',
+});
+
 const defaultGroupName =
   process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
   process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
@@ -95,7 +102,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable} ${newsreader.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable} ${newsreader.variable} ${hankenGrotesk.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Providers>
           <SkipLinks />
