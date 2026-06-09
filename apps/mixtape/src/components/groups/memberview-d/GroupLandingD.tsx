@@ -252,49 +252,39 @@ export function GroupLandingD({
 
   return (
     <Box className="gld-root" bg="theme.bg" minH="100vh">
-      {/* Utility bar */}
-      <Box
-        className="gld-utility"
-        position="sticky"
-        top={0}
-        zIndex={200}
-        bg="theme.bg"
-        borderBottomWidth="1px"
-        borderColor="theme.border"
-        h="52px"
-        px={{ base: "18px", xl: "48px" }}
-      >
-        <Flex h="full" align="center" justify="flex-end" gap={2}>
-          {/* Me button — hidden until Group Profile feature is built; see gld-me-btn */}
-          {user?.username && (
-            <NextLink href={`/groups/${group.slug}/me`} style={{ display: "none" }}>
-              <Flex
-                className="gld-me-btn"
-                as="span"
-                align="center"
-                justify="center"
-                w="38px"
-                h="38px"
-                borderRadius="10px"
-                bg="theme.accent"
-                color="white"
-                cursor="pointer"
-                title="Your group profile"
-              >
-                <IconUserCircle size={18} />
-              </Flex>
-            </NextLink>
-          )}
-        </Flex>
-        {/* Role chooser — absolute, does not affect bar height or inline layout */}
+      {/* Role chooser — zero-height sticky anchor; takes no vertical space */}
+      <Box position="sticky" top={0} h="0" overflow="visible" zIndex={300}>
         {isMember && onRoleChange && (
-          <Box position="absolute" top="7px" right={{ base: "18px", xl: "48px" }} zIndex={300}>
+          <Box position="absolute" top="7px" right={{ base: "18px", xl: "48px" }}>
             <UnifiedRoleSwitcher
               testRole={testRole}
               onRoleChange={onRoleChange}
               isAdminOrSteward={isAdminOrSteward}
             />
           </Box>
+        )}
+        {/* Me button — hidden until Group Profile feature is built; see gld-me-btn */}
+        {user?.username && (
+          <NextLink href={`/groups/${group.slug}/me`} style={{ display: "none" }}>
+            <Flex
+              className="gld-me-btn"
+              as="span"
+              position="absolute"
+              top="7px"
+              right={{ base: "70px", xl: "100px" }}
+              align="center"
+              justify="center"
+              w="38px"
+              h="38px"
+              borderRadius="10px"
+              bg="theme.accent"
+              color="white"
+              cursor="pointer"
+              title="Your group profile"
+            >
+              <IconUserCircle size={18} />
+            </Flex>
+          </NextLink>
         )}
       </Box>
 
@@ -315,7 +305,7 @@ export function GroupLandingD({
               alt={`${group.title} cover`}
               w="140px"
               h="140px"
-              m="5px"
+              m="10px 0"
               objectFit="cover"
               borderRadius="16px"
               borderWidth="1px"
@@ -327,7 +317,7 @@ export function GroupLandingD({
               className="gld-cover-placeholder"
               w="140px"
               h="140px"
-              m="5px"
+              m="10px 0"
               borderRadius="16px"
               borderWidth="1px"
               borderStyle="dashed"
