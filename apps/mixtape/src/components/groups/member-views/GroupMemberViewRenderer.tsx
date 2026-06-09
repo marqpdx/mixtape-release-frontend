@@ -2,7 +2,6 @@
 
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupLanding } from "../layout/GroupLanding";
-import { GroupLandingC } from "../memberview-c/GroupLandingC";
 import { GroupLandingD } from "../memberview-d/GroupLandingD";
 import type { GroupLayoutVariant } from "../GroupLayoutSwitcher";
 

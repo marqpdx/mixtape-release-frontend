@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Box, Flex, Grid, GridItem, Image, Text, Button, HStack } from "@chakra-ui/react";
+import { Box, Flex, Grid, GridItem, Image, Text, Button } from "@chakra-ui/react";
 import NextLink from "next/link";
 import {
   IconHome2,
@@ -15,7 +15,6 @@ import {
 } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
-import { MembersTab } from "../tabs/MembersTab";
 import { ThreadworksTab } from "../tabs/ThreadworksTab";
 import { CollectionsTab } from "../tabs/CollectionsTab";
 import { UnifiedRoleSwitcher } from "../UnifiedRoleSwitcher";
@@ -266,15 +265,9 @@ export function GroupLandingD({
         px={{ base: "18px", xl: "48px" }}
       >
         <Flex h="full" align="center" justify="flex-end" gap={2}>
-          {isMember && onRoleChange && (
-            <UnifiedRoleSwitcher
-              testRole={testRole}
-              onRoleChange={onRoleChange}
-              isAdminOrSteward={isAdminOrSteward}
-            />
-          )}
+          {/* Me button — hidden until Group Profile feature is built; see gld-me-btn */}
           {user?.username && (
-            <NextLink href={`/groups/${group.slug}/me`}>
+            <NextLink href={`/groups/${group.slug}/me`} style={{ display: "none" }}>
               <Flex
                 className="gld-me-btn"
                 as="span"
@@ -293,6 +286,16 @@ export function GroupLandingD({
             </NextLink>
           )}
         </Flex>
+        {/* Role chooser — absolute, does not affect bar height or inline layout */}
+        {isMember && onRoleChange && (
+          <Box position="absolute" top="7px" right={{ base: "18px", xl: "48px" }} zIndex={300}>
+            <UnifiedRoleSwitcher
+              testRole={testRole}
+              onRoleChange={onRoleChange}
+              isAdminOrSteward={isAdminOrSteward}
+            />
+          </Box>
+        )}
       </Box>
 
       {/* Compact header */}
@@ -310,8 +313,9 @@ export function GroupLandingD({
               className="gld-cover"
               src={viewData.media.heroImage}
               alt={`${group.title} cover`}
-              w="104px"
-              h="104px"
+              w="140px"
+              h="140px"
+              m="5px"
               objectFit="cover"
               borderRadius="16px"
               borderWidth="1px"
@@ -321,8 +325,9 @@ export function GroupLandingD({
           ) : (
             <Flex
               className="gld-cover-placeholder"
-              w="104px"
-              h="104px"
+              w="140px"
+              h="140px"
+              m="5px"
               borderRadius="16px"
               borderWidth="1px"
               borderStyle="dashed"
