@@ -129,7 +129,7 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
       <ProfileBanner200 backgroundImageUrl={profile.backgroundImageUrl} />
 
       {/* Page content — max-width container */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 44px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 44px' }}>
 
         {/* Identity — avatar overlaps banner with negative margin */}
         <div style={{ marginTop: -58 }}>
@@ -188,7 +188,7 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
             <div
               className="p200-content-root"
               style={{
-                maxWidth:      664,
+                maxWidth:      780,
                 margin:        '0 auto',
                 padding:       '32px 0 64px',
                 display:       'flex',
