@@ -5,7 +5,7 @@ import {
   Inter, DM_Serif_Display, Source_Serif_4,
   Instrument_Serif, Instrument_Sans,
   Space_Grotesk, JetBrains_Mono,
-  DM_Sans, Caprasimo,
+  DM_Sans, Caprasimo, Newsreader,
 } from 'next/font/google';
 
 const inter = Inter({
@@ -71,6 +71,14 @@ const sourceSerif = Source_Serif_4({
   display: 'swap',
 });
 
+const newsreader = Newsreader({
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  variable: '--font-read',
+  display: 'swap',
+});
+
 const defaultGroupName =
   process.env.NEXT_PUBLIC_DEFAULT_GROUP_NAME ||
   process.env.MIXTAPE_DEFAULT_GROUP_NAME ||
@@ -87,7 +95,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable} ${newsreader.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Providers>
           <SkipLinks />
