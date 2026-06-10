@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Flex, Grid, Image, Text, Button } from "@chakra-ui/react";
+import NextLink from "next/link";
 import {
   IconUpload,
   IconMessageCircle,
@@ -366,8 +367,11 @@ export function GroupLandingDIntroduce({ viewData, initialMemberUsername }: Intr
             fontWeight="600"
             _hover={{ opacity: 0.9 }}
             flexShrink={0}
+            asChild
           >
-            Set up profile
+            <NextLink href="/dashboard?section=edit-profile">
+              Set up profile
+            </NextLink>
           </Button>
         </Flex>
       </Box>

@@ -320,6 +320,16 @@ export async function createGroupCircle(
   return response.data;
 }
 
+export async function fetchGroupCircleDetail(
+  parentSlug: string,
+  circleSlug: string
+): Promise<Group> {
+  const response = await axiosInstance.get<Group>(
+    `/api/groups/${parentSlug}/circles/${circleSlug}`
+  );
+  return response.data;
+}
+
 export async function fetchGroupCircles(
   sponsorGroupSlug: string,
   options: FetchGroupsOptions = {}
@@ -393,6 +403,10 @@ export const groupApi = {
   addGroupMember,
   updateGroupMember,
   removeGroupMember,
+
+  // Circles
+  fetchGroupCircles,
+  fetchGroupCircleDetail,
 
   // Invitations
   inviteToGroup,

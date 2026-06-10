@@ -22,6 +22,8 @@ export const groupsQueryKeys = {
     [...groupsQueryKeys.members(groupSlug), options] as const,
   sponsorCircles: (sponsorGroupSlug: string) =>
     [...groupsQueryKeys.all, "sponsor", sponsorGroupSlug, "circles"] as const,
+  circleDetail: (parentSlug: string, circleSlug: string) =>
+    [...groupsQueryKeys.all, "sponsor", parentSlug, "circles", circleSlug] as const,
 };
 
 // Hook return type interfaces
@@ -234,6 +236,29 @@ export const useGroupCircles = (
   });
 
   return { circles, isLoading, error: error as Error | null, refetch };
+};
+
+/**
+ * Hook to fetch a single circle by parent group slug + circle slug.
+ * Uses the nested endpoint which validates the parent relationship.
+ */
+export const useGroupCircle = (
+  parentSlug: string | null,
+  circleSlug: string | null
+) => {
+  const {
+    data: group = null,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: groupsQueryKeys.circleDetail(parentSlug || "", circleSlug || ""),
+    queryFn: () => groupApi.fetchGroupCircleDetail(parentSlug!, circleSlug!),
+    enabled: !!parentSlug && !!circleSlug,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { group, isLoading, error: error as Error | null };
 };
 
 

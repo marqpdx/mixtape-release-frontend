@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
+import { useRouter } from "next/navigation";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 
 interface RailProps {
@@ -60,7 +61,8 @@ function RailFooter({ label, onClick }: { label: string; onClick: () => void }) 
 }
 
 export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
-  const { members, collections } = viewData;
+  const { members, collections, circles, identity } = viewData;
+  const router = useRouter();
 
   return (
     <Flex className="gld-rail" direction="column" gap={4}>
@@ -184,7 +186,7 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
                 {col.title}
               </Text>
               <Text fontSize="13px" color="theme.textMuted" flexShrink={0}>
-                {col.item_count ?? 0}
+                ({col.item_count ?? 0})
               </Text>
             </Flex>
           ))}
@@ -196,6 +198,54 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
         </Box>
         <RailFooter label="Browse collections" onClick={() => onNavigate("files")} />
       </RailCard>
+
+      {/* Circles card — only shown when the group has circles */}
+      {(circles.count > 0 || circles.isLoading) && (
+        <RailCard>
+          <RailHeader title="Circles" count={circles.count} />
+          <Box>
+            {circles.all.slice(0, 5).map((circle) => (
+              <Flex
+                key={circle.id}
+                as="button"
+                className="gld-rail-circle"
+                align="center"
+                gap={3}
+                px={5}
+                py="10px"
+                w="full"
+                textAlign="left"
+                cursor="pointer"
+                _hover={{ bg: "theme.bgSubtle" }}
+                transition="background 0.12s"
+                onClick={() =>
+                  router.push(`/groups/${identity.slug}/circles/${circle.slug}`)
+                }
+              >
+                <Box
+                  w="8px"
+                  h="8px"
+                  borderRadius="2px"
+                  bg="theme.accent"
+                  flexShrink={0}
+                  transform="rotate(45deg)"
+                />
+                <Text flex="1" fontSize="14px" color="theme.accent" truncate fontWeight="500">
+                  {circle.title}
+                </Text>
+                <Text fontSize="13px" color="theme.textMuted" flexShrink={0}>
+                  ({circle.member_count ?? 0})
+                </Text>
+              </Flex>
+            ))}
+            {circles.count === 0 && !circles.isLoading && (
+              <Text px={5} py={4} fontSize="14px" color="theme.textMuted">
+                No circles yet.
+              </Text>
+            )}
+          </Box>
+        </RailCard>
+      )}
     </Flex>
   );
 }

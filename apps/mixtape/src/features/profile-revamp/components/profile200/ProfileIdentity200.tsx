@@ -10,7 +10,7 @@ interface ProfileIdentity200Props {
   location?: string;
   avatarUrl: string | null;
   isOwner?: boolean;
-  username: string;
+  username?: string;
 }
 
 function initials(name: string) {
@@ -23,7 +23,6 @@ export function ProfileIdentity200({
   location,
   avatarUrl,
   isOwner,
-  username,
 }: ProfileIdentity200Props) {
   const [editHovered, setEditHovered] = useState(false);
 
@@ -116,7 +115,7 @@ export function ProfileIdentity200({
       {/* Edit profile button — owner only */}
       {isOwner && (
         <a
-          href={`/member/${username}/edit`}
+          href="/dashboard?section=edit-profile"
           onMouseEnter={() => setEditHovered(true)}
           onMouseLeave={() => setEditHovered(false)}
           style={{
