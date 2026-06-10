@@ -7,7 +7,7 @@ function deriveLabel(from: string): string {
   return 'previous page';
 }
 
-export function ProfileBackLink({ from }: { from: string }) {
+export function ProfileBackLink({ from, label }: { from: string; label?: string }) {
   const router = useRouter();
   return (
     <button
@@ -26,7 +26,7 @@ export function ProfileBackLink({ from }: { from: string }) {
         textUnderlineOffset: '2px',
       }}
     >
-      ← Back to {deriveLabel(from)}
+      ← Back to {label ?? deriveLabel(from)}
     </button>
   );
 }

@@ -22,6 +22,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import NextLink from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { IconChevronLeft, IconChevronRight, IconArrowLeft, IconExternalLink, IconMapPin, IconMail } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -43,7 +44,10 @@ interface GroupMemberProfilePanelProps {
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
-  onViewComplete: () => void;
+  /** Path to return to when navigating to the full profile (e.g. "/groups/my-group"). */
+  backFrom?: string;
+  /** Label for the back link on the full profile page (e.g. "My Group"). */
+  backLabel?: string;
 }
 
 export function GroupMemberProfilePanel({
@@ -55,8 +59,14 @@ export function GroupMemberProfilePanel({
   onNext,
   hasPrev,
   hasNext,
-  onViewComplete,
+  backFrom,
+  backLabel,
 }: GroupMemberProfilePanelProps) {
+  const profileHref = `/member/handle/${username}${
+    backFrom
+      ? `?from=${encodeURIComponent(backFrom)}&fromLabel=${encodeURIComponent(backLabel ?? '')}`
+      : ''
+  }`;
   const { user: authUser } = useAuth();
   const { member, isLoading, error } = useMemberProfile(username);
 
@@ -136,13 +146,11 @@ export function GroupMemberProfilePanel({
           >
             <IconChevronRight size={16} />
           </IconButton>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onViewComplete}
-          >
-            <IconExternalLink size={14} />
-            <Text ml={1}>View complete profile</Text>
+          <Button size="sm" variant="outline" asChild>
+            <NextLink href={profileHref}>
+              <IconExternalLink size={14} />
+              <Text ml={1}>View Full Profile</Text>
+            </NextLink>
           </Button>
         </HStack>
       </Flex>

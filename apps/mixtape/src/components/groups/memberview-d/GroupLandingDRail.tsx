@@ -5,7 +5,7 @@ import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData
 
 interface RailProps {
   viewData: GroupMemberViewData;
-  onNavigate: (id: "introduce" | "files") => void;
+  onNavigate: (id: "introduce" | "files", collectionId?: string, memberUsername?: string) => void;
 }
 
 function RailCard({ children }: { children: React.ReactNode }) {
@@ -25,22 +25,14 @@ function RailCard({ children }: { children: React.ReactNode }) {
 
 function RailHeader({ title, count }: { title: string; count: number | string }) {
   return (
-    <Flex
-      align="center"
-      justify="space-between"
-      px={5}
-      pt={5}
-      pb={3}
-      borderBottomWidth="1px"
-      borderColor="theme.border"
-    >
+    <Box px={5} pt={5} pb={3} borderBottomWidth="1px" borderColor="theme.border">
       <Text fontFamily="heading" fontSize="18px" fontWeight="600" color="theme.text">
-        {title}
+        {title}{" "}
+        <Box as="span" fontWeight="400" fontSize="15px" color="theme.textSecondary">
+          ({count})
+        </Box>
       </Text>
-      <Text fontSize="14px" color="theme.textSecondary">
-        {count}
-      </Text>
-    </Flex>
+    </Box>
   );
 }
 
@@ -79,13 +71,18 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
           {members.active.slice(0, 5).map((member) => (
             <Flex
               key={member.member_id}
+              as="button"
               className="gld-rail-member"
               align="center"
               gap={3}
               px={5}
               py="10px"
+              w="full"
+              textAlign="left"
+              cursor="pointer"
               _hover={{ bg: "theme.bgSubtle" }}
               transition="background 0.12s"
+              onClick={() => onNavigate("introduce", undefined, member.username ?? undefined)}
             >
               {member.profile_image ? (
                 <Image
@@ -163,13 +160,18 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
           {collections.ordered.slice(0, 5).map((col) => (
             <Flex
               key={col.id}
+              as="button"
               className="gld-rail-collection"
               align="center"
               gap={3}
               px={5}
               py="10px"
+              w="full"
+              textAlign="left"
+              cursor="pointer"
               _hover={{ bg: "theme.bgSubtle" }}
               transition="background 0.12s"
+              onClick={() => onNavigate("files", col.id)}
             >
               <Box
                 w="8px"
@@ -178,7 +180,7 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
                 bg="theme.accent"
                 flexShrink={0}
               />
-              <Text flex="1" fontSize="14px" color="theme.text" truncate>
+              <Text flex="1" fontSize="14px" color="theme.accent" truncate fontWeight="500">
                 {col.title}
               </Text>
               <Text fontSize="13px" color="theme.textMuted" flexShrink={0}>

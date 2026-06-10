@@ -241,9 +241,20 @@ export function GroupLandingD({
   const { user } = useAuth();
   const viewData = useGroupMemberViewData(group);
   const [active, setActive] = useState<DestinationId>("start");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
 
   const handleSelect = useCallback((id: DestinationId) => {
     setActive(id);
+    if (id !== "files" && id !== "findings") setSelectedCollectionId(null);
+    if (id !== "introduce") setSelectedMemberUsername(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleRailNavigate = useCallback((id: "introduce" | "files", collectionId?: string, memberUsername?: string) => {
+    setActive(id);
+    setSelectedCollectionId(collectionId ?? null);
+    setSelectedMemberUsername(memberUsername ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -255,7 +266,7 @@ export function GroupLandingD({
       {/* Role chooser — zero-height sticky anchor; takes no vertical space */}
       <Box position="sticky" top={0} h="0" overflow="visible" zIndex={300}>
         {isMember && onRoleChange && (
-          <Box position="absolute" top="7px" right={{ base: "18px", xl: "48px" }}>
+          <Box position="absolute" top={2} right={2}>
             <UnifiedRoleSwitcher
               testRole={testRole}
               onRoleChange={onRoleChange}
@@ -270,8 +281,8 @@ export function GroupLandingD({
               className="gld-me-btn"
               as="span"
               position="absolute"
-              top="7px"
-              right={{ base: "70px", xl: "100px" }}
+              top={2}
+              right="50px"
               align="center"
               justify="center"
               w="38px"
@@ -400,7 +411,7 @@ export function GroupLandingD({
               <GroupLandingDStartHere viewData={viewData} onNavigate={handleSelect} />
             )}
             {active === "introduce" && (
-              <GroupLandingDIntroduce viewData={viewData} />
+              <GroupLandingDIntroduce viewData={viewData} initialMemberUsername={selectedMemberUsername} />
             )}
             {(active === "share" || active === "converse" || active === "ask") && (
               <Box>
@@ -409,7 +420,7 @@ export function GroupLandingD({
               </Box>
             )}
             {(active === "files" || active === "findings") && (
-              <CollectionsTab group={group} />
+              <CollectionsTab group={group} selectedCollectionId={selectedCollectionId} />
             )}
           </GridItem>
 
@@ -420,7 +431,7 @@ export function GroupLandingD({
               className="gld-rail-col"
             >
               <Box position="sticky" top="68px">
-                <GroupLandingDRail viewData={viewData} onNavigate={handleSelect} />
+                <GroupLandingDRail viewData={viewData} onNavigate={handleRailNavigate} />
               </Box>
             </GridItem>
           )}

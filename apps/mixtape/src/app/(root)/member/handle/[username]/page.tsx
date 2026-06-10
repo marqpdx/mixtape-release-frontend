@@ -15,7 +15,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://127.0.0.1:3011';
 export const revalidate = 60;
 
 type Params = Promise<{ username: string }>;
-type SearchParams = Promise<{ from?: string; tab?: string }>;
+type SearchParams = Promise<{ from?: string; tab?: string; fromLabel?: string }>;
 
 const VALID_TABS = new Set<ProfileTabId>(['storyline', 'profile', 'writing']);
 
@@ -59,7 +59,7 @@ export default async function PublicProfilePage({
   searchParams: SearchParams;
 }) {
   const { username } = await params;
-  const { from: rawFrom, tab: rawTab } = await searchParams;
+  const { from: rawFrom, tab: rawTab, fromLabel } = await searchParams;
   const from = validateFrom(rawFrom);
   const initialTab = validateTab(rawTab);
 
@@ -74,7 +74,7 @@ export default async function PublicProfilePage({
       <ProfileViewTracker username={username} />
       {from && (
         <div style={{ padding: '0.5rem 1.5rem' }}>
-          <ProfileBackLink from={from} />
+          <ProfileBackLink from={from} label={fromLabel} />
         </div>
       )}
       <ProfileTabShell profile={profile} initialTab={initialTab} />

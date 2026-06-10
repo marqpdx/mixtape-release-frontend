@@ -43,7 +43,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { memberQueryKeys } from "@mixtape/api/hooks/useMembers";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useProfileDrawer } from "@/features/profile-revamp/stores/profileDrawerStore";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface GroupMemberListProps {
@@ -78,7 +77,6 @@ export function GroupMemberList({
 }: GroupMemberListProps) {
   const { user: identity } = useAuth();
   const queryClient = useQueryClient();
-  const openProfileDrawer = useProfileDrawer(s => s.open);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [nameFilter, setNameFilter] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -165,9 +163,6 @@ export function GroupMemberList({
     detailNav.exit();
   }, [detailNav]);
 
-  const handleViewComplete = useCallback((username: string) => {
-    openProfileDrawer(username);
-  }, [openProfileDrawer]);
 
   // Arrow keys step between members while the panel is open (Escape/back handled by useBackNavigableDetail)
   useEffect(() => {
@@ -704,7 +699,8 @@ export function GroupMemberList({
             onNext={() => setSelectedIndex((i) => Math.min(filteredMembers.length - 1, (i ?? 0) + 1))}
             hasPrev={selectedIndex !== null && selectedIndex > 0}
             hasNext={selectedIndex !== null && selectedIndex < filteredMembers.length - 1}
-            onViewComplete={() => handleViewComplete(selectedMember.username!)}
+            backFrom={`/groups/${group.slug}`}
+            backLabel={group.title}
           />
         )}
       </Box>
