@@ -58,6 +58,7 @@ interface SponsorInfo {
 
 export interface CollectionsExplorerProps {
   sponsor: SponsorInfo;
+  initialCollectionId?: string | null;
 }
 
 // ---- helpers ----------------------------------------------------------------
@@ -1209,8 +1210,9 @@ function readStoredNav(sponsor: SponsorInfo): StoredNav | null {
   }
 }
 
-export function CollectionsExplorer({ sponsor }: CollectionsExplorerProps) {
+export function CollectionsExplorer({ sponsor, initialCollectionId }: CollectionsExplorerProps) {
   const [nav, setNav] = useState<ExplorerNav>(() => {
+    if (initialCollectionId) return { collectionId: initialCollectionId, folderId: null };
     const stored = readStoredNav(sponsor);
     return stored ? { collectionId: stored.collectionId, folderId: stored.folderId } : { collectionId: null, folderId: null };
   });

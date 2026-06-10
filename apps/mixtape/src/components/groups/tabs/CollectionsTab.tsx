@@ -15,7 +15,7 @@ interface CollectionsTabProps {
   detailBackNav?: ReactNode;
 }
 
-export function CollectionsTab({ group }: CollectionsTabProps) {
+export function CollectionsTab({ group, selectedCollectionId }: CollectionsTabProps) {
   return (
     <Box className="cex-tab-root">
       <CollectionsExplorer
@@ -25,6 +25,7 @@ export function CollectionsTab({ group }: CollectionsTabProps) {
           slug: group.slug,
           displayName: group.title,
         }}
+        initialCollectionId={selectedCollectionId}
       />
     </Box>
   );
