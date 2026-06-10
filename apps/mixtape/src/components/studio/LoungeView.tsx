@@ -6,7 +6,7 @@ import { BerylPromptCard } from "./BerylPromptCard";
 import { PersonalCard } from "./PersonalCard";
 import { GroupContextCard } from "./GroupContextCard";
 import { WritingContextCard } from "./WritingContextCard";
-import type { StudioActivityItem } from "@mixtape/api/clients/studio/studioApi";
+import type { StudioActivityItem, RecurringActionItem } from "@mixtape/api/clients/studio/studioApi";
 
 function groupActivityBySlug(
   items: StudioActivityItem[],
@@ -19,6 +19,22 @@ function groupActivityBySlug(
     map[slug].push(item);
   }
   return map;
+}
+
+function groupRecurringActionsBySlug(
+  items: RecurringActionItem[],
+): { byGroup: Record<string, RecurringActionItem[]>; memberOwned: RecurringActionItem[] } {
+  const byGroup: Record<string, RecurringActionItem[]> = {};
+  const memberOwned: RecurringActionItem[] = [];
+  for (const item of items) {
+    if (item.owner_type === "group" && item.group_slug) {
+      if (!byGroup[item.group_slug]) byGroup[item.group_slug] = [];
+      byGroup[item.group_slug].push(item);
+    } else {
+      memberOwned.push(item);
+    }
+  }
+  return { byGroup, memberOwned };
 }
 
 export function LoungeView() {
@@ -41,6 +57,8 @@ export function LoungeView() {
   }
 
   const activityByGroup = groupActivityBySlug(personal?.activity ?? []);
+  const { byGroup: recurringByGroup, memberOwned: memberRecurring } =
+    groupRecurringActionsBySlug(personal?.recurring_actions ?? []);
 
   // Sort groups by activity count (salience proxy) — groups with more activity rank first
   const sortedGroups = [...(groups ?? [])].sort((a, b) => {
@@ -62,7 +80,7 @@ export function LoungeView() {
       )}
 
       {/* Position 2 — Personal card (always present) */}
-      <PersonalCard />
+      <PersonalCard dueActions={memberRecurring} />
 
       {/* Position 3 — Group context cards */}
       {sortedGroups.map((group) => (
@@ -70,6 +88,7 @@ export function LoungeView() {
           key={group.slug}
           group={group}
           digestItems={activityByGroup[group.slug] ?? []}
+          dueActions={recurringByGroup[group.slug] ?? []}
         />
       ))}
 

@@ -1,13 +1,14 @@
 "use client";
 
-import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
+import { Badge, Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import type { PersonalGroupItem, StudioActivityItem } from "@mixtape/api/clients/studio/studioApi";
+import type { PersonalGroupItem, RecurringActionItem, StudioActivityItem } from "@mixtape/api/clients/studio/studioApi";
 import { useRouter } from "next/navigation";
 
 interface Props {
   group: PersonalGroupItem;
   digestItems: StudioActivityItem[];
+  dueActions?: RecurringActionItem[];
 }
 
 function relativeTime(ts: string | null): string {
@@ -21,7 +22,12 @@ function relativeTime(ts: string | null): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function GroupContextCard({ group, digestItems }: Props) {
+function daysOverdue(next_due_at: string): number {
+  const diff = Date.now() - new Date(next_due_at).getTime();
+  return Math.max(0, Math.floor(diff / 86_400_000));
+}
+
+export function GroupContextCard({ group, digestItems, dueActions = [] }: Props) {
   const router = useRouter();
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -88,6 +94,39 @@ export function GroupContextCard({ group, digestItems }: Props) {
         </VStack>
       ) : (
         <Text fontSize="xs" color={mutedColor}>Quiet.</Text>
+      )}
+
+      {dueActions.length > 0 && (
+        <VStack gap={0} align="stretch" mt={2}>
+          {dueActions.map((action) => {
+            const overdue = daysOverdue(action.next_due_at);
+            return (
+              <HStack
+                key={action.id}
+                justify="space-between"
+                py={2}
+                borderTop="1px solid"
+                borderColor={itemBorder}
+              >
+                <VStack align="start" gap={0} flex={1} minW={0}>
+                  <Text fontSize="xs" fontWeight="medium" lineClamp={1}>{action.title}</Text>
+                  {action.suggested_label && (
+                    <Text fontSize="xs" color={mutedColor}>{action.suggested_label}</Text>
+                  )}
+                </VStack>
+                {overdue > 0 ? (
+                  <Badge colorPalette="orange" size="sm" flexShrink={0} ml={2}>
+                    {overdue}d overdue
+                  </Badge>
+                ) : (
+                  <Badge colorPalette="blue" size="sm" flexShrink={0} ml={2}>
+                    due
+                  </Badge>
+                )}
+              </HStack>
+            );
+          })}
+        </VStack>
       )}
     </Box>
   );

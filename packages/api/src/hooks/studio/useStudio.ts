@@ -13,6 +13,10 @@ import {
   createRecurringAction,
   updateRecurringAction,
   deleteRecurringAction,
+  fetchPersonalRecurringActions,
+  createPersonalRecurringAction,
+  updatePersonalRecurringAction,
+  deletePersonalRecurringAction,
   fetchBerylSession,
   updateBerylScrap,
   type PersonalStudioResponse,
@@ -46,6 +50,7 @@ export const studioQueryKeys = {
   groupCommand: (slug: string) => [...studioQueryKeys.group(slug), "command"] as const,
   groupClients: (slug: string) => [...studioQueryKeys.group(slug), "clients"] as const,
   groupRecurringActions: (slug: string) => [...studioQueryKeys.group(slug), "recurring-actions"] as const,
+  personalRecurringActions: () => [...studioQueryKeys.personal(), "recurring-actions"] as const,
 
   berylSession: (ctx: string) => [...studioQueryKeys.all, "beryl", "session", ctx] as const,
 };
@@ -166,6 +171,51 @@ export function useDeleteRecurringAction(groupSlug: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupRecurringActions(groupSlug) });
       queryClient.invalidateQueries({ queryKey: studioQueryKeys.groupPulse(groupSlug) });
+    },
+  });
+}
+
+// ============================================================================
+// Personal RecurringAction CRUD
+// ============================================================================
+
+export function usePersonalRecurringActions() {
+  return useQuery<RecurringActionItem[]>({
+    queryKey: studioQueryKeys.personalRecurringActions(),
+    queryFn: fetchPersonalRecurringActions,
+    staleTime: 60_000,
+  });
+}
+
+export function useCreatePersonalRecurringAction() {
+  const queryClient = useQueryClient();
+  return useMutation<RecurringActionItem, Error, RecurringActionCreateInput>({
+    mutationFn: createPersonalRecurringAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personalRecurringActions() });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personal() });
+    },
+  });
+}
+
+export function useUpdatePersonalRecurringAction() {
+  const queryClient = useQueryClient();
+  return useMutation<RecurringActionItem, Error, { id: string; input: RecurringActionUpdateInput }>({
+    mutationFn: ({ id, input }) => updatePersonalRecurringAction(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personalRecurringActions() });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personal() });
+    },
+  });
+}
+
+export function useDeletePersonalRecurringAction() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: deletePersonalRecurringAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personalRecurringActions() });
+      queryClient.invalidateQueries({ queryKey: studioQueryKeys.personal() });
     },
   });
 }

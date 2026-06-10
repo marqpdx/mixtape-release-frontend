@@ -34,6 +34,7 @@ export interface PersonalStudioResponse {
   activity: StudioActivityItem[];
   my_content: StudioContentItem[];
   beryl_prompt: BerylPrompt | null;
+  recurring_actions: RecurringActionItem[];
 }
 
 export interface PersonalGroupItem {
@@ -62,6 +63,9 @@ export interface RecurringActionItem {
   suggested_label: string;
   is_active?: boolean;
   is_overdue?: boolean;
+  /** Present only in personal studio digest — identifies ownership context */
+  owner_type?: "member" | "group";
+  group_slug?: string | null;
 }
 
 export interface RecurringActionCreateInput {
@@ -269,4 +273,32 @@ export async function fetchBerylSession(ctx: string): Promise<BerylSessionRespon
 export async function updateBerylScrap(id: string, input: ScrapUpdateInput): Promise<ScrapItem> {
   const { data } = await axiosInstance.patch(`/api/studio/beryl/scraps/${id}`, input);
   return data;
+}
+
+// ============================================================================
+// Personal RecurringAction CRUD
+// ============================================================================
+
+export async function fetchPersonalRecurringActions(): Promise<RecurringActionItem[]> {
+  const { data } = await axiosInstance.get("/api/studio/personal/recurring-actions");
+  return data;
+}
+
+export async function createPersonalRecurringAction(
+  input: RecurringActionCreateInput,
+): Promise<RecurringActionItem> {
+  const { data } = await axiosInstance.post("/api/studio/personal/recurring-actions", input);
+  return data;
+}
+
+export async function updatePersonalRecurringAction(
+  id: string,
+  input: RecurringActionUpdateInput,
+): Promise<RecurringActionItem> {
+  const { data } = await axiosInstance.patch(`/api/studio/personal/recurring-actions/${id}`, input);
+  return data;
+}
+
+export async function deletePersonalRecurringAction(id: string): Promise<void> {
+  await axiosInstance.delete(`/api/studio/personal/recurring-actions/${id}`);
 }
