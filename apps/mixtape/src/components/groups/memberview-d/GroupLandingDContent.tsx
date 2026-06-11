@@ -215,7 +215,7 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
               between welcome materials, conversations, and resources.
             </Text>
             <Text fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
-              Start in{" "}
+              Head to{" "}
               <Box
                 as="button"
                 fontWeight="600"
@@ -225,9 +225,9 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
                 _hover={{ textDecoration: "underline" }}
                 display="inline"
               >
-                Introduce Yourselves
+                Tell About Yourself
               </Box>{" "}
-              to add a photo and a short intro — it's how other members get to know you here.
+              to write a short intro — it's how other members get to know you here.
             </Text>
             <Text fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
               Everything the group makes together lives under{" "}

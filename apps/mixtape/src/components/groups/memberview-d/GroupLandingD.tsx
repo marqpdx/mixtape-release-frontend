@@ -21,9 +21,9 @@ import { CollectionsTab } from "../tabs/CollectionsTab";
 import { UnifiedRoleSwitcher } from "../UnifiedRoleSwitcher";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupLandingDStartHere } from "./GroupLandingDContent";
-import { GroupLandingDIntroduce } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
+import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     label: "Welcome",
     items: [
       { id: "start",     label: "Start Here",           icon: IconHome2,          rail: true  },
-      { id: "introduce", label: "Introduce Yourselves",  icon: IconUsers,          rail: true  },
+      { id: "introduce", label: "Tell About Yourself",   icon: IconUsers,          rail: true  },
     ],
   },
   {
@@ -414,7 +414,7 @@ export function GroupLandingD({
               <GroupLandingDStartHere viewData={viewData} onNavigate={handleSelect} />
             )}
             {active === "introduce" && (
-              <GroupLandingDIntroduce viewData={viewData} initialMemberUsername={selectedMemberUsername} />
+              <GroupLandingDTellAboutYourself groupSlug={group.slug} />
             )}
             {(active === "share" || active === "converse" || active === "ask") && (
               <Box>
