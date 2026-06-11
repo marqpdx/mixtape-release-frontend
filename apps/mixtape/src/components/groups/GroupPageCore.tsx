@@ -9,6 +9,7 @@ import GroupWorkArea from "@components/dashboard/group/GroupWorkArea";
 import { getFilteredGroupMenuItems } from "@components/dashboard/group/groupConfig";
 import DashboardLayout from "@components/common/DashboardLayout";
 import { canUserModerateGroup, isGroupMember, getPrimaryRole } from "@mixtape/core/types/groupTypes";
+import { recordGroupVisit } from "@mixtape/core/lib/groupVisitTracker";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { GroupMemberViewRenderer } from "@/components/groups/member-views/GroupMemberViewRenderer";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
@@ -49,6 +50,10 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
     myPermissions?.decorators || []
   );
   const canUseAdminView = isAdminOrSteward || canEditGroup;
+
+  useEffect(() => {
+    if (group?.slug) recordGroupVisit(group.slug);
+  }, [group?.slug]);
 
   const storageKey = useMemo(
     () => (group ? `group-${group.slug}-view` : null),

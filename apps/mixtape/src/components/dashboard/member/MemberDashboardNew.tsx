@@ -35,6 +35,7 @@ import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
 import { useNotificationsPage } from "@mixtape/api/hooks/activity/useActivity";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
+import { getGroupVisitTimes } from "@mixtape/core/lib/groupVisitTracker";
 import MemberWorkArea from "./MemberWorkArea";
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -624,8 +625,13 @@ function WhatsHereCard({ onNavigate }: { onNavigate: (key: SectionKey) => void }
 
 function MyGroupsCard({ onNavigate }: { onNavigate: (key: SectionKey) => void }) {
   const { groups, isLoading } = useUserGroups();
+  const visitTimes = getGroupVisitTimes();
   const shown = [...groups]
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .sort((a, b) => {
+      const ta = visitTimes[a.slug] ?? new Date(a.updated_at).getTime();
+      const tb = visitTimes[b.slug] ?? new Date(b.updated_at).getTime();
+      return tb - ta;
+    })
     .slice(0, 5);
 
   return (
