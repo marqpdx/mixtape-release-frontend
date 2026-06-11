@@ -624,7 +624,9 @@ function WhatsHereCard({ onNavigate }: { onNavigate: (key: SectionKey) => void }
 
 function MyGroupsCard({ onNavigate }: { onNavigate: (key: SectionKey) => void }) {
   const { groups, isLoading } = useUserGroups();
-  const shown = groups.slice(0, 5);
+  const shown = [...groups]
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 5);
 
   return (
     <Box

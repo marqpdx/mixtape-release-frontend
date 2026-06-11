@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useState, useCallback, useMemo } from "react";
+import { Fragment, useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { Box, Flex, Grid, GridItem, Image, Text, Button } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconHome2,
   IconUsers,
@@ -13,9 +14,12 @@ import {
   IconUserCircle,
   IconCalendarEvent,
   IconPin,
+  IconSwitchHorizontal,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
+import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { isDiscussionPinned } from "@mixtape/core/types/threadworksTypes";
 import { fetchForums } from "@mixtape/api/clients/threadworks/threadworksApi";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -254,6 +258,130 @@ function ConnectSubtoolbar({ destination }: { destination: DestinationId }) {
   );
 }
 
+// ── group switcher ─────────────────────────────────────────────────────────
+
+function GroupSwitcherButton({ currentGroupSlug }: { currentGroupSlug: string }) {
+  const router = useRouter();
+  const { groups } = useUserGroups();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <Box ref={ref} position="relative">
+      <Box
+        as="button"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        h="28px"
+        w="40px"
+        borderRadius="md"
+        bg="theme.surface"
+        backdropFilter="blur(8px)"
+        color="theme.textSecondary"
+        cursor="pointer"
+        _hover={{ color: "theme.accent" }}
+        transition="color 0.12s"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Switch group"
+        title="Switch group"
+      >
+        <IconSwitchHorizontal size={14} />
+      </Box>
+
+      {open && (
+        <Box
+          position="absolute"
+          top="calc(100% + 6px)"
+          right={0}
+          minW="220px"
+          bg="theme.surface"
+          borderRadius="12px"
+          boxShadow="0 4px 24px rgba(15,23,32,.14)"
+          border="1px solid"
+          borderColor="theme.border"
+          py="6px"
+          zIndex={400}
+          overflow="hidden"
+        >
+          {groups.length === 0 && (
+            <Box px="14px" py="10px">
+              <Text fontSize="13px" color="theme.textMuted">No other groups</Text>
+            </Box>
+          )}
+          {groups.map((g) => {
+            const emblemSrc = getBestEmblemUrl(g.emblem, 32) ?? g.profile_image_url;
+            const isCurrent = g.slug === currentGroupSlug;
+            return (
+              <Box
+                key={g.id}
+                as="button"
+                w="full"
+                display="flex"
+                alignItems="center"
+                gap="10px"
+                px="14px"
+                py="9px"
+                textAlign="left"
+                cursor={isCurrent ? "default" : "pointer"}
+                bg={isCurrent ? "theme.accentSoft" : "transparent"}
+                _hover={isCurrent ? {} : { bg: "theme.bgSubtle" }}
+                transition="background 0.1s"
+                onClick={() => {
+                  if (!isCurrent) {
+                    router.push(`/groups/${g.slug}`);
+                    setOpen(false);
+                  }
+                }}
+              >
+                <Box
+                  w="28px"
+                  h="28px"
+                  borderRadius="7px"
+                  bg="theme.accentSoft"
+                  flexShrink={0}
+                  overflow="hidden"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  {emblemSrc ? (
+                    <Image src={emblemSrc} alt={g.title} w="full" h="full" objectFit="cover" />
+                  ) : (
+                    <Text fontSize="12px" fontWeight="700" color="theme.accent">
+                      {g.title.charAt(0).toUpperCase()}
+                    </Text>
+                  )}
+                </Box>
+                <Text
+                  fontSize="13px"
+                  fontWeight={isCurrent ? "600" : "400"}
+                  color={isCurrent ? "theme.accent" : "theme.text"}
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  flex="1"
+                >
+                  {g.title}
+                </Text>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ── main component ─────────────────────────────────────────────────────────
 
 interface GroupLandingDProps {
@@ -318,17 +446,18 @@ export function GroupLandingD({
 
   return (
     <Box className="gld-root" bg="theme.bg" minH="100vh">
-      {/* Role chooser — zero-height sticky anchor; takes no vertical space */}
+      {/* Role chooser + group switcher — zero-height sticky anchor; takes no vertical space */}
       <Box position="sticky" top={0} h="0" overflow="visible" zIndex={300}>
-        {isMember && onRoleChange && (
-          <Box position="absolute" top={2} right={2}>
+        <Flex position="absolute" top={2} right={2} gap={2} align="center">
+          <GroupSwitcherButton currentGroupSlug={group.slug} />
+          {isMember && onRoleChange && (
             <UnifiedRoleSwitcher
               testRole={testRole}
               onRoleChange={onRoleChange}
               isAdminOrSteward={isAdminOrSteward}
             />
-          </Box>
-        )}
+          )}
+        </Flex>
         {/* Me button — hidden until Group Profile feature is built; see gld-me-btn */}
         {user?.username && (
           <NextLink href={`/groups/${group.slug}/me`} style={{ display: "none" }}>

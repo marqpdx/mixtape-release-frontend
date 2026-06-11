@@ -2,7 +2,7 @@
 
 import { useEffect, memo, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Box, Button, RadioGroup, Stack, Text, Heading } from "@chakra-ui/react";
+import { Box, Button, Grid, RadioGroup, Stack, Text, Heading } from "@chakra-ui/react";
 import { DatePickerInput } from "@components/forms/DatePickerField";
 import { Input } from "@/theme/recipes/input.recipe";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
@@ -133,75 +133,82 @@ function FormInner({
             />
           </Box>
 
-          <Box>
-            <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
-              Visibility
-            </Text>
-          <GroupVisibilitySelect
-            register={register}
-            value={visibility}
-            onChange={handleVisibilityChange}
-          />
-          </Box>
-
-          <Box>
-            <RadioGroup.Root value={groupType} onValueChange={handleRadioChange} disabled={!!lockedGroupType}>
-              <Text fontSize="sm" fontWeight="medium" mb={3} color="gray.600">
-                Group Type
+          {lockedGroupType !== "circle" && (
+            <Box>
+              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+                Visibility
               </Text>
-              <Text fontSize="sm" color="gray.500" mb={3}>
-                Community is a member group, Persona represents an individual, and Coalition links multiple groups.
-              </Text>
-              <Stack direction="row" gap={6} flexWrap="wrap">
-                {groupTypeOptions
-                  .filter((opt) => lockedGroupType ? opt.value === lockedGroupType : opt.value !== "circle")
-                  .map((opt) => (
-                    <RadioGroup.Item key={opt.id} value={opt.value} p={3} rounded="md" _hover={{ bg: "green.50" }}>
-                      <RadioGroup.ItemHiddenInput />
-                      <RadioGroup.ItemIndicator />
-                      <RadioGroup.ItemText fontWeight="medium">{opt.label}</RadioGroup.ItemText>
-                    </RadioGroup.Item>
-                  ))}
-              </Stack>
-            </RadioGroup.Root>
-          </Box>
-
-          {groupType === "circle" && (
-            <Stack gap={4} p={4} bg="green.50" rounded="md" border="1px solid" borderColor="green.200">
-              <Text fontSize="sm" fontWeight="medium" color="green.700">
-                Circle Details
-              </Text>
-
-              <DatePickerInput
-                name="start_date"
-                control={control}
-                isRequired={false}
-                placeholder="Start Date & Time (Optional)"
+              <GroupVisibilitySelect
+                register={register}
+                value={visibility}
+                onChange={handleVisibilityChange}
               />
-
-              <DatePickerInput
-                name="end_date"
-                control={control}
-                isRequired={false}
-                placeholder="End Date & Time (Optional)"
-                validateFn={(value: Date | null) => {
-                  if (!startDate && !value) return true;
-                  if (startDate && !value) return true;
-                  if (startDate && value && new Date(value) <= new Date(startDate)) {
-                    return "End date must be after start date";
-                  }
-                  return true;
-                }}
-              />
-            </Stack>
+            </Box>
           )}
 
-          <Box>
-            <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
-              Tagline (Optional)
-            </Text>
-            <Input {...register("tagline")} placeholder="A short tagline" size="md" />
-          </Box>
+          {!lockedGroupType && (
+            <Box>
+              <RadioGroup.Root value={groupType} onValueChange={handleRadioChange}>
+                <Text fontSize="sm" fontWeight="medium" mb={3} color="gray.600">
+                  Group Type
+                </Text>
+                <Text fontSize="sm" color="gray.500" mb={3}>
+                  Community is a member group, Persona represents an individual, and Coalition links multiple groups.
+                </Text>
+                <Stack direction="row" gap={6} flexWrap="wrap">
+                  {groupTypeOptions
+                    .filter((opt) => opt.value !== "circle")
+                    .map((opt) => (
+                      <RadioGroup.Item key={opt.id} value={opt.value} p={3} rounded="md" _hover={{ bg: "green.50" }}>
+                        <RadioGroup.ItemHiddenInput />
+                        <RadioGroup.ItemIndicator />
+                        <RadioGroup.ItemText fontWeight="medium">{opt.label}</RadioGroup.ItemText>
+                      </RadioGroup.Item>
+                    ))}
+                </Stack>
+              </RadioGroup.Root>
+            </Box>
+          )}
+
+          {groupType === "circle" ? (
+            <Grid templateColumns="2fr 1fr" gap={4} alignItems="start">
+              <Box>
+                <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+                  Tagline (Optional)
+                </Text>
+                <Input {...register("tagline")} placeholder="A short tagline" size="md" />
+              </Box>
+              <Stack gap={2}>
+                <DatePickerInput
+                  name="start_date"
+                  control={control}
+                  isRequired={false}
+                  placeholder="Start Date (Optional)"
+                />
+                <DatePickerInput
+                  name="end_date"
+                  control={control}
+                  isRequired={false}
+                  placeholder="End Date (Optional)"
+                  validateFn={(value: Date | null) => {
+                    if (!startDate && !value) return true;
+                    if (startDate && !value) return true;
+                    if (startDate && value && new Date(value) <= new Date(startDate)) {
+                      return "End date must be after start date";
+                    }
+                    return true;
+                  }}
+                />
+              </Stack>
+            </Grid>
+          ) : (
+            <Box>
+              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+                Tagline (Optional)
+              </Text>
+              <Input {...register("tagline")} placeholder="A short tagline" size="md" />
+            </Box>
+          )}
         </Stack>
 
         <Stack direction={{ base: "column", md: "row" }} gap={4} pt={4}>

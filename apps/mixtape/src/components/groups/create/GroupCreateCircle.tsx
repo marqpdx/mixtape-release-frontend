@@ -68,8 +68,8 @@ export default function GroupCreateCircle({ sponsorGroupSlug, onCreated }: Group
 
     const group = await mutation.mutateAsync(payload);
 
-    // Default navigation: back to circles landing, or to new circle page if you have it
-    if (group?.slug) {
+    // Let onCreated handle navigation when provided; otherwise fall back to group page
+    if (group?.slug && !onCreated) {
       router.push(`/groups/${sponsorGroupSlug}?section=circles-landing`);
     }
   };
