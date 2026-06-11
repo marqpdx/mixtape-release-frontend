@@ -76,6 +76,10 @@ export interface Group {
   member_count?: number;
   submitted_by_username?: string;
 
+  // Circle-specific — controls whether this circle is discoverable by parent group members.
+  // Backend field pending; optional so existing code is unaffected until serializer ships.
+  visible_to_parent?: boolean;
+
   emblem?: EmblemInline | null;
 }
 
@@ -434,7 +438,9 @@ export interface GroupCreateFormData {
   // sponsor?: SponsorRef;
 }
 
-export interface GroupUpdateFormData extends Partial<GroupCreateFormData> {}
+export interface GroupUpdateFormData extends Partial<GroupCreateFormData> {
+  visible_to_parent?: boolean;
+}
 
 
 export interface GroupCreateFormValues

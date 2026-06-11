@@ -3,6 +3,8 @@
 import { Box, HStack, Skeleton, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useGroupCommand } from "@mixtape/api/hooks/studio";
+import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
+import { CircleSettingsPanel } from "@/components/groups/circles/CircleSettingsPanel";
 import type { CommandMetrics, ActiveOp } from "@mixtape/api/clients/studio/studioApi";
 
 // ---------------------------------------------------------------------------
@@ -110,6 +112,8 @@ interface CommandTabProps {
 
 export function CommandTab({ groupSlug }: CommandTabProps) {
   const { data, isLoading, error } = useGroupCommand(groupSlug);
+  const { group } = useGroup(groupSlug);
+  const isCircle = group?.group_type === "circle";
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -156,6 +160,8 @@ export function CommandTab({ groupSlug }: CommandTabProps) {
           </VStack>
         )}
       </Box>
+
+      {isCircle && group && <CircleSettingsPanel group={group} />}
     </VStack>
   );
 }
