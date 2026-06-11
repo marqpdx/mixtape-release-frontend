@@ -302,7 +302,7 @@ export function GroupLandingD({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string, _memberUsername?: string) => {
+  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string, _?: string) => {
     setActive(id);
     setSelectedCollectionId(collectionId ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
