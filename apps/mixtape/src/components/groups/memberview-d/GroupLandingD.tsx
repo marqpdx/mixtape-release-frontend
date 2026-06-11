@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { Fragment, useState, useCallback, useMemo } from "react";
 import { Box, Flex, Grid, GridItem, Image, Text, Button } from "@chakra-ui/react";
 import NextLink from "next/link";
 import {
@@ -8,13 +8,16 @@ import {
   IconUsers,
   IconUpload,
   IconMessageCircle,
-  IconHelpCircle,
   IconFolder,
   IconSearch,
   IconUserCircle,
   IconCalendarEvent,
+  IconPin,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import type { Group } from "@mixtape/core/types/groupTypes";
+import { isDiscussionPinned } from "@mixtape/core/types/threadworksTypes";
+import { fetchForums } from "@mixtape/api/clients/threadworks/threadworksApi";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
 import { ThreadworksTab } from "../tabs/ThreadworksTab";
 import { CollectionsTab } from "../tabs/CollectionsTab";
@@ -24,10 +27,19 @@ import { GroupLandingDStartHere } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
 import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
+import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
-type DestinationId = "start" | "introduce" | "share" | "converse" | "ask" | "events" | "files" | "findings";
+type DestinationId =
+  | "start"
+  | "introduce"
+  | "share"
+  | "converse"
+  | "events"
+  | "files"
+  | "findings"
+  | `discussion:${string}`;
 
 interface NavItemDef {
   id: DestinationId;
@@ -48,17 +60,16 @@ const NAV_SECTIONS: NavSectionDef[] = [
   {
     label: "Welcome",
     items: [
-      { id: "start",     label: "Start Here",           icon: IconHome2,          rail: true  },
-      { id: "introduce", label: "Tell About Yourself",   icon: IconUsers,          rail: true  },
+      { id: "start",     label: "Start Here",          icon: IconHome2,         rail: true  },
+      { id: "introduce", label: "Tell About Yourself",  icon: IconUsers,         rail: true  },
     ],
   },
   {
     label: "Connect",
     items: [
-      { id: "share",    label: "Share",    icon: IconUpload,         rail: false },
-      { id: "converse", label: "Converse", icon: IconMessageCircle,  rail: false },
-      { id: "ask",      label: "Ask",           icon: IconHelpCircle,     rail: false },
-      { id: "events",   label: "Events",         icon: IconCalendarEvent,  rail: false },
+      { id: "share",    label: "Share",    icon: IconUpload,        rail: false },
+      { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
+      { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
     ],
   },
   {
@@ -71,9 +82,8 @@ const NAV_SECTIONS: NavSectionDef[] = [
 ];
 
 const CONNECT_META: Record<string, { title: string; filterLabel: string; actionLabel: string }> = {
-  share:    { title: "Share Your Wins",  filterLabel: "Latest",     actionLabel: "+ New Post"     },
-  converse: { title: "Discussions",      filterLabel: "Active",     actionLabel: "+ New Thread"   },
-  ask:      { title: "Questions",        filterLabel: "Unanswered", actionLabel: "+ Ask a Question" },
+  share:    { title: "Share Your Wins",  filterLabel: "Latest", actionLabel: "+ New Post"   },
+  converse: { title: "Discussions",      filterLabel: "Active",  actionLabel: "+ New Thread" },
 };
 
 // ── sub-components ─────────────────────────────────────────────────────────
@@ -135,9 +145,11 @@ function NavItem({
 function LeftNav({
   active,
   onSelect,
+  pinnedItems,
 }: {
   active: DestinationId;
   onSelect: (id: DestinationId) => void;
+  pinnedItems: NavItemDef[];
 }) {
   return (
     <Box className="gld-nav" display="flex" flexDirection="column" gap="22px">
@@ -156,12 +168,29 @@ function LeftNav({
           </Text>
           <Flex direction="column" gap="2px">
             {section.items.map((item) => (
-              <NavItem
-                key={item.id}
-                item={item}
-                isActive={active === item.id}
-                onSelect={onSelect}
-              />
+              <Fragment key={item.id}>
+                {/* Soft divider above Events */}
+                {section.label === "Connect" && item.id === "events" && (
+                  <Box
+                    borderTopWidth="1px"
+                    borderColor="theme.border"
+                    mx="12px"
+                    my="6px"
+                  />
+                )}
+                <NavItem item={item} isActive={active === item.id} onSelect={onSelect} />
+                {/* Pinned discussion items injected after Converse */}
+                {section.label === "Connect" && item.id === "converse" &&
+                  pinnedItems.map((pinned) => (
+                    <NavItem
+                      key={pinned.id}
+                      item={pinned}
+                      isActive={active === pinned.id}
+                      onSelect={onSelect}
+                    />
+                  ))
+                }
+              </Fragment>
             ))}
           </Flex>
         </Box>
@@ -247,6 +276,25 @@ export function GroupLandingD({
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
 
+  const forumsQuery = useQuery({
+    queryKey: ["threadworks", "forums", group.slug],
+    queryFn: () => fetchForums(group.slug),
+  });
+
+  const pinnedNavItems = useMemo((): NavItemDef[] => {
+    if (!forumsQuery.data) return [];
+    return forumsQuery.data.flatMap((forum) =>
+      forum.discussions
+        .filter(isDiscussionPinned)
+        .map((d) => ({
+          id: `discussion:${forum.slug}:${d.slug}` as DestinationId,
+          label: d.pinned_nav_name || d.title.slice(0, 32),
+          icon: IconPin,
+          rail: false,
+        }))
+    );
+  }, [forumsQuery.data]);
+
   const handleSelect = useCallback((id: DestinationId) => {
     setActive(id);
     if (id !== "files" && id !== "findings") setSelectedCollectionId(null);
@@ -263,6 +311,11 @@ export function GroupLandingD({
 
   const activeItem = NAV_SECTIONS.flatMap((s) => s.items).find((i) => i.id === active);
   const showRail = activeItem?.rail ?? false;
+
+  const isPinnedDiscussion = active.startsWith("discussion:");
+  const [, pinnedForumSlug = "", pinnedDiscussionSlug = ""] = isPinnedDiscussion
+    ? active.split(":")
+    : [];
 
   return (
     <Box className="gld-root" bg="theme.bg" minH="100vh">
@@ -404,7 +457,7 @@ export function GroupLandingD({
               position={{ base: "static", md: "sticky" }}
               top={{ md: "68px" }}
             >
-              <LeftNav active={active} onSelect={handleSelect} />
+              <LeftNav active={active} onSelect={handleSelect} pinnedItems={pinnedNavItems} />
             </Box>
           </GridItem>
 
@@ -416,11 +469,18 @@ export function GroupLandingD({
             {active === "introduce" && (
               <GroupLandingDTellAboutYourself groupSlug={group.slug} />
             )}
-            {(active === "share" || active === "converse" || active === "ask") && (
+            {(active === "share" || active === "converse") && (
               <Box>
                 <ConnectSubtoolbar destination={active} />
                 <ThreadworksTab group={group} />
               </Box>
+            )}
+            {isPinnedDiscussion && (
+              <GroupLandingDDiscussionThread
+                groupSlug={group.slug}
+                forumSlug={pinnedForumSlug}
+                discussionSlug={pinnedDiscussionSlug}
+              />
             )}
             {active === "events" && (
               <GroupMemberEventsPanel groupSlug={group.slug} />

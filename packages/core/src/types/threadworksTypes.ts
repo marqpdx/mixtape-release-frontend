@@ -41,6 +41,7 @@ export interface Discussion {
   posts: Post[];
   post_count: number;
   status: DiscussionStatus;
+  pinned_nav_name?: string;
   last_post?: Post;
 }
 

@@ -6,7 +6,6 @@ import NextLink from "next/link";
 import {
   IconUpload,
   IconMessageCircle,
-  IconHelpCircle,
   IconFolder,
   IconUsers,
   IconUserPlus,
@@ -95,7 +94,6 @@ function SectionHead({
 const WHAT_HERE_TILES = [
   { id: "share",    icon: IconUpload,        title: "Share",     desc: "Post wins, updates, and finds." },
   { id: "converse", icon: IconMessageCircle, title: "Converse",  desc: "Open-ended threads & discussion." },
-  { id: "ask",      icon: IconHelpCircle,    title: "Ask",       desc: "Questions that need an answer." },
   { id: "files",    icon: IconFolder,        title: "Resources", desc: "Core files & findings." },
 ] as const;
 
@@ -154,7 +152,7 @@ function RecentActivity() {
 
 interface StartHereProps {
   viewData: GroupMemberViewData;
-  onNavigate: (id: "start" | "introduce" | "share" | "converse" | "ask" | "files" | "findings") => void;
+  onNavigate: (id: "start" | "introduce" | "share" | "converse" | "files" | "findings") => void;
 }
 
 export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps) {
