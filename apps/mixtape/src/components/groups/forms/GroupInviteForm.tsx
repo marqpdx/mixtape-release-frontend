@@ -30,6 +30,8 @@ interface InviteFormProps {
   siteMembersLoading?: boolean;
   parentGroupName?: string;
   statusNode?: React.ReactNode;
+  // When true: hides the free-text input; users must pick from the MemberSelector (parent members only).
+  parentMembersOnly?: boolean;
 }
 
 interface UserSuggestion {
@@ -277,6 +279,7 @@ export const GroupInviteForm = ({
   siteMembersLoading = false,
   parentGroupName,
   statusNode,
+  parentMembersOnly = false,
 }: InviteFormProps) => {
   void siteMembersLoading;
   const { handleSubmit, reset, control, setValue, watch } = useForm({
@@ -446,7 +449,7 @@ export const GroupInviteForm = ({
     try {
       const submitData = {
         message: data.message,
-        invite_scope: "site_and_public",
+        invite_scope: parentMembersOnly ? "parent_members" : "site_and_public",
         silent_add: Boolean(data.silent_add),
         invited_emails: [] as string[],
         invited_usernames: [] as string[],
@@ -461,7 +464,11 @@ export const GroupInviteForm = ({
 
       for (const invitee of invitees) {
         if (isEmail(invitee)) {
-          submitData.invited_emails.push(invitee);
+          if (parentMembersOnly) {
+            invalidEntries.push(invitee);
+          } else {
+            submitData.invited_emails.push(invitee);
+          }
         } else if (invitee.startsWith('@')) {
           const username = invitee.slice(1);
 
@@ -480,7 +487,9 @@ export const GroupInviteForm = ({
       if (invalidEntries.length > 0) {
         toaster.create({
           title: "Invalid Entries",
-          description: `Could not process: ${invalidEntries.join(', ')}. Use email@example.com or @username format.`,
+          description: parentMembersOnly
+            ? `Circles only accept @username invites from the parent group. Could not process: ${invalidEntries.join(', ')}.`
+            : `Could not process: ${invalidEntries.join(', ')}. Use email@example.com or @username format.`,
           type: "error",
           duration: 7000,
         });
@@ -560,73 +569,116 @@ export const GroupInviteForm = ({
             Invite People
           </Text>
 
-          <HStack gap={2} mb={2}>
-            <Box position="relative" flex="1">
+          {parentMembersOnly ? (
+            /* Circle mode: selector-only, no email input */
+            <Box>
+              <HStack gap={2} mb={3}>
+                <Box
+                  flex="1"
+                  px={3}
+                  py={2}
+                  borderRadius="md"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  bg="gray.50"
+                  fontSize="sm"
+                  color="gray.500"
+                >
+                  {inviteeValue
+                    ? inviteeValue
+                    : `Select from ${parentGroupName || "parent group"} members…`}
+                </Box>
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setShowMemberSelector(true)}
+                  title={`Select from ${parentGroupName || "parent group"}`}
+                >
+                  <IconUsers size={18} />
+                </Button>
+              </HStack>
+              <Text fontSize="sm" color="gray.600">
+                Circle invites are restricted to {parentGroupName ? `${parentGroupName} members` : "parent group members"}. Use the button to pick.
+              </Text>
               <Controller
                 name="invitee"
                 control={control}
-                rules={{ required: "Email or username is required" }}
-                render={({ field }) => (
-                  <Input
-                    data-testid="invite-input"
-                    {...field}
-                    ref={inputRef}
-                    bg="white"
-                    placeholder="user@example.com, @username, ..."
-                    autoComplete="new-password"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    onKeyDown={handleKeyDown}
-                  />
-                )}
-              />
-              <UserSuggestions
-                suggestions={userSuggestions}
-                onSelect={handleUserSelect}
-                isVisible={showSuggestions}
-                selectedIndex={selectedIndex}
+                rules={{ required: "Select at least one member" }}
+                render={({ field }) => <input type="hidden" {...field} />}
               />
             </Box>
+          ) : (
+            /* Standard mode: free-text + selector */
+            <Box>
+              <HStack gap={2} mb={2}>
+                <Box position="relative" flex="1">
+                  <Controller
+                    name="invitee"
+                    control={control}
+                    rules={{ required: "Email or username is required" }}
+                    render={({ field }) => (
+                      <Input
+                        data-testid="invite-input"
+                        {...field}
+                        ref={inputRef}
+                        bg="white"
+                        placeholder="user@example.com, @username, ..."
+                        autoComplete="new-password"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                        onFocus={handleInputFocus}
+                        onBlur={handleInputBlur}
+                        onKeyDown={handleKeyDown}
+                      />
+                    )}
+                  />
+                  <UserSuggestions
+                    suggestions={userSuggestions}
+                    onSelect={handleUserSelect}
+                    isVisible={showSuggestions}
+                    selectedIndex={selectedIndex}
+                  />
+                </Box>
 
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => setShowMemberSelector(true)}
-            >
-              <IconUsers size={18} />
-            </Button>
-          </HStack>
-
-          <Text fontSize="sm" color="gray.600">
-            {parentGroupName
-              ? `Select members from ${parentGroupName} using the button above, or enter @usernames.`
-              : "Enter emails, or @usernames for existing members. Separate multiple entries with commas."
-            }
-          </Text>
-
-          <Box mt={3}>
-            <Controller
-              name="silent_add"
-              control={control}
-              render={({ field }) => (
-                <Checkbox.Root
-                  checked={Boolean(field.value)}
-                  onCheckedChange={(details) => field.onChange(details.checked === true)}
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setShowMemberSelector(true)}
                 >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Label fontSize="sm" color="gray.700">
-                    Don&apos;t send emails to entered @username users
-                  </Checkbox.Label>
-                </Checkbox.Root>
-              )}
-            />
-          </Box>
+                  <IconUsers size={18} />
+                </Button>
+              </HStack>
+
+              <Text fontSize="sm" color="gray.600">
+                {parentGroupName
+                  ? `Select members from ${parentGroupName} using the button above, or enter @usernames.`
+                  : "Enter emails, or @usernames for existing members. Separate multiple entries with commas."
+                }
+              </Text>
+
+              <Box mt={3}>
+                <Controller
+                  name="silent_add"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox.Root
+                      checked={Boolean(field.value)}
+                      onCheckedChange={(details) => field.onChange(details.checked === true)}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Label fontSize="sm" color="gray.700">
+                        Don&apos;t send emails to entered @username users
+                      </Checkbox.Label>
+                    </Checkbox.Root>
+                  )}
+                />
+              </Box>
+            </Box>
+          )}
         </Box>
 
         {/* Message */}

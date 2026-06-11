@@ -24,6 +24,7 @@ interface GroupInviteWorkAreaProps {
   allSiteMembers?: UserProfile[];
   siteMembersLoading: boolean;
   parentGroupName?: string;
+  parentMembersOnly?: boolean;
 }
 
 export default function GroupInviteWorkArea({
@@ -33,6 +34,7 @@ export default function GroupInviteWorkArea({
   allSiteMembers,
   siteMembersLoading,
   parentGroupName,
+  parentMembersOnly = false,
 }: GroupInviteWorkAreaProps) {
   const tabStorageKey = `groupInviteTab_${groupSlug}`;
   const [pollInvitationId, setPollInvitationId] = useState<number | null>(null);
@@ -140,6 +142,7 @@ export default function GroupInviteWorkArea({
             allSiteMembers={allSiteMembers}
             siteMembersLoading={siteMembersLoading}
             parentGroupName={parentGroupName}
+            parentMembersOnly={parentMembersOnly}
             statusNode={inviteStatusMessage ? (
               <Text
                 fontSize="sm"

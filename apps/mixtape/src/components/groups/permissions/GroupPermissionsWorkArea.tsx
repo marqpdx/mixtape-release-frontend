@@ -49,6 +49,7 @@ interface GroupPermissionsWorkAreaProps {
   groupSlug: string;
   groupId?: string;
   groupTitle?: string;
+  circleMode?: boolean;
 }
 
 // Define available permissions (will come from API later)
@@ -113,10 +114,19 @@ const PERMISSION_LABEL_OVERRIDES: Record<string, string> = {
   can__InviteMembers: "Invite to Group",
 };
 
+// Simplified set for circles — excludes permissions that don't apply in a circle context
+const CIRCLE_PERMISSION_CODES = new Set([
+  "can__PostToStoryline",
+  "can__ManageThreadworks",
+  "can__InviteMembers",
+  "can__ManageAlmanac",
+]);
+
 export default function GroupPermissionsWorkArea({
   groupSlug,
   groupId,
   groupTitle,
+  circleMode = false,
 }: GroupPermissionsWorkAreaProps) {
   void groupId;
   void groupTitle;
@@ -148,15 +158,17 @@ export default function GroupPermissionsWorkArea({
   const cloneProfileMutation = useClonePermissionProfile(groupSlug);
   const setDefaultProfileMutation = useSetDefaultPermissionProfile(groupSlug);
 
-  // Use available permissions from API or fall back to default
+  // Use available permissions from API or fall back to default; filter to circle subset when in circle mode
   const permissions = availablePermissions || AVAILABLE_PERMISSIONS;
   const visiblePermissions = useMemo(
     () =>
-      permissions.map((permission) => ({
-        ...permission,
-        name: PERMISSION_LABEL_OVERRIDES[permission.code] || permission.name,
-      })),
-    [permissions],
+      permissions
+        .filter((p) => !circleMode || CIRCLE_PERMISSION_CODES.has(p.code))
+        .map((permission) => ({
+          ...permission,
+          name: PERMISSION_LABEL_OVERRIDES[permission.code] || permission.name,
+        })),
+    [permissions, circleMode],
   );
   const sortedProfiles = useMemo(
     () => [...(profiles || [])].sort((a, b) => a.sort_order - b.sort_order),

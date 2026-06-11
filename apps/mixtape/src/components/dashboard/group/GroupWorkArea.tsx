@@ -417,6 +417,7 @@ export default function GroupWorkArea({
           groupSlug={group.slug}
           groupId={group.id}
           groupTitle={group.title}
+          circleMode={isCircle}
         />
       </WorkAreaWrapper>
     );
@@ -434,6 +435,7 @@ export default function GroupWorkArea({
           allSiteMembers={[]}
           siteMembersLoading={false}
           parentGroupName={isCircle && group.sponsor_group ? group.sponsor_group.title : undefined}
+          parentMembersOnly={isCircle}
         />
       </WorkAreaWrapper>
     );

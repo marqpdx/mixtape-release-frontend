@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Flex, Text, Spinner, Button } from "@chakra-ui/react";
+import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { IconCalendarEvent, IconMapPin, IconUsers } from "@tabler/icons-react";
 import { fetchGroupEvents, type EventResponse } from "@mixtape/api/clients/almanac/almanacApi";

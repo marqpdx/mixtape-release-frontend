@@ -276,7 +276,7 @@ export function GroupLandingD({
   const viewData = useGroupMemberViewData(group);
   const [active, setActive] = useState<DestinationId>("start");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-  const [selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
+  const [_selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
 
   const forumsQuery = useQuery({
     queryKey: ["threadworks", "forums", group.slug],
