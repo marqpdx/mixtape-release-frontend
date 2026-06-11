@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteNotification,
+  fetchGroupActivityFeed,
   fetchGroupPulse,
   fetchNotificationPreferences,
   fetchNotificationSummary,
@@ -15,6 +16,7 @@ import type {
   NotificationPreference,
   NotificationSummary,
 } from "@mixtape/core/types/activityTypes";
+import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
 
 export const activityQueryKeys = {
   all: ["activity"] as const,
@@ -116,6 +118,22 @@ export const useNotificationMutations = () => {
     markAllRead,
     dismiss,
     setPreference,
+  };
+};
+
+export const useGroupActivityFeed = (groupSlug: string, options?: { enabled?: boolean }) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [...activityQueryKeys.all, "group-feed", groupSlug] as const,
+    queryFn: () => fetchGroupActivityFeed(groupSlug),
+    staleTime: 30_000,
+    enabled: (options?.enabled ?? true) && !!groupSlug,
+  });
+
+  return {
+    feed: (data || []) as GroupActivityFeedItem[],
+    isLoading,
+    error: error as Error | null,
+    refetch,
   };
 };
 

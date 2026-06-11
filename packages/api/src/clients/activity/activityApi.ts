@@ -84,3 +84,17 @@ export async function fetchGroupPulse(): Promise<Record<string, GroupPulse>> {
   const response = await axiosInstance.get<Record<string, GroupPulse>>("/api/activity/group-pulse");
   return response.data;
 }
+
+export interface GroupActivityFeedItem {
+  id: string;
+  activity_code: string;
+  verb: string;
+  actor_name: string;
+  occurs_at: string;
+  metadata: Record<string, unknown>;
+}
+
+export async function fetchGroupActivityFeed(groupSlug: string): Promise<GroupActivityFeedItem[]> {
+  const response = await axiosInstance.get<GroupActivityFeedItem[]>(`/api/activity/group-feed/${groupSlug}/`);
+  return response.data;
+}

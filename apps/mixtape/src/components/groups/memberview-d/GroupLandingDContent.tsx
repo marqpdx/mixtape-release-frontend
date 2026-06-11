@@ -1,3 +1,5 @@
+// apps/mixtape/src/components/groups/membeview-d/GroupLandingDContent.tsx
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -10,9 +12,14 @@ import {
   IconUsers,
   IconUserPlus,
   IconArrowUpRight,
-  IconQuestionMark,
   IconMessageDots,
+  IconCalendarEvent,
+  IconBell,
+  IconUser,
 } from "@tabler/icons-react";
+import { useGroupActivityFeed } from "@mixtape/api/hooks/activity";
+import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
+import { Spinner } from "@chakra-ui/react";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 import { MembersTab } from "../tabs/MembersTab";
 import { GroupMemberProfilePanel } from "../members/GroupMemberProfilePanel";
@@ -97,22 +104,63 @@ const WHAT_HERE_TILES = [
   { id: "files",    icon: IconFolder,        title: "Resources", desc: "Core files & findings." },
 ] as const;
 
-const RECENT_ITEMS = [
-  { id: "r1", icon: IconUserPlus,      actor: "Marisol V.",  summary: "joined the group",                                         time: "2h ago"     },
-  { id: "r2", icon: IconArrowUpRight,  actor: "Drew K.",     summary: 'shared "Q2 retrospective notes"',                          time: "5h ago"     },
-  { id: "r3", icon: IconQuestionMark,  actor: "Priya N.",    summary: 'asked "What tools does everyone use for async updates?"',   time: "Yesterday"  },
-  { id: "r4", icon: IconMessageDots,   actor: "Sam L.",      summary: 'replied in "Monthly check-in thread"',                     time: "Yesterday"  },
-  { id: "r5", icon: IconArrowUpRight,  actor: "Tomás R.",    summary: 'shared "Article: building better async rituals"',          time: "2 days ago" },
-] as const;
-
 type StartTab = "welcome" | "recent";
 const TAB_KEY = "mixtape-gld-start-tab";
 
-function RecentActivity() {
+// Maps activity_code → icon component
+type IconComponent = React.ComponentType<{ size?: number }>;
+const CODE_ICON: Record<string, IconComponent> = {
+  "group.member.joined":               IconUserPlus,
+  "group.member.profile_updated":      IconUser,
+  "group.post.created":                IconArrowUpRight,
+  "group.threadworks.post_created":    IconMessageDots,
+  "group.livewire.message":            IconMessageCircle,
+  "group.collection.item_added":       IconFolder,
+  "group.collection.updated":          IconFolder,
+  "group.almanac.event_published":     IconCalendarEvent,
+  "group.almanac.occurrence_updated":  IconCalendarEvent,
+  "group.circle.active":               IconUsers,
+  "group.announcement":                IconBell,
+};
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
+function feedItemSummary(item: GroupActivityFeedItem): string {
+  const base = item.verb;
+  const objectTitle = (item.metadata.object_title || item.metadata.object_name) as string | undefined;
+  if (objectTitle) return `${base} "${objectTitle}"`;
+  return base;
+}
+
+function RecentActivity({ groupSlug }: { groupSlug: string }) {
+  const { feed, isLoading } = useGroupActivityFeed(groupSlug);
+
+  if (isLoading) {
+    return <Flex justify="center" py={6}><Spinner size="sm" color="theme.textMuted" /></Flex>;
+  }
+
+  if (feed.length === 0) {
+    return (
+      <Text fontSize="14px" color="theme.textMuted" py={4} textAlign="center">
+        No recent activity yet.
+      </Text>
+    );
+  }
+
   return (
     <Flex direction="column" gap={0}>
-      {RECENT_ITEMS.map((item, i) => {
-        const Icon = item.icon;
+      {feed.map((item, i) => {
+        const Icon = CODE_ICON[item.activity_code] ?? IconArrowUpRight;
         return (
           <Flex
             key={item.id}
@@ -137,11 +185,11 @@ function RecentActivity() {
             </Flex>
             <Box flex="1" minW={0}>
               <Text fontSize="14px" color="theme.textSecondary" lineHeight="1.4">
-                <Box as="span" fontWeight="600" color="theme.text">{item.actor}</Box>{" "}{item.summary}
+                <Box as="span" fontWeight="600" color="theme.text">{item.actor_name}</Box>{" "}{feedItemSummary(item)}
               </Text>
             </Box>
             <Text fontSize="12px" color="theme.textFaint" flexShrink={0} mt="2px">
-              {item.time}
+              {relativeTime(item.occurs_at)}
             </Text>
           </Flex>
         );
@@ -234,7 +282,7 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
           </Flex>
         )}
 
-        {tab === "recent" && <RecentActivity />}
+        {tab === "recent" && <RecentActivity groupSlug={viewData.group.slug} />}
       </Card>
 
       {tab === "welcome" && (
