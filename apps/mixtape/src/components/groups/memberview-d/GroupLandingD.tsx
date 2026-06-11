@@ -276,7 +276,6 @@ export function GroupLandingD({
   const viewData = useGroupMemberViewData(group);
   const [active, setActive] = useState<DestinationId>("start");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-  const [_selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
 
   const forumsQuery = useQuery({
     queryKey: ["threadworks", "forums", group.slug],
@@ -300,14 +299,12 @@ export function GroupLandingD({
   const handleSelect = useCallback((id: DestinationId) => {
     setActive(id);
     if (id !== "files" && id !== "findings") setSelectedCollectionId(null);
-    if (id !== "introduce") setSelectedMemberUsername(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string, memberUsername?: string) => {
     setActive(id);
     setSelectedCollectionId(collectionId ?? null);
-    setSelectedMemberUsername(memberUsername ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
