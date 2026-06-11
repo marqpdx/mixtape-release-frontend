@@ -27,6 +27,7 @@ import { ThreadworksTab } from "../tabs/ThreadworksTab";
 import { CollectionsTab } from "../tabs/CollectionsTab";
 import { UnifiedRoleSwitcher } from "../UnifiedRoleSwitcher";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useColorModeValue } from "@components/ui/color-mode";
 import { GroupLandingDStartHere } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
@@ -265,6 +266,7 @@ function GroupSwitcherButton({ currentGroupSlug }: { currentGroupSlug: string })
   const { groups } = useUserGroups();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const bgColor = useColorModeValue("background.light", "background.dark");
 
   useEffect(() => {
     if (!open) return;
@@ -278,24 +280,30 @@ function GroupSwitcherButton({ currentGroupSlug }: { currentGroupSlug: string })
   return (
     <Box ref={ref} position="relative">
       <Box
-        as="button"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        h="28px"
-        w="40px"
-        borderRadius="md"
-        bg="theme.surface"
+        bg={bgColor}
         backdropFilter="blur(8px)"
-        color="theme.textSecondary"
-        cursor="pointer"
-        _hover={{ color: "theme.accent" }}
-        transition="color 0.12s"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Switch group"
-        title="Switch group"
+        borderRadius="md"
+        p={1}
+        boxShadow="sm"
       >
-        <IconSwitchHorizontal size={14} />
+        <Box
+          as="button"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          h="24px"
+          w="40px"
+          borderRadius="sm"
+          color="theme.textSecondary"
+          cursor="pointer"
+          _hover={{ color: "theme.accent" }}
+          transition="color 0.12s"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Switch group"
+          title="Switch group"
+        >
+          <IconSwitchHorizontal size={14} />
+        </Box>
       </Box>
 
       {open && (
