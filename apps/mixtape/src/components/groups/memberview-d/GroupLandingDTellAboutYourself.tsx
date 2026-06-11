@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { IconSend } from "@tabler/icons-react";
@@ -112,9 +112,20 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
   const [introText, setIntroText] = useState("");
   const [introSaving, setIntroSaving] = useState(false);
   const [introSaved, setIntroSaved] = useState(false);
+  const [showSharePrompt, setShowSharePrompt] = useState(false);
+  const [sharePosting, setSharePosting] = useState(false);
+
+  // Capture whether the user had an intro when the component first mounted.
+  // null = not yet known (user still loading); false = was empty; true = had content.
+  const hadIntroOnMount = useRef<boolean | null>(null);
 
   useEffect(() => {
-    setIntroText(user?.profile?.quick_intro || "");
+    const currentIntro = user?.profile?.quick_intro || "";
+    setIntroText(currentIntro);
+    setIntroSaved(false);
+    if (hadIntroOnMount.current === null) {
+      hadIntroOnMount.current = !!currentIntro;
+    }
   }, [user?.profile?.quick_intro]);
 
   const remaining = MAX_INTRO_LENGTH - introText.length;
@@ -123,6 +134,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
     if (!user?.username || remaining < 0) return;
     setIntroSaving(true);
     setIntroSaved(false);
+    setShowSharePrompt(false);
     try {
       await axiosInstance.patch(`/api/members/${user.username}`, {
         quick_intro: introText.trim(),
@@ -130,10 +142,39 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
       await refreshUser();
       setIntroSaved(true);
       toaster.success({ title: "Intro saved" });
+
+      const isFirstPost = hadIntroOnMount.current === false;
+      if (isFirstPost) {
+        // Auto-post the intro to the thread on first save
+        hadIntroOnMount.current = true;
+        await createPost(WELCOME_FORUM, TAY_SLUG, { content: introText.trim() }, groupSlug);
+        qc.invalidateQueries({
+          queryKey: ["threadworks", "discussion", groupSlug, WELCOME_FORUM, TAY_SLUG],
+        });
+      } else {
+        // Offer to share the update to the thread
+        setShowSharePrompt(true);
+      }
     } catch {
       toaster.error({ title: "Could not save intro" });
     } finally {
       setIntroSaving(false);
+    }
+  }
+
+  async function handleShareToThread() {
+    setSharePosting(true);
+    try {
+      await createPost(WELCOME_FORUM, TAY_SLUG, { content: introText.trim() }, groupSlug);
+      qc.invalidateQueries({
+        queryKey: ["threadworks", "discussion", groupSlug, WELCOME_FORUM, TAY_SLUG],
+      });
+      setShowSharePrompt(false);
+      toaster.success({ title: "Posted to thread" });
+    } catch {
+      toaster.error({ title: "Could not post to thread" });
+    } finally {
+      setSharePosting(false);
     }
   }
 
@@ -207,6 +248,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             setIntroText(e.target.value);
             setIntroSaved(false);
+            setShowSharePrompt(false);
           }}
           placeholder="A few words about who you are, what you're exploring, or what brings you here."
           bg="theme.surface"
@@ -243,6 +285,58 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
             {introSaving ? "Saving…" : introSaved ? "Saved ✓" : "Save intro"}
           </Box>
         </Flex>
+
+        {/* Share-to-thread prompt — appears after non-first save */}
+        {showSharePrompt && (
+          <Flex
+            className="tay-share-prompt"
+            mt={3}
+            p={3}
+            bg="theme.bgSubtle"
+            borderRadius="10px"
+            borderWidth="1px"
+            borderColor="theme.border"
+            align="center"
+            gap={3}
+          >
+            <Text fontSize="13px" color="theme.textSecondary" flex="1">
+              Share this update to the Tell About Yourself thread?
+            </Text>
+            <Flex gap={2} flexShrink={0}>
+              <Box
+                as="button"
+                px="12px"
+                py="5px"
+                borderRadius="full"
+                fontSize="12px"
+                fontWeight="600"
+                color="theme.textMuted"
+                cursor="pointer"
+                _hover={{ color: "theme.textSecondary" }}
+                onClick={() => setShowSharePrompt(false)}
+              >
+                Dismiss
+              </Box>
+              <Box
+                as="button"
+                px="12px"
+                py="5px"
+                borderRadius="full"
+                bg="theme.accent"
+                color="white"
+                fontSize="12px"
+                fontWeight="600"
+                cursor={sharePosting ? "not-allowed" : "pointer"}
+                opacity={sharePosting ? 0.6 : 1}
+                transition="opacity 0.12s"
+                _hover={!sharePosting ? { opacity: 0.9 } : {}}
+                onClick={handleShareToThread}
+              >
+                {sharePosting ? "Posting…" : "Post"}
+              </Box>
+            </Flex>
+          </Flex>
+        )}
       </Box>
 
       {/* Discussion thread */}
