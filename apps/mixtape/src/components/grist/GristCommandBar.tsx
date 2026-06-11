@@ -4,7 +4,11 @@ import { Flex, Input, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 
-export function GristCommandBar() {
+interface GristCommandBarProps {
+  onCommand?: (cmd: string, args: string) => void;
+}
+
+export function GristCommandBar({ onCommand }: GristCommandBarProps) {
   const [value, setValue] = useState("");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const bgColor = useColorModeValue("white", "gray.800");
@@ -12,8 +16,14 @@ export function GristCommandBar() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value.trim()) return;
-    // Phase 1: stub — Switchboard routing in Phase 2
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    if (trimmed.startsWith("/") && onCommand) {
+      const parts = trimmed.slice(1).split(/\s+/);
+      const cmd = parts[0].toLowerCase();
+      const args = parts.slice(1).join(" ");
+      onCommand(cmd, args);
+    }
     setValue("");
   };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Box, Container, Flex } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { AtriumHeader } from "@/components/atrium/AtriumHeader";
@@ -9,9 +10,15 @@ import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
 import { BerylPresence } from "@/components/atrium/BerylPresence";
+import { RadarOverlay } from "@/components/radar/RadarOverlay";
 
 export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
+  const [radarOpen, setRadarOpen] = useState(false);
+
+  const handleGristCommand = (cmd: string) => {
+    if (cmd === "radar") setRadarOpen(true);
+  };
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -55,10 +62,12 @@ export default function AtriumPage() {
 
         {/* Zone F — GristCommandBar */}
         <Box mt={6}>
-          <GristCommandBar />
+          <GristCommandBar onCommand={handleGristCommand} />
         </Box>
 
       </Container>
+
+      <RadarOverlay open={radarOpen} onClose={() => setRadarOpen(false)} />
     </Box>
   );
 }
