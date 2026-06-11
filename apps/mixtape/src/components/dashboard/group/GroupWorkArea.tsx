@@ -5,6 +5,7 @@ import { VStack, Text, Spinner, Box, Heading } from "@chakra-ui/react";
 
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import WorkAreaWrapper from "@components/dashboard/shared/WorkAreaWrapper";
+import AnnouncementsWorkArea from "@/components/groups/announcements/AnnouncementsWorkArea";
 
 // Import group-specific components
 import GroupOverview from "@components/groups/GroupOverview";
@@ -158,6 +159,14 @@ export default function GroupWorkArea({
           userRole={userRole}
           onNavigate={setActiveSection}
         />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "announcements") {
+    return (
+      <WorkAreaWrapper>
+        <AnnouncementsWorkArea groupSlug={group.slug} />
       </WorkAreaWrapper>
     );
   }

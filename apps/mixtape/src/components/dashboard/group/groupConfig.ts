@@ -12,6 +12,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📊",
     subItems: [
       { key: "admin-dashboard", label: "Admin Dashboard" },
+      { key: "announcements", label: "Announcements" },
       { key: "stewards-permissions", label: "Stewards & Permission", hidden: false },
       { key: "activity", label: "Recent Activity", hidden: true },
       { key: "analytics", label: "Analytics", hidden: true },
