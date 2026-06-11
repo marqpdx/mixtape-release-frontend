@@ -3,14 +3,19 @@
 // Fetches visible-queue (active, not expired, snooze/dismiss respected).
 "use client";
 
-import { Box, Button, HStack, Spinner, Text, VStack } from "@chakra-ui/react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { Box, HStack, Spinner, Text, VStack } from "@chakra-ui/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchVisibleQueue,
   dismissAnnouncement,
-  GroupAnnouncement,
-  AnnouncementPriority,
+  type GroupAnnouncement,
+  type AnnouncementPriority,
 } from "@mixtape/api/clients/group/announcementApi";
+
+// Stable query key — exported so QuickAnnouncementCreate can invalidate after posting
+export const announcementsQueueKey = (groupSlug: string) =>
+  ["announcements", "visible-queue", groupSlug] as const;
 
 // Left-bar accent per priority level
 const PRIORITY_ACCENT: Record<AnnouncementPriority, string> = {
@@ -24,45 +29,28 @@ interface Props {
 }
 
 export function AnnouncementViewBox({ groupSlug }: Props) {
-  const [items, setItems] = useState<GroupAnnouncement[]>([]);
-  const [loading, setLoading] = useState(true);
-  // Track which item has an open dismiss prompt
+  const qc = useQueryClient();
   const [dismissing, setDismissing] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const data = await fetchVisibleQueue(groupSlug);
-      setItems(data);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [groupSlug]);
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: announcementsQueueKey(groupSlug),
+    queryFn: () => fetchVisibleQueue(groupSlug),
+  });
 
-  useEffect(() => { load(); }, [load]);
+  const dismissMutation = useMutation({
+    mutationFn: (id: string) => dismissAnnouncement(groupSlug, id),
+    onSuccess: () => {
+      setDismissing(null);
+      qc.invalidateQueries({ queryKey: announcementsQueueKey(groupSlug) });
+    },
+  });
 
-  const handleDismissChoice = async (
-    id: string,
-    choice: "snooze" | "permanent"
-  ) => {
-    if (choice === "snooze") {
-      // Just dismiss via API — server handles 24hr snooze logic
-      await dismissAnnouncement(groupSlug, id);
-    } else {
-      // Second dismiss = permanent
-      await dismissAnnouncement(groupSlug, id);
-    }
-    setDismissing(null);
-    await load();
-  };
-
-  if (loading) return <Spinner size="sm" />;
+  if (isLoading) return <Spinner size="sm" />;
   if (items.length === 0) return null;
 
   return (
     <VStack align="stretch" gap={3} mb={4}>
-      {items.map((item) => (
+      {items.map((item: GroupAnnouncement) => (
         <Box
           key={item.id}
           bg="theme.surface"
@@ -86,9 +74,7 @@ export function AnnouncementViewBox({ groupSlug }: Props) {
             fontWeight="700"
             cursor="pointer"
             _hover={{ color: "orange.600" }}
-            onClick={() =>
-              setDismissing(dismissing === item.id ? null : item.id)
-            }
+            onClick={() => setDismissing(dismissing === item.id ? null : item.id)}
             aria-label="Dismiss announcement"
           >
             ✕
@@ -126,36 +112,43 @@ export function AnnouncementViewBox({ groupSlug }: Props) {
 
           {/* Dismiss prompt */}
           {dismissing === item.id && (
-            <Box
-              mt={3}
-              pt={3}
-              borderTop="1px solid"
-              borderColor="theme.border"
-            >
+            <Box mt={3} pt={3} borderTop="1px solid" borderColor="theme.border">
               <Text fontSize="xs" color="theme.textMuted" mb={2}>
                 How would you like to dismiss this?
               </Text>
               <HStack gap={2}>
-                <Button
-                  size="xs"
-                  variant="outline"
+                <Box
+                  as="button"
+                  px="12px"
+                  py="4px"
                   borderRadius="9999px"
+                  borderWidth="1px"
                   borderColor="theme.border"
+                  fontSize="12px"
+                  fontWeight="600"
                   color="theme.textSecondary"
-                  onClick={() => handleDismissChoice(item.id, "snooze")}
+                  cursor="pointer"
+                  _hover={{ bg: "theme.bgSubtle" }}
+                  onClick={() => dismissMutation.mutate(item.id)}
                 >
                   Remind me later
-                </Button>
-                <Button
-                  size="xs"
-                  variant="outline"
+                </Box>
+                <Box
+                  as="button"
+                  px="12px"
+                  py="4px"
                   borderRadius="9999px"
+                  borderWidth="1px"
                   borderColor="theme.border"
+                  fontSize="12px"
+                  fontWeight="600"
                   color="theme.textMuted"
-                  onClick={() => handleDismissChoice(item.id, "permanent")}
+                  cursor="pointer"
+                  _hover={{ bg: "theme.bgSubtle" }}
+                  onClick={() => dismissMutation.mutate(item.id)}
                 >
                   Don't show again
-                </Button>
+                </Box>
               </HStack>
             </Box>
           )}

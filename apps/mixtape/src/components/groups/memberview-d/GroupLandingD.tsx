@@ -29,6 +29,7 @@ import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
 import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
 import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
 import { AnnouncementViewBox } from "../announcements/AnnouncementViewBox";
+import { QuickAnnouncementCreate } from "../announcements/QuickAnnouncementCreate";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
@@ -396,7 +397,7 @@ export function GroupLandingD({
               bg="theme.bgSubtle"
             />
           )}
-          <Box className="gld-header-text" flex="1" minW={0}>
+          <Box className="gld-header-text" flex="1" minW={0} mr={isAdminOrSteward ? 3 : 0}>
             <Text
               as="h1"
               fontFamily="heading"
@@ -429,6 +430,9 @@ export function GroupLandingD({
               {viewData.members.memberCount} MEMBERS
             </Text>
           </Box>
+          {isAdminOrSteward && (
+            <QuickAnnouncementCreate groupSlug={group.slug} />
+          )}
         </Flex>
       </Box>
 
