@@ -1,12 +1,15 @@
 "use client";
 
-import { Box, Flex, Image, Text } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, Spinner } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { IconCalendarEvent } from "@tabler/icons-react";
+import { fetchGroupEvents } from "@mixtape/api/clients/almanac/almanacApi";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 
 interface RailProps {
   viewData: GroupMemberViewData;
-  onNavigate: (id: "introduce" | "files", collectionId?: string, memberUsername?: string) => void;
+  onNavigate: (id: "introduce" | "files" | "events", collectionId?: string, memberUsername?: string) => void;
 }
 
 function RailCard({ children }: { children: React.ReactNode }) {
@@ -57,6 +60,84 @@ function RailFooter({ label, onClick }: { label: string; onClick: () => void }) 
     >
       {label}
     </Box>
+  );
+}
+
+function formatRailEventDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString("en-US", { month: "short", day: "numeric" });
+}
+
+function UpcomingEventsRailCard({
+  groupSlug,
+  onNavigate,
+}: {
+  groupSlug: string;
+  onNavigate: RailProps["onNavigate"];
+}) {
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["almanac", "events", "published", groupSlug],
+    queryFn: () => fetchGroupEvents(groupSlug, { status: "published" }),
+  });
+
+  const now = new Date();
+  const upcoming = (events ?? [])
+    .filter((e) => e.next_occurrence?.start && new Date(e.next_occurrence.start) >= now)
+    .sort((a, b) =>
+      new Date(a.next_occurrence!.start).getTime() - new Date(b.next_occurrence!.start).getTime()
+    )
+    .slice(0, 3);
+
+  return (
+    <RailCard>
+      <RailHeader title="Events" count={upcoming.length} />
+      <Box>
+        {isLoading && (
+          <Flex justify="center" py={4}>
+            <Spinner size="sm" color="theme.accent" />
+          </Flex>
+        )}
+        {!isLoading && upcoming.length === 0 && (
+          <Flex align="center" gap={2} px={5} py={4}>
+            <Box color="theme.textMuted"><IconCalendarEvent size={15} /></Box>
+            <Text fontSize="13px" color="theme.textMuted">No upcoming events.</Text>
+          </Flex>
+        )}
+        {!isLoading && upcoming.map((event) => (
+          <Flex
+            key={event.id}
+            className="gld-rail-event"
+            align="center"
+            gap={3}
+            px={5}
+            py="10px"
+            borderBottomWidth="1px"
+            borderColor="theme.border"
+            _last={{ borderBottomWidth: 0 }}
+          >
+            <Box
+              flexShrink={0}
+              px="7px"
+              py="3px"
+              borderRadius="6px"
+              bg="theme.accentSoft"
+              minW="44px"
+              textAlign="center"
+            >
+              <Text fontSize="11px" fontWeight="700" color="theme.accent" lineHeight="1.4">
+                {event.next_occurrence?.start
+                  ? formatRailEventDate(event.next_occurrence.start)
+                  : "—"}
+              </Text>
+            </Box>
+            <Text flex="1" fontSize="13.5px" fontWeight="500" color="theme.text" truncate>
+              {event.title}
+            </Text>
+          </Flex>
+        ))}
+      </Box>
+      <RailFooter label="See all events" onClick={() => onNavigate("events")} />
+    </RailCard>
   );
 }
 
@@ -154,6 +235,9 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
         </Box>
         <RailFooter label="View all members" onClick={() => onNavigate("introduce")} />
       </RailCard>
+
+      {/* Upcoming Events card */}
+      <UpcomingEventsRailCard groupSlug={identity.slug} onNavigate={onNavigate} />
 
       {/* Collections card */}
       <RailCard>

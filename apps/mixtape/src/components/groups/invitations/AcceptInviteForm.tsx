@@ -112,10 +112,10 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         await authApi.activateInviteSession(inviteResult);
         await refreshUser();
 
-        const introParams = new URLSearchParams();
-        if (groupSlug) introParams.set("group_slug", groupSlug);
-        if (groupTitle) introParams.set("group", groupTitle);
-        router.push(`/welcome/quick-intro?${introParams.toString()}`);
+        const agreementsParams = new URLSearchParams();
+        if (groupSlug) agreementsParams.set("group_slug", groupSlug);
+        if (groupTitle) agreementsParams.set("group", groupTitle);
+        router.push(`/welcome/agreements?${agreementsParams.toString()}`);
       } else {
         router.push(groupSlug ? `/groups/${groupSlug}` : "/dashboard");
       }

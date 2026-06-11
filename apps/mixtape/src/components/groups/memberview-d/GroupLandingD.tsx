@@ -12,6 +12,7 @@ import {
   IconFolder,
   IconSearch,
   IconUserCircle,
+  IconCalendarEvent,
 } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -22,10 +23,11 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupLandingDStartHere } from "./GroupLandingDContent";
 import { GroupLandingDIntroduce } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
+import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
-type DestinationId = "start" | "introduce" | "share" | "converse" | "ask" | "files" | "findings";
+type DestinationId = "start" | "introduce" | "share" | "converse" | "ask" | "events" | "files" | "findings";
 
 interface NavItemDef {
   id: DestinationId;
@@ -55,7 +57,8 @@ const NAV_SECTIONS: NavSectionDef[] = [
     items: [
       { id: "share",    label: "Share",    icon: IconUpload,         rail: false },
       { id: "converse", label: "Converse", icon: IconMessageCircle,  rail: false },
-      { id: "ask",      label: "Ask",      icon: IconHelpCircle,     rail: false },
+      { id: "ask",      label: "Ask",           icon: IconHelpCircle,     rail: false },
+      { id: "events",   label: "Events",         icon: IconCalendarEvent,  rail: false },
     ],
   },
   {
@@ -251,7 +254,7 @@ export function GroupLandingD({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const handleRailNavigate = useCallback((id: "introduce" | "files", collectionId?: string, memberUsername?: string) => {
+  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string, memberUsername?: string) => {
     setActive(id);
     setSelectedCollectionId(collectionId ?? null);
     setSelectedMemberUsername(memberUsername ?? null);
@@ -418,6 +421,9 @@ export function GroupLandingD({
                 <ConnectSubtoolbar destination={active} />
                 <ThreadworksTab group={group} />
               </Box>
+            )}
+            {active === "events" && (
+              <GroupMemberEventsPanel groupSlug={group.slug} />
             )}
             {(active === "files" || active === "findings") && (
               <CollectionsTab group={group} selectedCollectionId={selectedCollectionId} />
