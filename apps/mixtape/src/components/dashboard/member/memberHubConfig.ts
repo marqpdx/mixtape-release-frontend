@@ -19,6 +19,7 @@ export const MEMBER_HUB_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { key: "write", label: "Journal", hidden: false },
       { key: "writing", label: "Pieces", hidden: false },
+      { key: "dual-panel-editor", label: "Draft ↔ Dispatch", hidden: false },
     ],
   },
   {

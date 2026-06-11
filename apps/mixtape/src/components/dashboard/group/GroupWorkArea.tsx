@@ -43,6 +43,7 @@ import BroadcastWorkArea from "@/components/broadcast/BroadcastWorkArea";
 import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
 import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
+import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
@@ -520,6 +521,14 @@ export default function GroupWorkArea({
           onNavigateToDetail={({ slug }) => setActiveSection("write", { piece: slug })}
         />
       </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "dual-panel-editor") {
+    return (
+      <DualPanelEditorWorkArea
+        sponsor={{ type: "group", slug: group.slug, displayName: group.title }}
+      />
     );
   }
 

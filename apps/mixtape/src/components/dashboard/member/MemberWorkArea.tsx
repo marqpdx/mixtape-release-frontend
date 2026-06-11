@@ -31,6 +31,7 @@ import PersonalOverview from "../sections/PersonalOverview";
 import { MemberSettings } from "@/components/member/settings/MemberSettings";
 import WorkTable from "@components/initiatives/WorkTable";
 import MemberPreferencesWorkArea from "./MemberPreferencesWorkArea";
+import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity?: UserIdentity;
@@ -204,6 +205,15 @@ export default function MemberWorkArea({
           }}
         />
       </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "dual-panel-editor") {
+    const displayName = identity.profile?.display_name || identity.username;
+    return (
+      <DualPanelEditorWorkArea
+        sponsor={{ type: "member", slug: identity.username, displayName }}
+      />
     );
   }
 

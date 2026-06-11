@@ -85,6 +85,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "write", label: "Write", hidden: false },
       { key: "import-document", label: "Import Documents", hidden: false },
       { key: "series-writing", label: "Series Writing ✦", hidden: false },
+      { key: "dual-panel-editor", label: "Draft ↔ Dispatch", hidden: false },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },

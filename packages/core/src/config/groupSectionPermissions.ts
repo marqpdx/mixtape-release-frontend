@@ -188,6 +188,11 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Curation workbench — assemble raw pieces into working items and promote to drafts',
   },
 
+  'dual-panel-editor': {
+    requiredDecorator: 'can__ManageWriting',
+    description: 'Dual-panel draft ↔ dispatch editor for section-by-section content promotion',
+  },
+
 
 
       //   { key: "collections-landing", label: "Browse Collections" },
