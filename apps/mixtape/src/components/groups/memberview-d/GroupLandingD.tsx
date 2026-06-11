@@ -28,6 +28,7 @@ import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
 import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
 import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
+import { AnnouncementViewBox } from "../announcements/AnnouncementViewBox";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
@@ -463,6 +464,7 @@ export function GroupLandingD({
 
           {/* Main content */}
           <GridItem className="gld-main" minW={0}>
+            <AnnouncementViewBox groupSlug={group.slug} />
             {active === "start" && (
               <GroupLandingDStartHere viewData={viewData} onNavigate={handleSelect} />
             )}
