@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { Box, Flex, Input, Stack, Text, Textarea } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconMegaphone } from "@tabler/icons-react";
+import { IconSpeakerphone } from "@tabler/icons-react";
 import {
   DialogRoot,
   DialogContent,
@@ -86,7 +86,7 @@ export function QuickAnnouncementCreate({ groupSlug }: Props) {
           transition="opacity 0.12s"
           flexShrink={0}
         >
-          <IconMegaphone size={15} />
+          <IconSpeakerphone size={15} />
           Announce
         </Box>
       </DialogTrigger>
