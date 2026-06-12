@@ -13,6 +13,7 @@ import { recordGroupVisit } from "@mixtape/core/lib/groupVisitTracker";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { GroupMemberViewRenderer } from "@/components/groups/member-views/GroupMemberViewRenderer";
 import { useMyPermissions } from "@mixtape/api/hooks/groups/useGroupPermissions";
+import { GroupAdminView2WorkArea } from "@/components/groups/admin-view-2/GroupAdminView2WorkArea";
 import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
@@ -23,7 +24,7 @@ import {
   normalizeGroupMemberViewId,
 } from "@/components/groups/member-views/registry";
 
-type ViewRole = "admin" | "member" | "public";
+type ViewRole = "admin" | "member" | "public" | "ops";
 
 interface GroupPageCoreProps {
   slug: string;
@@ -50,6 +51,9 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
     myPermissions?.decorators || []
   );
   const canUseAdminView = isAdminOrSteward || canEditGroup;
+  const isSuperuser =
+    (myPermissions?.roles?.includes("owner") ?? false) ||
+    (myPermissions?.roles?.includes("superuser") ?? false);
 
   useEffect(() => {
     if (group?.slug) recordGroupVisit(group.slug);
@@ -71,11 +75,12 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
 
   const clampViewToPermissions = useCallback(
     (candidate: ViewRole): ViewRole => {
+      if (candidate === "ops" && !isSuperuser) return canUseAdminView ? "admin" : isMember ? "member" : "public";
       if (canUseAdminView) return candidate;
       if (isMember) return candidate === "admin" ? "member" : candidate;
       return "public";
     },
-    [canUseAdminView, isMember]
+    [canUseAdminView, isMember, isSuperuser]
   );
 
   const clampLayoutVariant = useCallback(
@@ -86,14 +91,14 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   useEffect(() => {
     if (!group) return;
     const fromUrl =
-      urlView && ["admin", "member", "public"].includes(urlView)
+      urlView && ["admin", "member", "public", "ops"].includes(urlView)
         ? (urlView as ViewRole)
         : null;
     let fromStorage: ViewRole | null = null;
     if (storageKey && typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(storageKey);
-        if (raw === "admin" || raw === "member" || raw === "public") fromStorage = raw;
+        if (raw === "admin" || raw === "member" || raw === "public" || raw === "ops") fromStorage = raw;
       } catch { /* ignore */ }
     }
     const roleDefault: ViewRole = canUseAdminView ? "admin" : isMember ? "member" : "public";
@@ -155,11 +160,32 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   if (!group) return <Box p={4}>Group not found.</Box>;
 
   const viewingAsAdmin = testRole === "admin";
+  const viewingAsOps = testRole === "ops" && isSuperuser;
   const showAdminDashboard = canUseAdminView && viewingAsAdmin;
-  const viewingAsMember = testRole === "member" || testRole === "admin";
+  const viewingAsMember = testRole === "member" || testRole === "admin" || testRole === "ops";
 
   const circleBar = <CircleParentBar group={group} />;
   const emblemUrl = getBestEmblemUrl(group.emblem) || undefined;
+
+  if (viewingAsOps) {
+    if (permissionsLoading || !myPermissions) return <Box p={4}>Loading...</Box>;
+
+    return (
+      <Box className="sixty-box" pt={0} px={2}>
+        <GroupAdminHeader
+          group={group}
+          currentGroupSlug={slug}
+          testRole={testRole}
+          onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
+          isAdminOrSteward={canUseAdminView}
+          isSuperuser={isSuperuser}
+          onOpsClick={() => setTestRole("ops")}
+        />
+        {circleBar}
+        <GroupAdminView2WorkArea group={group} />
+      </Box>
+    );
+  }
 
   if (showAdminDashboard) {
     if (permissionsLoading || !myPermissions) return <Box p={4}>Loading...</Box>;
@@ -178,6 +204,8 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
           testRole={testRole}
           onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
           isAdminOrSteward={canUseAdminView}
+          isSuperuser={isSuperuser}
+          onOpsClick={() => setTestRole("ops")}
         />
         {circleBar}
         <DashboardLayout
@@ -205,7 +233,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
         group={group}
         userRole={primaryRole}
         onJoinGroup={handleJoinGroup}
-        testRole={testRole}
+        testRole={testRole === "ops" ? "admin" : testRole}
         onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
         isMember={isMember}
         isAdminOrSteward={canUseAdminView}

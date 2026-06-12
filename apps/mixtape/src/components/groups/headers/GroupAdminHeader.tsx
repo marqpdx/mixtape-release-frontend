@@ -21,9 +21,11 @@ const GROUP_TYPE_ICONS = {
 interface GroupAdminHeaderProps {
   group: { title: string; group_type?: string };
   currentGroupSlug: string;
-  testRole?: 'admin' | 'member' | 'public' | null;
+  testRole?: 'admin' | 'member' | 'public' | 'ops' | null;
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isAdminOrSteward?: boolean;
+  isSuperuser?: boolean;
+  onOpsClick?: () => void;
 }
 
 export function GroupAdminHeader({
@@ -32,6 +34,8 @@ export function GroupAdminHeader({
   testRole,
   onRoleChange,
   isAdminOrSteward = false,
+  isSuperuser = false,
+  onOpsClick,
 }: GroupAdminHeaderProps) {
   void currentGroupSlug;
   const borderColor = "theme.border";
@@ -45,6 +49,8 @@ export function GroupAdminHeader({
       testRole={testRole}
       onRoleChange={onRoleChange}
       isAdminOrSteward={isAdminOrSteward}
+      isSuperuser={isSuperuser}
+      onOpsClick={onOpsClick}
     >
       <Box bg="transparent" borderBottomWidth="1px" borderColor={borderColor} py={4}>
         <Container maxW="7xl">

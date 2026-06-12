@@ -10,9 +10,11 @@ import { GROUP_MEMBER_VIEW_DEFINITIONS, type GroupMemberViewId } from "../member
 interface GroupHeaderWrapperProps {
   children: React.ReactNode;
   showRoleSwitcher?: boolean;
-  testRole?: 'admin' | 'member' | 'public' | null;
+  testRole?: 'admin' | 'member' | 'public' | 'ops' | null;
   onRoleChange?: (role: 'admin' | 'member' | 'public') => void;
   isAdminOrSteward?: boolean;
+  isSuperuser?: boolean;
+  onOpsClick?: () => void;
   layoutVariant?: GroupMemberViewId;
   onLayoutChange?: (layout: GroupMemberViewId) => void;
 }
@@ -23,6 +25,8 @@ export function GroupHeaderWrapper({
   testRole,
   onRoleChange,
   isAdminOrSteward = false,
+  isSuperuser = false,
+  onOpsClick,
   layoutVariant,
   onLayoutChange,
 }: GroupHeaderWrapperProps) {
@@ -76,6 +80,8 @@ export function GroupHeaderWrapper({
                 testRole={testRole}
                 onRoleChange={onRoleChange}
                 isAdminOrSteward={isAdminOrSteward}
+                isSuperuser={isSuperuser}
+                onOpsClick={onOpsClick}
               />
             )}
           </HStack>
