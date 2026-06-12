@@ -139,7 +139,9 @@ export function GroupAdminView2WorkArea({ group }: GroupAdminView2WorkAreaProps)
 
   const loadJoinRequests = useCallback(async () => {
     try {
-      const data = await fetchJoinRequests(group.slug);
+      const raw = await fetchJoinRequests(group.slug);
+      // Backend may return paginated { results: [...] } or a plain array
+      const data = Array.isArray(raw) ? raw : ((raw as unknown as { results?: JoinRequest[] }).results ?? []);
       setJoinRequests(data);
     } catch {
       setJoinRequests([]);
