@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { Box, Flex, Grid, GridItem, Image, Text, Button } from "@chakra-ui/react";
+import { Box, Flex, Grid, GridItem, Image, Text, Button, IconButton } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -286,24 +286,16 @@ function GroupSwitcherButton({ currentGroupSlug }: { currentGroupSlug: string })
         p={1}
         boxShadow="sm"
       >
-        <Box
-          as="button"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          h="24px"
-          w="40px"
-          borderRadius="sm"
-          color="theme.textSecondary"
-          cursor="pointer"
-          _hover={{ color: "theme.accent" }}
-          transition="color 0.12s"
-          onClick={() => setOpen((o) => !o)}
+        <IconButton
           aria-label="Switch group"
+          size="xs"
+          variant="ghost"
+          w="40px"
+          onClick={() => setOpen((o) => !o)}
           title="Switch group"
         >
-          <IconSwitchHorizontal size={14} />
-        </Box>
+          <IconSwitchHorizontal size={16} />
+        </IconButton>
       </Box>
 
       {open && (
