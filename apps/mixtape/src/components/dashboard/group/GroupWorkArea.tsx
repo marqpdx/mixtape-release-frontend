@@ -32,7 +32,7 @@ import LanternmailCampaignWorkArea from "@/components/lanternmail/LanternmailCam
 import { StackroomWorkArea } from "@/components/stackroom/StackroomWorkArea";
 import { useMembers } from "@mixtape/api/hooks";
 import ProjectsWorkArea from "@/components/projects/ProjectsWorkArea";
-import { CollectionsWorkArea, CollectionDetailWorkArea } from "@/components/collections";
+import { CollectionsExplorer } from "@/components/collections";
 import ThemeWorkArea from "@/components/groups/themes/ThemeWorkArea";
 import AudioWorkArea from "@/components/concord/AudioWorkArea";
 import ProductsWorkArea from "@/components/bazaar/products/ProductsWorkArea";
@@ -253,40 +253,17 @@ export default function GroupWorkArea({
   }
 
   // Collections (User-friendly curated content)
-  if (section === "collections-landing") {
+  if (section === "collections-landing" || section === "collection-detail") {
     return (
       <WorkAreaWrapper>
-        <CollectionsWorkArea
+        <CollectionsExplorer
           sponsor={{
             type: 'group',
             id: group.id,
             slug: group.slug,
-            displayName: group.title
+            displayName: group.title,
           }}
-          onNavigateToCollection={(collectionId) => {
-            setActiveSection('collection-detail', { collectionId });
-          }}
-        />
-      </WorkAreaWrapper>
-    );
-  }
-
-  if (section === "collection-detail") {
-    const collectionId = sectionParams?.collectionId;
-    if (!collectionId) {
-      return (
-        <WorkAreaWrapper>
-          <Text color="red.500">Collection ID is required</Text>
-        </WorkAreaWrapper>
-      );
-    }
-
-    return (
-      <WorkAreaWrapper>
-        <CollectionDetailWorkArea
-          collectionId={collectionId}
-          onBack={() => setActiveSection('collections-landing')}
-          canEdit={true}
+          isAdmin={true}
         />
       </WorkAreaWrapper>
     );

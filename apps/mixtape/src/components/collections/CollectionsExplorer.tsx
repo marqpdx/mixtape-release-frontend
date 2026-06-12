@@ -11,6 +11,8 @@ import {
   VStack,
   Badge,
   Input,
+  Textarea,
+  Button,
   IconButton,
   Spinner,
   SegmentGroup,
@@ -24,11 +26,21 @@ import {
   Eye,
   Download,
   ArrowRight,
+  Plus,
+  Pencil,
+  Check,
+  X,
+  Trash2,
 } from 'lucide-react';
 import {
   useCollections,
   useCollectionItems,
+  useCreateCollection,
+  useUpdateCollection,
+  useDeleteCollection,
 } from '@mixtape/api/hooks/stackroom/useCollections';
+import { CollectionBrowser } from '@/components/stackroom/CollectionBrowser';
+import { toaster } from '@/components/ui/toaster';
 import { useColorModeValue } from '@components/ui/color-mode';
 import { useViewMode } from './explorer/useViewMode';
 import { hueForName, coverGradient } from './explorer/coverUtils';
@@ -59,6 +71,7 @@ interface SponsorInfo {
 export interface CollectionsExplorerProps {
   sponsor: SponsorInfo;
   initialCollectionId?: string | null;
+  isAdmin?: boolean;
 }
 
 // ---- helpers ----------------------------------------------------------------
@@ -306,9 +319,11 @@ interface TopbarProps {
   onModeChange: (m: 'list' | 'grid') => void;
   q: string;
   onQ: (q: string) => void;
+  isAdmin?: boolean;
+  onNew?: () => void;
 }
 
-function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ }: TopbarProps) {
+function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, isAdmin, onNew }: TopbarProps) {
   const borderColor = useColorModeValue('border.default', 'border.default');
   const accentText = useColorModeValue('theme.accent', 'theme.accent');
   const mutedText = useColorModeValue('theme.textSecondary', 'theme.textSecondary');
@@ -432,6 +447,13 @@ function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ }: 
           <SegmentGroup.ItemHiddenInput />
         </SegmentGroup.Item>
       </SegmentGroup.Root>
+
+      {isAdmin && !nav.collectionId && onNew && (
+        <Button size="xs" onClick={onNew} colorPalette="orange" variant="subtle">
+          <Plus size={12} />
+          New
+        </Button>
+      )}
     </Box>
   );
 }
@@ -926,6 +948,7 @@ interface CollectionContentViewProps {
   q: string;
   onOpenFolder: (folderId: string) => void;
   onOpenItem: (item: LibraryItem) => void;
+  refreshKey?: number;
 }
 
 function CollectionContentView({
@@ -1097,13 +1120,37 @@ interface CollectionHeaderProps {
   collection: CollectionListItem;
   folder: (LibraryItem & { is_folder: true }) | null;
   allItems: LibraryItem[];
+  isAdmin?: boolean;
+  onSaveEdit?: (title: string, summary: string) => Promise<void>;
 }
 
-function CollectionHeader({ collection, folder, allItems }: CollectionHeaderProps) {
+function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }: CollectionHeaderProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const [saving, setSaving] = useState(false);
+
   const hue = hueForName(collection.title);
   const bg = coverGradient(hue);
   const topFileCount = allItems.filter((i) => !i.is_folder && !i.parent_id).length;
   const folderCount = allItems.filter((i) => i.is_folder && !i.parent_id).length;
+
+  const handleStartEdit = () => {
+    setEditTitle(collection.title);
+    setEditSummary(collection.summary ?? '');
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!editTitle.trim()) return;
+    setSaving(true);
+    try {
+      await onSaveEdit?.(editTitle, editSummary);
+      setIsEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (folder) {
     return (
@@ -1136,6 +1183,41 @@ function CollectionHeader({ collection, folder, allItems }: CollectionHeaderProp
             in {collection.title}
           </Text>
         </Box>
+      </Box>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <Box px={5} py={4} borderBottom="1px solid" borderColor="border.default">
+        <VStack align="stretch" gap={3} maxW="480px">
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            size="sm"
+            fontFamily="heading"
+            fontSize="md"
+            placeholder="Collection title"
+          />
+          <Textarea
+            value={editSummary}
+            onChange={(e) => setEditSummary(e.target.value)}
+            size="sm"
+            rows={2}
+            placeholder="Summary (optional)"
+            fontSize="13px"
+          />
+          <HStack gap={2}>
+            <Button size="xs" onClick={handleSave} loading={saving} colorPalette="orange" variant="subtle">
+              <Check size={12} />
+              Save
+            </Button>
+            <Button size="xs" variant="ghost" onClick={() => setIsEditing(false)}>
+              <X size={12} />
+              Cancel
+            </Button>
+          </HStack>
+        </VStack>
       </Box>
     );
   }
@@ -1175,6 +1257,160 @@ function CollectionHeader({ collection, folder, allItems }: CollectionHeaderProp
           <Text>· Updated {relativeTime(collection.updated_at)}</Text>
         </HStack>
       </Box>
+      {isAdmin && onSaveEdit && (
+        <IconButton
+          aria-label="Edit collection"
+          size="xs"
+          variant="ghost"
+          color="theme.textSecondary"
+          _hover={{ color: 'theme.text' }}
+          onClick={handleStartEdit}
+          flexShrink={0}
+        >
+          <Pencil size={14} />
+        </IconButton>
+      )}
+    </Box>
+  );
+}
+
+// ---- admin section (inside a collection) -----------------------------------
+
+interface AdminSectionProps {
+  collectionId: string;
+  onItemAdded: () => void;
+  onDelete: () => void;
+  deleteLoading: boolean;
+}
+
+function AdminSection({ collectionId, onItemAdded, onDelete, deleteLoading }: AdminSectionProps) {
+  const borderColor = useColorModeValue('border.default', 'border.default');
+
+  return (
+    <Box
+      className="cex-admin-section"
+      borderTop="2px solid"
+      borderColor="orange.200"
+      mt={4}
+      px={5}
+      py={5}
+    >
+      {/* Add items */}
+      <Box mb={8}>
+        <Text
+          fontFamily="mono"
+          fontSize="10px"
+          fontWeight="600"
+          letterSpacing="0.12em"
+          textTransform="uppercase"
+          color="theme.textMuted"
+          mb={3}
+        >
+          Add to collection
+        </Text>
+        <CollectionBrowser collectionId={collectionId} onItemAdded={onItemAdded} />
+      </Box>
+
+      {/* Delete zone */}
+      <Box pt={5} borderTop="1px solid" borderColor={borderColor}>
+        <Text
+          fontFamily="mono"
+          fontSize="10px"
+          fontWeight="600"
+          letterSpacing="0.12em"
+          textTransform="uppercase"
+          color="theme.textMuted"
+          mb={2}
+        >
+          Delete collection
+        </Text>
+        <Text fontSize="12px" color="theme.textSecondary" mb={3} lineHeight="1.6">
+          Removes all items from this collection. The underlying files are not deleted.
+        </Text>
+        <Button
+          size="xs"
+          variant="outline"
+          colorPalette="red"
+          onClick={onDelete}
+          loading={deleteLoading}
+        >
+          <Trash2 size={12} />
+          Delete collection
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+// ---- create collection form ------------------------------------------------
+
+interface CreateFormProps {
+  sponsor: SponsorInfo;
+  onCreated: () => void;
+  onCancel: () => void;
+}
+
+function CreateForm({ sponsor, onCreated, onCancel }: CreateFormProps) {
+  const [title, setTitle] = useState('');
+  const [summary, setSummary] = useState('');
+  const createMutation = useCreateCollection();
+  const borderColor = useColorModeValue('border.default', 'border.default');
+
+  const handleCreate = async () => {
+    if (!title.trim()) return;
+    try {
+      await createMutation.mutateAsync({
+        title,
+        summary,
+        sponsor_type: sponsor.type,
+        sponsor_id: sponsor.id,
+      });
+      toaster.create({ title: 'Collection created', type: 'success' });
+      onCreated();
+    } catch {
+      toaster.create({ title: 'Failed to create collection', type: 'error' });
+    }
+  };
+
+  return (
+    <Box
+      className="cex-create-form"
+      px={4}
+      py={4}
+      borderBottom="1px solid"
+      borderColor={borderColor}
+      bg="bg.subtle"
+    >
+      <VStack align="stretch" gap={3} maxW="480px">
+        <Text fontFamily="mono" fontSize="10px" fontWeight="600" letterSpacing="0.12em" textTransform="uppercase" color="theme.textMuted">
+          New collection
+        </Text>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Collection title"
+          size="sm"
+          autoFocus
+        />
+        <Textarea
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="Summary (optional)"
+          size="sm"
+          rows={2}
+          fontSize="13px"
+        />
+        <HStack gap={2}>
+          <Button size="xs" colorPalette="orange" variant="subtle" onClick={handleCreate} loading={createMutation.isPending}>
+            <Check size={12} />
+            Create
+          </Button>
+          <Button size="xs" variant="ghost" onClick={onCancel}>
+            <X size={12} />
+            Cancel
+          </Button>
+        </HStack>
+      </VStack>
     </Box>
   );
 }
@@ -1210,7 +1446,7 @@ function readStoredNav(sponsor: SponsorInfo): StoredNav | null {
   }
 }
 
-export function CollectionsExplorer({ sponsor, initialCollectionId }: CollectionsExplorerProps) {
+export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = false }: CollectionsExplorerProps) {
   const [nav, setNav] = useState<ExplorerNav>(() => {
     if (initialCollectionId) return { collectionId: initialCollectionId, folderId: null };
     const stored = readStoredNav(sponsor);
@@ -1219,6 +1455,11 @@ export function CollectionsExplorer({ sponsor, initialCollectionId }: Collection
   const [q, setQ] = useState('');
   const [previewItem, setPreviewItem] = useState<LibraryItem | null>(null);
   const [mode, setMode] = useViewMode();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [itemsRefreshKey, setItemsRefreshKey] = useState(0);
+
+  const updateMutation = useUpdateCollection();
+  const deleteMutation = useDeleteCollection();
 
   // The previewed item's id can only be resolved once its collection's items
   // have loaded, so the restore happens in an effect keyed off activeItems below.
@@ -1273,6 +1514,29 @@ export function CollectionsExplorer({ sponsor, initialCollectionId }: Collection
     setNav(next);
     setQ('');
   }, []);
+
+  const handleSaveEdit = useCallback(async (title: string, summary: string) => {
+    if (!nav.collectionId) return;
+    try {
+      await updateMutation.mutateAsync({ collectionId: nav.collectionId, data: { title, summary } });
+      toaster.create({ title: 'Collection updated', type: 'success' });
+    } catch {
+      toaster.create({ title: 'Failed to update collection', type: 'error' });
+      throw new Error('update failed');
+    }
+  }, [nav.collectionId, updateMutation]);
+
+  const handleDelete = useCallback(async () => {
+    if (!nav.collectionId) return;
+    if (!confirm('Delete this collection? This cannot be undone.')) return;
+    try {
+      await deleteMutation.mutateAsync(nav.collectionId);
+      toaster.create({ title: 'Collection deleted', type: 'success' });
+      go({ collectionId: null, folderId: null });
+    } catch {
+      toaster.create({ title: 'Failed to delete collection', type: 'error' });
+    }
+  }, [nav.collectionId, deleteMutation, go]);
 
   // Browser back / Escape from inside a collection returns to the collections list
   const detailNav = useBackNavigableDetail({
@@ -1360,7 +1624,18 @@ export function CollectionsExplorer({ sponsor, initialCollectionId }: Collection
             onModeChange={setMode}
             q={q}
             onQ={setQ}
+            isAdmin={isAdmin}
+            onNew={() => setShowCreateForm(true)}
           />
+
+          {/* Admin: create collection form */}
+          {isAdmin && showCreateForm && !nav.collectionId && (
+            <CreateForm
+              sponsor={sponsor}
+              onCreated={() => { setShowCreateForm(false); }}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          )}
 
           {/* Collection / folder header */}
           <AnimatePresence mode="wait">
@@ -1376,6 +1651,8 @@ export function CollectionsExplorer({ sponsor, initialCollectionId }: Collection
                   collection={activeCollection}
                   folder={activeFolder}
                   allItems={activeItems}
+                  isAdmin={isAdmin}
+                  onSaveEdit={isAdmin ? handleSaveEdit : undefined}
                 />
               </motion.div>
             )}
@@ -1401,13 +1678,24 @@ export function CollectionsExplorer({ sponsor, initialCollectionId }: Collection
                 )}
 
                 {nav.collectionId && !nav.folderId && (
-                  <CollectionContentView
-                    collectionId={nav.collectionId}
-                    mode={mode}
-                    q={q}
-                    onOpenFolder={(fid) => go({ collectionId: nav.collectionId!, folderId: fid })}
-                    onOpenItem={setPreviewItem}
-                  />
+                  <>
+                    <CollectionContentView
+                      collectionId={nav.collectionId}
+                      mode={mode}
+                      q={q}
+                      onOpenFolder={(fid) => go({ collectionId: nav.collectionId!, folderId: fid })}
+                      onOpenItem={setPreviewItem}
+                      refreshKey={itemsRefreshKey}
+                    />
+                    {isAdmin && (
+                      <AdminSection
+                        collectionId={nav.collectionId}
+                        onItemAdded={() => setItemsRefreshKey((k) => k + 1)}
+                        onDelete={handleDelete}
+                        deleteLoading={deleteMutation.isPending}
+                      />
+                    )}
+                  </>
                 )}
 
                 {nav.collectionId && nav.folderId && (
