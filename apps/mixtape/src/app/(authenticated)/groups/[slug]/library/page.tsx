@@ -21,7 +21,7 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@/components/ui/toaster";
 import { useColorModeValue } from "@components/ui/color-mode";
 
-async function openFileInTab(slug: string, fileId: string, filename: string) {
+async function openFileInTab(slug: string, fileId: string) {
   try {
     const response = await axiosInstance.get(
       `/api/groups/${slug}/files/${fileId}/download/`,
@@ -159,7 +159,7 @@ export default function GroupLibraryPage() {
                         <Button
                           size="xs"
                           variant="ghost"
-                          onClick={() => openFileInTab(slugStr, file.id, file.filename)}
+                          onClick={() => openFileInTab(slugStr, file.id)}
                         >
                           <ExternalLink size={14} />
                           Open

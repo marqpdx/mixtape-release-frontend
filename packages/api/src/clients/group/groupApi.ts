@@ -372,6 +372,15 @@ export async function deleteGroupFile(groupSlug: string, sourceFileId: string): 
   await axiosInstance.delete(`/api/groups/${groupSlug}/files/${sourceFileId}/`);
 }
 
+export async function fetchMyFiles(): Promise<GroupFile[]> {
+  const response = await axiosInstance.get('/api/me/files/');
+  return response.data;
+}
+
+export async function deleteMyFile(sourceFileId: string): Promise<void> {
+  await axiosInstance.delete(`/api/me/files/${sourceFileId}/`);
+}
+
 export async function uploadGroupFile(
   groupSlug: string,
   file: File
@@ -420,4 +429,6 @@ export const groupApi = {
   fetchGroupFiles,
   uploadGroupFile,
   deleteGroupFile,
+  fetchMyFiles,
+  deleteMyFile,
 };
