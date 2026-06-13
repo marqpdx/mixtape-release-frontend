@@ -30,6 +30,16 @@ interface PdfDocumentViewerProps {
 export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDocumentViewerProps) {
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerSrc;
 
+  const isConvertedDoc = !!downloadUrl;
+  const fileLabel = isConvertedDoc ? `PDF preview of ${filename}` : `PDF: ${filename}`;
+  const loadingLabel = isConvertedDoc ? 'Loading PDF preview…' : 'Loading PDF…';
+  const loadErrorLabel = isConvertedDoc
+    ? 'The PDF preview of this document could not be loaded inline.'
+    : 'The original PDF could not be loaded inline.';
+  const renderErrorLabel = isConvertedDoc
+    ? 'This document\'s PDF preview could not be rendered inline. Use Open original or Download original.'
+    : 'This PDF could not be rendered inline. Use Open original or Download original.';
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerWidth, setContainerWidth] = useState(760);
   const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
@@ -155,13 +165,13 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
           <Box py={16} textAlign="center">
             {loadError ? (
               <>
-                <Text color="red.500" mb={3}>The original PDF could not be loaded inline.</Text>
+                <Text color="red.500" mb={3}>{loadErrorLabel}</Text>
                 <Text color="theme.textSecondary" fontSize="sm">{loadError}</Text>
               </>
             ) : (
               <>
                 <Spinner size="lg" color="theme.accent" />
-                <Text mt={4} color="theme.textSecondary">Loading PDF...</Text>
+                <Text mt={4} color="theme.textSecondary">{loadingLabel}</Text>
               </>
             )}
           </Box>
@@ -176,7 +186,7 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
               }
               error={
                 <Text color="red.500">
-                  This PDF could not be rendered inline. Use Open original or Download original.
+                  {renderErrorLabel}
                 </Text>
               }
               onLoadSuccess={({ numPages: nextNumPages }: { numPages: number }) => {
@@ -203,7 +213,7 @@ export function PdfDocumentViewer({ filename, sourceFileId, downloadUrl }: PdfDo
       </Box>
 
       <Text color="theme.textSecondary" fontSize="xs">
-        Viewing original PDF: {filename}
+        Viewing {fileLabel}
       </Text>
     </VStack>
   );
