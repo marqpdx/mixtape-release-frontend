@@ -314,3 +314,30 @@ export async function submitSynopsisLinkedInAsync(
   const res = await axiosInstance.post("/api/switchboard/agent/synopsis/linkedin", payload);
   return res.data as SynopsisLinkedInResponse;
 }
+
+// ─── Group Search (Beryl) ─────────────────────────────────────────────────────
+
+export interface GroupSearchRequest {
+  group_id: string;
+  query: string;
+  max_results?: number;
+}
+
+export interface GroupSearchSource {
+  label: string;
+  url: string;
+  excerpt?: string;
+}
+
+export interface GroupSearchResponse {
+  answer: string;
+  sources: GroupSearchSource[];
+  found: boolean;
+}
+
+export async function groupSearch(
+  payload: GroupSearchRequest
+): Promise<GroupSearchResponse> {
+  const res = await axiosInstance.post("/api/switchboard/group/search", payload);
+  return res.data as GroupSearchResponse;
+}

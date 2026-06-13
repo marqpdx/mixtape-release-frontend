@@ -11,13 +11,11 @@ import {
   HStack,
   VStack,
   Button,
-  Input,
   Badge,
   Spinner,
 } from "@chakra-ui/react";
 import ProgressBar from "@components/common/Progress";
 import {
-  IconSearch,
   IconUsers,
   IconCalendar,
   IconHome,
@@ -39,6 +37,7 @@ import {
 import type { Group } from "@mixtape/core/types/groupTypes";
 import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
 import { useRouter } from "next/navigation";
+import { GroupSearchField } from "./BerylSearchField";
 
 interface GroupAdminView2WorkAreaProps {
   group: Group;
@@ -233,6 +232,7 @@ export function GroupAdminView2WorkArea({ group }: GroupAdminView2WorkAreaProps)
         memberCount={memberCount}
         pendingCount={pendingCount}
         nextEventLabel={nextEventLabel}
+        groupId={group.id}
       />
 
       {/* Main grid */}
@@ -307,11 +307,13 @@ function CommandStrip({
   memberCount,
   pendingCount,
   nextEventLabel,
+  groupId,
 }: {
   group: Group;
   memberCount: number;
   pendingCount: number;
   nextEventLabel: string | null;
+  groupId: string;
 }) {
   return (
     <Box
@@ -349,21 +351,7 @@ function CommandStrip({
           </HStack>
         </Box>
 
-        {/* Stub search field — TODO: wire Beryl search — see decisions/surfaces/beryl-search-spec.md */}
-        <Box flex="1" maxW="480px" position="relative">
-          <Input
-            placeholder="Search this group… (coming soon)"
-            size="sm"
-            bg="theme.surface"
-            borderRadius="lg"
-            disabled
-            _disabled={{ opacity: 0.6, cursor: "not-allowed" }}
-            pl={8}
-          />
-          <Box position="absolute" left={2.5} top="50%" transform="translateY(-50%)" color="orange.500" pointerEvents="none" zIndex={1}>
-            <IconSearch size={14} />
-          </Box>
-        </Box>
+        <GroupSearchField groupId={groupId} />
       </Flex>
     </Box>
   );
