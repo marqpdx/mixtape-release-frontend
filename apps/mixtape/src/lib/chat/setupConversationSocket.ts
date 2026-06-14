@@ -76,6 +76,8 @@ export const setupConversationSocket = (
       typeof sender === 'string' ? sender : sender?.username ?? 'Unknown';
 
       setMessages((prev) => {
+        // Dedup — voice uploads add the full message via REST; the socket fires too
+        if (messageId && prev.some((m) => m.id === messageId)) return prev;
         const newMessage = {
           sender: { username: senderUsername },
           text: text || '',

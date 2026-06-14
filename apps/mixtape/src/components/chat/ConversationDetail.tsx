@@ -15,14 +15,17 @@ import {
 } from "@chakra-ui/react";
 import { useConversationStore } from "@/stores/conversationStore";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { IconMoodSmile, IconSearch } from "@tabler/icons-react";
+import { IconMoodSmile, IconSearch, IconMicrophone, IconPlayerStop } from "@tabler/icons-react";
 import { AVAILABLE_REACTIONS, getReactionByName, USE_EMOJI_DISPLAY } from "@/lib/reactions";
 import { setupConversationSocket } from "@/lib/chat/setupConversationSocket";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
 import { getSocket, initializeSocket } from "@mixtape/api/lib/socket";
+import { useVoiceRecorder } from "@mixtape/api/hooks/useVoiceRecorder";
+import { uploadVoiceMessageBlob } from "@mixtape/api/clients/chat/chatApi";
+import { VoicePlaybackBubble } from "./VoicePlaybackBubble";
 
 type MessageReaction = {
   id: string;
@@ -56,6 +59,12 @@ type Message = {
   reactions?: MessageReaction[];
   mentions?: MessageMention[];
   reaction_summary?: ReactionSummary[];
+  // Voice message fields
+  message_type?: 'text' | 'voice';
+  audio_file_url?: string | null;
+  audio_duration_seconds?: number | null;
+  transcript_text?: string | null;
+  transcript_status?: 'pending' | 'done' | 'failed' | null;
 };
 
 type MentionSuggestion = {
@@ -104,6 +113,44 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAckRef = useRef<{ slug: string; lastMessageId?: string } | null>(null);
+
+  // Voice recording state
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
+  const [transcriptPatches, setTranscriptPatches] = useState<Record<string, { transcript_text: string; transcript_status: 'done' }>>({});
+  const voiceCancelledRef = useRef(false);
+  const recordingSecondsRef = useRef(0);
+
+  const handleVoiceComplete = useCallback(async (blob: Blob) => {
+    if (voiceCancelledRef.current) { voiceCancelledRef.current = false; return; }
+    setIsUploadingVoice(true);
+    try {
+      const message = await uploadVoiceMessageBlob(slug, blob, recordingSecondsRef.current);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [message as unknown as Message, ...prev];
+      });
+    } catch {
+      // silent — socket will still deliver the message to the room
+    } finally {
+      setIsUploadingVoice(false);
+    }
+  }, [slug]);
+
+  const { isRecording, isPreparingMic, recordingSeconds, micError, startRecording, stopRecording } =
+    useVoiceRecorder(handleVoiceComplete, { prewarm: false });
+
+  // Keep a ref current so the upload callback can read the duration at finalize time
+  useEffect(() => { recordingSecondsRef.current = recordingSeconds; }, [recordingSeconds]);
+
+  // 5-minute hard cap (ADR invariant)
+  useEffect(() => {
+    if (recordingSeconds >= 300 && isRecording) stopRecording();
+  }, [recordingSeconds, isRecording, stopRecording]);
+
+  const handleCancelVoice = () => {
+    voiceCancelledRef.current = true;
+    stopRecording();
+  };
 
 
   const { setActiveConversationId, resetUnread } = useChatUnread();
@@ -228,6 +275,20 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
     };
   }, [slug]);
 
+
+  // Live transcript patches for voice messages
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    const handler = (data: { message_id: string; transcript: string }) => {
+      setTranscriptPatches((prev) => ({
+        ...prev,
+        [data.message_id]: { transcript_text: data.transcript, transcript_status: 'done' },
+      }));
+    };
+    socket.on('transcript_ready', handler);
+    return () => { socket.off('transcript_ready', handler); };
+  }, [slug]);
 
   // Handle mention autocomplete
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -458,36 +519,85 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
 
       {/* Send message input — above message list */}
       <Box position="relative">
-        <HStack gap={[1, 2]}>
-          <Input
-            ref={inputRef}
-            value={newMessage}
-            onChange={handleInputChange}
-            placeholder="Type a message... (@mention someone)"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !showMentions) {
-                handleSend();
-              }
-            }}
-            onInput={handleTyping}
-            bg="bg.input"
-            border="1px solid"
-            borderColor="border.input"
-            color="text.primary"
-            _placeholder={{ color: "text.secondary" }}
-            fontSize={["sm", "md"]}
-          />
-          <Button
-            onClick={handleSend}
-            colorScheme="green"
-            size={["sm", "md"]}
-          >
-            Send
-          </Button>
-        </HStack>
+        {isRecording || isUploadingVoice ? (
+          <HStack gap={2} px={1} py={2} justify="space-between" align="center">
+            <HStack gap={2}>
+              <Box
+                w="8px"
+                h="8px"
+                borderRadius="full"
+                bg="red.500"
+                style={{ animation: 'pulse 1s ease-in-out infinite' }}
+              />
+              <Text fontSize="sm" color="text.secondary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {isUploadingVoice
+                  ? 'Sending…'
+                  : `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')} · Recording${recordingSeconds >= 280 ? ' · max reached' : ''}`
+                }
+              </Text>
+            </HStack>
+            {!isUploadingVoice && (
+              <HStack gap={2}>
+                <Button size="sm" variant="outline" onClick={handleCancelVoice} colorScheme="red">
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  colorScheme="blue"
+                  onClick={stopRecording}
+                >
+                  <IconPlayerStop size={14} />
+                  Send
+                </Button>
+              </HStack>
+            )}
+          </HStack>
+        ) : (
+          <HStack gap={[1, 2]}>
+            <Input
+              ref={inputRef}
+              value={newMessage}
+              onChange={handleInputChange}
+              placeholder="Type a message… (@mention someone)"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !showMentions) {
+                  handleSend();
+                }
+              }}
+              onInput={handleTyping}
+              bg="bg.input"
+              border="1px solid"
+              borderColor="border.input"
+              color="text.primary"
+              _placeholder={{ color: "text.secondary" }}
+              fontSize={["sm", "md"]}
+            />
+            <Button
+              onClick={handleSend}
+              colorScheme="green"
+              size={["sm", "md"]}
+            >
+              Send
+            </Button>
+            <Button
+              onClick={() => void startRecording()}
+              variant="outline"
+              size={["sm", "md"]}
+              loading={isPreparingMic}
+              aria-label="Record voice message"
+              title="Record voice message"
+            >
+              <IconMicrophone size={16} />
+            </Button>
+          </HStack>
+        )}
+
+        {micError && (
+          <Text fontSize="xs" color="red.500" mt={1}>{micError}</Text>
+        )}
 
         {/* Mention suggestions — positioned below input */}
-        {showMentions && mentionSuggestions.length > 0 && (
+        {!isRecording && showMentions && mentionSuggestions.length > 0 && (
           <Box
             position="absolute"
             top="100%"
@@ -547,8 +657,34 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
           <VStack align="stretch" gap={3}>
             {filteredMessages.map((msg, index) => {
               const isSelf = msg.sender.username === identity?.username;
+              const isVoice = msg.message_type === 'voice';
+              const patch = transcriptPatches[msg.id];
               return (
                 <Box key={`${msg.id}-${index}`}>
+                  {isVoice && msg.audio_file_url ? (
+                    <Box
+                      alignSelf={isSelf ? "flex-end" : "flex-start"}
+                      ml={isSelf ? "auto" : 0}
+                      display="flex"
+                      flexDir="column"
+                      alignItems={isSelf ? "flex-end" : "flex-start"}
+                      gap={1}
+                    >
+                      <Text fontSize="xs" fontWeight="bold" color="text.secondary">
+                        {msg.sender.username}
+                      </Text>
+                      <VoicePlaybackBubble
+                        audioUrl={msg.audio_file_url}
+                        durationSeconds={msg.audio_duration_seconds ?? null}
+                        transcript={patch?.transcript_text ?? msg.transcript_text ?? null}
+                        transcriptStatus={patch?.transcript_status ?? msg.transcript_status ?? null}
+                        variant={isSelf ? 'sent' : 'received'}
+                      />
+                      <Text fontSize="xs" color="text.secondary">
+                        {new Date(msg.created_at).toLocaleString()}
+                      </Text>
+                    </Box>
+                  ) : (
                   <Box
                     alignSelf={isSelf ? "flex-end" : "flex-start"}
                     maxW={["85%", "70%"]}
@@ -564,7 +700,6 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
                     >
                       {msg.sender.username}
                     </Text>
-                    {/* Fixed: Use dangerouslySetInnerHTML directly on Text component */}
                     <Text
                       color="text.primary"
                       dangerouslySetInnerHTML={{
@@ -575,6 +710,7 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
                       {new Date(msg.created_at).toLocaleString()}
                     </Text>
                   </Box>
+                  )}
 
                   {/* Reactions */}
                   {((msg.reaction_summary && msg.reaction_summary.length > 0) || !isSelf) && (

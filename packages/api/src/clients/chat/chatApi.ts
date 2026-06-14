@@ -171,6 +171,26 @@ export async function uploadVoiceMessage(
 }
 
 /**
+ * Upload a voice message from a web Blob (MediaRecorder output).
+ * Web FormData handles multipart/form-data boundary automatically — do not set Content-Type.
+ */
+export async function uploadVoiceMessageBlob(
+  conversationSlug: string,
+  blob: Blob,
+  durationSeconds: number
+): Promise<Message> {
+  const ext = blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'mp4';
+  const formData = new FormData();
+  formData.append('audio', blob, `voice-message.${ext}`);
+  formData.append('duration', String(Math.round(durationSeconds)));
+  const response = await axiosInstance.post<Message>(
+    `/api/chat/conversations/${conversationSlug}/voice-upload`,
+    formData
+  );
+  return response.data;
+}
+
+/**
  * React to a message
  * @param messageId - Message UUID
  * @param reactionName - Reaction emoji name (e.g., 'thumbs_up', 'heart')
