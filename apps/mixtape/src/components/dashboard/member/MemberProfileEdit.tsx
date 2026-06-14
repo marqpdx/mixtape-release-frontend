@@ -28,6 +28,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 import { useImageUpload } from "@hooks/useAssets";
+import { VoicePlaybackBubble } from "@/components/chat/VoicePlaybackBubble";
 import TipTapEditor from "@components/editor/TipTapEditor";
 import type { JSONContent } from "@tiptap/react";
 
@@ -562,19 +563,13 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               <VStack align="start" gap={3} w="100%">
                 {voiceUrl && (
                   <Box w="100%">
-                    <Box mb={2}>
-                      <audio controls src={voiceUrl} style={{ width: "100%" }} />
-                    </Box>
-                    {voiceTranscript && (
-                      <Text fontSize="xs" color={subtextColor} fontStyle="italic">
-                        {voiceTranscript}
-                      </Text>
-                    )}
-                    {!voiceTranscript && (
-                      <Text fontSize="xs" color={subtextColor} fontStyle="italic">
-                        {transcriptPolling ? "Transcribing…" : "Transcript pending"}
-                      </Text>
-                    )}
+                    <VoicePlaybackBubble
+                      audioUrl={voiceUrl}
+                      durationSeconds={null}
+                      transcript={voiceTranscript || null}
+                      transcriptStatus={voiceTranscript ? 'done' : (transcriptPolling ? 'pending' : null)}
+                      variant="neutral"
+                    />
                   </Box>
                 )}
                 <HStack gap={2}>

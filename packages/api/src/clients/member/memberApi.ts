@@ -90,3 +90,16 @@ export const uploadMemberVoice = async (file: File): Promise<VoiceUploadResult> 
 export const deleteMemberVoice = async (): Promise<void> => {
   await axiosInstance.delete('/api/members/me/voice');
 };
+
+export const uploadMemberVoiceClip = async (
+  uri: string,
+  mimeType: string,
+  fileName: string
+): Promise<VoiceUploadResult> => {
+  const form = new FormData();
+  form.append('audio', { uri, type: mimeType, name: fileName } as any);
+  const response = await axiosInstance.post<VoiceUploadResult>('/api/members/me/voice', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

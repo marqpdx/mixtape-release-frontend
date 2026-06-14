@@ -1,7 +1,10 @@
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
 import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
+import { VoicePlaybackBubble } from '../components/shared/VoicePlaybackBubble';
+import { VoiceCaptureBar } from '../components/shared/VoiceCaptureBar';
+import { useUploadIntroVoice } from '../hooks/useUploadIntroVoice';
 
 export default function ProfileScreen() {
   const currentUser = useAuthStore((state) => state.user);
@@ -12,6 +15,15 @@ export default function ProfileScreen() {
     messageMemoryEnabled,
     setMessageMemoryEnabled,
   } = useExperimentalSettings();
+
+  const {
+    isUploading,
+    isTranscribing,
+    voiceUrl,
+    transcript,
+    handleClipComplete,
+    deleteVoice,
+  } = useUploadIntroVoice();
 
   const initials = (currentUser?.username || '?').charAt(0).toUpperCase();
   const isSuperuser = currentUser?.is_superuser === true;
@@ -28,6 +40,43 @@ export default function ProfileScreen() {
         {currentUser?.username ? (
           <Text style={styles.username}>@{currentUser.username}</Text>
         ) : null}
+      </View>
+
+      {/* Intro Voice Note */}
+      <View style={styles.settingsCard}>
+        <Text style={styles.settingsHeading}>Intro Voice Note</Text>
+        {isUploading ? (
+          <View style={styles.voiceLoadingRow}>
+            <ActivityIndicator size="small" color="#0E5AA7" />
+            <Text style={styles.settingsDesc}>Uploading…</Text>
+          </View>
+        ) : voiceUrl ? (
+          <View style={styles.voicePlaybackContainer}>
+            <VoicePlaybackBubble
+              audioUrl={voiceUrl}
+              durationSeconds={null}
+              transcript={transcript || null}
+              transcriptStatus={transcript ? 'done' : (isTranscribing ? 'pending' : null)}
+              variant="neutral"
+            />
+            <TouchableOpacity
+              style={[styles.voiceActionButton, styles.voiceDeleteButton]}
+              onPress={() => { void deleteVoice(); }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.voiceActionText, styles.voiceDeleteText]}>Remove voice note</Text>
+            </TouchableOpacity>
+            <VoiceCaptureBar
+              onComplete={handleClipComplete}
+              submitLabel="Re-record"
+            />
+          </View>
+        ) : (
+          <VoiceCaptureBar
+            onComplete={handleClipComplete}
+            submitLabel="Intro voice"
+          />
+        )}
       </View>
 
       {/* Privacy settings — visible to all users */}
@@ -167,5 +216,33 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#5E6E7D',
     lineHeight: 18,
+  },
+  voiceLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  voicePlaybackContainer: {
+    gap: 12,
+  },
+  voiceActionButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#C9D4DE',
+    backgroundColor: '#FFFFFF',
+  },
+  voiceActionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0E5AA7',
+  },
+  voiceDeleteButton: {
+    borderColor: '#FADBD8',
+    backgroundColor: '#FDF2F1',
+  },
+  voiceDeleteText: {
+    color: '#C0392B',
   },
 });

@@ -28,6 +28,7 @@ import { IconChevronLeft, IconChevronRight, IconArrowLeft, IconExternalLink, Ico
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useMemberProfile } from "@mixtape/api/hooks/member/useMemberProfile";
 import { contactMember } from "@mixtape/api/clients/member/memberApi";
+import { VoicePlaybackBubble } from "@/components/chat/VoicePlaybackBubble";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
 function splitList(value?: string | null): string[] {
@@ -317,12 +318,13 @@ export function GroupMemberProfilePanel({
                 <Text fontSize="xs" fontWeight="semibold" color={muted} mb={2} textTransform="uppercase" letterSpacing="wide">
                   Voice Intro
                 </Text>
-                <audio controls src={profile.intro_voice_url} style={{ width: "100%" }} />
-                {profile.intro_voice_transcript && (
-                  <Text fontSize="xs" color={muted} mt={2} fontStyle="italic">
-                    {profile.intro_voice_transcript}
-                  </Text>
-                )}
+                <VoicePlaybackBubble
+                  audioUrl={profile.intro_voice_url}
+                  durationSeconds={null}
+                  transcript={profile.intro_voice_transcript || null}
+                  transcriptStatus={profile.intro_voice_transcript ? 'done' : (profile.intro_voice_url ? 'pending' : null)}
+                  variant="neutral"
+                />
               </Box>
             )}
 
