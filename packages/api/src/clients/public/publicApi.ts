@@ -62,7 +62,7 @@ export interface PublicGroup {
   slug: string;
   title: string;
   quick_intro: string;
-  group_type: "persona" | "circle" | "community" | "coalition";
+  group_type: "circle" | "community" | "coalition";
   member_count: number;
   profile_image_url: string | null;
   background_image_url: string | null;

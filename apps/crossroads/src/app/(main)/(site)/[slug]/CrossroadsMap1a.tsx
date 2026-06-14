@@ -51,7 +51,6 @@ const GROUP_TYPE_STYLES: Record<string, { color: string; label: string }> = {
   community: { color: "#2d6a4f", label: "Community" },
   circle: { color: "#5a3e8a", label: "Circle" },
   coalition: { color: "#9c5a1c", label: "Coalition" },
-  persona: { color: "#7a3b3b", label: "Persona" },
 };
 
 // Semiotic indicator ring definitions

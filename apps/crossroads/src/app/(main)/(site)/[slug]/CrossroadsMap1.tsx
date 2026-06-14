@@ -33,7 +33,6 @@ const GROUP_TYPE_STYLES: Record<
   community: { color: "#2d6a4f", label: "Community" },
   circle: { color: "#5a3e8a", label: "Circle" },
   coalition: { color: "#9c5a1c", label: "Coalition" },
-  persona: { color: "#7a3b3b", label: "Persona" },
 };
 
 // ---- Earthy Map Background (Layer 1) ----

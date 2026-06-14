@@ -4,7 +4,7 @@
 
 import { Box, Flex, HStack, Image, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
+import { IconBuildingCommunity, IconCircleDot, IconNetwork } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 import { useGroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -13,7 +13,6 @@ import { GroupLandingCTabs } from "./GroupLandingCTabs";
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
   circle: IconCircleDot,
-  persona: IconUserCircle,
   coalition: IconNetwork,
 };
 

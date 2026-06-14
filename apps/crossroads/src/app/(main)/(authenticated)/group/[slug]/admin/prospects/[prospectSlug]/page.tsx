@@ -110,7 +110,6 @@ export default function ProspectDetailPage() {
     items: [
       { label: "Community", value: "community" },
       { label: "Circle", value: "circle" },
-      { label: "Persona", value: "persona" },
       { label: "Coalition", value: "coalition" },
     ],
   }), []);

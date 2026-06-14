@@ -5,7 +5,7 @@
 import { Box, Button, Flex, Grid, Image, Link, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import NextLink from "next/link";
-import { IconBuildingCommunity, IconCircleDot, IconNetwork, IconUserCircle } from "@tabler/icons-react";
+import { IconBuildingCommunity, IconCircleDot, IconNetwork } from "@tabler/icons-react";
 import type { Group } from "@mixtape/core/types/groupTypes";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 import type { GroupLayoutVariant } from "../GroupLayoutSwitcher";
@@ -15,7 +15,6 @@ import { GroupLandingBTabs } from "./GroupLandingBTabs";
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
   circle: IconCircleDot,
-  persona: IconUserCircle,
   coalition: IconNetwork,
 };
 

@@ -26,8 +26,6 @@ export const GROUP_TYPE_EXCLUDED_SECTIONS: Record<string, Set<string>> = {
    */
   community: new Set([]),
 
-  persona: new Set([]),
-
   coalition: new Set([]),
 };
 

@@ -16,7 +16,7 @@ import {
 
 // ---------- Shared unions & enums ----------
 
-export type GroupType = 'community' | 'circle' | 'persona' | 'coalition';
+export type GroupType = 'community' | 'circle' | 'coalition';
 export type GroupVisibility = 'public' | 'private' | 'unlisted';
 export type GroupRole = 'admin' | 'steward' | 'member';
 export type GroupStatus = 'draft' | 'published' | 'archived';
@@ -288,7 +288,6 @@ export const getGroupTypeLabel = (groupType: GroupType): string => {
   const labels: Record<GroupType, string> = {
     community: 'Community',
     circle: 'Circle',
-    persona: 'Persona',
     coalition: 'Coalition'
   };
   return labels[groupType] || groupType;

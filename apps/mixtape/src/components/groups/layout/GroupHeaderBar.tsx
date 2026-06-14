@@ -9,7 +9,6 @@ import {
   IconUsers,
   IconBuildingCommunity,
   IconCircleDot,
-  IconUserCircle,
   IconNetwork
 } from "@tabler/icons-react";
 import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
@@ -28,7 +27,6 @@ interface GroupHeaderBarProps {
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,  // Multiple people, can contain circles
   circle: IconCircleDot,             // Smallest unit, contained within
-  persona: IconUserCircle,           // Individual identity/brand
   coalition: IconNetwork,            // Connected groups working together
 };
 

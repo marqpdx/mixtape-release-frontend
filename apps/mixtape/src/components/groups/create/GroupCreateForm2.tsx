@@ -27,7 +27,6 @@ interface GroupCreateForm2Props {
 
 const groupTypeOptions = [
   { id: "community", label: "Community", value: "community" },
-  { id: "persona", label: "Persona", value: "persona" },
   { id: "coalition", label: "Coalition", value: "coalition" },
   { id: "circle", label: "Circle", value: "circle" },
 ];

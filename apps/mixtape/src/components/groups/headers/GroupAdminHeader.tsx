@@ -6,7 +6,6 @@ import { Box, Container, Flex, Heading, Text } from "@chakra-ui/react";
 import {
   IconBuildingCommunity,
   IconCircleDot,
-  IconUserCircle,
   IconNetwork,
 } from "@tabler/icons-react";
 import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
@@ -14,7 +13,6 @@ import { GroupHeaderWrapper } from "../layout/GroupHeaderWrapper";
 const GROUP_TYPE_ICONS = {
   community: IconBuildingCommunity,
   circle: IconCircleDot,
-  persona: IconUserCircle,
   coalition: IconNetwork,
 };
 
