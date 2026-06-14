@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Audio } from 'expo-av';
 
-interface VoiceMessageBubbleProps {
+interface VoicePlaybackBubbleProps {
   audioUrl: string;
   durationSeconds: number | null;
   transcript?: string | null;
   transcriptStatus?: 'pending' | 'done' | 'failed' | null;
-  isSent: boolean; // true = right-aligned (own message), false = left-aligned
+  variant?: 'sent' | 'received' | 'neutral';
 }
 
 const WAVEFORM_HEIGHTS = [8, 14, 10, 18, 12, 16, 9, 14, 11, 17, 8, 13];
@@ -19,13 +19,13 @@ function formatDuration(seconds: number | null): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function VoiceMessageBubble({
+export function VoicePlaybackBubble({
   audioUrl,
   durationSeconds,
   transcript,
   transcriptStatus,
-  isSent,
-}: VoiceMessageBubbleProps) {
+  variant = 'received',
+}: VoicePlaybackBubbleProps) {
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -70,12 +70,18 @@ export function VoiceMessageBubble({
     }
   };
 
+  const isSent = variant === 'sent';
   const displayDuration = isPlaying || position > 0
     ? formatDuration(position)
     : formatDuration(durationSeconds);
 
   return (
-    <View style={[styles.bubble, isSent ? styles.bubbleSent : styles.bubbleReceived]}>
+    <View style={[
+      styles.bubble,
+      variant === 'sent' && styles.bubbleSent,
+      variant === 'received' && styles.bubbleReceived,
+      variant === 'neutral' && styles.bubbleNeutral,
+    ]}>
       {/* Playback row */}
       <View style={styles.playRow}>
         <TouchableOpacity onPress={togglePlayback} style={styles.playButton} activeOpacity={0.75}>
@@ -102,7 +108,7 @@ export function VoiceMessageBubble({
         <Text style={[styles.duration, isSent && styles.durationSent]}>{displayDuration}</Text>
       </View>
 
-      {/* Transcript section — only for voice messages */}
+      {/* Transcript section */}
       {transcriptStatus === 'pending' ? (
         <View style={styles.transcriptRow}>
           <ActivityIndicator size="small" color={isSent ? 'rgba(255,255,255,0.7)' : '#9AABBA'} />
@@ -126,9 +132,7 @@ export function VoiceMessageBubble({
           ) : null}
         </TouchableOpacity>
       ) : transcriptStatus === 'failed' ? (
-        <Text style={[styles.transcriptLabel, isSent && styles.transcriptLabelSent]}>
-          Transcript unavailable
-        </Text>
+        null // Silent per ADR — no error state shown to user
       ) : null}
     </View>
   );
@@ -151,6 +155,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
     alignSelf: 'flex-start',
+  },
+  bubbleNeutral: {
+    backgroundColor: '#ECF4FB',
+    alignSelf: 'stretch',
+    maxWidth: '100%',
   },
   playRow: {
     flexDirection: 'row',

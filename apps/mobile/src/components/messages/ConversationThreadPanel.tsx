@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   markConversationAsRead,
+  uploadVoiceMessage,
 } from '@mixtape/api/clients/chat/chatApi';
 import {
   ActivityIndicator,
@@ -18,10 +19,11 @@ import {
 } from 'react-native';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useConversationMessages } from '../../hooks/useConversationMessages';
-import { useChatVoiceUpload } from '../../hooks/useChatVoiceUpload';
 import { useAuthStore } from '../../stores/authStore';
 import { useChatStore } from '../../stores/chatStore';
-import { VoiceMessageBubble } from './VoiceMessageBubble';
+import { VoicePlaybackBubble } from '../shared/VoicePlaybackBubble';
+import { VoiceCaptureBar } from '../shared/VoiceCaptureBar';
+import type { RecordedClip } from '../shared/VoiceCaptureBar';
 import type { Message as SocketMessage } from '../../services/messaging/messagingService';
 import type { Message as ApiMessage } from '@mixtape/core/types/chatTypes';
 
@@ -45,15 +47,12 @@ export function ConversationThreadPanel({
   const updatePreview = useChatStore((state) => state.updatePreview);
   const setActiveConversation = useChatStore((state) => state.setActiveConversation);
   const [inputText, setInputText] = useState('');
+  const [voiceActive, setVoiceActive] = useState(false);
   const [realtimeMessages, setRealtimeMessages] = useState<SocketMessage[]>([]);
-  // Tracks transcript patches arriving via socket after voice messages are uploaded
   const [transcriptPatches, setTranscriptPatches] = useState<Record<string, Pick<ApiMessage, 'transcript_text' | 'transcript_status'>>>({});
   const flatListRef = useRef<FlatList>(null);
   const lastMarkedReadMessageIdRef = useRef<string | null>(null);
   const isNearBottomRef = useRef(true);
-
-  const voice = useChatVoiceUpload(conversationId);
-  const isVoiceActive = voice.isRecording || voice.isPaused || voice.isPreparing || voice.isUploading;
 
   const { sendMessage, startTyping, stopTyping, onMessage, typingUsers, isConnected } =
     useMessaging(conversationId);
@@ -67,7 +66,6 @@ export function ConversationThreadPanel({
     refresh,
   } = useConversationMessages({ conversationId });
 
-  // Scroll to bottom after initial history loads
   useEffect(() => {
     if (!loading && historyMessages.length > 0) {
       setTimeout(() => {
@@ -83,11 +81,8 @@ export function ConversationThreadPanel({
     });
     realtimeMessages.forEach((msg) => {
       const key = msg.messageId || '';
-      if (key) {
-        messageMap.set(key, msg as UnifiedMessage);
-      }
+      if (key) messageMap.set(key, msg as UnifiedMessage);
     });
-
     return Array.from(messageMap.values()).sort((a, b) => {
       const timeA = new Date((a as any).createdAt || (a as any).created_at || 0).getTime();
       const timeB = new Date((b as any).createdAt || (b as any).created_at || 0).getTime();
@@ -101,46 +96,31 @@ export function ConversationThreadPanel({
 
   useEffect(() => {
     setActiveConversation(conversationId);
-
-    return () => {
-      setActiveConversation(null);
-    };
+    return () => { setActiveConversation(null); };
   }, [conversationId, setActiveConversation]);
 
   useEffect(() => {
-    if (!isConnected) {
-      return;
-    }
-
+    if (!isConnected) return;
     const cleanup = onMessage((message: SocketMessage) => {
       if (message.conversationSlug === conversationId || message.conversationId === conversationId) {
         setRealtimeMessages((prev) => {
-          const msgId = message.messageId;
-          if (prev.some((m) => m.messageId === msgId)) {
-            return prev;
-          }
+          if (prev.some((m) => m.messageId === message.messageId)) return prev;
           return [...prev, message];
         });
-
         clearUnread(conversationId);
         if (isNearBottomRef.current) {
-          setTimeout(() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-          }, 100);
+          setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
         }
       }
     });
-
     return cleanup;
   }, [clearUnread, conversationId, isConnected, onMessage]);
 
-  // Listen for transcript_ready socket events and patch local message state
   useEffect(() => {
     if (!isConnected) return;
     const { socket } = require('../../services/socket/socketService').socketService;
     if (!socket) return;
 
-    // Server emits { message_id, transcript } — key is "transcript", status is implicitly "done"
     const handler = (data: { message_id: string; transcript: string }) => {
       setTranscriptPatches((prev) => ({
         ...prev,
@@ -152,24 +132,24 @@ export function ConversationThreadPanel({
     };
 
     socket.on('transcript_ready', handler);
-    return () => {
-      socket.off('transcript_ready', handler);
-    };
+    return () => { socket.off('transcript_ready', handler); };
   }, [isConnected]);
 
-  const handleSendVoice = useCallback(async () => {
-    const message = await voice.sendRecording();
+  const handleVoiceComplete = useCallback(async (clip: RecordedClip) => {
+    const message = await uploadVoiceMessage(
+      conversationId,
+      clip.uri,
+      clip.mimeType,
+      clip.fileName,
+      clip.durationSeconds
+    );
     if (!message) return;
 
-    // Add the returned API message directly to history so it renders immediately
-    // The transcript will be patched in when transcript_ready fires
     setRealtimeMessages((prev) => {
       if (prev.some((m) => m.messageId === message.id)) return prev;
-      // Shape the ApiMessage into the SocketMessage format used by realtimeMessages
       return [
         ...prev,
         {
-          // carry all ApiMessage fields (incl. voice fields) — renderItem reads via (msg as any)
           ...message,
           messageId: message.id,
           conversationSlug: conversationId,
@@ -179,74 +159,41 @@ export function ConversationThreadPanel({
         } as unknown as SocketMessage,
       ];
     });
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [conversationId, voice]);
+    setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
+  }, [conversationId]);
 
   useEffect(() => {
     const lastMessage = allMessages[allMessages.length - 1] as any;
     const lastMessageId = lastMessage?.id || lastMessage?.messageId;
-
-    if (!lastMessageId || lastMarkedReadMessageIdRef.current === lastMessageId) {
-      return;
-    }
-
+    if (!lastMessageId || lastMarkedReadMessageIdRef.current === lastMessageId) return;
     lastMarkedReadMessageIdRef.current = lastMessageId;
-
     void markConversationAsRead(conversationId, new Date().toISOString(), lastMessageId).catch(
-      (error) => {
-        console.error('[ConversationThreadPanel] Failed to mark conversation read', error);
-      }
+      () => undefined
     );
   }, [allMessages, conversationId]);
 
   const handleTextChange = (text: string) => {
     setInputText(text);
-    if (text.length > 0) {
-      startTyping();
-    } else {
-      stopTyping();
-    }
+    if (text.length > 0) startTyping();
+    else stopTyping();
   };
 
   const handleSend = () => {
     const trimmed = inputText.trim();
-    if (!trimmed) {
-      return;
-    }
-
+    if (!trimmed) return;
     sendMessage(trimmed);
-
     const nowIso = new Date().toISOString();
-    if (currentUser?.username) {
-      updatePreview(conversationId, trimmed, nowIso, currentUser.username);
-    }
-
+    if (currentUser?.username) updatePreview(conversationId, trimmed, nowIso, currentUser.username);
     setInputText('');
     stopTyping();
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    setTimeout(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, 100);
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const distanceFromBottom =
-      contentSize.height - (contentOffset.y + layoutMeasurement.height);
-
+    const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
     isNearBottomRef.current = distanceFromBottom <= 120;
-
-    // Older messages are prepended to the top of the list, so only fetch more
-    // when the user actually scrolls near the top.
-    if (
-      contentOffset.y <= 80 &&
-      contentSize.height > layoutMeasurement.height &&
-      hasMore &&
-      !loadingMore
-    ) {
+    if (contentOffset.y <= 80 && contentSize.height > layoutMeasurement.height && hasMore && !loadingMore) {
       void loadMore();
     }
   };
@@ -257,26 +204,28 @@ export function ConversationThreadPanel({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
-      <View style={styles.headerCard}>
+      {/* Header */}
+      <View style={styles.header}>
         <View style={styles.headerRow}>
           {onBack ? (
-            <TouchableOpacity onPress={onBack} activeOpacity={0.8}>
-              <Text style={styles.backLink}>Back</Text>
+            <TouchableOpacity onPress={onBack} activeOpacity={0.8} style={styles.backButton}>
+              <Text style={styles.backText}>‹ Back</Text>
             </TouchableOpacity>
-          ) : <View />}
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            Conversing with {title || '…'}
-          </Text>
-          <View />
+          ) : <View style={styles.headerSide} />}
+          <Text style={styles.headerTitle} numberOfLines={1}>{title || 'Conversation'}</Text>
+          <View style={styles.headerSide} />
         </View>
-        {!isConnected ? <Text style={styles.reconnectingText}>Reconnecting...</Text> : null}
+        {!isConnected ? (
+          <Text style={styles.reconnectingText}>Reconnecting…</Text>
+        ) : null}
       </View>
 
-      <View style={styles.messagesCard}>
+      {/* Message list */}
+      <View style={styles.messagesArea}>
         {loading && allMessages.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#0E5AA7" />
-            <Text style={styles.loadingText}>Loading messages...</Text>
+            <Text style={styles.loadingText}>Loading messages…</Text>
           </View>
         ) : (
           <FlatList
@@ -289,57 +238,32 @@ export function ConversationThreadPanel({
             }}
             renderItem={({ item }) => {
               const msg = item as any;
-              const isOwnMessage = msg.sender?.username === currentUser?.username;
-
+              const isOwn = msg.sender?.username === currentUser?.username;
               const timeLabel = new Date(msg.createdAt || msg.created_at || Date.now()).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               });
-
               const isVoice = msg.message_type === 'voice';
-              // Apply any in-flight transcript patches
               const patch = transcriptPatches[msg.id || msg.messageId];
 
               return (
-                <View
-                  style={[
-                    styles.messageContainer,
-                    isOwnMessage ? styles.messageContainerSent : styles.messageContainerReceived,
-                  ]}
-                >
+                <View style={[styles.messageRow, isOwn ? styles.messageRowSent : styles.messageRowReceived]}>
                   {isVoice && msg.audio_file_url ? (
-                    <VoiceMessageBubble
+                    <VoicePlaybackBubble
                       audioUrl={msg.audio_file_url}
                       durationSeconds={msg.audio_duration_seconds ?? null}
                       transcript={patch?.transcript_text ?? msg.transcript_text ?? null}
                       transcriptStatus={patch?.transcript_status ?? msg.transcript_status ?? null}
-                      isSent={isOwnMessage}
+                      variant={isOwn ? 'sent' : 'received'}
                     />
                   ) : (
-                    <View
-                      style={[
-                        styles.messageBubble,
-                        isOwnMessage ? styles.messageBubbleSent : styles.messageBubbleReceived,
-                      ]}
-                    >
-                      <View style={styles.messageRow}>
-                        <Text
-                          style={[
-                            styles.messageContent,
-                            isOwnMessage ? styles.messageContentSent : styles.messageContentReceived,
-                          ]}
-                        >
-                          {msg.text || msg.content}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.messageTime,
-                            isOwnMessage ? styles.messageTimeSent : styles.messageTimeReceived,
-                          ]}
-                        >
-                          {timeLabel}
-                        </Text>
-                      </View>
+                    <View style={[styles.bubble, isOwn ? styles.bubbleSent : styles.bubbleReceived]}>
+                      <Text style={[styles.bubbleText, isOwn ? styles.bubbleTextSent : styles.bubbleTextReceived]}>
+                        {msg.text || msg.content}
+                      </Text>
+                      <Text style={[styles.timeLabel, isOwn ? styles.timeLabelSent : styles.timeLabelReceived]}>
+                        {timeLabel}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -350,17 +274,17 @@ export function ConversationThreadPanel({
             scrollEventThrottle={16}
             ListHeaderComponent={
               loadingMore ? (
-                <View style={styles.loadingMoreContainer}>
+                <View style={styles.loadingMoreRow}>
                   <ActivityIndicator size="small" color="#0E5AA7" />
-                  <Text style={styles.loadingMoreText}>Loading older messages...</Text>
+                  <Text style={styles.loadingMoreText}>Loading older messages…</Text>
                 </View>
               ) : null
             }
             ListFooterComponent={
               typingUsers.length > 0 ? (
-                <View style={styles.typingIndicator}>
+                <View style={styles.typingBubble}>
                   <Text style={styles.typingText}>
-                    {typingUsers.map((u) => u.username).join(', ')} is typing...
+                    {typingUsers.map((u) => u.username).join(', ')} is typing…
                   </Text>
                 </View>
               ) : null
@@ -372,68 +296,35 @@ export function ConversationThreadPanel({
         )}
       </View>
 
-      {/* Voice recording controls — shown while recording/paused */}
-      {isVoiceActive && (
-        <View style={styles.voiceRow}>
-          <TouchableOpacity onPress={voice.cancelRecording} style={styles.voiceCancelButton}>
-            <Text style={styles.voiceCancelText}>✕</Text>
-          </TouchableOpacity>
-
-          <View style={styles.voiceStatus}>
-            {voice.isUploading ? (
-              <>
-                <ActivityIndicator size="small" color="#0E5AA7" />
-                <Text style={styles.voiceStatusText}>Sending…</Text>
-              </>
-            ) : voice.maxDurationReached ? (
-              <Text style={styles.voiceStatusText}>5:00 — max reached</Text>
-            ) : (
-              <>
-                <View style={[styles.voiceDot, voice.isRecording && styles.voiceDotActive]} />
-                <Text style={styles.voiceStatusText}>
-                  {voice.isPreparing ? 'Starting…' : voice.isPaused ? 'Paused' : `${voice.recordingSeconds}s`}
-                </Text>
-              </>
-            )}
+      {/* Input area */}
+      <View style={styles.inputArea}>
+        {!voiceActive ? (
+          <View style={styles.textRow}>
+            <TextInput
+              value={inputText}
+              onChangeText={handleTextChange}
+              placeholder="Type a message…"
+              placeholderTextColor="#8A9BAB"
+              style={styles.textInput}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={!inputText.trim()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.sendButtonText}>➤</Text>
+            </TouchableOpacity>
           </View>
+        ) : null}
 
-          <TouchableOpacity
-            onPress={handleSendVoice}
-            style={[styles.sendButton, voice.isUploading && styles.sendButtonDisabled]}
-            disabled={voice.isUploading || voice.isPreparing}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {(voice.micError || voice.uploadError) ? (
-        <Text style={styles.voiceError}>{voice.micError || voice.uploadError}</Text>
-      ) : null}
-
-      {/* Standard input row — hidden while voice is active */}
-      {!isVoiceActive && (
-        <View style={styles.inputContainer}>
-          <TouchableOpacity onPress={voice.startRecording} style={styles.micButton}>
-            <Text style={styles.micIcon}>🎙</Text>
-          </TouchableOpacity>
-          <TextInput
-            value={inputText}
-            onChangeText={handleTextChange}
-            placeholder="Type a message..."
-            style={styles.input}
-            multiline
-            maxLength={1000}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim()}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        <VoiceCaptureBar
+          onComplete={handleVoiceComplete}
+          onActiveChange={setVoiceActive}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -441,33 +332,39 @@ export function ConversationThreadPanel({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    gap: 10,
   },
-  headerCard: {
+  // Header
+  header: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#D7E0EA',
-    gap: 6,
-    marginBottom: 12,
+    gap: 4,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  backLink: {
+  backButton: {
+    paddingRight: 8,
+  },
+  backText: {
     color: '#0E5AA7',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     color: '#13293D',
-    marginHorizontal: 12,
+  },
+  headerSide: {
+    width: 48,
   },
   reconnectingText: {
     color: '#8A6500',
@@ -475,182 +372,135 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  messagesCard: {
+  // Messages
+  messagesArea: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: '#F5F8FC',
     borderRadius: 18,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0EAF3',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
     padding: 20,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    fontSize: 15,
     color: '#6A7785',
   },
-  loadingMoreContainer: {
+  loadingMoreRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    gap: 8,
+    paddingVertical: 12,
   },
   loadingMoreText: {
-    marginLeft: 8,
-    fontSize: 14,
+    fontSize: 13,
     color: '#6A7785',
   },
   messageList: {
-    padding: 16,
-  },
-  messageContainer: {
-    marginBottom: 12,
-    maxWidth: '80%',
-  },
-  messageContainerSent: {
-    alignSelf: 'flex-end',
-    alignItems: 'flex-end',
-  },
-  messageContainerReceived: {
-    alignSelf: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  messageBubble: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 18,
+    padding: 14,
+    gap: 10,
   },
   messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    flexWrap: 'wrap',
-    gap: 6,
+    marginBottom: 8,
   },
-  messageBubbleSent: {
+  messageRowSent: {
+    alignItems: 'flex-end',
+  },
+  messageRowReceived: {
+    alignItems: 'flex-start',
+  },
+  bubble: {
+    maxWidth: '80%',
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 18,
+    gap: 3,
+  },
+  bubbleSent: {
     backgroundColor: '#0E5AA7',
     borderBottomRightRadius: 4,
   },
-  messageBubbleReceived: {
+  bubbleReceived: {
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0EAF3',
   },
-  messageContent: {
-    fontSize: 16,
-    lineHeight: 22,
+  bubbleText: {
+    fontSize: 15,
+    lineHeight: 21,
   },
-  messageContentSent: {
+  bubbleTextSent: {
     color: '#FFFFFF',
   },
-  messageContentReceived: {
+  bubbleTextReceived: {
     color: '#13293D',
   },
-  messageTime: {
+  timeLabel: {
     fontSize: 10,
-    color: '#9AABBA',
     alignSelf: 'flex-end',
-    flexShrink: 0,
   },
-  messageTimeSent: {
-    color: 'rgba(255,255,255,0.65)',
+  timeLabelSent: {
+    color: 'rgba(255,255,255,0.55)',
   },
-  messageTimeReceived: {
+  timeLabelReceived: {
     color: '#9AABBA',
   },
-  typingIndicator: {
-    padding: 8,
-    marginTop: 8,
-    backgroundColor: '#EAF2F9',
-    borderRadius: 12,
+  typingBubble: {
     alignSelf: 'flex-start',
-    maxWidth: '70%',
+    backgroundColor: '#EAF2F9',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginTop: 4,
   },
   typingText: {
-    fontSize: 14,
+    fontSize: 13,
     fontStyle: 'italic',
     color: '#526170',
   },
-  inputContainer: {
-    flexDirection: 'row',
-    paddingTop: 10,
-    paddingBottom: 44,
-    gap: 8,
-    alignItems: 'flex-end',
-  },
-  micButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EAF2F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  micIcon: {
-    fontSize: 20,
-  },
-  voiceRow: {
-    flexDirection: 'row',
-    paddingTop: 10,
-    paddingBottom: 44,
-    gap: 10,
-    alignItems: 'center',
-  },
-  voiceCancelButton: {
-    width: 36,
-    height: 36,
+  // Input area
+  inputArea: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    backgroundColor: '#F0E0E0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: 10,
+    paddingHorizontal: 14,
+    paddingBottom: 44,
+    borderWidth: 1,
+    borderColor: '#D7E0EA',
+    gap: 0,
   },
-  voiceCancelText: {
-    fontSize: 16,
-    color: '#C00',
-    fontWeight: '700',
-  },
-  voiceStatus: {
-    flex: 1,
+  textRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 8,
   },
-  voiceDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#C9D4DE',
-  },
-  voiceDotActive: {
-    backgroundColor: '#D92B2B',
-  },
-  voiceStatusText: {
-    fontSize: 14,
-    color: '#526170',
-    fontWeight: '600',
-  },
-  voiceError: {
-    fontSize: 12,
-    color: '#C00',
-    paddingHorizontal: 4,
-    paddingBottom: 4,
-  },
-  input: {
+  textInput: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#C9D4DE',
-    borderRadius: 20,
-    padding: 12,
-    fontSize: 16,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    lineHeight: 20,
     maxHeight: 100,
     backgroundColor: '#F7FAFC',
+    color: '#13293D',
   },
   sendButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#0E5AA7',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
@@ -658,7 +508,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#FFFFFF',
+    fontSize: 17,
     fontWeight: '700',
-    fontSize: 15,
   },
 });

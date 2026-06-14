@@ -5,7 +5,6 @@ import {
   Animated,
   FlatList,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   RefreshControl,
@@ -26,7 +25,8 @@ import {
 } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useAuthStore } from '../../stores/authStore';
-import { useNativeVoiceRecorder } from '../../hooks/useNativeVoiceRecorder';
+import { VoiceCaptureBar } from '../shared/VoiceCaptureBar';
+import type { RecordedClip } from '../shared/VoiceCaptureBar';
 import { parseDispatchText, useDispatchCommand } from '../../hooks/useDispatchCommand';
 import { MentionSuggestionList } from './MentionSuggestionList';
 
@@ -51,12 +51,6 @@ function formatSeedTime(value: string): string {
 
 function selectVisibleSeeds(seeds: Seed[]): Seed[] {
   return seeds;
-}
-
-function formatDuration(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 const CAPTURE_DRAFT_KEY_PREFIX = 'mixtape.mobile.seedDraft';
@@ -91,27 +85,11 @@ export function SeedNotebook({
   const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRefreshPhaseRef = useRef<'initial' | 'extended'>('initial');
-  const {
-    isPreparing,
-    isRecording,
-    isPaused,
-    recordingSeconds,
-    meterLevel,
-    micError,
-    canOpenSettings,
-    startRecording,
-    pauseRecording,
-    resumeRecording,
-    finalizeRecording,
-    clearRecording,
-  } = useNativeVoiceRecorder();
 
   const visibleSeeds = useMemo(
     () => selectVisibleSeeds(recentSeedsQuery.data ?? []),
     [recentSeedsQuery.data]
   );
-  const showVoiceStatus = isRecording || isPaused || isPreparing;
-  const voiceSessionActive = isRecording || isPaused || isPreparing;
   const draftStorageKey = currentUser?.username
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
@@ -218,23 +196,13 @@ export function SeedNotebook({
     }, 10);
   };
 
-  const handleSendVoiceSeed = async () => {
-    if ((!isRecording && !isPaused) || createVoiceSeed.isPending) {
-      return;
-    }
-
-    const recordedClip = await finalizeRecording();
-    if (!recordedClip) {
-      return;
-    }
-
+  const handleVoiceComplete = async (clip: RecordedClip) => {
     const seed = await createVoiceSeed.mutateAsync({
-      uri: recordedClip.uri,
-      mimeType: recordedClip.mimeType,
-      fileName: recordedClip.fileName,
+      uri: clip.uri,
+      mimeType: clip.mimeType,
+      fileName: clip.fileName,
       source: 'mobile',
     });
-
     setSavedSeed(seed);
     requestAnimationFrame(() => {
       seedListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -587,99 +555,13 @@ export function SeedNotebook({
                 </TouchableOpacity>
               ) : null}
 
-              <View style={styles.captureFooter}>
-                {isPaused ? (
-                  <View style={styles.voiceControlCluster}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        void clearRecording();
-                      }}
-                      activeOpacity={0.85}
-                      style={styles.voiceTrashButton}
-                    >
-                      <Text style={styles.voiceTrashIcon}>🗑</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        void resumeRecording();
-                      }}
-                      activeOpacity={0.85}
-                      style={[
-                        styles.voiceSecondaryButton,
-                        isPreparing && styles.buttonDisabled,
-                      ]}
-                      disabled={isPreparing}
-                    >
-                      <Text style={styles.voiceSecondaryButtonText}>Resume</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (isRecording) {
-                        void pauseRecording();
-                        return;
-                      }
-                      void startRecording();
-                    }}
-                    activeOpacity={0.85}
-                    style={[
-                      styles.voiceSecondaryButton,
-                      isPreparing && styles.buttonDisabled,
-                    ]}
-                    disabled={isPreparing}
-                  >
-                    <Text style={styles.voiceSecondaryButtonText}>
-                      {showVoiceStatus ? 'Pause' : 'Record'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {showVoiceStatus ? (
-                  <View style={styles.voiceInlineStatus}>
-                    <Text style={styles.voiceStatus}>{formatDuration(recordingSeconds)}</Text>
-                    {isRecording ? (
-                      <View style={styles.voiceMeter}>
-                        {[0.2, 0.4, 0.6, 0.8].map((threshold, index) => (
-                          <View
-                            key={threshold}
-                            style={[
-                              styles.voiceMeterBar,
-                              meterLevel >= threshold && styles.voiceMeterBarActive,
-                              meterLevel >= threshold && {
-                                height: 8 + index * 2 + meterLevel * 4,
-                              },
-                            ]}
-                          />
-                        ))}
-                      </View>
-                    ) : null}
-                  </View>
-                ) : (
-                  <View style={styles.captureFooterSpacer} />
-                )}
-                {voiceSessionActive ? (
-                  <TouchableOpacity
-                    onPress={() => {
-                      void handleSendVoiceSeed();
-                    }}
-                    activeOpacity={0.85}
-                    style={[
-                      styles.sendButton,
-                      createVoiceSeed.isPending && styles.buttonDisabled,
-                    ]}
-                    disabled={createVoiceSeed.isPending}
-                  >
-                    {createVoiceSeed.isPending ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.sendButtonText}>➤ Voice</Text>
-                    )}
-                  </TouchableOpacity>
-                ) : (
+              <VoiceCaptureBar
+                onComplete={handleVoiceComplete}
+                trailingIdleContent={
                   <Pressable
                     style={[
                       styles.sendButton,
-                      (!captureText.trim() || createSeed.isPending || isRecording) && styles.buttonDisabled,
+                      (!captureText.trim() || createSeed.isPending) && styles.buttonDisabled,
                     ]}
                     focusable={false}
                     onPressIn={() => {
@@ -687,7 +569,7 @@ export function SeedNotebook({
                       captureInputRef.current?.focus();
                     }}
                     onPress={handleCapture}
-                    disabled={!captureText.trim() || createSeed.isPending || isRecording}
+                    disabled={!captureText.trim() || createSeed.isPending}
                   >
                     {createSeed.isPending ? (
                       <ActivityIndicator color="#FFFFFF" />
@@ -695,23 +577,8 @@ export function SeedNotebook({
                       <Text style={styles.sendButtonText}>➤</Text>
                     )}
                   </Pressable>
-                )}
-              </View>
-              {micError ? (
-                <View style={styles.voiceErrorRow}>
-                  <Text style={styles.voiceError}>{micError}</Text>
-                  {canOpenSettings ? (
-                    <TouchableOpacity
-                      onPress={() => {
-                        void Linking.openSettings();
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.voiceSettingsLink}>Open settings</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-              ) : null}
+                }
+              />
               <Text style={styles.draftStatus}>
                 {draftStatus === 'saving'
                   ? 'Saving draft...'
@@ -855,85 +722,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
     minHeight: 42,
   },
-  voiceControlCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  captureFooterSpacer: {
-    flex: 1,
-  },
-  voiceInlineStatus: {
-    flex: 1,
-    minHeight: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
   draftStatus: {
     minHeight: 12,
     fontSize: 12,
     color: '#6A7785',
     marginTop: -2,
-  },
-  voiceStatus: {
-    fontSize: 12,
-    color: '#34516B',
-    fontWeight: '600',
-  },
-  voiceMeter: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 3,
-    height: 18,
-    paddingTop: 0,
-  },
-  voiceMeterBar: {
-    width: 5,
-    height: 8,
-    borderRadius: 3,
-    backgroundColor: '#B7C7D6',
-    maxHeight: 18,
-  },
-  voiceMeterBarActive: {
-    backgroundColor: '#0E5AA7',
-  },
-  voiceSecondaryButton: {
-    minWidth: 116,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#F1F6FB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  voiceTrashButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#F1F6FB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voiceTrashIcon: {
-    fontSize: 16,
-  },
-  voiceSecondaryButtonText: {
-    color: '#244867',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  voiceError: {
-    fontSize: 12,
-    color: '#8F3341',
-  },
-  voiceErrorRow: {
-    gap: 4,
-  },
-  voiceSettingsLink: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0E5AA7',
   },
   sendButton: {
     minWidth: 108,
