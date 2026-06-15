@@ -299,7 +299,7 @@ interface MemberDetailProps {
   profileSaving: string | null;
 }
 
-function MemberDetail({ member, permissions, profiles, groupSlug, onToggle, onProfileChange, profileSaving }: MemberDetailProps) {
+function MemberDetail({ member, permissions, profiles, onToggle, onProfileChange, profileSaving }: MemberDetailProps) {
   const role = getPrimaryRole(member.roles);
   const isAdmin = role === "admin";
   const name = getMemberDisplayName(member);
