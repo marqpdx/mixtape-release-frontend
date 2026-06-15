@@ -776,18 +776,18 @@ function FileRow({ item, onPreview, onUnlink, canReorder = false }: FileRowProps
       )}
 
       <HStack gap={3} minW={0}>
-        <FileTypeIcon info={typeInfo} size={20} />
-        <Text fontSize="13px" color="theme.text" lineClamp={1}>{name}</Text>
+        <FileTypeIcon info={typeInfo} size={22} />
+        <Text fontSize="14px" color="theme.textSecondary" lineClamp={1}>{name}</Text>
       </HStack>
 
       <FileTypePill info={typeInfo} />
 
-      <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{size}</Text>
+      <Text fontFamily="mono" fontSize="12px" color="theme.textMuted">{size}</Text>
 
       <HStack
         gap={1}
         justify="flex-end"
-        visibility="hidden"
+        visibility={canReorder ? 'visible' : 'hidden'}
         _groupHover={{ visibility: 'visible' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -795,7 +795,7 @@ function FileRow({ item, onPreview, onUnlink, canReorder = false }: FileRowProps
           aria-label="Preview"
           size="xs"
           variant="ghost"
-          color="theme.textSecondary"
+          color="theme.textFaint"
           _hover={{ color: 'theme.accent' }}
           onClick={(e) => { e.stopPropagation(); onPreview(); }}
         >
@@ -806,7 +806,7 @@ function FileRow({ item, onPreview, onUnlink, canReorder = false }: FileRowProps
             aria-label="Remove from collection"
             size="xs"
             variant="ghost"
-            color="theme.textSecondary"
+            color="theme.textMuted"
             _hover={{ color: 'red.500' }}
             onClick={(e) => { e.stopPropagation(); onUnlink(); }}
           >
@@ -848,13 +848,13 @@ function FileCard({ item, onPreview, onUnlink }: FileCardProps) {
       cursor="pointer"
       onClick={onPreview}
     >
-      <FileTypeIcon info={typeInfo} size={26} />
+      <FileTypeIcon info={typeInfo} size={28} />
       <Box flex={1} minW={0}>
-        <Text fontSize="13px" fontWeight="500" color="theme.text" lineClamp={1} mb={1}>{name}</Text>
+        <Text fontSize="14px" fontWeight="500" color="theme.textSecondary" lineClamp={1} mb={1}>{name}</Text>
         <HStack gap={2}>
           <FileTypePill info={typeInfo} />
           {size && (
-            <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{size}</Text>
+            <Text fontFamily="mono" fontSize="12px" color="theme.textMuted">{size}</Text>
           )}
         </HStack>
       </Box>

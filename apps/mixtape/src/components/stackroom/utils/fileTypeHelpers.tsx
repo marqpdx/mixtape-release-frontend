@@ -4,12 +4,12 @@ import {
   IconFile,
   IconFileTypePdf,
   IconFileTypeDoc,
-  IconFileTypeCsv,
+  IconTable,
   IconPhoto,
-  IconMusic,
-  IconVideo,
-  IconFileCode,
-  IconFileZip,
+  IconHeadphones,
+  IconMovie,
+  IconCode,
+  IconPackage,
   IconFileText,
 } from '@tabler/icons-react';
 
@@ -55,7 +55,7 @@ export function getFileTypeInfo(filename: string, contentType?: string): FileTyp
     contentType?.includes('csv')
   ) {
     return {
-      icon: IconFileTypeCsv,
+      icon: IconTable,
       colorScheme: 'green',
       label: 'Spreadsheet',
     };
@@ -79,7 +79,7 @@ export function getFileTypeInfo(filename: string, contentType?: string): FileTyp
     contentType?.startsWith('audio/')
   ) {
     return {
-      icon: IconMusic,
+      icon: IconHeadphones,
       colorScheme: 'pink',
       label: 'Audio',
     };
@@ -91,7 +91,7 @@ export function getFileTypeInfo(filename: string, contentType?: string): FileTyp
     contentType?.startsWith('video/')
   ) {
     return {
-      icon: IconVideo,
+      icon: IconMovie,
       colorScheme: 'orange',
       label: 'Video',
     };
@@ -102,7 +102,7 @@ export function getFileTypeInfo(filename: string, contentType?: string): FileTyp
     ['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'c', 'cpp', 'go', 'rs', 'rb', 'php', 'swift'].includes(extension)
   ) {
     return {
-      icon: IconFileCode,
+      icon: IconCode,
       colorScheme: 'cyan',
       label: 'Code',
     };
@@ -111,7 +111,7 @@ export function getFileTypeInfo(filename: string, contentType?: string): FileTyp
   // Archives
   if (['zip', 'tar', 'gz', 'rar', '7z', 'bz2'].includes(extension)) {
     return {
-      icon: IconFileZip,
+      icon: IconPackage,
       colorScheme: 'yellow',
       label: 'Archive',
     };
