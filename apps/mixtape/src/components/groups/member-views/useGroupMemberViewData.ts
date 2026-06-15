@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useCollections } from "@mixtape/api/hooks/stackroom/useCollections";
 import { useGroupOverviewLayout, useGroupWelcomePin, useMembers } from "@mixtape/api/hooks";
 import { useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
-import { useStall } from "@mixtape/api/hooks/useBazaar";
 import type { GroupWelcomePin } from "@mixtape/api/clients/group/groupApi";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import {
@@ -113,7 +112,6 @@ export function useGroupMemberViewData(group: Group): GroupMemberViewData {
     sponsor_id: group.id,
   });
   const { circles, isLoading: circlesLoading } = useGroupCircles(group.slug);
-  const { stall, isLoading: stallLoading } = useStall("group", group.id);
   const { pin: welcomePin, isLoading: welcomeLoading } = useGroupWelcomePin(group.slug);
   const { layout, isLoading: layoutLoading } = useGroupOverviewLayout(group.slug);
 
@@ -193,9 +191,9 @@ export function useGroupMemberViewData(group: Group): GroupMemberViewData {
       isLoading: circlesLoading,
     },
     bazaar: {
-      stall,
-      offeringsCount: stall?.offerings_count ?? 0,
-      isLoading: stallLoading,
+      stall: null,
+      offeringsCount: 0,
+      isLoading: false,
     },
     overview: {
       welcomePin,

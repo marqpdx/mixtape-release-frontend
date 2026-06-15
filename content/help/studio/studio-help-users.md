@@ -4,8 +4,6 @@ subsystem: studio
 area: overview
 excerpt: Studio is the focused workspace for a group or circle, where members move from broad community context into the more intimate surface for that specific space.
 routes:
-  - /atrium
-  - /atrium/*
   - /studio
   - /studio/*
   - /studio/*/*

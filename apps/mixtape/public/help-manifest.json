@@ -879,6 +879,57 @@
         "review"
       ]
     },
+    "gather-overview": {
+      "key": "gather-overview",
+      "slug": "gather",
+      "feature": "gather",
+      "title": "Gather",
+      "subsystem": "gather",
+      "area": "overview",
+      "summary": "Gather rooms are live session spaces where invited members can join a real-time conversation.",
+      "excerpt": "Gather rooms are live session spaces where invited members can join a real-time conversation.",
+      "plainText": "Gather Gather rooms are live session spaces inside Mixtape. When a group, initiative, or event opens a live room, the gather page connects you to that session so you can participate in real time. --- What you can do here - Join a live room from a session link - Talk with other participants in real time - Use the room controls to manage your microphone, camera, and audio - Leave the room when the session is finished --- Key concepts Gather room — A live conversation space connected to a specific session. Session link — The route that opens the room. If you have access, Mixtape uses it to request a room token and connect you. Room controls — The buttons inside the live room for microphone, camera, audio, and leaving the session. --- How to join a gather room 1. Open the gather link from the session, event, or invitation. 2. Wait while Mixtape connects to the live room. 3. Use the room controls to turn your microphone or camera on or off. 4. Leave the room when you are done. --- Current limitations - Access depends on the session: If the session is unavailable or you do not have permission to join, Mixtape shows an unable-to-join message. - Room context is minimal: The current room page focuses on joining the live conversation and may not show the full event, group, or initiative context yet. --- Related features - Almanac — Events and gatherings may point members into live rooms. - Initiatives — Working sessions may use live rooms for real-time discussion. - Chat — Messaging remains the place for ongoing text and voice-message conversations outside the live room.",
+      "html": "<h1 id=\"gather\">Gather</h1>\n<p>Gather rooms are live session spaces inside Mixtape. When a group, initiative, or event opens a live room, the gather page connects you to that session so you can participate in real time.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Join a live room from a session link</li>\n<li>Talk with other participants in real time</li>\n<li>Use the room controls to manage your microphone, camera, and audio</li>\n<li>Leave the room when the session is finished</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Gather room</strong> — A live conversation space connected to a specific session.</p>\n<p><strong>Session link</strong> — The route that opens the room. If you have access, Mixtape uses it to request a room token and connect you.</p>\n<p><strong>Room controls</strong> — The buttons inside the live room for microphone, camera, audio, and leaving the session.</p>\n<hr>\n<h2 id=\"how-to-join-a-gather-room\">How to join a gather room</h2>\n<ol>\n<li>Open the gather link from the session, event, or invitation.</li>\n<li>Wait while Mixtape connects to the live room.</li>\n<li>Use the room controls to turn your microphone or camera on or off.</li>\n<li>Leave the room when you are done.</li>\n</ol>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Access depends on the session:</strong> If the session is unavailable or you do not have permission to join, Mixtape shows an unable-to-join message.</li>\n<li><strong>Room context is minimal:</strong> The current room page focuses on joining the live conversation and may not show the full event, group, or initiative context yet.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Almanac</strong> — Events and gatherings may point members into live rooms.</li>\n<li><strong>Initiatives</strong> — Working sessions may use live rooms for real-time discussion.</li>\n<li><strong>Chat</strong> — Messaging remains the place for ongoing text and voice-message conversations outside the live room.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to join a gather room",
+          "id": "how-to-join-a-gather-room"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/bridge/*",
+        "/gather/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "gather",
+        "live session",
+        "voice",
+        "video"
+      ]
+    },
     "groups-overview": {
       "key": "groups-overview",
       "slug": "groups",
@@ -1057,11 +1108,7 @@
         }
       ],
       "metadata": {},
-      "routes": [
-        "/radar/my",
-        "/radar/my/archive",
-        "/radar/*"
-      ],
+      "routes": [],
       "workAreas": [
         "InitiativesWorkArea"
       ],
@@ -1465,6 +1512,63 @@
         "canon"
       ]
     },
+    "radar-overview": {
+      "key": "radar-overview",
+      "slug": "radar",
+      "feature": "radar",
+      "title": "Radar",
+      "subsystem": "radar",
+      "area": "overview",
+      "summary": "Radar helps you keep personal initiatives visible, oriented, and ready to resume.",
+      "excerpt": "Radar helps you keep personal initiatives visible, oriented, and ready to resume.",
+      "plainText": "Radar Radar is a personal initiative workspace. It helps you see what is active, remember where you left off, and resume work without rebuilding context from scratch. Atrium is the entry point for this surface. It shows your current orientation, recent initiative activity, and quick ways to start or resume work. --- What you can do here - Review active initiatives from Atrium or your Radar list - Start a new initiative with a name and direction - Open an initiative workspace and update its north star or last-session note - Attach supporting artifacts, such as document links or imported conversations - Pause, activate, archive, or restore initiatives as their status changes --- Key concepts Atrium — The orientation hub that helps you re-enter your current work. Initiative — A focused piece of work you want to keep visible over time. North Star — A short statement of why the initiative matters and where it is headed. Last Session — A note about where you left off, so the next return starts with context. Archive — A place for initiatives that are complete or no longer active. Archived initiatives can be restored. --- How to start an initiative 1. Open Atrium or go to your Radar list. 2. Choose the option to start a new initiative. 3. Enter a name and, if helpful, a one-sentence direction. 4. Open the initiative workspace to add notes, artifacts, and next context. --- How to resume work 1. Open Atrium. 2. Review the resume and orientation cards. 3. Choose the initiative you want to continue. 4. Read the north star and last-session note before adding new work. --- Current limitations - Radar is still a focused workspace: It tracks orientation, notes, status, and artifacts, but it is not a full project management system. - Some context is manual: North star and last-session notes are most useful when you keep them current. --- Related features - Initiatives — Group initiatives support structured collaborative work. - Gather — Live sessions can support real-time discussion around active work. - Workbench — Operational tasks and reminders live outside Radar when they need workflow tracking.",
+      "html": "<h1 id=\"radar\">Radar</h1>\n<p>Radar is a personal initiative workspace. It helps you see what is active, remember where you left off, and resume work without rebuilding context from scratch.</p>\n<p>Atrium is the entry point for this surface. It shows your current orientation, recent initiative activity, and quick ways to start or resume work.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Review active initiatives from Atrium or your Radar list</li>\n<li>Start a new initiative with a name and direction</li>\n<li>Open an initiative workspace and update its north star or last-session note</li>\n<li>Attach supporting artifacts, such as document links or imported conversations</li>\n<li>Pause, activate, archive, or restore initiatives as their status changes</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Atrium</strong> — The orientation hub that helps you re-enter your current work.</p>\n<p><strong>Initiative</strong> — A focused piece of work you want to keep visible over time.</p>\n<p><strong>North Star</strong> — A short statement of why the initiative matters and where it is headed.</p>\n<p><strong>Last Session</strong> — A note about where you left off, so the next return starts with context.</p>\n<p><strong>Archive</strong> — A place for initiatives that are complete or no longer active. Archived initiatives can be restored.</p>\n<hr>\n<h2 id=\"how-to-start-an-initiative\">How to start an initiative</h2>\n<ol>\n<li>Open Atrium or go to your Radar list.</li>\n<li>Choose the option to start a new initiative.</li>\n<li>Enter a name and, if helpful, a one-sentence direction.</li>\n<li>Open the initiative workspace to add notes, artifacts, and next context.</li>\n</ol>\n<hr>\n<h2 id=\"how-to-resume-work\">How to resume work</h2>\n<ol>\n<li>Open Atrium.</li>\n<li>Review the resume and orientation cards.</li>\n<li>Choose the initiative you want to continue.</li>\n<li>Read the north star and last-session note before adding new work.</li>\n</ol>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li><strong>Radar is still a focused workspace:</strong> It tracks orientation, notes, status, and artifacts, but it is not a full project management system.</li>\n<li><strong>Some context is manual:</strong> North star and last-session notes are most useful when you keep them current.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Initiatives</strong> — Group initiatives support structured collaborative work.</li>\n<li><strong>Gather</strong> — Live sessions can support real-time discussion around active work.</li>\n<li><strong>Workbench</strong> — Operational tasks and reminders live outside Radar when they need workflow tracking.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to start an initiative",
+          "id": "how-to-start-an-initiative"
+        },
+        {
+          "depth": 2,
+          "text": "How to resume work",
+          "id": "how-to-resume-work"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/atrium",
+        "/radar/*",
+        "/radar/my/archive"
+      ],
+      "workAreas": [],
+      "tags": [
+        "radar",
+        "atrium",
+        "initiatives",
+        "orientation"
+      ]
+    },
     "stackroom-overview": {
       "key": "stackroom-overview",
       "slug": "stackroom",
@@ -1558,8 +1662,6 @@
       ],
       "metadata": {},
       "routes": [
-        "/atrium",
-        "/atrium/*",
         "/studio",
         "/studio/*",
         "/studio/*/*"
@@ -1818,6 +1920,9 @@
     "feedback": [
       "feedback-overview"
     ],
+    "gather": [
+      "gather-overview"
+    ],
     "groups": [
       "groups-overview"
     ],
@@ -1846,6 +1951,9 @@
     "puddlejump": [
       "puddlejump-overview"
     ],
+    "radar": [
+      "radar-overview"
+    ],
     "stackroom": [
       "stackroom-overview"
     ],
@@ -1859,5 +1967,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-06-12T00:17:59.919Z"
+  "generatedAt": "2026-06-15T17:02:53.981Z"
 }

@@ -53,7 +53,12 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     const loadManifest = async () => {
-      const urls = ["/help-manifest.json", "/api/help/manifest"];
+      const urls = [
+        "/app/help-manifest.json",
+        "/app/api/help/manifest",
+        "/help-manifest.json",
+        "/api/help/manifest",
+      ];
 
       for (const url of urls) {
         try {

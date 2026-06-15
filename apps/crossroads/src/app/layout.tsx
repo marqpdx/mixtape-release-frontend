@@ -2,6 +2,7 @@
 
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
+import { Analytics } from "@/components/analytics/Analytics";
 import {
   Pacifico,
   Allura,
@@ -105,6 +106,7 @@ export default function RootLayout({
     >
       <body style={{ overflowX: 'hidden' }}>
         <Providers>
+          <Analytics />
           {children}
         </Providers>
       </body>

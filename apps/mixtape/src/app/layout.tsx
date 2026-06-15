@@ -1,6 +1,7 @@
 import { Providers } from '@/components/providers';
 import { SkipLinks } from '@/components/accessibility';
 import { ProfileDrawer } from '@/features/profile-revamp/components/ProfileDrawer';
+import { Analytics } from '@/components/analytics';
 import {
   Inter, DM_Serif_Display, Source_Serif_4,
   Instrument_Serif, Instrument_Sans,
@@ -105,6 +106,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${dmSerif.variable} ${sourceSerif.variable} ${instrumentSerif.variable} ${instrumentSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${caprasimo.variable} ${newsreader.variable} ${hankenGrotesk.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Providers>
+          <Analytics />
           <SkipLinks />
           {children}
           <ProfileDrawer />

@@ -19,6 +19,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import Script from 'next/script';
 
 // ============================================================================
 // Types
@@ -36,9 +37,12 @@ declare global {
 // Configuration
 // ============================================================================
 
-const UMAMI_HOST = process.env.NEXT_PUBLIC_UMAMI_HOST || '';
+const UMAMI_SRC =
+  process.env.NEXT_PUBLIC_UMAMI_SRC ||
+  (process.env.NEXT_PUBLIC_UMAMI_HOST
+    ? `${process.env.NEXT_PUBLIC_UMAMI_HOST.replace(/\/$/, '')}/script.js`
+    : '');
 const UMAMI_WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '';
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // ============================================================================
 // Analytics Component
@@ -55,36 +59,24 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 export function Analytics() {
   const pathname = usePathname();
 
-  // Load Umami script on mount (production only)
-  useEffect(() => {
-    if (!IS_PRODUCTION || !UMAMI_HOST || !UMAMI_WEBSITE_ID) {
-      return;
-    }
-
-    // Check if script already exists
-    if (document.querySelector(`script[data-website-id="${UMAMI_WEBSITE_ID}"]`)) {
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.defer = true;
-    script.src = `${UMAMI_HOST}/script.js`;
-    script.dataset.websiteId = UMAMI_WEBSITE_ID;
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup on unmount (rarely needed)
-      script.remove();
-    };
-  }, []);
-
   // Track page views on route change
   useEffect(() => {
     // Umami auto-tracks page views, but this ensures SPA navigation is captured
     // The script handles this automatically, so this is optional
   }, [pathname]);
 
-  return null;
+  if (!UMAMI_SRC || !UMAMI_WEBSITE_ID) {
+    return null;
+  }
+
+  return (
+    <Script
+      id="umami-analytics"
+      src={UMAMI_SRC}
+      strategy="afterInteractive"
+      data-website-id={UMAMI_WEBSITE_ID}
+    />
+  );
 }
 
 // ============================================================================
