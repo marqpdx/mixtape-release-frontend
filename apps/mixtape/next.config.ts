@@ -31,6 +31,7 @@ const envConnectOrigins = [
   toOrigin(process.env.NEXT_PUBLIC_ROOT_API_URL),
   toOrigin(process.env.NEXT_PUBLIC_LIVEWIRE_URL),
   toWsOrigin(process.env.NEXT_PUBLIC_LIVEWIRE_URL),
+  toWsOrigin(process.env.NEXT_PUBLIC_LIVEKIT_URL),
 ].filter((value): value is string => Boolean(value));
 
 // Build connect-src from stable defaults plus env-configured service origins.
@@ -50,6 +51,8 @@ const connectSrc = Array.from(
           "ws://127.0.0.1:5001",
           "http://localhost:8011",
           "http://127.0.0.1:8011",
+          "ws://localhost:7880",
+          "ws://127.0.0.1:7880",
         ]
       : []),
     ...envConnectOrigins,
@@ -99,7 +102,7 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Modern syntax (OK as provided)
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
   // HSTS (safe even on Vercel; only effective over HTTPS)
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   // Legacy; harmless

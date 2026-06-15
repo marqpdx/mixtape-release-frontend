@@ -20,7 +20,7 @@ export function BridgeRoom({ token, livekitUrl }: BridgeRoomProps) {
       audio={true}
       connectOptions={{ autoSubscribe: true }}
     >
-      <Flex className="bridge-room" direction="column" h="100dvh" bg="gray.900">
+      <Flex className="bridge-room" direction="column" h="100dvh">
         <BridgeParticipantGrid />
         <BridgeControls />
       </Flex>

@@ -5,7 +5,7 @@ import { Box, Text, Spinner } from "@chakra-ui/react";
 import { BridgeRoom } from "@/components/bridge/BridgeRoom";
 import { useBridgeRoomToken } from "@/components/bridge/useBridgeRoomToken";
 
-export default function GatherPage() {
+export default function BridgePage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { token, livekitUrl, isLoading, error } = useBridgeRoomToken(sessionId);
 
