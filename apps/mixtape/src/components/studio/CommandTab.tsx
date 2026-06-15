@@ -1,10 +1,12 @@
 "use client";
 
-import { Box, HStack, Skeleton, Text, VStack } from "@chakra-ui/react";
+import { useState } from "react";
+import { Box, Button, HStack, Skeleton, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useGroupCommand } from "@mixtape/api/hooks/studio";
-import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
+import { useGroupCommand, } from "@mixtape/api/hooks/studio";
+import { useGroup, useGroupCircles } from "@mixtape/api/hooks/groups/useGroups";
 import { CircleSettingsPanel } from "@/components/groups/circles/CircleSettingsPanel";
+import GroupCreateCircle from "@/components/groups/create/GroupCreateCircle";
 import type { CommandMetrics, ActiveOp } from "@mixtape/api/clients/studio/studioApi";
 
 // ---------------------------------------------------------------------------
@@ -103,6 +105,64 @@ function OpRow({ op }: { op: ActiveOp }) {
 }
 
 // ---------------------------------------------------------------------------
+// Circles section (community groups only)
+// ---------------------------------------------------------------------------
+
+function CirclesSection({ groupSlug }: { groupSlug: string }) {
+  const [creating, setCreating] = useState(false);
+  const { circles, isLoading } = useGroupCircles(groupSlug);
+  const cardBg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
+
+  return (
+    <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={5}>
+      <HStack justify="space-between" mb={4}>
+        <Text fontWeight="semibold">Circles</Text>
+        {!creating && (
+          <Button size="xs" onClick={() => setCreating(true)}>
+            Create Circle
+          </Button>
+        )}
+      </HStack>
+
+      {creating ? (
+        <VStack align="stretch" gap={3}>
+          <Button size="xs" variant="ghost" alignSelf="flex-start" onClick={() => setCreating(false)}>
+            ← Back
+          </Button>
+          <GroupCreateCircle
+            sponsorGroupSlug={groupSlug}
+            onCreated={() => setCreating(false)}
+          />
+        </VStack>
+      ) : isLoading ? (
+        <VStack gap={2} align="stretch">
+          {[1, 2].map((i) => <Skeleton key={i} height="36px" borderRadius="md" />)}
+        </VStack>
+      ) : circles.length === 0 ? (
+        <Text fontSize="sm" color="gray.400">No circles yet.</Text>
+      ) : (
+        <VStack gap={0} align="stretch">
+          {circles.map((c) => (
+            <HStack
+              key={c.id}
+              py={2.5}
+              borderBottom="1px solid"
+              borderColor={borderColor}
+              _last={{ border: "none" }}
+              justify="space-between"
+            >
+              <Text fontSize="sm" fontWeight="medium">{c.title}</Text>
+              <Text fontSize="xs" color="gray.400">{c.visibility}</Text>
+            </HStack>
+          ))}
+        </VStack>
+      )}
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // CommandTab
 // ---------------------------------------------------------------------------
 
@@ -162,6 +222,9 @@ export function CommandTab({ groupSlug }: CommandTabProps) {
       </Box>
 
       {isCircle && group && <CircleSettingsPanel group={group} />}
+      {!isCircle && group?.group_type === "community" && (
+        <CirclesSection groupSlug={groupSlug} />
+      )}
     </VStack>
   );
 }
