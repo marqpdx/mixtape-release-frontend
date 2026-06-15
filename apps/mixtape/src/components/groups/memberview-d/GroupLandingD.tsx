@@ -10,7 +10,6 @@ import {
   IconUpload,
   IconMessageCircle,
   IconFolder,
-  IconSearch,
   IconUserCircle,
   IconCalendarEvent,
   IconPin,
