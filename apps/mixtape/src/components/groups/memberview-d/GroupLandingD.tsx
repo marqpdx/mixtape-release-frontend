@@ -83,7 +83,6 @@ const NAV_SECTIONS: NavSectionDef[] = [
     label: "Resources",
     items: [
       { id: "files",    label: "Core Files", icon: IconFolder, rail: false },
-      { id: "findings", label: "Findings",   icon: IconSearch, rail: false },
     ],
   },
 ];
