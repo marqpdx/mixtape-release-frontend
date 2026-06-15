@@ -67,7 +67,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     label: "Welcome",
     items: [
       { id: "start",     label: "Start Here",          icon: IconHome2,         rail: true  },
-      { id: "introduce", label: "Tell About Yourself",  icon: IconUsers,         rail: true  },
+      { id: "introduce", label: "Tell About Yourself",  icon: IconUsers,         rail: false },
     ],
   },
   {

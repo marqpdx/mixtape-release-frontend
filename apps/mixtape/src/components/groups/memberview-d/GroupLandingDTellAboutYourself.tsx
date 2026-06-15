@@ -213,33 +213,52 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
         boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
         p={5}
       >
-        <Text
-          fontSize="11.5px"
-          fontWeight="600"
-          letterSpacing="0.14em"
-          textTransform="uppercase"
-          color="theme.textMuted"
-          mb={4}
-        >
-          Your introduction
-        </Text>
-
-        {user?.username && (
-          <Box
-            display="inline-block"
-            px="10px"
-            py="4px"
-            borderRadius="full"
-            bg="theme.accentSoft"
-            borderWidth="1px"
-            borderColor="theme.border"
-            mb={3}
+        <Flex align="center" justify="space-between" mb={4}>
+          <Text
+            fontSize="11.5px"
+            fontWeight="600"
+            letterSpacing="0.14em"
+            textTransform="uppercase"
+            color="theme.textMuted"
           >
-            <Text fontSize="13px" fontWeight="600" color="theme.accent">
-              @{user.username}
-            </Text>
-          </Box>
-        )}
+            Your introduction
+          </Text>
+          <Flex align="center" gap={2}>
+            {user?.username && (
+              <Box
+                display="inline-block"
+                px="10px"
+                py="4px"
+                borderRadius="full"
+                bg="theme.accentSoft"
+                borderWidth="1px"
+                borderColor="theme.border"
+              >
+                <Text fontSize="13px" fontWeight="600" color="theme.accent">
+                  @{user.username}
+                </Text>
+              </Box>
+            )}
+            <Box
+              as="a"
+              href="/dashboard?section=edit-profile"
+              px="10px"
+              py="4px"
+              borderRadius="full"
+              bg="theme.bgSubtle"
+              borderWidth="1px"
+              borderColor="theme.border"
+              fontSize="12px"
+              fontWeight="600"
+              color="theme.textSecondary"
+              cursor="pointer"
+              _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+              transition="all 0.12s"
+            >
+              Edit Profile
+            </Box>
+          </Flex>
+        </Flex>
 
         <Textarea
           className="tay-intro-textarea"

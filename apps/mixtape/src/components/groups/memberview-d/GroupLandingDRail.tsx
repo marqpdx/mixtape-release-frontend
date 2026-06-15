@@ -88,6 +88,8 @@ function UpcomingEventsRailCard({
     )
     .slice(0, 3);
 
+  if (!isLoading && upcoming.length === 0) return null;
+
   return (
     <RailCard>
       <RailHeader title="Events" count={upcoming.length} />
@@ -95,12 +97,6 @@ function UpcomingEventsRailCard({
         {isLoading && (
           <Flex justify="center" py={4}>
             <Spinner size="sm" color="theme.accent" />
-          </Flex>
-        )}
-        {!isLoading && upcoming.length === 0 && (
-          <Flex align="center" gap={2} px={5} py={4}>
-            <Box color="theme.textMuted"><IconCalendarEvent size={15} /></Box>
-            <Text fontSize="13px" color="theme.textMuted">No upcoming events.</Text>
           </Flex>
         )}
         {!isLoading && upcoming.map((event) => (
