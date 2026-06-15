@@ -8,6 +8,9 @@ import {
   GroupCreateFormData,
   GroupUpdateFormData,
   GroupOverviewLayout,
+  CircleDeliverableIntent,
+  DeliverableType,
+  DeliverableStatus,
 } from '@mixtape/core/types/groupTypes';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from '../../lib/utils';
@@ -347,6 +350,68 @@ export async function fetchGroupCircles(
 }
 
 // ============================================================================
+// CIRCLE DECORATOR API (CR-E)
+// ============================================================================
+
+export interface ApplyDecoratorResponse {
+  applied: string;
+  deliverable_intent: CircleDeliverableIntent | null;
+}
+
+export async function applyCircleDecorator(
+  circleSlug: string,
+  decoratorCode: string,
+  deliverableType: DeliverableType
+): Promise<ApplyDecoratorResponse> {
+  const response = await axiosInstance.post<ApplyDecoratorResponse>(
+    `/api/groups/${circleSlug}/apply-decorator`,
+    { decorator_code: decoratorCode, deliverable_type: deliverableType }
+  );
+  return response.data;
+}
+
+export async function applyCircleProfile(
+  circleSlug: string,
+  profileCode: string,
+  deliverableType: DeliverableType
+): Promise<ApplyDecoratorResponse> {
+  const response = await axiosInstance.post<ApplyDecoratorResponse>(
+    `/api/groups/${circleSlug}/apply-decorator`,
+    { profile_code: profileCode, deliverable_type: deliverableType }
+  );
+  return response.data;
+}
+
+export async function removeCircleDecorator(
+  circleSlug: string,
+  decoratorCode: string
+): Promise<void> {
+  await axiosInstance.delete(`/api/groups/${circleSlug}/decorators/${decoratorCode}`);
+}
+
+export async function fetchCircleDeliverableIntent(
+  circleSlug: string
+): Promise<CircleDeliverableIntent | null> {
+  const response = await axiosInstance.get(
+    `/api/groups/${circleSlug}/deliverable-intent`,
+    { validateStatus: (s) => s === 204 || (s >= 200 && s < 300) }
+  );
+  if (response.status === 204 || !response.data) return null;
+  return response.data as CircleDeliverableIntent;
+}
+
+export async function updateCircleDeliverableIntent(
+  circleSlug: string,
+  updates: { deliverable_type?: DeliverableType; deliverable_status?: DeliverableStatus }
+): Promise<CircleDeliverableIntent> {
+  const response = await axiosInstance.patch<CircleDeliverableIntent>(
+    `/api/groups/${circleSlug}/deliverable-intent`,
+    updates
+  );
+  return response.data;
+}
+
+// ============================================================================
 // EXPORT API OBJECT (alternative pattern)
 // ============================================================================
 
@@ -416,6 +481,13 @@ export const groupApi = {
   // Circles
   fetchGroupCircles,
   fetchGroupCircleDetail,
+
+  // Circle decorators (CR-E)
+  applyCircleDecorator,
+  applyCircleProfile,
+  removeCircleDecorator,
+  fetchCircleDeliverableIntent,
+  updateCircleDeliverableIntent,
 
   // Invitations
   inviteToGroup,

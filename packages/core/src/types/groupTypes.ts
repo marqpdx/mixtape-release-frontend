@@ -82,7 +82,18 @@ export interface Group {
   // Circle-specific — controls whether this circle is discoverable by parent group members.
   visible_to_parent?: boolean;
 
+  // Non-null when hasDeliverableIntent decorator is applied (CR-E)
+  deliverable_intent?: CircleDeliverableIntent | null;
+
   emblem?: EmblemInline | null;
+}
+
+export type DeliverableType = 'puddlejump_doc' | 'dispatch' | 'finding';
+export type DeliverableStatus = 'working' | 'complete' | 'tabled';
+
+export interface CircleDeliverableIntent {
+  deliverable_type: DeliverableType;
+  deliverable_status: DeliverableStatus;
 }
 
 /** GROUP MEMBERSHIP - Flattened polymorphic membership */
