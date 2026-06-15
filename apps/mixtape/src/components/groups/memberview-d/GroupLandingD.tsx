@@ -14,6 +14,7 @@ import {
   IconCalendarEvent,
   IconPin,
   IconSwitchHorizontal,
+  IconMinus,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Group } from "@mixtape/core/types/groupTypes";
@@ -62,29 +63,31 @@ interface NavSectionDef {
 
 // ── nav config ─────────────────────────────────────────────────────────────
 
-const NAV_SECTIONS: NavSectionDef[] = [
-  {
-    label: "Welcome",
-    items: [
-      { id: "start",     label: "Start Here",          icon: IconHome2,         rail: true  },
-      { id: "introduce", label: "Tell About Yourself",  icon: IconUsers,         rail: false },
-    ],
-  },
-  {
-    label: "Connect",
-    items: [
-      { id: "share",    label: "Share",    icon: IconUpload,        rail: false },
-      { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
-      { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
-    ],
-  },
-  {
-    label: "Resources",
-    items: [
-      { id: "files",    label: "Core Files", icon: IconFolder, rail: false },
-    ],
-  },
-];
+function buildNavSections(hasIntro: boolean): NavSectionDef[] {
+  return [
+    {
+      label: "Welcome",
+      items: [
+        { id: "start",     label: "Start Here",                                        icon: IconHome2,  rail: true  },
+        { id: "introduce", label: hasIntro ? "About Each Other" : "Tell About Yourself", icon: IconUsers, rail: false },
+      ],
+    },
+    {
+      label: "Connect",
+      items: [
+        { id: "share",    label: "Share",    icon: IconUpload,        rail: false },
+        { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
+        { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
+      ],
+    },
+    {
+      label: "Resources",
+      items: [
+        { id: "files",    label: "Core Files", icon: IconFolder, rail: false },
+      ],
+    },
+  ];
+}
 
 const CONNECT_META: Record<string, { title: string; filterLabel: string; actionLabel: string }> = {
   share:    { title: "Share Your Wins",  filterLabel: "Latest", actionLabel: "+ New Post"   },
@@ -148,17 +151,19 @@ function NavItem({
 }
 
 function LeftNav({
+  sections,
   active,
   onSelect,
   pinnedItems,
 }: {
+  sections: NavSectionDef[];
   active: DestinationId;
   onSelect: (id: DestinationId) => void;
   pinnedItems: NavItemDef[];
 }) {
   return (
     <Box className="gld-nav" display="flex" flexDirection="column" gap="22px">
-      {NAV_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <Box key={section.label}>
           <Text
             px="12px"
@@ -402,6 +407,10 @@ export function GroupLandingD({
   const viewData = useGroupMemberViewData(group);
   const [active, setActive] = useState<DestinationId>("start");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [isIntroCollapsed, setIsIntroCollapsed] = useState(false);
+
+  const hasIntro = !!user?.profile?.quick_intro;
+  const navSections = useMemo(() => buildNavSections(hasIntro), [hasIntro]);
 
   const forumsQuery = useQuery({
     queryKey: ["threadworks", "forums", group.slug],
@@ -434,7 +443,7 @@ export function GroupLandingD({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const activeItem = NAV_SECTIONS.flatMap((s) => s.items).find((i) => i.id === active);
+  const activeItem = navSections.flatMap((s) => s.items).find((i) => i.id === active);
   const showRail = activeItem?.rail ?? false;
 
   const isPinnedDiscussion = active.startsWith("discussion:");
@@ -558,6 +567,33 @@ export function GroupLandingD({
             <QuickAnnouncementCreate groupSlug={group.slug} />
           )}
         </Flex>
+        {/* Your Intro restore pill — appears when intro card is collapsed */}
+        {active === "introduce" && isIntroCollapsed && (
+          <Flex justify="flex-end" pb={2} pt={1}>
+            <Box
+              as="button"
+              display="inline-flex"
+              alignItems="center"
+              gap="6px"
+              px="12px"
+              py="5px"
+              borderRadius="full"
+              bg="theme.accentSoft"
+              borderWidth="1px"
+              borderColor="theme.accent"
+              fontSize="12.5px"
+              fontWeight="600"
+              color="theme.accent"
+              cursor="pointer"
+              _hover={{ bg: "theme.accent", color: "white" }}
+              transition="all 0.15s"
+              onClick={() => setIsIntroCollapsed(false)}
+            >
+              <IconMinus size={12} />
+              Your Intro
+            </Box>
+          </Flex>
+        )}
       </Box>
 
       {/* 3-column body */}
@@ -586,7 +622,7 @@ export function GroupLandingD({
               position={{ base: "static", md: "sticky" }}
               top={{ md: "68px" }}
             >
-              <LeftNav active={active} onSelect={handleSelect} pinnedItems={pinnedNavItems} />
+              <LeftNav sections={navSections} active={active} onSelect={handleSelect} pinnedItems={pinnedNavItems} />
             </Box>
           </GridItem>
 
@@ -597,7 +633,11 @@ export function GroupLandingD({
               <GroupLandingDStartHere viewData={viewData} onNavigate={handleSelect} />
             )}
             {active === "introduce" && (
-              <GroupLandingDTellAboutYourself groupSlug={group.slug} />
+              <GroupLandingDTellAboutYourself
+                groupSlug={group.slug}
+                isCollapsed={isIntroCollapsed}
+                onCollapse={() => setIsIntroCollapsed(true)}
+              />
             )}
             {(active === "share" || active === "converse") && (
               <Box>

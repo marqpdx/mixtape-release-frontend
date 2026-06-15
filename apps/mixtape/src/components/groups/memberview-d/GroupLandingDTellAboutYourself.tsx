@@ -3,10 +3,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, Textarea, Spinner, IconButton } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconSend } from "@tabler/icons-react";
+import { IconSend, IconInfoCircle, IconMinus } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -103,9 +103,11 @@ function PostItem({ post }: { post: Post }) {
 
 interface GroupLandingDTellAboutYourselfProps {
   groupSlug: string;
+  isCollapsed: boolean;
+  onCollapse: () => void;
 }
 
-export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellAboutYourselfProps) {
+export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onCollapse }: GroupLandingDTellAboutYourselfProps) {
   const { user, refreshUser } = useAuth();
   const qc = useQueryClient();
 
@@ -204,7 +206,8 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
   return (
     <Flex className="tay-root" direction="column" gap={5}>
 
-      {/* Quick intro card */}
+      {/* Quick intro card — hidden when collapsed */}
+      {!isCollapsed && (
       <Box
         className="tay-intro-card"
         bg="theme.surface"
@@ -228,21 +231,34 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
               >
                 Your introduction
               </Text>
-              {user?.username && (
-                <Box
-                  display="inline-block"
-                  px="10px"
-                  py="4px"
-                  borderRadius="full"
-                  bg="theme.accentSoft"
-                  borderWidth="1px"
-                  borderColor="theme.border"
+              <Flex align="center" gap={2}>
+                {user?.username && (
+                  <Box
+                    display="inline-block"
+                    px="10px"
+                    py="4px"
+                    borderRadius="full"
+                    bg="theme.accentSoft"
+                    borderWidth="1px"
+                    borderColor="theme.border"
+                  >
+                    <Text fontSize="13px" fontWeight="600" color="theme.accent">
+                      @{user.username}
+                    </Text>
+                  </Box>
+                )}
+                <IconButton
+                  aria-label="Hide Your Introduction"
+                  size="xs"
+                  variant="ghost"
+                  color="theme.textFaint"
+                  _hover={{ color: "theme.textMuted" }}
+                  onClick={onCollapse}
+                  title="Hide this section"
                 >
-                  <Text fontSize="13px" fontWeight="600" color="theme.accent">
-                    @{user.username}
-                  </Text>
-                </Box>
-              )}
+                  <IconMinus size={14} />
+                </IconButton>
+              </Flex>
             </Flex>
 
             <Textarea
@@ -302,32 +318,56 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
             pl={6}
             gap={4}
           >
-            <Text fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6">
-              This introduction is you sharing a bit about who you are. You can see what
-              others have written below. If you want to see and edit all your other profile
-              fields, use the button below — this intro field is part of that profile.
-            </Text>
-            <Box>
-              <NextLink href="/dashboard?section=edit-profile" passHref legacyBehavior>
+            <Flex gap={3} align="flex-start">
+              <Box color="theme.accent" flexShrink={0} mt="2px">
+                <IconInfoCircle size={20} />
+              </Box>
+              <Text fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6">
+                Thank you for sharing a bit about you. You can see what others have
+                written below.
+                <br /><br />
+                You can edit this and other profile fields by clicking{" "}
+                <Box as="span" fontWeight="600" color="theme.text">Edit Profile</Box>{" "}
+                below.
+                <br /><br />
+                When you{"'"}re good for now, you can hide this section by clicking the{" "}
                 <Box
-                  as="a"
-                  display="inline-block"
-                  px="14px"
-                  py="7px"
-                  borderRadius="full"
-                  bg="theme.bgSubtle"
-                  borderWidth="1px"
-                  borderColor="theme.border"
-                  fontSize="13px"
-                  fontWeight="600"
-                  color="theme.textSecondary"
-                  cursor="pointer"
-                  _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
-                  transition="all 0.12s"
+                  as="span"
+                  display="inline-flex"
+                  alignItems="center"
+                  verticalAlign="middle"
+                  mx="2px"
+                  position="relative"
+                  top="-1px"
+                  color="theme.textMuted"
                 >
-                  Edit Profile
-                </Box>
-              </NextLink>
+                  <IconMinus size={13} />
+                </Box>{" "}
+                button above, and restore it with the{" "}
+                <Box as="span" fontWeight="600" color="theme.text">Your Intro</Box>{" "}
+                button that appears in the header.
+              </Text>
+            </Flex>
+            <Box>
+              <Box
+                as={NextLink}
+                href="/dashboard?section=edit-profile"
+                display="inline-block"
+                px="14px"
+                py="7px"
+                borderRadius="full"
+                bg="theme.bgSubtle"
+                borderWidth="1px"
+                borderColor="theme.border"
+                fontSize="13px"
+                fontWeight="600"
+                color="theme.textSecondary"
+                cursor="pointer"
+                _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+                transition="all 0.12s"
+              >
+                Edit Profile
+              </Box>
             </Box>
           </Flex>
         </Flex>
@@ -384,6 +424,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
           </Flex>
         )}
       </Box>
+      )} {/* end !isCollapsed */}
 
       {/* Discussion thread */}
       <Box
