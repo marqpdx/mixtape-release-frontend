@@ -24,24 +24,43 @@ import {
   List,
   Search,
   Eye,
-  Download,
   ArrowRight,
   Plus,
   Pencil,
   Check,
   X,
   Trash2,
+  GripVertical,
+  Unlink,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   useCollections,
   useCollectionItems,
   useCreateCollection,
   useUpdateCollection,
   useDeleteCollection,
+  useDeleteLibraryItem,
+  useReorderLibraryItems,
 } from '@mixtape/api/hooks/stackroom/useCollections';
 import { CollectionBrowser } from '@/components/stackroom/CollectionBrowser';
 import { toaster } from '@/components/ui/toaster';
-import { useColorModeValue } from '@components/ui/color-mode';
 import { useViewMode } from './explorer/useViewMode';
 import { hueForName, coverGradient } from './explorer/coverUtils';
 import {
@@ -84,7 +103,7 @@ function relativeTime(iso: string): string {
   }
 }
 
-// ---- file type icon + pill (matches admin CollectionItemCard styling) ------
+// ---- file type icon + pill --------------------------------------------------
 
 function FileTypeIcon({ info, size = 20 }: { info: ItemTypeInfo; size?: number }) {
   const Icon = info.icon;
@@ -119,8 +138,6 @@ function FolderGlyph({ size = 28, color = 'currentColor' }: { size?: number; col
   );
 }
 
-// ---- cover folder (big translucent, inside card cover) ---------------------
-
 function CoverFolder({ size = 130 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -142,15 +159,6 @@ interface SidebarProps {
 }
 
 function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
-  const bg = useColorModeValue('bg.subtle', 'bg.subtle');
-  const borderColor = useColorModeValue('border.default', 'border.default');
-  const nodeHoverBg = useColorModeValue('bg.canvas', 'bg.canvas');
-  const activeBg = useColorModeValue('theme.accentSoft', 'theme.accentSoft');
-  const activeText = useColorModeValue('theme.accent', 'theme.accent');
-  const textColor = useColorModeValue('theme.text', 'theme.text');
-  const mutedColor = useColorModeValue('theme.textMuted', 'theme.textMuted');
-  const countColor = useColorModeValue('theme.textFaint', 'theme.textFaint');
-
   const folders = folderItems.filter((i): i is LibraryItem & { is_folder: true } =>
     i.is_folder && !i.parent_id
   );
@@ -160,9 +168,9 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
       className="cex-sidebar"
       w="240px"
       flexShrink={0}
-      bg={bg}
+      bg="theme.surface"
       borderRight="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       display="flex"
       flexDir="column"
       overflowY="auto"
@@ -178,9 +186,9 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
         display="flex"
         alignItems="center"
         gap={2}
-        bg={!nav.collectionId ? activeBg : 'transparent'}
-        color={!nav.collectionId ? activeText : textColor}
-        _hover={{ bg: !nav.collectionId ? activeBg : nodeHoverBg }}
+        bg={!nav.collectionId ? 'theme.accentSoft' : 'transparent'}
+        color={!nav.collectionId ? 'theme.accent' : 'theme.text'}
+        _hover={{ bg: !nav.collectionId ? 'theme.accentSoft' : 'theme.bgSecondary' }}
         transition="background 0.12s"
         onClick={() => onNav({ collectionId: null, folderId: null })}
       >
@@ -190,12 +198,12 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
         <Text fontSize="sm" fontWeight={!nav.collectionId ? '600' : '500'} flex={1} lineClamp={1}>
           All Collections
         </Text>
-        <Text fontFamily="mono" fontSize="11px" color={countColor} flexShrink={0}>
+        <Text fontFamily="mono" fontSize="11px" color="theme.textFaint" flexShrink={0}>
           {collections.length}
         </Text>
       </Box>
 
-      <Box mx={3} my={2} h="1px" bg={borderColor} />
+      <Box mx={3} my={2} h="1px" bg="theme.border" />
 
       {/* Collection nodes */}
       {collections.map((c) => {
@@ -215,15 +223,15 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
               display="flex"
               alignItems="center"
               gap={2}
-              bg={isActive && !nav.folderId ? activeBg : 'transparent'}
-              color={isActive && !nav.folderId ? activeText : textColor}
-              _hover={{ bg: isActive && !nav.folderId ? activeBg : nodeHoverBg }}
+              bg={isActive && !nav.folderId ? 'theme.accentSoft' : 'transparent'}
+              color={isActive && !nav.folderId ? 'theme.accent' : 'theme.text'}
+              _hover={{ bg: isActive && !nav.folderId ? 'theme.accentSoft' : 'theme.bgSecondary' }}
               transition="background 0.12s"
               onClick={() => onNav({ collectionId: c.id, folderId: null })}
             >
               <Box
                 flexShrink={0}
-                color={mutedColor}
+                color="theme.textMuted"
                 style={{
                   transform: showFolders ? 'rotate(90deg)' : 'rotate(0deg)',
                   transition: 'transform 0.15s',
@@ -244,11 +252,11 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
                 fontWeight={isActive && !nav.folderId ? '600' : '400'}
                 flex={1}
                 lineClamp={1}
-                color={isActive && !nav.folderId ? activeText : textColor}
+                color={isActive && !nav.folderId ? 'theme.accent' : 'theme.text'}
               >
                 {c.title}
               </Text>
-              <Text fontFamily="mono" fontSize="11px" color={countColor} flexShrink={0}>
+              <Text fontFamily="mono" fontSize="11px" color="theme.textFaint" flexShrink={0}>
                 {c.item_count}
               </Text>
             </Box>
@@ -277,9 +285,9 @@ function Sidebar({ collections, nav, folderItems, onNav }: SidebarProps) {
                         display="flex"
                         alignItems="center"
                         gap={1.5}
-                        bg={folderActive ? activeBg : 'transparent'}
-                        color={folderActive ? activeText : mutedColor}
-                        _hover={{ bg: folderActive ? activeBg : nodeHoverBg }}
+                        bg={folderActive ? 'theme.accentSoft' : 'transparent'}
+                        color={folderActive ? 'theme.accent' : 'theme.textMuted'}
+                        _hover={{ bg: folderActive ? 'theme.accentSoft' : 'theme.bgSecondary' }}
                         transition="background 0.12s"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -324,19 +332,13 @@ interface TopbarProps {
 }
 
 function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, isAdmin, onNew }: TopbarProps) {
-  const borderColor = useColorModeValue('border.default', 'border.default');
-  const accentText = useColorModeValue('theme.accent', 'theme.accent');
-  const mutedText = useColorModeValue('theme.textSecondary', 'theme.textSecondary');
-  const textColor = useColorModeValue('theme.text', 'theme.text');
-  const inputBg = useColorModeValue('bg.canvas', 'bg.canvas');
-
   return (
     <Box
       className="cex-topbar"
       px={4}
       py={2.5}
       borderBottom="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       display="flex"
       alignItems="center"
       gap={4}
@@ -349,7 +351,7 @@ function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, is
           fontFamily="mono"
           fontSize="12px"
           cursor={collection ? 'pointer' : 'default'}
-          color={collection ? accentText : textColor}
+          color={collection ? 'theme.accent' : 'theme.text'}
           fontWeight={collection ? '500' : '600'}
           whiteSpace="nowrap"
           _hover={collection ? { textDecoration: 'underline' } : {}}
@@ -360,12 +362,12 @@ function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, is
 
         {collection && (
           <>
-            <Text fontFamily="mono" fontSize="12px" color={mutedText} flexShrink={0}>/</Text>
+            <Text fontFamily="mono" fontSize="12px" color="theme.textSecondary" flexShrink={0}>/</Text>
             <Text
               fontFamily="mono"
               fontSize="12px"
               cursor={folder ? 'pointer' : 'default'}
-              color={folder ? accentText : textColor}
+              color={folder ? 'theme.accent' : 'theme.text'}
               fontWeight={folder ? '500' : '600'}
               lineClamp={1}
               _hover={folder ? { textDecoration: 'underline' } : {}}
@@ -378,12 +380,12 @@ function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, is
 
         {folder && (
           <>
-            <Text fontFamily="mono" fontSize="12px" color={mutedText} flexShrink={0}>/</Text>
+            <Text fontFamily="mono" fontSize="12px" color="theme.textSecondary" flexShrink={0}>/</Text>
             <Text
               fontFamily="mono"
               fontSize="12px"
               fontWeight="600"
-              color={textColor}
+              color="theme.text"
               lineClamp={1}
             >
               {folder.title}
@@ -395,16 +397,16 @@ function Topbar({ nav, collection, folder, onNav, mode, onModeChange, q, onQ, is
       {/* Search */}
       <HStack
         gap={1.5}
-        bg={inputBg}
+        bg="theme.bgSecondary"
         border="1px solid"
-        borderColor={borderColor}
+        borderColor="theme.border"
         borderRadius="md"
         px={2.5}
         py={1}
         minW="180px"
         maxW="260px"
       >
-        <Box color={mutedText} flexShrink={0}><Search size={13} /></Box>
+        <Box color="theme.textSecondary" flexShrink={0}><Search size={13} /></Box>
         <Input
           border="none"
           outline="none"
@@ -471,8 +473,8 @@ function CollectionCard({ c, onOpen }: { c: CollectionListItem; onOpen: () => vo
       overflow="hidden"
       cursor="pointer"
       border="1px solid"
-      borderColor="border.default"
-      bg="bg.surface"
+      borderColor="theme.border"
+      bg="theme.bgSecondary"
       transition="transform 0.15s, box-shadow 0.15s, border-color 0.15s"
       _hover={{
         transform: 'translateY(-4px)',
@@ -519,7 +521,7 @@ function CollectionCard({ c, onOpen }: { c: CollectionListItem; onOpen: () => vo
           {c.file_count > 0 && <Text>· {c.file_count} files</Text>}
         </HStack>
 
-        <HStack justify="space-between" mt={3} pt={3} borderTop="1px solid" borderColor="border.default">
+        <HStack justify="space-between" mt={3} pt={3} borderTop="1px solid" borderColor="theme.border">
           <Text fontFamily="mono" fontSize="11px" color="theme.textFaint">
             {relativeTime(c.updated_at)}
           </Text>
@@ -538,8 +540,6 @@ function CollectionCard({ c, onOpen }: { c: CollectionListItem; onOpen: () => vo
 function CollectionRow({ c, onOpen }: { c: CollectionListItem; onOpen: () => void }) {
   const hue = hueForName(c.title);
   const bg = coverGradient(hue);
-  const borderColor = useColorModeValue('border.default', 'border.default');
-  const hoverBg = useColorModeValue('bg.subtle', 'bg.subtle');
 
   return (
     <Box
@@ -552,9 +552,9 @@ function CollectionRow({ c, onOpen }: { c: CollectionListItem; onOpen: () => voi
       py={3}
       cursor="pointer"
       borderBottom="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       transition="background 0.1s"
-      _hover={{ bg: hoverBg }}
+      _hover={{ bg: 'theme.surface' }}
       role="group"
       onClick={onOpen}
     >
@@ -614,9 +614,6 @@ interface FolderRowProps {
 }
 
 function FolderRow({ item, childCount, onOpen }: FolderRowProps) {
-  const borderColor = useColorModeValue('border.default', 'border.default');
-  const hoverBg = useColorModeValue('bg.subtle', 'bg.subtle');
-
   return (
     <Box
       className="cex-folder-row"
@@ -628,9 +625,9 @@ function FolderRow({ item, childCount, onOpen }: FolderRowProps) {
       py={3}
       cursor="pointer"
       borderBottom="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       transition="background 0.1s"
-      _hover={{ bg: hoverBg }}
+      _hover={{ bg: 'theme.surface' }}
       role="group"
       onClick={onOpen}
     >
@@ -685,8 +682,8 @@ function FolderCard({ item, childCount, onOpen }: FolderCardProps) {
       py={3}
       borderRadius="xl"
       border="1px solid"
-      borderColor="border.default"
-      bg="bg.surface"
+      borderColor="theme.border"
+      bg="theme.bgSecondary"
       cursor="pointer"
       transition="transform 0.12s, box-shadow 0.12s, border-color 0.12s"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md', borderColor: 'theme.accent' }}
@@ -716,37 +713,75 @@ function FolderCard({ item, childCount, onOpen }: FolderCardProps) {
 interface FileRowProps {
   item: LibraryItem;
   onPreview: () => void;
+  onUnlink?: () => void;
+  canReorder?: boolean;
 }
 
-function FileRow({ item, onPreview }: FileRowProps) {
+function FileRow({ item, onPreview, onUnlink, canReorder = false }: FileRowProps) {
   const typeInfo = getItemTypeInfo(item);
   const name = getItemDisplayName(item);
   const size = getItemSize(item);
-  const borderColor = useColorModeValue('border.default', 'border.default');
-  const hoverBg = useColorModeValue('bg.subtle', 'bg.subtle');
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id, disabled: !canReorder });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const hasActions = !!onUnlink;
+  const actionsWidth = hasActions ? '80px' : '56px';
+  const cols = canReorder
+    ? `24px minmax(0,1fr) 130px 100px ${actionsWidth}`
+    : `minmax(0,1fr) 130px 100px ${actionsWidth}`;
 
   return (
     <Box
+      ref={setNodeRef}
+      style={style}
       display="grid"
-      gridTemplateColumns="minmax(0,1fr) 130px 100px 56px"
+      gridTemplateColumns={cols}
       alignItems="center"
       gap={4}
       px={4}
       py={2.5}
       borderBottom="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       transition="background 0.1s"
-      _hover={{ bg: hoverBg }}
+      _hover={{ bg: 'theme.surface' }}
       role="group"
       cursor="pointer"
       onClick={onPreview}
     >
+      {canReorder && (
+        <Box
+          {...attributes}
+          {...listeners}
+          cursor="grab"
+          color="theme.textFaint"
+          _hover={{ color: 'theme.textMuted' }}
+          _active={{ cursor: 'grabbing' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={16} />
+        </Box>
+      )}
+
       <HStack gap={3} minW={0}>
         <FileTypeIcon info={typeInfo} size={20} />
         <Text fontSize="13px" color="theme.text" lineClamp={1}>{name}</Text>
       </HStack>
 
       <FileTypePill info={typeInfo} />
+
       <Text fontFamily="mono" fontSize="11px" color="theme.textMuted">{size}</Text>
 
       <HStack
@@ -754,6 +789,7 @@ function FileRow({ item, onPreview }: FileRowProps) {
         justify="flex-end"
         visibility="hidden"
         _groupHover={{ visibility: 'visible' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <IconButton
           aria-label="Preview"
@@ -765,16 +801,18 @@ function FileRow({ item, onPreview }: FileRowProps) {
         >
           <Eye size={15} />
         </IconButton>
-        <IconButton
-          aria-label="Download"
-          size="xs"
-          variant="ghost"
-          color="theme.textSecondary"
-          _hover={{ color: 'theme.accent' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Download size={15} />
-        </IconButton>
+        {onUnlink && (
+          <IconButton
+            aria-label="Remove from collection"
+            size="xs"
+            variant="ghost"
+            color="theme.textSecondary"
+            _hover={{ color: 'red.500' }}
+            onClick={(e) => { e.stopPropagation(); onUnlink(); }}
+          >
+            <Unlink size={15} />
+          </IconButton>
+        )}
       </HStack>
     </Box>
   );
@@ -782,7 +820,13 @@ function FileRow({ item, onPreview }: FileRowProps) {
 
 // ---- file card (grid view) --------------------------------------------------
 
-function FileCard({ item, onPreview }: FileRowProps) {
+interface FileCardProps {
+  item: LibraryItem;
+  onPreview: () => void;
+  onUnlink?: () => void;
+}
+
+function FileCard({ item, onPreview, onUnlink }: FileCardProps) {
   const typeInfo = getItemTypeInfo(item);
   const name = getItemDisplayName(item);
   const size = getItemSize(item);
@@ -796,8 +840,8 @@ function FileCard({ item, onPreview }: FileRowProps) {
       py={3}
       borderRadius="xl"
       border="1px solid"
-      borderColor="border.default"
-      bg="bg.surface"
+      borderColor="theme.border"
+      bg="theme.bgSecondary"
       transition="box-shadow 0.12s"
       _hover={{ boxShadow: 'sm' }}
       role="group"
@@ -818,6 +862,7 @@ function FileCard({ item, onPreview }: FileRowProps) {
         gap={1}
         visibility="hidden"
         _groupHover={{ visibility: 'visible' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <IconButton
           aria-label="Preview"
@@ -829,16 +874,18 @@ function FileCard({ item, onPreview }: FileRowProps) {
         >
           <Eye size={15} />
         </IconButton>
-        <IconButton
-          aria-label="Download"
-          size="xs"
-          variant="ghost"
-          color="theme.textSecondary"
-          _hover={{ color: 'theme.accent' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Download size={15} />
-        </IconButton>
+        {onUnlink && (
+          <IconButton
+            aria-label="Remove from collection"
+            size="xs"
+            variant="ghost"
+            color="theme.textSecondary"
+            _hover={{ color: 'red.500' }}
+            onClick={(e) => { e.stopPropagation(); onUnlink(); }}
+          >
+            <Unlink size={15} />
+          </IconButton>
+        )}
       </HStack>
     </Box>
   );
@@ -870,8 +917,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       px={4}
       py={2}
       borderBottom="1px solid"
-      borderColor="border.default"
-      bg="bg.subtle"
+      borderColor="theme.border"
+      bg="theme.surface"
       display="block"
     >
       {children}
@@ -925,8 +972,8 @@ function AllCollectionsView({ collections, mode, q, onOpen }: AllCollectionsView
         px={4}
         py={2}
         borderBottom="1px solid"
-        borderColor="border.default"
-        bg="bg.subtle"
+        borderColor="theme.border"
+        bg="theme.surface"
       >
         <Text fontFamily="mono" fontSize="10px" fontWeight="600" letterSpacing="0.1em" textTransform="uppercase" color="theme.textMuted">Collection</Text>
         <Text fontFamily="mono" fontSize="10px" fontWeight="600" letterSpacing="0.1em" textTransform="uppercase" color="theme.textMuted">Contents</Text>
@@ -948,6 +995,8 @@ interface CollectionContentViewProps {
   q: string;
   onOpenFolder: (folderId: string) => void;
   onOpenItem: (item: LibraryItem) => void;
+  isAdmin?: boolean;
+  onItemChanged?: () => void;
   refreshKey?: number;
 }
 
@@ -957,8 +1006,12 @@ function CollectionContentView({
   q,
   onOpenFolder,
   onOpenItem,
+  isAdmin,
+  onItemChanged,
 }: CollectionContentViewProps) {
-  const { items, isLoading } = useCollectionItems(collectionId);
+  const { items, isLoading, refetch } = useCollectionItems(collectionId);
+  const deleteMutation = useDeleteLibraryItem();
+  const reorderMutation = useReorderLibraryItems();
   const ql = q.trim().toLowerCase();
 
   const topFolders = useMemo(
@@ -967,7 +1020,7 @@ function CollectionContentView({
   );
 
   const topFiles = useMemo(
-    () => items.filter((i) => !i.is_folder && !i.parent_id),
+    () => items.filter((i) => !i.is_folder && !i.parent_id).sort((a, b) => a.order_index - b.order_index),
     [items]
   );
 
@@ -981,6 +1034,43 @@ function CollectionContentView({
 
   const childCountFor = (folderId: string) =>
     items.filter((i) => !i.is_folder && i.parent_id === folderId).length;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleUnlink = async (itemId: string) => {
+    if (!confirm('Remove this file from the collection?')) return;
+    try {
+      await deleteMutation.mutateAsync({ collectionId, itemId });
+      refetch();
+      onItemChanged?.();
+      toaster.create({ title: 'Removed from collection', type: 'success' });
+    } catch {
+      toaster.create({ title: 'Failed to remove', type: 'error' });
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = filteredFiles.findIndex((i) => i.id === active.id);
+    const newIndex = filteredFiles.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(filteredFiles, oldIndex, newIndex);
+    try {
+      await reorderMutation.mutateAsync({
+        collectionId,
+        data: { items: reordered.map((item, index) => ({ id: item.id, order_index: index })) },
+      });
+      refetch();
+      onItemChanged?.();
+    } catch {
+      toaster.create({ title: 'Failed to reorder', type: 'error' });
+      refetch();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -1022,7 +1112,12 @@ function CollectionContentView({
             </Text>
             <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
               {filteredFiles.map((file) => (
-                <FileCard key={file.id} item={file} onPreview={() => onOpenItem(file)} />
+                <FileCard
+                  key={file.id}
+                  item={file}
+                  onPreview={() => onOpenItem(file)}
+                  onUnlink={isAdmin ? () => handleUnlink(file.id) : undefined}
+                />
               ))}
             </Grid>
           </>
@@ -1030,6 +1125,34 @@ function CollectionContentView({
       </Box>
     );
   }
+
+  // List mode
+  const filesList = isAdmin && !ql ? (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={filteredFiles.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+        {filteredFiles.map((file) => (
+          <FileRow
+            key={file.id}
+            item={file}
+            onPreview={() => onOpenItem(file)}
+            onUnlink={() => handleUnlink(file.id)}
+            canReorder={true}
+          />
+        ))}
+      </SortableContext>
+    </DndContext>
+  ) : (
+    <>
+      {filteredFiles.map((file) => (
+        <FileRow
+          key={file.id}
+          item={file}
+          onPreview={() => onOpenItem(file)}
+          onUnlink={isAdmin ? () => handleUnlink(file.id) : undefined}
+        />
+      ))}
+    </>
+  );
 
   return (
     <Box>
@@ -1049,10 +1172,10 @@ function CollectionContentView({
 
       {filteredFiles.length > 0 && (
         <>
-          <SectionLabel>Files</SectionLabel>
-          {filteredFiles.map((file) => (
-            <FileRow key={file.id} item={file} onPreview={() => onOpenItem(file)} />
-          ))}
+          <SectionLabel>
+            Files{isAdmin && !ql ? ' — drag to reorder' : ''}
+          </SectionLabel>
+          {filesList}
         </>
       )}
     </Box>
@@ -1067,20 +1190,61 @@ interface FolderContentViewProps {
   mode: 'list' | 'grid';
   q: string;
   onOpenItem: (item: LibraryItem) => void;
+  isAdmin?: boolean;
+  onItemChanged?: () => void;
 }
 
-function FolderContentView({ collectionId, folderId, mode, q, onOpenItem }: FolderContentViewProps) {
-  const { items, isLoading } = useCollectionItems(collectionId);
+function FolderContentView({ collectionId, folderId, mode, q, onOpenItem, isAdmin, onItemChanged }: FolderContentViewProps) {
+  const { items, isLoading, refetch } = useCollectionItems(collectionId);
+  const deleteMutation = useDeleteLibraryItem();
+  const reorderMutation = useReorderLibraryItems();
   const ql = q.trim().toLowerCase();
 
   const folderFiles = useMemo(
-    () => items.filter((i) => !i.is_folder && i.parent_id === folderId),
+    () => items.filter((i) => !i.is_folder && i.parent_id === folderId).sort((a, b) => a.order_index - b.order_index),
     [items, folderId]
   );
 
   const filteredFiles = ql
     ? folderFiles.filter((f) => getItemDisplayName(f).toLowerCase().includes(ql))
     : folderFiles;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleUnlink = async (itemId: string) => {
+    if (!confirm('Remove this file from the collection?')) return;
+    try {
+      await deleteMutation.mutateAsync({ collectionId, itemId });
+      refetch();
+      onItemChanged?.();
+      toaster.create({ title: 'Removed from collection', type: 'success' });
+    } catch {
+      toaster.create({ title: 'Failed to remove', type: 'error' });
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = filteredFiles.findIndex((i) => i.id === active.id);
+    const newIndex = filteredFiles.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(filteredFiles, oldIndex, newIndex);
+    try {
+      await reorderMutation.mutateAsync({
+        collectionId,
+        data: { items: reordered.map((item, index) => ({ id: item.id, order_index: index })) },
+      });
+      refetch();
+      onItemChanged?.();
+    } catch {
+      toaster.create({ title: 'Failed to reorder', type: 'error' });
+      refetch();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -1097,9 +1261,35 @@ function FolderContentView({ collectionId, folderId, mode, q, onOpenItem }: Fold
       <Box p={5}>
         <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
           {filteredFiles.map((file) => (
-            <FileCard key={file.id} item={file} onPreview={() => onOpenItem(file)} />
+            <FileCard
+              key={file.id}
+              item={file}
+              onPreview={() => onOpenItem(file)}
+              onUnlink={isAdmin ? () => handleUnlink(file.id) : undefined}
+            />
           ))}
         </Grid>
+      </Box>
+    );
+  }
+
+  if (isAdmin && !ql) {
+    return (
+      <Box>
+        <SectionLabel>Files — drag to reorder</SectionLabel>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredFiles.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            {filteredFiles.map((file) => (
+              <FileRow
+                key={file.id}
+                item={file}
+                onPreview={() => onOpenItem(file)}
+                onUnlink={() => handleUnlink(file.id)}
+                canReorder={true}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </Box>
     );
   }
@@ -1108,7 +1298,12 @@ function FolderContentView({ collectionId, folderId, mode, q, onOpenItem }: Fold
     <Box>
       <SectionLabel>Files</SectionLabel>
       {filteredFiles.map((file) => (
-        <FileRow key={file.id} item={file} onPreview={() => onOpenItem(file)} />
+        <FileRow
+          key={file.id}
+          item={file}
+          onPreview={() => onOpenItem(file)}
+          onUnlink={isAdmin ? () => handleUnlink(file.id) : undefined}
+        />
       ))}
     </Box>
   );
@@ -1158,7 +1353,7 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
         px={5}
         py={4}
         borderBottom="1px solid"
-        borderColor="border.default"
+        borderColor="theme.border"
         display="flex"
         alignItems="center"
         gap={4}
@@ -1189,7 +1384,7 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
 
   if (isEditing) {
     return (
-      <Box px={5} py={4} borderBottom="1px solid" borderColor="border.default">
+      <Box px={5} py={4} borderBottom="1px solid" borderColor="theme.border">
         <VStack align="stretch" gap={3} maxW="480px">
           <Input
             value={editTitle}
@@ -1227,7 +1422,7 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
       px={5}
       py={4}
       borderBottom="1px solid"
-      borderColor="border.default"
+      borderColor="theme.border"
       display="flex"
       alignItems="center"
       gap={4}
@@ -1284,8 +1479,6 @@ interface AdminSectionProps {
 }
 
 function AdminSection({ collectionId, onItemAdded, onDelete, deleteLoading }: AdminSectionProps) {
-  const borderColor = useColorModeValue('border.default', 'border.default');
-
   return (
     <Box
       className="cex-admin-section"
@@ -1312,7 +1505,7 @@ function AdminSection({ collectionId, onItemAdded, onDelete, deleteLoading }: Ad
       </Box>
 
       {/* Delete zone */}
-      <Box pt={5} borderTop="1px solid" borderColor={borderColor}>
+      <Box pt={5} borderTop="1px solid" borderColor="theme.border">
         <Text
           fontFamily="mono"
           fontSize="10px"
@@ -1354,7 +1547,6 @@ function CreateForm({ sponsor, onCreated, onCancel }: CreateFormProps) {
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const createMutation = useCreateCollection();
-  const borderColor = useColorModeValue('border.default', 'border.default');
 
   const handleCreate = async () => {
     if (!title.trim()) return;
@@ -1378,8 +1570,8 @@ function CreateForm({ sponsor, onCreated, onCancel }: CreateFormProps) {
       px={4}
       py={4}
       borderBottom="1px solid"
-      borderColor={borderColor}
-      bg="bg.subtle"
+      borderColor="theme.border"
+      bg="theme.surface"
     >
       <VStack align="stretch" gap={3} maxW="480px">
         <Text fontFamily="mono" fontSize="10px" fontWeight="600" letterSpacing="0.12em" textTransform="uppercase" color="theme.textMuted">
@@ -1417,9 +1609,6 @@ function CreateForm({ sponsor, onCreated, onCancel }: CreateFormProps) {
 
 // ---- main shell ------------------------------------------------------------
 
-// Remembers where the member last was within a sponsor's collections —
-// collection, folder, and the file/post they had open — so returning to the
-// tab picks up where they left off instead of always landing on "All Collections".
 function lastNavStorageKey(sponsor: SponsorInfo) {
   return `mixtape:collections:lastNav:${sponsor.type}:${sponsor.id}`;
 }
@@ -1461,8 +1650,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
   const updateMutation = useUpdateCollection();
   const deleteMutation = useDeleteCollection();
 
-  // The previewed item's id can only be resolved once its collection's items
-  // have loaded, so the restore happens in an effect keyed off activeItems below.
   const pendingPreviewIdRef = useRef<string | null>(readStoredNav(sponsor)?.previewItemId ?? null);
 
   const { collections, isLoading: collectionsLoading } = useCollections({
@@ -1485,8 +1672,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     return found && found.is_folder ? found : null;
   }, [activeItems, nav.folderId]);
 
-  // Resolve a restored "last open file" id into the actual item once its
-  // collection's items have loaded, then drop into preview just like a click would.
   useEffect(() => {
     const pendingId = pendingPreviewIdRef.current;
     if (!pendingId || activeItems.length === 0) return;
@@ -1495,7 +1680,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     if (found && !found.is_folder) setPreviewItem(found);
   }, [activeItems]);
 
-  // Persist collection / folder / open-item so returning to this tab resumes here.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -1506,7 +1690,7 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
       };
       window.localStorage.setItem(lastNavStorageKey(sponsor), JSON.stringify(toStore));
     } catch {
-      // localStorage unavailable (private mode, quota) — resume position is best-effort.
+      // localStorage unavailable — resume position is best-effort.
     }
   }, [sponsor, nav, previewItem]);
 
@@ -1538,7 +1722,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     }
   }, [nav.collectionId, deleteMutation, go]);
 
-  // Browser back / Escape from inside a collection returns to the collections list
   const detailNav = useBackNavigableDetail({
     isOpen: nav.collectionId !== null,
     onClose: () => {
@@ -1548,8 +1731,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     tagKey: 'collectionDetail',
   });
 
-  // Routes collection-level entry/exit through detailNav so the synthetic
-  // history entry stays in sync; folder navigation within a collection passes through untouched.
   const goNav = useCallback(
     (next: ExplorerNav) => {
       const enteringCollection = next.collectionId !== null && nav.collectionId === null;
@@ -1564,9 +1745,6 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     },
     [nav.collectionId, go, detailNav]
   );
-
-  const panelBg = useColorModeValue('bg.surface', 'bg.surface');
-  const borderColor = useColorModeValue('border.default', 'border.default');
 
   if (previewItem) {
     return (
@@ -1594,9 +1772,9 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
   return (
     <Box
       className="cex-shell"
-      bg={panelBg}
+      bg="theme.bgSecondary"
       border="1px solid"
-      borderColor={borderColor}
+      borderColor="theme.border"
       borderRadius="xl"
       overflow="hidden"
       display="flex"
@@ -1685,6 +1863,8 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
                       q={q}
                       onOpenFolder={(fid) => go({ collectionId: nav.collectionId!, folderId: fid })}
                       onOpenItem={setPreviewItem}
+                      isAdmin={isAdmin}
+                      onItemChanged={() => setItemsRefreshKey((k) => k + 1)}
                       refreshKey={itemsRefreshKey}
                     />
                     {isAdmin && (
@@ -1705,6 +1885,8 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
                     mode={mode}
                     q={q}
                     onOpenItem={setPreviewItem}
+                    isAdmin={isAdmin}
+                    onItemChanged={() => setItemsRefreshKey((k) => k + 1)}
                   />
                 )}
               </motion.div>
