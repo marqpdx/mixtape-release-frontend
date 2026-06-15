@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
+import NextLink from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { IconSend } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -213,96 +214,122 @@ export function GroupLandingDTellAboutYourself({ groupSlug }: GroupLandingDTellA
         boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
         p={5}
       >
-        <Flex align="center" justify="space-between" mb={4}>
-          <Text
-            fontSize="11.5px"
-            fontWeight="600"
-            letterSpacing="0.14em"
-            textTransform="uppercase"
-            color="theme.textMuted"
-          >
-            Your introduction
-          </Text>
-          <Flex align="center" gap={2}>
-            {user?.username && (
-              <Box
-                display="inline-block"
-                px="10px"
-                py="4px"
-                borderRadius="full"
-                bg="theme.accentSoft"
-                borderWidth="1px"
-                borderColor="theme.border"
+        <Flex className="tay-intro-body" gap={6} align="stretch">
+
+          {/* Left 60% — textarea + controls */}
+          <Box flex="3" minW={0}>
+            <Flex align="center" justify="space-between" mb={4}>
+              <Text
+                fontSize="11.5px"
+                fontWeight="600"
+                letterSpacing="0.14em"
+                textTransform="uppercase"
+                color="theme.textMuted"
               >
-                <Text fontSize="13px" fontWeight="600" color="theme.accent">
-                  @{user.username}
-                </Text>
+                Your introduction
+              </Text>
+              {user?.username && (
+                <Box
+                  display="inline-block"
+                  px="10px"
+                  py="4px"
+                  borderRadius="full"
+                  bg="theme.accentSoft"
+                  borderWidth="1px"
+                  borderColor="theme.border"
+                >
+                  <Text fontSize="13px" fontWeight="600" color="theme.accent">
+                    @{user.username}
+                  </Text>
+                </Box>
+              )}
+            </Flex>
+
+            <Textarea
+              className="tay-intro-textarea"
+              rows={4}
+              value={introText}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                setIntroText(e.target.value);
+                setIntroSaved(false);
+                setShowSharePrompt(false);
+              }}
+              placeholder="A few words about who you are, what you're exploring, or what brings you here."
+              bg="theme.surface"
+              borderColor={remaining < 0 ? "red.400" : "theme.border"}
+              _focus={{
+                borderColor: remaining < 0 ? "red.400" : "theme.accent",
+                boxShadow: "none",
+              }}
+              resize="vertical"
+            />
+
+            <Flex align="center" justify="space-between" mt={3}>
+              <Text
+                fontSize="12px"
+                color={remaining < 0 ? "red.400" : remaining < 20 ? "theme.accent" : "theme.textMuted"}
+              >
+                {remaining} characters left
+              </Text>
+              <Box
+                as="button"
+                px="16px"
+                py="7px"
+                borderRadius="full"
+                bg={introSaved ? "theme.bgSubtle" : "theme.accent"}
+                color={introSaved ? "theme.textSecondary" : "white"}
+                fontSize="13px"
+                fontWeight="600"
+                cursor={introSaving || remaining < 0 ? "not-allowed" : "pointer"}
+                opacity={introSaving || remaining < 0 ? 0.6 : 1}
+                transition="all 0.12s"
+                _hover={!introSaving && remaining >= 0 ? { opacity: 0.9 } : {}}
+                onClick={handleSaveIntro}
+              >
+                {introSaving ? "Saving…" : introSaved ? "Saved ✓" : "Save intro"}
               </Box>
-            )}
-            <Box
-              as="a"
-              href="/dashboard?section=edit-profile"
-              px="10px"
-              py="4px"
-              borderRadius="full"
-              bg="theme.bgSubtle"
-              borderWidth="1px"
-              borderColor="theme.border"
-              fontSize="12px"
-              fontWeight="600"
-              color="theme.textSecondary"
-              cursor="pointer"
-              _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
-              transition="all 0.12s"
-            >
-              Edit Profile
+            </Flex>
+          </Box>
+
+          {/* Right 40% — context panel */}
+          <Flex
+            className="tay-intro-context"
+            flex="2"
+            direction="column"
+            justify="space-between"
+            borderLeftWidth="1px"
+            borderColor="theme.border"
+            pl={6}
+            gap={4}
+          >
+            <Text fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6">
+              This introduction is you sharing a bit about who you are. You can see what
+              others have written below. If you want to see and edit all your other profile
+              fields, use the button below — this intro field is part of that profile.
+            </Text>
+            <Box>
+              <NextLink href="/dashboard?section=edit-profile" passHref legacyBehavior>
+                <Box
+                  as="a"
+                  display="inline-block"
+                  px="14px"
+                  py="7px"
+                  borderRadius="full"
+                  bg="theme.bgSubtle"
+                  borderWidth="1px"
+                  borderColor="theme.border"
+                  fontSize="13px"
+                  fontWeight="600"
+                  color="theme.textSecondary"
+                  cursor="pointer"
+                  _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+                  transition="all 0.12s"
+                >
+                  Edit Profile
+                </Box>
+              </NextLink>
             </Box>
           </Flex>
-        </Flex>
-
-        <Textarea
-          className="tay-intro-textarea"
-          rows={4}
-          value={introText}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            setIntroText(e.target.value);
-            setIntroSaved(false);
-            setShowSharePrompt(false);
-          }}
-          placeholder="A few words about who you are, what you're exploring, or what brings you here."
-          bg="theme.surface"
-          borderColor={remaining < 0 ? "red.400" : "theme.border"}
-          _focus={{
-            borderColor: remaining < 0 ? "red.400" : "theme.accent",
-            boxShadow: "none",
-          }}
-          resize="vertical"
-        />
-
-        <Flex align="center" justify="space-between" mt={3}>
-          <Text
-            fontSize="12px"
-            color={remaining < 0 ? "red.400" : remaining < 20 ? "theme.accent" : "theme.textMuted"}
-          >
-            {remaining} characters left
-          </Text>
-          <Box
-            as="button"
-            px="16px"
-            py="7px"
-            borderRadius="full"
-            bg={introSaved ? "theme.bgSubtle" : "theme.accent"}
-            color={introSaved ? "theme.textSecondary" : "white"}
-            fontSize="13px"
-            fontWeight="600"
-            cursor={introSaving || remaining < 0 ? "not-allowed" : "pointer"}
-            opacity={introSaving || remaining < 0 ? 0.6 : 1}
-            transition="all 0.12s"
-            _hover={!introSaving && remaining >= 0 ? { opacity: 0.9 } : {}}
-            onClick={handleSaveIntro}
-          >
-            {introSaving ? "Saving…" : introSaved ? "Saved ✓" : "Save intro"}
-          </Box>
         </Flex>
 
         {/* Share-to-thread prompt — appears after non-first save */}
