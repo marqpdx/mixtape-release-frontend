@@ -14,7 +14,6 @@ import {
   IconCalendarEvent,
   IconPin,
   IconSwitchHorizontal,
-  IconMinus,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Group } from "@mixtape/core/types/groupTypes";

@@ -143,7 +143,7 @@ export default function DiscussionDetail({
       <Box mb={6}><Divider/></Box>
 
       <VStack align="stretch" gap={4} mb={6} maxH="400px" overflowY="auto">
-        {posts.map((post, idx) => (
+        {posts.map((post) => (
           <PostItem key={post.id} post={post} isReply={!!post.parent_id} />
         ))}
       </VStack>

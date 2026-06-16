@@ -3,7 +3,6 @@
 import { Box, Flex, Image, Text, Spinner } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { IconCalendarEvent } from "@tabler/icons-react";
 import { fetchGroupEvents } from "@mixtape/api/clients/almanac/almanacApi";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
 
