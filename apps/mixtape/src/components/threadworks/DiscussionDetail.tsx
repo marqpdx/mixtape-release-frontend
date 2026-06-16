@@ -116,10 +116,12 @@ export default function DiscussionDetail({
       </Heading>
 
       <HStack gap={4} fontSize="sm" color={textColor} mb={6}>
-        <HStack gap={1}>
-          <IconUser size={16} />
-          <Text>{currentDiscussion.created_by.first_name} {currentDiscussion.created_by.last_name}</Text>
-        </HStack>
+        {currentDiscussion.created_by && (
+          <HStack gap={1}>
+            <IconUser size={16} />
+            <Text>{currentDiscussion.created_by.first_name} {currentDiscussion.created_by.last_name}</Text>
+          </HStack>
+        )}
         <HStack gap={1}>
           <IconClock size={16} />
           <Text>{formatTimeAgo(currentDiscussion.created_at)}</Text>

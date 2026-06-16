@@ -18,6 +18,7 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useGroupActivityFeed } from "@mixtape/api/hooks/activity";
+import { useAuth } from "@/lib/auth/AuthContext";
 import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
 import { Spinner } from "@chakra-ui/react";
 import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData";
@@ -204,6 +205,8 @@ interface StartHereProps {
 }
 
 export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps) {
+  const { user } = useAuth();
+  const hasIntro = !!user?.profile?.quick_intro;
   const [tab, setTab] = useState<StartTab>("welcome");
 
   useEffect(() => {
@@ -260,21 +263,23 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
               This is your group's home. Use the <strong style={{ color: "inherit" }}>left navigation</strong> to move
               between welcome materials, conversations, and resources.
             </Text>
-            <Text fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
-              Head to{" "}
-              <Box
-                as="button"
-                fontWeight="600"
-                color="theme.accent"
-                cursor="pointer"
-                onClick={() => onNavigate("introduce")}
-                _hover={{ textDecoration: "underline" }}
-                display="inline"
-              >
-                About Us
-              </Box>{" "}
-              to write a short intro — it's how other members get to know you here.
-            </Text>
+            {!hasIntro && (
+              <Text className="gld-content-head-to" fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
+                Head to{" "}
+                <Box
+                  as="button"
+                  fontWeight="600"
+                  color="theme.accent"
+                  cursor="pointer"
+                  onClick={() => onNavigate("introduce")}
+                  _hover={{ textDecoration: "underline" }}
+                  display="inline"
+                >
+                  Who We Are
+                </Box>{" "}
+                to write a short intro — it's how other members get to know you here.
+              </Text>
+            )}
             <Text fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
               Everything the group makes together lives under{" "}
               <strong style={{ color: "inherit" }}>Resources</strong> — core files, findings, and links.

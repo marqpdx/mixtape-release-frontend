@@ -68,10 +68,12 @@ export default function DiscussionList({
                     {discussion.title}
                   </Heading>
                   <HStack gap={2} fontSize="xs" color={textColor}>
-                    <HStack gap={1}>
-                      <IconUser size={14} />
-                      <Text>{discussion.created_by.first_name} {discussion.created_by.last_name}</Text>
-                    </HStack>
+                    {discussion.created_by && (
+                      <HStack gap={1}>
+                        <IconUser size={14} />
+                        <Text>{discussion.created_by.first_name} {discussion.created_by.last_name}</Text>
+                      </HStack>
+                    )}
                     <Text>•</Text>
                     <Text>{formatTimeAgo(discussion.created_at)}</Text>
                   </HStack>
