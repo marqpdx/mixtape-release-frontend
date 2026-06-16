@@ -33,6 +33,16 @@ import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself
 import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
 import { AnnouncementViewBox } from "../announcements/AnnouncementViewBox";
 import { QuickAnnouncementCreate } from "../announcements/QuickAnnouncementCreate";
+import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogBackdrop,
+} from "@/components/ui/dialog";
+import MemberProfileEdit from "@/components/dashboard/member/MemberProfileEdit";
 
 // ── types ──────────────────────────────────────────────────────────────────
 
@@ -411,6 +421,7 @@ export function GroupLandingD({
     if (typeof window === "undefined") return false;
     return localStorage.getItem(`gld:${group.slug}:introCollapsed`) === "true";
   });
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   const hasIntro = !!user?.profile?.quick_intro;
   const navSections = useMemo(() => buildNavSections(), []);
@@ -583,6 +594,19 @@ export function GroupLandingD({
           {isAdminOrSteward && (
             <QuickAnnouncementCreate groupSlug={group.slug} />
           )}
+          {isMember && user && (
+            <Button
+              className="gld-edit-profile-btn"
+              size="xs"
+              variant="outline"
+              borderRadius="9999px"
+              fontSize="12px"
+              px="12px"
+              onClick={() => setEditProfileOpen(true)}
+            >
+              Edit profile
+            </Button>
+          )}
         </Flex>
         {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
         {active === "introduce" && !hasIntro && isIntroCollapsed && (
@@ -698,6 +722,28 @@ export function GroupLandingD({
           )}
         </Grid>
       </Box>
+
+      {/* Edit profile modal — keeps focus within the group view */}
+      <DialogRoot
+        open={editProfileOpen}
+        onOpenChange={(e) => setEditProfileOpen(e.open)}
+        size="xl"
+        scrollBehavior="inside"
+      >
+        <DialogBackdrop />
+        <DialogContent maxH="90vh">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={8}>
+            <MemberProfileEdit
+              onSave={() => setEditProfileOpen(false)}
+              onCancel={() => setEditProfileOpen(false)}
+            />
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
     </Box>
   );
 }

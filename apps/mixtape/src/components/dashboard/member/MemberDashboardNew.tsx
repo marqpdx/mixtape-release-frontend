@@ -66,7 +66,8 @@ type SectionKey =
   | "my-groups"
   | "messages"
   | "create-group"
-  | "preferences";
+  | "preferences"
+  | "edit-profile";
 
 interface NavItem {
   key: SectionKey;
@@ -182,6 +183,7 @@ interface BannerProps {
   backgroundImageUrl?: string;
   groupCount: number;
   memberSince: string;
+  onEditProfile: () => void;
 }
 
 function DashboardBanner({
@@ -191,6 +193,7 @@ function DashboardBanner({
   backgroundImageUrl,
   groupCount,
   memberSince,
+  onEditProfile,
 }: BannerProps) {
   return (
     <Box
@@ -277,21 +280,20 @@ function DashboardBanner({
           </VStack>
         </HStack>
 
-        <Link as={NextLink} href="/dashboard?section=edit-profile" _hover={{ textDecoration: "none" }}>
-          <Button
-            className="mdn-banner-edit-btn"
-            size="sm"
-            bg="rgba(255,255,255,.18)"
-            color="white"
-            borderRadius="9999px"
-            border="1px solid rgba(255,255,255,.3)"
-            backdropFilter="blur(8px)"
-            _hover={{ bg: "rgba(255,255,255,.28)" }}
-            mb="4px"
-          >
-            Edit profile
-          </Button>
-        </Link>
+        <Button
+          className="mdn-banner-edit-btn"
+          size="sm"
+          bg="rgba(255,255,255,.18)"
+          color="white"
+          borderRadius="9999px"
+          border="1px solid rgba(255,255,255,.3)"
+          backdropFilter="blur(8px)"
+          _hover={{ bg: "rgba(255,255,255,.28)" }}
+          mb="4px"
+          onClick={onEditProfile}
+        >
+          Edit profile
+        </Button>
       </Flex>
     </Box>
   );
@@ -845,15 +847,24 @@ function ProfileCompletenessCard({
 
 // ── Main component ─────────────────────────────────────────────────────────
 
+const VALID_SECTIONS = new Set<string>([
+  "overview", "activity", "writing", "my-drafts", "write",
+  "my-groups", "messages", "create-group", "preferences", "edit-profile",
+]);
+
 interface MemberDashboardNewProps {
-  initialSection?: SectionKey;
+  initialSection?: string;
 }
 
-export function MemberDashboardNew({ initialSection = "overview" }: MemberDashboardNewProps) {
+export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) {
+  const safeInitial: SectionKey =
+    initialSection && VALID_SECTIONS.has(initialSection)
+      ? (initialSection as SectionKey)
+      : "overview";
   const { user: identity } = useAuth();
   const { groups } = useUserGroups();
 
-  const [activeSection, setActiveSection] = useState<SectionKey>(initialSection);
+  const [activeSection, setActiveSection] = useState<SectionKey>(safeInitial);
 
   if (!identity) return null;
 
@@ -877,6 +888,7 @@ export function MemberDashboardNew({ initialSection = "overview" }: MemberDashbo
         backgroundImageUrl={undefined}
         groupCount={groups.length}
         memberSince={memberSinceYear(identity.date_joined)}
+        onEditProfile={() => setActiveSection("edit-profile")}
       />
 
       {/* Body */}
