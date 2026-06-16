@@ -63,13 +63,13 @@ interface NavSectionDef {
 
 // ── nav config ─────────────────────────────────────────────────────────────
 
-function buildNavSections(hasIntro: boolean): NavSectionDef[] {
+function buildNavSections(): NavSectionDef[] {
   return [
     {
       label: "Welcome",
       items: [
-        { id: "start",     label: "Start Here",                                        icon: IconHome2,  rail: true  },
-        { id: "introduce", label: hasIntro ? "About Each Other" : "Tell About Yourself", icon: IconUsers, rail: false },
+        { id: "start",     label: "Start Here",   icon: IconHome2,  rail: true  },
+        { id: "introduce", label: "Who We Are",   icon: IconUsers,  rail: false },
       ],
     },
     {
@@ -416,7 +416,7 @@ export function GroupLandingD({
   });
 
   const hasIntro = !!user?.profile?.quick_intro;
-  const navSections = useMemo(() => buildNavSections(hasIntro), [hasIntro]);
+  const navSections = useMemo(() => buildNavSections(), []);
 
   const forumsQuery = useQuery({
     queryKey: ["threadworks", "forums", group.slug],
@@ -443,6 +443,15 @@ export function GroupLandingD({
     if (id !== "files" && id !== "findings") setSelectedCollectionId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [group.slug]);
+
+  const handleStartHereNavigate = useCallback((id: Parameters<typeof handleSelect>[0]) => {
+    // Only expand the card if there's no intro yet — card doesn't exist once intro is set
+    if (id === "introduce" && !hasIntro) {
+      setIsIntroCollapsed(false);
+      localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
+    }
+    handleSelect(id);
+  }, [handleSelect, group.slug, hasIntro]);
 
   const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string) => {
     setActive(id);
@@ -576,8 +585,8 @@ export function GroupLandingD({
             <QuickAnnouncementCreate groupSlug={group.slug} />
           )}
         </Flex>
-        {/* My Intro restore pill — absolutely positioned so it doesn't expand header height */}
-        {active === "introduce" && isIntroCollapsed && (
+        {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
+        {active === "introduce" && !hasIntro && isIntroCollapsed && (
           <Box
             position="absolute"
             bottom="10px"
@@ -644,7 +653,7 @@ export function GroupLandingD({
           <GridItem className="gld-main" minW={0}>
             <AnnouncementViewBox groupSlug={group.slug} />
             {active === "start" && (
-              <GroupLandingDStartHere viewData={viewData} onNavigate={handleSelect} />
+              <GroupLandingDStartHere viewData={viewData} onNavigate={handleStartHereNavigate} />
             )}
             {active === "introduce" && (
               <GroupLandingDTellAboutYourself

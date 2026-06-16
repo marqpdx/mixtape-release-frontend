@@ -271,7 +271,7 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
                 _hover={{ textDecoration: "underline" }}
                 display="inline"
               >
-                Tell About Yourself
+                About Us
               </Box>{" "}
               to write a short intro — it's how other members get to know you here.
             </Text>
