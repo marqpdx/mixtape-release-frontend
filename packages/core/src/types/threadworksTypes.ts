@@ -28,6 +28,7 @@ export interface Post {
   created_at: IsoDateString;
   updated_at?: IsoDateString;
   is_edited: boolean;
+  parent_id: string | null;
 }
 
 export interface Discussion {
