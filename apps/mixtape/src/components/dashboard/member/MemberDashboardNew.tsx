@@ -29,6 +29,7 @@ import {
   IconMessageCircle,
   IconAdjustments,
   IconCheck,
+  IconUsersPlus,
 } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
@@ -64,6 +65,7 @@ type SectionKey =
   | "write"
   | "my-groups"
   | "messages"
+  | "create-group"
   | "preferences";
 
 interface NavItem {
@@ -78,36 +80,42 @@ interface NavSection {
   items: NavItem[];
 }
 
-const NAV: NavSection[] = [
-  {
-    label: "HOME",
-    items: [
-      { key: "overview", label: "Overview", icon: IconHome2 },
-      { key: "activity", label: "Activity", icon: IconActivity },
-    ],
-  },
-  {
-    label: "WRITING",
-    items: [
-      { key: "writing", label: "My Writing", icon: IconPencil },
-      { key: "my-drafts", label: "Drafts", icon: IconFileText },
-      { key: "write", label: "New Piece", icon: IconPlus },
-    ],
-  },
-  {
-    label: "CONNECT",
-    items: [
-      { key: "my-groups", label: "My Groups", icon: IconUsers },
-      { key: "messages", label: "Private Chats", icon: IconMessageCircle },
-    ],
-  },
-  {
-    label: "ACCOUNT",
-    items: [
-      { key: "preferences", label: "Preferences", icon: IconAdjustments },
-    ],
-  },
-];
+function buildNav(isSuperuser: boolean): NavSection[] {
+  const accountItems: NavItem[] = [];
+  if (isSuperuser) {
+    accountItems.push({ key: "create-group", label: "Create Group", icon: IconUsersPlus });
+  }
+  accountItems.push({ key: "preferences", label: "Preferences", icon: IconAdjustments });
+
+  return [
+    {
+      label: "HOME",
+      items: [
+        { key: "overview", label: "Overview", icon: IconHome2 },
+        { key: "activity", label: "Activity", icon: IconActivity },
+      ],
+    },
+    {
+      label: "WRITING",
+      items: [
+        { key: "writing", label: "My Writing", icon: IconPencil },
+        { key: "my-drafts", label: "Drafts", icon: IconFileText },
+        { key: "write", label: "New Piece", icon: IconPlus },
+      ],
+    },
+    {
+      label: "CONNECT",
+      items: [
+        { key: "my-groups", label: "My Groups", icon: IconUsers },
+        { key: "messages", label: "Private Chats", icon: IconMessageCircle },
+      ],
+    },
+    {
+      label: "ACCOUNT",
+      items: accountItems,
+    },
+  ];
+}
 
 // ── sub-components ─────────────────────────────────────────────────────────
 
@@ -292,9 +300,11 @@ function DashboardBanner({
 // ── Left nav ───────────────────────────────────────────────────────────────
 
 function DashboardNav({
+  nav,
   activeSection,
   onSelect,
 }: {
+  nav: NavSection[];
   activeSection: SectionKey;
   onSelect: (key: SectionKey) => void;
 }) {
@@ -308,7 +318,7 @@ function DashboardNav({
       px="8px"
     >
       <VStack align="stretch" gap={0}>
-        {NAV.map((section, si) => (
+        {nav.map((section, si) => (
           <Box key={section.label}>
             {si > 0 && <Box h="1px" bg="theme.border" mx="12px" my="8px" />}
             <Text
@@ -849,6 +859,7 @@ export function MemberDashboardNew({ initialSection = "overview" }: MemberDashbo
 
   const profile = identity.profile;
   const displayName = profile?.display_name || identity.first_name || identity.username;
+  const nav = buildNav(!!identity.is_superuser);
 
   const isOverview = activeSection === "overview";
 
@@ -884,6 +895,7 @@ export function MemberDashboardNew({ initialSection = "overview" }: MemberDashbo
           {/* Left nav */}
           <GridItem className="mdn-col-nav">
             <DashboardNav
+              nav={nav}
               activeSection={activeSection}
               onSelect={setActiveSection}
             />
