@@ -76,7 +76,7 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
       description: "Welcome Mat is ready.",
       type: "success",
     });
-    router.push(`/app/groups/${group.slug}/welcome`);
+    router.push(`/groups/${group.slug}/welcome`);
   };
 
   const handleSaveAndVisit = async (values: GroupCreateFormValues) => {
@@ -87,7 +87,7 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
       description: "Opening your group.",
       type: "success",
     });
-    router.push(`/app/groups/${group.slug}`);
+    router.push(`/groups/${group.slug}`);
   };
 
   return (
