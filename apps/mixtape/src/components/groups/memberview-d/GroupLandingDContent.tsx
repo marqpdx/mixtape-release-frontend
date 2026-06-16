@@ -5,6 +5,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Flex, Grid, Image, Text, Button } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDiscussion } from "@mixtape/api/clients/threadworks/threadworksApi";
 import {
   IconUpload,
   IconMessageCircle,
@@ -206,7 +208,13 @@ interface StartHereProps {
 
 export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps) {
   const { user } = useAuth();
-  const hasIntro = !!user?.profile?.quick_intro;
+  const { data: wwaDiscussion } = useQuery({
+    queryKey: ["threadworks", "discussion", viewData.group.slug, "welcome", "who-we-are"],
+    queryFn: () => fetchDiscussion("welcome", "who-we-are", viewData.group.slug),
+  });
+  const hasPostedToThread = (wwaDiscussion?.posts ?? []).some(
+    (p) => p.author.username === user?.username
+  );
   const [tab, setTab] = useState<StartTab>("welcome");
 
   useEffect(() => {
@@ -263,7 +271,7 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
               This is your group's home. Use the <strong style={{ color: "inherit" }}>left navigation</strong> to move
               between welcome materials, conversations, and resources.
             </Text>
-            {!hasIntro && (
+            {!hasPostedToThread && (
               <Text className="gld-content-head-to" fontSize="15px" lineHeight="1.5" color="theme.textSecondary">
                 Head to{" "}
                 <Box

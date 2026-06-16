@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -111,17 +111,9 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
   const { user, refreshUser } = useAuth();
   const qc = useQueryClient();
 
-  const hasIntro = !!user?.profile?.quick_intro;
-
-  // ── quick intro edit ────────────────────────────────────────────────────
   const [introText, setIntroText] = useState("");
-  const [introSaving, setIntroSaving] = useState(false);
-  const [introSaved, setIntroSaved] = useState(false);
-
-  useEffect(() => {
-    setIntroText(user?.profile?.quick_intro || "");
-    setIntroSaved(false);
-  }, [user?.profile?.quick_intro]);
+  const [showProfileNudge, setShowProfileNudge] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const remaining = MAX_INTRO_LENGTH - introText.length;
 
@@ -133,7 +125,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
 
   const [replyText, setReplyText] = useState("");
 
-  const postMutation = useMutation({
+  const replyMutation = useMutation({
     mutationFn: (content: string) =>
       createPost(WELCOME_FORUM, TAY_SLUG, { content }, groupSlug),
     onSuccess: () => {
@@ -145,218 +137,303 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
     onError: () => toaster.error({ title: "Could not post reply" }),
   });
 
-  const posts = discussionQuery.data?.posts ?? [];
-  const hasPostedToThread = posts.some((p) => p.author.username === user?.username);
+  const introMutation = useMutation({
+    mutationFn: (content: string) =>
+      createPost(WELCOME_FORUM, TAY_SLUG, { content }, groupSlug),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: ["threadworks", "discussion", groupSlug, WELCOME_FORUM, TAY_SLUG],
+      });
+      if (!user?.profile?.quick_intro) {
+        setShowProfileNudge(true);
+      }
+    },
+    onError: () => toaster.error({ title: "Could not post intro" }),
+  });
 
-  async function handleSaveIntro() {
-    if (!user?.username || remaining < 0) return;
-    setIntroSaving(true);
-    setIntroSaved(false);
+  const posts = discussionQuery.data?.posts ?? [];
+  const hasPostedToThread = !discussionQuery.isLoading && posts.some((p) => p.author.username === user?.username);
+  const showIntroCard = !discussionQuery.isLoading && !hasPostedToThread && !isCollapsed;
+
+  async function handleUseAsProfileIntro() {
+    if (!user?.username) return;
+    setProfileSaving(true);
     try {
       await axiosInstance.patch(`/api/members/${user.username}`, {
         quick_intro: introText.trim(),
       });
       await refreshUser();
-      setIntroSaved(true);
-      toaster.success({ title: "Intro saved" });
-
-      // Auto-post to thread only on first-ever introduction (not if they zeroed and re-set)
-      if (!discussionQuery.isLoading && !hasPostedToThread) {
-        await createPost(WELCOME_FORUM, TAY_SLUG, { content: introText.trim() }, groupSlug);
-        qc.invalidateQueries({
-          queryKey: ["threadworks", "discussion", groupSlug, WELCOME_FORUM, TAY_SLUG],
-        });
-      }
+      setShowProfileNudge(false);
+      toaster.success({ title: "Profile updated" });
     } catch {
-      toaster.error({ title: "Could not save intro" });
+      toaster.error({ title: "Could not update profile" });
     } finally {
-      setIntroSaving(false);
+      setProfileSaving(false);
     }
   }
 
   return (
     <Flex className="tay-root" direction="column" gap={5}>
 
-      {/* Quick intro card — only shown before quick_intro is set; hidden when collapsed */}
-      {!hasIntro && !isCollapsed && (
-      <Box
-        className="tay-intro-card"
-        bg="theme.surface"
-        borderWidth="1px"
-        borderColor="theme.border"
-        borderRadius="16px"
-        boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
-        p={5}
-      >
-        <Flex className="tay-intro-body" gap={6} align="stretch">
+      {/* Intro card — shown when user hasn't posted to this group's Who We Are thread yet */}
+      {showIntroCard && (
+        <Box
+          className="tay-intro-card"
+          bg="theme.surface"
+          borderWidth="1px"
+          borderColor="theme.border"
+          borderRadius="16px"
+          boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
+          p={5}
+        >
+          <Flex className="tay-intro-body" gap={6} align="stretch">
 
-          {/* Left 60% — textarea + controls; flex column so textarea fills height */}
-          <Flex flex="3" minW={0} direction="column" gap={3}>
-            <Flex align="center" justify="space-between">
-              <Text
-                fontSize="11.5px"
-                fontWeight="600"
-                letterSpacing="0.14em"
-                textTransform="uppercase"
-                color="theme.textMuted"
-              >
-                Your introduction
-              </Text>
-              {user?.username && (
-                <Box
-                  display="inline-block"
-                  px="10px"
-                  py="4px"
-                  borderRadius="full"
-                  bg="theme.accentSoft"
-                  borderWidth="1px"
-                  borderColor="theme.border"
-                >
-                  <Text fontSize="13px" fontWeight="600" color="theme.accent">
-                    @{user.username}
-                  </Text>
-                </Box>
-              )}
-            </Flex>
-
-            <Textarea
-              className="tay-intro-textarea"
-              flex="1"
-              minH="80px"
-              value={introText}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                setIntroText(e.target.value);
-                setIntroSaved(false);
-              }}
-              placeholder="A few words about who you are, what you're exploring, or what brings you here."
-              bg="theme.surface"
-              borderColor={remaining < 0 ? "red.400" : "theme.border"}
-              _focus={{
-                borderColor: remaining < 0 ? "red.400" : "theme.accent",
-                boxShadow: "none",
-              }}
-              resize="none"
-            />
-
-            <Flex align="center" justify="space-between">
-              <Text
-                fontSize="12px"
-                color={remaining < 0 ? "red.400" : remaining < 20 ? "theme.accent" : "theme.textMuted"}
-              >
-                {remaining} characters left
-              </Text>
-              <Box
-                as="button"
-                px="16px"
-                py="7px"
-                borderRadius="full"
-                bg={introSaved ? "theme.bgSubtle" : "theme.accent"}
-                color={introSaved ? "theme.textSecondary" : "white"}
-                fontSize="13px"
-                fontWeight="600"
-                cursor={introSaving || remaining < 0 ? "not-allowed" : "pointer"}
-                opacity={introSaving || remaining < 0 ? 0.6 : 1}
-                transition="all 0.12s"
-                _hover={!introSaving && remaining >= 0 ? { opacity: 0.9 } : {}}
-                onClick={handleSaveIntro}
-              >
-                {introSaving ? "Saving…" : introSaved ? "Saved ✓" : "Save intro"}
-              </Box>
-            </Flex>
-          </Flex>
-
-          {/* Right 40% — context panel */}
-          <Flex
-            className="tay-intro-context"
-            flex="2"
-            position="relative"
-            direction="column"
-            justify="space-between"
-            borderLeftWidth="1px"
-            borderColor="theme.border"
-            pl={6}
-            gap={4}
-          >
-            {/* Minimize button — sits just outside card top-right corner */}
-            <Box
-              as="button"
-              position="absolute"
-              top="-15px"
-              right="-15px"
-              display="inline-flex"
-              alignItems="center"
-              justifyContent="center"
-              w="24px"
-              h="24px"
-              borderRadius="full"
-              borderWidth="1px"
-              borderColor="theme.border"
-              color="theme.textSecondary"
-              cursor="pointer"
-              _hover={{ bg: "theme.bgSubtle", color: "theme.text", borderColor: "theme.textMuted" }}
-              transition="all 0.12s"
-              onClick={onCollapse}
-              title="Hide Your Introduction"
-            >
-              <IconMinus size={13} />
-            </Box>
-
-            {/* Info text — icon floats left, text wraps around it (dropcap style) */}
-            <Box fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6" overflow="hidden" pr={"5px"}>
-              <Box color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
-                <IconInfoCircle size={20} />
-              </Box>
-              A short intro helps others know who they're talking to. Write a few
-              words — it'll appear in the thread below and stay on your profile.
-              <Box mt={2}>
-                You can also fill this in through{" "}
-                <Box as="span" fontWeight="500" color="theme.text">Edit Profile</Box>{" "}
-                below.
-              </Box>
-              <Box mt={2}>
-                Not ready yet? Hit the{" "}
-                <Box
-                  as="span"
-                  display="inline-flex"
-                  alignItems="center"
-                  verticalAlign="middle"
-                  mx="2px"
-                  position="relative"
-                  top="-1px"
+            {/* Left 60% — textarea + controls; flex column so textarea fills height */}
+            <Flex flex="3" minW={0} direction="column" gap={3}>
+              <Flex align="center" justify="space-between">
+                <Text
+                  fontSize="11.5px"
+                  fontWeight="600"
+                  letterSpacing="0.14em"
+                  textTransform="uppercase"
                   color="theme.textMuted"
                 >
-                  <IconMinus size={13} />
-                </Box>{" "}
-                button to come back to this later.
-              </Box>
-            </Box>
+                  Your introduction
+                </Text>
+                {user?.username && (
+                  <Box
+                    display="inline-block"
+                    px="10px"
+                    py="4px"
+                    borderRadius="full"
+                    bg="theme.accentSoft"
+                    borderWidth="1px"
+                    borderColor="theme.border"
+                  >
+                    <Text fontSize="13px" fontWeight="600" color="theme.accent">
+                      @{user.username}
+                    </Text>
+                  </Box>
+                )}
+              </Flex>
 
-            <Box>
-              <NextLink href="/dashboard?section=edit-profile">
+              {/* Copy from profile — offered when they have a profile intro but textarea is empty */}
+              {user?.profile?.quick_intro && introText === "" && (
                 <Box
-                  display="inline-block"
-                  px="14px"
+                  as="button"
+                  textAlign="left"
+                  fontSize="13px"
+                  color="theme.accent"
+                  fontWeight="500"
+                  cursor="pointer"
+                  _hover={{ textDecoration: "underline" }}
+                  onClick={() => setIntroText(user?.profile?.quick_intro ?? "")}
+                >
+                  Copy from your profile intro →
+                </Box>
+              )}
+
+              <Textarea
+                className="tay-intro-textarea"
+                flex="1"
+                minH="80px"
+                value={introText}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                  setIntroText(e.target.value);
+                }}
+                placeholder="A few words about who you are, what you're exploring, or what brings you here."
+                bg="theme.surface"
+                borderColor={remaining < 0 ? "red.400" : "theme.border"}
+                _focus={{
+                  borderColor: remaining < 0 ? "red.400" : "theme.accent",
+                  boxShadow: "none",
+                }}
+                resize="none"
+              />
+
+              <Flex align="center" justify="space-between">
+                <Text
+                  fontSize="12px"
+                  color={remaining < 0 ? "red.400" : remaining < 20 ? "theme.accent" : "theme.textMuted"}
+                >
+                  {remaining} characters left
+                </Text>
+                <Box
+                  as="button"
+                  px="16px"
                   py="7px"
                   borderRadius="full"
-                  bg="theme.bgSubtle"
-                  borderWidth="1px"
-                  borderColor="theme.border"
+                  bg="theme.accent"
+                  color="white"
                   fontSize="13px"
                   fontWeight="600"
-                  color="theme.textSecondary"
-                  cursor="pointer"
-                  _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+                  cursor={introMutation.isPending || !introText.trim() || remaining < 0 ? "not-allowed" : "pointer"}
+                  opacity={introMutation.isPending || !introText.trim() || remaining < 0 ? 0.6 : 1}
                   transition="all 0.12s"
+                  _hover={!introMutation.isPending && !!introText.trim() && remaining >= 0 ? { opacity: 0.9 } : {}}
+                  onClick={() => {
+                    if (!introMutation.isPending && introText.trim() && remaining >= 0) {
+                      introMutation.mutate(introText.trim());
+                    }
+                  }}
                 >
-                  Edit Profile
+                  {introMutation.isPending ? "Posting…" : "Post intro"}
                 </Box>
-              </NextLink>
-            </Box>
-          </Flex>
-        </Flex>
+              </Flex>
+            </Flex>
 
-      </Box>
-      )} {/* end !hasIntro && !isCollapsed */}
+            {/* Right 40% — context panel */}
+            <Flex
+              className="tay-intro-context"
+              flex="2"
+              position="relative"
+              direction="column"
+              justify="space-between"
+              borderLeftWidth="1px"
+              borderColor="theme.border"
+              pl={6}
+              gap={4}
+            >
+              {/* Minimize button — sits just outside card top-right corner */}
+              <Box
+                as="button"
+                position="absolute"
+                top="-15px"
+                right="-15px"
+                display="inline-flex"
+                alignItems="center"
+                justifyContent="center"
+                w="24px"
+                h="24px"
+                borderRadius="full"
+                borderWidth="1px"
+                borderColor="theme.border"
+                color="theme.textSecondary"
+                cursor="pointer"
+                _hover={{ bg: "theme.bgSubtle", color: "theme.text", borderColor: "theme.textMuted" }}
+                transition="all 0.12s"
+                onClick={onCollapse}
+                title="Hide Your Introduction"
+              >
+                <IconMinus size={13} />
+              </Box>
+
+              {/* Info text */}
+              <Box fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6" overflow="hidden" pr={"5px"}>
+                <Box color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
+                  <IconInfoCircle size={20} />
+                </Box>
+                A short intro helps others in this group know who they're talking to. It'll
+                appear in the Who We Are thread below — separate from your global profile.
+                <Box mt={2}>
+                  You can also fill this in through{" "}
+                  <Box as="span" fontWeight="500" color="theme.text">Edit Profile</Box>{" "}
+                  below.
+                </Box>
+                <Box mt={2}>
+                  Not ready yet? Hit the{" "}
+                  <Box
+                    as="span"
+                    display="inline-flex"
+                    alignItems="center"
+                    verticalAlign="middle"
+                    mx="2px"
+                    position="relative"
+                    top="-1px"
+                    color="theme.textMuted"
+                  >
+                    <IconMinus size={13} />
+                  </Box>{" "}
+                  button to come back to this later.
+                </Box>
+              </Box>
+
+              <Box>
+                <NextLink href="/dashboard?section=edit-profile">
+                  <Box
+                    display="inline-block"
+                    px="14px"
+                    py="7px"
+                    borderRadius="full"
+                    bg="theme.bgSubtle"
+                    borderWidth="1px"
+                    borderColor="theme.border"
+                    fontSize="13px"
+                    fontWeight="600"
+                    color="theme.textSecondary"
+                    cursor="pointer"
+                    _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+                    transition="all 0.12s"
+                  >
+                    Edit Profile
+                  </Box>
+                </NextLink>
+              </Box>
+            </Flex>
+          </Flex>
+        </Box>
+      )}
+
+      {/* Profile nudge — one-time prompt after first post when quick_intro was empty */}
+      {showProfileNudge && (
+        <Box
+          className="tay-profile-nudge"
+          bg="theme.surface"
+          borderWidth="1px"
+          borderColor="theme.accent"
+          borderRadius="16px"
+          px={5}
+          py={4}
+        >
+          <Flex align="center" gap={4}>
+            <Box flex="1">
+              <Text fontWeight="600" fontSize="14px" color="theme.text">
+                Use this as your profile intro?
+              </Text>
+              <Text fontSize="13px" color="theme.textSecondary" mt="2px">
+                Your profile doesn't have a quick intro yet — want to add this one?
+              </Text>
+            </Box>
+            <Flex gap={2} flexShrink={0}>
+              <Box
+                as="button"
+                px="14px"
+                py="6px"
+                borderRadius="full"
+                bg="theme.bgSubtle"
+                borderWidth="1px"
+                borderColor="theme.border"
+                fontSize="13px"
+                fontWeight="600"
+                color="theme.textSecondary"
+                cursor="pointer"
+                _hover={{ borderColor: "theme.textMuted" }}
+                transition="all 0.12s"
+                onClick={() => setShowProfileNudge(false)}
+              >
+                No thanks
+              </Box>
+              <Box
+                as="button"
+                px="14px"
+                py="6px"
+                borderRadius="full"
+                bg="theme.accent"
+                color="white"
+                fontSize="13px"
+                fontWeight="600"
+                cursor={profileSaving ? "not-allowed" : "pointer"}
+                opacity={profileSaving ? 0.6 : 1}
+                transition="all 0.12s"
+                _hover={!profileSaving ? { opacity: 0.9 } : {}}
+                onClick={handleUseAsProfileIntro}
+              >
+                {profileSaving ? "Saving…" : "Yes, update profile"}
+              </Box>
+            </Flex>
+          </Flex>
+        </Box>
+      )}
 
       {/* Discussion thread */}
       <Box
@@ -390,7 +467,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
           {!discussionQuery.isLoading && posts.length === 0 && (
             <Box textAlign="center" py={10}>
               <Text fontSize="14px" color="theme.textMuted">
-                No posts yet — save your intro above to start the thread.
+                No posts yet — be the first to introduce yourself.
               </Text>
             </Box>
           )}
@@ -436,13 +513,13 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
               alignItems="center"
               justifyContent="center"
               cursor={
-                postMutation.isPending || !replyText.trim() ? "not-allowed" : "pointer"
+                replyMutation.isPending || !replyText.trim() ? "not-allowed" : "pointer"
               }
-              opacity={postMutation.isPending || !replyText.trim() ? 0.4 : 1}
+              opacity={replyMutation.isPending || !replyText.trim() ? 0.4 : 1}
               transition="opacity 0.12s"
               onClick={() => {
-                if (!postMutation.isPending && replyText.trim()) {
-                  postMutation.mutate(replyText.trim());
+                if (!replyMutation.isPending && replyText.trim()) {
+                  replyMutation.mutate(replyText.trim());
                 }
               }}
             >
