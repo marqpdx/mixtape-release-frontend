@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Box, Flex, Image, Text, Textarea, Spinner, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { IconSend, IconInfoCircle, IconMinus } from "@tabler/icons-react";
@@ -219,9 +219,9 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
       >
         <Flex className="tay-intro-body" gap={6} align="stretch">
 
-          {/* Left 60% — textarea + controls */}
-          <Box flex="3" minW={0}>
-            <Flex align="center" justify="space-between" mb={4}>
+          {/* Left 60% — textarea + controls; flex column so textarea fills height */}
+          <Flex flex="3" minW={0} direction="column" gap={3}>
+            <Flex align="center" justify="space-between">
               <Text
                 fontSize="11.5px"
                 fontWeight="600"
@@ -231,39 +231,27 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
               >
                 Your introduction
               </Text>
-              <Flex align="center" gap={2}>
-                {user?.username && (
-                  <Box
-                    display="inline-block"
-                    px="10px"
-                    py="4px"
-                    borderRadius="full"
-                    bg="theme.accentSoft"
-                    borderWidth="1px"
-                    borderColor="theme.border"
-                  >
-                    <Text fontSize="13px" fontWeight="600" color="theme.accent">
-                      @{user.username}
-                    </Text>
-                  </Box>
-                )}
-                <IconButton
-                  aria-label="Hide Your Introduction"
-                  size="xs"
-                  variant="ghost"
-                  color="theme.textFaint"
-                  _hover={{ color: "theme.textMuted" }}
-                  onClick={onCollapse}
-                  title="Hide this section"
+              {user?.username && (
+                <Box
+                  display="inline-block"
+                  px="10px"
+                  py="4px"
+                  borderRadius="full"
+                  bg="theme.accentSoft"
+                  borderWidth="1px"
+                  borderColor="theme.border"
                 >
-                  <IconMinus size={14} />
-                </IconButton>
-              </Flex>
+                  <Text fontSize="13px" fontWeight="600" color="theme.accent">
+                    @{user.username}
+                  </Text>
+                </Box>
+              )}
             </Flex>
 
             <Textarea
               className="tay-intro-textarea"
-              rows={4}
+              flex="1"
+              minH="80px"
               value={introText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                 setIntroText(e.target.value);
@@ -277,10 +265,10 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
                 borderColor: remaining < 0 ? "red.400" : "theme.accent",
                 boxShadow: "none",
               }}
-              resize="vertical"
+              resize="none"
             />
 
-            <Flex align="center" justify="space-between" mt={3}>
+            <Flex align="center" justify="space-between">
               <Text
                 fontSize="12px"
                 color={remaining < 0 ? "red.400" : remaining < 20 ? "theme.accent" : "theme.textMuted"}
@@ -305,12 +293,13 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
                 {introSaving ? "Saving…" : introSaved ? "Saved ✓" : "Save intro"}
               </Box>
             </Flex>
-          </Box>
+          </Flex>
 
           {/* Right 40% — context panel */}
           <Flex
             className="tay-intro-context"
             flex="2"
+            position="relative"
             direction="column"
             justify="space-between"
             borderLeftWidth="1px"
@@ -318,19 +307,44 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
             pl={6}
             gap={4}
           >
-            <Flex gap={3} align="flex-start">
-              <Box color="theme.accent" flexShrink={0} mt="2px">
+            {/* Minimize button — sits just outside card top-right corner */}
+            <Box
+              as="button"
+              position="absolute"
+              top="-15px"
+              right="-15px"
+              display="inline-flex"
+              alignItems="center"
+              justifyContent="center"
+              w="24px"
+              h="24px"
+              borderRadius="full"
+              borderWidth="1px"
+              borderColor="theme.border"
+              color="theme.textSecondary"
+              cursor="pointer"
+              _hover={{ bg: "theme.bgSubtle", color: "theme.text", borderColor: "theme.textMuted" }}
+              transition="all 0.12s"
+              onClick={onCollapse}
+              title="Hide Your Introduction"
+            >
+              <IconMinus size={13} />
+            </Box>
+
+            {/* Info text — icon floats left, text wraps around it (dropcap style) */}
+            <Box fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6" overflow="hidden" pr={"5px"}>
+              <Box color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
                 <IconInfoCircle size={20} />
               </Box>
-              <Text fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6">
-                Thank you for sharing a bit about you. You can see what others have
-                written below.
-                <br /><br />
+              Thank you for sharing a bit about you. You can see what others have
+              written below.
+              <Box mt={2}>
                 You can edit this and other profile fields by clicking{" "}
-                <Box as="span" fontWeight="600" color="theme.text">Edit Profile</Box>{" "}
+                <Box as="span" fontWeight="500" color="theme.text">Edit Profile</Box>{" "}
                 below.
-                <br /><br />
-                When you{"'"}re good for now, you can hide this section by clicking the{" "}
+              </Box>
+              <Box mt={2}>
+                Also, you can hide this section by clicking the{" "}
                 <Box
                   as="span"
                   display="inline-flex"
@@ -343,31 +357,32 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
                 >
                   <IconMinus size={13} />
                 </Box>{" "}
-                button above, and restore it with the{" "}
-                <Box as="span" fontWeight="600" color="theme.text">Your Intro</Box>{" "}
+                button above to the right, and restore it with the{" "}
+                <Box as="span" fontWeight="600" color="theme.text">My Intro</Box>{" "}
                 button that appears in the header.
-              </Text>
-            </Flex>
-            <Box>
-              <Box
-                as={NextLink}
-                href="/dashboard?section=edit-profile"
-                display="inline-block"
-                px="14px"
-                py="7px"
-                borderRadius="full"
-                bg="theme.bgSubtle"
-                borderWidth="1px"
-                borderColor="theme.border"
-                fontSize="13px"
-                fontWeight="600"
-                color="theme.textSecondary"
-                cursor="pointer"
-                _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
-                transition="all 0.12s"
-              >
-                Edit Profile
               </Box>
+            </Box>
+
+            <Box>
+              <NextLink href="/dashboard?section=edit-profile">
+                <Box
+                  display="inline-block"
+                  px="14px"
+                  py="7px"
+                  borderRadius="full"
+                  bg="theme.bgSubtle"
+                  borderWidth="1px"
+                  borderColor="theme.border"
+                  fontSize="13px"
+                  fontWeight="600"
+                  color="theme.textSecondary"
+                  cursor="pointer"
+                  _hover={{ color: "theme.accent", borderColor: "theme.accent" }}
+                  transition="all 0.12s"
+                >
+                  Edit Profile
+                </Box>
+              </NextLink>
             </Box>
           </Flex>
         </Flex>

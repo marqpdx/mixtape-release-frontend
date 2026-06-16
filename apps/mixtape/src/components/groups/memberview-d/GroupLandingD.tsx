@@ -405,9 +405,15 @@ export function GroupLandingD({
 }: GroupLandingDProps) {
   const { user } = useAuth();
   const viewData = useGroupMemberViewData(group);
-  const [active, setActive] = useState<DestinationId>("start");
+  const [active, setActive] = useState<DestinationId>(() => {
+    if (typeof window === "undefined") return "start";
+    return (localStorage.getItem(`gld:${group.slug}:active`) as DestinationId) ?? "start";
+  });
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
-  const [isIntroCollapsed, setIsIntroCollapsed] = useState(false);
+  const [isIntroCollapsed, setIsIntroCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`gld:${group.slug}:introCollapsed`) === "true";
+  });
 
   const hasIntro = !!user?.profile?.quick_intro;
   const navSections = useMemo(() => buildNavSections(hasIntro), [hasIntro]);
@@ -433,15 +439,17 @@ export function GroupLandingD({
 
   const handleSelect = useCallback((id: DestinationId) => {
     setActive(id);
+    localStorage.setItem(`gld:${group.slug}:active`, id);
     if (id !== "files" && id !== "findings") setSelectedCollectionId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [group.slug]);
 
   const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string) => {
     setActive(id);
+    localStorage.setItem(`gld:${group.slug}:active`, id);
     setSelectedCollectionId(collectionId ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [group.slug]);
 
   const activeItem = navSections.flatMap((s) => s.items).find((i) => i.id === active);
   const showRail = activeItem?.rail ?? false;
@@ -493,6 +501,7 @@ export function GroupLandingD({
       {/* Compact header */}
       <Box
         className="gld-header"
+        position="relative"
         borderBottomWidth="1px"
         borderColor="theme.border"
         bg="theme.bg"
@@ -567,32 +576,37 @@ export function GroupLandingD({
             <QuickAnnouncementCreate groupSlug={group.slug} />
           )}
         </Flex>
-        {/* Your Intro restore pill — appears when intro card is collapsed */}
+        {/* My Intro restore pill — absolutely positioned so it doesn't expand header height */}
         {active === "introduce" && isIntroCollapsed && (
-          <Flex justify="flex-end" pb={2} pt={1}>
+          <Box
+            position="absolute"
+            bottom="10px"
+            right={{ base: "18px", xl: "48px" }}
+          >
             <Box
               as="button"
               display="inline-flex"
               alignItems="center"
-              gap="6px"
-              px="12px"
-              py="5px"
+              px="10px"
+              py="3px"
               borderRadius="full"
               bg="theme.accentSoft"
               borderWidth="1px"
               borderColor="theme.accent"
-              fontSize="12.5px"
+              fontSize="11px"
               fontWeight="600"
               color="theme.accent"
               cursor="pointer"
               _hover={{ bg: "theme.accent", color: "white" }}
               transition="all 0.15s"
-              onClick={() => setIsIntroCollapsed(false)}
+              onClick={() => {
+                setIsIntroCollapsed(false);
+                localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
+              }}
             >
-              <IconMinus size={12} />
-              Your Intro
+              My Intro
             </Box>
-          </Flex>
+          </Box>
         )}
       </Box>
 
@@ -636,7 +650,10 @@ export function GroupLandingD({
               <GroupLandingDTellAboutYourself
                 groupSlug={group.slug}
                 isCollapsed={isIntroCollapsed}
-                onCollapse={() => setIsIntroCollapsed(true)}
+                onCollapse={() => {
+                  setIsIntroCollapsed(true);
+                  localStorage.setItem(`gld:${group.slug}:introCollapsed`, "true");
+                }}
               />
             )}
             {(active === "share" || active === "converse") && (
