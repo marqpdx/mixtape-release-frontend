@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { Box, Badge, Heading, VStack, HStack, Text, Flex } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import { IconUser, IconMessageCircle } from '@tabler/icons-react'
-import { Discussion, formatThreadPostCount } from '@mixtape/core/types/threadworksTypes'
+import { Discussion, formatThreadPostCount, getThreadworksUserDisplayName } from '@mixtape/core/types/threadworksTypes'
 import { formatTimeAgo, truncateText } from './threadworksUtils'
 
 interface DiscussionListProps {
@@ -71,7 +71,7 @@ export default function DiscussionList({
                     {discussion.created_by && (
                       <HStack gap={1}>
                         <IconUser size={14} />
-                        <Text>{discussion.created_by.first_name} {discussion.created_by.last_name}</Text>
+                        <Text>{getThreadworksUserDisplayName(discussion.created_by)}</Text>
                       </HStack>
                     )}
                     <Text>•</Text>

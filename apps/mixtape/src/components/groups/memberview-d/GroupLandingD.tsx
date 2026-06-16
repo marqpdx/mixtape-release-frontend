@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   IconHome2,
   IconUsers,
-  IconUpload,
   IconMessageCircle,
   IconFolder,
   IconUserCircle,
@@ -74,7 +73,6 @@ function buildNavSections(): NavSectionDef[] {
     {
       label: "Connect",
       items: [
-        { id: "share",    label: "Share",    icon: IconUpload,        rail: false },
         { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
         { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
       ],
@@ -82,7 +80,7 @@ function buildNavSections(): NavSectionDef[] {
     {
       label: "Resources",
       items: [
-        { id: "files",    label: "Core Files", icon: IconFolder, rail: false },
+        { id: "files",    label: "Collections", icon: IconFolder, rail: false },
       ],
     },
   ];

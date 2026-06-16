@@ -5,7 +5,7 @@ import { Box, Button, Heading, VStack, HStack, Spacer, Textarea, Text, Spinner, 
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Divider } from '@components/common/Divider'
 import { IconUser, IconClock, IconMessageCircle } from '@tabler/icons-react'
-import { Discussion, CreatePostData } from '@mixtape/core/types/threadworksTypes'
+import { Discussion, CreatePostData, getThreadworksUserDisplayName } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations, useDiscussion } from '@hooks/threadworks/useThreadworks'
 import { formatTimeAgo } from './threadworksUtils'
 import PostItem from './PostItem'
@@ -119,7 +119,7 @@ export default function DiscussionDetail({
         {currentDiscussion.created_by && (
           <HStack gap={1}>
             <IconUser size={16} />
-            <Text>{currentDiscussion.created_by.first_name} {currentDiscussion.created_by.last_name}</Text>
+            <Text>{getThreadworksUserDisplayName(currentDiscussion.created_by)}</Text>
           </HStack>
         )}
         <HStack gap={1}>
