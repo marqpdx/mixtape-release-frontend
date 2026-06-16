@@ -80,7 +80,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<ProfileFormData>({
     defaultValues: {
       display_name: "",
@@ -179,6 +179,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
   const avatarUrl = watch("avatar_url");
   const displayName = watch("display_name");
   const bioJson = watch("bio_json") as JSONContent | undefined;
+  const quickIntro = watch("quick_intro");
 
   const { handleImageChange, pending, previewUrls } = useImageUpload<ProfileFormData>({
     sponsorType: "member",
@@ -368,19 +369,21 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
           </HStack>
         </Box>
 
-        {/* Editable Fields */}
+        {/* Basics */}
         <Box
+          as="fieldset"
           bg={cardBg}
           border="1px solid"
           borderColor={cardBorder}
           borderRadius="xl"
           p={6}
         >
+          <Heading as="legend" size="sm" mb={5} fontWeight="semibold">
+            Basics
+          </Heading>
           <VStack gap={5} align="stretch">
             <Field.Root invalid={!!errors.display_name}>
-              <Field.Label>
-                Display Name
-              </Field.Label>
+              <Field.Label>Display Name</Field.Label>
               <Input
                 {...register("display_name", {
                   maxLength: { value: 100, message: "Display name must be 100 characters or less" }
@@ -395,10 +398,28 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               )}
             </Field.Root>
 
-            <Field.Root invalid={!!errors.avatar_url}>
+            <Field.Root required invalid={!!errors.quick_intro}>
               <Field.Label>
-                Avatar URL
+                Quick Intro <Text as="span" color="red.500" aria-hidden="true">*</Text>
               </Field.Label>
+              <Textarea
+                {...register("quick_intro", {
+                  required: "Quick intro is required",
+                  maxLength: { value: 300, message: "Quick intro must be 300 characters or less" }
+                })}
+                placeholder="A brief introduction about yourself..."
+                rows={4}
+              />
+              <Field.HelperText>
+                A short bio or introduction (up to 300 characters)
+              </Field.HelperText>
+              {errors.quick_intro && (
+                <Field.ErrorText>{errors.quick_intro.message}</Field.ErrorText>
+              )}
+            </Field.Root>
+
+            <Field.Root invalid={!!errors.avatar_url}>
+              <Field.Label>Avatar URL</Field.Label>
               <Input
                 {...register("avatar_url", {
                   pattern: {
@@ -415,30 +436,24 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
                 <Field.ErrorText>{errors.avatar_url.message}</Field.ErrorText>
               )}
             </Field.Root>
+          </VStack>
+        </Box>
 
-            <Field.Root invalid={!!errors.quick_intro}>
-              <Field.Label>
-                Quick Intro
-              </Field.Label>
-              <Textarea
-                {...register("quick_intro", {
-                  maxLength: { value: 300, message: "Quick intro must be 300 characters or less" }
-                })}
-                placeholder="A brief introduction about yourself..."
-                rows={4}
-              />
-              <Field.HelperText>
-                A short bio or introduction (up to 300 characters)
-              </Field.HelperText>
-              {errors.quick_intro && (
-                <Field.ErrorText>{errors.quick_intro.message}</Field.ErrorText>
-              )}
-            </Field.Root>
-
+        {/* More Info */}
+        <Box
+          as="fieldset"
+          bg={cardBg}
+          border="1px solid"
+          borderColor={cardBorder}
+          borderRadius="xl"
+          p={6}
+        >
+          <Heading as="legend" size="sm" mb={5} fontWeight="semibold">
+            More Info
+          </Heading>
+          <VStack gap={5} align="stretch">
             <Field.Root invalid={!!errors.right_now}>
-              <Field.Label>
-                Right now
-              </Field.Label>
+              <Field.Label>Right now</Field.Label>
               <Textarea
                 {...register("right_now", {
                   maxLength: {
@@ -469,9 +484,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
                   rows={2}
                   resize="vertical"
                 />
-                <Field.HelperText>
-                  Short freeform list is fine for now.
-                </Field.HelperText>
+                <Field.HelperText>Short freeform list is fine for now.</Field.HelperText>
                 {errors.skills && (
                   <Field.ErrorText>{errors.skills.message}</Field.ErrorText>
                 )}
@@ -489,9 +502,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
                   rows={2}
                   resize="vertical"
                 />
-                <Field.HelperText>
-                  What you are actively working in or around.
-                </Field.HelperText>
+                <Field.HelperText>What you are actively working in or around.</Field.HelperText>
                 {errors.work_areas && (
                   <Field.ErrorText>{errors.work_areas.message}</Field.ErrorText>
                 )}
@@ -629,9 +640,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
             </HStack>
 
             <Field.Root>
-              <Field.Label>
-                Bio
-              </Field.Label>
+              <Field.Label>Bio</Field.Label>
               <Box border="1px solid" borderColor={cardBorder} borderRadius="md" p={3} w="100%">
                 <TipTapEditor
                   initialContent={bioJson || { type: "doc", content: [] }}
@@ -651,7 +660,19 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
         )}
 
         {/* Form Actions */}
-        <Flex justify="flex-end" gap={4}>
+        <Flex
+          justify="flex-end"
+          gap={4}
+          position="sticky"
+          bottom={0}
+          bg={cardBg}
+          borderTop="1px solid"
+          borderColor={cardBorder}
+          py={3}
+          px={4}
+          zIndex={10}
+          mx={-4}
+        >
           {onCancel && (
             <Button
               variant="ghost"
@@ -688,7 +709,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
           <Button
             type="submit"
             loading={isUpdating}
-            disabled={!isDirty}
+            disabled={!quickIntro?.trim()}
             colorPalette="blue"
           >
             <IconCheck size={18} />

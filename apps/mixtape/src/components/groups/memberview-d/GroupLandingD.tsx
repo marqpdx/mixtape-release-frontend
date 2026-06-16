@@ -26,7 +26,7 @@ import { CollectionsTab } from "../tabs/CollectionsTab";
 import { UnifiedRoleSwitcher } from "../UnifiedRoleSwitcher";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { GroupLandingDStartHere } from "./GroupLandingDContent";
+import { GroupLandingDStartHere, GroupLandingDIntroduce } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
 import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
@@ -51,6 +51,7 @@ type DestinationId =
   | "introduce"
   | "share"
   | "converse"
+  | "members"
   | "events"
   | "files"
   | "findings"
@@ -84,6 +85,7 @@ function buildNavSections(): NavSectionDef[] {
       label: "Connect",
       items: [
         { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
+        { id: "members",  label: "Members",  icon: IconUsers,          rail: false },
         { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
       ],
     },
@@ -417,6 +419,7 @@ export function GroupLandingD({
     return (localStorage.getItem(`gld:${group.slug}:active`) as DestinationId) ?? "start";
   });
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [selectedMemberUsername, setSelectedMemberUsername] = useState<string | null>(null);
   const [isIntroCollapsed, setIsIntroCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(`gld:${group.slug}:introCollapsed`) === "true";
@@ -463,10 +466,11 @@ export function GroupLandingD({
     handleSelect(id);
   }, [handleSelect, group.slug, hasIntro]);
 
-  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events", collectionId?: string) => {
+  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events" | "members", collectionId?: string, memberUsername?: string) => {
     setActive(id);
     localStorage.setItem(`gld:${group.slug}:active`, id);
     setSelectedCollectionId(collectionId ?? null);
+    setSelectedMemberUsername(memberUsername ?? null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [group.slug]);
 
@@ -679,14 +683,22 @@ export function GroupLandingD({
               <GroupLandingDStartHere viewData={viewData} onNavigate={handleStartHereNavigate} />
             )}
             {active === "introduce" && (
-              <GroupLandingDTellAboutYourself
-                groupSlug={group.slug}
-                isCollapsed={isIntroCollapsed}
-                onCollapse={() => {
-                  setIsIntroCollapsed(true);
-                  localStorage.setItem(`gld:${group.slug}:introCollapsed`, "true");
-                }}
-              />
+              <>
+                <GroupLandingDTellAboutYourself
+                  groupSlug={group.slug}
+                  isCollapsed={isIntroCollapsed}
+                  onCollapse={() => {
+                    setIsIntroCollapsed(true);
+                    localStorage.setItem(`gld:${group.slug}:introCollapsed`, "true");
+                  }}
+                />
+                <Box mt={4}>
+                  <GroupLandingDIntroduce viewData={viewData} />
+                </Box>
+              </>
+            )}
+            {active === "members" && (
+              <GroupLandingDIntroduce viewData={viewData} initialMemberUsername={selectedMemberUsername} />
             )}
             {(active === "share" || active === "converse") && (
               <Box>

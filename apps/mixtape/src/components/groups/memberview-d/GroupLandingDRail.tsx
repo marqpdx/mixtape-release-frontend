@@ -8,7 +8,7 @@ import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData
 
 interface RailProps {
   viewData: GroupMemberViewData;
-  onNavigate: (id: "introduce" | "files" | "events", collectionId?: string, memberUsername?: string) => void;
+  onNavigate: (id: "introduce" | "files" | "events" | "members", collectionId?: string, memberUsername?: string) => void;
 }
 
 function RailCard({ children }: { children: React.ReactNode }) {
@@ -160,7 +160,7 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
               cursor="pointer"
               _hover={{ bg: "theme.bgSubtle" }}
               transition="background 0.12s"
-              onClick={() => onNavigate("introduce", undefined, member.username ?? undefined)}
+              onClick={() => onNavigate("members", undefined, member.username ?? undefined)}
             >
               {member.profile_image ? (
                 <Image
@@ -228,7 +228,7 @@ export function GroupLandingDRail({ viewData, onNavigate }: RailProps) {
             </Flex>
           ))}
         </Box>
-        <RailFooter label="View all members" onClick={() => onNavigate("introduce")} />
+        <RailFooter label="View all members" onClick={() => onNavigate("members")} />
       </RailCard>
 
       {/* Upcoming Events card */}
