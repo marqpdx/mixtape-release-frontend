@@ -18,6 +18,7 @@ import { CircleParentBar } from "@/components/groups/CircleParentBar";
 import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 import { canAccessSection } from "@/config/groupSectionPermissions";
+import { DropTray } from "@/components/groups/drops/DropTray";
 import type { GroupLayoutVariant } from "@/components/groups/GroupLayoutSwitcher";
 import {
   isGroupMemberViewId,
@@ -165,6 +166,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   const viewingAsMember = testRole === "member" || testRole === "admin" || testRole === "ops";
 
   const circleBar = <CircleParentBar group={group} />;
+  const dropTray = viewingAsMember ? <DropTray group={group} /> : null;
   const emblemUrl = getBestEmblemUrl(group.emblem) || undefined;
 
   if (viewingAsOps) {
@@ -182,6 +184,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
           onOpsClick={() => setTestRole("ops")}
         />
         {circleBar}
+        {dropTray}
         <GroupAdminView2WorkArea group={group} />
       </Box>
     );
@@ -208,6 +211,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
           onOpsClick={() => setTestRole("ops")}
         />
         {circleBar}
+        {dropTray}
         <DashboardLayout
           title={group.title}
           menuItems={menuItems}
@@ -229,6 +233,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
         isMember={isMember}
       />
       {circleBar}
+      {dropTray}
       <GroupMemberViewRenderer
         group={group}
         userRole={primaryRole}
