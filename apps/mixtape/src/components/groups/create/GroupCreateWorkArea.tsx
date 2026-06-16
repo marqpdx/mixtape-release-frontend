@@ -76,7 +76,7 @@ export default function GroupCreateWorkArea({ onCreated, onCancel }: GroupCreate
       description: "Welcome Mat is ready.",
       type: "success",
     });
-    router.push(`/groups/${group.slug}/welcome`);
+    router.push(`/groups/${group.slug}?view=admin&section=edit-group`);
   };
 
   const handleSaveAndVisit = async (values: GroupCreateFormValues) => {
