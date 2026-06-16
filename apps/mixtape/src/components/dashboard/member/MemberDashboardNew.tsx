@@ -91,7 +91,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
     {
       label: "HOME",
       items: [
-        { key: "overview", label: "Overview", icon: IconHome2 },
+        { key: "overview", label: "Start Here", icon: IconHome2 },
         { key: "activity", label: "Activity", icon: IconActivity },
       ],
     },
@@ -889,7 +889,7 @@ export function MemberDashboardNew({ initialSection = "overview" }: MemberDashbo
         pb="48px"
       >
         <Grid
-          templateColumns={{ base: "1fr", lg: "248px minmax(0,1fr) 332px" }}
+          templateColumns={{ base: "1fr", lg: isOverview ? "248px minmax(0,1fr) 332px" : "248px minmax(0,1fr)" }}
           gap={{ base: "16px", md: "28px" }}
         >
           {/* Left nav */}
@@ -928,17 +928,19 @@ export function MemberDashboardNew({ initialSection = "overview" }: MemberDashbo
             )}
           </GridItem>
 
-          {/* Right rail */}
-          <GridItem className="mdn-col-rail">
-            <VStack align="stretch" gap="22px">
-              <MyGroupsCard onNavigate={setActiveSection} />
-              <ProfileCompletenessCard
-                displayName={profile?.display_name}
-                quickIntro={profile?.quick_intro}
-                avatarUrl={profile?.avatar_url}
-              />
-            </VStack>
-          </GridItem>
+          {/* Right rail — Start Here only */}
+          {isOverview && (
+            <GridItem className="mdn-col-rail">
+              <VStack align="stretch" gap="22px">
+                <MyGroupsCard onNavigate={setActiveSection} />
+                <ProfileCompletenessCard
+                  displayName={profile?.display_name}
+                  quickIntro={profile?.quick_intro}
+                  avatarUrl={profile?.avatar_url}
+                />
+              </VStack>
+            </GridItem>
+          )}
         </Grid>
       </Box>
     </Box>
