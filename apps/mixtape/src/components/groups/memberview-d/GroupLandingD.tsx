@@ -428,6 +428,8 @@ export function GroupLandingD({
     return forumsQuery.data.flatMap((forum) =>
       forum.discussions
         .filter(isDiscussionPinned)
+        // "who-we-are" is owned by the hard-coded "introduce" nav item
+        .filter((d) => d.slug !== "who-we-are")
         .map((d) => ({
           id: `discussion:${forum.slug}:${d.slug}` as DestinationId,
           label: d.pinned_nav_name || d.title.slice(0, 32),

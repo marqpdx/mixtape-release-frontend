@@ -19,7 +19,7 @@ import {
 
 const MAX_INTRO_LENGTH = 300;
 const WELCOME_FORUM = "welcome";
-const TAY_SLUG = "tell-about-yourself";
+const TAY_SLUG = "who-we-are";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
