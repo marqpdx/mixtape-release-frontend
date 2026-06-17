@@ -49,13 +49,13 @@ export default function PostItem({ post, isReply = false, searchTerm = '' }: Pos
     >
       <HStack gap={3} align="start">
         <Avatar.Root size="sm" flexShrink={0}>
-          {post.author.avatar_url && <Avatar.Image src={post.author.avatar_url} />}
-          <Avatar.Fallback name={post.author.username} />
+          {post.author?.avatar_url && <Avatar.Image src={post.author.avatar_url} />}
+          <Avatar.Fallback name={post.author?.username} />
         </Avatar.Root>
         <Box flex={1}>
           <HStack gap={2} align="center" mb={1}>
             <Text fontWeight="semibold" fontSize="sm" color={textColor}>
-              {post.author.first_name} {post.author.last_name}
+              {post.author ? `${post.author.first_name} ${post.author.last_name}`.trim() : "Deleted member"}
             </Text>
             <Text fontSize="xs" color="gray.500">
               {formatTimeAgo(post.created_at)}
