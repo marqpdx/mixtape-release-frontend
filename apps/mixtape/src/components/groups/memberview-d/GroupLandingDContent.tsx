@@ -213,7 +213,7 @@ export function GroupLandingDStartHere({ viewData, onNavigate }: StartHereProps)
     queryFn: () => fetchDiscussion("welcome", "who-we-are", viewData.group.slug),
   });
   const hasPostedToThread = (wwaDiscussion?.posts ?? []).some(
-    (p) => p.author.username === user?.username
+    (p) => p.author?.username === user?.username
   );
   const [tab, setTab] = useState<StartTab>("welcome");
 
