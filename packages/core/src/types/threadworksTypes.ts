@@ -23,7 +23,7 @@ export interface ThreadworksUser {
 
 export interface Post {
   id: string;
-  author: ThreadworksUser;
+  author: ThreadworksUser | null;
   content: string;
   created_at: IsoDateString;
   updated_at?: IsoDateString;
@@ -178,7 +178,8 @@ export interface FetchDiscussionsOptions {
 /**
  * Get display name for a user (with fallbacks)
  */
-export const getThreadworksUserDisplayName = (user: ThreadworksUser): string => {
+export const getThreadworksUserDisplayName = (user: ThreadworksUser | null): string => {
+  if (!user) return "Deleted member";
   if (user.first_name || user.last_name) {
     return `${user.first_name || ''} ${user.last_name || ''}`.trim();
   }
@@ -188,7 +189,8 @@ export const getThreadworksUserDisplayName = (user: ThreadworksUser): string => 
 /**
  * Get user's initials for avatar fallback
  */
-export const getThreadworksUserInitials = (user: ThreadworksUser): string => {
+export const getThreadworksUserInitials = (user: ThreadworksUser | null): string => {
+  if (!user) return "?";
   const display = getThreadworksUserDisplayName(user);
   return display
     .split(' ')

@@ -50,7 +50,7 @@ function PostItem({ post }: { post: Post }) {
       borderColor="theme.border"
       _last={{ borderBottomWidth: 0 }}
     >
-      {post.author.avatar_url ? (
+      {post.author?.avatar_url ? (
         <Image
           src={post.author.avatar_url}
           alt={displayName}
@@ -152,7 +152,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
   });
 
   const posts = discussionQuery.data?.posts ?? [];
-  const hasPostedToThread = !discussionQuery.isLoading && posts.some((p) => p.author.username === user?.username);
+  const hasPostedToThread = !discussionQuery.isLoading && posts.some((p) => p.author?.username === user?.username);
   const showIntroCard = !discussionQuery.isLoading && !hasPostedToThread && !isCollapsed;
 
   async function handleUseAsProfileIntro() {
