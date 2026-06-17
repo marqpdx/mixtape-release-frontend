@@ -52,7 +52,7 @@ export function CollectionsWorkArea({
   const canCreateCollection =
     sponsor.type !== 'group'
       ? true
-      : myPermissions?.is_admin || myPermissions?.decorators?.includes('can__ManageCollections') || false;
+      : myPermissions?.is_admin || myPermissions?.decorators?.includes('can__ManageCollections') || myPermissions?.decorators?.includes('can__AddCollection') || false;
 
   // Fetch all collections (filtered by sponsor in backend)
   const { collections, isLoading, refetch } = useCollections();

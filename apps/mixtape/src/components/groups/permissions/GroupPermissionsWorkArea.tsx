@@ -60,6 +60,8 @@ const PERM_CATEGORY_MAP: Record<string, string> = {
   can__CreateSponsoredCircle: "community",
   can__ManageAlmanac: "community",
   can__ManageLanternmail: "communications",
+  can__EditGroup: "settings",
+  can__AddCollection: "content",
 };
 
 const CATEGORY_LABELS: { key: string; label: string }[] = [
@@ -88,6 +90,8 @@ const FALLBACK_PERMISSIONS: Permission[] = [
   { code: "can__ManageAlmanac", name: "Manage Almanac", description: "Create and manage events and calendar items", category: "capability" },
   { code: "can__ManageCollections", name: "Manage Collections", description: "Create and manage collections and exhibitions", category: "capability" },
   { code: "can__ManageLanternmail", name: "Manage Lanternmail", description: "Create, edit, and manage mailing lists", category: "capability" },
+  { code: "can__EditGroup", name: "Edit Group", description: "Edit group settings and details", category: "capability" },
+  { code: "can__AddCollection", name: "Add Collection", description: "Create new collections in this group", category: "capability" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

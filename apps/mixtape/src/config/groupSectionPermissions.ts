@@ -122,9 +122,9 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
 
 
 
-  // Settings - admin only
+  // Settings - admin or granted steward
   'edit-group': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__EditGroup',
     description: 'Edit group settings and details',
   },
 

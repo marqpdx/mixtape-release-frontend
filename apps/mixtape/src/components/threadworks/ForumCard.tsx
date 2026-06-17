@@ -114,7 +114,7 @@ export default function ForumCard({ forum, onClick }: ForumCardProps) {
                   <Avatar.Root key={participant.id} size="sm">
                     <Avatar.Image src={participant.avatar_url} />
                     <Avatar.Fallback>
-                      {participant.first_name[0]}{participant.last_name[0]}
+                      {(participant.first_name?.[0] || participant.username?.[0] || "?").toUpperCase()}
                     </Avatar.Fallback>
                   </Avatar.Root>
                 ))}
