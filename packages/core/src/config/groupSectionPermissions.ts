@@ -147,9 +147,9 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Landing page for group Projects management',
   },
 
-  // Settings - admin only
+  // Settings - admin or steward with can__EditGroup decorator
   'edit-group': {
-    requiredRole: 'admin',
+    requiredDecorator: 'can__EditGroup',
     description: 'Edit group settings and details',
   },
 
