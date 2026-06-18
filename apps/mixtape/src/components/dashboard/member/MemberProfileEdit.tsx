@@ -13,7 +13,6 @@ import {
   Flex,
   Input,
   Heading,
-  Avatar,
   Spinner,
   HStack,
 } from "@chakra-ui/react";
@@ -29,7 +28,6 @@ import { MixtapeAlert } from "@/components/ui/alerts";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 import { useImageUpload } from "@hooks/useAssets";
 import { VoicePlaybackBubble } from "@/components/chat/VoicePlaybackBubble";
-import TipTapEditor from "@components/editor/TipTapEditor";
 import type { JSONContent } from "@tiptap/react";
 
 interface ProfileFormData {
@@ -175,10 +173,7 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
     }
   };
 
-  // Watch avatar URL for preview (legacy)
-  const avatarUrl = watch("avatar_url");
   const displayName = watch("display_name");
-  const bioJson = watch("bio_json") as JSONContent | undefined;
   const quickIntro = watch("quick_intro");
 
   const { handleImageChange, pending, previewUrls } = useImageUpload<ProfileFormData>({
@@ -190,9 +185,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
       background: "background_image",
     },
   });
-
-  const avatarPreview =
-    previewUrls.profile || member?.profile_image_url || avatarUrl || undefined;
 
   async function handleVoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -330,19 +322,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
           p={6}
         >
           <HStack gap={6} align="start" flexWrap={{ base: "wrap", md: "nowrap" }}>
-            {/* Avatar Preview */}
-            <VStack gap={3}>
-              <Avatar.Root size="2xl">
-                <Avatar.Image src={avatarPreview} />
-                <Avatar.Fallback>
-                  {displayName?.charAt(0) || member.username?.charAt(0) || "?"}
-                </Avatar.Fallback>
-              </Avatar.Root>
-              <Text fontSize="sm" color={subtextColor}>
-                Avatar Preview
-              </Text>
-            </VStack>
-
             {/* Read-only info */}
             <VStack align="start" gap={2} flex="1">
               <Box>
@@ -418,24 +397,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               )}
             </Field.Root>
 
-            <Field.Root invalid={!!errors.avatar_url}>
-              <Field.Label>Avatar URL</Field.Label>
-              <Input
-                {...register("avatar_url", {
-                  pattern: {
-                    value: /^(https?:\/\/.*|)$/,
-                    message: "Please enter a valid URL starting with http:// or https://"
-                  }
-                })}
-                placeholder="https://example.com/your-avatar.jpg"
-              />
-              <Field.HelperText>
-                URL to your profile picture (supports most image formats)
-              </Field.HelperText>
-              {errors.avatar_url && (
-                <Field.ErrorText>{errors.avatar_url.message}</Field.ErrorText>
-              )}
-            </Field.Root>
           </VStack>
         </Box>
 
@@ -470,61 +431,13 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               )}
             </Field.Root>
 
-            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
-              <Field.Root flex={1}>
-                <Field.Label>Skills</Field.Label>
-                <Textarea
-                  {...register("skills", {
-                    maxLength: {
-                      value: 400,
-                      message: "Skills must be 400 characters or less",
-                    },
-                  })}
-                  placeholder="A few skills, capacities, or areas of expertise"
-                  rows={2}
-                  resize="vertical"
-                />
-                <Field.HelperText>Short freeform list is fine for now.</Field.HelperText>
-                {errors.skills && (
-                  <Field.ErrorText>{errors.skills.message}</Field.ErrorText>
-                )}
-              </Field.Root>
-              <Field.Root flex={1}>
-                <Field.Label>Work areas</Field.Label>
-                <Textarea
-                  {...register("work_areas", {
-                    maxLength: {
-                      value: 400,
-                      message: "Work areas must be 400 characters or less",
-                    },
-                  })}
-                  placeholder="Current focus areas, domains, or kinds of work"
-                  rows={2}
-                  resize="vertical"
-                />
-                <Field.HelperText>What you are actively working in or around.</Field.HelperText>
-                {errors.work_areas && (
-                  <Field.ErrorText>{errors.work_areas.message}</Field.ErrorText>
-                )}
-              </Field.Root>
-            </HStack>
-
-            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
-              <Field.Root flex={1}>
-                <Field.Label>Practice area</Field.Label>
-                <Input
-                  {...register("practice_area", { maxLength: { value: 120, message: "120 characters max" } })}
-                  placeholder="e.g. Product, Engineering, Design"
-                />
-              </Field.Root>
-              <Field.Root flex={1}>
-                <Field.Label>Location</Field.Label>
-                <Input
-                  {...register("location", { maxLength: { value: 120, message: "120 characters max" } })}
-                  placeholder="City, region, or Remote"
-                />
-              </Field.Root>
-            </HStack>
+            <Field.Root>
+              <Field.Label>Location</Field.Label>
+              <Input
+                {...register("location", { maxLength: { value: 120, message: "120 characters max" } })}
+                placeholder="City, region, or Remote"
+              />
+            </Field.Root>
 
             <Field.Root invalid={!!errors.quick_link}>
               <Field.Label>Quick Link</Field.Label>
@@ -541,29 +454,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               <Field.HelperText>A personal or work link shown on your member card</Field.HelperText>
               {errors.quick_link && <Field.ErrorText>{errors.quick_link.message}</Field.ErrorText>}
             </Field.Root>
-
-            <HStack gap={4} flexWrap={{ base: "wrap", md: "nowrap" }} w="100%">
-              <Field.Root flex={1}>
-                <Field.Label>Who I am</Field.Label>
-                <Textarea
-                  {...register("who_are_you", { maxLength: { value: 512, message: "512 characters max" } })}
-                  placeholder="How you'd describe yourself to the group..."
-                  rows={3}
-                  resize="vertical"
-                />
-                {errors.who_are_you && <Field.ErrorText>{errors.who_are_you.message}</Field.ErrorText>}
-              </Field.Root>
-              <Field.Root flex={1}>
-                <Field.Label>Why I'm here</Field.Label>
-                <Textarea
-                  {...register("why_are_you_here", { maxLength: { value: 512, message: "512 characters max" } })}
-                  placeholder="Why you joined / what you're looking for..."
-                  rows={3}
-                  resize="vertical"
-                />
-                {errors.why_are_you_here && <Field.ErrorText>{errors.why_are_you_here.message}</Field.ErrorText>}
-              </Field.Root>
-            </HStack>
 
             {/* Voice Note */}
             <Field.Root>
@@ -639,15 +529,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
               />
             </HStack>
 
-            <Field.Root>
-              <Field.Label>Bio</Field.Label>
-              <Box border="1px solid" borderColor={cardBorder} borderRadius="md" p={3} w="100%">
-                <TipTapEditor
-                  initialContent={bioJson || { type: "doc", content: [] }}
-                  onContentChange={(content) => setValue("bio_json", content)}
-                />
-              </Box>
-            </Field.Root>
           </VStack>
         </Box>
 
