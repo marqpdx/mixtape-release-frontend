@@ -314,7 +314,7 @@ export default function UnifiedNavbar({
 
           {/* Right: Theme Selector + Auth Actions */}
           <HStack className="zippy" gap={extraCompact ? 1 : 3}>
-            {identity && (
+            {identity?.is_superuser && (
               <Button
                 variant="ghost"
                 size="sm"
