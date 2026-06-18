@@ -343,7 +343,7 @@ export default function UnifiedNavbar({
             <Box transform={extraCompact ? "scale(0.85)" : "scale(1)"}>
               <ThemeSelector />
             </Box>
-            {identity && (
+            {identity?.is_superuser && (
               <Button
                 variant="ghost"
                 size="sm"
