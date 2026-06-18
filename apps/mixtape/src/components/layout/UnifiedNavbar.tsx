@@ -73,7 +73,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
-  { key: "help", label: "Help", href: "/help", section: "authenticated", memberOnly: true, shortLabel: "Help" },
+  { key: "help", label: "Help", href: "/help", section: "authenticated", superuserOnly: true, shortLabel: "Help" },
   { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
