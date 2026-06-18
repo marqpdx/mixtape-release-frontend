@@ -58,7 +58,7 @@ const AGREEMENTS: AgreementSection[] = [
     id: "place",
     title: "Place & Belonging",
     content:
-      "We recognize recognize place as more than coordinates, and value the responsibility needed to keep our shared spaces safe and healthy. Local context, culture, and care for land and the living matter deeply.",
+      "We recognize place as more than coordinates, and value the responsibility needed to keep our shared spaces safe and healthy. Local context, culture, as well as care for land and the living matter deeply.",
   },
 ];
 
@@ -240,7 +240,7 @@ export default function AgreementsPage() {
           </Button>
         </HStack>
 
-        <HStack mt={6} gap={6} color="theme.textSecondary" flexWrap="wrap">
+        <HStack display={'none'} mt={6} gap={6} color="theme.textSecondary" flexWrap="wrap">
           <Button
             variant="ghost"
             size="sm"
