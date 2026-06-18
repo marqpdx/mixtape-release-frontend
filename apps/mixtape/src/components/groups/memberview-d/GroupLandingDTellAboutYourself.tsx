@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { Box, Flex, Image, Text, Textarea, Spinner } from "@chakra-ui/react";
+import { useState, useRef } from "react";
+import { Box, Flex, Image, Text, Textarea, Spinner, Checkbox } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { IconSend, IconInfoCircle, IconMinus } from "@tabler/icons-react";
@@ -112,8 +112,8 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
   const qc = useQueryClient();
 
   const [introText, setIntroText] = useState("");
-  const [showProfileNudge, setShowProfileNudge] = useState(false);
-  const [profileSaving, setProfileSaving] = useState(false);
+  const [copyToProfile, setCopyToProfile] = useState(false);
+  const threadCardRef = useRef<HTMLDivElement>(null);
 
   const remaining = MAX_INTRO_LENGTH - introText.length;
 
@@ -140,12 +140,20 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
   const introMutation = useMutation({
     mutationFn: (content: string) =>
       createPost(WELCOME_FORUM, TAY_SLUG, { content }, groupSlug),
-    onSuccess: () => {
+    onSuccess: async (_, content) => {
       qc.invalidateQueries({
         queryKey: ["threadworks", "discussion", groupSlug, WELCOME_FORUM, TAY_SLUG],
       });
-      if (!user?.profile?.quick_intro) {
-        setShowProfileNudge(true);
+      if (copyToProfile && !user?.profile?.quick_intro && user?.username) {
+        try {
+          await axiosInstance.patch(`/api/members/${user.username}`, {
+            quick_intro: content,
+          });
+          await refreshUser();
+          toaster.success({ title: "Intro posted and profile updated" });
+        } catch {
+          toaster.error({ title: "Intro posted, but could not update profile" });
+        }
       }
     },
     onError: () => toaster.error({ title: "Could not post intro" }),
@@ -154,23 +162,6 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
   const posts = discussionQuery.data?.posts ?? [];
   const hasPostedToThread = !discussionQuery.isLoading && posts.some((p) => p.author?.username === user?.username);
   const showIntroCard = !discussionQuery.isLoading && !hasPostedToThread && !isCollapsed;
-
-  async function handleUseAsProfileIntro() {
-    if (!user?.username) return;
-    setProfileSaving(true);
-    try {
-      await axiosInstance.patch(`/api/members/${user.username}`, {
-        quick_intro: introText.trim(),
-      });
-      await refreshUser();
-      setShowProfileNudge(false);
-      toaster.success({ title: "Profile updated" });
-    } catch {
-      toaster.error({ title: "Could not update profile" });
-    } finally {
-      setProfileSaving(false);
-    }
-  }
 
   return (
     <Flex className="tay-root" direction="column" gap={5}>
@@ -258,27 +249,48 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
                 >
                   {remaining} characters left
                 </Text>
-                <Box
-                  as="button"
-                  px="16px"
-                  py="7px"
-                  borderRadius="full"
-                  bg="theme.accent"
-                  color="white"
-                  fontSize="13px"
-                  fontWeight="600"
-                  cursor={introMutation.isPending || !introText.trim() || remaining < 0 ? "not-allowed" : "pointer"}
-                  opacity={introMutation.isPending || !introText.trim() || remaining < 0 ? 0.6 : 1}
-                  transition="all 0.12s"
-                  _hover={!introMutation.isPending && !!introText.trim() && remaining >= 0 ? { opacity: 0.9 } : {}}
-                  onClick={() => {
-                    if (!introMutation.isPending && introText.trim() && remaining >= 0) {
-                      introMutation.mutate(introText.trim());
-                    }
-                  }}
-                >
-                  {introMutation.isPending ? "Posting…" : "Post intro"}
-                </Box>
+                <Flex align="center" gap={3}>
+                  {!user?.profile?.quick_intro && (
+                    <Checkbox.Root
+                      checked={copyToProfile}
+                      onCheckedChange={({ checked }: { checked: boolean | string }) => setCopyToProfile(!!checked)}
+                      size="sm"
+                    >
+                      <Checkbox.HiddenInput />
+                      <Flex align="center" gap="6px">
+                        <Checkbox.Control borderRadius="4px">
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                        <Checkbox.Label>
+                          <Text fontSize="12px" color="theme.textSecondary" whiteSpace="nowrap">
+                            Copy intro to profile
+                          </Text>
+                        </Checkbox.Label>
+                      </Flex>
+                    </Checkbox.Root>
+                  )}
+                  <Box
+                    as="button"
+                    px="16px"
+                    py="7px"
+                    borderRadius="full"
+                    bg="theme.accent"
+                    color="white"
+                    fontSize="13px"
+                    fontWeight="600"
+                    cursor={introMutation.isPending || !introText.trim() || remaining < 0 ? "not-allowed" : "pointer"}
+                    opacity={introMutation.isPending || !introText.trim() || remaining < 0 ? 0.6 : 1}
+                    transition="all 0.12s"
+                    _hover={!introMutation.isPending && !!introText.trim() && remaining >= 0 ? { opacity: 0.9 } : {}}
+                    onClick={() => {
+                      if (!introMutation.isPending && introText.trim() && remaining >= 0) {
+                        introMutation.mutate(introText.trim());
+                      }
+                    }}
+                  >
+                    {introMutation.isPending ? "Posting…" : "Post intro"}
+                  </Box>
+                </Flex>
               </Flex>
             </Flex>
 
@@ -323,13 +335,21 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
                 <Box color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
                   <IconInfoCircle size={20} />
                 </Box>
-                A short intro helps others in this group know who they're talking to. It'll
-                appear in the Who We Are thread below — separate from your global profile.
-                <Box mt={2}>
-                  You can also fill this in through{" "}
-                  <Box as="span" fontWeight="500" color="theme.text">Edit Profile</Box>{" "}
-                  below.
-                </Box>
+                Your intro helps others in the group get to know you. Thank you.
+                It will appear in the{" "}
+                <Box
+                  as="button"
+                  display="inline"
+                  fontStyle="italic"
+                  color="theme.accent"
+                  fontWeight="500"
+                  cursor="pointer"
+                  _hover={{ textDecoration: "underline" }}
+                  onClick={() => threadCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  Who We Are
+                </Box>{" "}
+                thread below.
                 <Box mt={2}>
                   Not ready yet? Hit the{" "}
                   <Box
@@ -374,69 +394,9 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
         </Box>
       )}
 
-      {/* Profile nudge — one-time prompt after first post when quick_intro was empty */}
-      {showProfileNudge && (
-        <Box
-          className="tay-profile-nudge"
-          bg="theme.surface"
-          borderWidth="1px"
-          borderColor="theme.accent"
-          borderRadius="16px"
-          px={5}
-          py={4}
-        >
-          <Flex align="center" gap={4}>
-            <Box flex="1">
-              <Text fontWeight="600" fontSize="14px" color="theme.text">
-                Use this as your profile intro?
-              </Text>
-              <Text fontSize="13px" color="theme.textSecondary" mt="2px">
-                Your profile doesn't have a quick intro yet — want to add this one?
-              </Text>
-            </Box>
-            <Flex gap={2} flexShrink={0}>
-              <Box
-                as="button"
-                px="14px"
-                py="6px"
-                borderRadius="full"
-                bg="theme.bgSubtle"
-                borderWidth="1px"
-                borderColor="theme.border"
-                fontSize="13px"
-                fontWeight="600"
-                color="theme.textSecondary"
-                cursor="pointer"
-                _hover={{ borderColor: "theme.textMuted" }}
-                transition="all 0.12s"
-                onClick={() => setShowProfileNudge(false)}
-              >
-                No thanks
-              </Box>
-              <Box
-                as="button"
-                px="14px"
-                py="6px"
-                borderRadius="full"
-                bg="theme.accent"
-                color="white"
-                fontSize="13px"
-                fontWeight="600"
-                cursor={profileSaving ? "not-allowed" : "pointer"}
-                opacity={profileSaving ? 0.6 : 1}
-                transition="all 0.12s"
-                _hover={!profileSaving ? { opacity: 0.9 } : {}}
-                onClick={handleUseAsProfileIntro}
-              >
-                {profileSaving ? "Saving…" : "Yes, update profile"}
-              </Box>
-            </Flex>
-          </Flex>
-        </Box>
-      )}
-
       {/* Discussion thread */}
       <Box
+        ref={threadCardRef}
         className="tay-thread-card"
         bg="theme.surface"
         borderWidth="1px"
