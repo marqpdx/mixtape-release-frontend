@@ -32,6 +32,8 @@ import {
   IconChevronDown,
   IconChevronUp,
 } from "@tabler/icons-react";
+import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
+import { useColorModeValue } from "@components/ui/color-mode";
 
 interface AgreementSection {
   id: string;
@@ -62,6 +64,7 @@ const AGREEMENTS: AgreementSection[] = [
 
 export default function AgreementsPage() {
   const router = useRouter();
+  const logoColor = useColorModeValue('black', 'white');
 
   const [groupName, setGroupName] = useState("");
   const [groupSlug, setGroupSlug] = useState("");
@@ -120,7 +123,12 @@ export default function AgreementsPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-    <Box minH="100vh" bg="theme.bg" py={{ base: 10, md: 16 }} px={{ base: 6, md: 8 }}>
+    <Box minH="100vh" bg="theme.bg" position="relative" py={{ base: 10, md: 16 }} px={{ base: 6, md: 8 }}>
+      <Box position="absolute" top={0} left={{ base: 3, md: 4 }}>
+        <Box transform="translateY(-15px)">
+          <CrossroadsLogo size={320} color={logoColor} />
+        </Box>
+      </Box>
       <Container maxW="3xl" px={0}>
         <VStack align="start" gap={2} mb={6}>
           <Text
