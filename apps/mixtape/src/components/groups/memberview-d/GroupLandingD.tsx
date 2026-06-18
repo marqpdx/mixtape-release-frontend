@@ -603,7 +603,7 @@ export function GroupLandingD({
           )}
         </Flex>
         {isMember && user && (
-          <Flex justify="flex-end" mt={2}>
+          <Flex justify="flex-end" align="center" gap={2} mt={2}>
             <Button
               className="gld-edit-profile-btn"
               size="xs"
@@ -615,39 +615,33 @@ export function GroupLandingD({
             >
               Edit profile
             </Button>
+            {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
+            {active === "introduce" && !hasIntro && isIntroCollapsed && (
+              <Box
+                as="button"
+                display="inline-flex"
+                alignItems="center"
+                px="10px"
+                py="3px"
+                borderRadius="full"
+                bg="theme.accentSoft"
+                borderWidth="1px"
+                borderColor="theme.accent"
+                fontSize="11px"
+                fontWeight="600"
+                color="theme.accent"
+                cursor="pointer"
+                _hover={{ bg: "theme.accent", color: "white" }}
+                transition="all 0.15s"
+                onClick={() => {
+                  setIsIntroCollapsed(false);
+                  localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
+                }}
+              >
+                My Intro
+              </Box>
+            )}
           </Flex>
-        )}
-        {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
-        {active === "introduce" && !hasIntro && isIntroCollapsed && (
-          <Box
-            position="absolute"
-            bottom="10px"
-            right={{ base: "18px", xl: "48px" }}
-          >
-            <Box
-              as="button"
-              display="inline-flex"
-              alignItems="center"
-              px="10px"
-              py="3px"
-              borderRadius="full"
-              bg="theme.accentSoft"
-              borderWidth="1px"
-              borderColor="theme.accent"
-              fontSize="11px"
-              fontWeight="600"
-              color="theme.accent"
-              cursor="pointer"
-              _hover={{ bg: "theme.accent", color: "white" }}
-              transition="all 0.15s"
-              onClick={() => {
-                setIsIntroCollapsed(false);
-                localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
-              }}
-            >
-              My Intro
-            </Box>
-          </Box>
         )}
       </Box>
 
