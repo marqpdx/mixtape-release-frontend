@@ -76,18 +76,20 @@ export function UnifiedRoleSwitcher({
           </IconButton>
         </Tooltip>
 
-        {/* Public button - RIGHT (always same spot) */}
-        <Tooltip content="View as Public (Non-member)">
-          <IconButton
-            aria-label="Public view"
-            size="xs"
-            variant={testRole === 'public' ? 'solid' : 'ghost'}
-            colorScheme={testRole === 'public' ? 'green' : 'gray'}
-            onClick={() => onRoleChange('public')}
-          >
-            <IconEyeOff size={14} />
-          </IconButton>
-        </Tooltip>
+        {/* Public button - superuser only */}
+        {isSuperuser && (
+          <Tooltip content="View as Public (Non-member)">
+            <IconButton
+              aria-label="Public view"
+              size="xs"
+              variant={testRole === 'public' ? 'solid' : 'ghost'}
+              colorScheme={testRole === 'public' ? 'green' : 'gray'}
+              onClick={() => onRoleChange('public')}
+            >
+              <IconEyeOff size={14} />
+            </IconButton>
+          </Tooltip>
+        )}
       </HStack>
     </Box>
   );

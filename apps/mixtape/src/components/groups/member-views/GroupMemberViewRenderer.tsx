@@ -14,6 +14,7 @@ interface GroupMemberViewRendererProps {
   isMember: boolean;
   isAdminOrSteward: boolean;
   canEditGroup: boolean;
+  isSuperuser?: boolean;
   layoutVariant: GroupLayoutVariant;
   onLayoutChange?: (layout: GroupLayoutVariant) => void;
 }
@@ -27,6 +28,7 @@ export function GroupMemberViewRenderer({
   isMember,
   isAdminOrSteward,
   canEditGroup,
+  isSuperuser = false,
   layoutVariant,
   onLayoutChange,
 }: GroupMemberViewRendererProps) {
@@ -42,6 +44,7 @@ export function GroupMemberViewRenderer({
         isMember={isMember}
         isAdminOrSteward={isAdminOrSteward}
         canEditGroup={canEditGroup}
+        isSuperuser={isSuperuser}
       />
     );
   }

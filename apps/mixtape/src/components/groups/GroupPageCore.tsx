@@ -243,6 +243,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
         isMember={isMember}
         isAdminOrSteward={canUseAdminView}
         canEditGroup={canEditGroup}
+        isSuperuser={isSuperuser}
         layoutVariant={layoutVariant}
         onLayoutChange={viewingAsMember ? (next) => setLayoutVariant(clampLayoutVariant(next)) : undefined}
       />

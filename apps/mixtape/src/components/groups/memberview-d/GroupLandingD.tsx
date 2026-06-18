@@ -403,6 +403,7 @@ interface GroupLandingDProps {
   isMember?: boolean;
   isAdminOrSteward?: boolean;
   canEditGroup?: boolean;
+  isSuperuser?: boolean;
 }
 
 export function GroupLandingD({
@@ -411,6 +412,7 @@ export function GroupLandingD({
   onRoleChange,
   isMember = false,
   isAdminOrSteward = false,
+  isSuperuser = false,
 }: GroupLandingDProps) {
   const { user } = useAuth();
   const viewData = useGroupMemberViewData(group);
@@ -488,11 +490,12 @@ export function GroupLandingD({
       <Box position="sticky" top={0} h="0" overflow="visible" zIndex={300}>
         <Flex position="absolute" top={2} right={2} gap={2} align="center">
           <GroupSwitcherButton currentGroupSlug={group.slug} />
-          {isMember && onRoleChange && (
+          {isAdminOrSteward && onRoleChange && (
             <UnifiedRoleSwitcher
               testRole={testRole}
               onRoleChange={onRoleChange}
               isAdminOrSteward={isAdminOrSteward}
+              isSuperuser={isSuperuser}
             />
           )}
         </Flex>
@@ -598,7 +601,9 @@ export function GroupLandingD({
           {isAdminOrSteward && (
             <QuickAnnouncementCreate groupSlug={group.slug} />
           )}
-          {isMember && user && (
+        </Flex>
+        {isMember && user && (
+          <Flex justify="flex-end" mt={2}>
             <Button
               className="gld-edit-profile-btn"
               size="xs"
@@ -610,8 +615,8 @@ export function GroupLandingD({
             >
               Edit profile
             </Button>
-          )}
-        </Flex>
+          </Flex>
+        )}
         {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
         {active === "introduce" && !hasIntro && isIntroCollapsed && (
           <Box
