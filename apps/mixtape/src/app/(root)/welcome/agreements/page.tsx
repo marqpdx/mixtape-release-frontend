@@ -126,10 +126,10 @@ export default function AgreementsPage() {
     <Box minH="100vh" bg="theme.bg" position="relative" py={{ base: 10, md: 16 }} px={{ base: 6, md: 8 }}>
       <Box position="absolute" top={0} left={{ base: 3, md: 4 }}>
         <Box transform="translateY(-15px)">
-          <CrossroadsLogo size={320} color={logoColor} />
+          <CrossroadsLogo size={240} color={logoColor} />
         </Box>
       </Box>
-      <Container maxW="3xl" px={0}>
+      <Container maxW="3xl" px={0} mt={2}>
         <VStack align="start" gap={2} mb={6}>
           <Text
             fontSize="sm"

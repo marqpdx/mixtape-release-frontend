@@ -332,11 +332,10 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
 
               {/* Info text */}
               <Box fontSize="13.5px" color="theme.textSecondary" lineHeight="1.6" overflow="hidden" pr={"5px"}>
-                <Box color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
+                <Box display={'none'} color="theme.accent" style={{ float: "left" }} mr="10px" mt="2px">
                   <IconInfoCircle size={20} />
                 </Box>
-                Your intro helps others in the group get to know you. Thank you.
-                It will appear in the{" "}
+                 🌞 Your intro helps others in the group get to know you. Thank you. It will appear in the{" "}
                 <Box
                   as="button"
                   display="inline"
