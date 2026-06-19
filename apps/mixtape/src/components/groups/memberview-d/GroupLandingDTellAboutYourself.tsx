@@ -397,6 +397,7 @@ export function GroupLandingDTellAboutYourself({ groupSlug, isCollapsed, onColla
       <Box
         ref={threadCardRef}
         className="tay-thread-card"
+        scrollMarginTop="72px"
         bg="theme.surface"
         borderWidth="1px"
         borderColor="theme.border"

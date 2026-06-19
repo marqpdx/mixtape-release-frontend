@@ -11,7 +11,7 @@ export function ProfileEditButton({ username }: { username: string }) {
 
   return (
     <Button size="sm" variant="outline" asChild>
-      <NextLink href="/app/dashboard?section=edit-profile">
+      <NextLink href="/dashboard?section=edit-profile">
         <IconEdit size={14} />
         Edit Profile
       </NextLink>

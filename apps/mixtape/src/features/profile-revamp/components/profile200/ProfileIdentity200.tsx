@@ -1,6 +1,3 @@
-'use client';
-
-import { useState } from 'react';
 import Image from 'next/image';
 import { IconMapPin } from '@tabler/icons-react';
 
@@ -22,10 +19,7 @@ export function ProfileIdentity200({
   practiceArea,
   location,
   avatarUrl,
-  isOwner,
 }: ProfileIdentity200Props) {
-  const [editHovered, setEditHovered] = useState(false);
-
   return (
     <div className="p200-identity-root" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Avatar — pulled up into banner via margin-top on the parent layout */}
@@ -112,32 +106,6 @@ export function ProfileIdentity200({
         </div>
       )}
 
-      {/* Edit profile button — owner only */}
-      {isOwner && (
-        <a
-          href="/dashboard?section=edit-profile"
-          onMouseEnter={() => setEditHovered(true)}
-          onMouseLeave={() => setEditHovered(false)}
-          style={{
-            marginTop: 18,
-            alignSelf: 'flex-start',
-            display: 'inline-flex',
-            alignItems: 'center',
-            background: editHovered ? '#fff' : 'var(--surface)',
-            border: `1px solid ${editHovered ? 'var(--accent)' : 'color-mix(in srgb, var(--ink) 20%, transparent)'}`,
-            borderRadius: 999,
-            padding: '10px 22px',
-            fontWeight: 600,
-            fontSize: 14.5,
-            color: editHovered ? 'var(--accent)' : 'var(--ink)',
-            textDecoration: 'none',
-            transition: 'color 0.15s, border-color 0.15s, background 0.15s',
-            cursor: 'pointer',
-          }}
-        >
-          Edit profile
-        </a>
-      )}
     </div>
   );
 }
