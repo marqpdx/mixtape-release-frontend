@@ -217,7 +217,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
           menuItems={menuItems}
           WorkAreaComponent={GroupWorkArea as React.ComponentType<WorkAreaProps>}
           workAreaProps={{ group, userRole: effectiveRole }}
-          defaultSection={menuItems[0]?.subItems?.[0]?.key || menuItems[0]?.key}
+          defaultSection="members-roles"
           localStorageKey={`group-${group.slug}-dashboard`}
         />
       </Box>

@@ -28,6 +28,7 @@ import { Group, GroupFormData, GroupType } from "@mixtape/core/types/groupTypes"
 import { EmblemPicker } from "@components/emblems/EmblemPicker";
 import { EmblemDisplay } from "@components/emblems/EmblemDisplay";
 import { EmblemInline } from "@mixtape/core/types/emblemTypes";
+import { StickyFormFooter } from "@components/common/StickyFormFooter";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
@@ -512,7 +513,11 @@ export default function GroupEditForm({
 
         {/* Form Actions - Only show in non-draft mode */}
         {!isDraftMode && (
-          <Flex justify="flex-end" gap={4} pt={4} borderTop="1px solid" borderColor="gray.200">
+          <StickyFormFooter
+            onCancel={() => window.history.back()}
+            isSaving={isSubmitting || isSaving}
+            saveLabel={group?.slug ? "Save Changes" : "Create Group"}
+          >
             <Button
               variant="outline"
               onClick={() => window.history.back()}
@@ -524,11 +529,11 @@ export default function GroupEditForm({
               type="submit"
               loading={isSubmitting || isSaving}
               colorScheme="green"
-              size="lg"
+              size="md"
             >
               {group?.slug ? "Save Changes" : "Create Group"}
             </Button>
-          </Flex>
+          </StickyFormFooter>
         )}
 
       </VStack>

@@ -65,9 +65,28 @@ export default function DashboardLayout({
   const sidebarBg = "theme.bgSecondary";
 
   const [activeSection, setActiveSection] = useState<string>(() => {
+    const isInMenu = (key: string) =>
+      menuItems.some(
+        (item) => item.key === key || item.subItems?.some((sub) => sub.key === key)
+      );
+
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(localStorageKey);
-      if (stored) return stored;
+      if (stored && isInMenu(stored)) return stored;
+    }
+
+    // defaultSection may refer to a section the current user can't access
+    // (e.g. steward without the required decorator). Fall through to first
+    // visible section rather than landing on "Access Denied".
+    if (isInMenu(defaultSection)) return defaultSection;
+
+    for (const item of menuItems) {
+      if (item.subItems?.length) {
+        const visible = item.subItems.find((sub) => !sub.hidden);
+        if (visible) return visible.key;
+      } else if (!item.hidden) {
+        return item.key;
+      }
     }
     return defaultSection;
   });
