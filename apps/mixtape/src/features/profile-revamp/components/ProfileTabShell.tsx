@@ -133,8 +133,8 @@ export function ProfileTabShell({ profile, initialTab = 'profile', username }: P
       {/* Page content — max-width container */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 44px' }}>
 
-        {/* Identity — avatar overlaps banner with negative margin; edit button pinned bottom-right */}
-        <div style={{ marginTop: -58, position: 'relative' }}>
+        {/* Identity row — edit button aligns to the natural bottom of the identity column */}
+        <div style={{ marginTop: -58, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <ProfileIdentity200
             displayName={profile.displayName}
             practiceArea={practiceArea}
@@ -144,7 +144,7 @@ export function ProfileTabShell({ profile, initialTab = 'profile', username }: P
             username={profile.username}
           />
           {username && (
-            <div style={{ position: 'absolute', bottom: -12, right: 0 }}>
+            <div style={{ flexShrink: 0, paddingBottom: 2 }}>
               <ProfileEditButton username={username} />
             </div>
           )}
