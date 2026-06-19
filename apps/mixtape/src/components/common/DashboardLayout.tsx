@@ -50,6 +50,25 @@ export default function DashboardLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sidebarWidth = sidebarCollapsed ? "50px" : "230px";
 
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const [topOffset, setTopOffset] = useState(0);
+
+  useEffect(() => {
+    if (!constrainToViewport) return;
+    const measure = () => {
+      if (layoutRef.current) setTopOffset(layoutRef.current.getBoundingClientRect().top);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [constrainToViewport]);
+
+  useEffect(() => {
+    if (!constrainToViewport) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [constrainToViewport]);
+
   const [showBubbleNote, setShowBubbleNote] = useState(false);
   const [bubbleFading, setBubbleFading] = useState(false);
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -332,13 +351,13 @@ export default function DashboardLayout({
 
   return (
     <Box
+      ref={layoutRef}
       className="dashboard-layout"
       bg="theme.surface"
-      h={constrainToViewport ? "100vh" : "auto"}
+      h={constrainToViewport ? `calc(100vh - ${topOffset}px)` : "auto"}
       display={constrainToViewport ? "flex" : "block"}
       flexDirection={constrainToViewport ? "column" : undefined}
       overflow={constrainToViewport ? "hidden" : "visible"}
-      style={{ "--dashboard-sidebar-w": sidebarWidth } as React.CSSProperties}
     >
       {header && <Box flexShrink={0}>{header}</Box>}
 
@@ -575,10 +594,9 @@ export default function DashboardLayout({
                 {...workAreaProps}
               />
             </Box>
-            {/* Footer slot — StickyFormFooter portals into this; fixed so it's
-                always viewport-anchored regardless of the outer page height.
-                left uses --dashboard-sidebar-w so it covers only the work area. */}
-            <Box id="dashboard-sticky-footer" position="fixed" bottom={0} left="var(--dashboard-sidebar-w)" right={0} zIndex={5} />
+            {/* Footer slot — StickyFormFooter portals into this sibling,
+                which sits outside the scroll area at the base of the content column. */}
+            <Box id="dashboard-sticky-footer" flexShrink={0} />
           </Flex>
         </Flex>
       )}
