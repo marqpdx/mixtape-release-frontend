@@ -338,6 +338,7 @@ export default function DashboardLayout({
       display={constrainToViewport ? "flex" : "block"}
       flexDirection={constrainToViewport ? "column" : undefined}
       overflow={constrainToViewport ? "hidden" : "visible"}
+      style={{ "--dashboard-sidebar-w": sidebarWidth } as React.CSSProperties}
     >
       {header && <Box flexShrink={0}>{header}</Box>}
 
@@ -575,8 +576,9 @@ export default function DashboardLayout({
               />
             </Box>
             {/* Footer slot — StickyFormFooter portals into this; fixed so it's
-                always viewport-anchored regardless of the outer page height */}
-            <Box id="dashboard-sticky-footer" position="fixed" bottom={0} left={0} right={0} zIndex={5} />
+                always viewport-anchored regardless of the outer page height.
+                left uses --dashboard-sidebar-w so it covers only the work area. */}
+            <Box id="dashboard-sticky-footer" position="fixed" bottom={0} left="var(--dashboard-sidebar-w)" right={0} zIndex={5} />
           </Flex>
         </Flex>
       )}
