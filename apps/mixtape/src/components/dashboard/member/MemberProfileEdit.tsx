@@ -173,7 +173,6 @@ export default function MemberProfileEdit({ onSave, onCancel }: MemberProfileEdi
     }
   };
 
-  const displayName = watch("display_name");
   const quickIntro = watch("quick_intro");
 
   const { handleImageChange, pending, previewUrls } = useImageUpload<ProfileFormData>({

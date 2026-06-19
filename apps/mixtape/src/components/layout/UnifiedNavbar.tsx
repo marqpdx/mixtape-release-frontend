@@ -32,14 +32,13 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { usePermissions } from "@mixtape/auth/usePermissions";
 import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { ThemeSelector } from "@components/common/ThemeSelector";
-import { IconMenu2, IconX, IconUser, IconLogout, IconMessageCircle, IconLayoutDashboard, IconPencil } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconUser, IconLogout, IconMessageCircle, IconLayoutDashboard } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { useChatUnread } from "@/contexts/ChatUnreadContext";
 import { useHelp } from "@components/help/useHelp";
 import { RadarOverlay } from "@components/radar/RadarOverlay";
-import { IconRadar } from "@tabler/icons-react";
 
 // Navigation item types
 type NavSection = "public" | "about" | "authenticated" | "admin" | "protected";
