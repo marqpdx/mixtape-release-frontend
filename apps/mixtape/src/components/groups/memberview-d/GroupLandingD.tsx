@@ -11,6 +11,7 @@ import {
   IconFolder,
   IconUserCircle,
   IconCalendarEvent,
+  IconBook2,
   IconPin,
   IconSwitchHorizontal,
 } from "@tabler/icons-react";
@@ -29,6 +30,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { GroupLandingDStartHere, GroupLandingDIntroduce } from "./GroupLandingDContent";
 import { GroupLandingDRail } from "./GroupLandingDRail";
 import { GroupMemberEventsPanel } from "./GroupMemberEventsPanel";
+import { GroupMemberWritingPanel } from "./GroupMemberWritingPanel";
 import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself";
 import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
 import { AnnouncementViewBox } from "../announcements/AnnouncementViewBox";
@@ -52,6 +54,7 @@ type DestinationId =
   | "share"
   | "converse"
   | "members"
+  | "writing"
   | "events"
   | "files"
   | "findings"
@@ -86,7 +89,8 @@ function buildNavSections(): NavSectionDef[] {
       items: [
         { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
         { id: "members",  label: "Members",  icon: IconUsers,          rail: false },
-        { id: "events",   label: "Events",   icon: IconCalendarEvent, rail: false },
+        { id: "writing",  label: "Writing",  icon: IconBook2,          rail: false },
+        { id: "events",   label: "Events",   icon: IconCalendarEvent,  rail: false },
       ],
     },
     {
@@ -711,6 +715,9 @@ export function GroupLandingD({
                 forumSlug={pinnedForumSlug}
                 discussionSlug={pinnedDiscussionSlug}
               />
+            )}
+            {active === "writing" && (
+              <GroupMemberWritingPanel groupSlug={group.slug} />
             )}
             {active === "events" && (
               <GroupMemberEventsPanel groupSlug={group.slug} />
