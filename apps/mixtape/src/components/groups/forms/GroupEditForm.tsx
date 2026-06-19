@@ -235,6 +235,7 @@ export default function GroupEditForm({
       maxW="1040px"
       mx="auto"
       p={2}
+      pb="100px"
     >
       <VStack gap={8} align="stretch">
 

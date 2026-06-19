@@ -574,8 +574,9 @@ export default function DashboardLayout({
                 {...workAreaProps}
               />
             </Box>
-            {/* Footer slot — StickyFormFooter portals into this */}
-            <Box id="dashboard-sticky-footer" flexShrink={0} />
+            {/* Footer slot — StickyFormFooter portals into this; fixed so it's
+                always viewport-anchored regardless of the outer page height */}
+            <Box id="dashboard-sticky-footer" position="fixed" bottom={0} left={0} right={0} zIndex={5} />
           </Flex>
         </Flex>
       )}
