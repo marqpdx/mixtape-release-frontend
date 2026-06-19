@@ -9,6 +9,7 @@ import { ROW_GAP } from '../lib/themes';
 import * as stackroomApi from '@mixtape/api/clients/stackroom/stackroomApi';
 import { ProfileBanner200 }   from './profile200/ProfileBanner200';
 import { ProfileIdentity200 } from './profile200/ProfileIdentity200';
+import { ProfileEditButton }  from './ProfileEditButton';
 import { AboutSection }       from './profile200/AboutSection';
 import { RightNowSection }    from './profile200/RightNowSection';
 import { VoicePlayer200 }     from './profile200/VoicePlayer200';
@@ -85,9 +86,10 @@ function WritingTab({ username }: { username: string }) {
 interface Props {
   profile: ProfileDTO;
   initialTab?: ProfileTabId;
+  username?: string;
 }
 
-export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
+export function ProfileTabShell({ profile, initialTab = 'profile', username }: Props) {
   const [tab, setTab] = useState<ProfileTabId>(initialTab);
   const { user } = useAuth();
   const isOwner = user?.username === profile.username;
@@ -142,6 +144,13 @@ export function ProfileTabShell({ profile, initialTab = 'profile' }: Props) {
             username={profile.username}
           />
         </div>
+
+        {/* Edit button — right-aligned, owner only */}
+        {username && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <ProfileEditButton username={username} />
+          </div>
+        )}
 
         {/* Tab navigation */}
         <div style={{ marginTop: 24, borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center' }}>

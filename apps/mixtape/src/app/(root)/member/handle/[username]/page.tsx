@@ -9,7 +9,6 @@ import { fetchPublicProfile } from '@/features/profile-revamp/api/client';
 import { ProfileTabShell, type ProfileTabId } from '@/features/profile-revamp/components/ProfileTabShell';
 import { ProfileViewTracker } from '@/features/profile-revamp/components/ProfileViewTracker';
 import { ProfileBackLink } from '@/features/profile-revamp/components/ProfileBackLink';
-import { ProfileEditButton } from '@/features/profile-revamp/components/ProfileEditButton';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://127.0.0.1:3011';
 
@@ -73,11 +72,12 @@ export default async function PublicProfilePage({
   return (
     <>
       <ProfileViewTracker username={username} />
-      <div style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-        {from ? <ProfileBackLink from={from} label={fromLabel} /> : <span />}
-        <ProfileEditButton username={username} />
-      </div>
-      <ProfileTabShell profile={profile} initialTab={initialTab} />
+      {from && (
+        <div style={{ padding: '0.5rem 1.5rem' }}>
+          <ProfileBackLink from={from} label={fromLabel} />
+        </div>
+      )}
+      <ProfileTabShell profile={profile} initialTab={initialTab} username={username} />
     </>
   );
 }

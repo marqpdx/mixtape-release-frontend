@@ -399,23 +399,6 @@ export default function UnifiedNavbar({
                         </Link>
                       </MenuItem>
                     )}
-                    {identity?.username && (
-                      <MenuItem value="edit-profile" asChild>
-                        <Link as={NextLink} href="/dashboard?section=edit-profile" display="flex" gap={2}>
-                          <IconPencil size={16} />
-                          Edit profile
-                        </Link>
-                      </MenuItem>
-                    )}
-                    <MenuItem
-                      value="radar"
-                      onClick={() => setRadarOpen(true)}
-                      display="flex"
-                      gap={2}
-                    >
-                      <IconRadar size={16} />
-                      Radar
-                    </MenuItem>
                     <MenuSeparator />
                     <MenuItem value="dashboard" asChild>
                       <Link as={NextLink} href="/dashboard" display="flex" gap={2}>
