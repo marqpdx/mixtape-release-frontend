@@ -334,9 +334,12 @@ export default function DashboardLayout({
     <Box
       className="dashboard-layout"
       bg="theme.surface"
-      minH={constrainToViewport ? "100vh" : "auto"}
+      h={constrainToViewport ? "100vh" : "auto"}
+      display={constrainToViewport ? "flex" : "block"}
+      flexDirection={constrainToViewport ? "column" : undefined}
+      overflow={constrainToViewport ? "hidden" : "visible"}
     >
-      {header && <Box>{header}</Box>}
+      {header && <Box flexShrink={0}>{header}</Box>}
 
       {isMobile ? (
         <MobileTabs
@@ -350,8 +353,9 @@ export default function DashboardLayout({
         />
       ) : (
         <Flex
-          h={constrainToViewport ? "100vh" : "auto"}
-          minH={constrainToViewport ? "100vh" : "auto"}
+          flex={constrainToViewport ? "1 1 0%" : undefined}
+          h={constrainToViewport ? undefined : "auto"}
+          minH={constrainToViewport ? "0" : "100vh"}
           position="relative"
           overflow={constrainToViewport ? "hidden" : "visible"}
         >

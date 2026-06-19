@@ -55,7 +55,7 @@ type DestinationId =
   | "converse"
   | "members"
   | "writing"
-  | "events"
+  | "almanac"
   | "files"
   | "findings"
   | `discussion:${string}`;
@@ -90,7 +90,7 @@ function buildNavSections(): NavSectionDef[] {
         { id: "converse", label: "Converse", icon: IconMessageCircle, rail: false },
         { id: "members",  label: "Members",  icon: IconUsers,          rail: false },
         { id: "writing",  label: "Writing",  icon: IconBook2,          rail: false },
-        { id: "events",   label: "Events",   icon: IconCalendarEvent,  rail: false },
+        { id: "almanac",  label: "Almanac",  icon: IconCalendarEvent,  rail: false },
       ],
     },
     {
@@ -472,7 +472,7 @@ export function GroupLandingD({
     handleSelect(id);
   }, [handleSelect, group.slug, hasIntro]);
 
-  const handleRailNavigate = useCallback((id: "introduce" | "files" | "events" | "members", collectionId?: string, memberUsername?: string) => {
+  const handleRailNavigate = useCallback((id: "introduce" | "files" | "almanac" | "members", collectionId?: string, memberUsername?: string) => {
     setActive(id);
     localStorage.setItem(`gld:${group.slug}:active`, id);
     setSelectedCollectionId(collectionId ?? null);
@@ -719,7 +719,7 @@ export function GroupLandingD({
             {active === "writing" && (
               <GroupMemberWritingPanel groupSlug={group.slug} />
             )}
-            {active === "events" && (
+            {active === "almanac" && (
               <GroupMemberEventsPanel groupSlug={group.slug} />
             )}
             {(active === "files" || active === "findings") && (
