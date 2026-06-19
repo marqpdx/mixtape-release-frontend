@@ -230,6 +230,7 @@ export default function GroupEditForm({
     <Box
       className="group-edit-form"
       as="form"
+      id="group-edit-form"
       onSubmit={handleSubmit(onSubmit)}
       maxW="1040px"
       mx="auto"
@@ -527,6 +528,7 @@ export default function GroupEditForm({
             </Button>
             <Button
               type="submit"
+              form="group-edit-form"
               loading={isSubmitting || isSaving}
               colorScheme="green"
               size="md"

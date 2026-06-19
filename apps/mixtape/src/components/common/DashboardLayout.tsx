@@ -548,22 +548,31 @@ export default function DashboardLayout({
             </VStack>
           </Box>
 
-          <Box
+          <Flex
             flex="1 1 0%"
             minW="0"
             minH="0"
-            p={0}
-            bg="theme.bgSubtle"
-            overflowX="hidden"
-            overflowY={constrainToViewport ? "auto" : "visible"}
+            flexDirection="column"
+            overflow="hidden"
           >
-            <WorkAreaComponent
-              section={activeSection}
-              sectionParams={sectionParams}
-              setActiveSection={handleSetActiveSection}
-              {...workAreaProps}
-            />
-          </Box>
+            <Box
+              flex="1"
+              minH="0"
+              p={0}
+              bg="theme.bgSubtle"
+              overflowX="hidden"
+              overflowY={constrainToViewport ? "auto" : "visible"}
+            >
+              <WorkAreaComponent
+                section={activeSection}
+                sectionParams={sectionParams}
+                setActiveSection={handleSetActiveSection}
+                {...workAreaProps}
+              />
+            </Box>
+            {/* Footer slot — StickyFormFooter portals into this */}
+            <Box id="dashboard-sticky-footer" flexShrink={0} />
+          </Flex>
         </Flex>
       )}
     </Box>
