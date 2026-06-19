@@ -1,4 +1,4 @@
-// src/components/groups/GroupEditForm.tsx - Enhanced for draft mode
+// src/components/groups/GroupEditForm.tsx
 
 "use client";
 
@@ -10,19 +10,15 @@ import {
   VStack,
   Textarea,
   Text,
-  Fieldset,
   Flex,
   SimpleGrid,
   Portal,
   Input,
-  Heading,
 } from "@chakra-ui/react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
-// import GroupVisibilitySelect from "@components/groups/GroupVisibilitySelect";
-// import { Input } from "@theme/recipes/input.recipe";
 import { createListCollection } from "@chakra-ui/react";
 import { Group, GroupFormData, GroupType } from "@mixtape/core/types/groupTypes";
 import { EmblemPicker } from "@components/emblems/EmblemPicker";
@@ -32,18 +28,20 @@ import { StickyFormFooter } from "@components/common/StickyFormFooter";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { MixtapeAlert } from "../../ui/alerts";
 import GroupVisibilitySelect from "../utils/GroupVisibilitySelect";
-import { useImageUpload } from '@hooks/useAssets';
+import { useImageUpload } from "@hooks/useAssets";
 
-// Helper function to safely render error messages
 const getErrorMessage = (error: unknown): string => {
-  if (typeof error === 'string') return error;
-  if (error && typeof error === 'object' && typeof (error as { message?: string }).message === 'string') {
-    return (error as { message?: string }).message ?? '';
+  if (typeof error === "string") return error;
+  if (
+    error &&
+    typeof error === "object" &&
+    typeof (error as { message?: string }).message === "string"
+  ) {
+    return (error as { message?: string }).message ?? "";
   }
-  return '';
+  return "";
 };
 
-// Collections for Select components
 const groupTypeCollection = createListCollection({
   items: [
     { label: "Community", value: "community" },
@@ -59,13 +57,50 @@ const displayLayoutCollection = createListCollection({
   ],
 });
 
-
 interface GroupEditFormProps {
   group: Group | null;
   onSuccess?: () => void;
   isSaving?: boolean;
   isDraftMode?: boolean;
   onFieldChange?: (updates: Partial<Group>) => void;
+}
+
+// Reusable card container for each section
+function EditCard({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Box
+      className={className}
+      bg="theme.surface"
+      borderRadius="16px"
+      border="1px solid"
+      borderColor="theme.border"
+      boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
+      p={8}
+    >
+      <Flex align="center" gap={3} mb={6}>
+        <Box w="10px" h="10px" borderRadius="full" bg="theme.accent" flexShrink={0} />
+        <Text
+          fontFamily="heading"
+          fontSize="23px"
+          fontWeight="400"
+          color="theme.text"
+          lineHeight="1.2"
+        >
+          {label}
+        </Text>
+        <Box flex={1} h="1px" bg="theme.border" />
+      </Flex>
+      {children}
+    </Box>
+  );
 }
 
 export default function GroupEditForm({
@@ -91,21 +126,12 @@ export default function GroupEditForm({
     formState: { errors, isSubmitting },
   } = useForm<GroupFormData>();
 
-  // Currently using deprecated wrapper (works via new sponsor-agnostic API)
-  // To migrate to new API directly, replace with:
-
   const { handleImageChange, pending, previewUrls } = useImageUpload({
-    sponsorType: 'group',
-    sponsorId: group?.id ?? '',
-    setValue
+    sponsorType: "group",
+    sponsorId: group?.id ?? "",
+    setValue,
   });
-  // const { handleImageChange, pending } = useEntityImageUpload<GroupFormData>(
-  //   "group",
-  //   group?.id ?? "",
-  //   setValue,
-  // );
 
-  // Initialize form with group data
   useEffect(() => {
     if (!group) return;
 
@@ -117,44 +143,43 @@ export default function GroupEditForm({
     setValue("group_type", group.group_type || "community");
     setValue("visibility", group.visibility || "public");
     setValue("display_layout", group.display_layout || "classic");
-    // Image storage paths (what gets saved to DB)
     setValue("profile_image_path", group.profile_image_path);
     setValue("background_image_path", group.background_image_path);
     setEmblemPreview(group.emblem ?? null);
-
-    // Note: profile_image_url and background_image_url are computed properties
-    // on the backend. They're read-only and generated on-demand from the paths.
   }, [group, setValue]);
 
   const handleSelectEmblem = async (emblemId: string) => {
     if (!group?.slug) return;
-    const response = await axiosInstance.post(`/api/groups/${group.slug}/emblem/attach`, {
-      emblem_id: emblemId,
-    });
+    const response = await axiosInstance.post(
+      `/api/groups/${group.slug}/emblem/attach`,
+      { emblem_id: emblemId }
+    );
     setEmblemPreview(response.data?.emblem ?? null);
   };
 
   const handleResetEmblem = async () => {
     if (!group?.slug) return;
-    const response = await axiosInstance.post(`/api/groups/${group.slug}/emblem/reset`);
+    const response = await axiosInstance.post(
+      `/api/groups/${group.slug}/emblem/reset`
+    );
     setEmblemPreview(response.data?.emblem ?? null);
   };
 
-  // Track form changes for draft mode
   const watchedFields = watch();
 
+  // Track local changes for the unsaved indicator (always, not just in draft mode)
   useEffect(() => {
-    if (!group || !isDraftMode) return;
+    if (!group) return;
 
     const changed =
-      watchedFields.title !== (group.title || '') ||
-      watchedFields.description !== (group.description || '') ||
-      watchedFields.summary !== (group.summary || '') ||
-      watchedFields.body !== (group.body || '') ||
-      watchedFields.author_name !== (group.author_name || '');
+      watchedFields.title !== (group.title || "") ||
+      watchedFields.description !== (group.description || "") ||
+      watchedFields.summary !== (group.summary || "") ||
+      watchedFields.body !== (group.body || "") ||
+      watchedFields.author_name !== (group.author_name || "");
 
     setHasLocalChanges(changed);
-  }, [watchedFields, group, isDraftMode]);
+  }, [watchedFields, group]);
 
   // Debounced auto-save in draft mode
   useEffect(() => {
@@ -163,27 +188,33 @@ export default function GroupEditForm({
     const timer = setTimeout(() => {
       const updates: Partial<Group> = {};
 
-      if (watchedFields.title !== group?.title) updates.title = watchedFields.title;
-      if (watchedFields.description !== group?.description) updates.description = watchedFields.description;
-      if (watchedFields.summary !== group?.summary) updates.summary = watchedFields.summary;
+      if (watchedFields.title !== group?.title)
+        updates.title = watchedFields.title;
+      if (watchedFields.description !== group?.description)
+        updates.description = watchedFields.description;
+      if (watchedFields.summary !== group?.summary)
+        updates.summary = watchedFields.summary;
       if (watchedFields.body !== group?.body) updates.body = watchedFields.body;
-      if (watchedFields.author_name !== group?.author_name) updates.author_name = watchedFields.author_name;
+      if (watchedFields.author_name !== group?.author_name)
+        updates.author_name = watchedFields.author_name;
 
       if (Object.keys(updates).length > 0) {
         onFieldChange(updates);
         setHasLocalChanges(false);
       }
-    }, 1000); // 1 second debounce
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [watchedFields, isDraftMode, hasLocalChanges, onFieldChange, group]);
 
-  const onSubmit: SubmitHandler<GroupFormData> = async (values: GroupFormData) => {
-    // In draft mode, don't submit manually (auto-save handles it)
+  const onSubmit: SubmitHandler<GroupFormData> = async (
+    values: GroupFormData
+  ) => {
     if (isDraftMode) {
       toaster.create({
         title: "Draft Mode Active",
-        description: "Changes are automatically saved. Exit draft mode to make manual changes.",
+        description:
+          "Changes are automatically saved. Exit draft mode to make manual changes.",
         type: "info",
         duration: 3000,
       });
@@ -206,16 +237,17 @@ export default function GroupEditForm({
         duration: 5000,
       });
 
+      setHasLocalChanges(false);
       onSuccess?.();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : `Could not ${group?.slug ? 'save' : 'create'} the group. Please try again.`
+          : `Could not ${group?.slug ? "save" : "create"} the group. Please try again.`
       );
       toaster.create({
         title: group?.slug ? "Update Failed" : "Creation Failed",
-        description: `Could not ${group?.slug ? 'save' : 'create'} the group. Please try again.`,
+        description: `Could not ${group?.slug ? "save" : "create"} the group. Please try again.`,
         type: "error",
         duration: 5000,
       });
@@ -223,271 +255,129 @@ export default function GroupEditForm({
   };
 
   if (error) {
-    return <MixtapeAlert status="error" title="Error Loading Group" description={error} />;
+    return (
+      <MixtapeAlert status="error" title="Error Loading Group" description={error} />
+    );
   }
 
   return (
     <Box
-      className="group-edit-form"
+      className="gef-root"
       as="form"
       id="group-edit-form"
       onSubmit={handleSubmit(onSubmit)}
-      maxW="1040px"
+      maxW="760px"
       mx="auto"
-      p={2}
+      px={4}
+      pt={6}
       pb="100px"
     >
-      <VStack gap={8} align="stretch">
+      {/* Page header */}
+      <Box className="gef-header" mb={8}>
+        <Text
+          fontFamily="mono"
+          fontSize="11px"
+          fontWeight="600"
+          letterSpacing="0.14em"
+          textTransform="uppercase"
+          color="theme.textMuted"
+          mb={2}
+        >
+          Group Settings
+        </Text>
+        <Text
+          as="h1"
+          fontFamily="heading"
+          fontSize="38px"
+          fontWeight="400"
+          color="theme.text"
+          lineHeight="1.15"
+          mb={2}
+        >
+          Edit Group
+        </Text>
+        <Text fontFamily="serifBody" fontSize="16px" color="theme.textSecondary">
+          Update how{" "}
+          <Box as="em" fontStyle="italic">
+            {group?.title ?? "your group"}
+          </Box>{" "}
+          appears to members across Mixtape.
+        </Text>
+      </Box>
 
-        {/* Draft mode indicator */}
-        {isDraftMode && (
-          <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
-            <Text fontSize="sm" color="blue.700">
-              ✏️ Draft mode active - changes will be saved automatically
-              {hasLocalChanges && " (typing...)"}
-            </Text>
-          </Box>
-        )}
+      {isDraftMode && (
+        <Box
+          mb={6}
+          p={3}
+          bg="blue.50"
+          borderRadius="md"
+          border="1px solid"
+          borderColor="blue.200"
+        >
+          <Text fontSize="sm" color="blue.700">
+            ✏️ Draft mode active — changes will be saved automatically
+            {hasLocalChanges && " (typing...)"}
+          </Text>
+        </Box>
+      )}
 
-        {/* Essential Information */}
-        <Fieldset.Root>
-          <Fieldset.Legend fontSize="lg" fontWeight="semibold" color="green.600">
-            Essential Information
-          </Fieldset.Legend>
-          <Fieldset.Content>
-            <VStack gap={4} align="stretch">
-              <Field.Root invalid={!!errors.title}>
-                <Field.Label>
-                  Group Name
-                  <Field.RequiredIndicator />
-                </Field.Label>
-                <Input
-                  {...register("title", { required: "Group name is required" })}
-                  placeholder="Enter group name"
-                />
-                <Field.ErrorText>{getErrorMessage(errors.title)}</Field.ErrorText>
-              </Field.Root>
+      <VStack gap={5} align="stretch">
+        {/* Essentials */}
+        <EditCard label="Essentials" className="gef-card-essentials">
+          <VStack gap={5} align="stretch">
+            <Field.Root invalid={!!errors.title}>
+              <Field.Label>
+                Group name
+                <Field.RequiredIndicator />
+              </Field.Label>
+              <Input
+                {...register("title", { required: "Group name is required" })}
+                placeholder="Enter group name"
+              />
+              <Field.ErrorText>
+                {getErrorMessage(errors.title)}
+              </Field.ErrorText>
+            </Field.Root>
 
-              <Field.Root invalid={!!errors.description}>
-                <Field.Label>
-                  Description
-                  <Field.RequiredIndicator />
-                </Field.Label>
-                <Textarea
-                  {...register("description", { required: "Description is required" })}
-                  placeholder="Brief description of your group"
-                  rows={3}
-                />
-                <Field.ErrorText>{getErrorMessage(errors.description)}</Field.ErrorText>
-              </Field.Root>
+            <Field.Root invalid={!!errors.description}>
+              <Field.Label>
+                Description
+                <Field.RequiredIndicator />
+              </Field.Label>
+              <Textarea
+                {...register("description", {
+                  required: "Description is required",
+                })}
+                placeholder="Brief description of your group"
+                rows={3}
+              />
+              <Field.ErrorText>
+                {getErrorMessage(errors.description)}
+              </Field.ErrorText>
+            </Field.Root>
 
-              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                <Field.Root invalid={!!errors.group_type}>
-                  <Field.Label>
-                    Group Type
-                    <Field.RequiredIndicator />
-                  </Field.Label>
-                  <Select.Root
-                    value={watch("group_type") ? [watch("group_type")] : undefined}
-                    defaultValue={["community"]}
-                    onValueChange={({ value }) => {
-                      setValue("group_type", value[0] as GroupType);
-                    }}
-                    collection={groupTypeCollection}
-                  >
-                    <Select.HiddenSelect
-                      {...register("group_type", { required: "Group type is required" })}
-                    />
-                    <Select.Control>
-                      <Select.Trigger>
-                        <Select.ValueText placeholder="Select group type..." />
-                      </Select.Trigger>
-                      <Select.IndicatorGroup>
-                        <Select.Indicator />
-                        <Select.ClearTrigger />
-                      </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
-                      <Select.Positioner>
-                        <Select.Content>
-                          {groupTypeCollection.items.map((item) => (
-                            <Select.Item item={item} key={item.value}>
-                              {item.label}
-                              <Select.ItemIndicator />
-                            </Select.Item>
-                          ))}
-                        </Select.Content>
-                      </Select.Positioner>
-                    </Portal>
-                  </Select.Root>
-                  <Field.ErrorText>{getErrorMessage(errors.group_type)}</Field.ErrorText>
-                </Field.Root>
-
-                <Field.Root>
-                  <Field.Label>
-                    Visibility
-                    <Field.RequiredIndicator />
-                  </Field.Label>
-                  <GroupVisibilitySelect
-                    register={register}
-                    value={watch("visibility")}
-                    onChange={(val) => setValue("visibility", val as "public" | "private" | "unlisted")}
-                  />
-                </Field.Root>
-              </SimpleGrid>
-
-              {/* Emblem selector with side-by-side layout */}
-              <Flex gap={6} align="flex-start">
-                {/* Left: Current emblem display (fixed width) */}
-                <Box flex="0 0 auto" minW="fit-content">
-                  <Heading size="sm" mb={3}>Group Emblem</Heading>
-                  <Box
-                    mb={3}
-                    p={4}
-                    bg="gray.50"
-                    rounded="md"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    minH="120px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    {emblemPreview ? (
-                      <EmblemDisplay emblem={emblemPreview} size={96} />
-                    ) : (
-                      <Text color="gray.500" fontSize="sm">
-                        No emblem selected
-                      </Text>
-                    )}
-                  </Box>
-                  <Button
-                    width="100%"
-                    onClick={() => setShowEmblemPicker((prev) => !prev)}
-                    colorScheme="green"
-                    size="sm"
-                  >
-                    {showEmblemPicker ? "Hide Emblem Picker" : "Choose Emblem"}
-                  </Button>
-                </Box>
-
-                {/* Right: Emblem picker (fills remaining space with internal scroll) */}
-                <Box flex="1" minW="0">
-                  <EmblemPicker
-                    isOpen={showEmblemPicker}
-                    onClose={() => setShowEmblemPicker(false)}
-                    onSelect={handleSelectEmblem}
-                    onReset={handleResetEmblem}
-                  />
-                </Box>
-              </Flex>
-            </VStack>
-          </Fieldset.Content>
-        </Fieldset.Root>
-
-        {/* Content & Details */}
-        <Fieldset.Root>
-          <Fieldset.Legend fontSize="lg" fontWeight="semibold" color="green.600">
-            Content & Details
-          </Fieldset.Legend>
-          <Fieldset.Content>
-            <VStack gap={4} align="stretch">
-              <Field.Root>
-                <Field.Label>Summary</Field.Label>
-                <Textarea
-                  {...register("summary")}
-                  placeholder="Optional summary of your group"
-                  rows={2}
-                />
-                <Field.HelperText>Short summary for listings and previews</Field.HelperText>
-              </Field.Root>
-
-              <Field.Root>
-                <Field.Label>Full Content</Field.Label>
-                <Textarea
-                  {...register("body")}
-                  placeholder="Detailed content about your group (supports markdown)"
-                  rows={6}
-                />
-                <Field.HelperText>Detailed description or welcome message</Field.HelperText>
-              </Field.Root>
-
-              <Field.Root>
-                <Field.Label>Author Name</Field.Label>
-                <Input
-                  {...register("author_name")}
-                  placeholder="Author display name"
-                />
-                <Field.HelperText>Display name for the group author</Field.HelperText>
-              </Field.Root>
-            </VStack>
-          </Fieldset.Content>
-        </Fieldset.Root>
-
-        {/* Visual Assets */}
-        <Fieldset.Root>
-          <Fieldset.Legend fontSize="lg" fontWeight="semibold" color="green.600">
-            Visual Assets
-          </Fieldset.Legend>
-          <Fieldset.Content>
-            {/* Hidden inputs for S3 paths (authoritative storage keys) */}
-            {/* <input type="hidden" {...register("profile_image_path")} />
-            <input type="hidden" {...register("background_image_path")} /> */}
-            {/* Note: URL fields removed - backend computes these on-demand */}
-
-            <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
-              <Field.Root>
-                <Field.Label>Profile Image</Field.Label>
-                <ImageUploadField
-                  imageType="profile"
-                  // imageUrl={group?.profile_image_url}
-                  imageUrl={previewUrls.profile ?? group?.profile_image_url}
-                  pending={pending.profile}
-                  watch={watch}
-                  register={register}
-                  errors={errors}
-                  doHandleImageChange={(e) => handleImageChange(e, "profile")}
-                />
-              </Field.Root>
-
-              <Field.Root>
-                <Field.Label>Background Image</Field.Label>
-                <ImageUploadField
-                  imageType="background"
-                  // imageUrl={group?.background_image_url}
-                  imageUrl={previewUrls.background ?? group?.background_image_url}
-                  pending={pending.background}
-                  watch={watch}
-                  register={register}
-                  errors={errors}
-                  doHandleImageChange={(e) => handleImageChange(e, "background")}
-                />
-              </Field.Root>
-            </SimpleGrid>
-          </Fieldset.Content>
-        </Fieldset.Root>
-
-        {/* Publishing & Layout */}
-        <Fieldset.Root>
-          <Fieldset.Legend fontSize="lg" fontWeight="semibold" color="green.600">
-            Publishing & Layout
-          </Fieldset.Legend>
-          <Fieldset.Content>
             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-              <Field.Root>
-                <Field.Label>Display Layout</Field.Label>
+              <Field.Root invalid={!!errors.group_type}>
+                <Field.Label>
+                  Group type
+                  <Field.RequiredIndicator />
+                </Field.Label>
                 <Select.Root
-                  value={watch("display_layout") ? [watch("display_layout")] : undefined}
-                  defaultValue={["classic"]}
+                  value={watch("group_type") ? [watch("group_type")] : undefined}
+                  defaultValue={["community"]}
                   onValueChange={({ value }) => {
-                    setValue("display_layout", value[0] as "classic" | "modern" | "minimal");
+                    setValue("group_type", value[0] as GroupType);
                   }}
-                  collection={displayLayoutCollection}
+                  collection={groupTypeCollection}
                 >
-                  <Select.HiddenSelect {...register("display_layout")} />
+                  <Select.HiddenSelect
+                    {...register("group_type", {
+                      required: "Group type is required",
+                    })}
+                  />
                   <Select.Control>
                     <Select.Trigger>
-                      <Select.ValueText placeholder="Select layout..." />
+                      <Select.ValueText placeholder="Select group type…" />
                     </Select.Trigger>
                     <Select.IndicatorGroup>
                       <Select.Indicator />
@@ -497,7 +387,7 @@ export default function GroupEditForm({
                   <Portal>
                     <Select.Positioner>
                       <Select.Content>
-                        {displayLayoutCollection.items.map((item) => (
+                        {groupTypeCollection.items.map((item) => (
                           <Select.Item item={item} key={item.value}>
                             {item.label}
                             <Select.ItemIndicator />
@@ -507,18 +397,198 @@ export default function GroupEditForm({
                     </Select.Positioner>
                   </Portal>
                 </Select.Root>
+                <Field.ErrorText>
+                  {getErrorMessage(errors.group_type)}
+                </Field.ErrorText>
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label>
+                  Visibility
+                  <Field.RequiredIndicator />
+                </Field.Label>
+                <GroupVisibilitySelect
+                  register={register}
+                  value={watch("visibility")}
+                  onChange={(val) =>
+                    setValue(
+                      "visibility",
+                      val as "public" | "private" | "unlisted"
+                    )
+                  }
+                />
               </Field.Root>
             </SimpleGrid>
 
-          </Fieldset.Content>
-        </Fieldset.Root>
+            {/* Emblem */}
+            <Flex gap={6} align="flex-start">
+              <Box flex="0 0 auto" minW="fit-content">
+                <Text fontSize="sm" fontWeight="500" color="theme.text" mb={3}>
+                  Group emblem
+                </Text>
+                <Box
+                  mb={3}
+                  p={4}
+                  bg="theme.bg"
+                  rounded="10px"
+                  border="1px solid"
+                  borderColor="theme.border"
+                  minH="120px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  {emblemPreview ? (
+                    <EmblemDisplay emblem={emblemPreview} size={96} />
+                  ) : (
+                    <Text color="theme.textMuted" fontSize="sm">
+                      No emblem selected
+                    </Text>
+                  )}
+                </Box>
+                <Button
+                  width="100%"
+                  onClick={() => setShowEmblemPicker((prev) => !prev)}
+                  size="sm"
+                >
+                  {showEmblemPicker ? "Hide picker" : "Choose emblem"}
+                </Button>
+              </Box>
 
-        {/* Form Actions - Only show in non-draft mode */}
+              <Box flex="1" minW="0">
+                <EmblemPicker
+                  isOpen={showEmblemPicker}
+                  onClose={() => setShowEmblemPicker(false)}
+                  onSelect={handleSelectEmblem}
+                  onReset={handleResetEmblem}
+                />
+              </Box>
+            </Flex>
+          </VStack>
+        </EditCard>
+
+        {/* Visual assets */}
+        <EditCard label="Visual assets" className="gef-card-visuals">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
+            <Field.Root>
+              <Field.Label>Profile image</Field.Label>
+              <ImageUploadField
+                imageType="profile"
+                imageUrl={previewUrls.profile ?? group?.profile_image_url}
+                pending={pending.profile}
+                watch={watch}
+                register={register}
+                errors={errors}
+                doHandleImageChange={(e) => handleImageChange(e, "profile")}
+              />
+            </Field.Root>
+
+            <Field.Root>
+              <Field.Label>Background image</Field.Label>
+              <ImageUploadField
+                imageType="background"
+                imageUrl={previewUrls.background ?? group?.background_image_url}
+                pending={pending.background}
+                watch={watch}
+                register={register}
+                errors={errors}
+                doHandleImageChange={(e) => handleImageChange(e, "background")}
+              />
+            </Field.Root>
+          </SimpleGrid>
+        </EditCard>
+
+        {/* Content & details */}
+        <EditCard label="Content & details" className="gef-card-content">
+          <VStack gap={5} align="stretch">
+            <Field.Root>
+              <Field.Label>Summary</Field.Label>
+              <Textarea
+                {...register("summary")}
+                placeholder="Optional summary for listings and previews"
+                rows={2}
+              />
+              <Field.HelperText>
+                Short summary for listings and previews
+              </Field.HelperText>
+            </Field.Root>
+
+            <Field.Root>
+              <Field.Label>Welcome message</Field.Label>
+              <Textarea
+                {...register("body")}
+                placeholder="Detailed content about your group (supports markdown)"
+                rows={6}
+              />
+              <Field.HelperText>
+                Detailed description or welcome message
+              </Field.HelperText>
+            </Field.Root>
+
+            <Field.Root>
+              <Field.Label>Author name</Field.Label>
+              <Input
+                {...register("author_name")}
+                placeholder="Author display name"
+              />
+              <Field.HelperText>Display name for the group author</Field.HelperText>
+            </Field.Root>
+          </VStack>
+        </EditCard>
+
+        {/* Publishing & layout */}
+        <EditCard label="Publishing & layout" className="gef-card-publishing">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+            <Field.Root>
+              <Field.Label>Display layout</Field.Label>
+              <Select.Root
+                value={
+                  watch("display_layout")
+                    ? [watch("display_layout")]
+                    : undefined
+                }
+                defaultValue={["classic"]}
+                onValueChange={({ value }) => {
+                  setValue(
+                    "display_layout",
+                    value[0] as "classic" | "modern" | "minimal"
+                  );
+                }}
+                collection={displayLayoutCollection}
+              >
+                <Select.HiddenSelect {...register("display_layout")} />
+                <Select.Control>
+                  <Select.Trigger>
+                    <Select.ValueText placeholder="Select layout…" />
+                  </Select.Trigger>
+                  <Select.IndicatorGroup>
+                    <Select.Indicator />
+                    <Select.ClearTrigger />
+                  </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {displayLayoutCollection.items.map((item) => (
+                        <Select.Item item={item} key={item.value}>
+                          {item.label}
+                          <Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Field.Root>
+          </SimpleGrid>
+        </EditCard>
+
         {!isDraftMode && (
           <StickyFormFooter
             onCancel={() => window.history.back()}
             isSaving={isSubmitting || isSaving}
-            saveLabel={group?.slug ? "Save Changes" : "Create Group"}
+            saveLabel={group?.slug ? "Save changes" : "Create group"}
+            showUnsavedIndicator={hasLocalChanges}
           >
             <Button
               variant="outline"
@@ -534,11 +604,10 @@ export default function GroupEditForm({
               colorScheme="green"
               size="md"
             >
-              {group?.slug ? "Save Changes" : "Create Group"}
+              {group?.slug ? "Save changes" : "Create group"}
             </Button>
           </StickyFormFooter>
         )}
-
       </VStack>
     </Box>
   );

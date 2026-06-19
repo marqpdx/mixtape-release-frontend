@@ -8,7 +8,7 @@ import type { GroupMemberViewData } from "../member-views/useGroupMemberViewData
 
 interface RailProps {
   viewData: GroupMemberViewData;
-  onNavigate: (id: "introduce" | "files" | "events" | "members", collectionId?: string, memberUsername?: string) => void;
+  onNavigate: (id: "introduce" | "files" | "almanac" | "members", collectionId?: string, memberUsername?: string) => void;
 }
 
 function RailCard({ children }: { children: React.ReactNode }) {
@@ -131,7 +131,7 @@ function UpcomingEventsRailCard({
           </Flex>
         ))}
       </Box>
-      <RailFooter label="See all events" onClick={() => onNavigate("events")} />
+      <RailFooter label="See all events" onClick={() => onNavigate("almanac")} />
     </RailCard>
   );
 }

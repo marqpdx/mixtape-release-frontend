@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Box, Flex, Button } from "@chakra-ui/react";
+import { Box, Flex, Button, Text } from "@chakra-ui/react";
 
 interface StickyFormFooterProps {
   onSave?: () => void;
@@ -13,6 +13,7 @@ interface StickyFormFooterProps {
   cancelLabel?: string;
   isSaving?: boolean;
   isDisabled?: boolean;
+  showUnsavedIndicator?: boolean;
   /** Pass custom buttons as children (e.g. type="submit" button associated via the form attr) */
   children?: React.ReactNode;
 }
@@ -37,6 +38,7 @@ export function StickyFormFooter({
   cancelLabel = "Cancel",
   isSaving = false,
   isDisabled = false,
+  showUnsavedIndicator = false,
   children,
 }: StickyFormFooterProps) {
   const [footerSlot, setFooterSlot] = useState<Element | null>(null);
@@ -46,25 +48,37 @@ export function StickyFormFooter({
   }, []);
 
   const inner = (
-    <Flex justify="flex-end" gap={3}>
-      {children ?? (
-        <>
-          {onCancel && (
-            <Button variant="outline" onClick={onCancel} disabled={isSaving}>
-              {cancelLabel}
-            </Button>
-          )}
-          <Button
-            onClick={onSave}
-            loading={isSaving}
-            disabled={isDisabled}
-            colorScheme="green"
-            size="md"
-          >
-            {saveLabel}
-          </Button>
-        </>
+    <Flex justify="space-between" align="center" gap={3}>
+      {showUnsavedIndicator ? (
+        <Flex align="center" gap={2}>
+          <Box w={2} h={2} borderRadius="full" bg="theme.accent" flexShrink={0} />
+          <Text fontFamily="body" fontSize="13px" color="theme.textSecondary">
+            Unsaved changes
+          </Text>
+        </Flex>
+      ) : (
+        <Box />
       )}
+      <Flex gap={3}>
+        {children ?? (
+          <>
+            {onCancel && (
+              <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+                {cancelLabel}
+              </Button>
+            )}
+            <Button
+              onClick={onSave}
+              loading={isSaving}
+              disabled={isDisabled}
+              colorScheme="green"
+              size="md"
+            >
+              {saveLabel}
+            </Button>
+          </>
+        )}
+      </Flex>
     </Flex>
   );
 
