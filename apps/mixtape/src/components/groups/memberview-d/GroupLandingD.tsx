@@ -192,8 +192,8 @@ function LeftNav({
           <Flex direction="column" gap="2px">
             {section.items.map((item) => (
               <Fragment key={item.id}>
-                {/* Soft divider above Events */}
-                {section.label === "Connect" && item.id === "events" && (
+                {/* Soft divider above Writing / Events cluster */}
+                {section.label === "Connect" && item.id === "writing" && (
                   <Box
                     borderTopWidth="1px"
                     borderColor="theme.border"
