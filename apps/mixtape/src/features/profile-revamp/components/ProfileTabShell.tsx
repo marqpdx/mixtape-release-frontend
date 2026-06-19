@@ -133,8 +133,8 @@ export function ProfileTabShell({ profile, initialTab = 'profile', username }: P
       {/* Page content — max-width container */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 44px' }}>
 
-        {/* Identity — avatar overlaps banner with negative margin */}
-        <div style={{ marginTop: -58 }}>
+        {/* Identity — avatar overlaps banner with negative margin; edit button pinned bottom-right */}
+        <div style={{ marginTop: -58, position: 'relative' }}>
           <ProfileIdentity200
             displayName={profile.displayName}
             practiceArea={practiceArea}
@@ -143,17 +143,15 @@ export function ProfileTabShell({ profile, initialTab = 'profile', username }: P
             isOwner={isOwner}
             username={profile.username}
           />
+          {username && (
+            <div style={{ position: 'absolute', bottom: 42, right: 0 }}>
+              <ProfileEditButton username={username} />
+            </div>
+          )}
         </div>
 
-        {/* Edit button — sits between identity and tab nav, pinned right */}
-        {username && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-            <ProfileEditButton username={username} />
-          </div>
-        )}
-
         {/* Tab navigation */}
-        <div style={{ marginTop: 12, borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center' }}>
+        <div style={{ marginTop: 24, borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center' }}>
           {TABS.map(t => (
             <button
               key={t.id}
