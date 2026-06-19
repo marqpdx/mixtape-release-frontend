@@ -17,20 +17,19 @@ tags:
 
 # Groups
 
-Groups are Mixtape's core community spaces. Each group is a gathering place for people with a shared purpose — a neighborhood association, a creative collective, a study circle, a professional community. Inside a group, members can discuss, write, organize events, run projects, share documents, and work together over time.
+Groups are Mixtape's core community spaces. Each group is a gathering place for people with a shared purpose — a neighborhood association, a creative collective, a study circle, a professional community. Inside a group, members can discuss, read and contribute writing, browse events, and connect with one another over time.
 
 ---
 
 ## What you can do in a group
 
-- Read and join the conversation in the group's forums (Threadworks)
-- RSVP to events and gatherings (Almanac)
-- Read and contribute writing published by the group
-- Browse the group's document library (Stackroom)
-- Participate in group projects (Projects)
-- Take courses offered by the group (EarthLab)
-- Join smaller circles within the group
-- Participate in group initiatives — AI-assisted thinking sessions
+- Read the group's welcome and orientation materials
+- Introduce yourself and read other members' introductions
+- Join conversations in the group's discussion threads
+- Browse and connect with group members
+- Read writing published by the group
+- Browse upcoming events (Almanac)
+- Access the group's shared resources and collections
 
 What you can see and do depends on your role in the group and the permissions the group admins have configured.
 
@@ -38,9 +37,9 @@ What you can see and do depends on your role in the group and the permissions th
 
 ## Key concepts
 
-**Group** — A named community space with its own members, content, and tools. Each group has a dashboard, discussion forums, events, and other sections depending on what the group has enabled.
+**Group** — A named community space with its own members, content, and tools. Each group has a welcome area, discussions, events, and other sections depending on what the group has enabled.
 
-**Member** — Anyone who has joined the group. Members can participate in discussions, RSVP to events, and access the group's content.
+**Member** — Anyone who has joined the group. Members can participate in discussions, browse events, read writing, and access the group's shared resources.
 
 **Steward** — A trusted member with elevated responsibilities. Stewards can manage content and members in areas they've been given access to. Different groups configure steward permissions differently.
 
@@ -52,37 +51,28 @@ What you can see and do depends on your role in the group and the permissions th
 
 ## How to join a group
 
-1. Browse groups at `/groups` or follow a link you've been given
-2. Open the group page and click **Join**
-3. Some groups require approval — if so, your request will be sent to the group's admin
-4. Once accepted, you'll see the group in your dashboard under **My Groups**
+Group membership is currently by invitation. If you've received an invitation link, follow it to join. Contact the group's admin if you need access.
 
 ---
 
 ## How to navigate a group
 
-When you're inside a group, you'll see a sidebar or navigation menu with the group's available sections. Common sections:
+When you open a group as a member, you'll see a left-side navigation panel with three sections:
 
-- **Home / Overview** — Group summary, recent activity, quick links
-- **Threadworks** — Discussion forums
-- **Almanac** — Events and gatherings
-- **Writing** — Published pieces from group members
-- **Stackroom** — Document library
-- **Projects** — Kanban-style task boards
-- **Circles** — Sub-groups within this group
-- **Initiatives** — AI-assisted group thinking sessions
+**Welcome**
+- **Start Here** — The group's home: an orientation card, quick links to key areas, and an overview of what the group makes together
+- **Who We Are** — Member introductions; write a short intro about yourself so others can get to know you
 
-Not all sections are visible to all members — admins control what each role can access.
+**Connect**
+- **Converse** — Open discussion threads; pinned threads from the group's admin appear here as quick links
+- **Members** — Browse the full member list and read member profiles
+- **Writing** — Published pieces from group members; click a piece to read it inline without leaving the group
+- **Almanac** — Upcoming and past events the group is hosting
 
----
+**Resources**
+- **Collections** — The group's shared files, links, and curated resources
 
-## How to leave a group
-
-1. Open the group from your dashboard
-2. Go to your profile or group settings
-3. Select **Leave Group**
-
-You can rejoin later if the group is open, or request re-admission if it requires approval.
+The main area to the right updates as you move between sections. On the Start Here view, a right rail also appears with quick-access cards for members and collections.
 
 ---
 
@@ -106,7 +96,5 @@ Circles are sub-groups nested inside a group. They're useful when a larger commu
 ## Related features
 
 - **Almanac** — The event and calendar system used within groups
-- **Threadworks** — The discussion forum system
-- **Stackroom** — The document library accessible within groups
-- **Initiatives** — AI-assisted group inquiry, available as a group section
-- **Projects** — Task boards for coordinating group work
+- **Stackroom** — The document and knowledge-base system available to group admins and stewards
+- **Writing** — Published pieces authored by group members
