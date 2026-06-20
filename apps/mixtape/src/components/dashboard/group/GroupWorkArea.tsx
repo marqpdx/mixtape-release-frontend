@@ -90,7 +90,7 @@ export default function GroupWorkArea({
   const queryClient = useQueryClient();
 
   // Check section permissions
-  const { canAccessSection, isLoading: permissionsLoading, isAdmin, isSteward } = useGroupPermissions(group.slug);
+  const { canAccessSection, isLoading: permissionsLoading, isAdmin, isSteward, hasDecorator } = useGroupPermissions(group.slug);
   const hasAccess = canAccessSection(section);
 
   // Show loading state while checking permissions
@@ -439,6 +439,7 @@ export default function GroupWorkArea({
             displayName: group.title,
           }}
           setActiveSection={setActiveSection}
+          canManagePosts={isAdmin || hasDecorator('can__ManageWriting')}
         />
       </WorkAreaWrapper>
     );
@@ -458,6 +459,7 @@ export default function GroupWorkArea({
           writingKind="post"
           pieceId={pieceId} // If undefined, creates new; if present, loads existing
           onPublished={handlePiecePublished}
+          onBack={() => setActiveSection("writing")}
           onUnpublished={() => {
             if (typeof window !== "undefined") {
               try {

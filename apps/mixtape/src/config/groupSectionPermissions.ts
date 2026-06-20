@@ -83,9 +83,8 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Group forums and discussions',
   },
 
-  // Almanac - accessible to all stewards
   'almanac-landing': {
-    public: true,
+    requiredDecorator: 'can__ManageAlmanac',
     description: 'Group events and calendar management',
   },
 

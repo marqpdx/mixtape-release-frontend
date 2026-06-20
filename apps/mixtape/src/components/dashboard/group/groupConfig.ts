@@ -82,10 +82,10 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "writing", label: "Writing", hidden: false },
       // { key: "create-writing", label: "Write", hidden: false },
       // { key: "threadworks-landing", label: "Threadworks", hidden: false },
-      { key: "write", label: "Write", hidden: false },
+      { key: "write", label: "Write", superuserOnly: true },
       { key: "import-document", label: "Import Documents", hidden: false },
       { key: "series-writing", label: "Series Writing ✦", hidden: false },
-      { key: "dual-panel-editor", label: "Draft ↔ Dispatch", hidden: false },
+      { key: "dual-panel-editor", label: "Draft ↔ Dispatch", superuserOnly: true },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },
@@ -188,7 +188,8 @@ export function filterMenuByPermissions(
   menuItems: MenuItem[],
   userRoles: string[],
   userDecorators: string[],
-  groupType: string = 'community'
+  groupType: string = 'community',
+  isSuperuser: boolean = false
 ): MenuItem[] {
   return menuItems
     .map(item => {
@@ -198,6 +199,12 @@ export function filterMenuByPermissions(
           // Hidden items are kept so programmatic navigation (e.g. collection-detail) still
           // resolves correctly in DashboardLayout. Display suppression is handled there via
           // isMenuItemVisible, which already checks item.hidden.
+
+          // Superuser-only items are hidden from the nav for non-superusers but remain
+          // navigable programmatically (e.g. navigating to the editor from writing list).
+          if (subItem.superuserOnly && !isSuperuser) {
+            return false;
+          }
 
           // Check if section is allowed for this group type
           if (!subItem.hidden && !isSectionAllowedForGroupType(subItem.key, groupType)) {
@@ -241,13 +248,14 @@ export function getFilteredGroupMenuItems(
   userRole: string | null,
   userRoles: string[] = [],
   userDecorators: string[] = [],
-  groupType: string = 'community'
+  groupType: string = 'community',
+  isSuperuser: boolean = false
 ): MenuItem[] {
   const baseMenu = getGroupMenuItems(userRole);
 
   // If user is admin or steward, filter the admin menu by permissions and group type
   if (['admin', 'steward'].includes(userRole || '')) {
-    return filterMenuByPermissions(baseMenu, userRoles, userDecorators, groupType);
+    return filterMenuByPermissions(baseMenu, userRoles, userDecorators, groupType, isSuperuser);
   }
 
   // Regular members get the member menu as-is

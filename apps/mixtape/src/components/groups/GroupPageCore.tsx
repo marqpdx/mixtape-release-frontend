@@ -150,7 +150,8 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
             effectiveRole,
             myPermissions.roles || [],
             myPermissions.decorators || [],
-            group.group_type || "community"
+            group.group_type || "community",
+            isSuperuser
           )
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -166,7 +167,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   const viewingAsMember = testRole === "member" || testRole === "admin" || testRole === "ops";
 
   const circleBar = <CircleParentBar group={group} />;
-  const dropTray = viewingAsMember ? <DropTray group={group} /> : null;
+  const dropTray = viewingAsMember && isSuperuser ? <DropTray group={group} /> : null;
   const emblemUrl = getBestEmblemUrl(group.emblem) || undefined;
 
   if (viewingAsOps) {
