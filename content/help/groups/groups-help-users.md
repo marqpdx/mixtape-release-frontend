@@ -6,6 +6,7 @@ excerpt: Groups are Mixtape's community spaces — places where members gather, 
 routes:
   - /groups
   - /groups/*
+  - /groups/*/circles/*
 workAreas:
   - GroupOverview
 tags:

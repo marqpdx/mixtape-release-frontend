@@ -3,8 +3,7 @@ title: Dashboard
 subsystem: dashboard
 area: overview
 excerpt: Dashboard is your authenticated home base for re-entry, recent activity, and navigation into the work that currently needs attention.
-routes:
-  - /dashboard
+routes: []
 workAreas: []
 tags:
   - dashboard

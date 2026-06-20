@@ -749,9 +749,7 @@
         }
       ],
       "metadata": {},
-      "routes": [
-        "/dashboard"
-      ],
+      "routes": [],
       "workAreas": [],
       "tags": [
         "dashboard",
@@ -981,7 +979,8 @@
       "metadata": {},
       "routes": [
         "/groups",
-        "/groups/*"
+        "/groups/*",
+        "/groups/*/circles/*"
       ],
       "workAreas": [
         "GroupOverview"
@@ -2004,5 +2003,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-06-20T18:23:24.847Z"
+  "generatedAt": "2026-06-20T21:26:27.946Z"
 }
