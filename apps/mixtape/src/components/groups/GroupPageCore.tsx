@@ -77,8 +77,8 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   const clampViewToPermissions = useCallback(
     (candidate: ViewRole): ViewRole => {
       if (candidate === "ops" && !isSuperuser) return canUseAdminView ? "admin" : isMember ? "member" : "public";
-      if (canUseAdminView) return candidate;
-      if (isMember) return candidate === "admin" ? "member" : candidate;
+      if (canUseAdminView) return candidate === "public" ? "admin" : candidate;
+      if (isMember) return (candidate === "admin" || candidate === "public") ? "member" : candidate;
       return "public";
     },
     [canUseAdminView, isMember, isSuperuser]
