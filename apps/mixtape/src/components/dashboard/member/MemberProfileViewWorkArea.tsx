@@ -8,6 +8,7 @@ import { IconArrowLeft, IconExternalLink } from "@tabler/icons-react";
 import { useMyMemberProfile } from "@hooks/member/useMemberProfile";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { MixtapeAlert } from "@/components/ui/alerts";
+import { HelpTip } from "@/components/help/HelpTip";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
 
 function splitProfileList(value?: string | null): string[] {
@@ -83,6 +84,7 @@ export default function MemberProfileViewWorkArea({ setActiveSection, sectionPar
           >
             Edit Profile
           </Button>
+          <HelpTip helpKey="member-overview" />
         </HStack>
       </HStack>
 

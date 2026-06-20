@@ -35,6 +35,7 @@ import { GroupLandingDTellAboutYourself } from "./GroupLandingDTellAboutYourself
 import { GroupLandingDDiscussionThread } from "./GroupLandingDDiscussionThread";
 import { AnnouncementViewBox } from "../announcements/AnnouncementViewBox";
 import { QuickAnnouncementCreate } from "../announcements/QuickAnnouncementCreate";
+import { HelpTip } from "@/components/help/HelpTip";
 import {
   DialogRoot,
   DialogContent,
@@ -619,6 +620,7 @@ export function GroupLandingD({
             >
               Edit profile
             </Button>
+            <HelpTip helpKey="groups-overview" />
             {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
             {active === "introduce" && !hasIntro && isIntroCollapsed && (
               <Box
