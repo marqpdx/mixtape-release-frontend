@@ -266,7 +266,7 @@ export default function GroupEditForm({
       as="form"
       id="group-edit-form"
       onSubmit={handleSubmit(onSubmit)}
-      maxW="760px"
+      maxW="960px"
       mx="auto"
       px={4}
       pt={6}
