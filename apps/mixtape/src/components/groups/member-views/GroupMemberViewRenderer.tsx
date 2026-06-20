@@ -13,6 +13,7 @@ interface GroupMemberViewRendererProps {
   onRoleChange?: (role: "admin" | "member" | "public") => void;
   isMember: boolean;
   isAdminOrSteward: boolean;
+  isGroupAdmin?: boolean;
   canEditGroup: boolean;
   isSuperuser?: boolean;
   layoutVariant: GroupLayoutVariant;
@@ -27,6 +28,7 @@ export function GroupMemberViewRenderer({
   onRoleChange,
   isMember,
   isAdminOrSteward,
+  isGroupAdmin = false,
   canEditGroup,
   isSuperuser = false,
   layoutVariant,
@@ -43,6 +45,7 @@ export function GroupMemberViewRenderer({
         onRoleChange={onRoleChange}
         isMember={isMember}
         isAdminOrSteward={isAdminOrSteward}
+        isGroupAdmin={isGroupAdmin}
         canEditGroup={canEditGroup}
         isSuperuser={isSuperuser}
       />

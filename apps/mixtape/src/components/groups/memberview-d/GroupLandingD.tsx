@@ -407,6 +407,7 @@ interface GroupLandingDProps {
   onRoleChange?: (role: "admin" | "member" | "public") => void;
   isMember?: boolean;
   isAdminOrSteward?: boolean;
+  isGroupAdmin?: boolean;
   canEditGroup?: boolean;
   isSuperuser?: boolean;
 }
@@ -417,6 +418,7 @@ export function GroupLandingD({
   onRoleChange,
   isMember = false,
   isAdminOrSteward = false,
+  isGroupAdmin = false,
   isSuperuser = false,
 }: GroupLandingDProps) {
   const { user } = useAuth();
@@ -536,7 +538,7 @@ export function GroupLandingD({
         borderBottomWidth="1px"
         borderColor="theme.border"
         bg="theme.bg"
-        px={{ base: "18px", xl: "48px" }}
+        px={{ base: "38px", xl: "68px" }}
         py="5px"
       >
         <Flex align="center" gap="20px">
@@ -570,7 +572,7 @@ export function GroupLandingD({
               bg="theme.bgSubtle"
             />
           )}
-          <Box className="gld-header-text" flex="1" minW={0} mr={isAdminOrSteward ? 3 : 0}>
+          <Box className="gld-header-text" flex="1" minW={0}>
             <Text
               as="h1"
               fontFamily="heading"
@@ -603,52 +605,57 @@ export function GroupLandingD({
               {viewData.members.memberCount} MEMBERS
             </Text>
           </Box>
-          {isAdminOrSteward && (
-            <QuickAnnouncementCreate groupSlug={group.slug} />
+          {/* Right-side header actions — announce (admin only) + edit profile (members) */}
+          {(isGroupAdmin || (isMember && user)) && (
+            <Flex className="gld-header-actions" direction="column" align="flex-end" gap={2} alignSelf="flex-end" pb="10px">
+              {isGroupAdmin && (
+                <QuickAnnouncementCreate groupSlug={group.slug} />
+              )}
+              {isMember && user && (
+                <Flex align="center" gap={2} mb="2px">
+                  <Button
+                    className="gld-edit-profile-btn"
+                    size="xs"
+                    variant="outline"
+                    borderRadius="9999px"
+                    fontSize="12px"
+                    px="12px"
+                    onClick={() => setEditProfileOpen(true)}
+                  >
+                    Edit profile
+                  </Button>
+                  <HelpTip helpKey="groups-overview" />
+                  {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
+                  {active === "introduce" && !hasIntro && isIntroCollapsed && (
+                    <Box
+                      as="button"
+                      display="inline-flex"
+                      alignItems="center"
+                      px="10px"
+                      py="3px"
+                      borderRadius="full"
+                      bg="theme.accentSoft"
+                      borderWidth="1px"
+                      borderColor="theme.accent"
+                      fontSize="11px"
+                      fontWeight="600"
+                      color="theme.accent"
+                      cursor="pointer"
+                      _hover={{ bg: "theme.accent", color: "white" }}
+                      transition="all 0.15s"
+                      onClick={() => {
+                        setIsIntroCollapsed(false);
+                        localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
+                      }}
+                    >
+                      My Intro
+                    </Box>
+                  )}
+                </Flex>
+              )}
+            </Flex>
           )}
         </Flex>
-        {isMember && user && (
-          <Flex justify="flex-end" align="center" gap={2} mt={2}>
-            <Button
-              className="gld-edit-profile-btn"
-              size="xs"
-              variant="outline"
-              borderRadius="9999px"
-              fontSize="12px"
-              px="12px"
-              onClick={() => setEditProfileOpen(true)}
-            >
-              Edit profile
-            </Button>
-            <HelpTip helpKey="groups-overview" />
-            {/* My Intro restore pill — only when card exists (no intro yet) and is collapsed */}
-            {active === "introduce" && !hasIntro && isIntroCollapsed && (
-              <Box
-                as="button"
-                display="inline-flex"
-                alignItems="center"
-                px="10px"
-                py="3px"
-                borderRadius="full"
-                bg="theme.accentSoft"
-                borderWidth="1px"
-                borderColor="theme.accent"
-                fontSize="11px"
-                fontWeight="600"
-                color="theme.accent"
-                cursor="pointer"
-                _hover={{ bg: "theme.accent", color: "white" }}
-                transition="all 0.15s"
-                onClick={() => {
-                  setIsIntroCollapsed(false);
-                  localStorage.setItem(`gld:${group.slug}:introCollapsed`, "false");
-                }}
-              >
-                My Intro
-              </Box>
-            )}
-          </Flex>
-        )}
       </Box>
 
       {/* 3-column body */}
@@ -656,7 +663,7 @@ export function GroupLandingD({
         className="gld-body"
         maxW="1360px"
         mx="auto"
-        px={{ base: "18px", xl: "48px" }}
+        px={{ base: "38px", xl: "68px" }}
         pt={6}
         pb={12}
       >

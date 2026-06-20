@@ -55,6 +55,9 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
   const isSuperuser =
     (myPermissions?.roles?.includes("owner") ?? false) ||
     (myPermissions?.roles?.includes("superuser") ?? false);
+  const isGroupAdmin =
+    (myPermissions?.roles?.includes("owner") ?? false) ||
+    (myPermissions?.roles?.includes("admin") ?? false);
 
   useEffect(() => {
     if (group?.slug) recordGroupVisit(group.slug);
@@ -243,6 +246,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
         onRoleChange={(next) => setTestRole(clampViewToPermissions(next))}
         isMember={isMember}
         isAdminOrSteward={canUseAdminView}
+        isGroupAdmin={isGroupAdmin}
         canEditGroup={canEditGroup}
         isSuperuser={isSuperuser}
         layoutVariant={layoutVariant}
