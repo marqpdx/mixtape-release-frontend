@@ -5,9 +5,7 @@ area: overview
 excerpt: "Your Dashboard is your personal workspace on Mixtape — writing, groups, profile, and account settings all in one place."
 routes:
   - /dashboard
-  - /dashboard?section=*
   - /member/*/hub
-  - /member/*/hub?*
   - /member/*/profile
   - /member/*/library
   - /member/*/settings
