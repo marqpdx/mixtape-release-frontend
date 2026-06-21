@@ -175,6 +175,7 @@ export default function FeedPostComposer({
         {/* Kind-specific input */}
         {kind === 'image' && imagePreview ? (
           <Box position="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imagePreview}
               alt="Preview"

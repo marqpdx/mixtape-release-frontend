@@ -9,7 +9,7 @@ import {
 } from '@chakra-ui/react'
 import { IconPlus } from '@tabler/icons-react'
 import { useColorModeValue } from '@components/ui/color-mode'
-import { Forum, Discussion, FeedPost, FeedItem } from '@mixtape/core/types/threadworksTypes'
+import { Forum, Discussion, FeedItem } from '@mixtape/core/types/threadworksTypes'
 import { useForumFeed } from '@hooks/threadworks/useThreadworks'
 import { formatTimeAgo } from './threadworksUtils'
 import DiscussionDetail from './DiscussionDetail'
