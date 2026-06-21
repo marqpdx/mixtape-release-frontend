@@ -107,25 +107,28 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [drafts, rightDocId]
   );
 
+  const leftPieceId = leftDoc?.piece.id ?? null;
+  const rightPieceId = rightDoc?.piece.id ?? null;
+
   useEffect(() => {
-    if (!leftDoc) { setLeftBodyJson(null); return; }
+    if (!leftPieceId) { setLeftBodyJson(null); return; }
     setLeftBodyLoading(true);
     axiosInstance
-      .get(`/api/writing/pieces/${leftDoc.piece.id}/working-copy`)
+      .get(`/api/writing/pieces/${leftPieceId}/working-copy`)
       .then((res) => setLeftBodyJson(res.data.body_json ?? null))
       .catch(() => setLeftBodyJson(null))
       .finally(() => setLeftBodyLoading(false));
-  }, [leftDoc?.piece.id]);
+  }, [leftPieceId]);
 
   useEffect(() => {
-    if (!rightDoc) { setRightBodyJson(null); return; }
+    if (!rightPieceId) { setRightBodyJson(null); return; }
     setRightBodyLoading(true);
     axiosInstance
-      .get(`/api/writing/pieces/${rightDoc.piece.id}/working-copy`)
+      .get(`/api/writing/pieces/${rightPieceId}/working-copy`)
       .then((res) => setRightBodyJson(res.data.body_json ?? null))
       .catch(() => setRightBodyJson(null))
       .finally(() => setRightBodyLoading(false));
-  }, [rightDoc?.piece.id]);
+  }, [rightPieceId]);
 
   const rightSections = useMemo(
     () => (rightBodyJson ? extractSections(rightBodyJson) : []),
