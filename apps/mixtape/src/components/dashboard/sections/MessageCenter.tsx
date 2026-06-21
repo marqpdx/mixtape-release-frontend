@@ -11,6 +11,7 @@ import { ConversationDetail } from "@components/chat/ConversationDetail";
 import { newConversationDialog } from "@components/chat/NewConversationDialog";
 import { IconPlus, IconMessageCircle } from "@tabler/icons-react";
 import { createOrGetConversation } from "@/lib/chat/createOrGetConversation";
+import type { TrustProfile } from "@/components/chat/interfaces";
 import { useConversationStore } from "@/stores/conversationStore";
 import { HelpTip } from "@/components/help/HelpTip";
 import { useHelpRegistration } from "@/components/help/useHelpRegistration";
@@ -36,9 +37,9 @@ export default function MessageCenter() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleStartConversation = async (usernames: string[]) => {
+  const handleStartConversation = async (usernames: string[], trustProfile: TrustProfile = "standard") => {
     try {
-      const conversation = await createOrGetConversation(usernames);
+      const conversation = await createOrGetConversation(usernames, trustProfile);
       if (conversation) {
         setSelectedSlug(conversation.slug);
         await refetchConversations();
