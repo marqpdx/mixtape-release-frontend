@@ -26,6 +26,7 @@ import { getSocket, initializeSocket } from "@mixtape/api/lib/socket";
 import { useVoiceRecorder } from "@mixtape/api/hooks/useVoiceRecorder";
 import { uploadVoiceMessageBlob } from "@mixtape/api/clients/chat/chatApi";
 import { VoicePlaybackBubble } from "./VoicePlaybackBubble";
+import { ConversationHeaderBar } from "./ConversationHeaderBar";
 
 type MessageReaction = {
   id: string;
@@ -482,20 +483,11 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   return (
     <VStack align="stretch" gap={4} h="100%" position="relative">
       {/* Header */}
-      <Flex
-        justify="space-between"
-        align="center"
-        direction={["column", "row"]}
-        gap={[2, 0]}
-      >
-        <Text
-          fontSize={["md", "lg"]}
-          fontWeight="bold"
-          color="text.primary"
-        >
-          Chat: {chatTitle}
-        </Text>
-      </Flex>
+      <ConversationHeaderBar
+        slug={slug}
+        title={chatTitle}
+        trustProfile={conversation?.trust_profile ?? "standard"}
+      />
 
       {safeMessages.length > 0 && (
         <HStack
