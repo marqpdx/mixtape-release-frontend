@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
+import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
   Flex,
   Text,
   HStack,
-  Textarea,
-  Input,
+  VStack,
+  NativeSelect,
+  Spinner,
   IconButton,
-  Button,
+  Badge,
 } from "@chakra-ui/react";
-import { IconArrowRight, IconPlus, IconTrash, IconCheck } from "@tabler/icons-react";
-
-interface Section {
-  id: string;
-  heading: string;
-  body: string;
-}
+import { IconArrowLeft, IconCheck } from "@tabler/icons-react";
+import { useWriting } from "@hooks/useWriting";
+import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
+import TipTapEditor from "@/components/editor/TipTapEditor";
+import { WorkingDocument } from "@mixtape/core/types/writingTypes";
 
 interface Sponsor {
   type: "group" | "member";
@@ -29,151 +29,226 @@ interface DualPanelEditorProps {
   sponsor: Sponsor;
 }
 
-function makeId(): string {
-  return `s-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+interface DocSection {
+  id: string;
+  heading: string;
+  nodes: JSONContent[];
 }
 
-function newSection(heading = ""): Section {
-  return { id: makeId(), heading, body: "" };
+// Extract heading-delimited sections from a Tiptap doc.
+// Content before the first heading becomes a "Preamble" section.
+function extractSections(doc: JSONContent): DocSection[] {
+  const topNodes = doc.content ?? [];
+  const sections: DocSection[] = [];
+  let currentHeading: string | null = null;
+  let currentNodes: JSONContent[] = [];
+
+  const flush = (idx: number) => {
+    if (currentNodes.length === 0) return;
+    sections.push({
+      id: `sec-${idx}`,
+      heading: currentHeading ?? "Preamble",
+      nodes: [...currentNodes],
+    });
+  };
+
+  for (const node of topNodes) {
+    if (node.type === "heading") {
+      flush(sections.length);
+      currentHeading = extractText(node);
+      currentNodes = [node];
+    } else {
+      currentNodes.push(node);
+    }
+  }
+  flush(sections.length);
+  return sections;
 }
 
-const DEFAULT_LEFT: Section[] = [{ id: "s-intro", heading: "Intro", body: "" }];
+function extractText(node: JSONContent): string {
+  if (!node.content) return "";
+  return node.content
+    .map((n) => (n.type === "text" ? (n.text ?? "") : extractText(n)))
+    .join("");
+}
 
-function loadState(key: string): { left: Section[]; right: Section[] } | null {
-  try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return null;
+function previewText(nodes: JSONContent[], maxLen = 120): string {
+  const body = nodes.filter((n) => n.type !== "heading");
+  const raw = body.map((n) => extractText(n)).join(" ").trim();
+  return raw.length > maxLen ? raw.slice(0, maxLen) + "…" : raw;
 }
 
 export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
-  const storageKey = `mx:dual-panel:${sponsor.type}:${sponsor.slug}`;
+  const { drafts, isLoading: draftsLoading } = useWriting(
+    sponsor.type,
+    sponsor.slug
+  );
 
-  const [left, setLeft] = useState<Section[]>(() => {
-    const saved = loadState(storageKey);
-    return saved?.left ?? DEFAULT_LEFT;
-  });
+  const [leftDocId, setLeftDocId] = useState<string | null>(null);
+  const [rightDocId, setRightDocId] = useState<string | null>(null);
+  const [pushedIds, setPushedIds] = useState<Set<string>>(new Set());
 
-  const [right, setRight] = useState<Section[]>(() => {
-    const saved = loadState(storageKey);
-    return saved?.right ?? [];
-  });
+  const leftEditorRef = useRef<Editor | null>(null);
 
-  const [transferredIds, setTransferredIds] = useState<Set<string>>(new Set());
+  const leftDoc: WorkingDocument | undefined = useMemo(
+    () => drafts?.find((d) => String(d.id) === leftDocId),
+    [drafts, leftDocId]
+  );
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({ left, right }));
-    } catch {}
-  }, [left, right, storageKey]);
+  const rightDoc: WorkingDocument | undefined = useMemo(
+    () => drafts?.find((d) => String(d.id) === rightDocId),
+    [drafts, rightDocId]
+  );
 
-  const updateLeft = useCallback((id: string, patch: Partial<Section>) => {
-    setLeft(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  const rightSections = useMemo(
+    () =>
+      rightDoc?.body_json
+        ? extractSections(rightDoc.body_json as JSONContent)
+        : [],
+    [rightDoc]
+  );
+
+  // Autosave uses piece.id (the WritingPiece PK), not the WorkingDocument id
+  const { schedule, saveStatus } = useWorkingCopyAutosave(
+    leftDoc?.piece.id ?? "",
+    2500
+  );
+
+  const handleContentChange = useCallback(
+    (json: JSONContent) => {
+      if (!leftDoc) return;
+      schedule({
+        title: leftDoc.title,
+        body_json: json,
+        excerpt: leftDoc.excerpt ?? "",
+      });
+    },
+    [leftDoc, schedule]
+  );
+
+  const pushSection = useCallback((section: DocSection) => {
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const pos = editor.state.doc.content.size;
+    editor.chain().focus().insertContentAt(pos, section.nodes).run();
+    setPushedIds((prev) => new Set([...prev, section.id]));
   }, []);
 
-  const updateRight = useCallback((id: string, patch: Partial<Section>) => {
-    setRight(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
-  }, []);
+  const saveLabel =
+    saveStatus === "saving"
+      ? "Saving…"
+      : saveStatus === "saved"
+      ? "Saved"
+      : saveStatus === "error"
+      ? "Save error"
+      : "";
 
-  const transfer = useCallback((section: Section) => {
-    const norm = section.heading.toLowerCase().trim();
-    setRight(prev => {
-      const idx = norm ? prev.findIndex(s => s.heading.toLowerCase().trim() === norm) : -1;
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = {
-          ...next[idx],
-          body: next[idx].body
-            ? `${next[idx].body}\n\n${section.body}`
-            : section.body,
-        };
-        return next;
-      }
-      return [
-        ...prev,
-        { id: `r-${section.id}`, heading: section.heading, body: section.body },
-      ];
-    });
-    setTransferredIds(prev => new Set([...prev, section.id]));
-  }, []);
+  if (draftsLoading) {
+    return (
+      <Flex align="center" justify="center" minH="60vh">
+        <Spinner size="lg" color="green.500" />
+      </Flex>
+    );
+  }
 
   return (
     <Flex className="dpe-root" minH="75vh" w="100%" align="stretch">
-      {/* Draft panel */}
+      {/* Left — editable target */}
       <Box
         className="dpe-left"
         flex="1"
         borderRightWidth="1px"
         borderColor="border.muted"
-        overflowY="auto"
+        display="flex"
+        flexDirection="column"
+        overflow="hidden"
       >
-        <PanelHeader label="Draft" />
-        <Box p={3}>
-          {left.map(section => (
-            <LeftSection
-              key={section.id}
-              section={section}
-              transferred={transferredIds.has(section.id)}
-              onUpdate={patch => updateLeft(section.id, patch)}
-              onTransfer={() => transfer(section)}
-              onRemove={() => setLeft(prev => prev.filter(s => s.id !== section.id))}
+        <PanelHeader label="Target">
+          <DocPicker
+            docs={drafts ?? []}
+            value={leftDocId}
+            exclude={rightDocId}
+            onChange={(id) => { setLeftDocId(id); setPushedIds(new Set()); }}
+            placeholder="Pick target draft…"
+          />
+          {saveLabel && (
+            <Text fontSize="xs" color="fg.muted" flexShrink={0}>
+              {saveLabel}
+            </Text>
+          )}
+        </PanelHeader>
+
+        <Box flex="1" overflowY="auto" p={3}>
+          {!leftDoc ? (
+            <EmptyState label="Select a draft to edit on the left." />
+          ) : (
+            <TipTapEditor
+              key={String(leftDoc.id)}
+              ref={leftEditorRef}
+              initialContent={leftDoc.body_json as JSONContent}
+              onContentChange={handleContentChange}
+              editable
+              className="borderless-editor"
             />
-          ))}
-          <Button
-            size="xs"
-            variant="ghost"
-            mt={1}
-            onClick={() => setLeft(prev => [...prev, newSection()])}
-          >
-            <IconPlus size={12} />
-            <Text ml={1}>Add section</Text>
-          </Button>
+          )}
         </Box>
       </Box>
 
-      {/* Dispatch panel */}
-      <Box className="dpe-right" flex="1" overflowY="auto">
-        <PanelHeader label="Dispatch" />
-        <Box p={3}>
-          {right.length === 0 && (
-            <Text
-              fontSize="sm"
-              color="fg.muted"
-              fontStyle="italic"
-              mb={4}
-            >
-              Use the → buttons on the Draft side to transfer sections here.
-            </Text>
+      {/* Right — read-only source */}
+      <Box
+        className="dpe-right"
+        flex="1"
+        display="flex"
+        flexDirection="column"
+        overflow="hidden"
+      >
+        <PanelHeader label="Source">
+          <DocPicker
+            docs={drafts ?? []}
+            value={rightDocId}
+            exclude={leftDocId}
+            onChange={(id) => { setRightDocId(id); setPushedIds(new Set()); }}
+            placeholder="Pick source draft…"
+          />
+        </PanelHeader>
+
+        <Box flex="1" overflowY="auto" p={3}>
+          {!rightDoc ? (
+            <EmptyState label="Select a source draft to browse its sections." />
+          ) : rightSections.length === 0 ? (
+            <EmptyState label="This draft has no content yet." />
+          ) : (
+            <VStack align="stretch" gap={3}>
+              {rightSections.map((section) => (
+                <SectionCard
+                  key={section.id}
+                  section={section}
+                  pushed={pushedIds.has(section.id)}
+                  onPush={pushSection}
+                  leftReady={!!leftDoc}
+                />
+              ))}
+            </VStack>
           )}
-          {right.map(section => (
-            <RightSection
-              key={section.id}
-              section={section}
-              onUpdate={patch => updateRight(section.id, patch)}
-              onRemove={() => setRight(prev => prev.filter(s => s.id !== section.id))}
-            />
-          ))}
-          <Button
-            size="xs"
-            variant="ghost"
-            mt={1}
-            onClick={() => setRight(prev => [...prev, newSection()])}
-          >
-            <IconPlus size={12} />
-            <Text ml={1}>Add section</Text>
-          </Button>
         </Box>
       </Box>
     </Flex>
   );
 }
 
-function PanelHeader({ label }: { label: string }) {
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function PanelHeader({
+  label,
+  children,
+}: {
+  label: string;
+  children?: React.ReactNode;
+}) {
   return (
     <Box
       className="dpe-panel-header"
-      px={4}
+      px={3}
       py={2}
       borderBottomWidth="1px"
       borderColor="border.muted"
@@ -182,123 +257,75 @@ function PanelHeader({ label }: { label: string }) {
       top={0}
       zIndex={1}
     >
-      <Text
-        fontSize="xs"
-        fontWeight="semibold"
-        color="fg.muted"
-        textTransform="uppercase"
-        letterSpacing="wider"
-      >
-        {label}
-      </Text>
-    </Box>
-  );
-}
-
-interface LeftSectionProps {
-  section: Section;
-  transferred: boolean;
-  onUpdate: (patch: Partial<Section>) => void;
-  onTransfer: () => void;
-  onRemove: () => void;
-}
-
-function LeftSection({ section, transferred, onUpdate, onTransfer, onRemove }: LeftSectionProps) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <Box
-      className="dpe-section-left"
-      position="relative"
-      borderWidth="1px"
-      borderColor={transferred ? "green.300" : "border.muted"}
-      borderRadius="md"
-      mb={3}
-      overflow="hidden"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <HStack
-        px={3}
-        py={1.5}
-        bg="bg.subtle"
-        borderBottomWidth="1px"
-        borderColor="border.muted"
-        gap={1}
-      >
-        <Input
-          value={section.heading}
-          onChange={e => onUpdate({ heading: e.target.value })}
-          placeholder="Section heading…"
-          size="xs"
-          border="none"
-          fontWeight="medium"
-          flex={1}
-          _focus={{ boxShadow: "none", outline: "none" }}
-        />
-        {transferred && (
-          <Box color="green.500" flexShrink={0}>
-            <IconCheck size={12} />
-          </Box>
-        )}
-        {hovered && (
-          <>
-            <IconButton
-              aria-label="Transfer to dispatch"
-              size="xs"
-              variant="ghost"
-              colorPalette="blue"
-              onClick={onTransfer}
-            >
-              <IconArrowRight size={14} />
-            </IconButton>
-            <IconButton
-              aria-label="Remove section"
-              size="xs"
-              variant="ghost"
-              colorPalette="gray"
-              onClick={onRemove}
-            >
-              <IconTrash size={14} />
-            </IconButton>
-          </>
-        )}
+      <HStack gap={2} align="center">
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          color="fg.muted"
+          textTransform="uppercase"
+          letterSpacing="wider"
+          flexShrink={0}
+        >
+          {label}
+        </Text>
+        {children}
       </HStack>
-      <Textarea
-        value={section.body}
-        onChange={e => onUpdate({ body: e.target.value })}
-        placeholder="Write here…"
-        size="sm"
-        p={3}
-        minH="80px"
-        resize="vertical"
-        border="none"
-        _focus={{ outline: "none", boxShadow: "none" }}
-      />
     </Box>
   );
 }
 
-interface RightSectionProps {
-  section: Section;
-  onUpdate: (patch: Partial<Section>) => void;
-  onRemove: () => void;
+function DocPicker({
+  docs,
+  value,
+  exclude,
+  onChange,
+  placeholder,
+}: {
+  docs: WorkingDocument[];
+  value: string | null;
+  exclude: string | null;
+  onChange: (id: string | null) => void;
+  placeholder: string;
+}) {
+  const available = exclude
+    ? docs.filter((d) => String(d.id) !== exclude)
+    : docs;
+  return (
+    <NativeSelect.Root size="xs" flex="1" minW={0}>
+      <NativeSelect.Field
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+      >
+        <option value="">{placeholder}</option>
+        {available.map((d) => (
+          <option key={d.id} value={String(d.id)}>
+            {d.title || d.piece.title || "(Untitled)"}
+          </option>
+        ))}
+      </NativeSelect.Field>
+    </NativeSelect.Root>
+  );
 }
 
-function RightSection({ section, onUpdate, onRemove }: RightSectionProps) {
-  const [hovered, setHovered] = useState(false);
-
+function SectionCard({
+  section,
+  pushed,
+  onPush,
+  leftReady,
+}: {
+  section: DocSection;
+  pushed: boolean;
+  onPush: (s: DocSection) => void;
+  leftReady: boolean;
+}) {
+  const preview = previewText(section.nodes);
   return (
     <Box
-      className="dpe-section-right"
-      position="relative"
+      className="dpe-section-card"
       borderWidth="1px"
-      borderColor="border.muted"
+      borderColor={pushed ? "green.300" : "border.muted"}
       borderRadius="md"
-      mb={3}
       overflow="hidden"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <HStack
         px={3}
@@ -306,41 +333,47 @@ function RightSection({ section, onUpdate, onRemove }: RightSectionProps) {
         bg="bg.subtle"
         borderBottomWidth="1px"
         borderColor="border.muted"
-        gap={1}
+        gap={2}
       >
-        <Input
-          value={section.heading}
-          onChange={e => onUpdate({ heading: e.target.value })}
-          placeholder="Section heading…"
-          size="xs"
-          border="none"
-          fontWeight="medium"
-          flex={1}
-          _focus={{ boxShadow: "none", outline: "none" }}
-        />
-        {hovered && (
+        <Text fontWeight="semibold" fontSize="sm" flex={1} minW={0} lineClamp={1}>
+          {section.heading}
+        </Text>
+        <HStack gap={1} flexShrink={0}>
+          {pushed && (
+            <Badge size="xs" colorPalette="green" variant="subtle">
+              <IconCheck size={10} />
+            </Badge>
+          )}
           <IconButton
-            aria-label="Remove section"
+            aria-label="Copy section to target"
             size="xs"
             variant="ghost"
-            colorPalette="gray"
-            onClick={onRemove}
+            colorPalette="blue"
+            disabled={!leftReady}
+            onClick={() => onPush(section)}
+            title={leftReady ? "Append to target" : "Select a target draft first"}
           >
-            <IconTrash size={14} />
+            <IconArrowLeft size={14} />
           </IconButton>
-        )}
+        </HStack>
       </HStack>
-      <Textarea
-        value={section.body}
-        onChange={e => onUpdate({ body: e.target.value })}
-        placeholder="Write here…"
-        size="sm"
-        p={3}
-        minH="80px"
-        resize="vertical"
-        border="none"
-        _focus={{ outline: "none", boxShadow: "none" }}
-      />
+      {preview && (
+        <Box px={3} py={2}>
+          <Text fontSize="xs" color="fg.muted" lineClamp={3}>
+            {preview}
+          </Text>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <Box py={8} textAlign="center">
+      <Text fontSize="sm" color="fg.muted" fontStyle="italic">
+        {label}
+      </Text>
     </Box>
   );
 }

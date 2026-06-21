@@ -188,7 +188,7 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   },
 
   'dual-panel-editor': {
-    requiredDecorator: 'can__ManageWriting',
+    requiredRole: 'admin',
     description: 'Dual-panel draft ↔ dispatch editor for section-by-section content promotion',
   },
 
