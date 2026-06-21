@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { IconArrowLeft, IconCheck } from "@tabler/icons-react";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting } from "@hooks/useWriting";
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
 import TipTapEditor from "@/components/editor/TipTapEditor";
@@ -88,6 +89,12 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const [rightDocId, setRightDocId] = useState<string | null>(null);
   const [pushedIds, setPushedIds] = useState<Set<string>>(new Set());
 
+  // body_json is excluded from the list serializer for performance; fetch on select
+  const [leftBodyJson, setLeftBodyJson] = useState<JSONContent | null>(null);
+  const [rightBodyJson, setRightBodyJson] = useState<JSONContent | null>(null);
+  const [leftBodyLoading, setLeftBodyLoading] = useState(false);
+  const [rightBodyLoading, setRightBodyLoading] = useState(false);
+
   const leftEditorRef = useRef<Editor | null>(null);
 
   const leftDoc: WorkingDocument | undefined = useMemo(
@@ -100,12 +107,29 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [drafts, rightDocId]
   );
 
+  useEffect(() => {
+    if (!leftDoc) { setLeftBodyJson(null); return; }
+    setLeftBodyLoading(true);
+    axiosInstance
+      .get(`/api/writing/pieces/${leftDoc.piece.id}/working-copy`)
+      .then((res) => setLeftBodyJson(res.data.body_json ?? null))
+      .catch(() => setLeftBodyJson(null))
+      .finally(() => setLeftBodyLoading(false));
+  }, [leftDoc?.piece.id]);
+
+  useEffect(() => {
+    if (!rightDoc) { setRightBodyJson(null); return; }
+    setRightBodyLoading(true);
+    axiosInstance
+      .get(`/api/writing/pieces/${rightDoc.piece.id}/working-copy`)
+      .then((res) => setRightBodyJson(res.data.body_json ?? null))
+      .catch(() => setRightBodyJson(null))
+      .finally(() => setRightBodyLoading(false));
+  }, [rightDoc?.piece.id]);
+
   const rightSections = useMemo(
-    () =>
-      rightDoc?.body_json
-        ? extractSections(rightDoc.body_json as JSONContent)
-        : [],
-    [rightDoc]
+    () => (rightBodyJson ? extractSections(rightBodyJson) : []),
+    [rightBodyJson]
   );
 
   // Autosave uses piece.id (the WritingPiece PK), not the WorkingDocument id
@@ -168,7 +192,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             docs={drafts ?? []}
             value={leftDocId}
             exclude={rightDocId}
-            onChange={(id) => { setLeftDocId(id); setPushedIds(new Set()); }}
+            onChange={(id) => { setLeftDocId(id); setLeftBodyJson(null); setPushedIds(new Set()); }}
             placeholder="Pick target draft…"
           />
           {saveLabel && (
@@ -181,11 +205,15 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
         <Box flex="1" overflowY="auto" p={3}>
           {!leftDoc ? (
             <EmptyState label="Select a draft to edit on the left." />
+          ) : leftBodyLoading ? (
+            <Flex align="center" justify="center" minH="30vh">
+              <Spinner size="md" color="green.500" />
+            </Flex>
           ) : (
             <TipTapEditor
               key={String(leftDoc.id)}
               ref={leftEditorRef}
-              initialContent={leftDoc.body_json as JSONContent}
+              initialContent={leftBodyJson ?? undefined}
               onContentChange={handleContentChange}
               editable
               className="borderless-editor"
@@ -207,7 +235,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             docs={drafts ?? []}
             value={rightDocId}
             exclude={leftDocId}
-            onChange={(id) => { setRightDocId(id); setPushedIds(new Set()); }}
+            onChange={(id) => { setRightDocId(id); setRightBodyJson(null); setPushedIds(new Set()); }}
             placeholder="Pick source draft…"
           />
         </PanelHeader>
@@ -215,6 +243,10 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
         <Box flex="1" overflowY="auto" p={3}>
           {!rightDoc ? (
             <EmptyState label="Select a source draft to browse its sections." />
+          ) : rightBodyLoading ? (
+            <Flex align="center" justify="center" minH="30vh">
+              <Spinner size="md" color="green.500" />
+            </Flex>
           ) : rightSections.length === 0 ? (
             <EmptyState label="This draft has no content yet." />
           ) : (
