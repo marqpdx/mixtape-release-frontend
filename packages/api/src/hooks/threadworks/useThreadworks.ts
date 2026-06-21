@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CreateForumData,
+  CreateFeedPostData,
+  UpdateFeedPostData,
   UpdateForumData,
   CreateDiscussionData,
   UpdateDiscussionData,
@@ -14,6 +16,7 @@ import {
   UseDiscussionResult,
   UseThreadworksMutationsResult,
 } from '@mixtape/core/types/threadworksTypes';
+import type { FetchFeedOptions } from '@mixtape/api/clients/threadworks/threadworksApi';
 import * as threadworksApi from '@mixtape/api/clients/threadworks/threadworksApi';
 
 // ============================================================================
@@ -34,6 +37,11 @@ export const threadworksQueryKeys = {
     [...threadworksQueryKeys.discussions(forumSlug), discussionSlug] as const,
   posts: (forumSlug: string, discussionSlug: string) =>
     [...threadworksQueryKeys.discussion(forumSlug, discussionSlug), 'posts'] as const,
+  feed: (forumSlug: string, options?: FetchFeedOptions) =>
+    [...threadworksQueryKeys.detail(forumSlug), 'feed', options] as const,
+  feedPosts: (forumSlug: string) => [...threadworksQueryKeys.detail(forumSlug), 'feed-posts'] as const,
+  feedPost: (forumSlug: string, feedPostId: string) =>
+    [...threadworksQueryKeys.feedPosts(forumSlug), feedPostId] as const,
 };
 
 // ============================================================================
@@ -317,5 +325,168 @@ export const useInvalidateThreadworks = () => {
       queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.discussions(forumSlug) }),
     invalidateDiscussion: (forumSlug: string, discussionSlug: string) =>
       queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.discussion(forumSlug, discussionSlug) }),
+    invalidateFeed: (forumSlug: string) =>
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feed(forumSlug) }),
+    invalidateFeedPosts: (forumSlug: string) =>
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feedPosts(forumSlug) }),
+  };
+};
+
+// ============================================================================
+// UNIFIED FEED
+// ============================================================================
+
+export const useForumFeed = (
+  forumSlug: string | null,
+  groupSlug?: string,
+  options: FetchFeedOptions = {}
+) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: threadworksQueryKeys.feed(forumSlug || '', options),
+    queryFn: () => threadworksApi.fetchForumFeed(forumSlug!, groupSlug, options),
+    enabled: !!forumSlug,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    feed: data?.results ?? [],
+    count: data?.count ?? 0,
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+// ============================================================================
+// FEED POSTS
+// ============================================================================
+
+export const useFeedPosts = (forumSlug: string | null, groupSlug?: string) => {
+  const { data: feedPosts = [], isLoading, error, refetch } = useQuery({
+    queryKey: threadworksQueryKeys.feedPosts(forumSlug || ''),
+    queryFn: () => threadworksApi.fetchFeedPosts(forumSlug!, groupSlug),
+    enabled: !!forumSlug,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { feedPosts, isLoading, error: error as Error | null, refetch };
+};
+
+export const useFeedPost = (forumSlug: string | null, feedPostId: string | null, groupSlug?: string) => {
+  const { data: feedPost = null, isLoading, error, refetch } = useQuery({
+    queryKey: threadworksQueryKeys.feedPost(forumSlug || '', feedPostId || ''),
+    queryFn: () => threadworksApi.fetchFeedPost(forumSlug!, feedPostId!, groupSlug),
+    enabled: !!forumSlug && !!feedPostId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { feedPost, isLoading, error: error as Error | null, refetch };
+};
+
+export const useFeedPostMutations = (forumSlug: string, groupSlug?: string) => {
+  const queryClient = useQueryClient();
+
+  const invalidateFeed = () => {
+    queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feed(forumSlug) });
+    queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feedPosts(forumSlug) });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateFeedPostData) => threadworksApi.createFeedPost(forumSlug, data, groupSlug),
+    onSuccess: invalidateFeed,
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: (vars: { file: File; title?: string; creation_signal?: string }) =>
+      threadworksApi.uploadFeedPostImage(forumSlug, vars.file, {
+        title: vars.title,
+        creation_signal: vars.creation_signal,
+        groupSlug,
+      }),
+    onSuccess: invalidateFeed,
+  });
+
+  const uploadVoiceMutation = useMutation({
+    mutationFn: (vars: { blob: Blob; title?: string; creation_signal?: string }) =>
+      threadworksApi.uploadFeedPostVoice(forumSlug, vars.blob, {
+        title: vars.title,
+        creation_signal: vars.creation_signal,
+        groupSlug,
+      }),
+    onSuccess: invalidateFeed,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ feedPostId, data }: { feedPostId: string; data: UpdateFeedPostData }) =>
+      threadworksApi.updateFeedPost(forumSlug, feedPostId, data, groupSlug),
+    onSuccess: (_, { feedPostId }) => {
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feedPost(forumSlug, feedPostId) });
+      invalidateFeed();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (feedPostId: string) => threadworksApi.deleteFeedPost(forumSlug, feedPostId, groupSlug),
+    onSuccess: invalidateFeed,
+  });
+
+  const createReplyMutation = useMutation({
+    mutationFn: (vars: { feedPostId: string; data: CreatePostData }) =>
+      threadworksApi.createFeedPostReply(forumSlug, vars.feedPostId, vars.data, groupSlug),
+    onSuccess: (_, { feedPostId }) => {
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.feedPost(forumSlug, feedPostId) });
+      invalidateFeed();
+    },
+  });
+
+  return {
+    createFeedPost: createMutation.mutateAsync,
+    uploadImage: uploadImageMutation.mutateAsync,
+    uploadVoice: uploadVoiceMutation.mutateAsync,
+    updateFeedPost: (feedPostId: string, data: UpdateFeedPostData) =>
+      updateMutation.mutateAsync({ feedPostId, data }),
+    deleteFeedPost: deleteMutation.mutateAsync,
+    createReply: (feedPostId: string, data: CreatePostData) =>
+      createReplyMutation.mutateAsync({ feedPostId, data }),
+    isCreating: createMutation.isPending || uploadImageMutation.isPending || uploadVoiceMutation.isPending,
+    isCreatingReply: createReplyMutation.isPending,
+  };
+};
+
+// ============================================================================
+// DISCUSSION SUMMARY MUTATIONS
+// ============================================================================
+
+export const useDiscussionSummaryMutations = (
+  forumSlug: string,
+  discussionSlug: string,
+  groupSlug?: string
+) => {
+  const queryClient = useQueryClient();
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({
+      queryKey: threadworksQueryKeys.discussion(forumSlug, discussionSlug),
+    });
+  };
+
+  const approveMutation = useMutation({
+    mutationFn: () => threadworksApi.approveSummary(forumSlug, discussionSlug, groupSlug),
+    onSuccess: invalidate,
+  });
+
+  const dismissMutation = useMutation({
+    mutationFn: () => threadworksApi.dismissSummary(forumSlug, discussionSlug, groupSlug),
+    onSuccess: invalidate,
+  });
+
+  return {
+    approveSummary: approveMutation.mutateAsync,
+    dismissSummary: dismissMutation.mutateAsync,
+    isApproving: approveMutation.isPending,
+    isDismissing: dismissMutation.isPending,
   };
 };

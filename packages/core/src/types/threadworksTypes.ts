@@ -8,6 +8,9 @@ import { IsoDateString } from "./groupTypes";
 export type ForumVisibility = 'public' | 'members' | 'group';
 export type DiscussionStatus = 'active' | 'archived' | 'pinned';
 export type ForumAudienceType = 'all_members' | 'subset';
+export type VisibilityScope = 'circle' | 'group' | 'crossroads';
+export type CreationSignal = 'low' | 'medium' | 'high';
+export type FeedPostKind = 'text' | 'image' | 'link' | 'voice';
 
 // ---------- User (embedded in forum/discussion data) ----------
 
@@ -29,7 +32,39 @@ export interface Post {
   updated_at?: IsoDateString;
   is_edited: boolean;
   parent_id: string | null;
+  // Phase 1 (ADR-0047)
+  discussion_id?: string | null;
+  feed_post_id?: string | null;
+  quoted_post_id?: string | null;
+  quoted_passage?: string;
+  is_author_distinguished?: boolean;
 }
+
+export interface FeedPost {
+  id: string;
+  author: ThreadworksUser | null;
+  title: string;
+  kind: FeedPostKind;
+  body_text: string;
+  body_json: Record<string, unknown> | null;
+  image_file: string | null;
+  audio_file: string | null;
+  link_url: string;
+  link_preview: { title?: string; description?: string; image?: string; url?: string } | null;
+  visibility_scope: VisibilityScope;
+  memory_value_score: number;
+  timeliness_date: string | null;
+  creation_signal: CreationSignal | null;
+  is_deleted: boolean;
+  created_at: IsoDateString;
+  updated_at: IsoDateString;
+  post_count: number;
+  posts?: Post[];
+}
+
+export type FeedItem =
+  | { type: 'discussion'; data: Discussion; created_at: IsoDateString }
+  | { type: 'feed_post'; data: FeedPost; created_at: IsoDateString };
 
 export interface Discussion {
   id: string;
@@ -44,6 +79,15 @@ export interface Discussion {
   status: DiscussionStatus;
   pinned_nav_name?: string;
   last_post?: Post;
+  // Phase 1 (ADR-0047)
+  visibility_scope?: VisibilityScope;
+  memory_value_score?: number;
+  timeliness_date?: string | null;
+  creation_signal?: CreationSignal | null;
+  summary?: string | null;
+  summary_pending?: string | null;
+  summary_pending_delta?: number | null;
+  summary_pending_substantive?: boolean | null;
 }
 
 export interface ForumAudienceMember {
@@ -64,12 +108,14 @@ export interface Forum {
   created_by: ThreadworksUser;
   discussions: Discussion[];
   discussion_count: number;
+  feed_post_count?: number;
   recent_participants: ThreadworksUser[];
   last_activity?: IsoDateString;
   audience_type: ForumAudienceType;
   auto_add_new_members: boolean;
   audience_member_count?: number | null;
   audience_members?: ForumAudienceMember[];
+  is_contained_circle?: boolean;
 }
 
 // ---------- API Response Types ----------
@@ -107,14 +153,32 @@ export interface UpdateForumAudienceData {
 export interface CreateDiscussionData {
   title: string;
   description?: string;
-  content: string; // Initial post content
+  content: string;
+  visibility_scope?: VisibilityScope;
+  creation_signal?: CreationSignal;
+  timeliness_date?: string;
 }
 
 export interface UpdateDiscussionData extends Partial<CreateDiscussionData> {}
 
 export interface CreatePostData {
   content: string;
+  quoted_post_id?: string;
+  quoted_passage?: string;
 }
+
+export interface CreateFeedPostData {
+  title?: string;
+  kind: FeedPostKind;
+  body_text?: string;
+  body_json?: Record<string, unknown>;
+  link_url?: string;
+  visibility_scope?: VisibilityScope;
+  timeliness_date?: string;
+  creation_signal?: CreationSignal;
+}
+
+export interface UpdateFeedPostData extends Partial<Omit<CreateFeedPostData, 'kind'>> {}
 
 // ---------- Hook Return Types ----------
 

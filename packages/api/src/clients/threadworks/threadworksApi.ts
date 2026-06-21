@@ -2,6 +2,8 @@
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import {
+  FeedPost,
+  FeedItem,
   Forum,
   Discussion,
   Post,
@@ -11,6 +13,8 @@ import {
   CreateDiscussionData,
   UpdateDiscussionData,
   CreatePostData,
+  CreateFeedPostData,
+  UpdateFeedPostData,
   FetchForumsOptions,
   FetchDiscussionsOptions,
   ThreadworksListResponse,
@@ -268,4 +272,171 @@ export async function deletePost(
     : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/posts/${postId}`;
 
   await axiosInstance.delete(endpoint);
+}
+
+// ============================================================================
+// UNIFIED FEED
+// ============================================================================
+
+export interface FetchFeedOptions {
+  type?: 'all' | 'discussion' | 'feed_post';
+  page?: number;
+}
+
+export interface FeedResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: FeedItem[];
+}
+
+export async function fetchForumFeed(
+  forumSlug: string,
+  groupSlug?: string,
+  options: FetchFeedOptions = {}
+): Promise<FeedResponse> {
+  const params = new URLSearchParams();
+  if (options.type && options.type !== 'all') params.append('type', options.type);
+  if (options.page) params.append('page', options.page.toString());
+  const qs = params.toString();
+  const base = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed`
+    : `/api/threadworks/${forumSlug}/feed`;
+  const response = await axiosInstance.get<FeedResponse>(`${base}${qs ? `?${qs}` : ''}`);
+  return response.data;
+}
+
+// ============================================================================
+// FEED POSTS
+// ============================================================================
+
+export async function fetchFeedPosts(forumSlug: string, groupSlug?: string): Promise<FeedPost[]> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts`
+    : `/api/threadworks/${forumSlug}/feed-posts`;
+  const response = await axiosInstance.get<ThreadworksListResponse<FeedPost>>(endpoint);
+  return response.data.results || response.data || [];
+}
+
+export async function fetchFeedPost(forumSlug: string, feedPostId: string, groupSlug?: string): Promise<FeedPost> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts/${feedPostId}`
+    : `/api/threadworks/${forumSlug}/feed-posts/${feedPostId}`;
+  const response = await axiosInstance.get<FeedPost>(endpoint);
+  return response.data;
+}
+
+export async function createFeedPost(
+  forumSlug: string,
+  data: CreateFeedPostData,
+  groupSlug?: string
+): Promise<FeedPost> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts`
+    : `/api/threadworks/${forumSlug}/feed-posts`;
+  const response = await axiosInstance.post<FeedPost>(endpoint, data);
+  return response.data;
+}
+
+export async function updateFeedPost(
+  forumSlug: string,
+  feedPostId: string,
+  data: UpdateFeedPostData,
+  groupSlug?: string
+): Promise<FeedPost> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts/${feedPostId}`
+    : `/api/threadworks/${forumSlug}/feed-posts/${feedPostId}`;
+  const response = await axiosInstance.patch<FeedPost>(endpoint, data);
+  return response.data;
+}
+
+export async function deleteFeedPost(
+  forumSlug: string,
+  feedPostId: string,
+  groupSlug?: string
+): Promise<void> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts/${feedPostId}`
+    : `/api/threadworks/${forumSlug}/feed-posts/${feedPostId}`;
+  await axiosInstance.delete(endpoint);
+}
+
+export async function uploadFeedPostImage(
+  forumSlug: string,
+  file: File,
+  options: { title?: string; visibility_scope?: string; creation_signal?: string; groupSlug?: string } = {}
+): Promise<FeedPost> {
+  const formData = new FormData();
+  formData.append('image_file', file);
+  if (options.title) formData.append('title', options.title);
+  if (options.visibility_scope) formData.append('visibility_scope', options.visibility_scope);
+  if (options.creation_signal) formData.append('creation_signal', options.creation_signal);
+  const endpoint = options.groupSlug
+    ? `/api/groups/${options.groupSlug}/threadworks/${forumSlug}/feed-posts/upload-image`
+    : `/api/threadworks/${forumSlug}/feed-posts/upload-image`;
+  const response = await axiosInstance.post<FeedPost>(endpoint, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+export async function uploadFeedPostVoice(
+  forumSlug: string,
+  blob: Blob,
+  options: { title?: string; visibility_scope?: string; creation_signal?: string; groupSlug?: string } = {}
+): Promise<FeedPost> {
+  const formData = new FormData();
+  formData.append('audio_file', blob, 'recording.webm');
+  if (options.title) formData.append('title', options.title);
+  if (options.visibility_scope) formData.append('visibility_scope', options.visibility_scope);
+  if (options.creation_signal) formData.append('creation_signal', options.creation_signal);
+  const endpoint = options.groupSlug
+    ? `/api/groups/${options.groupSlug}/threadworks/${forumSlug}/feed-posts/upload-voice`
+    : `/api/threadworks/${forumSlug}/feed-posts/upload-voice`;
+  const response = await axiosInstance.post<FeedPost>(endpoint, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+// FeedPost reply posts
+export async function createFeedPostReply(
+  forumSlug: string,
+  feedPostId: string,
+  data: { content: string; quoted_post_id?: string; quoted_passage?: string },
+  groupSlug?: string
+): Promise<Post> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts/${feedPostId}/posts`
+    : `/api/threadworks/${forumSlug}/feed-posts/${feedPostId}/posts`;
+  const response = await axiosInstance.post<Post>(endpoint, data);
+  return response.data;
+}
+
+// ============================================================================
+// DISCUSSION SUMMARY
+// ============================================================================
+
+export async function approveSummary(
+  forumSlug: string,
+  discussionSlug: string,
+  groupSlug?: string
+): Promise<Discussion> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/discussions/${discussionSlug}/summary/approve`
+    : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/summary/approve`;
+  const response = await axiosInstance.post<Discussion>(endpoint);
+  return response.data;
+}
+
+export async function dismissSummary(
+  forumSlug: string,
+  discussionSlug: string,
+  groupSlug?: string
+): Promise<void> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/discussions/${discussionSlug}/summary/dismiss`
+    : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/summary/dismiss`;
+  await axiosInstance.post(endpoint);
 }

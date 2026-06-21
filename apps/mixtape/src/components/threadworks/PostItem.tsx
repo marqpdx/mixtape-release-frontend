@@ -1,17 +1,19 @@
 // src/components/threadworks/PostItem.tsx
 
-import { Box, HStack, Avatar, Text } from '@chakra-ui/react'
+import { Box, HStack, Avatar, Text, Badge } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Post } from '@mixtape/core/types/threadworksTypes'
 import { formatTimeAgo } from './threadworksUtils'
+import QuotedPostCallout from './QuotedPostCallout'
 
 interface PostItemProps {
   post: Post
+  quotedPost?: Post
   isReply?: boolean
   searchTerm?: string
 }
 
-export default function PostItem({ post, isReply = false, searchTerm = '' }: PostItemProps) {
+export default function PostItem({ post, quotedPost, isReply = false, searchTerm = '' }: PostItemProps) {
   const textColor = useColorModeValue('gray.700', 'gray.300')
 
   const highlightSearchTerm = (text: string, term: string) => {
@@ -28,9 +30,7 @@ export default function PostItem({ post, isReply = false, searchTerm = '' }: Pos
             bg="yellow.200"
             px={1}
             borderRadius="sm"
-            style={{
-              animation: 'fadeHighlight 4.5s ease-out forwards',
-            }}
+            style={{ animation: 'fadeHighlight 4.5s ease-out forwards' }}
           >
             {part}
           </Text>
@@ -55,12 +55,26 @@ export default function PostItem({ post, isReply = false, searchTerm = '' }: Pos
         <Box flex={1}>
           <HStack gap={2} align="center" mb={1}>
             <Text fontWeight="semibold" fontSize="sm" color={textColor}>
-              {post.author ? `${post.author.first_name} ${post.author.last_name}`.trim() : "Deleted member"}
+              {post.author ? `${post.author.first_name} ${post.author.last_name}`.trim() : 'Deleted member'}
             </Text>
+            {post.is_author_distinguished && (
+              <Badge size="sm" colorScheme="green" variant="subtle" fontSize="2xs">
+                Author
+              </Badge>
+            )}
             <Text fontSize="xs" color="gray.500">
               {formatTimeAgo(post.created_at)}
             </Text>
           </HStack>
+
+          {/* Quoted reply callout */}
+          {quotedPost && (
+            <QuotedPostCallout
+              quotedPost={quotedPost}
+              quotedPassage={post.quoted_passage}
+            />
+          )}
+
           <Text fontSize="sm" lineHeight="1.5" color={textColor}>
             {searchTerm ? highlightSearchTerm(post.content, searchTerm) : post.content}
           </Text>
