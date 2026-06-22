@@ -12,10 +12,13 @@ import {
   Popover,
   Portal,
   RadioGroup,
+  Drawer,
 } from "@chakra-ui/react";
-import { IconSettings } from "@tabler/icons-react";
+import { IconSettings, IconShieldCheck, IconShieldExclamation, IconShieldOff } from "@tabler/icons-react";
 import { useState } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { useConversationDevices } from "@mixtape/api/hooks/chat/useConversationDevices";
+import { DeviceVerificationPanel } from "./DeviceVerificationPanel";
 import type { TrustProfile } from "./interfaces";
 
 type RetentionPeriod = "1d" | "7d" | "30d" | "90d" | "1y" | "indefinite";
@@ -48,6 +51,24 @@ interface ConversationHeaderBarProps {
   initialRetentionPeriod?: RetentionPeriod;
 }
 
+const VERIFICATION_ICONS = {
+  verified: <IconShieldCheck size={14} />,
+  partial: <IconShieldExclamation size={14} />,
+  unverified: <IconShieldOff size={14} />,
+};
+
+const VERIFICATION_COLORS = {
+  verified: "green",
+  partial: "orange",
+  unverified: "gray",
+};
+
+const VERIFICATION_LABELS = {
+  verified: "All verified",
+  partial: "Partially verified",
+  unverified: "Unverified",
+};
+
 export const ConversationHeaderBar = ({
   slug,
   title,
@@ -56,6 +77,10 @@ export const ConversationHeaderBar = ({
 }: ConversationHeaderBarProps) => {
   const [retentionPeriod, setRetentionPeriod] = useState<RetentionPeriod>(initialRetentionPeriod);
   const [saving, setSaving] = useState(false);
+  const [verifyDrawerOpen, setVerifyDrawerOpen] = useState(false);
+
+  const showVerification = trustProfile === "private" || trustProfile === "ephemeral";
+  const { verificationStatus } = useConversationDevices(slug, showVerification);
 
   const handleRetentionChange = async (value: RetentionPeriod) => {
     setRetentionPeriod(value);
@@ -92,6 +117,24 @@ export const ConversationHeaderBar = ({
         >
           {TRUST_LABELS[trustProfile]}
         </Badge>
+        {showVerification && (
+          <Badge
+            className="chb-verification-badge"
+            as="button"
+            colorPalette={VERIFICATION_COLORS[verificationStatus]}
+            variant="subtle"
+            fontSize="xs"
+            cursor="pointer"
+            onClick={() => setVerifyDrawerOpen(true)}
+            display="inline-flex"
+            alignItems="center"
+            gap="1"
+            aria-label="Manage device verification"
+          >
+            {VERIFICATION_ICONS[verificationStatus]}
+            {VERIFICATION_LABELS[verificationStatus]}
+          </Badge>
+        )}
       </Flex>
 
       <Popover.Root>
@@ -153,6 +196,33 @@ export const ConversationHeaderBar = ({
           </Popover.Positioner>
         </Portal>
       </Popover.Root>
+
+      {showVerification && (
+        <Drawer.Root
+          open={verifyDrawerOpen}
+          onOpenChange={(e) => setVerifyDrawerOpen(e.open)}
+          placement="end"
+          size="sm"
+        >
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content className="chb-verify-drawer">
+              <Drawer.CloseTrigger />
+              <Drawer.Header>
+                <Drawer.Title>Device Verification</Drawer.Title>
+              </Drawer.Header>
+              <Drawer.Body>
+                <Text fontSize="sm" color="text.muted" mb="4">
+                  Verify each participant&apos;s device fingerprint out-of-band
+                  (in person or over a trusted channel) before marking it as
+                  verified. Verification is recorded for this conversation.
+                </Text>
+                <DeviceVerificationPanel slug={slug} trustProfile={trustProfile} />
+              </Drawer.Body>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Drawer.Root>
+      )}
     </Flex>
   );
 };

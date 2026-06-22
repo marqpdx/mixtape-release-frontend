@@ -11,6 +11,9 @@ import {
   UnreadsResponse,
   CreateConversationRequest,
   CreateMessageRequest,
+  DeviceSession,
+  ParticipantDeviceGroup,
+  TrustDeviceResponse,
 } from '@mixtape/core/types/chatTypes';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from '../../lib/utils';
@@ -215,6 +218,37 @@ export interface MentionSuggestion {
   display_name: string;
   avatar_url?: string;
 }
+
+// ============================================================================
+// DEVICE VERIFICATION API FUNCTIONS (Phase B)
+// ============================================================================
+
+export async function fetchMyDevices(): Promise<DeviceSession[]> {
+  const response = await axiosInstance.get<DeviceSession[]>('/api/chat/devices');
+  return response.data;
+}
+
+export async function revokeDevice(deviceId: string): Promise<void> {
+  await axiosInstance.delete(`/api/chat/devices/${deviceId}`);
+}
+
+export async function fetchConversationDevices(slug: string): Promise<ParticipantDeviceGroup[]> {
+  const response = await axiosInstance.get<ParticipantDeviceGroup[]>(
+    `/api/chat/conversations/${slug}/devices`
+  );
+  return response.data;
+}
+
+export async function trustDevice(slug: string, deviceId: string): Promise<TrustDeviceResponse> {
+  const response = await axiosInstance.post<TrustDeviceResponse>(
+    `/api/chat/conversations/${slug}/devices/${deviceId}/trust`
+  );
+  return response.data;
+}
+
+// ============================================================================
+// MENTIONS API FUNCTIONS
+// ============================================================================
 
 /**
  * Get mention autocomplete suggestions

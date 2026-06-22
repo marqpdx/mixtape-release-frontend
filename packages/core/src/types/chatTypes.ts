@@ -98,3 +98,34 @@ export interface CreateConversationRequest {
 export interface CreateMessageRequest {
   text: string;
 }
+
+// Device verification types (Phase B)
+export interface DeviceSession {
+  id: string;
+  device_id: string;
+  device_name: string;
+  platform: string;
+  is_active: boolean;
+  is_trusted: boolean;
+  trusted_at: string | null;
+  last_seen_at: string;
+  verification_fingerprint: string;
+}
+
+export interface ParticipantDevice extends DeviceSession {
+  verified_by_me: boolean;
+}
+
+export interface ParticipantDeviceGroup {
+  username: string;
+  display_name: string;
+  devices: ParticipantDevice[];
+}
+
+export interface TrustDeviceResponse {
+  verified: boolean;
+  created: boolean;
+  fingerprint: string;
+}
+
+export type VerificationStatus = "verified" | "partial" | "unverified";
