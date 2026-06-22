@@ -11,10 +11,50 @@ import { ConversationDetail } from "@components/chat/ConversationDetail";
 import { newConversationDialog } from "@components/chat/NewConversationDialog";
 import { IconPlus, IconMessageCircle } from "@tabler/icons-react";
 import { createOrGetConversation } from "@/lib/chat/createOrGetConversation";
-import type { TrustProfile } from "@/components/chat/interfaces";
+import type { TrustProfile, Conversation } from "@/components/chat/interfaces";
 import { useConversationStore } from "@/stores/conversationStore";
 import { HelpTip } from "@/components/help/HelpTip";
 import { useHelpRegistration } from "@/components/help/useHelpRegistration";
+import { useDeviceSession } from "@mixtape/api/hooks/chat/useDeviceSession";
+import { fetchConversationDevices, postConversationKeyBundles } from "@mixtape/api/clients/chat/chatApi";
+import { getDeviceKeyPair, storeConversationKey } from "@mixtape/core/crypto/keyStore";
+import { generateConversationKey, importPublicKey, wrapKeyForDevice } from "@mixtape/core/crypto/primitives";
+import type { PostKeyBundleItem } from "@mixtape/core/types/chatTypes";
+
+async function initializeConversationKeys(conv: Conversation, deviceId: string) {
+  if (conv.trust_profile === "standard") return;
+  try {
+    const deviceKeyPair = await getDeviceKeyPair();
+    if (!deviceKeyPair) return;
+
+    const convKey = await generateConversationKey();
+    const participantDevices = await fetchConversationDevices(conv.slug);
+
+    const bundles: PostKeyBundleItem[] = [];
+    for (const group of participantDevices) {
+      for (const device of group.devices) {
+        if (!device.public_key) continue;
+        const recipientPubKey = await importPublicKey(device.public_key);
+        const wrapped = await wrapKeyForDevice(recipientPubKey, convKey);
+        bundles.push({
+          device_id: device.device_id,
+          encrypted_key: wrapped.encryptedKey,
+          nonce: wrapped.nonce,
+          ephemeral_public_key: wrapped.ephemeralPublicKey,
+        });
+      }
+    }
+
+    void deviceId; // referenced for future use in key rotation / auditing
+
+    if (bundles.length > 0) {
+      await postConversationKeyBundles(conv.slug, bundles);
+    }
+    await storeConversationKey(conv.slug, convKey, 1);
+  } catch (err) {
+    console.error("[E2E] Failed to initialize conversation keys:", err);
+  }
+}
 
 export default function MessageCenter() {
   useHelpRegistration("MessageCenter");
@@ -23,6 +63,7 @@ export default function MessageCenter() {
 
   const { user: identity, isLoading: identityLoading } = useAuth();
   const { users: members, isLoading: membersLoading } = useUsersExcludingCurrent(identity?.username);
+  const { deviceId } = useDeviceSession();
 
   const { refetchConversations } = useConversationStore();
 
@@ -43,6 +84,9 @@ export default function MessageCenter() {
       if (conversation) {
         setSelectedSlug(conversation.slug);
         await refetchConversations();
+        if (trustProfile !== "standard" && deviceId) {
+          void initializeConversationKeys(conversation, deviceId);
+        }
       }
     } catch (err) {
       console.error("Failed to start conversation:", err);
@@ -154,7 +198,7 @@ export default function MessageCenter() {
               </Flex>
 
               <Box flex={1}>
-                <ConversationDetail slug={selectedSlug} />
+                <ConversationDetail slug={selectedSlug} deviceId={deviceId} />
               </Box>
             </VStack>
           </Box>
@@ -225,7 +269,7 @@ export default function MessageCenter() {
           bg="bg.surface"
         >
           {selectedSlug ? (
-            <ConversationDetail slug={selectedSlug} />
+            <ConversationDetail slug={selectedSlug} deviceId={deviceId} />
           ) : (
             <VStack gap={4} justify="center" align="center" h="100%">
               <IconMessageCircle size={48} color="var(--chakra-colors-text-secondary)" />

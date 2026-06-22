@@ -226,6 +226,19 @@ export interface MentionSuggestion {
 // DEVICE VERIFICATION API FUNCTIONS (Phase B)
 // ============================================================================
 
+export async function registerDeviceSession(
+  deviceId: string,
+  platform: string,
+  deviceName: string
+): Promise<DeviceSession> {
+  const response = await axiosInstance.post<DeviceSession>('/api/chat/devices', {
+    device_id: deviceId,
+    platform,
+    device_name: deviceName,
+  });
+  return response.data;
+}
+
 export async function fetchMyDevices(): Promise<DeviceSession[]> {
   const response = await axiosInstance.get<DeviceSession[]>('/api/chat/devices');
   return response.data;

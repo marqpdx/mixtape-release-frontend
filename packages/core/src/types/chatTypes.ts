@@ -15,6 +15,7 @@ export interface Conversation {
   id: string;
   slug: string;
   title: string;
+  trust_profile: "standard" | "private" | "ephemeral";
   summary?: string;
   participants: string[]; // Array of usernames
   contexts?: ConversationContext[]; // Group/context associations

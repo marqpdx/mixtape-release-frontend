@@ -27,6 +27,10 @@ import { useVoiceRecorder } from "@mixtape/api/hooks/useVoiceRecorder";
 import { uploadVoiceMessageBlob } from "@mixtape/api/clients/chat/chatApi";
 import { VoicePlaybackBubble } from "./VoicePlaybackBubble";
 import { ConversationHeaderBar } from "./ConversationHeaderBar";
+import { useDeviceKey } from "@mixtape/api/hooks/chat/useDeviceKey";
+import { useConversationKey } from "@mixtape/api/hooks/chat/useConversationKey";
+import { encryptMessage, decryptMessage, E2E_PREFIX } from "@mixtape/core/crypto/primitives";
+import type { TrustProfile } from "./interfaces";
 
 type MessageReaction = {
   id: string;
@@ -78,9 +82,10 @@ type MentionSuggestion = {
 
 type ConversationDetailProps = {
   slug: string;
+  deviceId: string | null;
 };
 
-export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
+export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) => {
   const { user: identity } = useAuth();
   const { conversations } = useConversationStore();
   const conversation = conversations.find(c => c.slug === slug);
@@ -154,6 +159,40 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
   };
 
 
+  // E2E encryption hooks
+  const trustProfile = (conversation?.trust_profile ?? "standard") as TrustProfile;
+  const deviceKeyState = useDeviceKey(deviceId);
+  const convKeyState = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
+  const [decryptedTexts, setDecryptedTexts] = useState<Record<string, string>>({});
+
+  // Decrypt incoming e2e messages whenever messages or the conv key changes
+  useEffect(() => {
+    if (convKeyState.status !== "ready") return;
+    const { key } = convKeyState;
+    const toDecrypt = messages.filter(
+      (m) => typeof m.text === "string" && m.text.startsWith(E2E_PREFIX) && !(m.id in decryptedTexts)
+    );
+    if (toDecrypt.length === 0) return;
+
+    Promise.all(
+      toDecrypt.map(async (m) => {
+        try {
+          const plain = await decryptMessage(key, m.text);
+          return [m.id, plain] as const;
+        } catch {
+          return [m.id, "[Decryption failed]"] as const;
+        }
+      })
+    ).then((pairs) => {
+      setDecryptedTexts((prev) => {
+        const next = { ...prev };
+        pairs.forEach(([id, text]) => { next[id] = text; });
+        return next;
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, convKeyState]);
+
   const { setActiveConversationId, resetUnread } = useChatUnread();
 
   const safeMessages = useMemo(() => (
@@ -166,10 +205,10 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return safeMessages.filter((message) => {
       const sender = message.sender.username.toLowerCase();
-      const text = message.text.toLowerCase();
-      return sender.includes(normalizedQuery) || text.includes(normalizedQuery);
+      const displayText = (decryptedTexts[message.id] ?? message.text ?? "").toLowerCase();
+      return sender.includes(normalizedQuery) || displayText.includes(normalizedQuery);
     });
-  }, [safeMessages, searchQuery]);
+  }, [safeMessages, searchQuery, decryptedTexts]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -370,13 +409,23 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
       return;
     }
 
-    // Send via socket for real-time delivery
+    // Encrypt for Private/Ephemeral conversations when key is ready
+    let messageText = newMessage;
+    if (convKeyState.status === "ready") {
+      try {
+        messageText = await encryptMessage(convKeyState.key, newMessage);
+      } catch (err) {
+        console.error("❌ Failed to encrypt message, aborting send:", err);
+        return;
+      }
+    }
+
     if (process.env.NODE_ENV === 'development') {
-      console.log('📤 Emitting send_message event:', { message: newMessage, conversationSlug: slug });
+      console.log('📤 Emitting send_message event:', { encrypted: messageText !== newMessage, conversationSlug: slug });
     }
 
     socket.emit("send_message", {
-      message: newMessage,
+      message: messageText,
       conversationSlug: slug,
     });
 
@@ -695,7 +744,11 @@ export const ConversationDetail = ({ slug }: ConversationDetailProps) => {
                     <Text
                       color="text.primary"
                       dangerouslySetInnerHTML={{
-                        __html: processMessageText(msg.text, msg.mentions || [])
+                        __html: processMessageText(
+                          decryptedTexts[msg.id] ??
+                            (msg.text?.startsWith(E2E_PREFIX) ? "🔒 Decrypting…" : msg.text),
+                          msg.mentions || []
+                        )
                       }}
                     />
                     <Text fontSize="xs" color="text.secondary" mt={1}>
