@@ -376,7 +376,7 @@ export default function GristQuickPopup() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handlePromote, isSuperuser, open, promoting, savingDraft]);
 
-  if (isLoading || !isAuthenticated || !canUseBeacon) {
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 

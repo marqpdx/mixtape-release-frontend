@@ -13,7 +13,7 @@ import {
   IconButton,
   Badge,
 } from "@chakra-ui/react";
-import { IconArrowLeft, IconCheck } from "@tabler/icons-react";
+import { IconArrowLeft, IconCheck, IconRefresh, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting } from "@hooks/useWriting";
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
@@ -34,15 +34,17 @@ interface DualPanelEditorProps {
 interface DocSection {
   id: string;
   heading: string;
+  level: number; // 0 = preamble, 1–6 = heading level
   nodes: JSONContent[];
 }
 
 // Extract heading-delimited sections from a Tiptap doc.
-// Content before the first heading becomes a "Preamble" section.
+// Content before the first heading becomes a "Preamble" section (level 0).
 function extractSections(doc: JSONContent): DocSection[] {
   const topNodes = doc.content ?? [];
   const sections: DocSection[] = [];
   let currentHeading: string | null = null;
+  let currentLevel = 0;
   let currentNodes: JSONContent[] = [];
 
   const flush = (idx: number) => {
@@ -50,6 +52,7 @@ function extractSections(doc: JSONContent): DocSection[] {
     sections.push({
       id: `sec-${idx}`,
       heading: currentHeading ?? "Preamble",
+      level: currentLevel,
       nodes: [...currentNodes],
     });
   };
@@ -58,6 +61,7 @@ function extractSections(doc: JSONContent): DocSection[] {
     if (node.type === "heading") {
       flush(sections.length);
       currentHeading = extractText(node);
+      currentLevel = (node.attrs?.level as number) ?? 1;
       currentNodes = [node];
     } else {
       currentNodes.push(node);
@@ -95,6 +99,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const [rightBodyJson, setRightBodyJson] = useState<JSONContent | null>(null);
   const [leftBodyLoading, setLeftBodyLoading] = useState(false);
   const [rightBodyLoading, setRightBodyLoading] = useState(false);
+  const [rightRefreshKey, setRightRefreshKey] = useState(0);
 
   const leftEditorRef = useRef<Editor | null>(null);
 
@@ -129,7 +134,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
       .then((res) => setRightBodyJson(res.data.body_json ?? null))
       .catch(() => setRightBodyJson(null))
       .finally(() => setRightBodyLoading(false));
-  }, [rightPieceId]);
+  }, [rightPieceId, rightRefreshKey]);
 
   const rightSections = useMemo(
     () => (rightBodyJson ? extractSections(rightBodyJson) : []),
@@ -252,6 +257,18 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             onChange={(id) => { setRightDocId(id); setRightBodyJson(null); setPushedIds(new Set()); }}
             placeholder="Pick source draft…"
           />
+          {rightDoc && (
+            <IconButton
+              aria-label="Refresh source"
+              size="xs"
+              variant="ghost"
+              disabled={rightBodyLoading}
+              onClick={() => setRightRefreshKey((k) => k + 1)}
+              flexShrink={0}
+            >
+              <IconRefresh size={13} />
+            </IconButton>
+          )}
         </PanelHeader>
 
         <Box flex="1" overflowY="auto" p={3}>
@@ -353,6 +370,16 @@ function DocPicker({
   );
 }
 
+function levelIndent(level: number): number {
+  if (level <= 1) return 0;
+  return (level - 1) * 16;
+}
+
+function levelPrefix(level: number): string | null {
+  if (level <= 1) return null;
+  return "|" + "_".repeat(level - 1);
+}
+
 function SectionCard({
   section,
   pushed,
@@ -364,10 +391,16 @@ function SectionCard({
   onPush: (s: DocSection) => void;
   leftReady: boolean;
 }) {
+  const [expanded, setExpanded] = useState(true);
   const preview = previewText(section.nodes);
+  const prefix = levelPrefix(section.level);
+  const indent = levelIndent(section.level);
+  const hasBody = !!preview;
+
   return (
     <Box
       className="dpe-section-card"
+      ml={`${indent}px`}
       borderWidth="1px"
       borderColor={pushed ? "green.300" : "border.muted"}
       borderRadius="md"
@@ -377,10 +410,18 @@ function SectionCard({
         px={3}
         py={1.5}
         bg="bg.subtle"
-        borderBottomWidth="1px"
+        borderBottomWidth={expanded && hasBody ? "1px" : "0"}
         borderColor="border.muted"
         gap={2}
+        cursor={hasBody ? "pointer" : "default"}
+        onClick={() => hasBody && setExpanded((e) => !e)}
+        _hover={hasBody ? { bg: "bg.muted" } : undefined}
       >
+        {prefix && (
+          <Text fontSize="xs" color="fg.subtle" fontFamily="mono" flexShrink={0} userSelect="none">
+            {prefix}
+          </Text>
+        )}
         <Text fontWeight="semibold" fontSize="sm" flex={1} minW={0} lineClamp={1}>
           {section.heading}
         </Text>
@@ -390,20 +431,25 @@ function SectionCard({
               <IconCheck size={10} />
             </Badge>
           )}
+          {hasBody && (
+            <Box color="fg.subtle" lineHeight={1}>
+              {expanded ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
+            </Box>
+          )}
           <IconButton
             aria-label="Copy section to target"
             size="xs"
             variant="ghost"
             colorPalette="blue"
             disabled={!leftReady}
-            onClick={() => onPush(section)}
+            onClick={(e) => { e.stopPropagation(); onPush(section); }}
             title={leftReady ? "Append to target" : "Select a target draft first"}
           >
             <IconArrowLeft size={14} />
           </IconButton>
         </HStack>
       </HStack>
-      {preview && (
+      {expanded && hasBody && (
         <Box px={3} py={2}>
           <Text fontSize="xs" color="fg.muted" lineClamp={3}>
             {preview}
