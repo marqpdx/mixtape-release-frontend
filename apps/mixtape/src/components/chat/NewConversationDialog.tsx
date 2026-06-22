@@ -32,7 +32,7 @@ const TRUST_PROFILES: { value: TrustProfile; label: string; description: string 
   {
     value: "private",
     label: "Private",
-    description: "End-to-end encrypted. No AI features, no search, no Continuity.",
+    description: "Encrypted at rest. No AI features, no search, no Continuity.",
   },
   {
     value: "ephemeral",
