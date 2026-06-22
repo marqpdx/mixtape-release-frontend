@@ -82,7 +82,8 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "img-src 'self' https: data: blob: http://127.0.0.1:9000 http://localhost:9000",
+      "img-src 'self' https: data: blob: http://127.0.0.1:9000 http://localhost:9000" +
+        (!isProd ? " http://127.0.0.1:8010 http://localhost:8010" : ""),
       "media-src 'self' https: data: blob: https://assets.crossroads.place" +
         (isProd ? "" : " http://127.0.0.1:9000 http://localhost:9000"),
       // Next/Chakra often need these; remove 'unsafe-eval' if/when you can

@@ -1,6 +1,6 @@
 // src/lib/writing/uploadWritingImage.ts
 
-import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { axiosInstance, buildApiUrl } from "@mixtape/api/lib/axiosInstance";
 
 export interface UploadWritingImageResult {
   /** StoredFile UUID */
@@ -30,5 +30,8 @@ export async function uploadWritingImage(
     { headers: { "Content-Type": "multipart/form-data" } }
   );
 
-  return { id: res.data.id, serveUrl: res.data.serve_url };
+  // serve_url is a relative path; make it absolute so <img> src resolves to the
+  // backend origin rather than the Next.js dev server.
+  const serveUrl = buildApiUrl(res.data.serve_url);
+  return { id: res.data.id, serveUrl };
 }
