@@ -44,7 +44,7 @@ const TRUST_PROFILES: { value: TrustProfile; label: string; description: string 
 export const newConversationDialog = createOverlay<NewConversationDialogProps>(
   ({ title, allMembers, onStart, ...rest }) => {
     const [selected, setSelected] = useState<string[]>([]);
-    const [trustProfile, setTrustProfile] = useState<TrustProfile>("standard");
+    const [trustProfile, setTrustProfile] = useState<TrustProfile>("private");
 
     if (process.env.NODE_ENV === 'development') {
       console.log("NewConversationDialog allMembers:", allMembers);
