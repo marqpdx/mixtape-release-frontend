@@ -14,6 +14,9 @@ import {
   DeviceSession,
   ParticipantDeviceGroup,
   TrustDeviceResponse,
+  KeyBundle,
+  PostKeyBundleItem,
+  PostKeyBundlesResponse,
 } from '@mixtape/core/types/chatTypes';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from '../../lib/utils';
@@ -242,6 +245,33 @@ export async function fetchConversationDevices(slug: string): Promise<Participan
 export async function trustDevice(slug: string, deviceId: string): Promise<TrustDeviceResponse> {
   const response = await axiosInstance.post<TrustDeviceResponse>(
     `/api/chat/conversations/${slug}/devices/${deviceId}/trust`
+  );
+  return response.data;
+}
+
+// ============================================================================
+// E2E KEY MANAGEMENT API FUNCTIONS (Phase C)
+// ============================================================================
+
+export async function registerDeviceKey(deviceId: string, publicKey: string): Promise<void> {
+  await axiosInstance.post('/api/chat/devices/register-key', { device_id: deviceId, public_key: publicKey });
+}
+
+export async function fetchMyConversationKey(slug: string, deviceId: string): Promise<KeyBundle> {
+  const response = await axiosInstance.get<KeyBundle>(
+    `/api/chat/conversations/${slug}/my-key`,
+    { headers: { "X-Device-ID": deviceId } }
+  );
+  return response.data;
+}
+
+export async function postConversationKeyBundles(
+  slug: string,
+  bundles: PostKeyBundleItem[]
+): Promise<PostKeyBundlesResponse> {
+  const response = await axiosInstance.post<PostKeyBundlesResponse>(
+    `/api/chat/conversations/${slug}/keys`,
+    { bundles }
   );
   return response.data;
 }

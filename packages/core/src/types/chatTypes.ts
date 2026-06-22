@@ -110,6 +110,7 @@ export interface DeviceSession {
   trusted_at: string | null;
   last_seen_at: string;
   verification_fingerprint: string;
+  public_key: string; // JWK string; empty until device registers for E2E (Phase C)
 }
 
 export interface ParticipantDevice extends DeviceSession {
@@ -129,3 +130,24 @@ export interface TrustDeviceResponse {
 }
 
 export type VerificationStatus = "verified" | "partial" | "unverified";
+
+// E2E key management types (Phase C)
+export interface KeyBundle {
+  encrypted_key: string;
+  nonce: string;
+  ephemeral_public_key: string;
+  key_version: number;
+}
+
+export interface PostKeyBundleItem {
+  device_id: string;
+  encrypted_key: string;
+  nonce: string;
+  ephemeral_public_key: string;
+}
+
+export interface PostKeyBundlesResponse {
+  created: number;
+  key_version: number;
+  errors: string[];
+}
