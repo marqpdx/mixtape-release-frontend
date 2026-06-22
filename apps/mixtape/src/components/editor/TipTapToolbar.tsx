@@ -18,22 +18,26 @@ import {
   IconH4,
   IconHelpCircle,
   IconScissors,
+  IconPhoto,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function TipTapToolbar({
   editor,
   gristMode = false,
+  onImagePick,
 }: {
   editor: Editor | null
   gristMode?: boolean
+  onImagePick?: (file: File) => void
 }) {
   const { user } = useAuth();
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
   const [showHelp, setShowHelp] = useState(false);
@@ -208,6 +212,29 @@ export default function TipTapToolbar({
           tabIndex={-1}
           size="xs"
         />
+        {onImagePick && (
+          <>
+            <EditorToolbarButton
+              tooltip="Insert image"
+              icon={<IconPhoto size={16} />}
+              onClick={() => imageInputRef.current?.click()}
+              isActive={false}
+              tabIndex={-1}
+              size="xs"
+            />
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onImagePick(file);
+                e.target.value = "";
+              }}
+            />
+          </>
+        )}
         {gristMode && (
           <>
             <Box w="1px" h="16px" bg="gray.300" mx={0.5} />

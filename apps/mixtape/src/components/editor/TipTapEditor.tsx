@@ -19,6 +19,7 @@ import ListItem from "@tiptap/extension-list-item";
 import Link from "@tiptap/extension-link";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
+import Image from "@tiptap/extension-image";
 
 import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
@@ -97,6 +98,10 @@ interface TipTapEditorProps {
   };
   // Grist command mode — enables /split and future Copy Desk grist commands
   gristMode?: boolean;
+  // Inline image upload — when provided, enables the Image extension, paste/drop
+  // handling, and a toolbar button. Receives the dropped/picked File and returns
+  // the URL to embed (a stable /api/files/<id>/serve URL).
+  imageUpload?: (file: File) => Promise<string>;
 }
 
 type MentionState = {
@@ -121,10 +126,16 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   className = "",
   streamMode,
   gristMode,
+  imageUpload,
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
   const isUpdatingContentRef = useRef(false);
   const localRouteMapRef = useRef<Map<string, RouteMeta>>(new Map())
+
+  // Keep latest imageUpload in a ref so paste/drop handlers (captured at editor
+  // config time) always call the current uploader without recreating the editor.
+  const imageUploadRef = useRef(imageUpload);
+  useEffect(() => { imageUploadRef.current = imageUpload; }, [imageUpload]);
 
   // Editor ref for spell correction (populated after editor is created)
   const editorRef = useRef<Editor | null>(null);
@@ -168,6 +179,24 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
   const handleSegmentsChange = useCallback((segments: CompositionSegment[]) => {
     setCompositionSegments(segments);
+  }, []);
+
+  // Upload an image file and insert it into the editor. When `pos` is given
+  // (drop), insert at that position; otherwise insert at the current selection.
+  const uploadAndInsertImage = useCallback(async (file: File, pos?: number) => {
+    const upload = imageUploadRef.current;
+    const ed = editorRef.current;
+    if (!upload || !ed) return;
+    try {
+      const url = await upload(file);
+      if (pos != null) {
+        ed.chain().focus().insertContentAt(pos, { type: "image", attrs: { src: url } }).run();
+      } else {
+        ed.chain().focus().setImage({ src: url }).run();
+      }
+    } catch (err) {
+      console.error("[TipTapEditor] image upload failed", err);
+    }
   }, []);
 
   // Load writing preferences from localStorage on mount
@@ -334,6 +363,8 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     OutlineMarker,
     LbAnchor,
     BlockRouting.configure(routingOpts),
+    // Inline images — only when an uploader is wired in
+    ...(imageUpload ? [Image.configure({ inline: false, HTMLAttributes: { class: "editor-image" } })] : []),
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
     ...(spellCorrectionEnabled ? [SpellCorrection.configure(spellCorrectionConfig)] : []),
@@ -358,7 +389,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         suggestion: { render: gristCommandsRender },
       }),
     ] : []),
-  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, gristMode, handleBoundaryDelete, handleSegmentsChange]);
+  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, gristMode, imageUpload, handleBoundaryDelete, handleSegmentsChange]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
@@ -463,6 +494,37 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       attributes: {
         class: "editor-content",
         placeholder,
+      },
+      handlePaste: (_view, event) => {
+        if (!imageUploadRef.current) return false;
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              event.preventDefault();
+              void uploadAndInsertImage(file);
+              return true;
+            }
+          }
+        }
+        return false;
+      },
+      handleDrop: (view, event) => {
+        if (!imageUploadRef.current) return false;
+        const files = (event as DragEvent).dataTransfer?.files;
+        if (!files || files.length === 0) return false;
+        const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+        if (imageFiles.length === 0) return false;
+        event.preventDefault();
+        const coords = view.posAtCoords({
+          left: (event as DragEvent).clientX,
+          top: (event as DragEvent).clientY,
+        });
+        const pos = coords?.pos;
+        imageFiles.forEach((f) => void uploadAndInsertImage(f, pos));
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
@@ -725,7 +787,11 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         pl={1}
         position="relative"
       >
-        <TipTapToolbar editor={editor} gristMode={!!gristMode} />
+        <TipTapToolbar
+          editor={editor}
+          gristMode={!!gristMode}
+          onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}
+        />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />

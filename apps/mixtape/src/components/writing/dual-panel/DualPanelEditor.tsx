@@ -17,6 +17,7 @@ import { IconArrowLeft, IconCheck } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting } from "@hooks/useWriting";
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
+import { uploadWritingImage } from "@/lib/writing/uploadWritingImage";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import { WorkingDocument } from "@mixtape/core/types/writingTypes";
 
@@ -153,6 +154,15 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [leftDoc, schedule]
   );
 
+  const handleImageUpload = useCallback(
+    async (file: File): Promise<string> => {
+      if (!leftPieceId) throw new Error("No target piece selected");
+      const { serveUrl } = await uploadWritingImage(leftPieceId, file);
+      return serveUrl;
+    },
+    [leftPieceId]
+  );
+
   const pushSection = useCallback((section: DocSection) => {
     const editor = leftEditorRef.current;
     if (!editor) return;
@@ -220,6 +230,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
               onContentChange={handleContentChange}
               editable
               className="borderless-editor"
+              imageUpload={handleImageUpload}
             />
           )}
         </Box>

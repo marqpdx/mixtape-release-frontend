@@ -23,6 +23,7 @@ import { WorkspaceToggle } from "@components/writing/composer/WorkspaceToggle";
 import { ScrollToTopButton } from "@components/writing/composer/ScrollToTopButton";
 
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
+import { uploadWritingImage } from "@/lib/writing/uploadWritingImage";
 import { useStreamAuthoring } from "@/hooks/useStreamAuthoring";
 import { useEmptyFlagDetection } from "@components/writing/hooks/useEmptyFlagDetection";
 import { TextSelection } from "@components/writing/hooks/useTextSelection";
@@ -343,6 +344,15 @@ export default function WriteComposer({
   const handleCollabEditorReady = useCallback((editor: Editor | null) => {
     setCollabEditor(editor);
   }, []);
+
+  // Inline image upload — uploads to Stash, returns a stable serve URL to embed
+  const handleImageUpload = useCallback(
+    async (file: File): Promise<string> => {
+      const { serveUrl } = await uploadWritingImage(pieceId, file);
+      return serveUrl;
+    },
+    [pieceId]
+  );
 
   // Collaborative autosave (when in collab mode)
   const collabAutosaveEnabled = collabReady && wantsCollab && !!collabEditor;
@@ -845,6 +855,7 @@ export default function WriteComposer({
                 debugId={collabKey}
                 streamMode={wantsCollab ? undefined : streamMode}
                 gristMode={wantsCollab ? undefined : true}
+                imageUpload={handleImageUpload}
                 onCollabEditorReady={wantsCollab ? handleCollabEditorReady : undefined}
               />
               {lbId && collabEditor && (

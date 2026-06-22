@@ -77,6 +77,8 @@ export interface MainEditorProps {
   } | null;
   /** Grist command mode (solo only) — enables /split and Copy Desk grist commands */
   gristMode?: boolean;
+  /** Inline image uploader (solo only) — returns stable serve URL to embed */
+  imageUpload?: (file: File) => Promise<string>;
 }
 
 export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
@@ -95,6 +97,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       debugId,
       streamMode,
       gristMode,
+      imageUpload,
       onCollabEditorReady,
     },
     ref
@@ -325,6 +328,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
               className="borderless-editor"
               streamMode={streamMode ?? undefined}
               gristMode={gristMode}
+              imageUpload={imageUpload}
             />
           )}
 
