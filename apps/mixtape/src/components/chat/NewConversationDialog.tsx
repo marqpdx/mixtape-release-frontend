@@ -27,17 +27,17 @@ const TRUST_PROFILES: { value: TrustProfile; label: string; description: string 
   {
     value: "standard",
     label: "Standard",
-    description: "Full features, search, AI tools, and message history.",
+    description: "Full features: searching, indexing, conversation memory, and message history.",
   },
   {
     value: "private",
     label: "Private",
-    description: "Encrypted at rest. No AI features, no search, no Continuity.",
+    description: "Encrypted at rest. No searching, no indexing, no conversation memory.",
   },
   {
     value: "ephemeral",
     label: "Ephemeral",
-    description: "Private, plus messages are permanently deleted after a set time.",
+    description: "Private, plus messages are permanently deleted after a set time. No recovery by anyone.",
   },
 ];
 
