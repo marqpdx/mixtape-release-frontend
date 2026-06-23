@@ -1,7 +1,9 @@
 // hooks/atrium/useAtrium.ts
 
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
+import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
@@ -17,4 +19,113 @@ export function useAtriumSessions() {
   });
 
   return { sessions, isLoading, error: error as Error | null, refetch };
+}
+
+export function useCreateAtriumSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: atriumApi.createAtriumSession,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// SSE exchange hook
+// ---------------------------------------------------------------------------
+
+export interface ExchangeEntry {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export function useAtriumExchange(session: AtriumSession | null) {
+  const queryClient = useQueryClient();
+  const [entries, setEntries] = useState<ExchangeEntry[]>([]);
+  const [streaming, setStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const send = useCallback(
+    async (message: string) => {
+      if (!session || streaming) return;
+
+      setError(null);
+      setStreaming(true);
+
+      // Optimistically add user turn
+      setEntries((prev) => [...prev, { role: "user", content: message }]);
+
+      abortRef.current = new AbortController();
+
+      try {
+        const resp = await fetch(`/api/atrium/sessions/${session.id}/exchange`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ message }),
+          signal: abortRef.current.signal,
+        });
+
+        if (!resp.ok || !resp.body) {
+          throw new Error(`Exchange failed (${resp.status})`);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let assistantText = "";
+
+        // Add empty assistant entry for streaming-in
+        setEntries((prev) => [...prev, { role: "assistant", content: "" }]);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const raw = decoder.decode(value, { stream: true });
+          for (const line of raw.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const payload = JSON.parse(line.slice(6));
+              if (payload.type === "delta") {
+                assistantText += payload.text;
+                setEntries((prev) => {
+                  const next = [...prev];
+                  next[next.length - 1] = { role: "assistant", content: assistantText };
+                  return next;
+                });
+              } else if (payload.type === "error") {
+                setError(payload.detail ?? "An error occurred.");
+              }
+            } catch {
+              // malformed SSE line — skip
+            }
+          }
+        }
+
+        // Invalidate session list so entry_count updates
+        queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          setError(err.message);
+        }
+      } finally {
+        setStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [session, streaming, queryClient]
+  );
+
+  const cancel = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  const reset = useCallback(() => {
+    setEntries([]);
+    setError(null);
+  }, []);
+
+  return { entries, streaming, error, send, cancel, reset };
 }
