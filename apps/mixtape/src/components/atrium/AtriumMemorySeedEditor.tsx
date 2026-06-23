@@ -22,11 +22,12 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
   const labelColor = useColorModeValue("gray.600", "gray.400");
   const hintColor = useColorModeValue("gray.400", "gray.500");
 
-  // Sync if parent session changes (e.g. after invalidation)
+  // Sync only when session identity changes — intentionally omits field deps
+  // so in-progress edits aren't clobbered by re-renders.
   useEffect(() => {
     setTitle(session.title);
     setContext(session.session_context);
-  }, [session.id]);
+  }, [session.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isDirty = title !== session.title || context !== session.session_context;
 
