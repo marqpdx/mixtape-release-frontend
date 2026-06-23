@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box,
   Heading,
@@ -17,13 +17,13 @@ import {
 import { useColorModeValue } from '@components/ui/color-mode'
 import WorkAreaWrapper from '@components/dashboard/shared/WorkAreaWrapper'
 import { Tooltip } from "@components/ui/tooltip"
-import { IconPlus, IconMessages, IconAdjustmentsCancel } from '@tabler/icons-react'
+import { IconPlus, IconMessages } from '@tabler/icons-react'
 import {
   useThreadworks,
   useThreadworksMutations,
 } from '@hooks/threadworks/useThreadworks'
 import { CreateForumData } from '@mixtape/core/types/threadworksTypes'
-import ForumList from './ForumList'
+import ActivityStream from './ActivityStream'
 import CreateForumModal from './CreateForumModal'
 import { useMyPermissions } from '@mixtape/api/hooks/groups/useGroupPermissions'
 import NextLink from 'next/link'
@@ -41,7 +41,6 @@ export default function ThreadworksWorkArea({
   groupSlug,
 }: ThreadworksWorkAreaProps) {
   void section
-  const [expandedForums, setExpandedForums] = useState<string[]>([])
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const bgColor = useColorModeValue('transparent', 'gray.900')
@@ -57,21 +56,6 @@ export default function ThreadworksWorkArea({
   // Fetch forums - include refreshTrigger in dependencies to refetch on demand
   const { forums, isLoading, error, refetch } = useThreadworks(groupSlug)
   const mutations = useThreadworksMutations(groupSlug)
-
-  // Load last viewed forum from session storage
-  useEffect(() => {
-    const lastViewedForumId = sessionStorage.getItem('lastViewedForumId')
-    if (lastViewedForumId) {
-      setExpandedForums([lastViewedForumId])
-    }
-  }, [])
-
-  const handleForumToggle = (forumIds: string[]) => {
-    setExpandedForums(forumIds)
-    if (forumIds.length > 0) {
-      sessionStorage.setItem('lastViewedForumId', forumIds[forumIds.length - 1])
-    }
-  }
 
   const handleCreateForum = async (data: CreateForumData) => {
     try {
@@ -117,31 +101,21 @@ export default function ThreadworksWorkArea({
             </Text>
           </VStack>
 
-          <HStack>
-            {/* Close All Discussions Button */}
-            {expandedForums.length > 1 && (
-              <Button
-                variant="ghost"
-                // size="sm"
-                // mb={4}
-                onClick={() => setExpandedForums([])}
-              >
-                <Tooltip content="Close all open forums">
-                  <IconAdjustmentsCancel size={18} />
-                </Tooltip>
-              </Button>
-            )}
-            {canManageThreadworks && (
-              <Button
-                colorScheme="green"
-                onClick={() => setCreateModalOpen(true)}
-                disabled={mutations.isCreatingForum}
-              >
-                <IconPlus size={18} />
-                New Forum
-              </Button>
-            )}
-          </HStack>
+          {canManageThreadworks && (
+            <HStack>
+              <Tooltip content="Add a new forum channel">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCreateModalOpen(true)}
+                  disabled={mutations.isCreatingForum}
+                >
+                  <IconPlus size={16} />
+                  New Forum
+                </Button>
+              </Tooltip>
+            </HStack>
+          )}
         </Flex>
 
         {/* Empty State */}
@@ -169,29 +143,11 @@ export default function ThreadworksWorkArea({
             )}
           </Box>
         ) : (
-          <>
-            {/* Close All Discussions Button
-            {expandedForums.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                mb={4}
-                onClick={() => setExpandedForums([])}
-              >
-                Close all discussions
-              </Button>
-            )} */}
-
-            {/* Forums Accordion */}
-            <ForumList
-              forums={forums}
-              expandedForums={expandedForums}
-              onForumToggle={handleForumToggle}
-              groupSlug={groupSlug}
-              setActiveSection={setActiveSection}
-              onDiscussionCreated={refetch}
-            />
-          </>
+          <ActivityStream
+            forums={forums}
+            groupSlug={groupSlug}
+            onDiscussionCreated={refetch}
+          />
         )}
 
         {/* Error Display */}

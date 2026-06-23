@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Box, Button, Heading, VStack, HStack, Spacer, Textarea, Text, Spinner, Flex } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Divider } from '@components/common/Divider'
-import { IconUser, IconClock, IconMessageCircle, IconQuote, IconCircleCheck } from '@tabler/icons-react'
+import { IconUser, IconClock, IconMessageCircle, IconCircleCheck } from '@tabler/icons-react'
 import { Discussion, Post, CreatePostData, getThreadworksUserDisplayName } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations, useDiscussion } from '@hooks/threadworks/useThreadworks'
 import { formatTimeAgo } from './threadworksUtils'
@@ -30,7 +30,7 @@ interface ResolutionPanelProps {
   mutations: ReturnType<typeof useThreadworksMutations>
 }
 
-function ResolutionBanner({ discussion, isModerator, forumSlug, groupSlug, onSettled, mutations }: ResolutionPanelProps) {
+function ResolutionBanner({ discussion, isModerator, forumSlug, onSettled, mutations }: ResolutionPanelProps) {
   const [busy, setBusy] = useState(false)
   const resPost = discussion.resolution_post
   if (!resPost) return null
@@ -83,7 +83,7 @@ interface MarkResolvedPanelProps {
   mutations: ReturnType<typeof useThreadworksMutations>
 }
 
-function MarkResolvedPanel({ discussion, posts, forumSlug, groupSlug, onSettled, mutations }: MarkResolvedPanelProps) {
+function MarkResolvedPanel({ discussion, posts, forumSlug, onSettled, mutations }: MarkResolvedPanelProps) {
   const [selectedPostId, setSelectedPostId] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -148,6 +148,7 @@ export default function DiscussionDetail({
 }: DiscussionDetailProps) {
   const [postContent, setPostContent] = useState('')
   const [quotedPost, setQuotedPost] = useState<Post | null>(null)
+  const [quotedPassage, setQuotedPassage] = useState('')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const textColor = useColorModeValue('gray.600', 'gray.300')
   const quoteBgColor = useColorModeValue('green.50', 'green.950')
@@ -205,8 +206,9 @@ export default function DiscussionDetail({
     }, 3000)
   }
 
-  const handleQuotePost = (post: Post) => {
+  const handleQuote = (post: Post, passage?: string) => {
     setQuotedPost(post)
+    setQuotedPassage(passage || '')
     setTimeout(() => textareaRef.current?.focus(), 50)
   }
 
@@ -218,12 +220,13 @@ export default function DiscussionDetail({
         content: postContent,
         ...(quotedPost && {
           quoted_post_id: quotedPost.id,
-          quoted_passage: window.getSelection()?.toString() || '',
+          quoted_passage: quotedPassage,
         }),
       }
       await mutations.createPost(forumSlug, discussion.slug, data)
       setPostContent('')
       setQuotedPost(null)
+      setQuotedPassage('')
       emit('discussion', `${forumSlug}:${discussion.slug}`, 'post_created', {
         postCount: (fullDiscussion?.posts?.length || 0) + 1,
       })
@@ -311,28 +314,18 @@ export default function DiscussionDetail({
         </Text>
       )}
 
-      <VStack align="stretch" gap={4} mb={6} maxH="400px" overflowY="auto">
-        {posts.map((post) => (
-          <Box key={post.id} position="relative" role="group">
+      <VStack align="stretch" gap={0} mb={6} maxH="400px" overflowY="auto">
+        {posts.map((post, idx) => (
+          <Box key={post.id}>
+            {idx > 0 && (
+              <Box h="1px" bg={borderColor} opacity={0.5} my={4} />
+            )}
             <PostItem
               post={post}
               quotedPost={post.quoted_post_id ? postById[post.quoted_post_id] : undefined}
               isReply={!!post.parent_id}
+              onQuote={handleQuote}
             />
-            <Button
-              size="xs"
-              variant="ghost"
-              position="absolute"
-              top={0}
-              right={0}
-              opacity={0}
-              _groupHover={{ opacity: 1 }}
-              transition="opacity 0.15s"
-              onClick={() => handleQuotePost(post)}
-              title="Quote this post"
-            >
-              <IconQuote size={14} />
-            </Button>
           </Box>
         ))}
       </VStack>
@@ -352,13 +345,14 @@ export default function DiscussionDetail({
               <HStack justify="space-between">
                 <Text fontSize="xs" color="green.600">
                   Quoting {getThreadworksUserDisplayName(quotedPost.author)}
+                  {quotedPassage && ' · selected passage'}
                 </Text>
-                <Button size="xs" variant="ghost" onClick={() => setQuotedPost(null)} color="gray.400">
+                <Button size="xs" variant="ghost" onClick={() => { setQuotedPost(null); setQuotedPassage('') }} color="gray.400">
                   ✕
                 </Button>
               </HStack>
               <Text fontSize="xs" color="gray.500" lineClamp={1} mt={0.5}>
-                {quotedPost.content}
+                {quotedPassage || quotedPost.content}
               </Text>
             </Box>
           )}

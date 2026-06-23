@@ -51,7 +51,7 @@ export default function ForumFeed({ forum, groupSlug, setActiveSection }: ForumF
 
   const mutations = useThreadworksMutations(groupSlug)
 
-  const handleCreateDiscussion = async (data: { title: string; description?: string; content: string }) => {
+  const handleCreateDiscussion = async (_forumSlug: string, data: { title: string; description?: string; content: string }) => {
     try {
       await mutations.createDiscussion(forum.slug, data)
       closeDiscussionModal()

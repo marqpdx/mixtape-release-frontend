@@ -3,13 +3,15 @@
 import { VStack, Text, Input, Textarea } from '@chakra-ui/react'
 import AdminModal from '@components/admin/AdminModal'
 import { useState } from 'react'
-import { CreateDiscussionData } from '@mixtape/core/types/threadworksTypes'
+import { CreateDiscussionData, Forum } from '@mixtape/core/types/threadworksTypes'
 
 interface CreateDiscussionModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: CreateDiscussionData) => Promise<void>
+  onSubmit: (forumSlug: string, data: CreateDiscussionData) => Promise<void>
   isSubmitting: boolean
+  forums?: Forum[]
+  defaultForumSlug?: string
 }
 
 export default function CreateDiscussionModal({
@@ -17,36 +19,60 @@ export default function CreateDiscussionModal({
   onClose,
   onSubmit,
   isSubmitting,
+  forums,
+  defaultForumSlug,
 }: CreateDiscussionModalProps) {
+  const [selectedForumSlug, setSelectedForumSlug] = useState(defaultForumSlug || forums?.[0]?.slug || '')
   const [formData, setFormData] = useState<CreateDiscussionData>({
     title: '',
     description: '',
     content: '',
   })
 
+  const showForumPicker = forums && forums.length > 1
+
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.content.trim()) return
+    if (showForumPicker && !selectedForumSlug) return
     try {
-      await onSubmit(formData)
+      await onSubmit(selectedForumSlug, formData)
       setFormData({ title: '', description: '', content: '' })
     } catch (error) {
       console.error('Error creating discussion:', error)
     }
   }
 
+  const handleClose = () => {
+    onClose()
+    setFormData({ title: '', description: '', content: '' })
+  }
+
   return (
     <AdminModal
       title="Start a New Discussion"
       isOpen={isOpen}
-      onClose={() => {
-        onClose()
-        setFormData({ title: '', description: '', content: '' })
-      }}
+      onClose={handleClose}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       submitText="Create Discussion"
     >
       <VStack gap={4}>
+        {showForumPicker && (
+          <VStack align="start" gap={2} w="100%">
+            <Text fontWeight="semibold">Forum</Text>
+            <select
+              style={{ width: '100%', fontSize: '0.875rem', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--chakra-colors-border-muted)' }}
+              value={selectedForumSlug}
+              onChange={(e) => setSelectedForumSlug(e.target.value)}
+            >
+              <option value="">Select a forum…</option>
+              {forums.map((f) => (
+                <option key={f.slug} value={f.slug}>{f.title}</option>
+              ))}
+            </select>
+          </VStack>
+        )}
+
         <VStack align="start" gap={2} w="100%">
           <Text fontWeight="semibold">Discussion Title</Text>
           <Input
