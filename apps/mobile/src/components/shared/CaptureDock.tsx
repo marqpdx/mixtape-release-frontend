@@ -1,10 +1,14 @@
 // components/shared/CaptureDock.tsx
 //
 // Generic capture dock — text input + voice recording + draft persistence.
-// Used by SeedNotebook (personal seeds) and OpsScreen (HubCapture).
-// Callers supply submit handlers; all input/voice/draft mechanics live here.
+// This is the "PocketNotebook" shell from ADR-0048 (Mobile UX): same dock
+// reused across Notebook, Lists, and Build, with only labels/colors/slots
+// differing per screen. Used by SeedNotebook (personal seeds) and OpsScreen
+// (HubCapture). Callers supply submit handlers; all input/voice/draft
+// mechanics live here.
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -35,6 +39,22 @@ export interface CaptureDockProps {
   onFocusChange?: (focused: boolean) => void;
   isSubmittingText?: boolean;
   isSubmittingVoice?: boolean;
+  /** Drives the send button and active voice meter. Defaults to the standard blue. */
+  accentColor?: string;
+  /** Highlights the text input border/background, e.g. while a caller-specific command mode is active. */
+  isInputHighlighted?: boolean;
+  /** Full override of text-change handling — receives the raw value and the dock's own
+   *  setter, so callers can intercept (e.g. parse a command) or just forward to setText. */
+  onChangeTextOverride?: (value: string, setText: (next: string) => void) => void;
+  /** Rendered between the text input and the footer row, e.g. mention suggestions or an inline error. */
+  belowInputContent?: ReactNode;
+  /** Rendered after the draft-status line, e.g. a "Saved" confirmation prompt. */
+  footerExtraContent?: ReactNode;
+}
+
+export interface CaptureDockHandle {
+  getText: () => string;
+  setText: (next: string) => void;
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -43,7 +63,7 @@ function formatDuration(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export function CaptureDock({
+export const CaptureDock = forwardRef<CaptureDockHandle, CaptureDockProps>(function CaptureDock({
   draftStorageKey,
   placeholder = 'Type here...',
   kickerLabel = 'Capture',
@@ -55,7 +75,12 @@ export function CaptureDock({
   onFocusChange,
   isSubmittingText = false,
   isSubmittingVoice = false,
-}: CaptureDockProps) {
+  accentColor = '#0E5AA7',
+  isInputHighlighted = false,
+  onChangeTextOverride,
+  belowInputContent,
+  footerExtraContent,
+}, ref) {
   const [captureText, setCaptureText] = useState('');
   const [captureFocused, setCaptureFocused] = useState(false);
   const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -81,6 +106,11 @@ export function CaptureDock({
 
   const showVoiceStatus = isRecording || isPaused;
   const voiceSessionActive = isRecording || isPaused;
+
+  useImperativeHandle(ref, () => ({
+    getText: () => captureText,
+    setText: setCaptureText,
+  }), [captureText]);
 
   // Restore draft on mount
   useEffect(() => {
@@ -146,13 +176,19 @@ export function CaptureDock({
 
       <TextInput
         ref={captureInputRef}
-        style={styles.captureInput}
+        style={[styles.captureInput, isInputHighlighted && styles.captureInputHighlighted]}
         autoFocus={false}
         multiline
         placeholder={placeholder}
         placeholderTextColor="#738292"
         value={captureText}
-        onChangeText={setCaptureText}
+        onChangeText={(value) => {
+          if (onChangeTextOverride) {
+            onChangeTextOverride(value, setCaptureText);
+          } else {
+            setCaptureText(value);
+          }
+        }}
         textAlignVertical="top"
         onFocus={() => {
           setCaptureFocused(true);
@@ -167,6 +203,8 @@ export function CaptureDock({
           onFocusChange?.(false);
         }}
       />
+
+      {belowInputContent}
 
       <View style={styles.captureFooter}>
         {isPaused ? (
@@ -210,7 +248,7 @@ export function CaptureDock({
                     key={threshold}
                     style={[
                       styles.voiceMeterBar,
-                      meterLevel >= threshold && styles.voiceMeterBarActive,
+                      meterLevel >= threshold && { backgroundColor: accentColor },
                       meterLevel >= threshold && { height: 8 + index * 2 + meterLevel * 4 },
                     ]}
                   />
@@ -226,7 +264,11 @@ export function CaptureDock({
           <TouchableOpacity
             onPress={() => void handleSubmitVoice()}
             activeOpacity={0.85}
-            style={[styles.sendButton, isSubmittingVoice && styles.buttonDisabled]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: accentColor },
+              isSubmittingVoice && styles.buttonDisabled,
+            ]}
             disabled={isSubmittingVoice}
           >
             {isSubmittingVoice
@@ -237,6 +279,7 @@ export function CaptureDock({
           <Pressable
             style={[
               styles.sendButton,
+              { backgroundColor: accentColor },
               (!captureText.trim() || isSubmittingText) && styles.buttonDisabled,
             ]}
             onPressIn={() => {
@@ -267,9 +310,11 @@ export function CaptureDock({
       <Text style={styles.draftStatus}>
         {draftStatus === 'saving' ? 'Saving draft...' : draftStatus === 'saved' ? 'Draft saved' : ' '}
       </Text>
+
+      {footerExtraContent}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   captureCard: {
@@ -312,6 +357,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  captureInputHighlighted: {
+    borderColor: '#0E5AA7',
+    backgroundColor: '#F0F7FF',
+  },
   captureFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -347,7 +396,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#B7C7D6',
     maxHeight: 18,
   },
-  voiceMeterBarActive: { backgroundColor: '#0E5AA7' },
   voiceSecondaryButton: {
     minWidth: 116,
     height: 42,

@@ -6,7 +6,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -15,7 +14,6 @@ import {
   View,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useCreateSeed,
   useCreateVoiceSeed,
@@ -25,8 +23,9 @@ import {
 } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useAuthStore } from '../../stores/authStore';
-import { VoiceCaptureBar } from '../shared/VoiceCaptureBar';
-import type { RecordedClip } from '../shared/VoiceCaptureBar';
+import { CaptureDock } from '../shared/CaptureDock';
+import type { CaptureDockHandle } from '../shared/CaptureDock';
+import type { RecordedClip } from '../../hooks/useNativeVoiceRecorder';
 import { parseDispatchText, useDispatchCommand } from '../../hooks/useDispatchCommand';
 import { MentionSuggestionList } from './MentionSuggestionList';
 
@@ -67,22 +66,17 @@ export function SeedNotebook({
   const createVoiceSeed = useCreateVoiceSeed();
   const deleteSeed = useDeleteSeed();
   const updateSeed = useUpdateSeed();
-  const [captureText, setCaptureText] = useState('');
   const [editingSeedId, setEditingSeedId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [savedSeed, setSavedSeed] = useState<Seed | null>(null);
-  const [captureFocused, setCaptureFocused] = useState(false);
-  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [copiedSeedId, setCopiedSeedId] = useState<string | null>(null);
   const [dispatchParseResult, setDispatchParseResult] = useState(() =>
     parseDispatchText('')
   );
   const dispatch = useDispatchCommand();
-  const captureInputRef = useRef<TextInput | null>(null);
   const editInputRef = useRef<TextInput | null>(null);
+  const captureDockRef = useRef<CaptureDockHandle | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
-  const retainCaptureFocusRef = useRef(false);
-  const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceRefreshPhaseRef = useRef<'initial' | 'extended'>('initial');
 
@@ -93,53 +87,6 @@ export function SeedNotebook({
   const draftStorageKey = currentUser?.username
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
-
-  useEffect(() => {
-    let active = true;
-
-    void AsyncStorage.getItem(draftStorageKey).then((value) => {
-      if (!active || !value) {
-        return;
-      }
-
-      setCaptureText(value);
-      setDraftStatus('saved');
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [draftStorageKey]);
-
-  useEffect(() => {
-    if (editingSeedId) {
-      return;
-    }
-
-    if (draftSaveTimeoutRef.current) {
-      clearTimeout(draftSaveTimeoutRef.current);
-    }
-
-    setDraftStatus(captureText.trim() ? 'saving' : 'idle');
-
-    draftSaveTimeoutRef.current = setTimeout(() => {
-      const nextValue = captureText;
-      const request = nextValue.trim()
-        ? AsyncStorage.setItem(draftStorageKey, nextValue)
-        : AsyncStorage.removeItem(draftStorageKey);
-
-      void request.then(() => {
-        setDraftStatus(nextValue.trim() ? 'saved' : 'idle');
-      });
-    }, 600);
-
-    return () => {
-      if (draftSaveTimeoutRef.current) {
-        clearTimeout(draftSaveTimeoutRef.current);
-        draftSaveTimeoutRef.current = null;
-      }
-    };
-  }, [captureText, draftStorageKey, editingSeedId]);
 
   useEffect(() => {
     const hasProcessingVoiceSeed = visibleSeeds.some(
@@ -169,31 +116,17 @@ export function SeedNotebook({
     };
   }, [recentSeedsQuery, visibleSeeds]);
 
-  const handleCapture = async () => {
-    const bodyText = captureText.trim();
-    if (!bodyText || createSeed.isPending) {
-      return;
-    }
-
-    retainCaptureFocusRef.current = true;
-
+  const handleCapture = async (bodyText: string) => {
     const seed = await createSeed.mutateAsync({
       body_text: bodyText,
       kind: 'text',
       source: 'mobile',
     });
 
-    setCaptureText('');
-    setDraftStatus('idle');
     setSavedSeed(seed);
-    void AsyncStorage.removeItem(draftStorageKey);
     requestAnimationFrame(() => {
       seedListRef.current?.scrollToOffset({ offset: 0, animated: false });
     });
-    setTimeout(() => {
-      captureInputRef.current?.focus();
-      retainCaptureFocusRef.current = false;
-    }, 10);
   };
 
   const handleVoiceComplete = async (clip: RecordedClip) => {
@@ -235,7 +168,6 @@ export function SeedNotebook({
   const cancelEditingSeed = () => {
     setEditingSeedId(null);
     setEditingText('');
-    setCaptureFocused(false);
     onFocusChange?.(false);
   };
 
@@ -417,208 +349,153 @@ export function SeedNotebook({
       />
 
       <View style={styles.captureDock}>
-        <View style={styles.captureCard}>
-          <View style={styles.kickerRow}>
-            <Text style={styles.kicker}>
-              {editingSeedId ? 'Editing Seed' : 'Pocket Notebook'}
-            </Text>
-            {!editingSeedId ? (
-              <Text style={styles.kickerSub}> · What's on your mind?</Text>
-            ) : null}
-          </View>
-          {editingSeedId ? (
-            <>
-              <Text style={styles.editingTitle}>Refine this Seed</Text>
-              <TextInput
-                ref={editInputRef}
-                style={styles.captureInput}
-                multiline
-                placeholder="Revise this Seed..."
-                placeholderTextColor="#738292"
-                value={editingText}
-                onChangeText={setEditingText}
-                textAlignVertical="top"
-                onFocus={() => {
-                  setCaptureFocused(true);
-                  onFocusChange?.(true);
-                }}
-                onBlur={() => {
-                  setCaptureFocused(false);
-                  onFocusChange?.(false);
-                }}
-              />
-              <View style={styles.captureFooter}>
-                <TouchableOpacity onPress={cancelEditingSeed} activeOpacity={0.8}>
-                  <Text style={styles.seedSecondaryAction}>Done later</Text>
+        {editingSeedId ? (
+          <View style={styles.captureCard}>
+            <View style={styles.kickerRow}>
+              <Text style={styles.kicker}>Editing Seed</Text>
+            </View>
+            <Text style={styles.editingTitle}>Refine this Seed</Text>
+            <TextInput
+              ref={editInputRef}
+              style={styles.captureInput}
+              multiline
+              placeholder="Revise this Seed..."
+              placeholderTextColor="#738292"
+              value={editingText}
+              onChangeText={setEditingText}
+              textAlignVertical="top"
+              onFocus={() => onFocusChange?.(true)}
+              onBlur={() => onFocusChange?.(false)}
+            />
+            <View style={styles.captureFooter}>
+              <TouchableOpacity onPress={cancelEditingSeed} activeOpacity={0.8}>
+                <Text style={styles.seedSecondaryAction}>Done later</Text>
+              </TouchableOpacity>
+              <View style={styles.editorActions}>
+                <TouchableOpacity
+                  onPress={() => {
+                    const activeSeed = visibleSeeds.find((seed) => seed.id === editingSeedId);
+                    if (activeSeed) {
+                      handleDeleteSeed(activeSeed);
+                    }
+                  }}
+                  activeOpacity={0.8}
+                  style={styles.seedIconButton}
+                  disabled={!editingSeedId}
+                >
+                  <Text style={styles.seedIconText}>🗑</Text>
                 </TouchableOpacity>
-                <View style={styles.editorActions}>
+                <TouchableOpacity
+                  onPress={handleSaveSeedEdit}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.iconSendButton,
+                    (!editingText.trim() || updateSeed.isPending) && styles.buttonDisabled,
+                  ]}
+                  disabled={!editingText.trim() || updateSeed.isPending}
+                >
+                  {updateSeed.isPending ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.iconSendText}>➤</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <CaptureDock
+            ref={captureDockRef}
+            draftStorageKey={draftStorageKey}
+            kickerLabel="Pocket Notebook"
+            kickerSub="What's on your mind?"
+            placeholder="Type here..."
+            isInputHighlighted={dispatchEnabled && dispatchParseResult.isDispatchMode}
+            onChangeTextOverride={(value, setText) => {
+              if (dispatchEnabled) {
+                const parsed = parseDispatchText(value);
+                setDispatchParseResult(parsed);
+                if (parsed.shouldFire && !dispatch.isDispatching) {
+                  void dispatch.fire(parsed, draftStorageKey, (newText) => {
+                    setText(newText);
+                    setDispatchParseResult(parseDispatchText(newText));
+                  });
+                  return;
+                }
+              }
+              setText(value);
+              if (savedSeed) {
+                setSavedSeed(null);
+              }
+            }}
+            belowInputContent={
+              <>
+                {dispatchEnabled &&
+                 dispatchParseResult.isDispatchMode &&
+                 dispatchParseResult.mentionQuery !== null ? (
+                  <MentionSuggestionList
+                    query={dispatchParseResult.mentionQuery}
+                    onSelect={(username) => {
+                      // Replace the partial @mention at the end of the command line with the completed one
+                      const currentText = captureDockRef.current?.getText() ?? '';
+                      const newText = currentText.replace(/@(\w*)$/, `@${username} `);
+                      captureDockRef.current?.setText(newText);
+                      setDispatchParseResult(parseDispatchText(newText));
+                    }}
+                  />
+                ) : null}
+
+                {dispatchEnabled && dispatch.dispatchError ? (
+                  <TouchableOpacity
+                    onPress={dispatch.clearError}
+                    style={styles.dispatchError}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.dispatchErrorText}>{dispatch.dispatchError}</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            }
+            onSubmitText={handleCapture}
+            onSubmitVoice={handleVoiceComplete}
+            isSubmittingText={createSeed.isPending}
+            isSubmittingVoice={createVoiceSeed.isPending}
+            onFocusChange={onFocusChange}
+            footerExtraContent={
+              <>
+                {dispatch.confirmationVisible ? (
+                  <Animated.View
+                    style={[styles.dispatchConfirmation, { opacity: dispatch.confirmationOpacity }]}
+                    pointerEvents="none"
+                  >
+                    <Text style={styles.dispatchConfirmationText}>✓ Message sent</Text>
+                  </Animated.View>
+                ) : null}
+
+                <View
+                  style={[
+                    styles.savedPrompt,
+                    !savedSeed && styles.savedPromptHidden,
+                  ]}
+                  pointerEvents={savedSeed ? 'auto' : 'none'}
+                >
+                  <Text style={styles.savedTitle}>Saved</Text>
                   <TouchableOpacity
                     onPress={() => {
-                      const activeSeed = visibleSeeds.find((seed) => seed.id === editingSeedId);
-                      if (activeSeed) {
-                        handleDeleteSeed(activeSeed);
+                      if (savedSeed) {
+                        onDevelopSeed(savedSeed);
                       }
                     }}
                     activeOpacity={0.8}
-                    style={styles.seedIconButton}
-                    disabled={!editingSeedId}
+                    disabled={!savedSeed}
                   >
-                    <Text style={styles.seedIconText}>🗑</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleSaveSeedEdit}
-                    activeOpacity={0.85}
-                    style={[
-                      styles.iconSendButton,
-                      (!editingText.trim() || updateSeed.isPending) && styles.buttonDisabled,
-                    ]}
-                    disabled={!editingText.trim() || updateSeed.isPending}
-                  >
-                    {updateSeed.isPending ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.iconSendText}>➤</Text>
-                    )}
+                    <Text style={styles.savedLink}>Develop this?</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </>
-          ) : (
-            <>
-              <TextInput
-                ref={captureInputRef}
-                style={[
-                  styles.captureInput,
-                  dispatchEnabled && dispatchParseResult.isDispatchMode && styles.captureInputDispatch,
-                ]}
-                autoFocus={false}
-                multiline
-                placeholder="Type here..."
-                placeholderTextColor="#738292"
-                value={captureText}
-                onChangeText={(value) => {
-                  if (dispatchEnabled) {
-                    const parsed = parseDispatchText(value);
-                    setDispatchParseResult(parsed);
-                    if (parsed.shouldFire && !dispatch.isDispatching) {
-                      void dispatch.fire(parsed, draftStorageKey, (newText) => {
-                        setCaptureText(newText);
-                        setDispatchParseResult(parseDispatchText(newText));
-                      });
-                      return;
-                    }
-                  }
-                  setCaptureText(value);
-                  if (savedSeed) {
-                    setSavedSeed(null);
-                  }
-                }}
-                textAlignVertical="top"
-                onFocus={() => {
-                  setCaptureFocused(true);
-                  onFocusChange?.(true);
-                }}
-                onBlur={() => {
-                  if (retainCaptureFocusRef.current) {
-                    requestAnimationFrame(() => {
-                      captureInputRef.current?.focus();
-                    });
-                    return;
-                  }
-
-                  setCaptureFocused(false);
-                  onFocusChange?.(false);
-                }}
-              />
-
-              {dispatchEnabled &&
-               dispatchParseResult.isDispatchMode &&
-               dispatchParseResult.mentionQuery !== null ? (
-                <MentionSuggestionList
-                  query={dispatchParseResult.mentionQuery}
-                  onSelect={(username) => {
-                    // Replace the partial @mention at the end of the command line with the completed one
-                    const newText = captureText.replace(/@(\w*)$/, `@${username} `);
-                    setCaptureText(newText);
-                    setDispatchParseResult(parseDispatchText(newText));
-                  }}
-                />
-              ) : null}
-
-              {dispatchEnabled && dispatch.dispatchError ? (
-                <TouchableOpacity
-                  onPress={dispatch.clearError}
-                  style={styles.dispatchError}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.dispatchErrorText}>{dispatch.dispatchError}</Text>
-                </TouchableOpacity>
-              ) : null}
-
-              <VoiceCaptureBar
-                onComplete={handleVoiceComplete}
-                trailingIdleContent={
-                  <Pressable
-                    style={[
-                      styles.sendButton,
-                      (!captureText.trim() || createSeed.isPending) && styles.buttonDisabled,
-                    ]}
-                    focusable={false}
-                    onPressIn={() => {
-                      retainCaptureFocusRef.current = true;
-                      captureInputRef.current?.focus();
-                    }}
-                    onPress={handleCapture}
-                    disabled={!captureText.trim() || createSeed.isPending}
-                  >
-                    {createSeed.isPending ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.sendButtonText}>➤</Text>
-                    )}
-                  </Pressable>
-                }
-              />
-              <Text style={styles.draftStatus}>
-                {draftStatus === 'saving'
-                  ? 'Saving draft...'
-                  : draftStatus === 'saved'
-                    ? 'Draft saved'
-                    : ' '}
-              </Text>
-            </>
-          )}
-
-          {dispatch.confirmationVisible ? (
-            <Animated.View
-              style={[styles.dispatchConfirmation, { opacity: dispatch.confirmationOpacity }]}
-              pointerEvents="none"
-            >
-              <Text style={styles.dispatchConfirmationText}>✓ Message sent</Text>
-            </Animated.View>
-          ) : null}
-
-          <View
-            style={[
-              styles.savedPrompt,
-              !savedSeed && styles.savedPromptHidden,
-            ]}
-            pointerEvents={savedSeed ? 'auto' : 'none'}
-          >
-            <Text style={styles.savedTitle}>Saved</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (savedSeed) {
-                  onDevelopSeed(savedSeed);
-                }
-              }}
-              activeOpacity={0.8}
-              disabled={!savedSeed}
-            >
-              <Text style={styles.savedLink}>Develop this?</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+              </>
+            }
+          />
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -682,10 +559,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
-  captureInputDispatch: {
-    borderColor: '#0E5AA7',
-    backgroundColor: '#F0F7FF',
-  },
   dispatchError: {
     backgroundColor: '#FFF0EE',
     borderRadius: 10,
@@ -721,26 +594,6 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 6,
     minHeight: 42,
-  },
-  draftStatus: {
-    minHeight: 12,
-    fontSize: 12,
-    color: '#6A7785',
-    marginTop: -2,
-  },
-  sendButton: {
-    minWidth: 108,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#0E5AA7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  sendButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
   iconSendButton: {
     width: 46,
