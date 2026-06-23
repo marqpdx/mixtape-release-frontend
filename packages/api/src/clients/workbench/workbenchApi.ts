@@ -15,7 +15,7 @@ import { AxiosError } from 'axios';
 
 export type MillDraftStatus = 'candidate' | 'active' | 'ready_to_promote' | 'promoted' | 'archived';
 export type SponsorType = 'user' | 'group';
-export type SourceType = 'stackroom' | 'concord' | 'gristmill' | 'copydesk' | 'in-editor' | 'manual';
+export type SourceType = 'stackroom' | 'concord' | 'gristmill' | 'copydesk' | 'in-editor' | 'manual' | 'atrium';
 export type PublishSafetyClass = 'psc_0' | 'psc_1' | 'psc_2';
 export type ValidationState = 'unvalidated' | 'valid' | 'invalid' | 'warnings';
 

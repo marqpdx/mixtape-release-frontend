@@ -134,7 +134,12 @@ export function AtriumDialogSurface() {
       {/* Thread */}
       {activeSession ? (
         <Box px={4} pt={4}>
-          <AtriumSessionThread entries={entries} streaming={streaming} error={error} />
+          <AtriumSessionThread
+            entries={entries}
+            streaming={streaming}
+            error={error}
+            sessionTitle={activeSession.title}
+          />
         </Box>
       ) : (
         <Box px={4} pt={6} pb={2} textAlign="center">

@@ -2,6 +2,13 @@
 
 export type AtriumSessionStatus = "active" | "closed" | "archived";
 
+export interface AtriumSessionEntry {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
 export interface AtriumSession {
   id: string;
   title: string;

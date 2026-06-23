@@ -1,6 +1,6 @@
 // hooks/atrium/useAtrium.ts
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
@@ -9,6 +9,7 @@ export const atriumQueryKeys = {
   all: ["atrium"] as const,
   sessions: () => [...atriumQueryKeys.all, "sessions"] as const,
   context: (sessionId: string) => [...atriumQueryKeys.all, "context", sessionId] as const,
+  entries: (sessionId: string) => [...atriumQueryKeys.all, "entries", sessionId] as const,
 };
 
 export function useAtriumSessions() {
@@ -61,10 +62,27 @@ export function useUpdateAtriumSession() {
 }
 
 // ---------------------------------------------------------------------------
+// Session history (persisted entries)
+// ---------------------------------------------------------------------------
+
+export function useAtriumSessionEntries(sessionId: string | null) {
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: atriumQueryKeys.entries(sessionId ?? ""),
+    queryFn: () => atriumApi.fetchAtriumSessionEntries(sessionId!),
+    enabled: !!sessionId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { entries, isLoading, error: error as Error | null };
+}
+
+// ---------------------------------------------------------------------------
 // SSE exchange hook
 // ---------------------------------------------------------------------------
 
 export interface ExchangeEntry {
+  id?: string;
   role: "user" | "assistant";
   content: string;
 }
@@ -75,6 +93,15 @@ export function useAtriumExchange(session: AtriumSession | null) {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Load persisted history whenever the active session changes
+  const { entries: history } = useAtriumSessionEntries(session?.id ?? null);
+
+  useEffect(() => {
+    setEntries(history);
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.id, history]);
 
   const send = useCallback(
     async (message: string) => {
@@ -133,8 +160,9 @@ export function useAtriumExchange(session: AtriumSession | null) {
           }
         }
 
-        // Invalidate session list so entry_count updates
+        // Invalidate session list (entry_count) and persisted entries (ids for promotion)
         queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+        queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(session.id) });
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
           setError(err.message);
