@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Box, Button, Heading, VStack, HStack, Spacer, Textarea, Text, Spinner, Flex } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import { Divider } from '@components/common/Divider'
-import { IconUser, IconClock, IconMessageCircle, IconQuote } from '@tabler/icons-react'
+import { IconUser, IconClock, IconMessageCircle, IconQuote, IconCircleCheck } from '@tabler/icons-react'
 import { Discussion, Post, CreatePostData, getThreadworksUserDisplayName } from '@mixtape/core/types/threadworksTypes'
 import { useThreadworksMutations, useDiscussion } from '@hooks/threadworks/useThreadworks'
 import { formatTimeAgo } from './threadworksUtils'
@@ -19,6 +19,124 @@ interface DiscussionDetailProps {
   forumSlug: string
   groupSlug?: string
   isModerator?: boolean
+}
+
+interface ResolutionPanelProps {
+  discussion: Discussion
+  isModerator: boolean
+  forumSlug: string
+  groupSlug?: string
+  onSettled: () => void
+  mutations: ReturnType<typeof useThreadworksMutations>
+}
+
+function ResolutionBanner({ discussion, isModerator, forumSlug, groupSlug, onSettled, mutations }: ResolutionPanelProps) {
+  const [busy, setBusy] = useState(false)
+  const resPost = discussion.resolution_post
+  if (!resPost) return null
+
+  const handleUnresolve = async () => {
+    setBusy(true)
+    try {
+      await mutations.unresolveDiscussion(forumSlug, discussion.slug)
+      onSettled()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Box
+      className="dd-resolution-banner"
+      bg="green.50"
+      border="1px solid"
+      borderColor="green.200"
+      borderRadius="md"
+      px={4}
+      py={3}
+      mb={3}
+    >
+      <HStack gap={2} align="center">
+        <IconCircleCheck size={16} color="var(--chakra-colors-green-600)" />
+        <Text fontSize="sm" fontWeight="semibold" color="green.700" flex={1}>
+          Resolved — {resPost.author ? getThreadworksUserDisplayName(resPost.author) : 'Unknown'}'s post was marked as the answer
+        </Text>
+        {isModerator && (
+          <Button size="xs" variant="ghost" colorPalette="gray" loading={busy} onClick={handleUnresolve}>
+            Unresolve
+          </Button>
+        )}
+      </HStack>
+      <Text fontSize="xs" color="green.600" mt={1} lineClamp={2}>
+        {resPost.content}
+      </Text>
+    </Box>
+  )
+}
+
+interface MarkResolvedPanelProps {
+  discussion: Discussion
+  posts: Post[]
+  forumSlug: string
+  groupSlug?: string
+  onSettled: () => void
+  mutations: ReturnType<typeof useThreadworksMutations>
+}
+
+function MarkResolvedPanel({ discussion, posts, forumSlug, groupSlug, onSettled, mutations }: MarkResolvedPanelProps) {
+  const [selectedPostId, setSelectedPostId] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const handleResolve = async () => {
+    if (!selectedPostId) return
+    setBusy(true)
+    try {
+      await mutations.resolveDiscussion(forumSlug, discussion.slug, selectedPostId)
+      onSettled()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Box
+      className="dd-mark-resolved"
+      border="1px dashed"
+      borderColor="border.muted"
+      borderRadius="md"
+      px={4}
+      py={3}
+      mb={3}
+    >
+      <Text fontSize="xs" fontWeight="semibold" color="fg.muted" mb={2}>
+        Mark as Resolved
+      </Text>
+      <HStack gap={2}>
+        <select
+          style={{ flex: 1, fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--chakra-colors-border-muted)' }}
+          value={selectedPostId}
+          onChange={(e) => setSelectedPostId(e.target.value)}
+        >
+          <option value="">Select the resolving post…</option>
+          {posts.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.author ? getThreadworksUserDisplayName(p.author) : 'Unknown'}: {p.content.slice(0, 60)}
+              {p.content.length > 60 ? '…' : ''}
+            </option>
+          ))}
+        </select>
+        <Button
+          size="xs"
+          colorPalette="green"
+          disabled={!selectedPostId}
+          loading={busy}
+          onClick={handleResolve}
+        >
+          Mark Resolved
+        </Button>
+      </HStack>
+    </Box>
+  )
 }
 
 export default function DiscussionDetail({
@@ -160,6 +278,28 @@ export default function DiscussionDetail({
           forumSlug={forumSlug}
           groupSlug={groupSlug}
           onSettled={refetch}
+        />
+      )}
+
+      {/* Resolution state (D13 Phase 3) */}
+      {currentDiscussion.resolution_post && (
+        <ResolutionBanner
+          discussion={currentDiscussion}
+          isModerator={isModerator}
+          forumSlug={forumSlug}
+          groupSlug={groupSlug}
+          onSettled={refetch}
+          mutations={mutations}
+        />
+      )}
+      {isModerator && !currentDiscussion.resolution_post && posts.length > 0 && (
+        <MarkResolvedPanel
+          discussion={currentDiscussion}
+          posts={posts}
+          forumSlug={forumSlug}
+          groupSlug={groupSlug}
+          onSettled={refetch}
+          mutations={mutations}
         />
       )}
 

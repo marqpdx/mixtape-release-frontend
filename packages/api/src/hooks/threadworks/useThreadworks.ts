@@ -266,6 +266,36 @@ export const useThreadworksMutations = (
     },
   });
 
+  // Resolve discussion mutation
+  const resolveDiscussionMutation = useMutation({
+    mutationFn: ({
+      forumSlug,
+      discussionSlug,
+      postId,
+    }: {
+      forumSlug: string;
+      discussionSlug: string;
+      postId: string;
+    }) => threadworksApi.resolveDiscussion(forumSlug, discussionSlug, postId, groupSlug),
+    onSuccess: (_, { forumSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.discussion(forumSlug, discussionSlug) });
+    },
+  });
+
+  // Unresolve discussion mutation
+  const unresolveDiscussionMutation = useMutation({
+    mutationFn: ({
+      forumSlug,
+      discussionSlug,
+    }: {
+      forumSlug: string;
+      discussionSlug: string;
+    }) => threadworksApi.unresolveDiscussion(forumSlug, discussionSlug, groupSlug),
+    onSuccess: (_, { forumSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: threadworksQueryKeys.discussion(forumSlug, discussionSlug) });
+    },
+  });
+
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: ({
@@ -297,6 +327,10 @@ export const useThreadworksMutations = (
       updatePostMutation.mutateAsync({ forumSlug, discussionSlug, postId, data }),
     deletePost: (forumSlug, discussionSlug, postId) =>
       deletePostMutation.mutateAsync({ forumSlug, discussionSlug, postId }),
+    resolveDiscussion: (forumSlug, discussionSlug, postId) =>
+      resolveDiscussionMutation.mutateAsync({ forumSlug, discussionSlug, postId }),
+    unresolveDiscussion: (forumSlug, discussionSlug) =>
+      unresolveDiscussionMutation.mutateAsync({ forumSlug, discussionSlug }),
     isCreatingForum: createForumMutation.isPending,
     isCreatingDiscussion: createDiscussionMutation.isPending,
     isCreatingPost: createPostMutation.isPending,

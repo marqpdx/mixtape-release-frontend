@@ -88,6 +88,9 @@ export interface Discussion {
   summary_pending?: string | null;
   summary_pending_delta?: number | null;
   summary_pending_substantive?: boolean | null;
+  // Phase 3 (D13)
+  resolution_post_id?: string | null;
+  resolution_post?: Post | null;
 }
 
 export interface ForumAudienceMember {
@@ -213,6 +216,8 @@ export interface UseThreadworksMutationsResult {
   createPost: (forumSlug: string, discussionSlug: string, data: CreatePostData) => Promise<Post>;
   updatePost: (forumSlug: string, discussionSlug: string, postId: string, data: Partial<CreatePostData>) => Promise<Post>;
   deletePost: (forumSlug: string, discussionSlug: string, postId: string) => Promise<void>;
+  resolveDiscussion: (forumSlug: string, discussionSlug: string, postId: string) => Promise<Discussion>;
+  unresolveDiscussion: (forumSlug: string, discussionSlug: string) => Promise<Discussion>;
   isCreatingForum: boolean;
   isCreatingDiscussion: boolean;
   isCreatingPost: boolean;

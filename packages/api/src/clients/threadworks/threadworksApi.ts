@@ -440,3 +440,32 @@ export async function dismissSummary(
     : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/summary/dismiss`;
   await axiosInstance.post(endpoint);
 }
+
+// ============================================================================
+// RESOLUTION STATE (D13, Phase 3)
+// ============================================================================
+
+export async function resolveDiscussion(
+  forumSlug: string,
+  discussionSlug: string,
+  postId: string,
+  groupSlug?: string
+): Promise<Discussion> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/discussions/${discussionSlug}/resolve`
+    : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/resolve`;
+  const response = await axiosInstance.post<Discussion>(endpoint, { post_id: postId });
+  return response.data;
+}
+
+export async function unresolveDiscussion(
+  forumSlug: string,
+  discussionSlug: string,
+  groupSlug?: string
+): Promise<Discussion> {
+  const endpoint = groupSlug
+    ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/discussions/${discussionSlug}/unresolve`
+    : `/api/threadworks/${forumSlug}/discussions/${discussionSlug}/unresolve`;
+  const response = await axiosInstance.post<Discussion>(endpoint);
+  return response.data;
+}
