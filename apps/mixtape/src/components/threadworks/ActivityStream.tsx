@@ -27,7 +27,7 @@ import CreateDiscussionModal from './CreateDiscussionModal'
 
 type SortBy = 'activity' | 'name'
 
-interface TaggedFeedItem extends FeedItem {
+type TaggedFeedItem = FeedItem & {
   forumSlug: string
   forumTitle: string
 }

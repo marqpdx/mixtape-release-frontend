@@ -37,7 +37,6 @@ interface ThreadworksWorkAreaProps {
 
 export default function ThreadworksWorkArea({
   section,
-  setActiveSection,
   groupSlug,
 }: ThreadworksWorkAreaProps) {
   void section
