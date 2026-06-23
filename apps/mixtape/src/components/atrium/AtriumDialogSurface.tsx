@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, Flex, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconPlus } from "@tabler/icons-react";
+import { Box, Button, Flex, IconButton, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useAtriumSessions,
@@ -12,28 +12,38 @@ import {
 import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 import { AtriumSessionThread } from "./AtriumSessionThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
+import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
 
 export function AtriumDialogSurface() {
   const { sessions, isLoading } = useAtriumSessions();
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
+  const [editingMemory, setEditingMemory] = useState(false);
 
   const { entries, streaming, error, send, reset } = useAtriumExchange(activeSession);
 
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
+  const editIconColor = useColorModeValue("gray.400", "gray.500");
 
   async function handleNewSession() {
     const session = await createSession({});
     reset();
+    setEditingMemory(false);
     setActiveSession(session);
   }
 
   function handleSelectSession(session: AtriumSession) {
     if (session.id === activeSession?.id) return;
     reset();
+    setEditingMemory(false);
     setActiveSession(session);
+  }
+
+  function handleMemorySaved(updated: AtriumSession) {
+    setActiveSession(updated);
+    setEditingMemory(false);
   }
 
   if (isLoading) {
@@ -81,6 +91,18 @@ export function AtriumDialogSurface() {
             <Text lineClamp={1}>{s.title || "Untitled"}</Text>
           </Button>
         ))}
+        {activeSession && (
+          <IconButton
+            aria-label={editingMemory ? "Close memory seed editor" : "Edit session title and memory seed"}
+            size="xs"
+            variant="ghost"
+            color={editingMemory ? "blue.500" : editIconColor}
+            onClick={() => setEditingMemory((v) => !v)}
+            flexShrink={0}
+          >
+            {editingMemory ? <IconX size={14} /> : <IconPencil size={14} />}
+          </IconButton>
+        )}
         <Button
           size="xs"
           variant="ghost"
@@ -93,6 +115,15 @@ export function AtriumDialogSurface() {
           New
         </Button>
       </Flex>
+
+      {/* Memory seed editor — inline, collapsible */}
+      {activeSession && editingMemory && (
+        <AtriumMemorySeedEditor
+          session={activeSession}
+          onSaved={handleMemorySaved}
+          onCancel={() => setEditingMemory(false)}
+        />
+      )}
 
       {/* Thread */}
       {activeSession ? (

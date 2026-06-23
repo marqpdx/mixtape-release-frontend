@@ -15,3 +15,11 @@ export async function createAtriumSession(data: {
   const response = await axiosInstance.post<AtriumSession>("/api/atrium/sessions/new", data);
   return response.data;
 }
+
+export async function updateAtriumSession(
+  sessionId: string,
+  data: { title?: string; session_context?: string }
+): Promise<AtriumSession> {
+  const response = await axiosInstance.patch<AtriumSession>(`/api/atrium/sessions/${sessionId}/`, data);
+  return response.data;
+}

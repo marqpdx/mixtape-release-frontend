@@ -31,6 +31,17 @@ export function useCreateAtriumSession() {
   });
 }
 
+export function useUpdateAtriumSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, data }: { sessionId: string; data: { title?: string; session_context?: string } }) =>
+      atriumApi.updateAtriumSession(sessionId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // SSE exchange hook
 // ---------------------------------------------------------------------------
