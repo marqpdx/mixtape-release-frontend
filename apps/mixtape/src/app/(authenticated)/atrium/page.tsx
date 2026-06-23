@@ -8,6 +8,7 @@ import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
+import { AtriumSessionList } from "@/components/atrium/AtriumSessionList";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
 import { BerylPresence } from "@/components/atrium/BerylPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
@@ -27,7 +28,12 @@ export default function AtriumPage() {
         {/* Zone A — AtriumHeader */}
         <AtriumHeader />
 
-        {/* Zone B — AtriumResumeCard */}
+        {/* Zone B — Session list (AT-D2) */}
+        <Box mt={6}>
+          <AtriumSessionList />
+        </Box>
+
+        {/* Zone C — AtriumResumeCard */}
         <Box mt={6}>
           <AtriumResumeCard />
         </Box>

@@ -19,6 +19,7 @@ export * from './spellbook'
 export * from './worksessions'
 export * from './studio'
 export * from './radar'
+export * from './atrium'
 
 // Root-level hooks
 export * from './useAssets'
