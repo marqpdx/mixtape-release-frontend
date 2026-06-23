@@ -16,6 +16,15 @@ export async function createAtriumSession(data: {
   return response.data;
 }
 
+export async function fetchAtriumSessionContext(
+  sessionId: string
+): Promise<{ context: string; sources: string[] }> {
+  const response = await axiosInstance.get<{ context: string; sources: string[] }>(
+    `/api/atrium/sessions/${sessionId}/context/`
+  );
+  return response.data;
+}
+
 export async function updateAtriumSession(
   sessionId: string,
   data: { title?: string; session_context?: string }

@@ -13,6 +13,7 @@ import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 import { AtriumSessionThread } from "./AtriumSessionThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
 import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
+import { AtriumContextPreview } from "./AtriumContextPreview";
 
 export function AtriumDialogSurface() {
   const { sessions, isLoading } = useAtriumSessions();
@@ -123,6 +124,11 @@ export function AtriumDialogSurface() {
           onSaved={handleMemorySaved}
           onCancel={() => setEditingMemory(false)}
         />
+      )}
+
+      {/* Beryl context preview — collapsed by default, power-user transparency */}
+      {activeSession && !editingMemory && (
+        <AtriumContextPreview sessionId={activeSession.id} />
       )}
 
       {/* Thread */}

@@ -8,6 +8,7 @@ import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
   sessions: () => [...atriumQueryKeys.all, "sessions"] as const,
+  context: (sessionId: string) => [...atriumQueryKeys.all, "context", sessionId] as const,
 };
 
 export function useAtriumSessions() {
@@ -29,6 +30,23 @@ export function useCreateAtriumSession() {
       queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
     },
   });
+}
+
+export function useAtriumSessionContext(sessionId: string | null) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: atriumQueryKeys.context(sessionId ?? ""),
+    queryFn: () => atriumApi.fetchAtriumSessionContext(sessionId!),
+    enabled: !!sessionId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    context: data?.context ?? null,
+    sources: data?.sources ?? [],
+    isLoading,
+    error: error as Error | null,
+  };
 }
 
 export function useUpdateAtriumSession() {
