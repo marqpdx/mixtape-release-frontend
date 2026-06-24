@@ -184,5 +184,11 @@ export function useAtriumExchange(session: AtriumSession | null) {
     setError(null);
   }, []);
 
-  return { entries, streaming, error, send, cancel, reset };
+  // Appends a synthetic, non-persisted entry (e.g. a Grist verb result).
+  // Lives only until the next persisted-history refetch.
+  const appendLocalEntry = useCallback((entry: ExchangeEntry) => {
+    setEntries((prev) => [...prev, entry]);
+  }, []);
+
+  return { entries, streaming, error, send, cancel, reset, appendLocalEntry };
 }

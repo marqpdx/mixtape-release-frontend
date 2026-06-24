@@ -126,7 +126,7 @@ export interface AddRequest {
   list_title: string;
   items: string[];
   create_if_missing?: boolean;
-  surface?: 'mobile' | 'desktop';
+  surface?: 'mobile' | 'desktop' | 'atrium';
 }
 
 export interface AddResponse {
@@ -155,7 +155,7 @@ export interface FindRequest {
   library_id?: string;
   limit?: number;
   score_threshold?: number;
-  surface?: 'mobile' | 'desktop';
+  surface?: 'mobile' | 'desktop' | 'atrium';
 }
 
 export interface FindResponse {

@@ -9,6 +9,7 @@ import {
   useCreateAtriumSession,
   useAtriumExchange,
 } from "@mixtape/api/hooks/atrium";
+import { useFind, useAdd } from "@mixtape/api/hooks/switchboard";
 import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 import { AtriumSessionThread } from "./AtriumSessionThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
@@ -20,8 +21,72 @@ export function AtriumDialogSurface() {
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
   const [editingMemory, setEditingMemory] = useState(false);
+  const [commandPending, setCommandPending] = useState(false);
 
-  const { entries, streaming, error, send, reset } = useAtriumExchange(activeSession);
+  const { entries, streaming, error, send, reset, appendLocalEntry } = useAtriumExchange(activeSession);
+  const { submitAsync: submitFind } = useFind();
+  const { submitAsync: submitAdd } = useAdd();
+
+  async function handleCompose(message: string) {
+    if (message.startsWith("/find")) {
+      const query = message.slice("/find".length).trim();
+      if (!query) {
+        appendLocalEntry({ role: "assistant", content: "Usage: /find <query> — searches your library." });
+        return;
+      }
+      appendLocalEntry({ role: "user", content: message });
+      setCommandPending(true);
+      try {
+        const result = await submitFind({ query, surface: "atrium" });
+        const body = result.results.length
+          ? result.results
+              .map((r, i) => `${i + 1}. ${r.text.slice(0, 200)}${r.text.length > 200 ? "…" : ""} (score: ${r.score.toFixed(2)})`)
+              .join("\n")
+          : "No results found.";
+        appendLocalEntry({ role: "assistant", content: body });
+      } catch (err) {
+        appendLocalEntry({
+          role: "assistant",
+          content: `/find failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+        });
+      } finally {
+        setCommandPending(false);
+      }
+      return;
+    }
+
+    if (message.startsWith("/add")) {
+      const rest = message.slice("/add".length).trim();
+      const [listTitle, itemsRaw] = rest.split(":");
+      const items = (itemsRaw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      if (!listTitle?.trim() || items.length === 0) {
+        appendLocalEntry({
+          role: "assistant",
+          content: "Usage: /add <list name>: item one, item two — appends items to a list, creating it if needed.",
+        });
+        return;
+      }
+      appendLocalEntry({ role: "user", content: message });
+      setCommandPending(true);
+      try {
+        const result = await submitAdd({ list_title: listTitle.trim(), items, surface: "atrium" });
+        appendLocalEntry({
+          role: "assistant",
+          content: `Added ${result.items_added} item${result.items_added === 1 ? "" : "s"} to "${result.title}".`,
+        });
+      } catch (err) {
+        appendLocalEntry({
+          role: "assistant",
+          content: `/add failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+        });
+      } finally {
+        setCommandPending(false);
+      }
+      return;
+    }
+
+    send(message);
+  }
 
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -152,9 +217,9 @@ export function AtriumDialogSurface() {
       {/* Compose bar */}
       <Box px={4} pb={4} pt={3}>
         <AtriumComposeBar
-          onSend={send}
+          onSend={handleCompose}
           disabled={!activeSession}
-          streaming={streaming}
+          streaming={streaming || commandPending}
         />
       </Box>
     </Box>

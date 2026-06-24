@@ -51,7 +51,7 @@ export function AtriumComposeBar({ onSend, disabled, streaming }: AtriumComposeB
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask anything… (Enter to send, Shift+Enter for new line)"
+          placeholder="Ask anything… or /find, /add (Enter to send, Shift+Enter for new line)"
           rows={1}
           resize="none"
           border="none"
