@@ -20,10 +20,10 @@ function NotebookGuide() {
     <>
       <Text style={guideStyles.item}>
         <Text style={guideStyles.label}>Notebook </Text>
-        <Text style={guideStyles.text}>— capture fast. Seeds autosave while you type. Tap Develop to send to Studio.</Text>
+        <Text style={guideStyles.text}>— capture fast. Seeds autosave while you type. Tap Develop to send to Storyline.</Text>
       </Text>
       <Text style={guideStyles.item}>
-        <Text style={guideStyles.label}>Studio </Text>
+        <Text style={guideStyles.label}>Storyline </Text>
         <Text style={guideStyles.text}>— shape and refine. Long-form drafts live here.</Text>
       </Text>
       <Text style={guideStyles.item}>
@@ -31,7 +31,7 @@ function NotebookGuide() {
         <Text style={guideStyles.text}>— last 90 min, or your latest 8 if things are quiet.</Text>
       </Text>
       <Text style={guideStyles.item}>
-        <Text style={guideStyles.label}>Messages & Groups </Text>
+        <Text style={guideStyles.label}>Connect </Text>
         <Text style={guideStyles.text}>— community stays secondary to capture.</Text>
       </Text>
     </>
@@ -101,7 +101,7 @@ export default function NotebookScreen({ navigation }: NotebookScreenProps) {
         onFocusChange={setEditorFocused}
         onDevelopSeed={(seed) => {
           setSeedToDevelop(seed);
-          navigation.navigate('Studio');
+          navigation.navigate('Storyline');
         }}
         dispatchEnabled={dispatchInputEnabled}
       />

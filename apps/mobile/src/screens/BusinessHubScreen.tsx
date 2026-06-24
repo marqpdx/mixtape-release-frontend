@@ -20,7 +20,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useUserGroups } from '@mixtape/api/hooks/groups/useGroups';
 import { useFixItems, useSupplyRequests, useUpdateFixItem, useUpdateSupplyRequest } from '@mixtape/api/hooks/business/useBusiness';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
-import type { RootStackParamList, MainTabParamList } from '../navigation/AppNavigator';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import type { FixItem, FixItemStatus, SupplyRequest, SupplyRequestStatus } from '@mixtape/api/clients/business/businessApi';
 import type { Group } from '@mixtape/core/types/groupTypes';
 
@@ -244,8 +244,8 @@ export default function BusinessHubScreen() {
   };
 
   const handleVerbTile = (prefix: string) => {
-    // Navigate to Capture tab for quick HubCapture entry
-    navigation.navigate('MainTabs', { screen: 'Ops' });
+    // Navigate to Ops for quick HubCapture entry (Ops moved under Profile, ADR-0048 MX-10)
+    navigation.navigate('Ops');
   };
 
   const handleMarkFixResolved = (id: string) => {

@@ -5,6 +5,7 @@ import { useExperimentalSettings } from '../hooks/useExperimentalSettings';
 import { VoicePlaybackBubble } from '../components/shared/VoicePlaybackBubble';
 import { VoiceCaptureBar } from '../components/shared/VoiceCaptureBar';
 import { useUploadIntroVoice } from '../hooks/useUploadIntroVoice';
+import { navigationRef } from '../navigation/AppNavigator';
 
 export default function ProfileScreen() {
   const currentUser = useAuthStore((state) => state.user);
@@ -96,6 +97,27 @@ export default function ProfileScreen() {
             thumbColor="#FFFFFF"
           />
         </View>
+      </View>
+
+      {/* Tools — moved here from primary nav, ADR-0048 MX-10 */}
+      <View style={styles.settingsCard}>
+        <Text style={styles.settingsHeading}>Tools</Text>
+        <TouchableOpacity
+          style={styles.toolRow}
+          onPress={() => navigationRef.isReady() && navigationRef.navigate('Console')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.toolRowText}>Console</Text>
+          <Text style={styles.toolRowChevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolRow}
+          onPress={() => navigationRef.isReady() && navigationRef.navigate('Ops')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.toolRowText}>Ops</Text>
+          <Text style={styles.toolRowChevron}>›</Text>
+        </TouchableOpacity>
       </View>
 
       {isSuperuser ? (
@@ -216,6 +238,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#5E6E7D',
     lineHeight: 18,
+  },
+  toolRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  toolRowText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#13293D',
+  },
+  toolRowChevron: {
+    fontSize: 18,
+    color: '#9DB6CC',
   },
   voiceLoadingRow: {
     flexDirection: 'row',

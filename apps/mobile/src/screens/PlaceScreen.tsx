@@ -159,8 +159,8 @@ export default function PlaceScreen() {
           description="Send directly to a person or group conversation."
           color="#0E5AA7"
           lightColor="#EAF2FB"
-          onCopy={() => navigationRef.isReady() && navigationRef.navigate('MainTabs', { screen: 'Messages' })}
-          onMove={() => navigationRef.isReady() && navigationRef.navigate('MainTabs', { screen: 'Messages' })}
+          onCopy={() => navigationRef.isReady() && navigationRef.navigate('MainTabs', { screen: 'Connect' })}
+          onMove={() => navigationRef.isReady() && navigationRef.navigate('MainTabs', { screen: 'Connect' })}
           dispatches={messageDispatches}
         />
 
@@ -171,11 +171,11 @@ export default function PlaceScreen() {
           color="#4A6B42"
           lightColor="#EDF5EB"
           // Disabled until Leaf draft creation endpoint is available.
-          // On tap: POST to Leaf draft endpoint with Seed content → navigate to Studio with draft ID.
+          // On tap: POST to Leaf draft endpoint with Seed content → navigate to Storyline with draft ID.
           // See features/groups/group-storyline-implementation.md + backend Leaf+LeafPlacement model.
           onCopy={null}
           onMove={null}
-          pendingNote="Coming soon — will open Studio with a pre-filled draft."
+          pendingNote="Coming soon — will open Storyline with a pre-filled draft."
           dispatches={storylineDispatches}
         />
 

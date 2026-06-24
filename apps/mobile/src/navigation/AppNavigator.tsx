@@ -1,11 +1,13 @@
 // apps/mobile/src/navigation/AppNavigator.tsx
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { StickyNote } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 import { useNotifications } from '../hooks/useNotifications';
@@ -14,6 +16,8 @@ import LoginScreen from '../screens/LoginScreen';
 import NotebookScreen from '../screens/NotebookScreen';
 import StudioScreen from '../screens/StudioScreen';
 import MyChatsScreen from '../screens/MyChatsScreen';
+import ListsScreen from '../screens/ListsScreen';
+import BuildScreen from '../screens/BuildScreen';
 import OpsScreen from '../screens/OpsScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -26,19 +30,22 @@ import { ChatScreen } from '../screens/ChatScreen';
 // TYPE DEFINITIONS
 // ============================================================================
 
+// Tab order reflects ADR-0048's member-motivation gradient: capture for self →
+// share outward → connect with others → don't forget actionables → develop ideas.
 export type MainTabParamList = {
   Notebook: undefined;
-  Studio: undefined;
-  Messages: undefined;
-  Console: undefined;
-  ProfileTab: undefined;
-  Ops: undefined;
+  Storyline: undefined;
+  Connect: undefined;
+  Lists: undefined;
+  Build: undefined;
 };
 
 export type RootStackParamList = {
   Login: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Profile: undefined;
+  Console: undefined;
+  Ops: undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
@@ -53,12 +60,37 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 // BOTTOM TAB NAVIGATOR
 // ============================================================================
 
+// ADR-0048 D2: the app remembers the last visited primary tab.
+const LAST_TAB_KEY = 'mixtape.mobile.lastTab';
+const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Build'] as const;
+type TabName = (typeof TAB_NAMES)[number];
+
+function isTabName(value: string | null): value is TabName {
+  return value !== null && (TAB_NAMES as readonly string[]).includes(value);
+}
+
+function persistLastTab(name: TabName) {
+  void AsyncStorage.setItem(LAST_TAB_KEY, name);
+}
+
 function MainTabs() {
   const unreadCounts = useChatStore((state) => state.unreadCounts);
   const totalUnread = Object.values(unreadCounts).reduce((sum, n) => sum + n, 0);
+  const [initialRouteName, setInitialRouteName] = useState<TabName | null>(null);
+
+  useEffect(() => {
+    void AsyncStorage.getItem(LAST_TAB_KEY).then((value) => {
+      setInitialRouteName(isTabName(value) ? value : 'Notebook');
+    });
+  }, []);
+
+  if (!initialRouteName) {
+    return null;
+  }
 
   return (
     <Tab.Navigator
+      initialRouteName={initialRouteName}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#0E5AA7',
@@ -74,13 +106,17 @@ function MainTabs() {
           paddingBottom: 4,
         },
         tabBarIcon: ({ focused, color, size }) => {
+          if (route.name === 'Lists') {
+            // No Phosphor/Lucide/Remix set has the ADR's literal "finger with
+            // string" icon (MX-V3) — sticky-note is the closest semantic match.
+            return <StickyNote size={size} color={color} strokeWidth={focused ? 2.4 : 2} />;
+          }
+
           const icons: Record<string, [string, string]> = {
             Notebook: ['book', 'book-outline'],
-            Studio: ['color-palette', 'color-palette-outline'],
-            Messages: ['chatbubble', 'chatbubble-outline'],
-            Console: ['grid', 'grid-outline'],
-            ProfileTab: ['person', 'person-outline'],
-            Ops: ['flash', 'flash-outline'],
+            Storyline: ['image', 'image-outline'],
+            Connect: ['chatbubble', 'chatbubble-outline'],
+            Build: ['hammer', 'hammer-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
@@ -88,25 +124,33 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Notebook" component={NotebookScreen} />
-      <Tab.Screen name="Studio" component={StudioScreen} />
       <Tab.Screen
-        name="Messages"
+        name="Notebook"
+        component={NotebookScreen}
+        listeners={{ focus: () => persistLastTab('Notebook') }}
+      />
+      <Tab.Screen
+        name="Storyline"
+        component={StudioScreen}
+        listeners={{ focus: () => persistLastTab('Storyline') }}
+      />
+      <Tab.Screen
+        name="Connect"
         component={MyChatsScreen}
         options={{
           tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? '99+' : totalUnread) : undefined,
         }}
-      />
-      <Tab.Screen name="Console" component={ConsoleScreen} />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
+        listeners={{ focus: () => persistLastTab('Connect') }}
       />
       <Tab.Screen
-        name="Ops"
-        component={OpsScreen}
-        options={{ tabBarLabel: 'Ops' }}
+        name="Lists"
+        component={ListsScreen}
+        listeners={{ focus: () => persistLastTab('Lists') }}
+      />
+      <Tab.Screen
+        name="Build"
+        component={BuildScreen}
+        listeners={{ focus: () => persistLastTab('Build') }}
       />
     </Tab.Navigator>
   );
@@ -172,6 +216,17 @@ export default function AppNavigator() {
               name="Profile"
               component={ProfileScreen}
               options={{ headerShown: false, presentation: 'modal' }}
+            />
+            {/* Console/Ops moved off the primary tab bar under ADR-0048 MX-10 — reached from Profile's Tools section */}
+            <RootStack.Screen
+              name="Console"
+              component={ConsoleScreen}
+              options={{ headerShown: false, presentation: 'card' }}
+            />
+            <RootStack.Screen
+              name="Ops"
+              component={OpsScreen}
+              options={{ headerShown: false, presentation: 'card' }}
             />
             <RootStack.Screen
               name="Chat"
