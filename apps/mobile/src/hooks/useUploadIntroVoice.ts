@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadMemberVoiceClip, deleteMemberVoice, fetchMyProfile } from '@mixtape/api/clients/member/memberApi';
+import { pollWithBackoff } from '../services/polling/pollWithBackoff';
 import type { RecordedClip } from '../components/shared/VoiceCaptureBar';
-
-const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 60000;
 
 interface UseUploadIntroVoiceResult {
   isUploading: boolean;
@@ -23,41 +21,32 @@ export function useUploadIntroVoice(
   const [voiceUrl, setVoiceUrl] = useState<string | null>(initialVoiceUrl ?? null);
   const [transcript, setTranscript] = useState<string>(initialTranscript ?? '');
 
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pollStartRef = useRef<number>(0);
+  const pollCancelledRef = useRef(false);
 
   const stopPolling = useCallback(() => {
-    if (pollTimerRef.current) {
-      clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
+    pollCancelledRef.current = true;
   }, []);
 
   const startPolling = useCallback(() => {
-    stopPolling();
-    pollStartRef.current = Date.now();
+    pollCancelledRef.current = false;
     setIsTranscribing(true);
 
-    const tick = async () => {
-      if (Date.now() - pollStartRef.current >= POLL_TIMEOUT_MS) {
-        setIsTranscribing(false);
-        return;
-      }
+    void pollWithBackoff(async () => {
       try {
         const profile = await fetchMyProfile();
         if (profile.intro_voice_transcript) {
-          setTranscript(profile.intro_voice_transcript);
-          setIsTranscribing(false);
-          return;
+          return { done: true, value: profile.intro_voice_transcript };
         }
       } catch {
         // ignore transient poll errors
       }
-      pollTimerRef.current = setTimeout(() => { void tick(); }, POLL_INTERVAL_MS);
-    };
-
-    pollTimerRef.current = setTimeout(() => { void tick(); }, POLL_INTERVAL_MS);
-  }, [stopPolling]);
+      return { done: false };
+    }, { isCancelled: () => pollCancelledRef.current }).then((transcript) => {
+      if (pollCancelledRef.current) return;
+      if (transcript) setTranscript(transcript);
+      setIsTranscribing(false);
+    });
+  }, []);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 

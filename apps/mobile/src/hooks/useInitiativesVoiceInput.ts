@@ -2,31 +2,38 @@ import { useCallback } from 'react';
 import { useInitiativesStore } from '../stores/initiativesStore';
 import { createVoiceProcessingItem } from '../services/initiatives/commandService';
 import { getInitiativesCommandClient } from '../services/initiatives/commandClient';
+import { pollWithBackoff } from '../services/polling/pollWithBackoff';
 import { useNativeVoiceRecorder } from './useNativeVoiceRecorder';
 
 const commandClient = getInitiativesCommandClient();
-const POLL_INTERVAL_MS = 2000;
-const POLL_MAX_ATTEMPTS = 30;
 
 async function pollUntilDone(
-  jobId: string,
-  attempts = 0
+  jobId: string
 ): Promise<{ transcriptionText?: string; failed?: boolean; failureReason?: string }> {
-  if (attempts >= POLL_MAX_ATTEMPTS) {
+  let failed = false;
+  let failureReason: string | undefined;
+
+  const transcriptionText = await pollWithBackoff(async () => {
+    const result = await commandClient.pollTranscribeJob(jobId);
+
+    if (result.status === 'complete') {
+      return { done: true, value: result.transcriptionText };
+    }
+    if (result.status === 'failed') {
+      failed = true;
+      failureReason = result.failureReason || 'Transcription failed.';
+      return { done: true };
+    }
+    return { done: false };
+  });
+
+  if (failed) {
+    return { failed: true, failureReason };
+  }
+  if (!transcriptionText) {
     return { failed: true, failureReason: 'Transcription timed out.' };
   }
-
-  const result = await commandClient.pollTranscribeJob(jobId);
-
-  if (result.status === 'complete') {
-    return { transcriptionText: result.transcriptionText };
-  }
-  if (result.status === 'failed') {
-    return { failed: true, failureReason: result.failureReason || 'Transcription failed.' };
-  }
-
-  await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-  return pollUntilDone(jobId, attempts + 1);
+  return { transcriptionText };
 }
 
 export function useInitiativesVoiceInput() {

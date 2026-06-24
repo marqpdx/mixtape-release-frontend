@@ -6,7 +6,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { StickyNote } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
@@ -106,16 +105,14 @@ function MainTabs() {
           paddingBottom: 4,
         },
         tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === 'Lists') {
-            // No Phosphor/Lucide/Remix set has the ADR's literal "finger with
-            // string" icon (MX-V3) — sticky-note is the closest semantic match.
-            return <StickyNote size={size} color={color} strokeWidth={focused ? 2.4 : 2} />;
-          }
-
+          // Restored original Ionicons (2026-06-24) — kept Lists on Ionicons
+          // too (was Lucide sticky-note from MX-V3) so the whole bar stays
+          // on one icon set/stroke weight. Revisit once built and reviewed.
           const icons: Record<string, [string, string]> = {
             Notebook: ['book', 'book-outline'],
             Storyline: ['image', 'image-outline'],
             Connect: ['chatbubble', 'chatbubble-outline'],
+            Lists: ['list', 'list-outline'],
             Build: ['hammer', 'hammer-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];

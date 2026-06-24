@@ -23,6 +23,7 @@ import {
 } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useAuthStore } from '../../stores/authStore';
+import { pollWithBackoff } from '../../services/polling/pollWithBackoff';
 import { CaptureDock } from '../shared/CaptureDock';
 import type { CaptureDockHandle } from '../shared/CaptureDock';
 import type { RecordedClip } from '../../hooks/useNativeVoiceRecorder';
@@ -77,8 +78,6 @@ export function SeedNotebook({
   const editInputRef = useRef<TextInput | null>(null);
   const captureDockRef = useRef<CaptureDockHandle | null>(null);
   const seedListRef = useRef<FlatList<Seed> | null>(null);
-  const voiceRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const voiceRefreshPhaseRef = useRef<'initial' | 'extended'>('initial');
 
   const visibleSeeds = useMemo(
     () => selectVisibleSeeds(recentSeedsQuery.data ?? []),
@@ -88,33 +87,30 @@ export function SeedNotebook({
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
 
+  const hasProcessingVoiceSeed = useMemo(
+    () => visibleSeeds.some((seed) => seed.kind === 'voice' && seed.status === 'processing'),
+    [visibleSeeds]
+  );
+
   useEffect(() => {
-    const hasProcessingVoiceSeed = visibleSeeds.some(
-      (seed) => seed.kind === 'voice' && seed.status === 'processing'
+    if (!hasProcessingVoiceSeed) return;
+
+    let cancelled = false;
+    void pollWithBackoff(
+      async () => {
+        const result = await recentSeedsQuery.refetch();
+        const stillProcessing = (result.data ?? []).some(
+          (seed) => seed.kind === 'voice' && seed.status === 'processing'
+        );
+        return { done: !stillProcessing };
+      },
+      { isCancelled: () => cancelled, timeoutMs: Number.POSITIVE_INFINITY }
     );
 
-    if (!hasProcessingVoiceSeed) {
-      if (voiceRefreshTimeoutRef.current) {
-        clearTimeout(voiceRefreshTimeoutRef.current);
-        voiceRefreshTimeoutRef.current = null;
-      }
-      voiceRefreshPhaseRef.current = 'initial';
-      return;
-    }
-
-    const delay = voiceRefreshPhaseRef.current === 'initial' ? 5000 : 24000;
-    voiceRefreshTimeoutRef.current = setTimeout(() => {
-      voiceRefreshPhaseRef.current = 'extended';
-      void recentSeedsQuery.refetch();
-    }, delay);
-
     return () => {
-      if (voiceRefreshTimeoutRef.current) {
-        clearTimeout(voiceRefreshTimeoutRef.current);
-        voiceRefreshTimeoutRef.current = null;
-      }
+      cancelled = true;
     };
-  }, [recentSeedsQuery, visibleSeeds]);
+  }, [hasProcessingVoiceSeed, recentSeedsQuery]);
 
   const handleCapture = async (bodyText: string) => {
     const seed = await createSeed.mutateAsync({
