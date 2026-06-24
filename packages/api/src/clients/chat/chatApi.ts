@@ -179,16 +179,21 @@ export async function uploadVoiceMessage(
 /**
  * Upload a voice message from a web Blob (MediaRecorder output).
  * Web FormData handles multipart/form-data boundary automatically — do not set Content-Type.
+ *
+ * @param iv - base64 AES-GCM IV, set when `blob` is already E2E-encrypted ciphertext
+ *   (Private/Ephemeral conversations, LW-C3). Server stores it opaquely and skips transcription.
  */
 export async function uploadVoiceMessageBlob(
   conversationSlug: string,
   blob: Blob,
-  durationSeconds: number
+  durationSeconds: number,
+  iv?: string
 ): Promise<Message> {
-  const ext = blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'mp4';
+  const ext = iv ? 'bin' : blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'mp4';
   const formData = new FormData();
   formData.append('audio', blob, `voice-message.${ext}`);
   formData.append('duration', String(Math.round(durationSeconds)));
+  if (iv) formData.append('iv', iv);
   const response = await axiosInstance.post<Message>(
     `/api/chat/conversations/${conversationSlug}/voice-upload`,
     formData

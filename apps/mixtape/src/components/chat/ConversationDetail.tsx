@@ -29,7 +29,7 @@ import { VoicePlaybackBubble } from "./VoicePlaybackBubble";
 import { ConversationHeaderBar } from "./ConversationHeaderBar";
 import { useDeviceKey } from "@mixtape/api/hooks/chat/useDeviceKey";
 import { useConversationKey } from "@mixtape/api/hooks/chat/useConversationKey";
-import { encryptMessage, decryptMessage, E2E_PREFIX } from "@mixtape/core/crypto/primitives";
+import { encryptMessage, decryptMessage, encryptBlob, E2E_PREFIX } from "@mixtape/core/crypto/primitives";
 import type { TrustProfile } from "./interfaces";
 
 type MessageReaction = {
@@ -68,6 +68,7 @@ type Message = {
   message_type?: 'text' | 'voice';
   audio_file_url?: string | null;
   audio_duration_seconds?: number | null;
+  audio_iv?: string | null;
   transcript_text?: string | null;
   transcript_status?: 'pending' | 'done' | 'failed' | null;
 };
@@ -126,11 +127,26 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
   const voiceCancelledRef = useRef(false);
   const recordingSecondsRef = useRef(0);
 
+  // E2E encryption hooks
+  const trustProfile = (conversation?.trust_profile ?? "standard") as TrustProfile;
+  const deviceKeyState = useDeviceKey(deviceId);
+  const convKeyState = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
+  const [decryptedTexts, setDecryptedTexts] = useState<Record<string, string>>({});
+
   const handleVoiceComplete = useCallback(async (blob: Blob) => {
     if (voiceCancelledRef.current) { voiceCancelledRef.current = false; return; }
     setIsUploadingVoice(true);
     try {
-      const message = await uploadVoiceMessageBlob(slug, blob, recordingSecondsRef.current);
+      // LW-C3: encrypt the blob with the conversation key before upload for
+      // Private/Ephemeral conversations. Standard conversations upload raw.
+      let uploadBlob = blob;
+      let iv: string | undefined;
+      if (convKeyState.status === "ready") {
+        const encrypted = await encryptBlob(convKeyState.key, blob);
+        uploadBlob = encrypted.ciphertext;
+        iv = encrypted.iv;
+      }
+      const message = await uploadVoiceMessageBlob(slug, uploadBlob, recordingSecondsRef.current, iv);
       setMessages((prev) => {
         if (prev.some((m) => m.id === message.id)) return prev;
         return [message as unknown as Message, ...prev];
@@ -140,7 +156,7 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
     } finally {
       setIsUploadingVoice(false);
     }
-  }, [slug]);
+  }, [slug, convKeyState]);
 
   const { isRecording, isPreparingMic, recordingSeconds, micError, startRecording, stopRecording } =
     useVoiceRecorder(handleVoiceComplete, { prewarm: false });
@@ -157,13 +173,6 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
     voiceCancelledRef.current = true;
     stopRecording();
   };
-
-
-  // E2E encryption hooks
-  const trustProfile = (conversation?.trust_profile ?? "standard") as TrustProfile;
-  const deviceKeyState = useDeviceKey(deviceId);
-  const convKeyState = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
-  const [decryptedTexts, setDecryptedTexts] = useState<Record<string, string>>({});
 
   // Decrypt incoming e2e messages whenever messages or the conv key changes
   useEffect(() => {
@@ -720,6 +729,8 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
                         transcript={patch?.transcript_text ?? msg.transcript_text ?? null}
                         transcriptStatus={patch?.transcript_status ?? msg.transcript_status ?? null}
                         variant={isSelf ? 'sent' : 'received'}
+                        audioIv={msg.audio_iv ?? null}
+                        conversationKey={convKeyState.status === "ready" ? convKeyState.key : null}
                       />
                       <Text fontSize="xs" color="text.secondary">
                         {new Date(msg.created_at).toLocaleString()}

@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Box, HStack, Text } from '@chakra-ui/react';
 import { IconPlayerPlayFilled, IconPlayerPauseFilled } from '@tabler/icons-react';
+import { decryptBlob } from '@mixtape/core/crypto/primitives';
 
 interface VoicePlaybackBubbleProps {
   audioUrl: string;
@@ -10,6 +11,10 @@ interface VoicePlaybackBubbleProps {
   transcript?: string | null;
   transcriptStatus?: 'pending' | 'done' | 'failed' | null;
   variant?: 'sent' | 'received' | 'neutral';
+  /** LW-C3: base64 AES-GCM IV — set when audioUrl points at E2E ciphertext. */
+  audioIv?: string | null;
+  /** Conversation key to decrypt with. Required when audioIv is set. */
+  conversationKey?: CryptoKey | null;
 }
 
 const BAR_COUNT = 10;
@@ -32,12 +37,43 @@ export function VoicePlaybackBubble({
   transcript,
   transcriptStatus,
   variant = 'received',
+  audioIv,
+  conversationKey,
 }: VoicePlaybackBubbleProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(durationSeconds ?? 0);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
+  const [decryptError, setDecryptError] = useState(false);
+
+  // LW-C3: fetch ciphertext and decrypt to a local blob: URL before <audio> can play it.
+  useEffect(() => {
+    if (!audioIv || !conversationKey) return;
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(audioUrl);
+        const ciphertext = await res.blob();
+        const plain = await decryptBlob(conversationKey, ciphertext, audioIv);
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(plain);
+        setDecryptedUrl(objectUrl);
+      } catch {
+        if (!cancelled) setDecryptError(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [audioUrl, audioIv, conversationKey]);
+
+  const playableUrl = audioIv ? decryptedUrl : audioUrl;
 
   useEffect(() => {
     const a = audioRef.current;
@@ -57,10 +93,10 @@ export function VoicePlaybackBubble({
 
   const toggle = useCallback(() => {
     const a = audioRef.current;
-    if (!a) return;
+    if (!a || !playableUrl) return;
     if (playing) { a.pause(); setPlaying(false); }
     else { void a.play(); setPlaying(true); }
-  }, [playing]);
+  }, [playing, playableUrl]);
 
   const isSent = variant === 'sent';
   const isNeutral = variant === 'neutral';
@@ -90,11 +126,12 @@ export function VoicePlaybackBubble({
       maxW="260px"
       minW="180px"
     >
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      {playableUrl && <audio ref={audioRef} src={playableUrl} preload="metadata" />}
 
       <HStack gap={2} align="center">
         <button
           onClick={toggle}
+          disabled={!playableUrl}
           aria-label={playing ? 'Pause voice message' : 'Play voice message'}
           style={{
             width: 34,
@@ -102,7 +139,8 @@ export function VoicePlaybackBubble({
             borderRadius: '50%',
             background: btnBg,
             border: 'none',
-            cursor: 'pointer',
+            cursor: playableUrl ? 'pointer' : 'default',
+            opacity: playableUrl ? 1 : 0.5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -137,7 +175,7 @@ export function VoicePlaybackBubble({
             color={dimColor}
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
-            {timeLabel}
+            {audioIv && !playableUrl ? (decryptError ? 'Decryption failed' : 'Decrypting…') : timeLabel}
           </Text>
         </Box>
       </HStack>

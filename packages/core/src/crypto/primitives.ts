@@ -133,6 +133,38 @@ export async function decryptMessage(key: CryptoKey, encoded: string): Promise<s
   return new TextDecoder().decode(plaintext);
 }
 
+// ─── Attachment (blob) encryption ────────────────────────────────────────────
+//
+// Same AES-GCM 256 conversation key as message text, applied to raw binary
+// data (e.g. voice recordings). The IV travels alongside the ciphertext blob
+// as a separate field — unlike encryptMessage, it can't be prefixed onto the
+// payload without corrupting the binary container the server stores it as.
+
+export interface EncryptedBlob {
+  ciphertext: Blob;
+  iv: string; // base64
+}
+
+export async function encryptBlob(key: CryptoKey, blob: Blob): Promise<EncryptedBlob> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plainBytes = await blob.arrayBuffer();
+  const cipherBytes = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plainBytes);
+  return {
+    ciphertext: new Blob([cipherBytes], { type: "application/octet-stream" }),
+    iv: _toBase64(iv),
+  };
+}
+
+export async function decryptBlob(key: CryptoKey, ciphertext: Blob, iv: string): Promise<Blob> {
+  const cipherBytes = await ciphertext.arrayBuffer();
+  const plainBytes = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: _fromBase64(iv) },
+    key,
+    cipherBytes
+  );
+  return new Blob([plainBytes]);
+}
+
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 async function _deriveWrappingKey(
