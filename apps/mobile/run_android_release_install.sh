@@ -41,11 +41,15 @@ if [[ "$BUILD_MODE" == "debug" ]]; then
   APK_PATH="$ANDROID_DIR/app/build/outputs/apk/debug/app-debug.apk"
   GRADLE_TASK="assembleDebug"
   export NODE_ENV="development"
+  export EXPO_INCLUDE_DEV_CLIENT="${EXPO_INCLUDE_DEV_CLIENT:-true}"
 else
   APK_PATH="$ANDROID_DIR/app/build/outputs/apk/release/app-release.apk"
   GRADLE_TASK="assembleRelease"
   export NODE_ENV="production"
+  export EXPO_INCLUDE_DEV_CLIENT="${EXPO_INCLUDE_DEV_CLIENT:-false}"
 fi
+
+export ANDROID_PUSH_NOTIFICATIONS_ENABLED="${ANDROID_PUSH_NOTIFICATIONS_ENABLED:-true}"
 
 if [[ ! -d "$SDK_DIR" ]]; then
   echo "Android SDK not found at $SDK_DIR" >&2

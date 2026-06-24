@@ -41,6 +41,8 @@ fi
 export ANDROID_HOME="$SDK_DIR"
 export ANDROID_SDK_ROOT="$SDK_DIR"
 export NODE_ENV="development"
+export EXPO_INCLUDE_DEV_CLIENT="${EXPO_INCLUDE_DEV_CLIENT:-true}"
+export ANDROID_PUSH_NOTIFICATIONS_ENABLED="${ANDROID_PUSH_NOTIFICATIONS_ENABLED:-true}"
 
 if [[ ! -d "$ROOT_DIR/node_modules/@react-native-clipboard/clipboard" ]]; then
   echo "@react-native-clipboard/clipboard is missing from apps/mobile/node_modules. Running yarn install from monorepo root..."

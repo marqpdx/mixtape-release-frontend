@@ -1,11 +1,23 @@
-// To disable push notifications (e.g. iOS free Apple Developer account):
-//   Set PUSH_NOTIFICATIONS_ENABLED=false in .env and re-run: npx expo prebuild --clean
-// To build a standalone iOS alpha app (no Expo dev client):
-//   Set IOS_ALPHA_STANDALONE=true in .env and re-run: npx expo prebuild --clean --platform ios
+// Production/store builds should be standalone. Development builds can opt into
+// the Expo dev client with EXPO_INCLUDE_DEV_CLIENT=true before prebuild/build.
+//
+// Push can be controlled per platform so Android production can keep push while
+// iOS USB/free-account testing can omit the aps-environment entitlement:
+//   PUSH_NOTIFICATIONS_ENABLED=false
+//   ANDROID_PUSH_NOTIFICATIONS_ENABLED=false
+//   IOS_PUSH_NOTIFICATIONS_ENABLED=false
 const { withEntitlementsPlist } = require('@expo/config-plugins');
 
-const pushEnabled = process.env.PUSH_NOTIFICATIONS_ENABLED !== 'false';
-const iosAlphaStandalone = process.env.IOS_ALPHA_STANDALONE === 'true';
+const globalPushEnabled = process.env.PUSH_NOTIFICATIONS_ENABLED !== 'false';
+const isPushEnabledForPlatform = (name) => {
+  const value = process.env[name];
+  return typeof value === 'string' ? value !== 'false' : globalPushEnabled;
+};
+const androidPushEnabled = isPushEnabledForPlatform('ANDROID_PUSH_NOTIFICATIONS_ENABLED');
+const iosPushEnabled = isPushEnabledForPlatform('IOS_PUSH_NOTIFICATIONS_ENABLED');
+const includeDevClient =
+  process.env.EXPO_INCLUDE_DEV_CLIENT === 'true' ||
+  process.env.EXPO_PUBLIC_INCLUDE_DEV_CLIENT === 'true';
 
 // Strips aps-environment so free Apple accounts can sign without Push Notifications capability
 const withNoPushEntitlements = (config) =>
@@ -35,7 +47,7 @@ module.exports = {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: pushEnabled ? "com.mixtape.mobile" : "com.marklilly.mixtape.dev",
+      bundleIdentifier: "com.mixtape.mobile",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSMicrophoneUsageDescription:
@@ -45,7 +57,13 @@ module.exports = {
     android: {
       package: "com.mixtape.mobile",
       googleServicesFile: "./google-services.json",
-      permissions: ["RECORD_AUDIO", "POST_NOTIFICATIONS"],
+      permissions: [
+        "RECORD_AUDIO",
+        ...(androidPushEnabled ? ["POST_NOTIFICATIONS"] : []),
+      ],
+      softwareKeyboardLayoutMode: "resize",
+      edgeToEdgeEnabled: false,
+      predictiveBackGestureEnabled: false,
       adaptiveIcon: {
         foregroundImage: "./assets/crossroads2-adaptive.png",
         backgroundColor: "#ffffff",
@@ -55,8 +73,9 @@ module.exports = {
       favicon: "./assets/favicon.png",
     },
     plugins: [
-      ...(iosAlphaStandalone ? [] : ["expo-dev-client"]),
-      ...(pushEnabled ? [notificationsPlugin] : [withNoPushEntitlements]),
+      ...(includeDevClient ? ["expo-dev-client"] : []),
+      ...(androidPushEnabled || iosPushEnabled ? [notificationsPlugin] : []),
+      ...(iosPushEnabled ? [] : [withNoPushEntitlements]),
     ],
     extra: {
       eas: {

@@ -87,8 +87,12 @@ This script:
 - optionally runs Android prebuild clean
 - builds a local APK
 - installs it with `adb`
+- sets `EXPO_INCLUDE_DEV_CLIENT=false` for release mode so the installed QA APK behaves like a standalone app
+- keeps `ANDROID_PUSH_NOTIFICATIONS_ENABLED=true` unless you override it
 
 Use this when you want a more portable on-device APK for QA instead of a Metro-dependent dev build.
+
+The release APK is for local USB QA only. The Play Store artifact should be an EAS production Android App Bundle (`.aab`) signed with EAS/Play credentials.
 
 ### API Base URLs (Local vs Staging/Prod)
 
@@ -116,6 +120,51 @@ eas submit --platform android
 # Both
 eas build --profile production --platform all
 ```
+
+### Android Play Store Release Flow
+
+Android production uses the `production` EAS profile in `eas.json`:
+- standalone app, no Expo dev client
+- Android App Bundle output for Play Store
+- EAS remote app version source with production auto-increment
+- production API and Livewire URLs
+- Android push notifications enabled
+
+Before the first Play submission:
+1. Create or verify the Google Play Console developer account.
+2. Create the Play Console app with package name `com.mixtape.mobile`.
+3. Set up EAS Android credentials with the Expo project owner account.
+4. Complete Play Console app content: privacy policy, Data Safety, ads declaration, target audience/content rating, app access instructions, and store listing assets.
+5. If using a new personal Play developer account, run the required closed test before production access.
+
+Build and submit:
+```bash
+cd apps/mobile
+eas build --profile production --platform android
+eas submit --profile production --platform android
+```
+
+Keep local Android proofing on the USB install path:
+```bash
+cd apps/mobile
+bash run_android_release_install.sh
+```
+
+Use `--clean` only when native config has intentionally changed and you want to regenerate `android/` before installing:
+```bash
+bash run_android_release_install.sh --clean
+```
+
+### Config Source of Truth
+
+`app.config.js` is the Expo config source of truth. `app.json` is legacy/static reference and should not be used for release decisions.
+
+Important production flags:
+- `EXPO_INCLUDE_DEV_CLIENT=true` includes the Expo dev client for development builds.
+- `EXPO_INCLUDE_DEV_CLIENT=false` creates standalone QA/store builds.
+- `PUSH_NOTIFICATIONS_ENABLED=false` disables push globally.
+- `ANDROID_PUSH_NOTIFICATIONS_ENABLED=false` disables Android notification permission/plugin behavior.
+- `IOS_PUSH_NOTIFICATIONS_ENABLED=false` disables iOS notification entitlements for USB/free-account testing.
 
 ### OTA Updates
 

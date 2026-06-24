@@ -9,6 +9,9 @@
       "distribution": "internal",
       "environment": "development",
       "env": {
+        "EXPO_INCLUDE_DEV_CLIENT": "true",
+        "ANDROID_PUSH_NOTIFICATIONS_ENABLED": "true",
+        "IOS_PUSH_NOTIFICATIONS_ENABLED": "false",
         "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
         "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
         "EXPO_PUBLIC_APP_ENV": "production"
@@ -24,6 +27,9 @@
       "distribution": "internal",
       "environment": "preview",
       "env": {
+        "EXPO_INCLUDE_DEV_CLIENT": "false",
+        "ANDROID_PUSH_NOTIFICATIONS_ENABLED": "true",
+        "IOS_PUSH_NOTIFICATIONS_ENABLED": "false",
         "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
         "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
         "EXPO_PUBLIC_APP_ENV": "production"
@@ -37,7 +43,11 @@
     },
     "production": {
       "environment": "production",
+      "autoIncrement": true,
       "env": {
+        "EXPO_INCLUDE_DEV_CLIENT": "false",
+        "ANDROID_PUSH_NOTIFICATIONS_ENABLED": "true",
+        "IOS_PUSH_NOTIFICATIONS_ENABLED": "true",
         "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
         "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
         "EXPO_PUBLIC_APP_ENV": "production"
@@ -57,6 +67,8 @@
       },
       "environment": "development",
       "env": {
+        "EXPO_INCLUDE_DEV_CLIENT": "true",
+        "IOS_PUSH_NOTIFICATIONS_ENABLED": "false",
         "EXPO_PUBLIC_API_URL": "https://api.crossroads.place",
         "EXPO_PUBLIC_LIVEWIRE_URL": "https://chat.crossroads.place",
         "EXPO_PUBLIC_APP_ENV": "production"
