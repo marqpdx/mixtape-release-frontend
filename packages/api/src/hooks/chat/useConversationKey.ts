@@ -2,12 +2,20 @@
 //
 // Resolves the AES-GCM conversation key for a Private or Ephemeral conversation.
 // Order: IndexedDB cache → fetch bundle from server → unwrap with device private key → cache.
-// Returns null for Standard conversations (no E2E key needed).
+// Returns "n/a" for Standard conversations (no E2E key needed).
+//
+// LW-C4: also exposes getKeyForVersion (to decrypt history from before a
+// rotation) and rotate (to mint + distribute a fresh key now).
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { unwrapConversationKey } from "@mixtape/core/crypto/primitives";
-import { getConversationKey, storeConversationKey } from "@mixtape/core/crypto/keyStore";
+import {
+  getLatestCachedConversationKey,
+  getConversationKeyVersion,
+  storeConversationKeyVersion,
+} from "@mixtape/core/crypto/keyStore";
 import { fetchMyConversationKey } from "../../clients/chat/chatApi";
+import { rotateConversationKey } from "../../lib/chat/keyRotation";
 import type { DeviceKeyState } from "./useDeviceKey";
 
 type TrustProfile = "standard" | "private" | "ephemeral";
@@ -24,9 +32,11 @@ export function useConversationKey(
   trustProfile: TrustProfile,
   deviceId: string | null,
   deviceKeyState: DeviceKeyState
-): ConversationKeyState {
+) {
   const [state, setState] = useState<ConversationKeyState>({ status: "loading" });
   const loadedSlug = useRef<string | null>(null);
+  const deviceKeyStateRef = useRef(deviceKeyState);
+  deviceKeyStateRef.current = deviceKeyState;
 
   useEffect(() => {
     if (trustProfile === "standard") {
@@ -43,7 +53,7 @@ export function useConversationKey(
     (async () => {
       try {
         // Check IndexedDB cache first
-        const cached = await getConversationKey(slug);
+        const cached = await getLatestCachedConversationKey(slug);
         if (cached) {
           setState({ status: "ready", key: cached.key, version: cached.version });
           return;
@@ -70,7 +80,7 @@ export function useConversationKey(
           bundle.nonce
         );
 
-        await storeConversationKey(slug, key, bundle.key_version);
+        await storeConversationKeyVersion(slug, key, bundle.key_version);
         setState({ status: "ready", key, version: bundle.key_version });
       } catch (err) {
         setState({ status: "error", error: err instanceof Error ? err : new Error(String(err)) });
@@ -78,5 +88,39 @@ export function useConversationKey(
     })();
   }, [slug, trustProfile, deviceId, deviceKeyState]);
 
-  return state;
+  // Resolves the key for a specific version, for decrypting messages sent
+  // before the latest rotation. Checks the cache before hitting the server.
+  const getKeyForVersion = useCallback(
+    async (version: number): Promise<CryptoKey | null> => {
+      const cached = await getConversationKeyVersion(slug, version);
+      if (cached) return cached;
+
+      if (!deviceId || deviceKeyStateRef.current.status !== "ready") return null;
+      const { privateKey } = deviceKeyStateRef.current;
+
+      try {
+        const bundle = await fetchMyConversationKey(slug, deviceId, version);
+        const key = await unwrapConversationKey(
+          privateKey,
+          bundle.ephemeral_public_key,
+          bundle.encrypted_key,
+          bundle.nonce
+        );
+        await storeConversationKeyVersion(slug, key, version);
+        return key;
+      } catch {
+        return null; // no bundle for this version — device never had access to it
+      }
+    },
+    [slug, deviceId]
+  );
+
+  // Mints a new conversation key, wraps + distributes it to every active
+  // device with a registered public key, and adopts it as the live state.
+  const rotate = useCallback(async (): Promise<void> => {
+    const { key, version } = await rotateConversationKey(slug);
+    setState({ status: "ready", key, version });
+  }, [slug]);
+
+  return { state, getKeyForVersion, rotate };
 }

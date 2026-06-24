@@ -18,6 +18,7 @@ import { IconSettings, IconShieldCheck, IconShieldExclamation, IconShieldOff } f
 import { useState } from "react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useConversationDevices } from "@mixtape/api/hooks/chat/useConversationDevices";
+import { rotateConversationKey } from "@mixtape/api/lib/chat/keyRotation";
 import { DeviceVerificationPanel } from "./DeviceVerificationPanel";
 import type { TrustProfile } from "./interfaces";
 
@@ -78,9 +79,25 @@ export const ConversationHeaderBar = ({
   const [retentionPeriod, setRetentionPeriod] = useState<RetentionPeriod>(initialRetentionPeriod);
   const [saving, setSaving] = useState(false);
   const [verifyDrawerOpen, setVerifyDrawerOpen] = useState(false);
+  const [rotating, setRotating] = useState(false);
+  const [rotateMessage, setRotateMessage] = useState<string | null>(null);
 
   const showVerification = trustProfile === "private" || trustProfile === "ephemeral";
   const { verificationStatus } = useConversationDevices(slug, showVerification);
+
+  const handleRotateKey = async () => {
+    setRotating(true);
+    setRotateMessage(null);
+    try {
+      const { version } = await rotateConversationKey(slug);
+      setRotateMessage(`Rotated to key v${version}. Devices you didn't include must reopen the chat to pick it up.`);
+    } catch (err) {
+      console.error("Failed to rotate conversation key", err);
+      setRotateMessage("Rotation failed — see console for details.");
+    } finally {
+      setRotating(false);
+    }
+  };
 
   const handleRetentionChange = async (value: RetentionPeriod) => {
     setRetentionPeriod(value);
@@ -190,6 +207,28 @@ export const ConversationHeaderBar = ({
                       </Stack>
                     </RadioGroup.Root>
                   </Box>
+
+                  {showVerification && (
+                    <Box>
+                      <Text fontSize="xs" fontWeight="semibold" color="text.muted" mb="2">
+                        ENCRYPTION KEY
+                      </Text>
+                      <Button
+                        className="chb-rotate-key"
+                        size="xs"
+                        variant="outline"
+                        loading={rotating}
+                        onClick={handleRotateKey}
+                      >
+                        Rotate encryption key
+                      </Button>
+                      {rotateMessage && (
+                        <Text fontSize="xs" color="text.muted" mt="1">
+                          {rotateMessage}
+                        </Text>
+                      )}
+                    </Box>
+                  )}
                 </Stack>
               </Popover.Body>
             </Popover.Content>

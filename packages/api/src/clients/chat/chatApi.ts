@@ -182,18 +182,23 @@ export async function uploadVoiceMessage(
  *
  * @param iv - base64 AES-GCM IV, set when `blob` is already E2E-encrypted ciphertext
  *   (Private/Ephemeral conversations, LW-C3). Server stores it opaquely and skips transcription.
+ * @param keyVersion - conversation key version that encrypted `blob` (LW-C4). Required when iv is set.
  */
 export async function uploadVoiceMessageBlob(
   conversationSlug: string,
   blob: Blob,
   durationSeconds: number,
-  iv?: string
+  iv?: string,
+  keyVersion?: number
 ): Promise<Message> {
   const ext = iv ? 'bin' : blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'mp4';
   const formData = new FormData();
   formData.append('audio', blob, `voice-message.${ext}`);
   formData.append('duration', String(Math.round(durationSeconds)));
-  if (iv) formData.append('iv', iv);
+  if (iv) {
+    formData.append('iv', iv);
+    formData.append('key_version', String(keyVersion ?? 1));
+  }
   const response = await axiosInstance.post<Message>(
     `/api/chat/conversations/${conversationSlug}/voice-upload`,
     formData
@@ -275,10 +280,17 @@ export async function registerDeviceKey(deviceId: string, publicKey: string): Pr
   await axiosInstance.post('/api/chat/devices/register-key', { device_id: deviceId, public_key: publicKey });
 }
 
-export async function fetchMyConversationKey(slug: string, deviceId: string): Promise<KeyBundle> {
+export async function fetchMyConversationKey(
+  slug: string,
+  deviceId: string,
+  version?: number
+): Promise<KeyBundle> {
   const response = await axiosInstance.get<KeyBundle>(
     `/api/chat/conversations/${slug}/my-key`,
-    { headers: { "X-Device-ID": deviceId } }
+    {
+      headers: { "X-Device-ID": deviceId },
+      params: version !== undefined ? { version } : undefined,
+    }
   );
   return response.data;
 }

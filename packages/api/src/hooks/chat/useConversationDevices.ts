@@ -5,6 +5,7 @@ import {
   fetchMyDevices,
   revokeDevice,
 } from "@mixtape/api/clients/chat/chatApi";
+import { rotateAllMyConversationKeys } from "@mixtape/api/lib/chat/keyRotation";
 import type {
   ParticipantDeviceGroup,
   DeviceSession,
@@ -34,13 +35,33 @@ export function computeVerificationStatus(
 }
 
 export function useMyDevices() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading } = useQuery({
     queryKey: deviceQueryKeys.myDevices(),
     queryFn: fetchMyDevices,
     staleTime: 60_000,
   });
 
-  return { devices: (data ?? []) as DeviceSession[], isLoading };
+  // LW-C4: revoking one of my own devices rotates the key for every
+  // Private/Ephemeral conversation I'm in, excluding that device — it stops
+  // receiving future key bundles, so it can't read anything sent afterward.
+  const revokeMutation = useMutation({
+    mutationFn: async (deviceId: string) => {
+      await revokeDevice(deviceId);
+      await rotateAllMyConversationKeys(deviceId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: deviceQueryKeys.myDevices() });
+    },
+  });
+
+  return {
+    devices: (data ?? []) as DeviceSession[],
+    isLoading,
+    revokeDevice: (deviceId: string) => revokeMutation.mutateAsync(deviceId),
+    isRevoking: revokeMutation.isPending,
+  };
 }
 
 export function useConversationDevices(slug: string, enabled: boolean = true) {
@@ -57,13 +78,6 @@ export function useConversationDevices(slug: string, enabled: boolean = true) {
     mutationFn: (deviceId: string) => trustDevice(slug, deviceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: deviceQueryKeys.conversationDevices(slug) });
-    },
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: revokeDevice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: deviceQueryKeys.myDevices() });
     },
   });
 

@@ -29,7 +29,7 @@ import { VoicePlaybackBubble } from "./VoicePlaybackBubble";
 import { ConversationHeaderBar } from "./ConversationHeaderBar";
 import { useDeviceKey } from "@mixtape/api/hooks/chat/useDeviceKey";
 import { useConversationKey } from "@mixtape/api/hooks/chat/useConversationKey";
-import { encryptMessage, decryptMessage, encryptBlob, E2E_PREFIX } from "@mixtape/core/crypto/primitives";
+import { encryptMessage, decryptMessage, encryptBlob, parseE2EVersion, E2E_PREFIX } from "@mixtape/core/crypto/primitives";
 import type { TrustProfile } from "./interfaces";
 
 type MessageReaction = {
@@ -69,6 +69,7 @@ type Message = {
   audio_file_url?: string | null;
   audio_duration_seconds?: number | null;
   audio_iv?: string | null;
+  audio_key_version?: number | null;
   transcript_text?: string | null;
   transcript_status?: 'pending' | 'done' | 'failed' | null;
 };
@@ -130,23 +131,25 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
   // E2E encryption hooks
   const trustProfile = (conversation?.trust_profile ?? "standard") as TrustProfile;
   const deviceKeyState = useDeviceKey(deviceId);
-  const convKeyState = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
+  const { state: convKeyState, getKeyForVersion } = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
   const [decryptedTexts, setDecryptedTexts] = useState<Record<string, string>>({});
 
   const handleVoiceComplete = useCallback(async (blob: Blob) => {
     if (voiceCancelledRef.current) { voiceCancelledRef.current = false; return; }
     setIsUploadingVoice(true);
     try {
-      // LW-C3: encrypt the blob with the conversation key before upload for
-      // Private/Ephemeral conversations. Standard conversations upload raw.
+      // LW-C3/C4: encrypt the blob with the current conversation key version
+      // before upload for Private/Ephemeral conversations. Standard uploads raw.
       let uploadBlob = blob;
       let iv: string | undefined;
+      let keyVersion: number | undefined;
       if (convKeyState.status === "ready") {
         const encrypted = await encryptBlob(convKeyState.key, blob);
         uploadBlob = encrypted.ciphertext;
         iv = encrypted.iv;
+        keyVersion = convKeyState.version;
       }
-      const message = await uploadVoiceMessageBlob(slug, uploadBlob, recordingSecondsRef.current, iv);
+      const message = await uploadVoiceMessageBlob(slug, uploadBlob, recordingSecondsRef.current, iv, keyVersion);
       setMessages((prev) => {
         if (prev.some((m) => m.id === message.id)) return prev;
         return [message as unknown as Message, ...prev];
@@ -174,10 +177,11 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
     stopRecording();
   };
 
-  // Decrypt incoming e2e messages whenever messages or the conv key changes
+  // Decrypt incoming e2e messages whenever messages or the conv key changes.
+  // LW-C4: each message may have been encrypted under an earlier key version
+  // than the conversation's current one, so resolve per-message via parseE2EVersion.
   useEffect(() => {
     if (convKeyState.status !== "ready") return;
-    const { key } = convKeyState;
     const toDecrypt = messages.filter(
       (m) => typeof m.text === "string" && m.text.startsWith(E2E_PREFIX) && !(m.id in decryptedTexts)
     );
@@ -186,6 +190,9 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
     Promise.all(
       toDecrypt.map(async (m) => {
         try {
+          const version = parseE2EVersion(m.text);
+          const key = await getKeyForVersion(version);
+          if (!key) return [m.id, "[Decryption failed]"] as const;
           const plain = await decryptMessage(key, m.text);
           return [m.id, plain] as const;
         } catch {
@@ -422,7 +429,7 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
     let messageText = newMessage;
     if (convKeyState.status === "ready") {
       try {
-        messageText = await encryptMessage(convKeyState.key, newMessage);
+        messageText = await encryptMessage(convKeyState.key, newMessage, convKeyState.version);
       } catch (err) {
         console.error("❌ Failed to encrypt message, aborting send:", err);
         return;
@@ -730,7 +737,8 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
                         transcriptStatus={patch?.transcript_status ?? msg.transcript_status ?? null}
                         variant={isSelf ? 'sent' : 'received'}
                         audioIv={msg.audio_iv ?? null}
-                        conversationKey={convKeyState.status === "ready" ? convKeyState.key : null}
+                        audioKeyVersion={msg.audio_key_version ?? 1}
+                        getKeyForVersion={getKeyForVersion}
                       />
                       <Text fontSize="xs" color="text.secondary">
                         {new Date(msg.created_at).toLocaleString()}

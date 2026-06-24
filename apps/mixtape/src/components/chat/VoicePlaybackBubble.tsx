@@ -13,8 +13,10 @@ interface VoicePlaybackBubbleProps {
   variant?: 'sent' | 'received' | 'neutral';
   /** LW-C3: base64 AES-GCM IV — set when audioUrl points at E2E ciphertext. */
   audioIv?: string | null;
-  /** Conversation key to decrypt with. Required when audioIv is set. */
-  conversationKey?: CryptoKey | null;
+  /** LW-C4: conversation key version that encrypted the audio. Defaults to 1. */
+  audioKeyVersion?: number | null;
+  /** Resolves the conversation key for a given version. Required when audioIv is set. */
+  getKeyForVersion?: (version: number) => Promise<CryptoKey | null>;
 }
 
 const BAR_COUNT = 10;
@@ -38,7 +40,8 @@ export function VoicePlaybackBubble({
   transcriptStatus,
   variant = 'received',
   audioIv,
-  conversationKey,
+  audioKeyVersion,
+  getKeyForVersion,
 }: VoicePlaybackBubbleProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -48,17 +51,21 @@ export function VoicePlaybackBubble({
   const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
   const [decryptError, setDecryptError] = useState(false);
 
-  // LW-C3: fetch ciphertext and decrypt to a local blob: URL before <audio> can play it.
+  // LW-C3/C4: fetch ciphertext, resolve the key version that encrypted it
+  // (may predate the conversation's current rotation), and decrypt to a
+  // local blob: URL before <audio> can play it.
   useEffect(() => {
-    if (!audioIv || !conversationKey) return;
+    if (!audioIv || !getKeyForVersion) return;
     let objectUrl: string | null = null;
     let cancelled = false;
 
     (async () => {
       try {
+        const key = await getKeyForVersion(audioKeyVersion ?? 1);
+        if (!key) throw new Error("No key available for this audio's key version");
         const res = await fetch(audioUrl);
         const ciphertext = await res.blob();
-        const plain = await decryptBlob(conversationKey, ciphertext, audioIv);
+        const plain = await decryptBlob(key, ciphertext, audioIv);
         if (cancelled) return;
         objectUrl = URL.createObjectURL(plain);
         setDecryptedUrl(objectUrl);
@@ -71,7 +78,7 @@ export function VoicePlaybackBubble({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [audioUrl, audioIv, conversationKey]);
+  }, [audioUrl, audioIv, audioKeyVersion, getKeyForVersion]);
 
   const playableUrl = audioIv ? decryptedUrl : audioUrl;
 

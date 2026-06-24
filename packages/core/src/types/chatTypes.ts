@@ -45,6 +45,10 @@ export interface Message {
   message_type?: 'text' | 'voice';
   audio_file_url?: string | null;
   audio_duration_seconds?: number | null;
+  // LW-C3: base64 AES-GCM IV, set when audio_file_url points at E2E ciphertext
+  audio_iv?: string | null;
+  // LW-C4: conversation key version that encrypted the audio, when audio_iv is set
+  audio_key_version?: number | null;
   transcript_text?: string | null;
   transcript_status?: 'pending' | 'done' | 'failed' | null;
 }

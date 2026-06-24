@@ -106,25 +106,55 @@ export async function unwrapConversationKey(
 }
 
 // ─── Message encryption ───────────────────────────────────────────────────────
+//
+// Format: "e2e:<version>:<iv_b64>:<ciphertext_b64>" — the server stores this
+// opaque string. <version> is the ConversationKeyBundle.key_version that
+// encrypted it (LW-C4), so a client can pick the right key after a rotation.
+// Legacy messages with no version segment ("e2e:<iv>:<ciphertext>") predate
+// LW-C4 and are always version 1.
 
-// Returns "e2e:<iv_b64>:<ciphertext_b64>" — the server stores this opaque string.
-export async function encryptMessage(key: CryptoKey, plaintext: string): Promise<string> {
+export async function encryptMessage(
+  key: CryptoKey,
+  plaintext: string,
+  version: number = 1
+): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
     new TextEncoder().encode(plaintext)
   );
-  return `${E2E_PREFIX}${_toBase64(iv)}:${_toBase64(ciphertext)}`;
+  return `${E2E_PREFIX}${version}:${_toBase64(iv)}:${_toBase64(ciphertext)}`;
+}
+
+// Returns the key_version that encrypted an e2e: message, or 1 for legacy
+// (pre-LW-C4) messages and non-E2E text alike. Callers use this to resolve
+// the matching key before calling decryptMessage.
+export function parseE2EVersion(encoded: string): number {
+  if (!encoded.startsWith(E2E_PREFIX)) return 1;
+  const parts = encoded.slice(E2E_PREFIX.length).split(":");
+  if (parts.length === 3) {
+    const version = parseInt(parts[0], 10);
+    return Number.isFinite(version) ? version : 1;
+  }
+  return 1; // legacy "e2e:<iv>:<ciphertext>" format
 }
 
 // Returns plaintext. If the value is not E2E-prefixed, returns it unchanged
 // (Standard conversation or server-side encrypted — caller handles appropriately).
+// `key` must already be the version returned by parseE2EVersion(encoded).
 export async function decryptMessage(key: CryptoKey, encoded: string): Promise<string> {
   if (!encoded.startsWith(E2E_PREFIX)) return encoded;
   const parts = encoded.slice(E2E_PREFIX.length).split(":");
-  if (parts.length !== 2) throw new Error("Malformed E2E message");
-  const [ivB64, ciphertextB64] = parts;
+  let ivB64: string;
+  let ciphertextB64: string;
+  if (parts.length === 3) {
+    [, ivB64, ciphertextB64] = parts;
+  } else if (parts.length === 2) {
+    [ivB64, ciphertextB64] = parts; // legacy, pre-LW-C4
+  } else {
+    throw new Error("Malformed E2E message");
+  }
   const plaintext = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: _fromBase64(ivB64) },
     key,
