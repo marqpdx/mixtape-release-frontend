@@ -165,12 +165,6 @@ export const CaptureDock = forwardRef<CaptureDockHandle, CaptureDockProps>(funct
     if (!clip) return;
     onRecordingFinalized?.(clip);  // OP-4: caller can persist URI before upload
     await onSubmitVoice(clip);
-
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        captureInputRef.current?.focus();
-      }, 10);
-    });
   };
 
   return (
