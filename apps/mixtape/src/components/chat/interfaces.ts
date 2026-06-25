@@ -9,4 +9,5 @@ export type Conversation = {
   created_at: string;
   participants: string[];
   last_message?: string;
+  next_rotation_due_at?: string | null;
 };

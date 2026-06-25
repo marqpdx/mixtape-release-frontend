@@ -131,7 +131,13 @@ export const ConversationDetail = ({ slug, deviceId }: ConversationDetailProps) 
   // E2E encryption hooks
   const trustProfile = (conversation?.trust_profile ?? "standard") as TrustProfile;
   const deviceKeyState = useDeviceKey(deviceId);
-  const { state: convKeyState, getKeyForVersion } = useConversationKey(slug, trustProfile, deviceId, deviceKeyState);
+  const { state: convKeyState, getKeyForVersion } = useConversationKey(
+    slug,
+    trustProfile,
+    deviceId,
+    deviceKeyState,
+    conversation?.next_rotation_due_at,
+  );
   const [decryptedTexts, setDecryptedTexts] = useState<Record<string, string>>({});
 
   const handleVoiceComplete = useCallback(async (blob: Blob) => {

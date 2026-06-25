@@ -123,6 +123,24 @@ export async function getLatestCachedConversationKey(
   return { key: latest.key, version: latest.version };
 }
 
+// LW-D2: removes a specific [slug, version] entry from the cache. Called when
+// conversation_my_key?version=N returns 404 for an Ephemeral conversation,
+// meaning the server has pruned that bundle and it will never be recoverable.
+export async function evictConversationKeyVersion(
+  slug: string,
+  version: number
+): Promise<void> {
+  const db = await _openDb();
+  return new Promise((resolve, reject) => {
+    const req = db
+      .transaction(CONV_VERSIONS_STORE, "readwrite")
+      .objectStore(CONV_VERSIONS_STORE)
+      .delete([slug, version]);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
 // Back-compat aliases for the pre-LW-C4 single-key API — both now operate on
 // the latest cached version. Existing callers (e.g. conversation creation)
 // keep working unchanged.
