@@ -442,6 +442,50 @@ export async function fetchApertureOrientation(limit = 10): Promise<ApertureOrie
   return res.data;
 }
 
+// ============================================================================
+// Me (personal initiative) — /api/initiatives/me/
+// ============================================================================
+
+export interface NoteCreatePayload {
+  title: string;
+  body: string;
+}
+
+export async function fetchPersonalInitiative(): Promise<InitiativeResponse> {
+  const res = await axiosInstance.get('/api/initiatives/me');
+  return res.data;
+}
+
+export async function fetchMeSessions(): Promise<SessionResponse[]> {
+  const res = await axiosInstance.get('/api/initiatives/me/sessions');
+  return res.data;
+}
+
+export async function createMeSession(payload: SessionCreatePayload = {}): Promise<SessionResponse> {
+  const res = await axiosInstance.post('/api/initiatives/me/sessions', payload);
+  return res.data;
+}
+
+export async function fetchMeSession(sessionId: string): Promise<SessionResponse> {
+  const res = await axiosInstance.get(`/api/initiatives/me/sessions/${sessionId}`);
+  return res.data;
+}
+
+export async function patchMeSession(sessionId: string, payload: { end?: boolean }): Promise<SessionResponse> {
+  const res = await axiosInstance.patch(`/api/initiatives/me/sessions/${sessionId}`, payload);
+  return res.data;
+}
+
+export async function createMeNote(payload: NoteCreatePayload): Promise<ArtifactResponse> {
+  const res = await axiosInstance.post('/api/initiatives/me/notes', payload);
+  return res.data;
+}
+
+export async function fetchMeSessionArtifacts(sessionId: string): Promise<ArtifactResponse[]> {
+  const res = await axiosInstance.get(`/api/initiatives/me/sessions/${sessionId}/artifacts`);
+  return res.data;
+}
+
 export interface ApertureTypeaheadItem {
   id: string;
   title: string;

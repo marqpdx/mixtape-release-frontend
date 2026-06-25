@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,7 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { listsApi } from '@mixtape/api/clients/lists/listsApi';
+import { createMeNote } from '@mixtape/api/clients/initiatives/initiativesApi';
 import {
   useCreateSeed,
   useCreateVoiceSeed,
@@ -71,6 +74,9 @@ export function SeedNotebook({
   const [editingText, setEditingText] = useState('');
   const [savedSeed, setSavedSeed] = useState<Seed | null>(null);
   const [copiedSeedId, setCopiedSeedId] = useState<string | null>(null);
+  const [exitingListSeedId, setExitingListSeedId] = useState<string | null>(null);
+  const [exitingBuildSeedId, setExitingBuildSeedId] = useState<string | null>(null);
+  const [exitConfirmed, setExitConfirmed] = useState<{ seedId: string; type: 'list' | 'build' } | null>(null);
   const [dispatchParseResult, setDispatchParseResult] = useState(() =>
     parseDispatchText('')
   );
@@ -205,6 +211,48 @@ export function SeedNotebook({
     }, 1800);
   };
 
+  const showExitConfirmed = useCallback((seedId: string, type: 'list' | 'build') => {
+    setExitConfirmed({ seedId, type });
+    setTimeout(() => setExitConfirmed(null), 2000);
+  }, []);
+
+  const handleAddToList = useCallback(async (seed: Seed) => {
+    if (exitingListSeedId) return;
+    const lastListId = await AsyncStorage.getItem('mixtape.mobile.lastListId');
+    if (!lastListId) {
+      Alert.alert('No list selected', 'Open the Lists tab and select or create a list first.');
+      return;
+    }
+    setExitingListSeedId(seed.id);
+    try {
+      const list = await listsApi.getList(lastListId);
+      const trimmed = list.body_text.trimEnd();
+      const newBody = trimmed ? `${trimmed}\n- ${seed.body_text}` : `- ${seed.body_text}`;
+      await listsApi.updateList(lastListId, { body_text: newBody });
+      showExitConfirmed(seed.id, 'list');
+    } catch {
+      Alert.alert('Could not add to list', 'Try again in a moment.');
+    } finally {
+      setExitingListSeedId(null);
+    }
+  }, [exitingListSeedId, showExitConfirmed]);
+
+  const handleUpliftToBuild = useCallback(async (seed: Seed) => {
+    if (exitingBuildSeedId) return;
+    setExitingBuildSeedId(seed.id);
+    try {
+      const title = seed.body_text.length > 100
+        ? `${seed.body_text.slice(0, 97)}…`
+        : seed.body_text;
+      await createMeNote({ title, body: seed.body_text });
+      showExitConfirmed(seed.id, 'build');
+    } catch {
+      Alert.alert('Could not uplift to Build', 'Try again in a moment.');
+    } finally {
+      setExitingBuildSeedId(null);
+    }
+  }, [exitingBuildSeedId, showExitConfirmed]);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -335,6 +383,41 @@ export function SeedNotebook({
                       >
                         <Text style={styles.seedIconText}>🗑</Text>
                       </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.seedExits}>
+                    <TouchableOpacity
+                      onPress={() => { void handleAddToList(item); }}
+                      activeOpacity={0.7}
+                      disabled={!!exitingListSeedId}
+                      style={styles.exitButtonWrap}
+                    >
+                      {exitingListSeedId === item.id ? (
+                        <ActivityIndicator size="small" color="#0E5AA7" />
+                      ) : exitConfirmed?.seedId === item.id && exitConfirmed.type === 'list' ? (
+                        <Text style={styles.exitConfirmedText}>✓ Added</Text>
+                      ) : (
+                        <Text style={styles.exitButtonText}>To List</Text>
+                      )}
+                    </TouchableOpacity>
+                    <View style={styles.exitDivider} />
+                    <TouchableOpacity
+                      onPress={() => { void handleUpliftToBuild(item); }}
+                      activeOpacity={0.7}
+                      disabled={!!exitingBuildSeedId}
+                      style={styles.exitButtonWrap}
+                    >
+                      {exitingBuildSeedId === item.id ? (
+                        <ActivityIndicator size="small" color="#0E5AA7" />
+                      ) : exitConfirmed?.seedId === item.id && exitConfirmed.type === 'build' ? (
+                        <Text style={styles.exitConfirmedText}>✓ Sent</Text>
+                      ) : (
+                        <Text style={styles.exitButtonText}>To Build</Text>
+                      )}
+                    </TouchableOpacity>
+                    <View style={styles.exitDivider} />
+                    <View style={styles.exitButtonWrap}>
+                      <Text style={[styles.exitButtonText, styles.exitDisabled]}>Commons ···</Text>
                     </View>
                   </View>
                 </>
@@ -740,6 +823,37 @@ const styles = StyleSheet.create({
     color: '#13293D',
     fontSize: 15,
     lineHeight: 22,
+  },
+  seedExits: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#EEF4F8',
+  },
+  exitButtonWrap: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  exitButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#315E87',
+  },
+  exitConfirmedText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2B6E44',
+  },
+  exitDisabled: {
+    color: '#AABECF',
+  },
+  exitDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: '#D8E8F2',
   },
   seedEditingCard: {
     borderRadius: 14,
