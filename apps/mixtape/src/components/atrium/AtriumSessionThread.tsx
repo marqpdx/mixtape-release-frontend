@@ -94,16 +94,33 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
 
 export function AtriumSessionThread({ entries, streaming, error, sessionTitle }: AtriumSessionThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const errorColor = useColorModeValue("red.500", "red.400");
+  const userScrolledUp = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = containerRef.current;
+    if (!container) return;
+    function onScroll() {
+      const el = containerRef.current;
+      if (!el) return;
+      userScrolledUp.current = el.scrollHeight - el.scrollTop - el.clientHeight > 80;
+    }
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!userScrolledUp.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [entries, streaming]);
 
   if (!entries.length && !error) return null;
 
   return (
     <Box
+      ref={containerRef}
       maxH="480px"
       overflowY="auto"
       px={1}
