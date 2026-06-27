@@ -61,7 +61,6 @@ function normalizeShortcuts(input: string): string {
 export default function GristQuickPopup() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const isSuperuser = !!user?.is_superuser;
-  const canUseBeacon = !!(user?.can_use_beacon ?? user?.can_use_lighthouse);
 
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
