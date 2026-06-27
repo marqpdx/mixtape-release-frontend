@@ -1,16 +1,17 @@
 // atrium/atriumApi.ts
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { unwrapListResponse } from "@mixtape/api/lib/utils";
 import type { AtriumSession, AtriumSessionEntry } from "@mixtape/core/types/atriumTypes";
 
 export async function fetchAtriumSessions(): Promise<AtriumSession[]> {
-  const response = await axiosInstance.get<AtriumSession[]>("/api/atrium/sessions/");
-  return response.data;
+  const response = await axiosInstance.get("/api/atrium/sessions/");
+  return unwrapListResponse<AtriumSession>(response.data);
 }
 
 export async function fetchAtriumSessionEntries(sessionId: string): Promise<AtriumSessionEntry[]> {
-  const response = await axiosInstance.get<AtriumSessionEntry[]>(`/api/atrium/sessions/${sessionId}/entries/`);
-  return response.data;
+  const response = await axiosInstance.get(`/api/atrium/sessions/${sessionId}/entries/`);
+  return unwrapListResponse<AtriumSessionEntry>(response.data);
 }
 
 export async function createAtriumSession(data: {

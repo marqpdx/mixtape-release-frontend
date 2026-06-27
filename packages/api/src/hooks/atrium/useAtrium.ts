@@ -1,8 +1,10 @@
 // hooks/atrium/useAtrium.ts
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
+import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
 import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
@@ -87,6 +89,12 @@ export interface ExchangeEntry {
   content: string;
 }
 
+const EMPTY_EXCHANGE_ENTRIES: ExchangeEntry[] = [];
+
+function getEntriesSignature(entries: ExchangeEntry[]) {
+  return entries.map((entry) => `${entry.id ?? ""}:${entry.role}:${entry.content}`).join("\n");
+}
+
 export function useAtriumExchange(session: AtriumSession | null) {
   const queryClient = useQueryClient();
   const [entries, setEntries] = useState<ExchangeEntry[]>([]);
@@ -96,12 +104,13 @@ export function useAtriumExchange(session: AtriumSession | null) {
 
   // Load persisted history whenever the active session changes
   const { entries: history } = useAtriumSessionEntries(session?.id ?? null);
+  const historySignature = useMemo(() => getEntriesSignature(history), [history]);
 
   useEffect(() => {
-    setEntries(history);
+    setEntries(history.length > 0 ? history : EMPTY_EXCHANGE_ENTRIES);
     setError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.id, history]);
+  }, [session?.id, historySignature]);
 
   const send = useCallback(
     async (message: string) => {
@@ -116,9 +125,13 @@ export function useAtriumExchange(session: AtriumSession | null) {
       abortRef.current = new AbortController();
 
       try {
-        const resp = await fetch(`/api/atrium/sessions/${session.id}/exchange`, {
+        const token = getAccessToken();
+        const resp = await fetch(buildApiUrl(`/api/atrium/sessions/${session.id}/exchange`), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           credentials: "include",
           body: JSON.stringify({ message }),
           signal: abortRef.current.signal,
