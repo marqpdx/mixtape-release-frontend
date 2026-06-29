@@ -135,8 +135,11 @@ export function useConversationKey(
   // H2 (LW-D3): listen for server-pushed key_rotated events so a device that is
   // live in a conversation learns about a rotation triggered by another device
   // without waiting for the next conversation open (H3 covers that path).
+  // GPT F-001 (LW-D3 Pass 3): extended to Private — a Private participant with a live tab that
+  // misses a manual rotation (e.g., after device revocation) would keep encrypting under the old
+  // key, allowing the revoked device to decrypt post-revocation messages it should not see.
   useEffect(() => {
-    if (trustProfile !== "ephemeral" || !deviceId || deviceKeyState.status !== "ready") return;
+    if (trustProfile === "standard" || !deviceId || deviceKeyState.status !== "ready") return;
 
     const socket = getSocket();
     if (!socket) return;
