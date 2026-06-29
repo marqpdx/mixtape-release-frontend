@@ -59,6 +59,28 @@ export function useConversationKey(
         const cached = await getLatestCachedConversationKey(slug);
         if (cached) {
           setState({ status: "ready", key: cached.key, version: cached.version });
+
+          // H3 (LW-D3): for Ephemeral, verify cached version is still current — the server
+          // may have pruned the old bundle after a rotation we missed while offline.
+          // A stale cached key lets clients decrypt ciphertext that should be inaccessible.
+          if (trustProfile === "ephemeral") {
+            try {
+              const latestBundle = await fetchMyConversationKey(slug, deviceId);
+              if (latestBundle.key_version > cached.version) {
+                await evictConversationKeyVersion(slug, cached.version).catch(() => {});
+                const freshKey = await unwrapConversationKey(
+                  privateKey,
+                  latestBundle.ephemeral_public_key,
+                  latestBundle.encrypted_key,
+                  latestBundle.nonce,
+                );
+                await storeConversationKeyVersion(slug, freshKey, latestBundle.key_version);
+                setState({ status: "ready", key: freshKey, version: latestBundle.key_version });
+              }
+            } catch {
+              // Network failure — keep using the cached key rather than blocking the user.
+            }
+          }
         } else {
           // Fetch bundle from server
           let bundle;
