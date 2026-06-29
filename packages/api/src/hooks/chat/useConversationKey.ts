@@ -67,8 +67,11 @@ export function useConversationKey(
 
           // H3 (LW-D3): for Ephemeral, verify cached version is still current — the server
           // may have pruned the old bundle after a rotation we missed while offline.
-          // A stale cached key lets clients decrypt ciphertext that should be inaccessible.
-          if (trustProfile === "ephemeral") {
+          // GPT F-001 (LW-D3 Pass 4): extended to Private — a Private device that was offline
+          // when conversation:key_rotated fired (H2 path) will reopen with a stale cached key
+          // and keep encrypting under the pre-rotation version. Checking the server on every
+          // cache-hit mount catches the offline-miss case for both trust profiles.
+          if (trustProfile === "ephemeral" || trustProfile === "private") {
             try {
               const latestBundle = await fetchMyConversationKey(slug, deviceId);
               if (latestBundle.key_version > cached.version) {
