@@ -1,7 +1,5 @@
-// Conversation List Item Component
-// Displays a single conversation row with title, preview, timestamp, and unread badge
-
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { Conversation } from '@mixtape/core/types/chatTypes';
 
 interface ConversationListItemProps {
@@ -9,6 +7,7 @@ interface ConversationListItemProps {
   unreadCount?: number;
   preview?: { text: string; timestamp: string; senderUsername: string };
   currentUsername?: string;
+  showLockGlyph?: boolean;
   onPress: () => void;
 }
 
@@ -17,6 +16,7 @@ export function ConversationListItem({
   unreadCount = 0,
   preview,
   currentUsername,
+  showLockGlyph = false,
   onPress,
 }: ConversationListItemProps) {
   const lastMessage = conversation.last_message as
@@ -80,7 +80,6 @@ export function ConversationListItem({
       activeOpacity={0.7}
     >
       <View style={styles.content}>
-        {/* Conversation Title */}
         <View style={styles.header}>
           <View style={styles.titleWrap}>
             {isUnread ? <View style={styles.unreadDot} /> : null}
@@ -88,11 +87,16 @@ export function ConversationListItem({
               {conversation.title}
             </Text>
           </View>
-          {previewTimestamp && (
-            <Text style={[styles.timestamp, isUnread && styles.timestampUnread]}>
-              {formatTime(previewTimestamp)}
-            </Text>
-          )}
+          <View style={styles.trailingMeta}>
+            {showLockGlyph ? (
+              <Ionicons name="lock-closed" size={12} color="#9DB9D4" />
+            ) : null}
+            {previewTimestamp ? (
+              <Text style={[styles.timestamp, isUnread && styles.timestampUnread]}>
+                {formatTime(previewTimestamp)}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
         {/* Message Preview */}
@@ -165,6 +169,11 @@ const styles = StyleSheet.create({
   },
   titleUnread: {
     fontWeight: '700',
+  },
+  trailingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   timestamp: {
     fontSize: 14,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
@@ -10,7 +11,7 @@ import { useThreadworks } from '@mixtape/api/hooks/threadworks/useThreadworks';
 import type { Forum } from '@mixtape/core/types/threadworksTypes';
 
 const CONNECT_MODE_KEY = 'mixtape.mobile.connectMode';
-type ConnectMode = 'messages' | 'forums';
+type ConnectMode = 'messages' | 'threads';
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -55,7 +56,7 @@ function ForumsPanel() {
   if (!forums.length) {
     return (
       <View style={forumStyles.center}>
-        <Text style={forumStyles.empty}>No forums yet.</Text>
+        <Text style={forumStyles.empty}>No threads yet.</Text>
       </View>
     );
   }
@@ -78,7 +79,9 @@ export default function MyChatsScreen() {
   useEffect(() => {
     AsyncStorage.getItem(CONNECT_MODE_KEY)
       .then((val) => {
-        if (val === 'forums' || val === 'messages') setMode(val);
+        if (val === 'threads' || val === 'messages') setMode(val);
+        // migrate legacy 'forums' value written by pre-MX-11 builds
+        else if (val === 'forums') setMode('threads');
       })
       .finally(() => setModeLoaded(true));
   }, []);
@@ -96,27 +99,40 @@ export default function MyChatsScreen() {
         <CrossroadsHeader routeLabel="connect" />
         <View style={styles.toggle}>
           <TouchableOpacity
-            style={[styles.toggleSeg, mode === 'messages' && styles.toggleSegActive]}
+            style={[styles.toggleSeg, mode === 'messages' && styles.toggleSegActiveMessages]}
             onPress={() => handleModeChange('messages')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.toggleText, mode === 'messages' && styles.toggleTextActive]}>
+            <Ionicons
+              name="lock-closed"
+              size={12}
+              color={mode === 'messages' ? '#FFFFFF' : '#6B8FA8'}
+              style={styles.toggleIcon}
+            />
+            <Text style={[styles.toggleText, mode === 'messages' && styles.toggleTextActiveMessages]}>
               Messages
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleSeg, mode === 'forums' && styles.toggleSegActive]}
-            onPress={() => handleModeChange('forums')}
+            style={[styles.toggleSeg, mode === 'threads' && styles.toggleSegActiveThreads]}
+            onPress={() => handleModeChange('threads')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.toggleText, mode === 'forums' && styles.toggleTextActive]}>
-              Forums
+            <Ionicons
+              name="git-network-outline"
+              size={13}
+              color={mode === 'threads' ? '#FFFFFF' : '#6B8FA8'}
+              style={styles.toggleIcon}
+            />
+            <Text style={[styles.toggleText, mode === 'threads' && styles.toggleTextActiveThreads]}>
+              Threads
             </Text>
           </TouchableOpacity>
         </View>
       </View>
       {mode === 'messages' ? (
         <ConversationListPanel
+          showLockGlyph
           onOpenConversation={(conversationId, title) => {
             navigation.navigate('Chat', { conversationId, title });
           }}
@@ -152,17 +168,29 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
   },
-  toggleSegActive: {
-    backgroundColor: '#FFFFFF',
+  toggleSegActiveMessages: {
+    backgroundColor: '#1B4570',
+  },
+  toggleSegActiveThreads: {
+    backgroundColor: '#4E7055',
+  },
+  toggleIcon: {
+    lineHeight: 16,
   },
   toggleText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#6B8FA8',
   },
-  toggleTextActive: {
-    color: '#1B4570',
+  toggleTextActiveMessages: {
+    color: '#FFFFFF',
+  },
+  toggleTextActiveThreads: {
+    color: '#FFFFFF',
   },
 });
 

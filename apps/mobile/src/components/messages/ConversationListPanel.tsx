@@ -20,12 +20,14 @@ interface ConversationListPanelProps {
   onOpenConversation: (conversationId: string, title: string) => void;
   onOpenNewChat?: () => void;
   autoRefreshOnFocus?: boolean;
+  showLockGlyph?: boolean;
 }
 
 export function ConversationListPanel({
   onOpenConversation,
   onOpenNewChat,
   autoRefreshOnFocus = true,
+  showLockGlyph = false,
 }: ConversationListPanelProps) {
   const { conversations, loading, error, refresh } = useConversations();
   const currentUser = useAuthStore((state) => state.user);
@@ -225,6 +227,7 @@ export function ConversationListPanel({
                 unreadCount={unreadCounts[conversationSlug] || 0}
                 preview={conversationPreviews[conversationSlug]}
                 currentUsername={currentUser?.username}
+                showLockGlyph={showLockGlyph}
                 onPress={() => onOpenConversation(conversationSlug, displayTitle)}
               />
             );
