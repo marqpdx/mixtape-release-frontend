@@ -41,6 +41,10 @@ export function useConversationKey(
   const rotationTriggeredRef = useRef<string | null>(null);
   const deviceKeyStateRef = useRef(deviceKeyState);
   deviceKeyStateRef.current = deviceKeyState;
+  // F-002 (LW-D3): track live state in a ref so getKeyForVersion (a useCallback) can
+  // compare the requested version against the current live version without a stale closure.
+  const stateRef = useRef<ConversationKeyState>(state);
+  stateRef.current = state;
 
   useEffect(() => {
     if (trustProfile === "standard") {
@@ -178,7 +182,26 @@ export function useConversationKey(
   const getKeyForVersion = useCallback(
     async (version: number): Promise<CryptoKey | null> => {
       const cached = await getConversationKeyVersion(slug, version);
-      if (cached) return cached;
+      if (cached) {
+        // F-002 (LW-D3): for Ephemeral conversations, if the requested version is older than
+        // the live version we know about, background-verify the bundle still exists server-side.
+        // H2/H3 evict the previous "latest" entry on rotation, but per-version entries for older
+        // versions are not re-validated until explicitly requested. A 404 here means the server
+        // pruned the bundle; evict from cache so the next caller hits the 404 path cleanly.
+        if (
+          trustProfile === "ephemeral"
+          && deviceId
+          && deviceKeyStateRef.current.status === "ready"
+          && stateRef.current.status === "ready"
+          && version < stateRef.current.version
+        ) {
+          fetchMyConversationKey(slug, deviceId, version).catch((err: unknown) => {
+            const httpStatus = (err as { response?: { status?: number } })?.response?.status;
+            if (httpStatus === 404) evictConversationKeyVersion(slug, version).catch(() => {});
+          });
+        }
+        return cached;
+      }
 
       if (!deviceId || deviceKeyStateRef.current.status !== "ready") return null;
       const { privateKey } = deviceKeyStateRef.current;

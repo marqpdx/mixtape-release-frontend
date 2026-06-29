@@ -224,7 +224,14 @@ async function _deriveWrappingKey(
 
 function _toBase64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
-  return btoa(String.fromCharCode(...bytes));
+  // F-004 (LW-D3): spread operator hits V8's ~65k argument limit for large buffers.
+  // Chunked loop handles voice blobs up to MAX_VOICE_BYTES (10 MB) without throwing.
+  let binary = "";
+  const chunkSize = 32768;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
 }
 
 function _fromBase64(b64: string): Uint8Array<ArrayBuffer> {
