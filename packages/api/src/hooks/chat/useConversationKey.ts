@@ -17,6 +17,7 @@ import {
 } from "@mixtape/core/crypto/keyStore";
 import { fetchMyConversationKey } from "../../clients/chat/chatApi";
 import { rotateConversationKey } from "../../lib/chat/keyRotation";
+import { getSocket } from "../../lib/socket";
 import type { DeviceKeyState } from "./useDeviceKey";
 
 type TrustProfile = "standard" | "private" | "ephemeral";
@@ -126,6 +127,49 @@ export function useConversationKey(
       }
     })();
   }, [slug, trustProfile, deviceId, deviceKeyState, nextRotationDueAt]);
+
+  // H2 (LW-D3): listen for server-pushed key_rotated events so a device that is
+  // live in a conversation learns about a rotation triggered by another device
+  // without waiting for the next conversation open (H3 covers that path).
+  useEffect(() => {
+    if (trustProfile !== "ephemeral" || !deviceId || deviceKeyState.status !== "ready") return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleKeyRotated = async (payload: { slug?: string; key_version?: number }) => {
+      if (payload.slug !== slug) return;
+      const serverVersion = payload.key_version;
+      if (!serverVersion) return;
+
+      const cached = await getLatestCachedConversationKey(slug);
+      if (cached && serverVersion <= cached.version) return;
+
+      const { privateKey } = deviceKeyStateRef.current.status === "ready"
+        ? deviceKeyStateRef.current
+        : { privateKey: null };
+      if (!privateKey) return;
+
+      try {
+        const bundle = await fetchMyConversationKey(slug, deviceId);
+        if (bundle.key_version <= (cached?.version ?? 0)) return;
+        if (cached) await evictConversationKeyVersion(slug, cached.version).catch(() => {});
+        const freshKey = await unwrapConversationKey(
+          privateKey,
+          bundle.ephemeral_public_key,
+          bundle.encrypted_key,
+          bundle.nonce,
+        );
+        await storeConversationKeyVersion(slug, freshKey, bundle.key_version);
+        setState({ status: "ready", key: freshKey, version: bundle.key_version });
+      } catch {
+        // If fetch fails, H3 will catch the stale key on next open.
+      }
+    };
+
+    socket.on("conversation:key_rotated", handleKeyRotated);
+    return () => { socket.off("conversation:key_rotated", handleKeyRotated); };
+  }, [slug, trustProfile, deviceId, deviceKeyState.status]);
 
   // Resolves the key for a specific version, for decrypting messages sent
   // before the latest rotation. Checks the cache before hitting the server.
