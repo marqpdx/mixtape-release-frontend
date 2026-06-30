@@ -127,37 +127,48 @@ export default function MyChatsScreen() {
     <View style={styles.container}>
       <View style={styles.headerWrap}>
         <CrossroadsHeader routeLabel="connect" />
-        <View style={styles.toggle}>
-          <TouchableOpacity
-            style={[styles.toggleSeg, mode === 'messages' && styles.toggleSegActiveMessages]}
-            onPress={() => handleModeChange('messages')}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="lock-closed"
-              size={12}
-              color={mode === 'messages' ? '#FFFFFF' : '#6B8FA8'}
-              style={styles.toggleIcon}
-            />
-            <Text style={[styles.toggleText, mode === 'messages' && styles.toggleTextActiveMessages]}>
-              Messages
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleSeg, mode === 'threads' && styles.toggleSegActiveThreads]}
-            onPress={() => handleModeChange('threads')}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="git-network-outline"
-              size={13}
-              color={mode === 'threads' ? '#FFFFFF' : '#6B8FA8'}
-              style={styles.toggleIcon}
-            />
-            <Text style={[styles.toggleText, mode === 'threads' && styles.toggleTextActiveThreads]}>
-              Threads
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.toggleRow}>
+          <View style={styles.toggle}>
+            <TouchableOpacity
+              style={[styles.toggleSeg, mode === 'messages' && styles.toggleSegActiveMessages]}
+              onPress={() => handleModeChange('messages')}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="lock-closed"
+                size={12}
+                color={mode === 'messages' ? '#FFFFFF' : '#6B8FA8'}
+                style={styles.toggleIcon}
+              />
+              <Text style={[styles.toggleText, mode === 'messages' && styles.toggleTextActiveMessages]}>
+                Messages
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleSeg, mode === 'threads' && styles.toggleSegActiveThreads]}
+              onPress={() => handleModeChange('threads')}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="git-network-outline"
+                size={13}
+                color={mode === 'threads' ? '#FFFFFF' : '#6B8FA8'}
+                style={styles.toggleIcon}
+              />
+              <Text style={[styles.toggleText, mode === 'threads' && styles.toggleTextActiveThreads]}>
+                Threads
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {mode === 'threads' ? (
+            <TouchableOpacity
+              style={styles.composeBtn}
+              onPress={() => navigation.navigate('NewThread')}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="add" size={20} color="#4E7055" />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
       {mode === 'messages' ? (
@@ -185,13 +196,27 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 4,
   },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+    gap: 8,
+  },
   toggle: {
+    flex: 1,
     flexDirection: 'row',
     backgroundColor: '#DDEAF4',
     borderRadius: 8,
     padding: 3,
-    marginTop: 12,
-    marginBottom: 8,
+  },
+  composeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: '#E6F0E8',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   toggleSeg: {
     flex: 1,
