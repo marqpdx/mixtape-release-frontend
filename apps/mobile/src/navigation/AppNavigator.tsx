@@ -24,6 +24,7 @@ import GroupConversationsScreen from '../screens/GroupConversationsScreen';
 import NewPersonalChatScreen from '../screens/NewPersonalChatScreen';
 import NewGroupChatScreen from '../screens/NewGroupChatScreen';
 import { ChatScreen } from '../screens/ChatScreen';
+import ThreadDetailScreen from '../screens/ThreadDetailScreen';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -49,6 +50,7 @@ export type RootStackParamList = {
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
   NewGroupChat: { groupSlug: string; groupName: string };
+  ThreadDetail: { forumSlug: string; discussionSlug: string; title: string; forumName: string };
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -252,6 +254,11 @@ export default function AppNavigator() {
               name="NewGroupChat"
               component={NewGroupChatScreen}
               options={{ headerShown: false, presentation: 'modal' }}
+            />
+            <RootStack.Screen
+              name="ThreadDetail"
+              component={ThreadDetailScreen}
+              options={{ headerShown: false, presentation: 'card' }}
             />
           </>
         )}

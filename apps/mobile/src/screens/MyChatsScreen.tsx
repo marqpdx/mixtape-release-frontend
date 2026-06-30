@@ -58,6 +58,7 @@ function ThreadRow({ discussion, onPress }: { discussion: DiscussionSummary; onP
 
 function ThreadsPanel() {
   const { discussions, isLoading, refetch } = useRecentDiscussions();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   if (isLoading && !discussions.length) {
     return (
@@ -82,9 +83,14 @@ function ThreadsPanel() {
       renderItem={({ item }) => (
         <ThreadRow
           discussion={item}
-          onPress={() => {
-            // MX-13: navigate to ThreadDetail screen
-          }}
+          onPress={() =>
+            nav.navigate('ThreadDetail', {
+              forumSlug: item.forum_slug,
+              discussionSlug: item.slug,
+              title: item.title,
+              forumName: item.forum_name,
+            })
+          }
         />
       )}
       contentContainerStyle={threadStyles.list}
