@@ -15,6 +15,7 @@ import {
   UseForumResult,
   UseDiscussionResult,
   UseThreadworksMutationsResult,
+  DiscussionSummary,
 } from '@mixtape/core/types/threadworksTypes';
 import type { FetchFeedOptions } from '@mixtape/api/clients/threadworks/threadworksApi';
 import * as threadworksApi from '@mixtape/api/clients/threadworks/threadworksApi';
@@ -42,6 +43,7 @@ export const threadworksQueryKeys = {
   feedPosts: (forumSlug: string) => [...threadworksQueryKeys.detail(forumSlug), 'feed-posts'] as const,
   feedPost: (forumSlug: string, feedPostId: string) =>
     [...threadworksQueryKeys.feedPosts(forumSlug), feedPostId] as const,
+  recentDiscussions: () => [...threadworksQueryKeys.all, 'recent-discussions'] as const,
 };
 
 // ============================================================================
@@ -155,6 +157,32 @@ export const useDiscussion = (
 
   return {
     discussion,
+    isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+};
+
+/**
+ * Cross-forum activity-sorted discussions list (MX-12 — Connect tab Threads panel)
+ */
+export const useRecentDiscussions = (limit = 30): {
+  discussions: DiscussionSummary[];
+  count: number;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+} => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: threadworksQueryKeys.recentDiscussions(),
+    queryFn: () => threadworksApi.fetchRecentDiscussions(limit),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    discussions: data?.results ?? [],
+    count: data?.count ?? 0,
     isLoading,
     error: error as Error | null,
     refetch,

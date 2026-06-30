@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -7,8 +7,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { ConversationListPanel } from '../components/messages/ConversationListPanel';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
-import { useThreadworks } from '@mixtape/api/hooks/threadworks/useThreadworks';
-import type { Forum } from '@mixtape/core/types/threadworksTypes';
+import { useRecentDiscussions } from '@mixtape/api/hooks/threadworks/useThreadworks';
+import type { DiscussionSummary } from '@mixtape/core/types/threadworksTypes';
 
 const CONNECT_MODE_KEY = 'mixtape.mobile.connectMode';
 type ConnectMode = 'messages' | 'threads';
@@ -22,51 +22,75 @@ function relativeTime(iso: string): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-function ForumRow({ forum }: { forum: Forum }) {
-  const activityLabel = forum.last_activity ? relativeTime(forum.last_activity) : null;
-  const countLabel = `${forum.discussion_count} thread${forum.discussion_count !== 1 ? 's' : ''}`;
+function ThreadRow({ discussion, onPress }: { discussion: DiscussionSummary; onPress: () => void }) {
+  const timeLabel = relativeTime(discussion.updated_at);
+  const postLabel = `${discussion.post_count} post${discussion.post_count !== 1 ? 's' : ''}`;
+  const isUnread = discussion.unread_count > 0;
 
   return (
-    <View style={forumStyles.row}>
-      <View style={forumStyles.main}>
-        <Text style={forumStyles.title} numberOfLines={1}>{forum.title}</Text>
-        {forum.description ? (
-          <Text style={forumStyles.description} numberOfLines={1}>{forum.description}</Text>
-        ) : null}
+    <TouchableOpacity
+      style={[threadStyles.row, isUnread && threadStyles.rowUnread]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <View style={threadStyles.main}>
+        <Text style={[threadStyles.title, isUnread && threadStyles.titleUnread]} numberOfLines={1}>
+          {discussion.title}
+        </Text>
+        <Text style={threadStyles.forumName} numberOfLines={1}>{discussion.forum_name}</Text>
       </View>
-      <View style={forumStyles.meta}>
-        {activityLabel ? <Text style={forumStyles.metaText}>{activityLabel}</Text> : null}
-        <Text style={forumStyles.metaText}>{countLabel}</Text>
+      <View style={threadStyles.meta}>
+        <Text style={threadStyles.metaTime}>{timeLabel}</Text>
+        <View style={threadStyles.metaBottom}>
+          <Text style={threadStyles.metaCount}>{postLabel}</Text>
+          {isUnread ? (
+            <View style={threadStyles.unreadBadge}>
+              <Text style={threadStyles.unreadText}>
+                {discussion.unread_count > 99 ? '99+' : discussion.unread_count}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
-function ForumsPanel() {
-  const { forums, isLoading } = useThreadworks();
+function ThreadsPanel() {
+  const { discussions, isLoading, refetch } = useRecentDiscussions();
 
-  if (isLoading) {
+  if (isLoading && !discussions.length) {
     return (
-      <View style={forumStyles.center}>
-        <ActivityIndicator color="#9DB9D4" />
+      <View style={threadStyles.center}>
+        <ActivityIndicator color="#4E7055" />
       </View>
     );
   }
 
-  if (!forums.length) {
+  if (!discussions.length) {
     return (
-      <View style={forumStyles.center}>
-        <Text style={forumStyles.empty}>No threads yet.</Text>
+      <View style={threadStyles.center}>
+        <Text style={threadStyles.empty}>No active threads yet.</Text>
       </View>
     );
   }
 
   return (
     <FlatList
-      data={forums}
+      data={discussions}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ForumRow forum={item} />}
-      contentContainerStyle={forumStyles.list}
+      renderItem={({ item }) => (
+        <ThreadRow
+          discussion={item}
+          onPress={() => {
+            // MX-13: navigate to ThreadDetail screen
+          }}
+        />
+      )}
+      contentContainerStyle={threadStyles.list}
+      refreshControl={
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#4E7055" />
+      }
     />
   );
 }
@@ -139,7 +163,7 @@ export default function MyChatsScreen() {
           onOpenNewChat={() => navigation.navigate('NewPersonalChat')}
         />
       ) : (
-        <ForumsPanel />
+        <ThreadsPanel />
       )}
     </View>
   );
@@ -194,7 +218,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const forumStyles = StyleSheet.create({
+const threadStyles = StyleSheet.create({
   list: {
     paddingHorizontal: 18,
     paddingTop: 8,
@@ -208,6 +232,9 @@ const forumStyles = StyleSheet.create({
     borderBottomColor: '#D8E8F2',
     gap: 12,
   },
+  rowUnread: {
+    backgroundColor: '#F2F7F3',
+  },
   main: {
     flex: 1,
   },
@@ -216,18 +243,45 @@ const forumStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#1B4570',
   },
-  description: {
+  titleUnread: {
+    fontWeight: '700',
+    color: '#13293D',
+  },
+  forumName: {
     fontSize: 12,
-    color: '#6B8FA8',
+    color: '#4E7055',
     marginTop: 2,
   },
   meta: {
     alignItems: 'flex-end',
-    gap: 2,
+    gap: 3,
   },
-  metaText: {
+  metaTime: {
     fontSize: 11,
     color: '#9DB9D4',
+  },
+  metaBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  metaCount: {
+    fontSize: 11,
+    color: '#9DB9D4',
+  },
+  unreadBadge: {
+    backgroundColor: '#4E7055',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   center: {
     flex: 1,

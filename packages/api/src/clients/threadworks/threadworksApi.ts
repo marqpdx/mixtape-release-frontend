@@ -6,6 +6,7 @@ import {
   FeedItem,
   Forum,
   Discussion,
+  DiscussionSummary,
   Post,
   CreateForumData,
   UpdateForumData,
@@ -411,6 +412,24 @@ export async function createFeedPostReply(
     ? `/api/groups/${groupSlug}/threadworks/${forumSlug}/feed-posts/${feedPostId}/posts`
     : `/api/threadworks/${forumSlug}/feed-posts/${feedPostId}/posts`;
   const response = await axiosInstance.post<Post>(endpoint, data);
+  return response.data;
+}
+
+// ============================================================================
+// RECENT DISCUSSIONS (cross-forum, activity-sorted — MX-12)
+// ============================================================================
+
+export interface RecentDiscussionsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: DiscussionSummary[];
+}
+
+export async function fetchRecentDiscussions(limit = 30): Promise<RecentDiscussionsResponse> {
+  const response = await axiosInstance.get<RecentDiscussionsResponse>(
+    `/api/threadworks/discussions/recent/?limit=${limit}`
+  );
   return response.data;
 }
 

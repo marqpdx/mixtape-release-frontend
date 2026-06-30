@@ -93,6 +93,19 @@ export interface Discussion {
   resolution_post?: Post | null;
 }
 
+export interface DiscussionSummary {
+  id: string;
+  slug: string;
+  title: string;
+  forum_slug: string;
+  forum_name: string;
+  updated_at: IsoDateString;
+  created_at: IsoDateString;
+  post_count: number;
+  unread_count: number;
+  status: DiscussionStatus;
+}
+
 export interface ForumAudienceMember {
   id: string;
   username: string;
