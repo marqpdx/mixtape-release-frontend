@@ -3,14 +3,15 @@
 import WorkAreaWrapper from "@/components/dashboard/shared/WorkAreaWrapper";
 import { DualPanelEditor } from "./DualPanelEditor";
 
-interface Sponsor {
+export interface DualPanelSponsor {
   type: "group" | "member";
+  id?: string;
   slug: string;
   displayName?: string;
 }
 
 interface DualPanelEditorWorkAreaProps {
-  sponsor: Sponsor;
+  sponsor: DualPanelSponsor;
 }
 
 export function DualPanelEditorWorkArea({ sponsor }: DualPanelEditorWorkAreaProps) {

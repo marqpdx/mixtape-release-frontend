@@ -506,7 +506,7 @@ export default function GroupWorkArea({
   if (section === "dual-panel-editor") {
     return (
       <DualPanelEditorWorkArea
-        sponsor={{ type: "group", slug: group.slug, displayName: group.title }}
+        sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
       />
     );
   }

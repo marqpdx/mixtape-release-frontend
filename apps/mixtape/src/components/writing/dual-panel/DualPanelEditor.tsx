@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
+  Button,
   Flex,
   Text,
   HStack,
@@ -13,22 +14,18 @@ import {
   IconButton,
   Badge,
 } from "@chakra-ui/react";
-import { IconArrowLeft, IconCheck, IconRefresh, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { IconArrowLeft, IconCheck, IconDeviceFloppy, IconRefresh, IconChevronDown, IconChevronRight, IconMicroscope } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useWriting } from "@hooks/useWriting";
 import { useWorkingCopyAutosave } from "@/lib/writing/useWorkingCopyAutosave";
 import { uploadWritingImage } from "@/lib/writing/uploadWritingImage";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import { WorkingDocument } from "@mixtape/core/types/writingTypes";
-
-interface Sponsor {
-  type: "group" | "member";
-  slug: string;
-  displayName?: string;
-}
+import { StructureCheckPanel } from "@components/writing/StructureCheckPanel";
+import type { DualPanelSponsor } from "./DualPanelEditorWorkArea";
 
 interface DualPanelEditorProps {
-  sponsor: Sponsor;
+  sponsor: DualPanelSponsor;
 }
 
 interface DocSection {
@@ -100,6 +97,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const [leftBodyLoading, setLeftBodyLoading] = useState(false);
   const [rightBodyLoading, setRightBodyLoading] = useState(false);
   const [rightRefreshKey, setRightRefreshKey] = useState(0);
+  const [structureCheckDoc, setStructureCheckDoc] = useState<{ bodyJson: JSONContent; title: string; pieceId: string } | null>(null);
 
   const leftEditorRef = useRef<Editor | null>(null);
 
@@ -142,7 +140,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   );
 
   // Autosave uses piece.id (the WritingPiece PK), not the WorkingDocument id
-  const { schedule, saveStatus } = useWorkingCopyAutosave(
+  const { schedule, saveNow, saveStatus } = useWorkingCopyAutosave(
     leftDoc?.piece.id ?? "",
     2500
   );
@@ -170,11 +168,19 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
 
   const pushSection = useCallback((section: DocSection) => {
     const editor = leftEditorRef.current;
-    if (!editor) return;
+    if (!editor || !leftDoc) return;
     const pos = editor.state.doc.content.size;
     editor.chain().focus().insertContentAt(pos, section.nodes).run();
     setPushedIds((prev) => new Set([...prev, section.id]));
-  }, []);
+    // Save immediately after push — don't rely on the debounce timer,
+    // which can be cancelled if the user navigates away within 2.5 s.
+    const json = editor.getJSON();
+    void saveNow({
+      title: leftDoc.title ?? "",
+      body_json: json,
+      excerpt: leftDoc.excerpt ?? "",
+    });
+  }, [leftDoc, saveNow]);
 
   const saveLabel =
     saveStatus === "saving"
@@ -218,6 +224,27 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
               {saveLabel}
             </Text>
           )}
+          {leftDoc && (
+            <IconButton
+              aria-label="Save now"
+              size="xs"
+              variant="ghost"
+              colorPalette="green"
+              title="Save target draft now"
+              flexShrink={0}
+              onClick={() => {
+                const editor = leftEditorRef.current;
+                if (!editor || !leftDoc) return;
+                void saveNow({
+                  title: leftDoc.title ?? "",
+                  body_json: editor.getJSON(),
+                  excerpt: leftDoc.excerpt ?? "",
+                });
+              }}
+            >
+              <IconDeviceFloppy size={13} />
+            </IconButton>
+          )}
         </PanelHeader>
 
         <Box flex="1" overflowY="auto" p={3}>
@@ -258,16 +285,37 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             placeholder="Pick source draft…"
           />
           {rightDoc && (
-            <IconButton
-              aria-label="Refresh source"
-              size="xs"
-              variant="ghost"
-              disabled={rightBodyLoading}
-              onClick={() => setRightRefreshKey((k) => k + 1)}
-              flexShrink={0}
-            >
-              <IconRefresh size={13} />
-            </IconButton>
+            <>
+              <IconButton
+                aria-label="Check structure"
+                size="xs"
+                variant="ghost"
+                colorPalette="orange"
+                title="Check document structure"
+                flexShrink={0}
+                onClick={() => {
+                  if (rightBodyJson && rightDoc) {
+                    setStructureCheckDoc({
+                      bodyJson: rightBodyJson,
+                      title: rightDoc.title || rightDoc.piece.title || "Untitled",
+                      pieceId: rightDoc.piece.id,
+                    });
+                  }
+                }}
+              >
+                <IconMicroscope size={13} />
+              </IconButton>
+              <IconButton
+                aria-label="Refresh source"
+                size="xs"
+                variant="ghost"
+                disabled={rightBodyLoading}
+                onClick={() => setRightRefreshKey((k) => k + 1)}
+                flexShrink={0}
+              >
+                <IconRefresh size={13} />
+              </IconButton>
+            </>
           )}
         </PanelHeader>
 
@@ -295,6 +343,15 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
           )}
         </Box>
       </Box>
+      {structureCheckDoc && (
+        <StructureCheckPanel
+          bodyJson={structureCheckDoc.bodyJson}
+          title={structureCheckDoc.title}
+          pieceId={structureCheckDoc.pieceId}
+          sponsor={sponsor}
+          onClose={() => setStructureCheckDoc(null)}
+        />
+      )}
     </Flex>
   );
 }
