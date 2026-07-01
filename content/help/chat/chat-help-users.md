@@ -44,7 +44,7 @@ Chat is Mixtape's real-time messaging system. You can send text and voice messag
 
 ## How to send a message
 
-1. Open a conversation from your Messages section or from within a group
+1. Open a conversation from your Private Chats section or from within a group
 2. Click or tap the message input at the bottom
 3. Type your message and press **Enter** (desktop) or tap **Send** (mobile)
 
@@ -63,7 +63,7 @@ Voice messages are transcribed automatically. The transcript appears below the a
 
 ## How to start a direct message
 
-1. Go to **Messages** in your personal dashboard
+1. Go to **Private Chats** in your personal dashboard
 2. Click or tap **New Message**
 3. Search for the member you want to reach and select them
 4. Type your first message

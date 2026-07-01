@@ -26,12 +26,13 @@ Help Hub is Mixtape's central documentation surface. Use it when the contextual 
 
 ## Key concepts
 
-**Contextual help** — The article or set of articles chosen by the `?` button from your current page context.
+**Contextual help** — The article or set of articles chosen by the `?` button from your current page context. The `?` button and the Help navigation item are currently available to system administrators only.
 
 **Help Hub** — The full browseable documentation surface, independent of where you started.
 
 ## Current limitations
 
+- The `?` button and Help navigation item are visible to system administrators only. Regular members can reach `/help` directly by URL but have no navigation affordance to it in the current product.
 - Coverage is still being expanded across the full authenticated app.
 - Some pages currently inherit subsystem-level help before they get dedicated page-specific articles.
 

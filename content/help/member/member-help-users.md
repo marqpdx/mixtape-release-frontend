@@ -55,7 +55,7 @@ The left side of your dashboard is a navigation panel divided into four sections
 
 **Account**
 - **Preferences** — Notification settings, display options, and other personal settings
-- **Create Group** — Available to administrators only
+- **Create Group** — Available to system administrators only
 
 ---
 

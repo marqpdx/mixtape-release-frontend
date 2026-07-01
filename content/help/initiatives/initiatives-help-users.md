@@ -41,29 +41,16 @@ An Initiative has a title and an optional direction (a compass heading, not a ri
 
 ## How to start working in an Initiative
 
-### Create an Initiative
+> **In development** — The Initiatives surface is not yet available in the group navigation. The concepts and workflow below describe how Initiatives will work when the feature ships. No action is required now.
+
+When the group Initiatives section is available:
 
 1. Go to your group's Initiatives section.
 2. Click **New Initiative**.
 3. Give it a title. Add a direction if you have one — a sentence about where this is headed.
-4. The Initiative is created in `active` status and ready for its first session.
-
-### Start a session
-
-1. Open the Initiative.
-2. Click **Start Session**.
-3. Talk or type. The session captures your input and the AI's responses.
-4. When you're done, click **End Session**.
-
-### Review and curate the distillation
-
-After ending a session, the AI proposes what to keep:
-
-- **Decisions made** during this session
-- **Open questions** that surfaced
-- **A summary** of where things stand
-
-Review each item. Accept what belongs, edit what's close, skip what doesn't fit. What you accept is merged into the rolling summary.
+4. Open the Initiative and click **Start Session** to begin a conversation.
+5. Talk or type. When you're done, click **End Session**.
+6. The AI proposes what to keep — decisions, open questions, a summary. Accept, edit, or skip each item to update the rolling summary.
 
 ---
 
@@ -105,6 +92,7 @@ Routed artifacts appear on the Initiative timeline with a provenance record show
 
 ## Current limitations
 
+- **Group Initiatives section** — not yet available in the group navigation. The feature is in development; the workflow above will apply when it ships.
 - **Voice session transcription** is handled by Web Speech API in v0 — quality may vary by browser and device. Server-side transcription is planned for v1.
 - **Single participant per session** — one person can hold a session at a time in v0. Multi-participant sessions are planned for v1.
 - **Tableau routing** — the full routing surface (sending artifacts to more destinations) is planned. Puddlejump routing is the first destination available.
