@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
-  Button,
   Flex,
   Text,
   HStack,

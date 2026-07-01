@@ -4,9 +4,9 @@
  * StructureCheckPanel — non-destructive TipTap document structure analyzer.
  *
  * Shows: node-type distribution, heading hierarchy, word count, structural issues.
- * "Create repaired copy" normalizes heading levels and trims empty boundary
- * paragraphs, then creates a new draft. Word count is verified before
- * confirming the clone so no content is silently lost.
+ * "Create repaired copy" removes empty headings, applies sequential level
+ * normalization (no jump > 1 level), trims boundary empty paragraphs, then
+ * creates a new draft. Word count is verified so no content is silently lost.
  */
 
 import { useState, useMemo, useCallback } from "react";
@@ -14,6 +14,7 @@ import { JSONContent } from "@tiptap/react";
 import {
   Box,
   Button,
+  Checkbox,
   HStack,
   Heading,
   Spinner,
@@ -130,36 +131,45 @@ function isEmptyParagraph(node: JSONContent): boolean {
   return node.type === "paragraph" && !extractNodeText(node).trim();
 }
 
-function repairDoc(doc: JSONContent): JSONContent {
+function repairDoc(doc: JSONContent, opts: { removeEmptyParas?: boolean } = {}): JSONContent {
   const topContent = doc.content ?? [];
 
-  // Determine minimum heading level to shift headings to start from H1
-  const headingLevels = topContent
-    .filter((n) => n.type === "heading")
-    .map((n) => (n.attrs?.level as number) ?? 1);
-  const minLevel = headingLevels.length > 0 ? Math.min(...headingLevels) : 1;
-  const shift = minLevel - 1;
+  // Remove empty headings (no text content — common Word/Markdown import artifact).
+  const withoutEmptyHeadings = topContent.filter(
+    (n) => !(n.type === "heading" && !extractNodeText(n).trim())
+  );
 
-  function processNode(node: JSONContent): JSONContent {
-    if (node.type === "heading" && shift > 0) {
+  // Sequential level normalization: walk headings in document order.
+  // A heading may go up any number of levels but can only go ONE level deeper
+  // than the previous heading. First heading is always normalized to H1.
+  let prevLevel = 0;
+  const normalized = withoutEmptyHeadings.map((node) => {
+    if (node.type === "heading") {
       const orig = (node.attrs?.level as number) ?? 1;
-      return { ...node, attrs: { ...node.attrs, level: Math.max(1, orig - shift) } };
-    }
-    if (node.content) {
-      return { ...node, content: node.content.map(processNode) };
+      const newLevel =
+        prevLevel === 0
+          ? 1
+          : orig <= prevLevel
+          ? orig
+          : Math.min(orig, prevLevel + 1);
+      prevLevel = newLevel;
+      return { ...node, attrs: { ...node.attrs, level: newLevel } };
     }
     return node;
-  }
+  });
 
-  let processed = topContent.map(processNode);
-
-  // Trim leading empty paragraphs
-  while (processed.length > 0 && isEmptyParagraph(processed[0])) {
-    processed = processed.slice(1);
-  }
-  // Trim trailing empty paragraphs
-  while (processed.length > 0 && isEmptyParagraph(processed[processed.length - 1])) {
-    processed = processed.slice(0, -1);
+  // Remove all empty paragraphs, or just trim boundary ones.
+  let processed: JSONContent[];
+  if (opts.removeEmptyParas) {
+    processed = normalized.filter((n) => !isEmptyParagraph(n));
+  } else {
+    processed = normalized;
+    while (processed.length > 0 && isEmptyParagraph(processed[0])) {
+      processed = processed.slice(1);
+    }
+    while (processed.length > 0 && isEmptyParagraph(processed[processed.length - 1])) {
+      processed = processed.slice(0, -1);
+    }
   }
 
   return { ...doc, content: processed };
@@ -176,9 +186,10 @@ export function StructureCheckPanel({
   const [creating, setCreating] = useState(false);
   const [createResult, setCreateResult] = useState<{ pieceId: string; title: string } | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [removeEmptyParas, setRemoveEmptyParas] = useState(false);
 
   const analysis = useMemo(() => analyzeDoc(bodyJson), [bodyJson]);
-  const repairedDoc = useMemo(() => repairDoc(bodyJson), [bodyJson]);
+  const repairedDoc = useMemo(() => repairDoc(bodyJson, { removeEmptyParas }), [bodyJson, removeEmptyParas]);
   const repairedAnalysis = useMemo(() => analyzeDoc(repairedDoc), [repairedDoc]);
 
   const wordCountMatch = analysis.wordCount === repairedAnalysis.wordCount;
@@ -191,7 +202,7 @@ export function StructureCheckPanel({
     setCreating(true);
     setCreateError(null);
     try {
-      const res = await axiosInstance.post("/api/writing/pieces/", {
+      const res = await axiosInstance.post("/api/writing/pieces", {
         title: `${title} (repaired)`,
         body_json: repairedDoc,
         status: "draft",
@@ -338,11 +349,23 @@ export function StructureCheckPanel({
               Create repaired copy
             </Text>
             <Text fontSize="xs" color="fg.muted" mb={3}>
-              Normalizes heading levels (shifts minimum to H1), trims leading/trailing empty
-              paragraphs. Original draft is untouched.
+              Removes empty headings, normalizes heading levels (sequential — no jump greater
+              than one), trims leading/trailing empty paragraphs. Original draft is untouched.
             </Text>
 
             <VStack align="stretch" gap={2}>
+              <Checkbox.Root
+                size="sm"
+                checked={removeEmptyParas}
+                onCheckedChange={(e) => setRemoveEmptyParas(!!e.checked)}
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control />
+                <Checkbox.Label>
+                  <Text fontSize="xs">Remove empty paragraphs</Text>
+                </Checkbox.Label>
+              </Checkbox.Root>
+
               <HStack gap={2} fontSize="xs">
                 <Text color="fg.muted">Word count:</Text>
                 <Text>{analysis.wordCount} → {repairedAnalysis.wordCount}</Text>
@@ -388,6 +411,12 @@ export function StructureCheckPanel({
               )}
             </VStack>
           </Box>
+
+          <Separator />
+
+          <Button size="sm" variant="ghost" onClick={onClose} w="full">
+            Close
+          </Button>
 
         </VStack>
       </Box>
