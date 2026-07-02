@@ -165,20 +165,46 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [leftPieceId]
   );
 
-  const pushSection = useCallback((section: DocSection) => {
+  const pushSection = useCallback(async (section: DocSection) => {
     const editor = leftEditorRef.current;
     if (!editor || !leftDoc) return;
-    const pos = editor.state.doc.content.size;
-    editor.chain().focus().insertContentAt(pos, section.nodes).run();
+
+    // TipTap preserves selection state after focus leaves the editor,
+    // so reading from state gives the last cursor position the user set.
+    const cursorPos = editor.state.selection.from;
+    const docEnd = editor.state.doc.content.size;
+    // Use cursor if it's a real mid-doc position, otherwise append.
+    const insertPos = cursorPos > 1 && cursorPos < docEnd ? cursorPos : docEnd;
+
+    // If not already on an empty paragraph, insert one as a separator.
+    const resolvedPos = editor.state.doc.resolve(Math.min(insertPos, docEnd - 1));
+    const parentNode = resolvedPos.parent;
+    const isOnEmpty = parentNode?.type.name === 'paragraph' && parentNode.childCount === 0;
+    const chain = editor.chain().focus();
+    if (!isOnEmpty) {
+      chain.insertContentAt(insertPos, { type: 'paragraph' });
+    }
+    chain.insertContentAt(insertPos, section.nodes).run();
+
     setPushedIds((prev) => new Set([...prev, section.id]));
-    // Save immediately after push — don't rely on the debounce timer,
-    // which can be cancelled if the user navigates away within 2.5 s.
+
     const json = editor.getJSON();
-    void saveNow({
+    const payload = {
       title: leftDoc.title ?? "",
       body_json: json,
       excerpt: leftDoc.excerpt ?? "",
-    });
+    };
+
+    // Save to working-copy (solo path, updates wc.body_json).
+    await saveNow(payload);
+
+    // For collab docs: also PATCH dispatch content so content_snapshot stays
+    // current and the collab editor bootstraps from it on next open.
+    if (leftDoc.dispatch_content_id) {
+      void axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
+        body_json: json,
+      });
+    }
   }, [leftDoc, saveNow]);
 
   const saveLabel =

@@ -115,7 +115,7 @@ function HeadingItem({
         w="100%"
         px={3}
         py={1.5}
-        pl={`${12 + depth * 16}px`}
+        pl={`${8 + (entry.level - 1) * 16}px`}
         gap={2}
         borderRadius="md"
         bg={isActive ? activeBg : 'transparent'}
@@ -127,21 +127,21 @@ function HeadingItem({
         textAlign="left"
         transition="background 0.15s"
       >
-        {hasChildren ? (
-          <IconButton
-            size="2xs"
-            variant="ghost"
-            aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleCollapse(entry.id);
-            }}
-          >
-            {isCollapsed ? <IconChevronRight size={14} /> : <IconChevronDown size={14} />}
-          </IconButton>
-        ) : (
-          <Box w="22px" />
-        )}
+        <Box w="20px" flexShrink={0} display="flex" alignItems="center" justifyContent="center">
+          {hasChildren ? (
+            <IconButton
+              size="2xs"
+              variant="ghost"
+              aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleCollapse(entry.id);
+              }}
+            >
+              {isCollapsed ? <IconChevronRight size={14} /> : <IconChevronDown size={14} />}
+            </IconButton>
+          ) : null}
+        </Box>
         <Text fontSize="2xs" fontWeight="bold" color={levelColor} minW="24px" flexShrink={0} fontFamily="mono">
           H{entry.level}
         </Text>
