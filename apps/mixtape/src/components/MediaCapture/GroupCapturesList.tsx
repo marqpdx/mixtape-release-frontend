@@ -10,7 +10,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { IconCheck, IconClock, IconPlayerRecord, IconX } from "@tabler/icons-react";
+import { IconCheck, IconPlayerRecord, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
