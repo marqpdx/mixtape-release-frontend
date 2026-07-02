@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
@@ -101,6 +102,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const [structureCheckDoc, setStructureCheckDoc] = useState<{ bodyJson: JSONContent; title: string; pieceId: string } | null>(null);
 
   const leftEditorRef = useRef<Editor | null>(null);
+  const queryClient = useQueryClient();
 
   const leftDoc: WorkingDocument | undefined = useMemo(
     () => drafts?.find((d) => String(d.id) === leftDocId),
@@ -144,6 +146,11 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     leftDoc?.piece.id ?? "",
     2500
   );
+
+  // Mark dirty on any typing edit — does NOT schedule autosave.
+  const handleContentChange = useCallback(() => {
+    setHasPendingChanges(true);
+  }, []);
 
   const handleImageUpload = useCallback(
     async (file: File): Promise<string> => {
@@ -198,7 +205,10 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     }
 
     setHasPendingChanges(false);
-  }, [leftDoc, saveNow]);
+
+    // Bust the writing list cache so body_preview reflects the new content.
+    queryClient.invalidateQueries({ queryKey: ['writing', 'drafts'] });
+  }, [leftDoc, saveNow, queryClient]);
 
   const saveLabel =
     saveStatus === "saving" ? "Saving…"
@@ -249,6 +259,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
               key={String(leftDoc.id)}
               ref={leftEditorRef}
               initialContent={leftBodyJson ?? undefined}
+              onContentChange={handleContentChange}
               editable
               className="borderless-editor"
               imageUpload={handleImageUpload}
