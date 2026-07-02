@@ -20,6 +20,8 @@ import { ChatUnreadProvider } from "@/contexts/ChatUnreadContext";
 import { initializeSocket } from "@mixtape/api/lib/socket";
 import { ChatRealtimeWire } from "@/components/chat/ChatRealtimeWire";
 import { ActivityRealtimeWire } from "@/components/activity/ActivityRealtimeWire";
+import { MediaCaptureProvider } from "@/components/MediaCapture/MediaCaptureContext";
+import { RecordingFloatingControl } from "@/components/MediaCapture/RecordingFloatingControl";
 
 function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -191,10 +193,12 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
+    <MediaCaptureProvider>
     <ChatUnreadProvider>
       <HelpProvider>
         <ChatRealtimeWire />
         <ActivityRealtimeWire />
+        <RecordingFloatingControl />
 
         <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
           <UnifiedNavbar compact={isAdminPath} />
@@ -246,6 +250,7 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
         </>
       )}
     </ChatUnreadProvider>
+    </MediaCaptureProvider>
   );
 }
 
