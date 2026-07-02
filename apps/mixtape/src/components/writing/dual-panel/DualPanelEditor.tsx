@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Editor, JSONContent } from "@tiptap/react";
 import {
   Box,
+  Button,
   Flex,
   Text,
   HStack,
@@ -89,6 +90,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const [leftDocId, setLeftDocId] = useState<string | null>(null);
   const [rightDocId, setRightDocId] = useState<string | null>(null);
   const [pushedIds, setPushedIds] = useState<Set<string>>(new Set());
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   // body_json is excluded from the list serializer for performance; fetch on select
   const [leftBodyJson, setLeftBodyJson] = useState<JSONContent | null>(null);
@@ -138,22 +140,9 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [rightBodyJson]
   );
 
-  // Autosave uses piece.id (the WritingPiece PK), not the WorkingDocument id
-  const { schedule, saveNow, saveStatus } = useWorkingCopyAutosave(
+  const { saveNow, saveStatus } = useWorkingCopyAutosave(
     leftDoc?.piece.id ?? "",
     2500
-  );
-
-  const handleContentChange = useCallback(
-    (json: JSONContent) => {
-      if (!leftDoc) return;
-      schedule({
-        title: leftDoc.title,
-        body_json: json,
-        excerpt: leftDoc.excerpt ?? "",
-      });
-    },
-    [leftDoc, schedule]
   );
 
   const handleImageUpload = useCallback(
@@ -165,7 +154,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     [leftPieceId]
   );
 
-  const pushSection = useCallback(async (section: DocSection) => {
+  const pushSection = useCallback((section: DocSection) => {
     const editor = leftEditorRef.current;
     if (!editor || !leftDoc) return;
 
@@ -173,7 +162,6 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     // so reading from state gives the last cursor position the user set.
     const cursorPos = editor.state.selection.from;
     const docEnd = editor.state.doc.content.size;
-    // Use cursor if it's a real mid-doc position, otherwise append.
     const insertPos = cursorPos > 1 && cursorPos < docEnd ? cursorPos : docEnd;
 
     // If not already on an empty paragraph, insert one as a separator.
@@ -187,34 +175,36 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     chain.insertContentAt(insertPos, section.nodes).run();
 
     setPushedIds((prev) => new Set([...prev, section.id]));
+    setHasPendingChanges(true);
+  }, [leftDoc]);
+
+  const handleSave = useCallback(async () => {
+    const editor = leftEditorRef.current;
+    if (!editor || !leftDoc) return;
 
     const json = editor.getJSON();
-    const payload = {
+    await saveNow({
       title: leftDoc.title ?? "",
       body_json: json,
       excerpt: leftDoc.excerpt ?? "",
-    };
+    });
 
-    // Save to working-copy (solo path, updates wc.body_json).
-    await saveNow(payload);
-
-    // For collab docs: also PATCH dispatch content so content_snapshot stays
-    // current and the collab editor bootstraps from it on next open.
+    // For collab targets: also update content_snapshot so the collab editor
+    // bootstraps from the new content on next open.
     if (leftDoc.dispatch_content_id) {
       void axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
         body_json: json,
       });
     }
+
+    setHasPendingChanges(false);
   }, [leftDoc, saveNow]);
 
   const saveLabel =
-    saveStatus === "saving"
-      ? "Saving…"
-      : saveStatus === "saved"
-      ? "Saved"
-      : saveStatus === "error"
-      ? "Save error"
-      : "";
+    saveStatus === "saving" ? "Saving…"
+    : saveStatus === "saved" ? "Saved"
+    : saveStatus === "error" ? "Save error"
+    : "";
 
   if (draftsLoading) {
     return (
@@ -225,7 +215,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   }
 
   return (
-    <Flex className="dpe-root" minH="75vh" w="100%" align="stretch">
+    <Flex className="dpe-root" h="75vh" w="100%" align="stretch">
       {/* Left — editable target */}
       <Box
         className="dpe-left"
@@ -241,38 +231,13 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             docs={drafts ?? []}
             value={leftDocId}
             exclude={rightDocId}
-            onChange={(id) => { setLeftDocId(id); setLeftBodyJson(null); setPushedIds(new Set()); }}
+            onChange={(id) => { setLeftDocId(id); setLeftBodyJson(null); setPushedIds(new Set()); setHasPendingChanges(false); }}
             placeholder="Pick target draft…"
           />
-          {saveLabel && (
-            <Text fontSize="xs" color="fg.muted" flexShrink={0}>
-              {saveLabel}
-            </Text>
-          )}
-          {leftDoc && (
-            <IconButton
-              aria-label="Save now"
-              size="xs"
-              variant="ghost"
-              colorPalette="green"
-              title="Save target draft now"
-              flexShrink={0}
-              onClick={() => {
-                const editor = leftEditorRef.current;
-                if (!editor || !leftDoc) return;
-                void saveNow({
-                  title: leftDoc.title ?? "",
-                  body_json: editor.getJSON(),
-                  excerpt: leftDoc.excerpt ?? "",
-                });
-              }}
-            >
-              <IconDeviceFloppy size={13} />
-            </IconButton>
-          )}
         </PanelHeader>
 
-        <Box flex="1" overflowY="auto" p={3}>
+        {/* Scrollable editor area */}
+        <Box flex="1" minH={0} overflowY="auto" p={3}>
           {!leftDoc ? (
             <EmptyState label="Select a draft to edit on the left." />
           ) : leftBodyLoading ? (
@@ -284,12 +249,40 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
               key={String(leftDoc.id)}
               ref={leftEditorRef}
               initialContent={leftBodyJson ?? undefined}
-              onContentChange={handleContentChange}
               editable
               className="borderless-editor"
               imageUpload={handleImageUpload}
             />
           )}
+        </Box>
+
+        {/* Pinned save bar — always visible at bottom of target panel */}
+        <Box
+          className="dpe-save-bar"
+          borderTopWidth="1px"
+          borderColor="border.muted"
+          bg="bg.subtle"
+          px={3}
+          py={2}
+          flexShrink={0}
+        >
+          <HStack gap={3} justify="flex-end">
+            {saveLabel && (
+              <Text fontSize="xs" color={saveStatus === "error" ? "red.500" : "fg.muted"}>
+                {saveLabel}
+              </Text>
+            )}
+            <Button
+              size="sm"
+              colorPalette="green"
+              variant={hasPendingChanges ? "solid" : "outline"}
+              disabled={!hasPendingChanges || !leftDoc || saveStatus === "saving"}
+              onClick={handleSave}
+            >
+              <IconDeviceFloppy size={14} />
+              Save target
+            </Button>
+          </HStack>
         </Box>
       </Box>
 
@@ -344,7 +337,8 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
           )}
         </PanelHeader>
 
-        <Box flex="1" overflowY="auto" p={3}>
+        {/* Scrollable section list */}
+        <Box flex="1" minH={0} overflowY="auto" p={3}>
           {!rightDoc ? (
             <EmptyState label="Select a source draft to browse its sections." />
           ) : rightBodyLoading ? (
@@ -368,6 +362,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
           )}
         </Box>
       </Box>
+
       {structureCheckDoc && (
         <StructureCheckPanel
           bodyJson={structureCheckDoc.bodyJson}
@@ -398,9 +393,7 @@ function PanelHeader({
       borderBottomWidth="1px"
       borderColor="border.muted"
       bg="bg.subtle"
-      position="sticky"
-      top={0}
-      zIndex={1}
+      flexShrink={0}
     >
       <HStack gap={2} align="center">
         <Text
@@ -525,7 +518,7 @@ function SectionCard({
             colorPalette="blue"
             disabled={!leftReady}
             onClick={(e) => { e.stopPropagation(); onPush(section); }}
-            title={leftReady ? "Append to target" : "Select a target draft first"}
+            title={leftReady ? "Insert into target at cursor" : "Select a target draft first"}
           >
             <IconArrowLeft size={14} />
           </IconButton>
