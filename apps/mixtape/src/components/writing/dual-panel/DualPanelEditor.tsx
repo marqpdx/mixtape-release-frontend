@@ -196,11 +196,14 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
       excerpt: leftDoc.excerpt ?? "",
     });
 
-    // For collab targets: also update content_snapshot so the collab editor
-    // bootstraps from the new content on next open.
+    // For collab targets: PATCH dispatch content with external_update=true.
+    // This updates content_snapshot AND clears the Yjs binary state so the
+    // next collab editor open bootstraps from content_snapshot rather than
+    // stale binary Yjs state. Throttle is also bypassed for this explicit save.
     if (leftDoc.dispatch_content_id) {
       void axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
         body_json: json,
+        external_update: true,
       });
     }
 
