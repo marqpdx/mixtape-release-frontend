@@ -61,6 +61,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as writingApi from "@mixtape/api/clients/writing/writingApi";
 import type { WritingSeries } from "@mixtape/core/types/writingTypes";
+import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
+import { ScreencastCaptureButton } from "@components/MediaCapture/ScreencastCaptureButton";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
 
 type ProseMirrorNode = {
@@ -132,6 +134,13 @@ export default function WritingListWrapper({
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
   const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
+
+  // Record privilege — evaluated after `user` is declared below.
+  // A dedicated can__RecordMedia decorator can replace can__ManageWriting when the
+  // permission system is extended.
+  const groupPerms = useGroupPermissions(
+    sponsor.type === "group" ? sponsor.slug : "__none__"
+  );
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");
   const [promotingPiece, setPromotingPiece] = useState<{ slug: string; title: string } | null>(null);
@@ -144,6 +153,10 @@ export default function WritingListWrapper({
   // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
+  const canRecord =
+    !!user?.is_superuser ||
+    (sponsor.type === "group" &&
+      (groupPerms.isAdmin || groupPerms.hasDecorator("can__ManageWriting")));
   const queryClient = useQueryClient();
 
   // Fetch series list for the rail + assignment dropdowns (group only)
@@ -875,11 +888,16 @@ export default function WritingListWrapper({
             </Heading>
             {/* {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>} */}
           </Box>
-          {sponsor.type === "member" && (
-            <Button asChild size="sm" variant="outline">
-              <NextLink href={`/members/${sponsor.slug}/library`}>View Public Library</NextLink>
-            </Button>
-          )}
+          <HStack gap={2}>
+            {sponsor.type === "member" && (
+              <Button asChild size="sm" variant="outline">
+                <NextLink href={`/members/${sponsor.slug}/library`}>View Public Library</NextLink>
+              </Button>
+            )}
+            {canRecord && sponsor.type === "group" && (
+              <ScreencastCaptureButton groupSlug={sponsor.slug} />
+            )}
+          </HStack>
         </HStack>
       </VStack>
 
