@@ -205,6 +205,25 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     // Full fix requires either y-py (Django decodes binary) or a protocol change so
     // the client sends body_json alongside the binary on every collab autosave.
     if (leftDoc.dispatch_content_id) {
+      // Gap 4b: warn if another collaborator has the room open — their in-memory
+      // Yjs state won't see this save until they reconnect.
+      try {
+        const presenceRes = await axiosInstance.get(
+          `/api/dispatch/content/${leftDoc.dispatch_content_id}/presence`
+        );
+        if (presenceRes.data?.active) {
+          const proceed = window.confirm(
+            "Someone else has this document open in the collaborative editor. " +
+            "Saving now will override their session content when they reconnect. Continue?"
+          );
+          if (!proceed) {
+            return;
+          }
+        }
+      } catch {
+        // Presence check failure is non-fatal — proceed with save
+      }
+
       try {
         await axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
           body_json: json,
