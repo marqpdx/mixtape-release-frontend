@@ -37,3 +37,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Meridian / OpenWiki — generated wiki prose; VPS-only by default
+# Client deployments may override this policy via their own git server configuration
+openwiki/
