@@ -31,6 +31,8 @@ interface PublishingControlsProps {
   onSaved?: (piece: Record<string, unknown>) => void
   onUnpublished?: (piece: Record<string, unknown>) => void
   publishLabel?: string
+  onPrePublishFlush?: () => void | Promise<void>
+  isCollab?: boolean
 }
 
 type DocumentJSON = Record<string, unknown>
@@ -53,7 +55,9 @@ export function PublishingControls({
   onPublished,
   onSaved,
   onUnpublished,
-  publishLabel
+  publishLabel,
+  onPrePublishFlush,
+  isCollab,
 }: PublishingControlsProps) {
   void pieceId
   void hasUnsavedChanges
@@ -138,6 +142,8 @@ export function PublishingControls({
           setDialogOpen(false)
           onPublished?.(publishedPiece)
         }}
+        onPrePublishFlush={onPrePublishFlush}
+        isCollab={isCollab}
       />
     </>
   )

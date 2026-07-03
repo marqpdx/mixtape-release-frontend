@@ -50,6 +50,8 @@ interface SimplePublishDialogProps {
   isUpdate?: boolean
   onPublished?: (piece: Record<string, unknown>) => void
   initialLinkedinCopy?: string
+  onPrePublishFlush?: () => void | Promise<void>
+  isCollab?: boolean
 }
 
 type DocumentJSON = Record<string, unknown>
@@ -84,6 +86,8 @@ export function SimplePublishDialog({
   isUpdate = false,
   onPublished,
   initialLinkedinCopy = '',
+  onPrePublishFlush,
+  isCollab = false,
 }: SimplePublishDialogProps) {
   const [audience, setAudience] = useState<AudienceChoice>('just_me')
   const [publishTiming, setPublishTiming] = useState<PublishTiming>('now')
@@ -275,6 +279,13 @@ export function SimplePublishDialog({
 
     setIsPublishing(true)
     try {
+      // In collab mode, flush the current Yjs state to WorkingDocument before
+      // publishing so the server WC is authoritative and we don't send a
+      // stale docJSONRef snapshot (which isn't updated by the collab editor).
+      if (onPrePublishFlush) {
+        await onPrePublishFlush()
+      }
+
       const destinations = isMemberSponsor
         ? { shelves: selectedShelves }
         : { groups: postToGroup ? [sponsorId] : [] }
@@ -298,7 +309,9 @@ export function SimplePublishDialog({
         pieceId: piece.id,
         payload: {
           title: titleRef.current,
-          body_json: docJSONRef.current,
+          // In collab mode, don't send body_json — docJSONRef isn't updated by
+          // the Yjs editor. The server uses the WC we just flushed above.
+          body_json: isCollab ? undefined : docJSONRef.current,
           excerpt: excerptRef.current,
           audience,
           scheduled_for: scheduledForISO ?? null,

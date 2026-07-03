@@ -960,6 +960,8 @@ export default function WriteComposer({
                       onUnpublished={onUnpublished}
                       publishLabel={isPublished ? "Publish updates" : "Publish"}
                       onSaved={onSaved}
+                      onPrePublishFlush={wantsCollab ? collabTriggerSave : undefined}
+                      isCollab={wantsCollab}
                     />
                   )}
 
