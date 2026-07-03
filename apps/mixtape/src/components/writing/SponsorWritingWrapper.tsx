@@ -6,7 +6,7 @@ import { Box } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import WritingListWrapper from "@components/writing/WritingListWrapper";
-import { useRouter } from "next/navigation";
+
 
 interface GroupPermissions {
   canCreatePost: boolean;
@@ -43,7 +43,6 @@ export default function SponsorWritingWrapper({
   canCreatePost,
   canManagePosts,
 }: SponsorWritingWrapperProps) {
-  const router = useRouter();
   const shouldFetchGroup = sponsor.type === "group" && !sponsor.displayName;
 
   const {
@@ -93,12 +92,11 @@ export default function SponsorWritingWrapper({
           setActiveSection("write");
         }
       }}
-      onNavigateToDetail={({ id, slug }) => {
-        if (sponsor.type === "group") {
-          router.replace(`/groups/${sponsor.slug}/writing/${slug}`);
-        } else {
-          setActiveSection("write", { piece: id });
-        }
+      onNavigateToDetail={({ id }) => {
+        // In the admin writing list, clicking a piece always opens the editor
+        // so admins see their working copy (draft), not the published reader.
+        // Use the reader link from the published piece detail view instead.
+        setActiveSection("write", { piece: id });
       }}
     />
   );

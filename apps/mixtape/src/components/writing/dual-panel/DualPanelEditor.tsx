@@ -200,11 +200,19 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
     // This updates content_snapshot AND clears the Yjs binary state so the
     // next collab editor open bootstraps from content_snapshot rather than
     // stale binary Yjs state. Throttle is also bypassed for this explicit save.
+    // NOTE: Gap 4 (y-py) — clearing yjs_state only helps for NEW room initializations.
+    // If the Livewire room is already live in memory, this patch won't flush it.
+    // Full fix requires either y-py (Django decodes binary) or a protocol change so
+    // the client sends body_json alongside the binary on every collab autosave.
     if (leftDoc.dispatch_content_id) {
-      void axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
-        body_json: json,
-        external_update: true,
-      });
+      try {
+        await axiosInstance.patch(`/api/dispatch/content/${leftDoc.dispatch_content_id}`, {
+          body_json: json,
+          external_update: true,
+        });
+      } catch (err) {
+        console.error("[DualPanelEditor] dispatch content sync failed:", err);
+      }
     }
 
     setHasPendingChanges(false);
