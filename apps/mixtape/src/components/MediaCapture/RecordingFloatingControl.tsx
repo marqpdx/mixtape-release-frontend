@@ -9,6 +9,7 @@ import {
   IconUpload,
   IconX,
 } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMediaCapture } from "./MediaCaptureContext";
 
 function formatTime(s: number) {
@@ -18,6 +19,7 @@ function formatTime(s: number) {
 }
 
 export function RecordingFloatingControl() {
+  const queryClient = useQueryClient();
   const {
     pipelineState,
     elapsed,
@@ -83,6 +85,10 @@ export function RecordingFloatingControl() {
                 <Link
                   href={`/groups/${groupSlug}/screencasts`}
                   style={{ textDecoration: "underline", color: "inherit" }}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["media-captures"] });
+                    reset();
+                  }}
                 >
                   Transcript ready
                 </Link>

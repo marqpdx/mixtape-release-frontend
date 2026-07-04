@@ -127,10 +127,12 @@ function TranscriptPanel({ captureId }: { captureId: string }) {
       {data.video_url && (
         <Box borderRadius="md" overflow="hidden" bg="black">
           <video
-            src={data.video_url}
             controls
             style={{ width: "100%", maxHeight: "360px", display: "block" }}
-          />
+          >
+            <source src={data.video_url} type="video/webm" />
+            <source src={data.video_url} type="video/mp4" />
+          </video>
         </Box>
       )}
 
