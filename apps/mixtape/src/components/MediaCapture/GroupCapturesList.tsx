@@ -34,6 +34,7 @@ interface CaptureDetailResponse {
   capture_id: string;
   title: string;
   status: string;
+  video_url?: string | null;
   transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
 }
 
@@ -122,6 +123,16 @@ function TranscriptPanel({ captureId }: { captureId: string }) {
         <Heading size="sm">{data.title || "Untitled"}</Heading>
         <StatusBadge status={data.status} />
       </HStack>
+
+      {data.video_url && (
+        <Box borderRadius="md" overflow="hidden" bg="black">
+          <video
+            src={data.video_url}
+            controls
+            style={{ width: "100%", maxHeight: "360px", display: "block" }}
+          />
+        </Box>
+      )}
 
       {data.status !== "ready" && (
         <HStack gap={2} color="fg.muted">

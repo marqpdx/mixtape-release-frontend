@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 import {
   IconPlayerPause,
@@ -20,6 +21,7 @@ export function RecordingFloatingControl() {
   const {
     pipelineState,
     elapsed,
+    groupSlug,
     stopRecording,
     pauseRecording,
     resumeRecording,
@@ -77,7 +79,16 @@ export function RecordingFloatingControl() {
               {pipelineState === "stopped" && "Recording ready"}
               {pipelineState === "uploading" && "Uploading…"}
               {pipelineState === "processing" && "Transcribing…"}
-              {pipelineState === "ready" && "Transcript ready"}
+              {pipelineState === "ready" && groupSlug ? (
+                <Link
+                  href={`/groups/${groupSlug}/screencasts`}
+                  style={{ textDecoration: "underline", color: "inherit" }}
+                >
+                  Transcript ready
+                </Link>
+              ) : pipelineState === "ready" ? (
+                "Transcript ready"
+              ) : null}
             </Text>
           </HStack>
 

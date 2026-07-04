@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -30,18 +30,21 @@ import {
 import { useMediaCapture } from "./MediaCaptureContext";
 
 export function ScreencastCaptureButton({ groupSlug }: { groupSlug: string }) {
-  void groupSlug;
-
   const {
     pipelineState,
     statusData,
     errorMsg,
     title,
     setTitle,
+    setGroupSlug,
     startRecording,
     uploadRecording,
     reset,
   } = useMediaCapture();
+
+  useEffect(() => {
+    setGroupSlug(groupSlug);
+  }, [groupSlug, setGroupSlug]);
 
   const [open, setOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);

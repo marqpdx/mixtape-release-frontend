@@ -38,7 +38,9 @@ interface MediaCaptureContextValue {
   errorMsg: string;
   elapsed: number;
   title: string;
+  groupSlug: string | null;
   setTitle: (t: string) => void;
+  setGroupSlug: (slug: string) => void;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
@@ -58,6 +60,7 @@ export function MediaCaptureProvider({ children }: { children: React.ReactNode }
   const [elapsed, setElapsed] = useState(0);
   const [title, setTitle] = useState("");
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [groupSlug, setGroupSlug] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -237,7 +240,9 @@ export function MediaCaptureProvider({ children }: { children: React.ReactNode }
         errorMsg,
         elapsed,
         title,
+        groupSlug,
         setTitle,
+        setGroupSlug,
         startRecording,
         stopRecording,
         pauseRecording,
