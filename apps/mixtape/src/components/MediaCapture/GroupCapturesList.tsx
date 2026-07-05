@@ -4,14 +4,17 @@ import { useState, useEffect } from "react";
 import {
   Badge,
   Box,
+  Button,
   Heading,
   HStack,
+  Input,
   Spinner,
   Text,
+  Textarea,
   VStack,
 } from "@chakra-ui/react";
-import { IconCheck, IconPlayerRecord, IconX } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { IconCheck, IconEdit, IconPlayerRecord, IconTrash, IconX } from "@tabler/icons-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useMediaCapture } from "./MediaCaptureContext";
@@ -33,6 +36,7 @@ interface CaptureRow {
 interface CaptureDetailResponse {
   capture_id: string;
   title: string;
+  purpose: string;
   status: string;
   video_url?: string | null;
   transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
@@ -138,7 +142,14 @@ function CaptureRow({
   );
 }
 
-function TranscriptPanel({ captureId }: { captureId: string }) {
+function TranscriptPanel({
+  captureId,
+  onDeleted,
+}: {
+  captureId: string;
+  onDeleted: () => void;
+}) {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<CaptureDetailResponse>({
     queryKey: ["media-capture-detail", captureId],
     queryFn: () =>
@@ -149,15 +160,112 @@ function TranscriptPanel({ captureId }: { captureId: string }) {
     },
   });
 
+  const [editing, setEditing] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [purposeDraft, setPurposeDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setTitleDraft(data.title || "");
+      setPurposeDraft(data.purpose || "");
+    }
+  }, [data]);
+
+  const handleSaveMeta = async () => {
+    setSaving(true);
+    try {
+      await axiosInstance.patch(`/api/media-capture/${captureId}`, {
+        title: titleDraft,
+        purpose: purposeDraft,
+      });
+      queryClient.invalidateQueries({ queryKey: ["media-capture-detail", captureId] });
+      queryClient.invalidateQueries({ queryKey: ["media-captures"] });
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Delete this screencast? This removes the video, transcript, and Stackroom entry permanently.")) return;
+    setDeleting(true);
+    try {
+      await axiosInstance.delete(`/api/media-capture/${captureId}`);
+      queryClient.invalidateQueries({ queryKey: ["media-captures"] });
+      onDeleted();
+    } catch {
+      setDeleting(false);
+    }
+  };
+
   if (isLoading) return <Spinner size="sm" />;
   if (!data) return null;
 
   return (
     <VStack align="stretch" gap={4} className="mc-transcript-panel">
-      <HStack justify="space-between">
-        <Heading size="sm">{data.title || "Untitled"}</Heading>
+      {/* Header row */}
+      <HStack justify="space-between" align="start">
         <StatusBadge status={data.status} />
+        <HStack gap={1}>
+          <Button
+            size="xs"
+            variant="ghost"
+            onClick={() => setEditing((e) => !e)}
+            aria-label="Edit metadata"
+          >
+            <IconEdit size={13} />
+            Edit
+          </Button>
+          <Button
+            size="xs"
+            variant="ghost"
+            colorPalette="red"
+            onClick={handleDelete}
+            loading={deleting}
+            aria-label="Delete screencast"
+          >
+            <IconTrash size={13} />
+            Delete
+          </Button>
+        </HStack>
       </HStack>
+
+      {/* Metadata — view or edit */}
+      {editing ? (
+        <VStack align="stretch" gap={2}>
+          <Box>
+            <Text fontSize="xs" color="fg.muted" mb={1}>Title</Text>
+            <Input
+              size="sm"
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+            />
+          </Box>
+          <Box>
+            <Text fontSize="xs" color="fg.muted" mb={1}>Purpose</Text>
+            <Textarea
+              size="sm"
+              rows={3}
+              placeholder="What is this screencast for? What does it demonstrate?"
+              value={purposeDraft}
+              onChange={(e) => setPurposeDraft(e.target.value)}
+            />
+          </Box>
+          <HStack gap={2} justify="flex-end">
+            <Button size="xs" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button size="xs" colorPalette="green" onClick={handleSaveMeta} loading={saving}>Save</Button>
+          </HStack>
+        </VStack>
+      ) : (
+        <VStack align="start" gap={1}>
+          <Heading size="sm">{data.title || "Untitled"}</Heading>
+          {data.purpose && (
+            <Text fontSize="sm" color="fg.muted">{data.purpose}</Text>
+          )}
+        </VStack>
+      )}
 
       {data.video_url && <VideoPlayer videoUrl={data.video_url} />}
 
@@ -291,7 +399,10 @@ export function GroupCapturesList({ groupSlug }: { groupSlug: string }) {
               p={4}
               className="mc-capture-detail"
             >
-              <TranscriptPanel captureId={selected.capture_id} />
+              <TranscriptPanel
+                captureId={selected.capture_id}
+                onDeleted={() => setSelectedId(null)}
+              />
             </Box>
           )}
         </Box>
