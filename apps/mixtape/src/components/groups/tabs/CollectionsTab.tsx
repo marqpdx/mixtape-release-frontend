@@ -4,7 +4,7 @@
 
 import type { ReactNode } from "react";
 import { Box } from "@chakra-ui/react";
-import type { Group } from "@mixtape/core/types/groupTypes";
+import { canUserModerateGroup, type Group } from "@mixtape/core/types/groupTypes";
 import { CollectionsExplorer } from "@/components/collections";
 
 interface CollectionsTabProps {
@@ -16,6 +16,8 @@ interface CollectionsTabProps {
 }
 
 export function CollectionsTab({ group, selectedCollectionId }: CollectionsTabProps) {
+  const isAdmin = canUserModerateGroup(group);
+
   return (
     <Box className="cex-tab-root">
       <CollectionsExplorer
@@ -26,6 +28,7 @@ export function CollectionsTab({ group, selectedCollectionId }: CollectionsTabPr
           displayName: group.title,
         }}
         initialCollectionId={selectedCollectionId}
+        isAdmin={isAdmin}
       />
     </Box>
   );
