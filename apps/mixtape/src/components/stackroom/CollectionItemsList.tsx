@@ -110,6 +110,10 @@ export function CollectionItemsList({
       return item.title || 'Untitled';
     }
 
+    if (item.content_type === 'media_capture') {
+      return item.content.title || item.title || 'Untitled screencast';
+    }
+
     return 'Untitled';
   };
 
@@ -286,6 +290,10 @@ export function CollectionItemsList({
             item.content.title.toLowerCase().includes(searchLower) ||
             item.content.summary.toLowerCase().includes(searchLower)
           );
+        }
+
+        if (item.content_type === 'media_capture') {
+          return getItemDisplayName(item).toLowerCase().includes(searchLower);
         }
 
         return false;

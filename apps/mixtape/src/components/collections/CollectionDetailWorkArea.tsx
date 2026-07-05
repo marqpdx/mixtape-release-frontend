@@ -18,7 +18,6 @@ import {
   Grid,
   Select,
   Portal,
-  createListCollection,
 } from '@chakra-ui/react';
 import {
   IconArrowLeft,
@@ -39,6 +38,16 @@ import { IndexingStatus } from '@/components/stackroom/IndexingStatus';
 import { toaster } from '@/components/ui/toaster';
 import { CollectionItemReader } from './CollectionItemReader';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
+import { createListCollection } from '@chakra-ui/react';
+
+const VISIBILITY_OPTIONS = createListCollection({
+  items: [
+    { value: 'members', label: 'Members — visible to group members' },
+    { value: 'public',  label: 'Public — visible to everyone' },
+    { value: 'unlisted', label: 'Unlisted — accessible by link only' },
+    { value: 'private', label: 'Private — admins only' },
+  ],
+});
 
 interface CollectionDetailWorkAreaProps {
   collectionId: string;
@@ -243,14 +252,7 @@ export function CollectionDetailWorkArea({
                 Visibility
               </Text>
               <Select.Root
-                collection={createListCollection({
-                  items: [
-                    { value: 'members', label: 'Members — visible to group members' },
-                    { value: 'public', label: 'Public — visible to everyone' },
-                    { value: 'unlisted', label: 'Unlisted — accessible by link only' },
-                    { value: 'private', label: 'Private — admins only' },
-                  ],
-                })}
+                collection={VISIBILITY_OPTIONS}
                 value={[editVisibility]}
                 onValueChange={(e) => setEditVisibility(e.value[0] as typeof editVisibility)}
                 size="md"
@@ -261,12 +263,7 @@ export function CollectionDetailWorkArea({
                 <Portal>
                   <Select.Positioner>
                     <Select.Content>
-                      {[
-                        { value: 'members', label: 'Members — visible to group members' },
-                        { value: 'public', label: 'Public — visible to everyone' },
-                        { value: 'unlisted', label: 'Unlisted — accessible by link only' },
-                        { value: 'private', label: 'Private — admins only' },
-                      ].map((opt) => (
+                      {VISIBILITY_OPTIONS.items.map((opt) => (
                         <Select.Item key={opt.value} item={opt}>
                           {opt.label}
                         </Select.Item>
