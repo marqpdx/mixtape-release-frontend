@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Badge,
   Box,
@@ -36,6 +36,41 @@ interface CaptureDetailResponse {
   status: string;
   video_url?: string | null;
   transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
+}
+
+function VideoPlayer({ videoUrl }: { videoUrl: string }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    axiosInstance
+      .get(videoUrl, { responseType: "blob" })
+      .then((res) => {
+        objectUrl = URL.createObjectURL(res.data);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setLoadError(true));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [videoUrl]);
+
+  if (loadError) return <Text fontSize="sm" color="red.500">Video unavailable.</Text>;
+  if (!blobUrl) return (
+    <HStack gap={2} py={4} justify="center" color="fg.muted">
+      <Spinner size="sm" />
+      <Text fontSize="sm">Loading video…</Text>
+    </HStack>
+  );
+  return (
+    <Box borderRadius="md" overflow="hidden" bg="black">
+      <video controls style={{ width: "100%", maxHeight: "360px", display: "block" }}>
+        <source src={blobUrl} type="video/webm" />
+        <source src={blobUrl} type="video/mp4" />
+      </video>
+    </Box>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -124,17 +159,7 @@ function TranscriptPanel({ captureId }: { captureId: string }) {
         <StatusBadge status={data.status} />
       </HStack>
 
-      {data.video_url && (
-        <Box borderRadius="md" overflow="hidden" bg="black">
-          <video
-            controls
-            style={{ width: "100%", maxHeight: "360px", display: "block" }}
-          >
-            <source src={data.video_url} type="video/webm" />
-            <source src={data.video_url} type="video/mp4" />
-          </video>
-        </Box>
-      )}
+      {data.video_url && <VideoPlayer videoUrl={data.video_url} />}
 
       {data.status !== "ready" && (
         <HStack gap={2} color="fg.muted">
