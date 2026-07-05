@@ -45,6 +45,7 @@ export interface CollectionDetail {
   summary: string;
   body: string;
   slug: string;
+  visibility: 'public' | 'members' | 'unlisted' | 'private';
 
   // Sponsor info
   sponsor_type: 'group' | 'user';
@@ -333,6 +334,7 @@ export interface CollectionUpdateRequest {
   summary?: string;
   body?: string;
   author_name?: string;
+  visibility?: 'public' | 'members' | 'unlisted' | 'private';
 }
 
 /**

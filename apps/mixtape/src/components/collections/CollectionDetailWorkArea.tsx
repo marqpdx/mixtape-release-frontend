@@ -16,6 +16,9 @@ import {
   Input,
   Textarea,
   Grid,
+  Select,
+  Portal,
+  createListCollection,
 } from '@chakra-ui/react';
 import {
   IconArrowLeft,
@@ -55,6 +58,7 @@ export function CollectionDetailWorkArea({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editSummary, setEditSummary] = useState('');
+  const [editVisibility, setEditVisibility] = useState<'public' | 'members' | 'unlisted' | 'private'>('private');
   const [itemsRefreshKey, setItemsRefreshKey] = useState(0);
   const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
 
@@ -79,6 +83,7 @@ export function CollectionDetailWorkArea({
     if (collection) {
       setEditTitle(collection.title);
       setEditSummary(collection.summary || '');
+      setEditVisibility(collection.visibility ?? 'private');
       setIsEditing(true);
     }
   };
@@ -99,6 +104,7 @@ export function CollectionDetailWorkArea({
         data: {
           title: editTitle,
           summary: editSummary,
+          visibility: editVisibility,
         },
       });
 
@@ -232,6 +238,44 @@ export function CollectionDetailWorkArea({
                 fontFamily="serifBody"
               />
             </Box>
+            <Box>
+              <Text fontFamily="mono" fontSize="10px" letterSpacing="0.12em" textTransform="uppercase" color="theme.textSecondary" mb={2}>
+                Visibility
+              </Text>
+              <Select.Root
+                collection={createListCollection({
+                  items: [
+                    { value: 'members', label: 'Members — visible to group members' },
+                    { value: 'public', label: 'Public — visible to everyone' },
+                    { value: 'unlisted', label: 'Unlisted — accessible by link only' },
+                    { value: 'private', label: 'Private — admins only' },
+                  ],
+                })}
+                value={[editVisibility]}
+                onValueChange={(e) => setEditVisibility(e.value[0] as typeof editVisibility)}
+                size="md"
+              >
+                <Select.Trigger>
+                  <Select.ValueText />
+                </Select.Trigger>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content>
+                      {[
+                        { value: 'members', label: 'Members — visible to group members' },
+                        { value: 'public', label: 'Public — visible to everyone' },
+                        { value: 'unlisted', label: 'Unlisted — accessible by link only' },
+                        { value: 'private', label: 'Private — admins only' },
+                      ].map((opt) => (
+                        <Select.Item key={opt.value} item={opt}>
+                          {opt.label}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </Box>
             <HStack gap={2}>
               <Button
                 size="sm"
@@ -276,6 +320,18 @@ export function CollectionDetailWorkArea({
                 </Text>
               )}
               <HStack gap={6} mt={3}>
+                <Badge
+                  size="sm"
+                  colorPalette={
+                    collection.visibility === 'public' ? 'green'
+                    : collection.visibility === 'members' ? 'blue'
+                    : collection.visibility === 'unlisted' ? 'yellow'
+                    : 'gray'
+                  }
+                  variant="subtle"
+                >
+                  {collection.visibility ?? 'private'}
+                </Badge>
                 <HStack gap={1.5} color="theme.textSecondary">
                   <IconFile size={14} />
                   <Text fontFamily="mono" fontSize="11px" letterSpacing="0.08em">
