@@ -10,6 +10,7 @@ export interface CollectionListItem {
   title: string;
   summary: string;
   slug: string;
+  visibility: 'public' | 'members' | 'unlisted' | 'private';
 
   // Sponsor info (flattened)
   sponsor_type: 'group' | 'user';

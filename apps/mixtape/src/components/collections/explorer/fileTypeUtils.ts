@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { IconFile, IconLink } from '@tabler/icons-react';
+import { IconFile, IconLink, IconVideo } from '@tabler/icons-react';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { getFileTypeInfo } from '@/components/stackroom/utils/fileTypeHelpers';
 import { getWritingKindInfo } from '@/components/stackroom/utils/writingKindHelpers';
@@ -21,6 +21,7 @@ export function getItemDisplayName(item: LibraryItem): string {
     return item.content?.filename || getSourceFileTitle(item) || 'Untitled file';
   }
   if (item.content_type === 'collection') return item.content.title;
+  if (item.content_type === 'media_capture') return item.content.title || 'Untitled screencast';
   return 'Untitled';
 }
 
@@ -40,6 +41,9 @@ export function getItemTypeInfo(item: LibraryItem): ItemTypeInfo {
   }
   if (item.content_type === 'collection') {
     return { icon: IconLink, colorScheme: 'blue', label: 'Collection' };
+  }
+  if (item.content_type === 'media_capture') {
+    return { icon: IconVideo, colorScheme: 'purple', label: 'Screencast' };
   }
   return { icon: IconFile, colorScheme: 'gray', label: 'File' };
 }

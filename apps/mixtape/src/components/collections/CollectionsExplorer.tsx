@@ -1,3 +1,7 @@
+// THIS IS THE LIVE COLLECTIONS UI used in the group view.
+// CollectionDetailWorkArea.tsx exists but is never mounted — do not edit it for group UI fixes.
+// Entry points: CollectionsTab.tsx, GroupWorkArea.tsx
+
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
@@ -16,6 +20,9 @@ import {
   IconButton,
   Spinner,
   SegmentGroup,
+  Select,
+  Portal,
+  createListCollection,
 } from '@chakra-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -72,6 +79,16 @@ import type { ItemTypeInfo } from './explorer/fileTypeUtils';
 import { CollectionItemReader } from './CollectionItemReader';
 import type { CollectionListItem, LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { formatDistanceToNow } from 'date-fns';
+
+// Must be module-level so Chakra Select matches items by reference, not inline recreation
+const VISIBILITY_OPTIONS = createListCollection({
+  items: [
+    { value: 'members', label: 'Members — visible to group members' },
+    { value: 'public',  label: 'Public — visible to everyone' },
+    { value: 'unlisted', label: 'Unlisted — accessible by link only' },
+    { value: 'private', label: 'Private — admins only' },
+  ],
+});
 
 // ---- types ------------------------------------------------------------------
 
@@ -1316,13 +1333,14 @@ interface CollectionHeaderProps {
   folder: (LibraryItem & { is_folder: true }) | null;
   allItems: LibraryItem[];
   isAdmin?: boolean;
-  onSaveEdit?: (title: string, summary: string) => Promise<void>;
+  onSaveEdit?: (title: string, summary: string, visibility: 'public' | 'members' | 'unlisted' | 'private') => Promise<void>;
 }
 
 function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }: CollectionHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editSummary, setEditSummary] = useState('');
+  const [editVisibility, setEditVisibility] = useState<'public' | 'members' | 'unlisted' | 'private'>('private');
   const [saving, setSaving] = useState(false);
 
   const hue = hueForName(collection.title);
@@ -1333,6 +1351,7 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
   const handleStartEdit = () => {
     setEditTitle(collection.title);
     setEditSummary(collection.summary ?? '');
+    setEditVisibility(collection.visibility ?? 'private');
     setIsEditing(true);
   };
 
@@ -1340,7 +1359,7 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
     if (!editTitle.trim()) return;
     setSaving(true);
     try {
-      await onSaveEdit?.(editTitle, editSummary);
+      await onSaveEdit?.(editTitle, editSummary, editVisibility);
       setIsEditing(false);
     } finally {
       setSaving(false);
@@ -1402,6 +1421,27 @@ function CollectionHeader({ collection, folder, allItems, isAdmin, onSaveEdit }:
             placeholder="Summary (optional)"
             fontSize="13px"
           />
+          <Select.Root
+            collection={VISIBILITY_OPTIONS}
+            value={[editVisibility]}
+            onValueChange={(e) => setEditVisibility(e.value[0] as typeof editVisibility)}
+            size="sm"
+          >
+            <Select.Trigger>
+              <Select.ValueText />
+            </Select.Trigger>
+            <Portal>
+              <Select.Positioner>
+                <Select.Content>
+                  {VISIBILITY_OPTIONS.items.map((opt) => (
+                    <Select.Item key={opt.value} item={opt}>
+                      {opt.label}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Positioner>
+            </Portal>
+          </Select.Root>
           <HStack gap={2}>
             <Button size="xs" onClick={handleSave} loading={saving} colorPalette="orange" variant="subtle">
               <Check size={12} />
@@ -1699,10 +1739,10 @@ export function CollectionsExplorer({ sponsor, initialCollectionId, isAdmin = fa
     setQ('');
   }, []);
 
-  const handleSaveEdit = useCallback(async (title: string, summary: string) => {
+  const handleSaveEdit = useCallback(async (title: string, summary: string, visibility: 'public' | 'members' | 'unlisted' | 'private') => {
     if (!nav.collectionId) return;
     try {
-      await updateMutation.mutateAsync({ collectionId: nav.collectionId, data: { title, summary } });
+      await updateMutation.mutateAsync({ collectionId: nav.collectionId, data: { title, summary, visibility } });
       toaster.create({ title: 'Collection updated', type: 'success' });
     } catch {
       toaster.create({ title: 'Failed to update collection', type: 'error' });
