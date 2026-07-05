@@ -141,6 +141,17 @@ export interface CollectionLinkContent {
   created_at: string;
 }
 
+// MediaCapture content - for screencast items
+export interface MediaCaptureContent {
+  id: string;
+  title: string;
+  purpose: string;
+  status: string;
+  source_type: string;
+  created_at: string;
+  has_transcript: boolean;
+}
+
 /**
  * LibraryItem (editorial overlay) - Polymorphic
  * Represents how content appears in a Collection
@@ -215,6 +226,25 @@ export type LibraryItem =
       parent_id: string | null;  // Hierarchy support
       order_index: number;
       folder_path: string;  // Legacy
+      tags: string[];
+      notes: string;
+      is_featured: boolean;
+      is_hidden: boolean;
+      created_at: string;
+      updated_at: string;
+    }
+  | {
+      // MediaCapture variant - screencasts
+      content_type: 'media_capture';
+      is_folder: false;
+      content: MediaCaptureContent;
+
+      // Editorial overlay fields (common)
+      id: string;
+      title: string;
+      parent_id: string | null;
+      order_index: number;
+      folder_path: string;
       tags: string[];
       notes: string;
       is_featured: boolean;

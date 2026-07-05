@@ -26,6 +26,7 @@ import {
   IconLink,
   IconUnlink,
   IconExternalLink,
+  IconVideo,
 } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -251,6 +252,49 @@ export function CollectionItemCard({
               </Text>
             )}
           </HStack>
+        </VStack>
+      );
+    }
+
+    if (item.content_type === 'media_capture') {
+      const { content } = item;
+      return (
+        <VStack
+          align="start"
+          gap={2}
+          flex={1}
+          cursor={onOpen ? 'pointer' : 'default'}
+          onClick={onOpen ? openItem : undefined}
+          _hover={onOpen ? { opacity: 0.8 } : undefined}
+        >
+          <HStack>
+            <Box color="var(--chakra-colors-purple-500)">
+              <IconVideo size={20} />
+            </Box>
+            <Text fontWeight="medium" fontSize="md">
+              {content.title || item.title || 'Untitled screencast'}
+            </Text>
+          </HStack>
+          <HStack gap={2} fontSize="sm">
+            <Badge colorPalette="purple" size="sm">
+              Screencast
+            </Badge>
+            {content.has_transcript && (
+              <Badge colorPalette="green" size="sm">
+                Transcript ready
+              </Badge>
+            )}
+            {content.created_at && (
+              <Text fontSize="xs" color="gray.600">
+                {formatDistanceToNow(new Date(content.created_at), { addSuffix: true })}
+              </Text>
+            )}
+          </HStack>
+          {content.purpose && (
+            <Text fontSize="sm" color="gray.600" lineClamp={2}>
+              {content.purpose}
+            </Text>
+          )}
         </VStack>
       );
     }

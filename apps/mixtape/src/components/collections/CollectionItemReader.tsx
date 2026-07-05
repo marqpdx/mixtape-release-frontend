@@ -11,7 +11,8 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import Link from 'next/link';
-import { IconArrowLeft, IconDownload, IconExternalLink } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconDownload, IconExternalLink } from '@tabler/icons-react';
+import { formatDistanceToNow } from 'date-fns';
 import type { LibraryItem } from '@mixtape/core/types/collectionTypes';
 import { useSourceFileContent } from '@mixtape/api/hooks';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
@@ -392,6 +393,144 @@ function WritingPieceReader({
   );
 }
 
+interface CaptureDetail {
+  capture_id: string;
+  title: string;
+  purpose: string;
+  status: string;
+  video_url?: string | null;
+  transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
+}
+
+function VideoBlobPlayer({ videoUrl }: { videoUrl: string }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    axiosInstance
+      .get(videoUrl, { responseType: 'blob' })
+      .then((res) => {
+        objectUrl = URL.createObjectURL(res.data);
+        setBlobUrl(objectUrl);
+      })
+      .catch(() => setLoadError(true));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [videoUrl]);
+
+  if (loadError) return <Text fontSize="sm" color="red.500">Video unavailable.</Text>;
+  if (!blobUrl) return (
+    <HStack gap={2} py={6} justify="center" color="gray.500">
+      <Spinner size="sm" />
+      <Text fontSize="sm">Loading video…</Text>
+    </HStack>
+  );
+  return (
+    <Box borderRadius="md" overflow="hidden" bg="black">
+      <video controls style={{ width: '100%', maxHeight: '400px', display: 'block' }}>
+        <source src={blobUrl} type="video/webm" />
+        <source src={blobUrl} type="video/mp4" />
+      </video>
+    </Box>
+  );
+}
+
+function MediaCaptureReader({ captureId, onBack }: { captureId: string; onBack: () => void }) {
+  const [detail, setDetail] = useState<CaptureDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    axiosInstance
+      .get(`/api/media-capture/${captureId}`)
+      .then((r) => setDetail(r.data))
+      .catch(() => setError('Could not load screencast.'))
+      .finally(() => setIsLoading(false));
+  }, [captureId]);
+
+  return (
+    <VStack align="stretch" gap={0}>
+      <Box pb={5}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          color="theme.textSecondary"
+          px={0}
+          _hover={{ color: 'theme.text' }}
+        >
+          <IconArrowLeft size={14} />
+          <Text ml={1} fontFamily="mono" fontSize="11px" letterSpacing="0.1em" textTransform="uppercase">
+            Back to collection
+          </Text>
+        </Button>
+      </Box>
+
+      {isLoading ? (
+        <Box py={16} textAlign="center">
+          <Spinner size="lg" color="theme.accent" />
+          <Text mt={4} color="theme.textSecondary">Loading screencast…</Text>
+        </Box>
+      ) : error || !detail ? (
+        <Box py={12}>
+          <Text color="red.500">{error || 'Screencast could not be loaded.'}</Text>
+        </Box>
+      ) : (
+        <VStack align="stretch" gap={5}>
+          <Box pb={5} borderBottom="1px solid" borderColor="theme.border">
+            <Text fontFamily="heading" fontSize={{ base: '2xl', md: '3xl' }} lineHeight="1.1" letterSpacing="-0.02em" color="theme.text" mb={2}>
+              {detail.title || 'Untitled screencast'}
+            </Text>
+            <HStack gap={2} flexWrap="wrap">
+              <Badge colorPalette="purple" variant="subtle">Screencast</Badge>
+              {detail.status === 'ready' && (
+                <Badge colorPalette="green" variant="subtle">Transcript ready</Badge>
+              )}
+            </HStack>
+            {detail.purpose && (
+              <Text mt={3} fontSize="md" color="theme.textSecondary">{detail.purpose}</Text>
+            )}
+          </Box>
+
+          {detail.video_url && <VideoBlobPlayer videoUrl={detail.video_url} />}
+
+          {detail.transcript?.raw_text && (
+            <Box>
+              <Text fontSize="xs" color="theme.textSecondary" mb={3} textTransform="uppercase" letterSpacing="0.08em">
+                Transcript
+              </Text>
+              <Box
+                bg="bg.subtle"
+                borderRadius="md"
+                p={5}
+                maxH="60vh"
+                overflowY="auto"
+                fontSize="sm"
+                lineHeight="1.85"
+                whiteSpace="pre-wrap"
+                color="theme.text"
+              >
+                {detail.transcript.raw_text}
+              </Box>
+              {detail.transcript.stackroom_ingested_at && (
+                <HStack gap={1} mt={2} color="green.600">
+                  <IconCheck size={13} />
+                  <Text fontSize="xs">
+                    Indexed {formatDistanceToNow(new Date(detail.transcript.stackroom_ingested_at), { addSuffix: true })}
+                  </Text>
+                </HStack>
+              )}
+            </Box>
+          )}
+        </VStack>
+      )}
+    </VStack>
+  );
+}
+
 export function CollectionItemReader({
   item,
   onBack,
@@ -409,6 +548,10 @@ export function CollectionItemReader({
 
   if (!item.is_folder && (!item.content_type || item.content_type === 'source_file')) {
     return <SourceFileReader item={item} onBack={onBack} />;
+  }
+
+  if (item.content_type === 'media_capture') {
+    return <MediaCaptureReader captureId={item.content.id} onBack={onBack} />;
   }
 
   return (
