@@ -227,7 +227,7 @@ export type LibraryItem =
  * Request to create a new LibraryItem (polymorphic)
  */
 export interface LibraryItemCreateRequest {
-  content_type: 'source_file' | 'writing_piece' | 'dispatch_post' | 'collection';
+  content_type: 'source_file' | 'writing_piece' | 'dispatch_post' | 'collection' | 'media_capture';
   content_id: string;
   title?: string;
   order_index?: number; // Auto if not provided

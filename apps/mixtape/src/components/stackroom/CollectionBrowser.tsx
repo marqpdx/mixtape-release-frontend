@@ -5,14 +5,17 @@
 import { useState } from 'react';
 import {
   Box,
-  Text,
+  Button,
   Badge,
   HStack,
+  Spinner,
+  Text,
   VStack,
-  Button,
 } from '@chakra-ui/react';
-import { IconFiles, IconFileText, IconFolders, IconUpload } from '@tabler/icons-react';
+import { IconFiles, IconFileText, IconFolders, IconUpload, IconVideo } from '@tabler/icons-react';
 import { useAvailableFiles, useAvailableDocuments, useCollections, useCreateLibraryItem } from '@mixtape/api/hooks/stackroom/useCollections';
+import { useQuery } from '@tanstack/react-query';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { AvailableFilesList } from './AvailableFilesList';
 import { AvailableDocumentsList } from './AvailableDocumentsList';
 import { AvailableCollectionsList } from './AvailableCollectionsList';
@@ -24,7 +27,7 @@ interface CollectionBrowserProps {
   onItemAdded?: () => void;
 }
 
-type TopFilter = 'upload' | 'writing' | 'collections' | 'uploaded';
+type TopFilter = 'upload' | 'writing' | 'collections' | 'uploaded' | 'screencasts';
 
 const TOP_FILTERS: { id: TopFilter; label: string; icon: React.ReactNode; help: string }[] = [
   {
@@ -51,6 +54,12 @@ const TOP_FILTERS: { id: TopFilter; label: string; icon: React.ReactNode; help: 
     icon: <IconFiles size={16} />,
     help: 'Add previously uploaded files from your library.',
   },
+  {
+    id: 'screencasts',
+    label: 'Screencasts',
+    icon: <IconVideo size={16} />,
+    help: 'Add a ready screencast (transcription complete) from your captures.',
+  },
 ];
 
 export function CollectionBrowser({
@@ -63,6 +72,14 @@ export function CollectionBrowser({
   const { documents, isLoading: docsLoading } = useAvailableDocuments(collectionId);
   const { collections, isLoading: collectionsLoading } = useCollections();
   const createMutation = useCreateLibraryItem();
+
+  const { data: captures = [], isLoading: capturesLoading } = useQuery<{
+    capture_id: string; title: string; status: string; created_at: string;
+  }[]>({
+    queryKey: ['media-captures'],
+    queryFn: () => axiosInstance.get('/api/media-capture/').then((r) => r.data),
+    enabled: activeTop === 'screencasts',
+  });
   const availableCollectionsCount = collections.filter(
     (collection) => collection.id !== collectionId
   ).length;
@@ -136,6 +153,23 @@ export function CollectionBrowser({
     }
   };
 
+  const handleAddScreencast = async (captureId: string, title: string) => {
+    try {
+      await createMutation.mutateAsync({
+        collectionId,
+        data: { content_type: 'media_capture', content_id: captureId, title },
+      });
+      toaster.create({ title: 'Screencast added', type: 'success' });
+      onItemAdded?.();
+    } catch (error: unknown) {
+      toaster.create({
+        title: 'Error adding screencast',
+        description: error instanceof Error ? error.message : 'Failed to add screencast',
+        type: 'error',
+      });
+    }
+  };
+
   const handleAddAllItems = async (sourceCollectionId: string) => {
     try {
       const response = await fetch(
@@ -201,6 +235,33 @@ export function CollectionBrowser({
           onAddFile={handleAddFile}
           isLoading={filesLoading}
         />
+      );
+    }
+
+    if (activeTop === 'screencasts') {
+      const ready = captures.filter((c) => c.status === 'ready');
+      if (capturesLoading) return <Spinner size="sm" />;
+      if (ready.length === 0) return (
+        <Text fontSize="sm" color="gray.500">No ready screencasts found. Record and transcribe a screencast first.</Text>
+      );
+      return (
+        <VStack align="stretch" gap={2}>
+          {ready.map((c) => (
+            <HStack key={c.capture_id} justify="space-between" px={3} py={2}
+              borderWidth="1px" borderColor="border" borderRadius="md">
+              <VStack align="start" gap={0}>
+                <Text fontSize="sm" fontWeight="medium">{c.title || 'Untitled screencast'}</Text>
+                <Text fontSize="xs" color="gray.500">
+                  {new Date(c.created_at).toLocaleDateString()}
+                </Text>
+              </VStack>
+              <Button size="xs" colorPalette="blue" variant="outline"
+                onClick={() => handleAddScreencast(c.capture_id, c.title || 'Untitled screencast')}>
+                Add
+              </Button>
+            </HStack>
+          ))}
+        </VStack>
       );
     }
 
