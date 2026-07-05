@@ -7,7 +7,7 @@ import { useColorModeValue } from '@mixtape/core';
 import { useStoryline, useDeleteLeaf } from '@mixtape/api/hooks/useLeaf';
 import { useComposerDraft } from './ComposerContext';
 import LeafCard from './LeafCard';
-import { useAuth } from '@/lib/auth/AuthContext';
+import type { UserIdentity } from '@mixtape/core/types/auth';
 
 function PreviewCard() {
   const ctx = useComposerDraft();
@@ -57,9 +57,8 @@ function PreviewCard() {
   );
 }
 
-export default function StorylineFeed() {
+export default function StorylineFeed({ user }: { user?: UserIdentity | null }) {
   const { data, isLoading, error } = useStoryline();
-  const { user } = useAuth();
   const deleteLeaf = useDeleteLeaf();
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
 
