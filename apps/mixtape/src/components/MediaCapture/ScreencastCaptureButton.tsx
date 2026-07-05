@@ -146,7 +146,9 @@ export function ScreencastCaptureButton({ groupSlug }: { groupSlug: string }) {
                     {pipelineState === "idle" && (
                       <Text fontSize="sm" color="fg.muted">
                         Click <strong>Start recording</strong> — your browser asks you to
-                        choose a screen or window. A floating control appears on every page
+                        choose what to share. Pick <strong>Entire Screen</strong> or a
+                        browser tab to capture navigation. Choosing a specific window
+                        records only that window. A floating control appears on every page
                         so you can pause, resume, or stop from anywhere.
                       </Text>
                     )}
