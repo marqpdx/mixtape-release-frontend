@@ -66,6 +66,7 @@ export function SeedNotebook({
 }: SeedNotebookProps) {
   const currentUser = useAuthStore((state) => state.user);
   const recentSeedsQuery = useRecentSeeds(20);
+  const [isUserRefreshing, setIsUserRefreshing] = useState(false);
   const createSeed = useCreateSeed();
   const createVoiceSeed = useCreateVoiceSeed();
   const deleteSeed = useDeleteSeed();
@@ -273,9 +274,10 @@ export function SeedNotebook({
         inverted
         refreshControl={
           <RefreshControl
-            refreshing={recentSeedsQuery.isRefetching}
+            refreshing={isUserRefreshing}
             onRefresh={() => {
-              void recentSeedsQuery.refetch();
+              setIsUserRefreshing(true);
+              void recentSeedsQuery.refetch().finally(() => setIsUserRefreshing(false));
             }}
             tintColor="#0E5AA7"
           />
@@ -540,38 +542,18 @@ export function SeedNotebook({
             isSubmittingText={createSeed.isPending}
             isSubmittingVoice={createVoiceSeed.isPending}
             onFocusChange={onFocusChange}
+            footerCenter={savedSeed ? (
+              <Text style={styles.savedTitle}>Saved</Text>
+            ) : null}
             footerExtraContent={
-              <>
-                {dispatch.confirmationVisible ? (
-                  <Animated.View
-                    style={[styles.dispatchConfirmation, { opacity: dispatch.confirmationOpacity }]}
-                    pointerEvents="none"
-                  >
-                    <Text style={styles.dispatchConfirmationText}>✓ Message sent</Text>
-                  </Animated.View>
-                ) : null}
-
-                <View
-                  style={[
-                    styles.savedPrompt,
-                    !savedSeed && styles.savedPromptHidden,
-                  ]}
-                  pointerEvents={savedSeed ? 'auto' : 'none'}
+              dispatch.confirmationVisible ? (
+                <Animated.View
+                  style={[styles.dispatchConfirmation, { opacity: dispatch.confirmationOpacity }]}
+                  pointerEvents="none"
                 >
-                  <Text style={styles.savedTitle}>Saved</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (savedSeed) {
-                        onDevelopSeed(savedSeed);
-                      }
-                    }}
-                    activeOpacity={0.8}
-                    disabled={!savedSeed}
-                  >
-                    <Text style={styles.savedLink}>Develop this?</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
+                  <Text style={styles.dispatchConfirmationText}>✓ Message sent</Text>
+                </Animated.View>
+              ) : null
             }
           />
         )}
@@ -690,24 +672,10 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.55,
   },
-  savedPrompt: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-    minHeight: 18,
-  },
-  savedPromptHidden: {
-    display: 'none',
-  },
   savedTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: '#2B6E44',
-  },
-  savedLink: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0E5AA7',
   },
   recentHeader: {
     marginBottom: 10,

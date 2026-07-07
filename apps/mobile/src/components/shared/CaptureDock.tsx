@@ -50,6 +50,8 @@ export interface CaptureDockProps {
   belowInputContent?: ReactNode;
   /** Rendered after the draft-status line, e.g. a "Saved" confirmation prompt. */
   footerExtraContent?: ReactNode;
+  /** Rendered in the footer row between the voice/record button and the send button. */
+  footerCenter?: ReactNode;
 }
 
 export interface CaptureDockHandle {
@@ -80,6 +82,7 @@ export const CaptureDock = forwardRef<CaptureDockHandle, CaptureDockProps>(funct
   onChangeTextOverride,
   belowInputContent,
   footerExtraContent,
+  footerCenter,
 }, ref) {
   const [captureText, setCaptureText] = useState('');
   const [captureFocused, setCaptureFocused] = useState(false);
@@ -257,7 +260,9 @@ export const CaptureDock = forwardRef<CaptureDockHandle, CaptureDockProps>(funct
             ) : null}
           </View>
         ) : (
-          <View style={styles.captureFooterSpacer} />
+          <View style={styles.captureFooterSpacer}>
+            {footerCenter ?? null}
+          </View>
         )}
 
         {voiceSessionActive ? (
@@ -374,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  captureFooterSpacer: { flex: 1 },
+  captureFooterSpacer: { flex: 1, justifyContent: 'center' },
   voiceInlineStatus: {
     flex: 1,
     minHeight: 0,
