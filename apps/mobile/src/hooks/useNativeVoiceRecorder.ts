@@ -1,5 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { Audio } from 'expo-av';
+
+/** Wait until AppState is 'active', with a 3s safety timeout so we don't hang. */
+function waitForForeground(): Promise<void> {
+  return new Promise((resolve) => {
+    if (AppState.currentState === 'active') {
+      resolve();
+      return;
+    }
+    const timeout = setTimeout(() => {
+      sub.remove();
+      resolve();
+    }, 3000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        clearTimeout(timeout);
+        sub.remove();
+        resolve();
+      }
+    });
+  });
+}
 
 export interface RecordedClip {
   uri: string;
@@ -71,6 +93,12 @@ export function useNativeVoiceRecorder(): UseNativeVoiceRecorderReturn {
         setCanOpenSettings(!permission.canAskAgain);
         return;
       }
+
+      // iOS returns the permission result while the app may still be transitioning
+      // back to foreground after the system permission sheet dismisses. Activating
+      // the audio session before the app is fully active triggers EXModulesErrorDomain
+      // "experience is currently in the background." Wait until AppState is 'active'.
+      await waitForForeground();
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
