@@ -56,6 +56,15 @@ function selectVisibleSeeds(seeds: Seed[]): Seed[] {
   return seeds;
 }
 
+function TranscribingText({ style }: { style: object }) {
+  const [dots, setDots] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setDots((d) => (d + 1) % 4), 800);
+    return () => clearInterval(id);
+  }, []);
+  return <Text style={style}>{'Transcription in progress' + '.'.repeat(dots)}</Text>;
+}
+
 const CAPTURE_DRAFT_KEY_PREFIX = 'mixtape.mobile.seedDraft';
 
 export function SeedNotebook({
@@ -357,7 +366,11 @@ export function SeedNotebook({
                 </>
               ) : (
                 <>
-                  <Text style={styles.seedBody}>{item.body_text || 'Empty Seed'}</Text>
+                  {item.kind === 'voice' && item.status === 'processing' ? (
+                    <TranscribingText style={styles.seedBody} />
+                  ) : (
+                    <Text style={styles.seedBody}>{item.body_text || 'Empty Seed'}</Text>
+                  )}
                   <View style={styles.seedActions}>
                     <Text style={styles.seedTapHint}>Tap to edit inline</Text>
                     <View style={styles.seedPrimaryActions}>
