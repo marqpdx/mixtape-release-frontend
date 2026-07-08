@@ -139,7 +139,8 @@ function MainTabs() {
         name="Connect"
         component={MyChatsScreen}
         options={{
-          tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? '99+' : totalUnread) : undefined,
+          tabBarBadge: totalUnread > 0 ? '' : undefined,
+          tabBarBadgeStyle: { minWidth: 10, height: 10, borderRadius: 5, paddingHorizontal: 0 },
         }}
         listeners={{ focus: () => persistLastTab('Connect') }}
       />
