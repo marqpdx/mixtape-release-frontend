@@ -29,6 +29,42 @@ const FEEDBACK_STATUS_OPTIONS: Array<FeedbackStatus | "all"> = [
   "wontfix",
 ];
 
+function getGroupSlugFromUrl(pageUrl: string): string | null {
+  try {
+    const path = new URL(pageUrl).pathname;
+    const m = path.match(/^\/groups\/([^/?#]+)/);
+    return m?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const WORK_AREA_LABELS: Record<string, string> = {
+  start: "Overview",
+  introduce: "Introduce",
+  share: "Share",
+  converse: "Converse",
+  members: "Members",
+  writing: "Writing",
+  almanac: "Almanac",
+  files: "Collections",
+  findings: "Findings",
+};
+
+function getGroupWorkArea(pageUrl: string): string | null {
+  if (typeof window === "undefined") return null;
+  const slug = getGroupSlugFromUrl(pageUrl);
+  if (!slug) return null;
+  try {
+    const raw = localStorage.getItem(`gld:${slug}:active`);
+    if (!raw) return null;
+    if (raw.startsWith("discussion:")) return "Discussion";
+    return WORK_AREA_LABELS[raw] ?? raw;
+  } catch {
+    return null;
+  }
+}
+
 function splitIssueContext(message: string): { cleanMessage: string; context: string | null } {
   const match = message.match(/\[ctx:\s*(.*)\](?=\s|$)/i);
   const context = match?.[1]?.trim() || null;
@@ -76,6 +112,7 @@ export default function FeedbackChecklistPage() {
   const [editingMessage, setEditingMessage] = useState("");
   const [kind, setKind] = useState<FeedbackKind | "all">("all");
   const [status, setStatus] = useState<FeedbackStatus | "all">("all");
+  const [submitterFilter, setSubmitterFilter] = useState<string>("all");
   const [filtersReady, setFiltersReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -137,12 +174,28 @@ export default function FeedbackChecklistPage() {
     setSelectedIds((prev) => prev.filter((id) => items.some((item) => item.id === id && item.status !== "shipped")));
   }, [items]);
 
+  const submitters = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const item of items) {
+      const key = item.user_username ?? "";
+      if (key && !seen.has(key)) {
+        seen.set(key, item.user_first_name?.trim() || item.user_username || key);
+      }
+    }
+    return Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [items]);
+
+  const visibleItems = useMemo(() => {
+    if (submitterFilter === "all") return items;
+    return items.filter((item) => (item.user_username ?? "") === submitterFilter);
+  }, [items, submitterFilter]);
+
   const emptyMessage = useMemo(() => {
     if (loading) return "";
     if (error) return error;
-    if (items.length === 0) return "No checklist items yet.";
+    if (visibleItems.length === 0) return items.length > 0 ? "No items match the current filters." : "No checklist items yet.";
     return "";
-  }, [error, items.length, loading]);
+  }, [error, items.length, visibleItems.length, loading]);
 
   const removeWithFade = useCallback((ids: string[]) => {
     if (ids.length === 0) return;
@@ -224,7 +277,7 @@ export default function FeedbackChecklistPage() {
     });
   };
 
-  const selectableIds = items.filter((item) => item.status !== "shipped").map((item) => item.id);
+  const selectableIds = visibleItems.filter((item) => item.status !== "shipped").map((item) => item.id);
   const resettableSentToAgentIds = selectedIds.filter((id) =>
     items.some((item) => item.id === id && item.status === "sent_to_agent")
   );
@@ -302,8 +355,8 @@ export default function FeedbackChecklistPage() {
   };
 
   const selectedIssues = useMemo(
-    () => items.filter((item) => selectedIds.includes(item.id) && item.kind === "issue"),
-    [items, selectedIds]
+    () => visibleItems.filter((item) => selectedIds.includes(item.id) && item.kind === "issue"),
+    [visibleItems, selectedIds]
   );
 
   const buildCodexBrief = () => {
@@ -414,6 +467,19 @@ Notes:
             <NativeSelect.Indicator />
           </NativeSelect.Root>
 
+          <NativeSelect.Root w={{ base: "full", md: "200px" }}>
+            <NativeSelect.Field
+              value={submitterFilter}
+              onChange={(event) => setSubmitterFilter(event.currentTarget.value)}
+            >
+              <option value="all">All submitters</option>
+              {submitters.map(([username, label]) => (
+                <option key={username} value={username}>{label}</option>
+              ))}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+
           <Button
             size="sm"
             variant="outline"
@@ -512,7 +578,7 @@ Notes:
         ) : null}
 
         <VStack align="stretch" gap={3}>
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             <Box
               key={item.id}
               borderWidth="1px"
@@ -580,6 +646,12 @@ Notes:
               {item.page_url ? (
                 <Text mt={2} fontSize="xs" color="fg.muted">Page: {formatPageLabel(item.page_url)}</Text>
               ) : null}
+              {item.page_url && getGroupSlugFromUrl(item.page_url) ? (() => {
+                const area = getGroupWorkArea(item.page_url);
+                return area ? (
+                  <Text fontSize="xs" color="fg.muted">Active area: {area}</Text>
+                ) : null;
+              })() : null}
               {splitIssueContext(item.message).context ? (
                 <Text fontSize="xs" color="fg.muted">Context: {splitIssueContext(item.message).context}</Text>
               ) : null}
