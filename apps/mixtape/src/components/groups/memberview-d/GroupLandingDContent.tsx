@@ -3,8 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Flex, Grid, Image, Text, Button } from "@chakra-ui/react";
-import NextLink from "next/link";
+import { Box, Flex, Grid, Image, Text } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDiscussion } from "@mixtape/api/clients/threadworks/threadworksApi";
 import {
@@ -384,57 +383,6 @@ export function GroupLandingDIntroduce({ viewData, initialMemberUsername }: Intr
 
   return (
     <Flex direction="column" gap={4} className="gld-introduce-root">
-      {/* Intro prompt banner */}
-      <Box
-        className="gld-intro-prompt"
-        borderWidth="1px"
-        borderStyle="dashed"
-        borderColor="theme.accent"
-        borderRadius="14px"
-        px={5}
-        py={4}
-        bg="theme.accentSoft"
-      >
-        <Flex align="center" gap={4}>
-          <Flex
-            w="40px"
-            h="40px"
-            borderRadius="full"
-            bg="theme.accent"
-            align="center"
-            justify="center"
-            color="white"
-            flexShrink={0}
-            fontSize="16px"
-            fontWeight="700"
-          >
-            Me
-          </Flex>
-          <Box flex="1">
-            <Text fontWeight="600" fontSize="15px" color="theme.text">
-              Introduce yourself
-            </Text>
-            <Text fontSize="14px" color="theme.textSecondary">
-              Add a photo, a short bio, and what you're here for.
-            </Text>
-          </Box>
-          <Button
-            size="sm"
-            bg="theme.accent"
-            color="white"
-            borderRadius="10px"
-            fontWeight="600"
-            _hover={{ opacity: 0.9 }}
-            flexShrink={0}
-            asChild
-          >
-            <NextLink href="/dashboard?section=edit-profile">
-              Set up profile
-            </NextLink>
-          </Button>
-        </Flex>
-      </Box>
-
       {/* Member intros card */}
       <Card className="gld-member-intros-card">
         {selectedMember?.username ? (
