@@ -115,8 +115,6 @@ export default function UnifiedNavbar({
 }: UnifiedNavbarProps) {
   const pathname = usePathname();
   const { user: identity, logout, isLoading } = useAuth();
-  // const { isAdmin, isSteward, isMember } = usePermissions();
-  // const { isAdmin, isSteward, isMember } = usePermissions({ user: identity });
   const { open, onOpen, onClose } = useDisclosure();
   const logoColor = useColorModeValue('black', 'white');
   const navBackground = useColorModeValue("rgba(255, 255, 255, 0.75)", "rgba(17, 24, 39, 0.75)");
@@ -127,6 +125,9 @@ export default function UnifiedNavbar({
     process.env.NODE_ENV === "development"
       ? "http://127.0.0.1:3011/app/login"
       : "/app/login";
+
+  const isAdmin = !!(identity?.is_staff || identity?.is_superuser);
+  const isSteward = !!(identity?.roles?.includes('steward')) || isAdmin;
 
   // Auto-detect section if not provided.
   // Straddle paths (/members/, /group/) show authenticated nav for logged-in users
@@ -148,8 +149,6 @@ export default function UnifiedNavbar({
 
   // For rendering purposes, both /admin and /dashboard use authenticated nav
   const navSection: NavSection = detectedSection;
-
-  const { isAdmin, isSteward } = { isAdmin: false, isSteward: false };
   const getMemberProfileHref = () => {
     if (!identity?.username) return resolveHref('/members/{username}');
     let href = resolveHref('/members/{username}');
