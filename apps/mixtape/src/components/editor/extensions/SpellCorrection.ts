@@ -65,16 +65,48 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
   addProseMirrorPlugins() {
     const { onOpen, modifierKey, getCorrection, recordUsage } = this.options;
 
+    // Tracks the most recent autocorrect so backspace can undo it.
+    // Cleared on any keydown that isn't Backspace.
+    let lastAutoCorrect: {
+      original: string;
+      from: number;
+      correctionEnd: number;
+    } | null = null;
+
     return [
       new Plugin({
         key: new PluginKey('spellCorrection'),
 
         props: {
           handleDOMEvents: {
+            keydown(view, event) {
+              // If Backspace fires immediately after an autocorrect and the
+              // cursor is still at the end of the replacement, undo it.
+              if (event.key === 'Backspace' && lastAutoCorrect) {
+                const { state } = view;
+                const cursorPos = state.selection.from;
+                const { original, from, correctionEnd } = lastAutoCorrect;
+                lastAutoCorrect = null;
+
+                if (cursorPos === correctionEnd) {
+                  event.preventDefault();
+                  const tr = state.tr.insertText(original, from, correctionEnd);
+                  view.dispatch(tr);
+                  return true;
+                }
+                return false;
+              }
+
+              // Any other key clears the undo window.
+              lastAutoCorrect = null;
+              return false;
+            },
+
             keyup(view, event) {
               if (!getCorrection) return false;
               if (event.isComposing) return false;
 
+              // Non-boundary key: undo window already cleared by keydown.
               const boundaryChars = new Set([
                 ' ', 'Enter', 'Tab', '.', ',', ';', ':', '!', '?', ')', ']', '}', '"', "'",
               ]);
@@ -107,6 +139,15 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
               const tr = state.tr.insertText(correction, absoluteFrom, absoluteTo);
               view.dispatch(tr);
               recordUsage?.(word);
+
+              // Record undo window. After insertText the cursor lands at
+              // absoluteFrom + correction.length.
+              lastAutoCorrect = {
+                original: word,
+                from: absoluteFrom,
+                correctionEnd: absoluteFrom + correction.length,
+              };
+
               return false;
             },
             dblclick(view, event) {

@@ -211,6 +211,18 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const [spellPopupState, setSpellPopupState] = useState<SpellCorrectionState | null>(null);
   const spellDictionary = useSpellDictionary();
 
+  // Refs keep the latest dictionary functions without recreating the editor when
+  // the dictionary loads (API corrections arrive async after editor init).
+  const getCorrectionRef = useRef(spellDictionary.getCorrection);
+  const recordUsageRef = useRef(spellDictionary.recordUsage);
+  useEffect(() => { getCorrectionRef.current = spellDictionary.getCorrection; }, [spellDictionary.getCorrection]);
+  useEffect(() => { recordUsageRef.current = spellDictionary.recordUsage; }, [spellDictionary.recordUsage]);
+
+  // Stable wrappers — these never change reference, so the extension plugin
+  // always reads the current dictionary without triggering editor recreation.
+  const stableGetCorrection = useCallback((word: string) => getCorrectionRef.current(word), []);
+  const stableRecordUsage = useCallback((word: string) => recordUsageRef.current(word), []);
+
   // Stable callback for opening spell popup (called by extension)
   const handleSpellOpen = useCallback((state: SpellCorrectionState) => {
     setSpellPopupState(state);
@@ -222,14 +234,14 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     editorRef.current?.commands.focus();
   }, []);
 
-  // Stable extension config - only recreated if callbacks change (they won't)
+  // Config never changes after mount — extension plugin always calls latest fns via refs.
   const spellCorrectionConfig = useMemo(() => ({
     onOpen: handleSpellOpen,
     onClose: handleSpellClose,
     modifierKey: 'meta' as const,
-    getCorrection: spellDictionary.getCorrection,
-    recordUsage: spellDictionary.recordUsage,
-  }), [handleSpellOpen, handleSpellClose, spellDictionary.getCorrection, spellDictionary.recordUsage]);
+    getCorrection: stableGetCorrection,
+    recordUsage: stableRecordUsage,
+  }), [handleSpellOpen, handleSpellClose, stableGetCorrection, stableRecordUsage]);
 
   // Apply correction handler (needs editor, called by popup)
   const handleSpellApplyOnce = useCallback((originalWord: string, correction: string) => {
@@ -494,6 +506,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       attributes: {
         class: "editor-content",
         placeholder,
+        spellcheck: "true",
       },
       handlePaste: (_view, event) => {
         if (!imageUploadRef.current) return false;

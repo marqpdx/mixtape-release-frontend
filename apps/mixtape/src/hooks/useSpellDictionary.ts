@@ -15,6 +15,7 @@ import {
   useUserDictionary,
   useUpsertUserDictionaryEntry,
 } from '@mixtape/api';
+import { COMMON_TYPOS } from '@/lib/spell/commonTypos';
 
 const STORAGE_KEY = 'mixtape-spell-dictionary';
 
@@ -44,38 +45,7 @@ const DEFAULT_DICTIONARY: SpellDictionary = {
   ignores: [],
 };
 
-const SEED_CORRECTIONS: Omit<SpellCorrection, 'addedAt' | 'usageCount'>[] = [
-  { wrong: 'teh', correct: 'the' },
-  { wrong: 'adn', correct: 'and' },
-  { wrong: 'taht', correct: 'that' },
-  { wrong: 'waht', correct: 'what' },
-  { wrong: 'wiht', correct: 'with' },
-  { wrong: 'hte', correct: 'the' },
-  { wrong: 'dont', correct: "don't" },
-  { wrong: 'wont', correct: "won't" },
-  { wrong: 'cant', correct: "can't" },
-  { wrong: 'didnt', correct: "didn't" },
-  { wrong: 'doesnt', correct: "doesn't" },
-  { wrong: 'isnt', correct: "isn't" },
-  { wrong: 'wasnt', correct: "wasn't" },
-  { wrong: 'werent', correct: "weren't" },
-  { wrong: 'havent', correct: "haven't" },
-  { wrong: 'hasnt', correct: "hasn't" },
-  { wrong: 'hadnt', correct: "hadn't" },
-  { wrong: 'wouldnt', correct: "wouldn't" },
-  { wrong: 'couldnt', correct: "couldn't" },
-  { wrong: 'shouldnt', correct: "shouldn't" },
-  { wrong: 'recieve', correct: 'receive' },
-  { wrong: 'occured', correct: 'occurred' },
-  { wrong: 'seperate', correct: 'separate' },
-  { wrong: 'definately', correct: 'definitely' },
-  { wrong: 'occassion', correct: 'occasion' },
-  { wrong: 'untill', correct: 'until' },
-  { wrong: 'accross', correct: 'across' },
-  { wrong: 'beleive', correct: 'believe' },
-  { wrong: 'begining', correct: 'beginning' },
-  { wrong: 'arguement', correct: 'argument' },
-];
+const SEED_CORRECTIONS: Omit<SpellCorrection, 'addedAt' | 'usageCount'>[] = COMMON_TYPOS;
 
 export function useSpellDictionary() {
   const { data: apiCorrections, isError: apiFailed } = useSpellCorrections();
