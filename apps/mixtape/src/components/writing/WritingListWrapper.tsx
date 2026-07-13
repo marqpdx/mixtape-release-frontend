@@ -139,7 +139,7 @@ export default function WritingListWrapper({
   // A dedicated can__RecordMedia decorator can replace can__ManageWriting when the
   // permission system is extended.
   const groupPerms = useGroupPermissions(
-    sponsor.type === "group" ? sponsor.slug : "__none__"
+    sponsor.type === "group" ? sponsor.slug : ""
   );
   const [dateSortOrder, setDateSortOrder] = useState<"desc" | "asc">("desc");
   const [dateSortField, setDateSortField] = useState<"recent" | "created">("recent");

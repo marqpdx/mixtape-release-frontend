@@ -865,6 +865,12 @@ export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) 
   const { groups } = useUserGroups();
 
   const [activeSection, setActiveSection] = useState<SectionKey>(safeInitial);
+  const [sectionParams, setSectionParams] = useState<Record<string, string> | undefined>(undefined);
+
+  const handleSetActiveSection = (s: string, params?: Record<string, string>) => {
+    setActiveSection(s as SectionKey);
+    setSectionParams(params);
+  };
 
   if (!identity) return null;
 
@@ -933,7 +939,8 @@ export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) 
               >
                 <MemberWorkArea
                   section={activeSection}
-                  setActiveSection={(s) => setActiveSection(s as SectionKey)}
+                  sectionParams={sectionParams}
+                  setActiveSection={handleSetActiveSection}
                   identity={identity}
                 />
               </Box>
