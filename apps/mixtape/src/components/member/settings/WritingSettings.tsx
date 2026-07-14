@@ -26,6 +26,9 @@ import {
   useSubmitSpellSuggestion,
   useApproveSpellSuggestion,
   useRejectSpellSuggestion,
+  useUserDictionary,
+  useUpsertUserDictionaryEntry,
+  useDeleteUserDictionaryEntry,
 } from '@mixtape/api/hooks/spellbook';
 import { toaster } from '@mixtape/core/lib/toaster';
 
@@ -132,6 +135,38 @@ export function WritingSettings() {
     }
   }, [rejectSuggestion]);
 
+  // My Shortcuts (personal text expansions)
+  const { data: userDictionary } = useUserDictionary();
+  const upsertEntry = useUpsertUserDictionaryEntry();
+  const deleteEntry = useDeleteUserDictionaryEntry();
+  const myShortcuts = (userDictionary?.entries ?? []).filter(e => e.kind === 'replace');
+  const [shortcut, setShortcut] = useState('');
+  const [expansion, setExpansion] = useState('');
+
+  const handleAddShortcut = useCallback(async () => {
+    if (!shortcut.trim() || !expansion.trim()) {
+      toaster.create({ title: 'Both fields required', type: 'warning', duration: 2000 });
+      return;
+    }
+    try {
+      await upsertEntry.mutateAsync({ kind: 'replace', token: shortcut.trim(), display: shortcut.trim(), replacement: expansion.trim() });
+      toaster.create({ title: 'Shortcut added', type: 'success', duration: 1500 });
+      setShortcut('');
+      setExpansion('');
+    } catch (err) {
+      toaster.create({ title: 'Failed', description: (err as Error).message, type: 'error', duration: 3000 });
+    }
+  }, [shortcut, expansion, upsertEntry]);
+
+  const handleDeleteShortcut = useCallback(async (id: string) => {
+    try {
+      await deleteEntry.mutateAsync(id);
+      toaster.create({ title: 'Shortcut removed', type: 'info', duration: 1500 });
+    } catch (err) {
+      toaster.create({ title: 'Delete failed', description: (err as Error).message, type: 'error', duration: 3000 });
+    }
+  }, [deleteEntry]);
+
   return (
     <VStack align="stretch" gap={6}>
       {/* Writing Preferences */}
@@ -192,6 +227,72 @@ export function WritingSettings() {
             </Switch.Root>
           </HStack>
         </VStack>
+      </Box>
+
+      {/* My Shortcuts */}
+      <Box p={4} bg={cardBg} border="1px" borderColor={borderColor} borderRadius="md">
+        <Box mb={4}>
+          <Heading size="sm">My Shortcuts</Heading>
+          <Text fontSize="xs" color={mutedColor} mt={0.5}>
+            Type a shorthand and it expands automatically as you write. Works inline and in spell check.
+          </Text>
+        </Box>
+
+        <HStack gap={2} mb={4}>
+          <Input
+            value={shortcut}
+            onChange={(e) => setShortcut(e.target.value)}
+            placeholder="Shorthand (e.g. b/c)"
+            size="sm"
+            flex="1"
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleAddShortcut(); }}
+          />
+          <Text color={mutedColor}>→</Text>
+          <Input
+            value={expansion}
+            onChange={(e) => setExpansion(e.target.value)}
+            placeholder="Expansion (e.g. because)"
+            size="sm"
+            flex="1"
+            onKeyDown={(e) => { if (e.key === 'Enter') void handleAddShortcut(); }}
+          />
+          <Button size="sm" colorPalette="blue" onClick={() => void handleAddShortcut()} loading={upsertEntry.isPending}>
+            Add
+          </Button>
+        </HStack>
+
+        {myShortcuts.length > 0 ? (
+          <Table.Root size="sm">
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeader>Shorthand</Table.ColumnHeader>
+                <Table.ColumnHeader>Expansion</Table.ColumnHeader>
+                <Table.ColumnHeader w="40px" />
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {myShortcuts.map(entry => (
+                <Table.Row key={entry.id}>
+                  <Table.Cell fontFamily="mono" fontSize="sm">{entry.display || entry.token}</Table.Cell>
+                  <Table.Cell fontSize="sm">{entry.replacement}</Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorPalette="red"
+                      onClick={() => void handleDeleteShortcut(entry.id)}
+                      loading={deleteEntry.isPending}
+                    >
+                      ×
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        ) : (
+          <Text fontSize="sm" color={mutedColor}>No shortcuts yet.</Text>
+        )}
       </Box>
 
       {/* Spell Dictionary */}

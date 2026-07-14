@@ -14,6 +14,7 @@ import {
   useRecordCorrectionUsage,
   useUserDictionary,
   useUpsertUserDictionaryEntry,
+  useDeleteUserDictionaryEntry,
 } from '@mixtape/api';
 import { COMMON_TYPOS } from '@/lib/spell/commonTypos';
 
@@ -52,6 +53,7 @@ export function useSpellDictionary() {
   const { data: userDictionary } = useUserDictionary();
   const recordUsageMutation = useRecordCorrectionUsage();
   const upsertUserEntry = useUpsertUserDictionaryEntry();
+  const deleteUserEntryMutation = useDeleteUserDictionaryEntry();
 
   const [localDictionary, setLocalDictionary] = useState<SpellDictionary>(DEFAULT_DICTIONARY);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -313,6 +315,10 @@ export function useSpellDictionary() {
     return false;
   }, []);
 
+  const deleteUserEntry = useCallback((entryId: string) => {
+    deleteUserEntryMutation.mutate(entryId);
+  }, [deleteUserEntryMutation]);
+
   return {
     dictionary: {
       ...localDictionary,
@@ -321,6 +327,7 @@ export function useSpellDictionary() {
     },
     isLoaded: isLoaded && !apiFailed,
     corrections,
+    userEntries: userDictionary?.entries ?? [],
     addCorrection: addReplacement,
     addReplacement,
     addIgnore,
@@ -328,6 +335,7 @@ export function useSpellDictionary() {
     removeCorrection,
     getCorrection,
     recordUsage,
+    deleteUserEntry,
     exportDictionary,
     importDictionary,
   };

@@ -48,9 +48,18 @@ export interface ApprovalResult {
   correction: SpellCorrection;
 }
 
+export interface UserDictionaryEntryRecord {
+  id: string;
+  kind: 'ignore' | 'replace';
+  token: string;
+  display: string;
+  replacement: string;
+}
+
 export interface UserDictionaryPayload {
   ignores: string[];
   replacements: Record<string, string>;
+  entries: UserDictionaryEntryRecord[];
 }
 
 export interface UserDictionaryEntryPayload {
@@ -212,6 +221,14 @@ class SpellbookApi {
   async upsertUserDictionaryEntry(payload: UserDictionaryEntryPayload): Promise<void> {
     try {
       await this.client.post('/api/spellbook/dictionary/entries', payload);
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async deleteUserDictionaryEntry(entryId: string): Promise<void> {
+    try {
+      await this.client.delete(`/api/spellbook/dictionary/entries/${entryId}/`);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }

@@ -106,6 +106,16 @@ export function useUpsertUserDictionaryEntry() {
   });
 }
 
+export function useDeleteUserDictionaryEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) => spellbookApi.deleteUserDictionaryEntry(entryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: spellbookKeys.userDictionary() });
+    },
+  });
+}
+
 // ============================================================================
 // SUGGESTIONS HOOKS
 // ============================================================================

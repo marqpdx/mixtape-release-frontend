@@ -19,6 +19,7 @@ import {
   IconHelpCircle,
   IconScissors,
   IconPhoto,
+  IconSpellcheck,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -31,10 +32,12 @@ export default function TipTapToolbar({
   editor,
   gristMode = false,
   onImagePick,
+  onSpellScan,
 }: {
   editor: Editor | null
   gristMode?: boolean
   onImagePick?: (file: File) => void
+  onSpellScan?: () => void
 }) {
   const { user } = useAuth();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -297,6 +300,19 @@ export default function TipTapToolbar({
             <IconShare size={16} />
           </IconButton>
         </Tooltip>
+        {onSpellScan && (
+          <Tooltip content="Check Spelling">
+            <IconButton
+              size="xs"
+              variant="ghost"
+              onClick={onSpellScan}
+              tabIndex={-1}
+              aria-label="Check spelling"
+            >
+              <IconSpellcheck size={16} />
+            </IconButton>
+          </Tooltip>
+        )}
         {isSuperuser ? (
           <Tooltip content="Writing Help">
             <IconButton

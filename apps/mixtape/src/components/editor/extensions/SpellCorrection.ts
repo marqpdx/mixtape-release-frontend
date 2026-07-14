@@ -123,8 +123,13 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
                 end--;
               }
               let start = end;
-              while (start > 0 && /\w/.test(text[start - 1])) {
-                start--;
+              // Walk back through word chars, also crossing a single '/' when
+              // the char before it is also a word char (catches b/c, w/, and/or).
+              while (start > 0) {
+                const ch = text[start - 1];
+                if (/\w/.test(ch)) { start--; continue; }
+                if (ch === '/' && start >= 2 && /\w/.test(text[start - 2])) { start--; continue; }
+                break;
               }
               const word = text.slice(start, end);
               if (!word || word.length < 2) return false;

@@ -32,6 +32,7 @@ import TipTapToolbar from "./TipTapToolbar";
 import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
+import { SpellScanDialog } from "./SpellScanDialog";
 import { useSpellDictionary } from "@/hooks/useSpellDictionary";
 import { useUsers } from "@mixtape/api/hooks";
 import { SegmentBoundary, SegmentBoundaryAttrs } from "./extensions/SegmentBoundary";
@@ -209,6 +210,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
   // Spell correction state and handlers (direct implementation for stable references)
   const [spellPopupState, setSpellPopupState] = useState<SpellCorrectionState | null>(null);
+  const [spellScanOpen, setSpellScanOpen] = useState(false);
   const spellDictionary = useSpellDictionary();
 
   // Refs keep the latest dictionary functions without recreating the editor when
@@ -804,6 +806,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           editor={editor}
           gristMode={!!gristMode}
           onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}
+          onSpellScan={() => setSpellScanOpen(true)}
         />
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
@@ -827,7 +830,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         <InkwellControls editor={editor} />
       </Box> */}
 
-      {/* Spell Correction Popup - PocketTools */}
+      {/* Spell Correction Popup - PocketTools (Cmd+double-click) */}
       <SpellCorrectionPopup
         state={spellPopupState}
         onApplyOnce={handleSpellApplyOnce}
@@ -835,6 +838,16 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         onAddToDictionary={handleSpellAddToDictionary}
         onClose={handleSpellClose}
       />
+
+      {/* Sequential spell-check scan dialog */}
+      {spellScanOpen && editor && (
+        <SpellScanDialog
+          editor={editor}
+          getCorrection={spellDictionary.getCorrection}
+          addReplacement={spellDictionary.addReplacement}
+          onClose={() => setSpellScanOpen(false)}
+        />
+      )}
       {mentionState && mentionSuggestions.length > 0 ? (
         <Box
           position="fixed"
