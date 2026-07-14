@@ -121,6 +121,7 @@ export function useWriting(
     queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter],
     queryFn: () => writingApi.fetchDrafts(sponsorType, sponsorSlug, draftFilter),
     enabled: !!sponsorSlug,
+    refetchOnMount: "always",
   });
 
   const mapPieceToPlacement = (piece: WritingPiece): FlattenedPlacement => {

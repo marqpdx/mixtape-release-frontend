@@ -58,6 +58,7 @@ type YDocWithMeta = Y.Doc & {
   __serverSynced?: boolean;
   __didSeed?: boolean;
   __initialContent?: JSONContent | string;
+  __forceOverwrite?: boolean;
 };
 
 const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollabEditorProps>(
@@ -160,6 +161,17 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
           // If we never saw the sync ack, do NOT seed.
           // Seeding without sync is the classic way to create duplication.
           console.warn("⚠️ [CollabEditor] Never saw __serverSynced; skipping seed to avoid duplication");
+          return;
+        }
+
+        // Force-overwrite path: yjs_state was cleared by an external save (DualPanelEditor).
+        // The Livewire room may be alive in memory with stale content — override it.
+        if (ydocWithMeta.__forceOverwrite && contentToSeed) {
+          console.log("🔥 [CollabEditor] Force-overwriting stale Yjs room state with content_snapshot");
+          editor?.commands.setContent(contentToSeed, { emitUpdate: true });
+          ydocWithMeta.__didSeed = true;
+          delete ydocWithMeta.__initialContent;
+          delete ydocWithMeta.__forceOverwrite;
           return;
         }
 

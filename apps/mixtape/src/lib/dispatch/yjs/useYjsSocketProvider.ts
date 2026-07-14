@@ -26,6 +26,7 @@ type YDocWithMeta = Y.Doc & {
   __yjsRoomId?: string;
   __dispatchContentId?: string;
   __initialContent?: Record<string, unknown>;
+  __forceOverwrite?: boolean;
 };
 
 type SyncPayload = { documentId?: string };
@@ -142,25 +143,27 @@ export function useYjsSocketProvider(
       doc.__yjsRoomId = roomId;
       doc.__dispatchContentId = contentId;
 
-      // 3) If empty, fetch content_snapshot for seeding (TipTap will seed it)
+      // 3) Fetch content_snapshot for seeding (TipTap will seed it)
+      // Always fetch so we can detect external_update (yjs_state_updated_at === null)
       try {
-        const frag = doc.getXmlFragment("default");
-        const isEmpty = frag.length === 0;
+        console.log("🌱 [YjsProvider] fetching content_snapshot:", contentId);
+        const contentRes = await axiosInstance.get(`/api/dispatch/content/${contentId}`);
+        if (didCancel) return;
 
-        if (isEmpty) {
-          console.log("🌱 [YjsProvider] doc empty; fetching content_snapshot:", contentId);
-          const contentRes = await axiosInstance.get(`/api/dispatch/content/${contentId}`);
-          if (didCancel) return;
-
-          const contentSnapshot = contentRes.data?.content_snapshot as Record<string, unknown> | undefined;
-          if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
-            doc.__initialContent = contentSnapshot;
-            console.log("✅ [YjsProvider] stored snapshot for seeding");
-          } else {
-            console.log("ℹ️ [YjsProvider] no content_snapshot found");
-          }
+        const contentSnapshot = contentRes.data?.content_snapshot as Record<string, unknown> | undefined;
+        if (contentSnapshot && Object.keys(contentSnapshot).length > 0) {
+          doc.__initialContent = contentSnapshot;
+          console.log("✅ [YjsProvider] stored snapshot for seeding");
         } else {
-          console.log("✅ [YjsProvider] doc has content:", frag.length);
+          console.log("ℹ️ [YjsProvider] no content_snapshot found");
+        }
+
+        // If yjs_state was cleared by an external save (DualPanelEditor), the room's
+        // in-memory state is stale. Signal TipTap to force-overwrite after sync.
+        const yjsStateCleared = contentRes.data?.yjs_state_updated_at === null;
+        if (yjsStateCleared && doc.__initialContent) {
+          doc.__forceOverwrite = true;
+          console.log("🔥 [YjsProvider] yjs_state_updated_at is null — marking __forceOverwrite");
         }
       } catch (err) {
         console.error("⚠️ [YjsProvider] failed to fetch content_snapshot:", err);

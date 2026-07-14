@@ -187,7 +187,7 @@ export function FeedbackQueue() {
               {items.map((item) => (
                 <Table.Row key={item.id}>
                   <Table.Cell maxW="320px">
-                    <Text fontSize="sm" lineClamp={2}>{item.message}</Text>
+                    <Text fontSize="sm" whiteSpace="pre-wrap">{item.message}</Text>
                     {item.page_url && (
                       <Text fontSize="xs" color="fg.muted" truncate>{item.page_url}</Text>
                     )}
