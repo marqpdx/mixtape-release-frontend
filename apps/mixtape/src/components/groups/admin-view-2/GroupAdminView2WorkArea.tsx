@@ -38,6 +38,7 @@ import type { Group } from "@mixtape/core/types/groupTypes";
 import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
 import { useRouter } from "next/navigation";
 import { GroupSearchField } from "./BerylSearchField";
+import { GroupSwitcher } from "../utils/GroupSwitcher";
 
 interface GroupAdminView2WorkAreaProps {
   group: Group;
@@ -351,7 +352,10 @@ function CommandStrip({
           </HStack>
         </Box>
 
-        <GroupSearchField groupId={groupId} />
+        <HStack gap={2}>
+          <GroupSwitcher currentGroupSlug={group.slug} />
+          <GroupSearchField groupId={groupId} />
+        </HStack>
       </Flex>
     </Box>
   );

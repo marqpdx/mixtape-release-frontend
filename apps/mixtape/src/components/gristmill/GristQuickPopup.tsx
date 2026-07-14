@@ -12,6 +12,8 @@ import {
   IconButton,
   Input,
   Link,
+  Spinner,
+  Tabs,
   Text,
   Textarea,
   VStack,
@@ -22,6 +24,7 @@ import { parseGrist, promoteDraft, saveDraft } from "@mixtape/api/clients/gristm
 import { toaster } from "@components/ui/toaster";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { useFeedbackVoiceRecorder } from "@/hooks/useFeedbackVoiceRecorder";
 
 const STORAGE_KEY = "grist_quick_popup_unsent_v1";
 const CONTEXT_STORAGE_KEY = "grist_quick_popup_issue_context_v1";
@@ -83,6 +86,21 @@ export default function GristQuickPopup() {
 
   // Superuser tab: "power" | "lighthouse"
   const [activeTab, setActiveTab] = useState<"power" | "lighthouse">("power");
+
+  // Lighthouse input tab: "text" | "voice"
+  const [lighthouseInputTab, setLighthouseInputTab] = useState<"text" | "voice">("text");
+  const voice = useFeedbackVoiceRecorder();
+
+  const fmtVoice = (s: number) =>
+    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  // When transcript is ready, populate the lighthouse text field
+  const prevVoiceReady = useRef(false);
+  if (voice.recorderState === "ready" && !prevVoiceReady.current && voice.transcript) {
+    prevVoiceReady.current = true;
+    setLighthouseText(voice.transcript);
+  }
+  if (voice.recorderState !== "ready") prevVoiceReady.current = false;
 
   const currentPath = typeof window === "undefined"
     ? ""
@@ -338,8 +356,12 @@ export default function GristQuickPopup() {
         kind: "idea",
         message: lighthouseText.trim(),
         page_url: currentRoutePath(),
+        voice_file_id: voice.voiceUploadId ?? undefined,
+        voice_transcript: voice.transcript || undefined,
       });
       setLighthouseText("");
+      voice.reset();
+      setLighthouseInputTab("text");
       setOpen(false);
       toaster.create({ title: "Got it. Thank you.", type: "success" });
     } catch {
@@ -642,16 +664,96 @@ export default function GristQuickPopup() {
                 <CloseButton onClick={() => setOpen(false)} />
               </HStack>
 
-              <Textarea
-                ref={lighthouseTextareaRef}
-                minH="120px"
-                maxH="40vh"
-                resize="vertical"
-                value={lighthouseText}
-                onChange={(event) => setLighthouseText(event.target.value)}
-                placeholder="What's on your mind?"
-                fontSize="sm"
-              />
+              <Tabs.Root
+                value={lighthouseInputTab}
+                onValueChange={(d) => setLighthouseInputTab(d.value as "text" | "voice")}
+                size="sm"
+              >
+                <Tabs.List>
+                  <Tabs.Trigger value="text">Text</Tabs.Trigger>
+                  <Tabs.Trigger value="voice">Voice</Tabs.Trigger>
+                </Tabs.List>
+
+                <Tabs.Content value="text">
+                  <Textarea
+                    ref={lighthouseTextareaRef}
+                    mt={2}
+                    minH="120px"
+                    maxH="40vh"
+                    resize="vertical"
+                    value={lighthouseText}
+                    onChange={(event) => setLighthouseText(event.target.value)}
+                    placeholder="What's on your mind?"
+                    fontSize="sm"
+                  />
+                </Tabs.Content>
+
+                <Tabs.Content value="voice">
+                  <VStack align="stretch" gap={2} mt={2}>
+                    {voice.recorderState === "idle" && (
+                      <Button size="sm" onClick={voice.startRecording}>
+                        <LuMic />
+                        Start recording
+                      </Button>
+                    )}
+
+                    {voice.recorderState === "recording" && (
+                      <HStack>
+                        <Spinner size="xs" color="red.400" />
+                        <Text fontSize="sm" color="red.500" fontVariantNumeric="tabular-nums">
+                          {fmtVoice(voice.elapsed)}
+                        </Text>
+                        <Button size="xs" variant="outline" onClick={voice.stopRecording}>
+                          Stop
+                        </Button>
+                      </HStack>
+                    )}
+
+                    {voice.recorderState === "stopped" && (
+                      <HStack>
+                        <Text fontSize="sm">Recording complete.</Text>
+                        <Button size="xs" onClick={voice.uploadRecording}>
+                          Transcribe
+                        </Button>
+                        <Button size="xs" variant="ghost" onClick={voice.reset}>
+                          Discard
+                        </Button>
+                      </HStack>
+                    )}
+
+                    {(voice.recorderState === "uploading" || voice.recorderState === "transcribing") && (
+                      <HStack>
+                        <Spinner size="xs" />
+                        <Text fontSize="sm" color="fg.muted">
+                          {voice.recorderState === "uploading" ? "Uploading…" : "Transcribing…"}
+                        </Text>
+                      </HStack>
+                    )}
+
+                    {voice.recorderState === "ready" && (
+                      <>
+                        <Text fontSize="xs" color="fg.muted">
+                          Transcript — edit before sending.
+                        </Text>
+                        <Textarea
+                          rows={4}
+                          value={lighthouseText}
+                          onChange={(e) => setLighthouseText(e.target.value)}
+                        />
+                        <Button size="xs" variant="ghost" onClick={() => { voice.reset(); setLighthouseText(""); }}>
+                          Re-record
+                        </Button>
+                      </>
+                    )}
+
+                    {voice.recorderState === "error" && (
+                      <Text fontSize="sm" color="red.500">
+                        {voice.errorMsg || "Recording failed."}
+                      </Text>
+                    )}
+                  </VStack>
+                </Tabs.Content>
+              </Tabs.Root>
 
               {lighthouseError ? (
                 <Text fontSize="xs" color="red.500">{lighthouseError}</Text>
