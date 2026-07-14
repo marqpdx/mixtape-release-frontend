@@ -369,7 +369,7 @@ export default function GristQuickPopup() {
     } finally {
       setLighthouseSubmitting(false);
     }
-  }, [lighthouseText]);
+  }, [lighthouseText, voice]);
 
   useEffect(() => {
     if (!isSuperuser) return;

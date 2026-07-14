@@ -142,7 +142,7 @@ export const COMMON_TYPOS: CommonTypo[] = [
   { wrong: 'shouldve',  correct: "should've" },
   { wrong: 'mustve',    correct: "must've" },
   { wrong: 'mightve',   correct: "might've" },
-  { wrong: 'wouldnt've',correct: "wouldn't've" },
+  { wrong: "wouldnt've", correct: "wouldn't've" },
   { wrong: 'couldntve', correct: "couldn't've" },
   { wrong: 'ive',       correct: "I've" },
   { wrong: 'im',        correct: "I'm" },
