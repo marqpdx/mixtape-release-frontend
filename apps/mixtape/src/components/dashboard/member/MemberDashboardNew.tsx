@@ -380,12 +380,13 @@ function JumpBackInCard({
   onNavigate,
 }: {
   username: string;
-  onNavigate: (key: SectionKey) => void;
+  onNavigate: (key: SectionKey, params?: Record<string, string>) => void;
 }) {
   const [tab, setTab] = useState<"drafts" | "published">("drafts");
-  const { drafts, isLoading } = useWriting("member", username);
+  const { drafts, placements, isLoading } = useWriting("member", username);
 
   const recentDrafts = drafts.slice(0, 3);
+  const recentPublished = placements.slice(0, 3);
 
   return (
     <CardShell accentBar>
@@ -459,13 +460,13 @@ function JumpBackInCard({
                       </VStack>
                     </HStack>
                     <Link
-                      as={NextLink}
-                      href={`/writing/${draft.piece?.slug ?? draft.id}`}
+                      as="button"
                       fontSize="13px"
                       fontWeight="600"
                       color="theme.accent"
                       _hover={{ textDecoration: "underline" }}
                       flexShrink={0}
+                      onClick={() => onNavigate("write", { piece: draft.piece?.id ?? draft.id })}
                     >
                       Continue
                     </Link>
@@ -477,25 +478,77 @@ function JumpBackInCard({
         )}
 
         {tab === "published" && (
-          <Flex
-            align="center"
-            justify="space-between"
-            pt="4px"
-          >
-            <Text fontSize="14px" color="theme.textMuted">
-              View your published writing.
-            </Text>
-            <Link
-              as={NextLink}
-              href="#"
-              fontSize="13px"
-              fontWeight="600"
-              color="theme.accent"
-              onClick={(e) => { e.preventDefault(); onNavigate("writing"); }}
-            >
-              My Writing →
-            </Link>
-          </Flex>
+          <>
+            {isLoading && (
+              <Text color="theme.textMuted" fontSize="14px">Loading…</Text>
+            )}
+            {!isLoading && recentPublished.length === 0 && (
+              <Text color="theme.textMuted" fontSize="14px">No published pieces yet.</Text>
+            )}
+            <VStack align="stretch" gap={0}>
+              {recentPublished.map((piece, i) => (
+                <Box key={piece.piece_id}>
+                  {i > 0 && <Box h="1px" bg="theme.border" />}
+                  <Flex align="center" justify="space-between" py="12px" gap="12px">
+                    <HStack gap="12px" flex="1" minW={0}>
+                      <Flex
+                        w="32px"
+                        h="32px"
+                        borderRadius="8px"
+                        bg="theme.bgSubtle"
+                        align="center"
+                        justify="center"
+                        flexShrink={0}
+                        color="theme.textMuted"
+                      >
+                        <IconFileText size={15} />
+                      </Flex>
+                      <VStack align="flex-start" gap="2px" minW={0}>
+                        <Text
+                          fontSize="14px"
+                          fontWeight="500"
+                          color="theme.text"
+                          lineHeight="1.3"
+                          overflow="hidden"
+                          textOverflow="ellipsis"
+                          whiteSpace="nowrap"
+                        >
+                          {piece.piece_title || "Untitled"}
+                        </Text>
+                        <Text fontSize="12px" color="theme.textMuted">
+                          Published · {timeAgo(piece.published_at)}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                    <Link
+                      as={NextLink}
+                      href={`/writing/${piece.piece_slug}`}
+                      fontSize="13px"
+                      fontWeight="600"
+                      color="theme.accent"
+                      _hover={{ textDecoration: "underline" }}
+                      flexShrink={0}
+                    >
+                      Read
+                    </Link>
+                  </Flex>
+                </Box>
+              ))}
+            </VStack>
+            {recentPublished.length > 0 && (
+              <Link
+                as="button"
+                fontSize="13px"
+                fontWeight="600"
+                color="theme.accent"
+                _hover={{ textDecoration: "underline" }}
+                mt={2}
+                onClick={() => onNavigate("writing")}
+              >
+                All writing →
+              </Link>
+            )}
+          </>
         )}
       </Box>
     </CardShell>
@@ -925,7 +978,7 @@ export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) 
               <VStack align="stretch" gap="22px">
                 <JumpBackInCard
                   username={identity.username}
-                  onNavigate={setActiveSection}
+                  onNavigate={handleSetActiveSection}
                 />
                 <ActivityFeedCard onViewAll={() => setActiveSection("activity")} />
                 <WhatsHereCard onNavigate={setActiveSection} />
