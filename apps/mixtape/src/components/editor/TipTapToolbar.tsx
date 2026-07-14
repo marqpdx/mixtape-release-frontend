@@ -19,7 +19,7 @@ import {
   IconHelpCircle,
   IconScissors,
   IconPhoto,
-  IconSpellcheck,
+  IconTextSpellcheck,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -309,7 +309,7 @@ export default function TipTapToolbar({
               tabIndex={-1}
               aria-label="Check spelling"
             >
-              <IconSpellcheck size={16} />
+              <IconTextSpellcheck size={16} />
             </IconButton>
           </Tooltip>
         )}

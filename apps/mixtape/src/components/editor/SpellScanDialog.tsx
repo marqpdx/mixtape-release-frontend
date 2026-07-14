@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, HStack, IconButton, Text, VStack } from "@chakra-ui/react";
-import { IconSpellcheck, IconX } from "@tabler/icons-react";
+import { IconTextSpellcheck, IconX } from "@tabler/icons-react";
 import { Editor } from "@tiptap/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -159,7 +159,7 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
       {/* Header */}
       <HStack justify="space-between" mb={3}>
         <HStack gap={2}>
-          <IconSpellcheck size={16} />
+          <IconTextSpellcheck size={16} />
           <Text fontWeight="semibold" fontSize="sm">Check Spelling</Text>
           {!isDone && matches.length > 0 && (
             <Text fontSize="xs" color={mutedColor}>{idx + 1} of {matches.length}</Text>
