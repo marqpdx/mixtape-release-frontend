@@ -361,12 +361,15 @@ export default function FeedbackChecklistPage() {
 
   const buildCodexBrief = () => {
     const issueLines = selectedIssues.map((item, idx) => {
-      const title = splitIssueContext(item.message).cleanMessage.split("\n")[0] || "Untitled issue";
+      const { cleanMessage, context } = splitIssueContext(item.message);
+      const messageLines = cleanMessage.split("\n");
+      const title = messageLines[0]?.trim() || "Untitled issue";
+      const details = messageLines.slice(1).join("\n").trim() || cleanMessage;
       return `${idx + 1}. [${item.id}] ${title}
 Status: ${item.status}
 Page: ${item.page_url ? formatPageLabel(item.page_url) : "(not provided)"}
-${splitIssueContext(item.message).context ? `Context: ${splitIssueContext(item.message).context}\n` : ""}Details:
-${splitIssueContext(item.message).cleanMessage}`;
+${context ? `Context: ${context}\n` : ""}Details:
+${details}`;
     });
 
     const text = `Agent Brief
