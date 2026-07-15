@@ -30,6 +30,7 @@ import {
   IconAdjustments,
   IconCheck,
   IconUsersPlus,
+  IconLayoutBoard,
 } from "@tabler/icons-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useUserGroups } from "@mixtape/api/hooks/groups/useGroups";
@@ -63,6 +64,7 @@ type SectionKey =
   | "writing"
   | "my-drafts"
   | "write"
+  | "run-board"
   | "my-groups"
   | "messages"
   | "create-group"
@@ -102,6 +104,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
         { key: "writing", label: "My Writing", icon: IconPencil },
         { key: "my-drafts", label: "Drafts", icon: IconFileText },
         { key: "write", label: "New Piece", icon: IconPlus },
+        ...(isSuperuser ? [{ key: "run-board" as SectionKey, label: "Run Board ✦", icon: IconLayoutBoard }] : []),
       ],
     },
     {

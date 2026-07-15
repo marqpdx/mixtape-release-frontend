@@ -145,6 +145,8 @@ export interface WorkingDocument {
     series_title?: string | null
     series_phase_num?: number | null
     series_order?: number | null
+    spellcheck_clean?: boolean
+    signed_off?: boolean
   }
   user: {
     id: string | number
@@ -513,4 +515,47 @@ export interface PublishAndPlacePayload {
   destinations: PublishDestinations;
   placement_options?: PlacementOptions;
   group_overrides?: GroupOverridesMap;
+}
+
+// ---------------------------------------------------------------------------
+// Writing Assembly (ADR-0054)
+// ---------------------------------------------------------------------------
+
+export type RunStatus = 'draft' | 'published'
+
+export interface RunMember {
+  id: string
+  order_index: number
+  added_at: string
+  piece_id: string
+  piece_title: string
+  piece_status: ContentStatus
+  spellcheck_clean: boolean
+  signed_off: boolean
+  word_count: number
+}
+
+export interface WritingRun {
+  id: string
+  title: string
+  slug: string
+  status: RunStatus
+  published_at: string | null
+  created_at: string
+  updated_at: string
+  memberships: RunMember[]
+  member_count: number
+  is_publishable: boolean
+}
+
+export interface WritingRunList {
+  id: string
+  title: string
+  slug: string
+  status: RunStatus
+  published_at: string | null
+  created_at: string
+  updated_at: string
+  member_count: number
+  is_publishable: boolean
 }
