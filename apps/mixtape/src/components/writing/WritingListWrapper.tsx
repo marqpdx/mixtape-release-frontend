@@ -21,6 +21,9 @@ import {
   Wrap,
   WrapItem,
   Button,
+  Select,
+  Portal,
+  createListCollection,
 } from "@chakra-ui/react";
 import {
   DialogRoot,
@@ -44,7 +47,6 @@ import {
   IconMapPin,
   IconBook2,
   IconFolder,
-  IconFolderOpen,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { SeriesGroupView } from "./SeriesGroupView";
@@ -88,6 +90,8 @@ type Collaborator = {
   role?: string;
   user: CollaboratorUser;
 };
+
+type GroupingMode = "by-list" | "by-tag" | "by-where" | "by-series" | "by-category";
 
 interface SponsorConfig {
   type: 'group' | 'member';
@@ -135,7 +139,7 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series" | "by-category">("by-list");
+  const [groupingMode, setGroupingMode] = useState<GroupingMode>("by-list");
   const [categorySortMode, setCategorySortMode] = useState<"updated" | "alpha">("updated");
 
   // Record privilege — evaluated after `user` is declared below.
@@ -197,14 +201,9 @@ export default function WritingListWrapper({
         setDateSortField(savedDateSortField);
       }
       const savedGroupingMode = window.localStorage.getItem("writing_group_mode");
-      if (
-        savedGroupingMode === "by-list" ||
-        savedGroupingMode === "by-tag" ||
-        savedGroupingMode === "by-where" ||
-        savedGroupingMode === "by-series" ||
-        savedGroupingMode === "by-category"
-      ) {
-        setGroupingMode(savedGroupingMode);
+      const validModes: GroupingMode[] = ["by-list", "by-tag", "by-where", "by-series", "by-category"];
+      if (validModes.includes(savedGroupingMode as GroupingMode)) {
+        setGroupingMode(savedGroupingMode as GroupingMode);
       }
       const loadAcc = (key: string) => {
         const v = window.localStorage.getItem(key);
@@ -235,7 +234,7 @@ export default function WritingListWrapper({
     }
   }, []);
 
-  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where" | "by-series" | "by-category") => {
+  const handleGroupingModeChange = useCallback((mode: GroupingMode) => {
     setGroupingMode(mode);
     if (typeof window !== "undefined") {
       try {
@@ -941,6 +940,16 @@ export default function WritingListWrapper({
     return { groups: sorted, uncategorized };
   }, [filteredPublishedPieces, sponsorCategories, categorySortMode]);
 
+  const groupByCollection = useMemo(() => createListCollection({
+    items: [
+      { value: 'by-list', label: 'None' },
+      ...(sponsor.type === 'group' ? [{ value: 'by-series', label: 'Series' }] : []),
+      { value: 'by-category', label: 'Category' },
+      { value: 'by-tag', label: 'Tag' },
+      { value: 'by-where', label: 'Where' },
+    ],
+  }), [sponsor.type]);
+
   return (
     <Box>
       {/* Header */}
@@ -1011,28 +1020,35 @@ export default function WritingListWrapper({
                 showSoloCollab={true}
                 showAllButton={false}
               />
-              <Tabs.Root
-                value={groupingMode}
-                onValueChange={(value) =>
-                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where" | "by-series" | "by-category")
-                }
-              >
-                <Tabs.List>
-                  <Tabs.Trigger value="by-list">List</Tabs.Trigger>
-                  <Tabs.Trigger value="by-tag">By Tag</Tabs.Trigger>
-                  <Tabs.Trigger value="by-where">By Where</Tabs.Trigger>
-                  {sponsor.type === "group" && (
-                    <Tabs.Trigger value="by-series">By Series</Tabs.Trigger>
-                  )}
-                  <Tabs.Trigger value="by-category">
-                    <HStack gap={1}>
-                      {groupingMode === "by-category" ? <IconFolderOpen size={14} /> : <IconFolder size={14} />}
-                      Folders
-                    </HStack>
-                  </Tabs.Trigger>
-                  <Tabs.Indicator />
-                </Tabs.List>
-              </Tabs.Root>
+              <HStack gap={2} align="center">
+                <Text fontSize="sm" color="gray.500" flexShrink={0}>Group by</Text>
+                <Select.Root
+                  size="sm"
+                  collection={groupByCollection}
+                  value={[groupingMode]}
+                  onValueChange={({ value }) =>
+                    handleGroupingModeChange((value[0] ?? 'by-list') as GroupingMode)
+                  }
+                  w="140px"
+                >
+                  <Select.Control>
+                    <Select.Trigger>
+                      <Select.ValueText />
+                    </Select.Trigger>
+                  </Select.Control>
+                  <Portal>
+                    <Select.Positioner>
+                      <Select.Content>
+                        {groupByCollection.items.map((item) => (
+                          <Select.Item key={item.value} item={item}>
+                            {item.label}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Portal>
+                </Select.Root>
+              </HStack>
               {groupingMode === "by-list" && (
                 <>
                   <Button size="sm" variant="outline" onClick={handleDateSortFieldToggle}>
@@ -1071,9 +1087,6 @@ export default function WritingListWrapper({
             />
           ) : groupingMode === "by-tag" ? (
             <>
-              <Heading size="md" color={textSecondary} mb={3}>
-                By Tag
-              </Heading>
               <Accordion.Root
                 collapsible
                 multiple
@@ -1151,9 +1164,6 @@ export default function WritingListWrapper({
             </>
           ) : groupingMode === "by-where" ? (
             <Box maxH="62vh" overflowY="auto" pr={1}>
-              <Heading size="md" color={textSecondary} mb={3}>
-                By Where
-              </Heading>
               <Accordion.Root
                 collapsible
                 multiple
@@ -1201,26 +1211,21 @@ export default function WritingListWrapper({
             </Box>
           ) : groupingMode === "by-category" ? (
             <Box>
-              <HStack justify="space-between" align="center" mb={4}>
-                <Heading size="md" color={textSecondary}>
-                  Folders
-                </Heading>
-                <HStack gap={2}>
-                  <Button
-                    size="xs"
-                    variant={categorySortMode === "updated" ? "solid" : "outline"}
-                    onClick={() => setCategorySortMode("updated")}
-                  >
-                    Most recently updated
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant={categorySortMode === "alpha" ? "solid" : "outline"}
-                    onClick={() => setCategorySortMode("alpha")}
-                  >
-                    Alphabetical
-                  </Button>
-                </HStack>
+              <HStack justify="flex-end" mb={4} gap={2}>
+                <Button
+                  size="xs"
+                  variant={categorySortMode === "updated" ? "solid" : "outline"}
+                  onClick={() => setCategorySortMode("updated")}
+                >
+                  Most recently updated
+                </Button>
+                <Button
+                  size="xs"
+                  variant={categorySortMode === "alpha" ? "solid" : "outline"}
+                  onClick={() => setCategorySortMode("alpha")}
+                >
+                  Alphabetical
+                </Button>
               </HStack>
               {categoryGroups.groups.length === 0 && categoryGroups.uncategorized.length === 0 ? (
                 <Text color={textSecondary} fontSize="sm">No categories assigned yet.</Text>
@@ -1431,9 +1436,6 @@ export default function WritingListWrapper({
             />
           ) : groupingMode === "by-tag" ? (
             <>
-              <Heading size="md" color={textSecondary} mb={3}>
-                By Tag
-              </Heading>
               <Accordion.Root
                 collapsible
                 multiple
@@ -1568,9 +1570,6 @@ export default function WritingListWrapper({
             </>
           ) : (
             <Box maxH="62vh" overflowY="auto" pr={1}>
-              <Heading size="md" color={textSecondary} mb={3}>
-                By Where
-              </Heading>
               <Accordion.Root
                 collapsible
                 multiple
