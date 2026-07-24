@@ -62,7 +62,7 @@ function timeAgo(iso: string): string {
 
 function CommentThreadCard({
   comment,
-  pieceId,
+  pieceId: _pieceId,
   editor,
   canResolve,
   currentUserId,
@@ -80,7 +80,7 @@ function CommentThreadCard({
   onResolve: (id: string) => void
   onUnresolve: (id: string) => void
   onEdit: (id: string, body: string) => void
-  onDelete: (id: string, commentId: string) => void
+  onDelete: (id: string) => void
   onReply: (parentId: string, body: string) => void
 }) {
   const [replyOpen, setReplyOpen] = useState(false)
@@ -196,7 +196,7 @@ function CommentThreadCard({
             {(isAuthor || canResolve) && (
               <Tooltip content="Delete">
                 <IconButton aria-label="Delete" size="xs" variant="ghost" colorPalette="red"
-                  onClick={() => onDelete(comment.id, comment.id)}>
+                  onClick={() => onDelete(comment.id)}>
                   <IconTrash size={13} />
                 </IconButton>
               </Tooltip>
@@ -227,7 +227,7 @@ function CommentThreadCard({
                     </Box>
                     {reply.author.id === currentUserId && (
                       <IconButton aria-label="Delete reply" size="xs" variant="ghost" colorPalette="red"
-                        onClick={(e) => { e.stopPropagation(); onDelete(reply.id, comment.id) }}>
+                        onClick={(e) => { e.stopPropagation(); onDelete(reply.id) }}>
                         <IconTrash size={12} />
                       </IconButton>
                     )}
@@ -336,7 +336,7 @@ export function DispatchCommentPanel({
     }
   }
 
-  const handleDelete = async (id: string, _rootId: string) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteComment.mutateAsync(id)
       if (editor) editor.commands.unsetCommentMark(id)

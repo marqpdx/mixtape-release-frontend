@@ -31,7 +31,7 @@ import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
 import { useRuns, useRun } from "@mixtape/api/hooks/useRunBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
-import type { WorkingDocument, WritingRun, WritingRunList, RunMember } from "@mixtape/core/types/writingTypes";
+import type { WorkingDocument, WritingRun, WritingRunList } from "@mixtape/core/types/writingTypes";
 
 interface Sponsor {
   type: "member" | "group";
@@ -49,13 +49,6 @@ interface RunBoardWorkAreaProps {
 // ---------------------------------------------------------------------------
 
 type DotColor = "blue" | "green" | "yellow";
-
-function getDotColor(member: RunMember, runStatus: "draft" | "published"): DotColor {
-  if (runStatus === "published") return "blue";
-  if (member.piece_status === "published") return "blue";
-  if (member.spellcheck_clean && member.signed_off) return "green";
-  return "yellow";
-}
 
 function getDocDotColor(doc: WorkingDocument): DotColor {
   if (doc.piece?.status === "published") return "blue";
@@ -426,7 +419,7 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
   const [zoomedRunId, setZoomedRunId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
-  const { run: focusedRunData, isLoading: focusedRunLoading, addMember, removeMember, reorderMembers, publishRun, signOffPiece } = useRun(zoomedRunId);
+  const { run: focusedRunData, isLoading: focusedRunLoading, addMember, removeMember, publishRun, signOffPiece } = useRun(zoomedRunId);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -502,27 +495,29 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
           // (The user can also zoom in and drag)
           setZoomedRunId(runId);
         }
-      } catch (e: any) {
-        toaster.create({ title: e?.response?.data?.detail || "Failed to add to Run", type: "error" });
+      } catch (e) {
+        const err = e as { response?: { data?: { detail?: string } } };
+        toaster.create({ title: err?.response?.data?.detail || "Failed to add to Run", type: "error" });
       }
     }
-  }, [pieceRunMap, zoomedRunId, addMember, removeMember, toaster]);
+  }, [pieceRunMap, zoomedRunId, addMember, removeMember]);
 
   const handlePublish = useCallback(async () => {
     if (!zoomedRunId) return;
     try {
       await publishRun.mutateAsync();
       toaster.create({ title: "Run published — all Docs are now live", type: "success" });
-    } catch (e: any) {
-      const detail = e?.response?.data?.detail || "Publish failed";
-      const notReady: string[] = e?.response?.data?.not_ready || [];
+    } catch (e) {
+      const err = e as { response?: { data?: { detail?: string; not_ready?: string[] } } };
+      const detail = err?.response?.data?.detail || "Publish failed";
+      const notReady: string[] = err?.response?.data?.not_ready || [];
       toaster.create({
         title: detail,
         description: notReady.length ? `Not ready: ${notReady.join(", ")}` : undefined,
         type: "error",
       });
     }
-  }, [zoomedRunId, publishRun, toaster]);
+  }, [zoomedRunId, publishRun]);
 
   const handleSignOff = useCallback(async (pieceId: string) => {
     if (!zoomedRunId) return;
@@ -532,7 +527,7 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
     } catch {
       toaster.create({ title: "Sign-off failed", type: "error" });
     }
-  }, [zoomedRunId, signOffPiece, toaster]);
+  }, [zoomedRunId, signOffPiece]);
 
   const handleDeleteRun = useCallback(async (runId: string) => {
     try {
@@ -541,11 +536,9 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
     } catch {
       toaster.create({ title: "Failed to delete Run", type: "error" });
     }
-  }, [deleteRun, zoomedRunId, toaster]);
+  }, [deleteRun, zoomedRunId]);
 
   const isLoading = runsLoading || docsLoading;
-
-  const zoomedRun = zoomedRunId ? runs.find((r) => r.id === zoomedRunId) ?? null : null;
 
   return (
     <Box className="rb-root" w="full" minH="80vh" position="relative">
