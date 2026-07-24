@@ -43,6 +43,8 @@ import {
   IconTrash,
   IconMapPin,
   IconBook2,
+  IconFolder,
+  IconFolderOpen,
 } from "@tabler/icons-react";
 import { DraftFilterToolbar } from "./DraftFilterToolbar";
 import { SeriesGroupView } from "./SeriesGroupView";
@@ -60,7 +62,7 @@ import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as writingApi from "@mixtape/api/clients/writing/writingApi";
-import type { WritingSeries } from "@mixtape/core/types/writingTypes";
+import type { WritingSeries, WritingCategoryWithMeta } from "@mixtape/core/types/writingTypes";
 import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
 import { ScreencastCaptureButton } from "@components/MediaCapture/ScreencastCaptureButton";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
@@ -133,7 +135,8 @@ export default function WritingListWrapper({
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
   const [activeTab, setActiveTab] = useState("published");
-  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series">("by-list");
+  const [groupingMode, setGroupingMode] = useState<"by-list" | "by-tag" | "by-where" | "by-series" | "by-category">("by-list");
+  const [categorySortMode, setCategorySortMode] = useState<"updated" | "alpha">("updated");
 
   // Record privilege — evaluated after `user` is declared below.
   // A dedicated can__RecordMedia decorator can replace can__ManageWriting when the
@@ -166,6 +169,13 @@ export default function WritingListWrapper({
     enabled: sponsor.type === 'group' && groupingMode === 'by-series',
   });
 
+  // Fetch sponsor categories for folder view
+  const { data: sponsorCategories = [] } = useQuery<WritingCategoryWithMeta[]>({
+    queryKey: ['writing', 'categories', sponsor.type, sponsor.slug],
+    queryFn: () => writingApi.fetchSponsorCategories(sponsor.type, sponsor.slug),
+    enabled: groupingMode === 'by-category',
+  });
+
   // Load persisted tab from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -191,7 +201,8 @@ export default function WritingListWrapper({
         savedGroupingMode === "by-list" ||
         savedGroupingMode === "by-tag" ||
         savedGroupingMode === "by-where" ||
-        savedGroupingMode === "by-series"
+        savedGroupingMode === "by-series" ||
+        savedGroupingMode === "by-category"
       ) {
         setGroupingMode(savedGroupingMode);
       }
@@ -224,7 +235,7 @@ export default function WritingListWrapper({
     }
   }, []);
 
-  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where" | "by-series") => {
+  const handleGroupingModeChange = useCallback((mode: "by-list" | "by-tag" | "by-where" | "by-series" | "by-category") => {
     setGroupingMode(mode);
     if (typeof window !== "undefined") {
       try {
@@ -877,6 +888,59 @@ export default function WritingListWrapper({
       .sort((a, b) => a.sponsor.label.localeCompare(b.sponsor.label));
   }, [processedDrafts, getDraftSponsorMeta]);
 
+  // Category groups — published pieces grouped by Category, with uncategorized bucket
+  const categoryGroups = useMemo(() => {
+    const catMap = new Map<string, { category: WritingCategoryWithMeta; items: FlattenedPlacement[] }>();
+    const uncategorized: FlattenedPlacement[] = [];
+
+    filteredPublishedPieces.forEach((placement) => {
+      const cats = placement.categories;
+      if (!cats || cats.length === 0) {
+        uncategorized.push(placement);
+        return;
+      }
+      cats.forEach((cat) => {
+        if (!catMap.has(cat.id)) {
+          const meta = sponsorCategories.find((sc) => sc.id === cat.id) ?? {
+            id: cat.id,
+            title: cat.title,
+            slug: cat.slug,
+            latest_piece_updated_at: "",
+          };
+          catMap.set(cat.id, { category: meta, items: [] });
+        }
+        catMap.get(cat.id)!.items.push(placement);
+      });
+    });
+
+    // Also ensure categories from the server are represented even if no filteredPublishedPieces matched
+    sponsorCategories.forEach((sc) => {
+      if (!catMap.has(sc.id)) {
+        catMap.set(sc.id, { category: sc, items: [] });
+      }
+    });
+
+    const sorted = Array.from(catMap.values())
+      .filter((entry) => entry.items.length > 0)
+      .map((entry) => ({
+        ...entry,
+        items: entry.items.sort(
+          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        ),
+        latest_updated_at:
+          entry.category.latest_piece_updated_at ||
+          (entry.items[0]?.updated_at ?? ""),
+      }));
+
+    if (categorySortMode === "alpha") {
+      sorted.sort((a, b) => a.category.title.localeCompare(b.category.title));
+    } else {
+      sorted.sort((a, b) => (b.latest_updated_at > a.latest_updated_at ? 1 : -1));
+    }
+
+    return { groups: sorted, uncategorized };
+  }, [filteredPublishedPieces, sponsorCategories, categorySortMode]);
+
   return (
     <Box>
       {/* Header */}
@@ -950,7 +1014,7 @@ export default function WritingListWrapper({
               <Tabs.Root
                 value={groupingMode}
                 onValueChange={(value) =>
-                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where" | "by-series")
+                  handleGroupingModeChange(value.value as "by-list" | "by-tag" | "by-where" | "by-series" | "by-category")
                 }
               >
                 <Tabs.List>
@@ -960,6 +1024,12 @@ export default function WritingListWrapper({
                   {sponsor.type === "group" && (
                     <Tabs.Trigger value="by-series">By Series</Tabs.Trigger>
                   )}
+                  <Tabs.Trigger value="by-category">
+                    <HStack gap={1}>
+                      {groupingMode === "by-category" ? <IconFolderOpen size={14} /> : <IconFolder size={14} />}
+                      Folders
+                    </HStack>
+                  </Tabs.Trigger>
                   <Tabs.Indicator />
                 </Tabs.List>
               </Tabs.Root>
@@ -1128,6 +1198,96 @@ export default function WritingListWrapper({
                   </Accordion.Item>
                 ))}
               </Accordion.Root>
+            </Box>
+          ) : groupingMode === "by-category" ? (
+            <Box>
+              <HStack justify="space-between" align="center" mb={4}>
+                <Heading size="md" color={textSecondary}>
+                  Folders
+                </Heading>
+                <HStack gap={2}>
+                  <Button
+                    size="xs"
+                    variant={categorySortMode === "updated" ? "solid" : "outline"}
+                    onClick={() => setCategorySortMode("updated")}
+                  >
+                    Most recently updated
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant={categorySortMode === "alpha" ? "solid" : "outline"}
+                    onClick={() => setCategorySortMode("alpha")}
+                  >
+                    Alphabetical
+                  </Button>
+                </HStack>
+              </HStack>
+              {categoryGroups.groups.length === 0 && categoryGroups.uncategorized.length === 0 ? (
+                <Text color={textSecondary} fontSize="sm">No categories assigned yet.</Text>
+              ) : (
+                <Accordion.Root collapsible multiple defaultValue={categoryGroups.groups[0] ? [categoryGroups.groups[0].category.id] : []}>
+                  {categoryGroups.groups.map((entry) => (
+                    <Accordion.Item key={entry.category.id} value={entry.category.id}>
+                      <Accordion.ItemTrigger>
+                        <HStack justify="space-between" w="full">
+                          <HStack gap={2}>
+                            <IconFolder size={16} />
+                            <Text fontWeight="semibold">{entry.category.title}</Text>
+                            <Badge size="sm" variant="subtle">{entry.items.length}</Badge>
+                          </HStack>
+                          <Accordion.ItemIndicator />
+                        </HStack>
+                      </Accordion.ItemTrigger>
+                      <Accordion.ItemContent>
+                        <Box pt={4}>
+                          <UniversalDataTable<FlattenedPlacement>
+                            data={entry.items}
+                            title=""
+                            isLoading={placementsLoading}
+                            error={placementsError ? "Failed to load writing" : null}
+                            columns={postsColumns(
+                              handleRowClick,
+                              canManagePosts ? handlePublishedEdit : undefined,
+                              welcomePinnedPieceId
+                            )}
+                            showAvatar={false}
+                            emptyStateMessage="No pieces in this folder"
+                            showCreateButton={false}
+                            onRowClick={handleRowClick}
+                            canView={() => true}
+                            canEdit={() => canManagePosts}
+                            pageSize={25}
+                            defaultSort={{ field: "post_info", order: "desc" }}
+                          />
+                        </Box>
+                      </Accordion.ItemContent>
+                    </Accordion.Item>
+                  ))}
+                </Accordion.Root>
+              )}
+              {categoryGroups.uncategorized.length > 0 && (
+                <Box mt={6}>
+                  <UniversalDataTable<FlattenedPlacement>
+                    data={categoryGroups.uncategorized}
+                    title="Uncategorized"
+                    isLoading={placementsLoading}
+                    error={placementsError ? "Failed to load writing" : null}
+                    columns={postsColumns(
+                      handleRowClick,
+                      canManagePosts ? handlePublishedEdit : undefined,
+                      welcomePinnedPieceId
+                    )}
+                    showAvatar={false}
+                    emptyStateMessage="No uncategorized pieces"
+                    showCreateButton={false}
+                    onRowClick={handleRowClick}
+                    canView={() => true}
+                    canEdit={() => canManagePosts}
+                    pageSize={25}
+                    defaultSort={{ field: "post_info", order: "desc" }}
+                  />
+                </Box>
+              )}
             </Box>
           ) : groupingMode === "by-series" ? (
             <HStack align="start" gap={0}>

@@ -255,6 +255,16 @@ export interface WritingPlacement {
 }
 
 
+export interface WritingCategory {
+  id: string
+  title: string
+  slug: string
+}
+
+export interface WritingCategoryWithMeta extends WritingCategory {
+  latest_piece_updated_at: string
+}
+
 export interface FlattenedPlacement {
   id: string
   piece_id: string
@@ -272,6 +282,7 @@ export interface FlattenedPlacement {
   created_at: string
   updated_at: string
   tags?: string[]
+  categories?: WritingCategory[]
   sponsor_content_type?: string
   sponsor_object_id?: string
   sponsor_label?: string

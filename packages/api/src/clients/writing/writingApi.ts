@@ -14,6 +14,7 @@ import {
   DocumentImportPreviewResult,
   DocumentImportConfirmPayload,
   DocumentImportConfirmResult,
+  WritingCategoryWithMeta,
 } from "@mixtape/core/types/writingTypes";
 import type { WritingPiece } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -124,6 +125,22 @@ export async function fetchPlacements(
     },
   });
   return unwrapListResponse<FlattenedPlacement>(response.data);
+}
+
+/**
+ * Fetch all categories used by a sponsor's pieces, with latest_piece_updated_at
+ */
+export async function fetchSponsorCategories(
+  sponsorType: 'group' | 'member',
+  sponsorSlug: string
+): Promise<WritingCategoryWithMeta[]> {
+  const response = await axiosInstance.get('/api/writing/categories', {
+    params: {
+      sponsor_type: sponsorType,
+      sponsor_slug: sponsorSlug,
+    },
+  });
+  return Array.isArray(response.data) ? response.data : [];
 }
 
 /**
