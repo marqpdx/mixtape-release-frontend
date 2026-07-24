@@ -118,6 +118,7 @@ export interface WritingPieceCatalogItem {
   reading_time: number | null
   series: WritingSeries | null
   series_order: number | null
+  categories_list?: WritingCategory[]
 }
 
 

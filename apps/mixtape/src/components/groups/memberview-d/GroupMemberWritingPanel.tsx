@@ -2,9 +2,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
-import { IconClock, IconArrowLeft } from "@tabler/icons-react";
+import { IconClock, IconArrowLeft, IconList, IconFolder } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { useGroupWritingCatalog, useWritingPiece } from "@hooks/useWriting";
 import { TipTapRenderer } from "@components/tiptap/TipTapRenderer";
@@ -109,6 +109,30 @@ function PieceRow({
   );
 }
 
+function groupByCategory(pieces: WritingPieceCatalogItem[]): Array<{ categoryTitle: string; pieces: WritingPieceCatalogItem[] }> {
+  const order: string[] = [];
+  const map = new Map<string, WritingPieceCatalogItem[]>();
+  const uncatKey = "__uncategorized__";
+
+  for (const piece of pieces) {
+    const cats = piece.categories_list;
+    if (!cats || cats.length === 0) {
+      if (!map.has(uncatKey)) { map.set(uncatKey, []); order.push(uncatKey); }
+      map.get(uncatKey)!.push(piece);
+    } else {
+      cats.forEach((cat) => {
+        if (!map.has(cat.id)) { map.set(cat.id, []); order.push(cat.id); }
+        map.get(cat.id)!.push(piece);
+      });
+    }
+  }
+
+  return order.map((key) => ({
+    categoryTitle: key === uncatKey ? "" : pieces.find((p) => p.categories_list?.some((c) => c.id === key))?.categories_list?.find((c) => c.id === key)?.title ?? key,
+    pieces: map.get(key)!,
+  }));
+}
+
 function WritingCatalog({
   groupSlug,
   onSelect,
@@ -117,6 +141,12 @@ function WritingCatalog({
   onSelect: (slug: string) => void;
 }) {
   const { pieces, isLoading } = useGroupWritingCatalog(groupSlug);
+  const [viewMode, setViewMode] = useState<"series" | "folders">("series");
+
+  const hasCategoryData = useMemo(
+    () => pieces.some((p) => p.categories_list && p.categories_list.length > 0),
+    [pieces]
+  );
 
   if (isLoading) {
     return (
@@ -152,10 +182,14 @@ function WritingCatalog({
   const namedGroups = seriesGroups.filter((g) => g.series !== null);
   const uncategorized = seriesGroups.find((g) => g.series === null);
 
+  const categoryGroups = groupByCategory(pieces);
+  const namedCatGroups = categoryGroups.filter((g) => g.categoryTitle !== "");
+  const uncatPieces = categoryGroups.find((g) => g.categoryTitle === "")?.pieces ?? [];
+
   return (
     <Box className="gmwp-catalog">
-      {/* Header */}
-      <Flex align="center" mb={5}>
+      {/* Header with view toggle */}
+      <Flex align="center" justify="space-between" mb={5}>
         <Text
           fontSize="11.5px"
           fontWeight="600"
@@ -165,71 +199,175 @@ function WritingCatalog({
         >
           Published Writing
         </Text>
+        {hasCategoryData && (
+          <Flex gap="4px">
+            <Box
+              as="button"
+              px="8px"
+              py="4px"
+              borderRadius="6px"
+              fontSize="12px"
+              fontWeight="600"
+              display="flex"
+              alignItems="center"
+              gap="4px"
+              bg={viewMode === "series" ? "theme.accent" : "transparent"}
+              color={viewMode === "series" ? "white" : "theme.textMuted"}
+              _hover={{ bg: viewMode === "series" ? "theme.accent" : "theme.bgSubtle" }}
+              onClick={() => setViewMode("series")}
+            >
+              <IconList size={12} />
+              <Text>List</Text>
+            </Box>
+            <Box
+              as="button"
+              px="8px"
+              py="4px"
+              borderRadius="6px"
+              fontSize="12px"
+              fontWeight="600"
+              display="flex"
+              alignItems="center"
+              gap="4px"
+              bg={viewMode === "folders" ? "theme.accent" : "transparent"}
+              color={viewMode === "folders" ? "white" : "theme.textMuted"}
+              _hover={{ bg: viewMode === "folders" ? "theme.accent" : "theme.bgSubtle" }}
+              onClick={() => setViewMode("folders")}
+            >
+              <IconFolder size={12} />
+              <Text>Folders</Text>
+            </Box>
+          </Flex>
+        )}
       </Flex>
 
-      {/* Named series */}
-      {namedGroups.map(({ series, pieces: sectionPieces }) => (
-        <Box
-          key={series!.id}
-          className="gmwp-series"
-          bg="theme.surface"
-          borderWidth="1px"
-          borderColor="theme.border"
-          borderRadius="16px"
-          px={5}
-          pt={4}
-          pb={1}
-          mb={4}
-        >
-          <Text
-            fontSize="11px"
-            fontWeight="700"
-            letterSpacing="0.13em"
-            textTransform="uppercase"
-            color="theme.accent"
-            mb={series!.subtitle ? "2px" : "10px"}
-          >
-            {series!.title}
-          </Text>
-          {series!.subtitle && (
-            <Text fontSize="13px" color="theme.textSecondary" mb="10px">
-              {series!.subtitle}
-            </Text>
-          )}
-          {sectionPieces.map((piece) => (
-            <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
-          ))}
-        </Box>
-      ))}
-
-      {/* Uncategorized */}
-      {uncategorized && uncategorized.pieces.length > 0 && (
-        <Box
-          className="gmwp-uncategorized"
-          bg="theme.surface"
-          borderWidth="1px"
-          borderColor="theme.border"
-          borderRadius="16px"
-          px={5}
-          pt={4}
-          pb={1}
-        >
-          {namedGroups.length > 0 && (
-            <Text
-              fontSize="11px"
-              fontWeight="700"
-              letterSpacing="0.13em"
-              textTransform="uppercase"
-              color="theme.textMuted"
-              mb="10px"
+      {viewMode === "folders" ? (
+        // Folder / category view
+        <>
+          {namedCatGroups.map(({ categoryTitle, pieces: catPieces }) => (
+            <Box
+              key={categoryTitle}
+              className="gmwp-category"
+              bg="theme.surface"
+              borderWidth="1px"
+              borderColor="theme.border"
+              borderRadius="16px"
+              px={5}
+              pt={4}
+              pb={1}
+              mb={4}
             >
-              More
-            </Text>
-          )}
-          {uncategorized.pieces.map((piece) => (
-            <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
+              <Flex align="center" gap="6px" mb="10px">
+                <IconFolder size={13} color="var(--chakra-colors-theme-accent)" />
+                <Text
+                  fontSize="11px"
+                  fontWeight="700"
+                  letterSpacing="0.13em"
+                  textTransform="uppercase"
+                  color="theme.accent"
+                >
+                  {categoryTitle}
+                </Text>
+              </Flex>
+              {catPieces.map((piece) => (
+                <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
+              ))}
+            </Box>
           ))}
-        </Box>
+          {uncatPieces.length > 0 && (
+            <Box
+              className="gmwp-cat-uncategorized"
+              bg="theme.surface"
+              borderWidth="1px"
+              borderColor="theme.border"
+              borderRadius="16px"
+              px={5}
+              pt={4}
+              pb={1}
+            >
+              {namedCatGroups.length > 0 && (
+                <Text
+                  fontSize="11px"
+                  fontWeight="700"
+                  letterSpacing="0.13em"
+                  textTransform="uppercase"
+                  color="theme.textMuted"
+                  mb="10px"
+                >
+                  Other
+                </Text>
+              )}
+              {uncatPieces.map((piece) => (
+                <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
+              ))}
+            </Box>
+          )}
+        </>
+      ) : (
+        // Series / list view (existing behaviour)
+        <>
+          {namedGroups.map(({ series, pieces: sectionPieces }) => (
+            <Box
+              key={series!.id}
+              className="gmwp-series"
+              bg="theme.surface"
+              borderWidth="1px"
+              borderColor="theme.border"
+              borderRadius="16px"
+              px={5}
+              pt={4}
+              pb={1}
+              mb={4}
+            >
+              <Text
+                fontSize="11px"
+                fontWeight="700"
+                letterSpacing="0.13em"
+                textTransform="uppercase"
+                color="theme.accent"
+                mb={series!.subtitle ? "2px" : "10px"}
+              >
+                {series!.title}
+              </Text>
+              {series!.subtitle && (
+                <Text fontSize="13px" color="theme.textSecondary" mb="10px">
+                  {series!.subtitle}
+                </Text>
+              )}
+              {sectionPieces.map((piece) => (
+                <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
+              ))}
+            </Box>
+          ))}
+          {uncategorized && uncategorized.pieces.length > 0 && (
+            <Box
+              className="gmwp-uncategorized"
+              bg="theme.surface"
+              borderWidth="1px"
+              borderColor="theme.border"
+              borderRadius="16px"
+              px={5}
+              pt={4}
+              pb={1}
+            >
+              {namedGroups.length > 0 && (
+                <Text
+                  fontSize="11px"
+                  fontWeight="700"
+                  letterSpacing="0.13em"
+                  textTransform="uppercase"
+                  color="theme.textMuted"
+                  mb="10px"
+                >
+                  More
+                </Text>
+              )}
+              {uncategorized.pieces.map((piece) => (
+                <PieceRow key={piece.id} piece={piece} onSelect={onSelect} />
+              ))}
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );
