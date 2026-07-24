@@ -24,6 +24,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapToolbar from "./TipTapToolbar";
 import { LbAnchor } from "./extensions/LbAnchor";
+import { CommentMark } from "./extensions/CommentMark";
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -93,6 +94,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
         CollabStarterKit,
         CustomParagraph,
         LbAnchor,
+        CommentMark,
         Collaboration.configure({
           document: ydoc,
           field: "default",
@@ -299,6 +301,15 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
                     fontWeight: 620,
                     marginTop: "0.9em",
                     marginBottom: "0.35em",
+                  },
+                  "& mark.dc-comment-mark": {
+                    background: "rgba(250, 204, 21, 0.35)",
+                    borderBottom: "2px solid rgba(234, 179, 8, 0.7)",
+                    borderRadius: "2px",
+                    cursor: "pointer",
+                  },
+                  "& mark.dc-comment-mark:hover": {
+                    background: "rgba(250, 204, 21, 0.55)",
                   },
                   "& h4": {
                     fontSize: "1.05rem",

@@ -45,6 +45,8 @@ import { useYjsSocketProvider } from "@/lib/dispatch/yjs/useYjsSocketProvider";
 import { useCollabAutosave } from "@hooks/dispatch/useCollabAutosave";
 import { Divider } from "../common/Divider";
 import { OutlineDrawer } from "./outline/OutlineDrawer";
+import { AddCommentBubble } from "@components/editor/AddCommentBubble";
+import { DispatchCommentPanel } from "@components/editor/DispatchCommentPanel";
 
 interface SponsorConfig {
   type: "group" | "member";
@@ -162,6 +164,11 @@ export default function WriteComposer({
   const [lbDeskOpen, setLbDeskOpen] = useState(false);
   const [workspaceWidth] = useState("360px");
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [commentPanelOpen, setCommentPanelOpen] = useState(false);
+  const [pendingComment, setPendingComment] = useState<{
+    commentId: string; blockId: string | null;
+    anchorFrom: number; anchorTo: number; quotedText: string;
+  } | null>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfExportError, setPdfExportError] = useState<string | null>(null);
 
@@ -697,6 +704,17 @@ export default function WriteComposer({
                           : "+ Add Collaborators"}
                       </Button>
 
+                      {isCollaborative && (
+                        <Button
+                          size="xs"
+                          variant={commentPanelOpen ? "solid" : "outline"}
+                          colorScheme="yellow"
+                          onClick={() => setCommentPanelOpen(v => !v)}
+                        >
+                          💬 Comments
+                        </Button>
+                      )}
+
                       <Button
                         size="xs"
                         variant={lbId ? "solid" : "outline"}
@@ -993,6 +1011,41 @@ export default function WriteComposer({
             <Box h={8} />
           </VStack>
         </Box>
+
+        {/* Dispatch inline comment panel */}
+        {isCollaborative && commentPanelOpen && (
+          <DispatchCommentPanel
+            pieceId={pieceId}
+            editor={editorRef.current}
+            canResolve={(() => {
+              try {
+                const uid = JSON.parse(localStorage.getItem('user_identity') ?? '{}').id
+                return dispatchContent?.collaborator_details?.some(
+                  (c: { user: { id: number }; role: string }) => c.user.id === uid && c.role === 'editor'
+                ) ?? false
+              } catch { return false }
+            })()}
+            currentUserId={(() => {
+              try { return JSON.parse(localStorage.getItem('user_identity') ?? '{}').id } catch { return undefined }
+            })()}
+            pendingComment={pendingComment}
+            onPendingCancel={() => setPendingComment(null)}
+          />
+        )}
+
+        {/* Selection bubble — only in collab dispatch mode */}
+        {isCollaborative && (
+          <Box position="relative">
+            <AddCommentBubble
+              editor={editorRef.current}
+              canComment
+              onStartComment={(params) => {
+                setCommentPanelOpen(true)
+                setPendingComment(params)
+              }}
+            />
+          </Box>
+        )}
 
         <ScrollToTopButton workspaceOpen={workspaceOpen} workspaceWidth={workspaceWidth} />
 
