@@ -218,9 +218,10 @@ class SpellbookApi {
     }
   }
 
-  async upsertUserDictionaryEntry(payload: UserDictionaryEntryPayload): Promise<void> {
+  async upsertUserDictionaryEntry(payload: UserDictionaryEntryPayload): Promise<UserDictionaryEntryRecord> {
     try {
-      await this.client.post('/api/spellbook/dictionary/entries', payload);
+      const response = await this.client.post('/api/spellbook/dictionary/entries', payload);
+      return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }

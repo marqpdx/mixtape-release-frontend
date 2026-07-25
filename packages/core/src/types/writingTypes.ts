@@ -131,7 +131,7 @@ export interface WritingPieceCatalogItem {
  * WorkingDocument - per-user autosave buffer (full version from list endpoint)
  */
 export interface WorkingDocument {
-  id: string | number
+  id: number
   piece: {
     id: string
     slug: string
@@ -150,7 +150,7 @@ export interface WorkingDocument {
     signed_off?: boolean
   }
   user: {
-    id: string | number
+    id: number
     username: string
     email?: string
     first_name?: string
