@@ -281,14 +281,16 @@ export const getMemberUsername = (member: GroupMembership): string => {
 };
 
 /**
- * Check if user can perform admin actions in group
+ * Check if user holds the admin role in the group (admin only — not steward).
  */
 export const canUserAdminGroup = (group: Group): boolean => {
-  return hasAnyRole(group, ['admin', 'steward']);
+  return hasRole(group, 'admin');
 };
 
 /**
- * Check if user can moderate group (admin, steward, or owner)
+ * @deprecated No "Moderator" concept in Mixtape. Use permission profiles and
+ * steward roles for graduated access. Kept to avoid breaking call sites while
+ * they migrate — do not add new callers.
  */
 export const canUserModerateGroup = (group: Group): boolean => {
   return hasAnyRole(group, ['admin', 'steward']);
