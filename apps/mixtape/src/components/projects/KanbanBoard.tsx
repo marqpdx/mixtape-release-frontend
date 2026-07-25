@@ -25,10 +25,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconSettings } from '@tabler/icons-react';
+import { useGroupMembers } from '@mixtape/api/hooks';
 import { useProjectBoard, useProjectsList, useTaskTypes } from '@mixtape/api/hooks';
+import type { MemberCandidate } from '@/components/common/MemberPicker';
 import { KanbanCard } from './KanbanCard';
 import { TaskModal } from './TaskModal';
+import { KanbanColumnManager } from './KanbanColumnManager';
 import type { Task, TaskCreatePayload, TaskUpdatePayload } from '@mixtape/api/clients/projects/projectsApi';
 
 interface KanbanBoardProps {
@@ -65,6 +68,7 @@ export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBo
   const [modalOpen, setModalOpen] = useState(false);
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>();
   const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
+  const [columnManagerOpen, setColumnManagerOpen] = useState(false);
 
   const listParams = useMemo(
     () => ({ sponsor_type: 'group', sponsor_object_id: groupId }),
@@ -73,6 +77,18 @@ export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBo
 
   const { projects, isLoading: projectsLoading } = useProjectsList(listParams);
   const { taskTypes } = useTaskTypes();
+  const { activeMembers } = useGroupMembers(groupSlug);
+  const memberCandidates = useMemo<MemberCandidate[]>(
+    () => activeMembers.map(m => ({
+      id: Number(m.member_id),
+      displayName: m.display_name || m.username || '',
+      username: m.username ?? '',
+      badge: m.roles.includes('admin') ? 'Admin'
+           : m.roles.includes('steward') ? 'Steward'
+           : undefined,
+    })),
+    [activeMembers]
+  );
 
   const resolvedProjectId = activeProjectId ?? projects[0]?.id ?? null;
 
@@ -80,6 +96,7 @@ export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBo
     board,
     isLoading: boardLoading,
     error: boardError,
+    loadBoard,
     createTask,
     moveTask,
     updateTask,
@@ -174,10 +191,15 @@ export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBo
           <Heading size="md">{board?.project.title ?? groupTitle}</Heading>
           {boardLoading && <Spinner size="sm" />}
         </HStack>
-        <Button size="sm" onClick={() => openCreate()} colorPalette="blue">
-          <IconPlus size={14} />
-          New task
-        </Button>
+        <HStack gap={2}>
+          <Button size="sm" variant="ghost" onClick={() => setColumnManagerOpen(true)} aria-label="Manage columns">
+            <IconSettings size={14} />
+          </Button>
+          <Button size="sm" onClick={() => openCreate()} colorPalette="blue">
+            <IconPlus size={14} />
+            New task
+          </Button>
+        </HStack>
       </HStack>
 
       {boardError && (
@@ -288,7 +310,18 @@ export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBo
         taskTypes={taskTypes}
         defaultColumnId={defaultColumnId}
         columns={visibleColumns}
+        memberCandidates={memberCandidates}
       />
+
+      {resolvedProjectId && board && (
+        <KanbanColumnManager
+          open={columnManagerOpen}
+          onClose={() => setColumnManagerOpen(false)}
+          projectId={resolvedProjectId}
+          columns={board.columns}
+          onColumnsChanged={() => void loadBoard()}
+        />
+      )}
     </Box>
   );
 }

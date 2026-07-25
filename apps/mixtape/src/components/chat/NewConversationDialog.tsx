@@ -9,13 +9,13 @@ import {
   Portal,
   Text,
   Stack,
-  Checkbox,
   createOverlay,
   Box,
   RadioGroup,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { TrustProfile } from "./interfaces";
+import { MemberPicker, type MemberCandidate } from "@/components/common/MemberPicker";
 
 interface NewConversationDialogProps {
   title: string;
@@ -43,18 +43,27 @@ const TRUST_PROFILES: { value: TrustProfile; label: string; description: string 
 
 export const newConversationDialog = createOverlay<NewConversationDialogProps>(
   ({ title, allMembers, onStart, ...rest }) => {
-    const [selected, setSelected] = useState<string[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [trustProfile, setTrustProfile] = useState<TrustProfile>("private");
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("NewConversationDialog allMembers:", allMembers);
-    }
+    const candidates = useMemo<MemberCandidate[]>(
+      () => allMembers.map(u => ({
+        id: u.id,
+        displayName: [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username,
+        username: u.username,
+      })),
+      [allMembers]
+    );
 
-    const toggleSelection = (username: string) => {
-      setSelected((prev) =>
-        prev.includes(username)
-          ? prev.filter((u) => u !== username)
-          : [...prev, username]
+    const selectedUsernames = useMemo(() => {
+      const idSet = new Set(selectedIds);
+      return allMembers.filter(u => idSet.has(u.id)).map(u => u.username);
+    }, [selectedIds, allMembers]);
+
+    const toggleSelection = (id: number | string) => {
+      const strId = String(id);
+      setSelectedIds(prev =>
+        prev.includes(strId) ? prev.filter(i => i !== strId) : [...prev, strId]
       );
     };
 
@@ -78,38 +87,12 @@ export const newConversationDialog = createOverlay<NewConversationDialogProps>(
               </Dialog.Header>
 
               <Dialog.Body>
-                {allMembers.length === 0 ? (
-                  <Text fontSize="sm" color="text.muted">
-                    No members available.
-                  </Text>
-                ) : (
-                  <Stack gap="3" maxH="240px" overflowY="auto">
-                    {allMembers.map((user) => {
-                      const isChecked = selected.includes(user.username);
-                      return (
-                        <Checkbox.Root
-                          key={user.id}
-                          checked={isChecked}
-                          onCheckedChange={() => toggleSelection(user.username)}
-                          display="flex"
-                          alignItems="center"
-                          gap="3"
-                          p="2"
-                          rounded="md"
-                          _hover={{ bg: "background.subtle" }}
-                        >
-                          <Checkbox.HiddenInput />
-                          <Checkbox.Control>
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                          <Checkbox.Label fontSize="sm">
-                            {user.first_name} {user.last_name || user.username}
-                          </Checkbox.Label>
-                        </Checkbox.Root>
-                      );
-                    })}
-                  </Stack>
-                )}
+                <MemberPicker
+                  candidates={candidates}
+                  selected={selectedIds}
+                  onToggle={toggleSelection}
+                  maxH="240px"
+                />
 
                 <Box mt="5" className="ncd-trust-selector">
                   <Text fontSize="sm" fontWeight="semibold" mb="2" color="text.primary">
@@ -157,10 +140,10 @@ export const newConversationDialog = createOverlay<NewConversationDialogProps>(
                 </Button>
                 <Button
                   onClick={() => {
-                    onStart(selected, trustProfile);
+                    onStart(selectedUsernames, trustProfile);
                     newConversationDialog.close("new-chat");
                   }}
-                  disabled={selected.length === 0}
+                  disabled={selectedIds.length === 0}
                 >
                   Start Chat
                 </Button>

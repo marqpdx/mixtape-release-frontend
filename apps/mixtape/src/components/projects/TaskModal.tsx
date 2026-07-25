@@ -31,6 +31,7 @@ import type {
   TaskType,
   TaskUpdatePayload,
 } from '@mixtape/api/clients/projects/projectsApi';
+import { MemberPicker, type MemberCandidate } from '@/components/common/MemberPicker';
 
 interface TaskModalProps {
   open: boolean;
@@ -41,6 +42,7 @@ interface TaskModalProps {
   taskTypes: TaskType[];
   defaultColumnId?: string;
   columns: { id: string; title: string }[];
+  memberCandidates?: MemberCandidate[];
 }
 
 const SEVERITY_OPTIONS = [
@@ -80,6 +82,7 @@ export function TaskModal({
   taskTypes,
   defaultColumnId,
   columns,
+  memberCandidates = [],
 }: TaskModalProps) {
   const isEdit = !!task;
 
@@ -89,6 +92,7 @@ export function TaskModal({
   const [severity, setSeverity] = useState<TaskSeverity>('low');
   const [timeliness, setTimeliness] = useState<TaskTimeliness>('normal');
   const [signOff, setSignOff] = useState('');
+  const [assigneeId, setAssigneeId] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState('');
   const [dueDateOverridden, setDueDateOverridden] = useState(false);
   const [columnId, setColumnId] = useState(defaultColumnId ?? '');
@@ -106,6 +110,7 @@ export function TaskModal({
       setSeverity(task.severity);
       setTimeliness(task.timeliness);
       setSignOff(task.sign_off_criteria ?? '');
+      setAssigneeId(task.assignee_id ? Number(task.assignee_id) : null);
       setDueDate(task.due_date ?? '');
       setDueDateOverridden(task.due_date_overridden);
       setColumnId(task.column);
@@ -116,6 +121,7 @@ export function TaskModal({
       setSeverity('low');
       setTimeliness('normal');
       setSignOff('');
+      setAssigneeId(null);
       setDueDate(autoDate('low', 'normal'));
       setDueDateOverridden(false);
       setColumnId(defaultColumnId ?? '');
@@ -166,6 +172,7 @@ export function TaskModal({
         task_type_id: typeId || null,
         severity,
         timeliness,
+        assignee_id: assigneeId,
         sign_off_criteria: signOff.trim() || undefined,
         due_date: dueDate || null,
         ...(!isEdit && columnId ? { column_id: columnId } : {}),
@@ -381,6 +388,38 @@ export function TaskModal({
                   rows={2}
                 />
               </Field.Root>
+
+              {memberCandidates.length > 0 && (
+                <Field.Root>
+                  <Field.Label>
+                    Assignee
+                    {assigneeId !== null && (
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorPalette="gray"
+                        ml={2}
+                        onClick={() => setAssigneeId(null)}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </Field.Label>
+                  {assigneeId !== null && (
+                    <Text fontSize="sm" color="blue.600" mb={1} _dark={{ color: 'blue.300' }}>
+                      {memberCandidates.find(m => m.id === assigneeId)?.displayName ?? 'Assigned'}
+                    </Text>
+                  )}
+                  <MemberPicker
+                    candidates={memberCandidates}
+                    selected={assigneeId !== null ? [assigneeId] : []}
+                    onToggle={id => setAssigneeId(prev => prev === Number(id) ? null : Number(id))}
+                    multiSelect={false}
+                    maxH="160px"
+                    emptyText="No group members available."
+                  />
+                </Field.Root>
+              )}
 
               {error && <Text fontSize="sm" color="red.500">{error}</Text>}
             </VStack>
