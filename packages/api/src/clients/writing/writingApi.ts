@@ -210,27 +210,32 @@ export async function fetchGroupWritingCatalog(groupSlug: string) {
 }
 
 /**
- * Create a WritingSeries for a group
+ * Create a WritingSeries for a group or member.
  */
 export async function createWritingSeries(payload: {
   title: string
   slug: string
   phase_num: number | null
   subtitle?: string
-  group: string // group UUID
+  group?: string | null  // group UUID (group sponsors)
+  user?: number | null   // user PK (member sponsors)
 }): Promise<import('@mixtape/core/types/writingTypes').WritingSeries> {
   const res = await axiosInstance.post('/api/writing/series', payload)
   return res.data
 }
 
 /**
- * Fetch all WritingSeries for a group (for catalog section headers).
+ * Fetch all WritingSeries for a group or member sponsor.
  */
-export async function fetchWritingSeries(groupSlug: string) {
-  const response = await axiosInstance.get(`/api/writing/series`, {
-    params: { group: groupSlug },
-  });
-  return response.data as import('@mixtape/core/types/writingTypes').WritingSeries[];
+export async function fetchWritingSeries(
+  sponsorSlug: string,
+  sponsorType: 'group' | 'member' = 'group'
+) {
+  const params = sponsorType === 'member'
+    ? { member: sponsorSlug }
+    : { group: sponsorSlug }
+  const response = await axiosInstance.get('/api/writing/series', { params })
+  return response.data as import('@mixtape/core/types/writingTypes').WritingSeries[]
 }
 
 /**

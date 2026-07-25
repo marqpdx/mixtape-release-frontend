@@ -245,9 +245,11 @@ function SortableRow({
 
 function CreateSeriesForm({
   groupId,
+  memberId,
   onCreated,
 }: {
-  groupId: string
+  groupId?: string
+  memberId?: number
   onCreated: (series: WritingSeries) => void
 }) {
   const [title, setTitle] = useState('')
@@ -262,7 +264,8 @@ function CreateSeriesForm({
         title: trimmed,
         slug: slugify(trimmed),
         phase_num: null,
-        group: groupId,
+        group: groupId ?? null,
+        user: memberId ?? null,
       })
       onCreated(series)
       setTitle('')
@@ -305,8 +308,10 @@ interface SeriesGroupViewProps {
   drafts: WorkingDocument[]
   onEdit: (pieceId: string) => void
   onDetail?: (pieceSlug: string) => void
-  /** Group UUID — enables inline series creation */
+  /** Group UUID — enables inline series creation for group sponsors */
   groupId?: string
+  /** User PK — enables inline series creation for member sponsors */
+  memberId?: number
   /** Full series list for assignment dropdowns */
   allSeries?: WritingSeries[]
   /**
@@ -328,6 +333,7 @@ export function SeriesGroupView({
   onEdit,
   onDetail,
   groupId,
+  memberId,
   allSeries,
   filterSeriesKey,
   onSeriesCreated,
@@ -566,10 +572,11 @@ export function SeriesGroupView({
         </Box>
       ))}
 
-      {/* Inline series creation — only when groupId provided */}
-      {groupId && (
+      {/* Inline series creation — available for group or member sponsors */}
+      {(groupId || memberId != null) && (
         <CreateSeriesForm
           groupId={groupId}
+          memberId={memberId}
           onCreated={(series) => {
             onSeriesCreated?.(series)
             onRefresh?.()

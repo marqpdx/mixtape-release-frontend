@@ -166,11 +166,11 @@ export default function WritingListWrapper({
       (groupPerms.isAdmin || groupPerms.hasDecorator("can__ManageWriting")));
   const queryClient = useQueryClient();
 
-  // Fetch series list for the rail + assignment dropdowns (group only)
+  // Fetch series list for the rail + assignment dropdowns (group or member)
   const { data: seriesList = [] } = useQuery<WritingSeries[]>({
-    queryKey: ['writing', 'series', sponsor.slug],
-    queryFn: () => writingApi.fetchWritingSeries(sponsor.slug),
-    enabled: sponsor.type === 'group' && groupingMode === 'by-series',
+    queryKey: ['writing', 'series', sponsor.type, sponsor.slug],
+    queryFn: () => writingApi.fetchWritingSeries(sponsor.slug, sponsor.type),
+    enabled: groupingMode === 'by-series',
   });
 
   // Fetch sponsor categories for folder view
@@ -943,12 +943,12 @@ export default function WritingListWrapper({
   const groupByCollection = useMemo(() => createListCollection({
     items: [
       { value: 'by-list', label: 'None' },
-      ...(sponsor.type === 'group' ? [{ value: 'by-series', label: 'Series' }] : []),
+      { value: 'by-series', label: 'Series' },
       { value: 'by-category', label: 'Category' },
       { value: 'by-tag', label: 'Tag' },
       { value: 'by-where', label: 'Where' },
     ],
-  }), [sponsor.type]);
+  }), []);
 
   return (
     <Box>
@@ -1372,11 +1372,12 @@ export default function WritingListWrapper({
                   drafts={Array.isArray(drafts) ? drafts : []}
                   onEdit={onNavigateToEditor}
                   onDetail={(slug: string) => onNavigateToDetail({ id: '', slug })}
-                  groupId={sponsor.id}
+                  groupId={sponsor.type === 'group' ? sponsor.id : undefined}
+                  memberId={sponsor.type === 'member' ? (user?.id as number | undefined) : undefined}
                   allSeries={seriesList}
                   filterSeriesKey={selectedSeriesKey}
                   onSeriesCreated={() => {
-                    void queryClient.invalidateQueries({ queryKey: ['writing', 'series', sponsor.slug] })
+                    void queryClient.invalidateQueries({ queryKey: ['writing', 'series', sponsor.type, sponsor.slug] })
                   }}
                   onRefresh={() => {
                     void queryClient.invalidateQueries({ queryKey: ['writing', 'placements', sponsor.type, sponsor.slug] })
