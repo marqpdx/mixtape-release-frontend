@@ -10,9 +10,39 @@ import {
   Task,
   TaskCreatePayload,
   TaskMovePayload,
+  TaskType,
   TaskUpdatePayload,
   projectsApi,
 } from '../../clients/projects/projectsApi';
+
+export type { TaskType };
+
+// ─── Task types ───────────────────────────────────────────────────────────────
+
+export function useTaskTypes() {
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await projectsApi.fetchTaskTypes();
+      setTaskTypes(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load task types');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  return { taskTypes, isLoading, error };
+}
+
+// ─── Project create ───────────────────────────────────────────────────────────
 
 interface UseProjectCreateReturn {
   createProject: (payload: ProjectCreatePayload) => Promise<Project>;
@@ -44,6 +74,8 @@ export function useProjectCreate(): UseProjectCreateReturn {
   return { createProject, isCreating, error, clearError };
 }
 
+// ─── Projects list ────────────────────────────────────────────────────────────
+
 interface UseProjectsListReturn {
   projects: Project[];
   isLoading: boolean;
@@ -65,15 +97,13 @@ export function useProjectsList(params: ProjectListParams | null): UseProjectsLi
         setProjects([]);
         return;
       }
-
       setIsLoading(true);
       setError(null);
       try {
         const data = await projectsApi.fetchProjects(queryParams);
         setProjects(data);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load projects';
-        setError(message);
+        setError(err instanceof Error ? err.message : 'Failed to load projects');
       } finally {
         setIsLoading(false);
       }
@@ -95,15 +125,10 @@ export function useProjectsList(params: ProjectListParams | null): UseProjectsLi
     }
   }, [params, loadProjects]);
 
-  return {
-    projects,
-    isLoading,
-    error,
-    loadProjects,
-    addProject,
-    clearError,
-  };
+  return { projects, isLoading, error, loadProjects, addProject, clearError };
 }
+
+// ─── Project board ────────────────────────────────────────────────────────────
 
 interface UseProjectBoardReturn {
   board: ProjectBoard | null;
@@ -127,19 +152,14 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
   const loadBoard = useCallback(
     async (overrideId?: string) => {
       const id = overrideId ?? projectId;
-      if (!id) {
-        setBoard(null);
-        return;
-      }
-
+      if (!id) { setBoard(null); return; }
       setIsLoading(true);
       setError(null);
       try {
         const data = await projectsApi.fetchBoard(id);
         setBoard(data);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load project board';
-        setError(message);
+        setError(err instanceof Error ? err.message : 'Failed to load project board');
       } finally {
         setIsLoading(false);
       }
@@ -157,9 +177,7 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
 
   const createTask = useCallback(
     async (payload: TaskCreatePayload): Promise<Task> => {
-      if (!projectId) {
-        throw new Error('Project id is required to create tasks.');
-      }
+      if (!projectId) throw new Error('Project id is required to create tasks.');
       setError(null);
       try {
         const task = await projectsApi.createTask(projectId, payload);
@@ -167,12 +185,11 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
           if (!prev) return prev;
           const columnId = task.column;
           const existing = prev.tasks_by_column[columnId] || [];
-          const nextTasks = [...existing, task].sort((a, b) => a.position - b.position);
           return {
             ...prev,
             tasks_by_column: {
               ...prev.tasks_by_column,
-              [columnId]: nextTasks,
+              [columnId]: [...existing, task].sort((a, b) => a.position - b.position),
             },
           };
         });
@@ -188,9 +205,7 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
 
   const moveTask = useCallback(
     async (taskId: string, payload: TaskMovePayload): Promise<void> => {
-      if (!projectId) {
-        throw new Error('Project id is required to move tasks.');
-      }
+      if (!projectId) throw new Error('Project id is required to move tasks.');
       setError(null);
       try {
         const result = await projectsApi.moveTask(taskId, payload);
@@ -273,10 +288,7 @@ export function useProjectBoard(projectId: string | null): UseProjectBoardReturn
         const updated = await projectsApi.toggleColumnHidden(projectId, columnId);
         setBoard(prev => {
           if (!prev) return prev;
-          return {
-            ...prev,
-            columns: prev.columns.map(c => (c.id === columnId ? updated : c)),
-          };
+          return { ...prev, columns: prev.columns.map(c => (c.id === columnId ? updated : c)) };
         });
         return updated;
       } catch (err) {

@@ -4,6 +4,17 @@ import { AxiosError } from 'axios';
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export type ProjectMode = 'list' | 'project';
+export type TaskSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type TaskTimeliness = 'pressing' | 'normal' | 'eventually';
+
+export interface TaskType {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  is_active: boolean;
+  position: number;
+}
 
 export interface Project {
   id: string;
@@ -31,7 +42,16 @@ export interface Task {
   summary: string;
   slug: string;
   position: number;
+  task_type: TaskType | null;
+  severity: TaskSeverity;
+  timeliness: TaskTimeliness;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  sign_off_criteria: string;
+  due_date: string | null;
+  due_date_overridden: boolean;
   completed_at: string | null;
+  is_overdue: boolean;
 }
 
 export interface ProjectBoard {
@@ -53,6 +73,23 @@ export interface TaskCreatePayload {
   title: string;
   summary?: string;
   column_id?: string;
+  task_type_id?: string | null;
+  severity?: TaskSeverity;
+  timeliness?: TaskTimeliness;
+  assignee_id?: number | null;
+  sign_off_criteria?: string;
+  due_date?: string | null;
+}
+
+export interface TaskUpdatePayload {
+  title?: string;
+  summary?: string;
+  task_type_id?: string | null;
+  severity?: TaskSeverity;
+  timeliness?: TaskTimeliness;
+  assignee_id?: number | null;
+  sign_off_criteria?: string;
+  due_date?: string | null;
 }
 
 export interface TaskMovePayload {
@@ -60,14 +97,18 @@ export interface TaskMovePayload {
   to_index: number;
 }
 
-export interface TaskUpdatePayload {
-  title?: string;
-  summary?: string;
-}
-
 export interface ProjectListParams {
   sponsor_type: string;
   sponsor_object_id: string;
+}
+
+export interface ColumnUpdatePayload {
+  title?: string;
+  position?: number;
+}
+
+export interface ColumnCreatePayload {
+  title: string;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -95,6 +136,15 @@ function getErrorMessage(error: unknown): string {
 }
 
 class ProjectsApi {
+  async fetchTaskTypes(): Promise<TaskType[]> {
+    try {
+      const response = await axiosInstance.get('/api/projects/task-types');
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
   async createProject(payload: ProjectCreatePayload): Promise<Project> {
     try {
       const response = await axiosInstance.post('/api/projects/projects', payload);
@@ -163,6 +213,35 @@ class ProjectsApi {
         `/api/projects/projects/${projectId}/columns/${columnId}/toggle-hidden`
       );
       return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async createColumn(projectId: string, payload: ColumnCreatePayload): Promise<ProjectColumn> {
+    try {
+      const response = await axiosInstance.post(`/api/projects/projects/${projectId}/columns`, payload);
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async updateColumn(projectId: string, columnId: string, payload: ColumnUpdatePayload): Promise<ProjectColumn> {
+    try {
+      const response = await axiosInstance.patch(
+        `/api/projects/projects/${projectId}/columns/${columnId}`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }
+
+  async deleteColumn(projectId: string, columnId: string): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/projects/projects/${projectId}/columns/${columnId}/delete`);
     } catch (error) {
       throw new Error(getErrorMessage(error));
     }
