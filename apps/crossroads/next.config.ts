@@ -15,6 +15,33 @@ const nextConfig: NextConfig = {
   ],
   allowedDevOrigins: ["http://127.0.0.1:3010", "http://localhost:3010"],
 
+  async headers() {
+    return [
+      {
+        // CSP for the Crossroads Page public group route only.
+        // Primary control: sanitized template slots (typed values via React JSX).
+        // This header is the defense-in-depth backstop (DB-0002 Decision 2).
+        source: "/:slug",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https:",
+              "font-src 'self'",
+              "connect-src 'self'",
+              "frame-ancestors 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+            ].join("; "),
+          },
+        ],
+      },
+    ];
+  },
+
   async rewrites() {
     return [
       // Route /app and anything under it to the Mixtape app zone.
