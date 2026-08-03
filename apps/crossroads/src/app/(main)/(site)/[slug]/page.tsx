@@ -1,8 +1,9 @@
 // apps/crossroads/app/(main)/(site)/[slug]/page.tsx
-// Server component — fetches group data for SEO metadata and initial render.
+// Server component — renders only when a published PublicPage exists for the group.
+// No published page → redirect to /. SEO metadata emitted server-side.
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import CrossroadsPageClient from "./CrossroadsPageClient";
 import type { PublicGroupDetail } from "@mixtape/api/clients/public/publicApi";
 
@@ -13,19 +14,28 @@ const API_BASE =
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://crossroads.mixtape.com";
 
+async function fetchPublishedPage(slug: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/api/public/groups/${slug}/page`, {
+    next: { revalidate: 60 },
+  });
+  return res.ok;
+}
+
 async function fetchGroup(slug: string): Promise<PublicGroupDetail | null> {
   const res = await fetch(`${API_BASE}/api/public/groups/${slug}`, {
     next: { revalidate: 60 },
   });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Unexpected response ${res.status} for group ${slug}`);
+  if (!res.ok) return null;
   return res.json() as Promise<PublicGroupDetail>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const isPublished = await fetchPublishedPage(slug);
+  if (!isPublished) return {};
+
   const group = await fetchGroup(slug);
-  if (!group) return { title: "Group not found" };
+  if (!group) return {};
 
   const description = group.quick_intro || group.description || undefined;
 
@@ -49,7 +59,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CrossroadsPage({ params }: Props) {
   const { slug } = await params;
+
+  const isPublished = await fetchPublishedPage(slug);
+  if (!isPublished) redirect("/");
+
   const group = await fetchGroup(slug);
-  if (!group) notFound();
+  if (!group) redirect("/");
+
   return <CrossroadsPageClient group={group} />;
 }
