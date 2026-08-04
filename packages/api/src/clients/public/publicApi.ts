@@ -158,6 +158,27 @@ export interface PublicCourseDetail extends PublicCourseListItem {
   items: PublicCourseOutlineItem[];
 }
 
+export type LayoutTemplate = "standard" | "hero" | "focus" | "directory";
+export type ComponentType = "text" | "image" | "link" | "callout";
+
+export interface PageComponent {
+  id: number;
+  slot: string;
+  component_type: ComponentType;
+  content_json: Record<string, unknown>;
+  sort_order: number;
+}
+
+export interface CrossroadsPageData {
+  group_slug: string;
+  group_id: string;
+  status: string;
+  layout_template: LayoutTemplate;
+  content: Record<string, unknown> | null;
+  components: PageComponent[];
+  published_at: string | null;
+}
+
 // --- API Functions ---
 
 export async function fetchPublicMemberProfile(

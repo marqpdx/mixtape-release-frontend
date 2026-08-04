@@ -5,7 +5,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import CrossroadsPageClient from "./CrossroadsPageClient";
-import type { PublicGroupDetail } from "@mixtape/api/clients/public/publicApi";
+import type {
+  PublicGroupDetail,
+  CrossroadsPageData,
+} from "@mixtape/api/clients/public/publicApi";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -14,11 +17,12 @@ const API_BASE =
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://crossroads.mixtape.com";
 
-async function fetchPublishedPage(slug: string): Promise<boolean> {
+async function fetchPageData(slug: string): Promise<CrossroadsPageData | null> {
   const res = await fetch(`${API_BASE}/api/public/groups/${slug}/page`, {
     next: { revalidate: 60 },
   });
-  return res.ok;
+  if (!res.ok) return null;
+  return res.json() as Promise<CrossroadsPageData>;
 }
 
 async function fetchGroup(slug: string): Promise<PublicGroupDetail | null> {
@@ -31,8 +35,8 @@ async function fetchGroup(slug: string): Promise<PublicGroupDetail | null> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const isPublished = await fetchPublishedPage(slug);
-  if (!isPublished) return {};
+  const pageData = await fetchPageData(slug);
+  if (!pageData) return {};
 
   const group = await fetchGroup(slug);
   if (!group) return {};
@@ -60,11 +64,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CrossroadsPage({ params }: Props) {
   const { slug } = await params;
 
-  const isPublished = await fetchPublishedPage(slug);
-  if (!isPublished) redirect("/");
+  const pageData = await fetchPageData(slug);
+  if (!pageData) redirect("/");
 
   const group = await fetchGroup(slug);
   if (!group) redirect("/");
 
-  return <CrossroadsPageClient group={group} />;
+  return (
+    <CrossroadsPageClient
+      group={group}
+      layoutTemplate={pageData.layout_template}
+      components={pageData.components}
+      groupSlug={slug}
+    />
+  );
 }
