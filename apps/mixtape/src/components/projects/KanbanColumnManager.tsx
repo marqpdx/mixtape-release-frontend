@@ -9,7 +9,6 @@ import {
   Input,
   Text,
   VStack,
-  Spinner,
 } from '@chakra-ui/react';
 import {
   DndContext,

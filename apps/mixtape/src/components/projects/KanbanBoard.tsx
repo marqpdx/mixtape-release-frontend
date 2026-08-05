@@ -63,7 +63,7 @@ function ColumnDropZone({ columnId, children }: ColumnDropZoneProps) {
 }
 
 export default function KanbanBoard({ groupId, groupSlug, groupTitle }: KanbanBoardProps) {
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>();

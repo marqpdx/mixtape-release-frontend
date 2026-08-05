@@ -1659,7 +1659,7 @@ export default function WritingListWrapper({
             <Button
               colorPalette="red"
               onClick={() => {
-                if (deletingDraft) deleteDraft.mutate(deletingDraft.id as string);
+                if (deletingDraft) deleteDraft.mutate(String(deletingDraft.id));
                 setDeletingDraft(null);
               }}
             >
