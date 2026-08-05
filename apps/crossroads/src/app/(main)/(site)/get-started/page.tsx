@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Field, Heading, Input, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Field, Heading, Input, Stack, Text, Textarea } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useState } from "react";
 
@@ -10,6 +10,8 @@ type IntakeError = {
 
 export default function GetStartedPage() {
   const [orgName, setOrgName] = useState("");
+  const [orgDescription, setOrgDescription] = useState("");
+  const [knowledgeGoal, setKnowledgeGoal] = useState("");
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +28,8 @@ export default function GetStartedPage() {
     try {
       await axiosInstance.post("/api/public/client-intake", {
         org_name: orgName.trim(),
+        org_description: orgDescription.trim(),
+        knowledge_goal: knowledgeGoal.trim(),
         email: email.trim(),
       });
       setSubmitted(true);
@@ -66,6 +70,25 @@ export default function GetStartedPage() {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="Acme Corp"
+            />
+          </Field.Root>
+
+          <Field.Root>
+            <Field.Label>What does your organization do?</Field.Label>
+            <Textarea
+              value={orgDescription}
+              onChange={(e) => setOrgDescription(e.target.value)}
+              placeholder="A sentence or two is fine."
+              rows={3}
+            />
+          </Field.Root>
+
+          <Field.Root>
+            <Field.Label>What&apos;s one thing your team should always be able to find quickly?</Field.Label>
+            <Input
+              value={knowledgeGoal}
+              onChange={(e) => setKnowledgeGoal(e.target.value)}
+              placeholder="e.g. our supplier contacts, how we handle returns, who to call when X breaks"
             />
           </Field.Root>
 
