@@ -165,6 +165,20 @@ export default function GroupSettingsPage() {
       </Button>
 
       <GroupDispatchEditor slug={slug} />
+
+      {/* ── Catalyst ─────────────────────────────────────────────────────── */}
+      <Box mt={10} pt={8} borderTop="1px solid" borderColor={borderColor}>
+        <Text fontWeight="600" mb={1}>Catalyst</Text>
+        <Text fontSize="sm" color={mutedColor} mb={4}>
+          Catalyst gives your group an AI-powered knowledge workspace — structured docs,
+          smart search, and a Codex your whole team can rely on.
+        </Text>
+        <ChakraLink asChild>
+          <NextLink href={`/group/${slug}/admin/settings/catalyst-intake`}>
+            <Button size="sm" variant="outline">Request Catalyst activation →</Button>
+          </NextLink>
+        </ChakraLink>
+      </Box>
     </Box>
   );
 }
