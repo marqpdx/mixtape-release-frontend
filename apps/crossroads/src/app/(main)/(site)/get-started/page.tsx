@@ -2,6 +2,7 @@
 
 import { Box, Button, Field, Heading, Input, Stack, Text, Textarea } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { toaster } from "@mixtape/core/lib/toaster";
 import { useState } from "react";
 
 type IntakeError = {
@@ -21,6 +22,7 @@ export default function GetStartedPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (honeypot) return;
+    if (!orgName.trim() || !email.trim()) return;
 
     setError(null);
     setSubmitting(true);
@@ -33,9 +35,22 @@ export default function GetStartedPage() {
         email: email.trim(),
       });
       setSubmitted(true);
+      toaster.create({
+        title: "Request received",
+        description: "We'll be in touch at the email you provided.",
+        type: "success",
+        duration: 5000,
+      });
     } catch (err: unknown) {
       const e = err as IntakeError;
-      setError(e.response?.data?.detail ?? "Something went wrong. Please try again.");
+      const msg = e.response?.data?.detail ?? "Something went wrong. Please try again.";
+      setError(msg);
+      toaster.create({
+        title: "Submission failed",
+        description: msg,
+        type: "error",
+        duration: 5000,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +135,7 @@ export default function GetStartedPage() {
             <Text color="red.500" fontSize="sm">{error}</Text>
           )}
 
-          <Button type="submit" loading={submitting} disabled={!orgName || !email}>
+          <Button type="submit" loading={submitting}>
             Request access
           </Button>
         </Stack>

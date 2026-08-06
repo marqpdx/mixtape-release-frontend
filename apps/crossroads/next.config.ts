@@ -21,7 +21,9 @@ const nextConfig: NextConfig = {
         // CSP for the Crossroads Page public group route only.
         // Primary control: sanitized template slots (typed values via React JSX).
         // This header is the defense-in-depth backstop (DB-0002 Decision 2).
-        source: "/:slug",
+        // Negative lookahead excludes known non-group top-level routes so that
+        // Next.js hydration scripts aren't blocked on those pages.
+        source: "/:slug((?!get-started$|about$|pricing$|contact$)[a-z][a-z0-9-]*)",
         headers: [
           {
             key: "Content-Security-Policy",
