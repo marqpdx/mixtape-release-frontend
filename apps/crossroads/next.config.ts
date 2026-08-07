@@ -13,7 +13,13 @@ const nextConfig: NextConfig = {
     "framer-motion",
     "motion-dom",
   ],
-  allowedDevOrigins: ["http://127.0.0.1:3010", "http://localhost:3010"],
+  allowedDevOrigins: [
+    "http://127.0.0.1:3010",
+    "http://localhost:3010",
+    // Tenant subdomains used in local dev testing (e.g. mindful-brilliance-test.localhost:3010)
+    "http://mindful-brilliance.localhost:3010",
+    "http://mindful-brilliance-test.localhost:3010",
+  ],
 
   async headers() {
     return [
@@ -23,7 +29,8 @@ const nextConfig: NextConfig = {
         // This header is the defense-in-depth backstop (DB-0002 Decision 2).
         // Negative lookahead excludes known non-group top-level routes so that
         // Next.js hydration scripts aren't blocked on those pages.
-        source: "/:slug((?!get-started$|about$|pricing$|contact$)[a-z][a-z0-9-]*)",
+        // catalyst excluded: it is an authenticated app route, not a public group page.
+        source: "/:slug((?!get-started$|about$|pricing$|contact$|catalyst$)[a-z][a-z0-9-]*)",
         headers: [
           {
             key: "Content-Security-Policy",
@@ -45,6 +52,10 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
+    const appBase =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3011"
+        : "https://app.crossroads.place";
     return [
       // Route /app and anything under it to the Mixtape app zone.
       // IMPORTANT: keep `/app` in the destination path.
@@ -53,11 +64,11 @@ const nextConfig: NextConfig = {
       // breaks those requests and causes `_not-found` responses.
       {
         source: "/app",
-        destination: "https://app.crossroads.place/app",
+        destination: `${appBase}/app`,
       },
       {
         source: "/app/:path*",
-        destination: "https://app.crossroads.place/app/:path*",
+        destination: `${appBase}/app/:path*`,
       },
     ];
   },
