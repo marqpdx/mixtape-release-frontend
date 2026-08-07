@@ -35,7 +35,13 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/app/login');
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      if (appUrl) {
+        // Hard redirect so tenant subdomains (*.localhost:3010) land on the correct login origin
+        window.location.href = `${appUrl}/app/login`;
+      } else {
+        router.push('/app/login');
+      }
     }
   }, [isLoading, isAuthenticated, router]);
 
