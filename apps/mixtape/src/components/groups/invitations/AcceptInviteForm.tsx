@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -60,6 +60,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
   const [group, setGroup] = useState<InviteInfoGroup | null>(null);
   const [groupLoading, setGroupLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
 
   useEffect(() => {
@@ -111,6 +112,14 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       if (isNewUser) {
         await authApi.activateInviteSession(inviteResult);
         await refreshUser();
+
+        // If a ?next= URL was provided (e.g. Catalyst workspace), hard-redirect there.
+        // Hard redirect is required because the destination may be a different origin.
+        const nextUrl = searchParams.get("next");
+        if (nextUrl) {
+          window.location.href = nextUrl;
+          return;
+        }
 
         const agreementsParams = new URLSearchParams();
         if (groupSlug) agreementsParams.set("group_slug", groupSlug);

@@ -2,21 +2,25 @@
 
 "use client";
 
+import { Suspense } from "react";
 import { AcceptInviteForm } from "@/components/groups/invitations/AcceptInviteForm";
 import { useParams } from "next/navigation";
 
-export default function NewUserAcceptInvitePage() {
+function NewUserAcceptInviteInner() {
   const params = useParams();
   const shortcode = (params.inviteInfo as string) || "";
 
-  console.log("Params:", params);
-  console.log("Shortcode:", shortcode);
-
   if (!shortcode) {
-    return (
-      <div>Invalid invitation link</div>
-    );
+    return <div>Invalid invitation link</div>;
   }
 
   return <AcceptInviteForm shortcode={shortcode} isNewUser={true} />;
+}
+
+export default function NewUserAcceptInvitePage() {
+  return (
+    <Suspense>
+      <NewUserAcceptInviteInner />
+    </Suspense>
+  );
 }
