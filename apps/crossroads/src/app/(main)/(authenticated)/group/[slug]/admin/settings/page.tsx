@@ -175,7 +175,7 @@ export default function GroupSettingsPage() {
         </Text>
         <ChakraLink asChild>
           <NextLink href={`/group/${slug}/admin/settings/catalyst-intake`}>
-            <Button size="sm" variant="outline">Request Catalyst activation →</Button>
+            <Button size="sm" variant="outline">Enable Catalyst →</Button>
           </NextLink>
         </ChakraLink>
       </Box>
