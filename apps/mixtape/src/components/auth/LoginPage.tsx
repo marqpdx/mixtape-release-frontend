@@ -23,6 +23,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { safeRedirect, useAuth } from "@/lib/auth/AuthContext";
 import { toaster } from "@mixtape/core/lib/toaster";
 import * as authApi from "@mixtape/api/clients/auth/api";
+import { getAccessToken, getTokenExpiry } from "@mixtape/auth/tokenStorage";
 import { fetchUserGroups } from "@mixtape/api/clients/group/groupApi";
 
 import { LoginFormProps } from "./interfaces";
@@ -67,6 +68,27 @@ const LoginPage: React.FC = () => {
         title: "Login successful",
         description: "Welcome back!",
       });
+
+      // Catalyst cross-origin return: relay back to the tenant workspace with hash token.
+      // Crossroads sends ?catalyst_return=<url> when it redirects unauthenticated users here.
+      // Only trusted Crossroads subdomains are honored.
+      const catalystReturn = searchParams.get("catalyst_return");
+      if (catalystReturn) {
+        try {
+          const returnUrl = new URL(catalystReturn);
+          const hostname = returnUrl.hostname;
+          const isTrusted =
+            hostname.endsWith(".localhost") || hostname.endsWith(".crossroads.place");
+          if (isTrusted) {
+            const token = getAccessToken() || "";
+            const expSec = getTokenExpiry() ? Math.floor(getTokenExpiry()! / 1000) : 0;
+            window.location.href = `${catalystReturn}#at=${encodeURIComponent(token)}&exp=${expSec}`;
+            return;
+          }
+        } catch {
+          // Invalid URL — fall through to normal redirect
+        }
+      }
 
       // Post-invite flow: redirect to the member group page.
       const postInviteGroup = searchParams.get("post_invite_group");

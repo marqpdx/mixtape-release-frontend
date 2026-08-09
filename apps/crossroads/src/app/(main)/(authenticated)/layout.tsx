@@ -37,8 +37,10 @@ export default function AuthenticatedLayout({
     if (!isLoading && !isAuthenticated) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL;
       if (appUrl) {
-        // Hard redirect so tenant subdomains (*.localhost:3010) land on the correct login origin
-        window.location.href = `${appUrl}/app/login`;
+        // Pass current URL as catalyst_return so Mixtape login can relay back with hash token.
+        // Hard redirect required — destination is a different origin (tenant subdomain).
+        const returnTo = encodeURIComponent(window.location.href);
+        window.location.href = `${appUrl}/app/login?catalyst_return=${returnTo}`;
       } else {
         router.push('/app/login');
       }
