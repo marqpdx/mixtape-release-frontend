@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { UserIdentity, LoginCredentials } from '@mixtape/core/types/auth';
 import * as authApi from '@mixtape/api/clients/auth/api';
+import { setAccessToken } from '@mixtape/auth/tokenStorage';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -48,6 +49,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize CSRF and check authentication status on mount
   useEffect(() => {
+    // Catalyst activation handoff: access token delivered via URL hash (#at=<token>&exp=<unix_secs>).
+    // Needed in dev because Chrome treats localhost as a public suffix — Domain=.localhost cookies
+    // don't propagate from localhost:3011 to *.localhost:3010. Production subdomains work via
+    // normal cookie domain sharing and this branch is never reached there.
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#at=')) {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const token = params.get('at') ? decodeURIComponent(params.get('at')!) : null;
+      const expSec = params.get('exp');
+      const expiresAt = expSec && parseInt(expSec) > 0
+        ? parseInt(expSec) * 1000
+        : Date.now() + 8 * 60 * 60 * 1000;
+      if (token) {
+        setAccessToken(token, expiresAt);
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+
     // Initialize CSRF protection
     authApi.initializeCsrf();
 

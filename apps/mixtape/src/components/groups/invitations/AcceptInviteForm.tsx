@@ -110,6 +110,7 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
       const groupSlug = inviteResult.group?.slug;
       const groupTitle = inviteResult.group?.title;
       if (isNewUser) {
+        console.log("[AUTH-DEBUG] AcceptInviteForm: inviteResult has_access:", !!inviteResult.access, "has_refresh:", !!inviteResult.refresh, "user_was_new:", inviteResult.user_was_new);
         await authApi.activateInviteSession(inviteResult);
         await refreshUser();
 
@@ -117,7 +118,12 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
         // Hard redirect is required because the destination may be a different origin.
         const nextUrl = searchParams.get("next");
         if (nextUrl) {
-          window.location.href = nextUrl;
+          // Pass access token via hash so Crossroads can auth without cross-origin cookie sharing.
+          // Chrome treats localhost as a public suffix — Domain=.localhost cookies don't reach *.localhost.
+          // Production uses real subdomains where this isn't needed.
+          const at = encodeURIComponent(inviteResult.access || "");
+          const exp = inviteResult.access_expires || 0;
+          window.location.href = `${nextUrl}#at=${at}&exp=${exp}`;
           return;
         }
 
