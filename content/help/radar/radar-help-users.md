@@ -5,6 +5,8 @@ area: overview
 excerpt: Radar helps you keep personal initiatives visible, oriented, and ready to resume.
 routes:
   - /atrium
+  - /*/atrium
+  - /groups/*/atrium
   - /radar/*
   - /radar/my/archive
 workAreas: []
