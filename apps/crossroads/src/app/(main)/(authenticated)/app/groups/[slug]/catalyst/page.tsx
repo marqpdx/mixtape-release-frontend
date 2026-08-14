@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import {
   Avatar,
   Box,
@@ -30,19 +30,14 @@ type GroupDetail = {
   member_preview?: MemberPreview[];
 };
 
-function getTenantSlug(): string | null {
-  if (typeof window === "undefined") return null;
-  const hostname = window.location.hostname;
-  const parts = hostname.split(".");
-  if (parts.length >= 2 && parts[0] !== "localhost" && parts[0] !== "127") {
-    return parts[0];
-  }
-  return null;
-}
-
 const BRAND = "#1a1a2e";
 
-export default function CatalystLandingPage() {
+export default function GroupCatalystPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,19 +51,12 @@ export default function CatalystLandingPage() {
   const startHereBorder = useColorModeValue("#c3d9ff", "#2a4070");
 
   useEffect(() => {
-    const slug = getTenantSlug();
-    if (!slug) {
-      setError("No tenant context found. This page is only accessible via a Catalyst workspace URL.");
-      setLoading(false);
-      return;
-    }
-
     axiosInstance
       .get(`/api/public/groups/${slug}`)
       .then((res) => setGroup(res.data))
       .catch(() => setError("Could not load your workspace. Please try again or contact support."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [slug]);
 
   if (loading) {
     return (
