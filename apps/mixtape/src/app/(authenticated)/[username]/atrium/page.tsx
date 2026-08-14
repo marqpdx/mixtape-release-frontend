@@ -13,11 +13,7 @@ import { GristCommandBar } from "@/components/grist/GristCommandBar";
 import { BerylPresence } from "@/components/atrium/BerylPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
 
-export default function AtriumPage({
-  params: _params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default function AtriumPage() {
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const [radarOpen, setRadarOpen] = useState(false);
 
