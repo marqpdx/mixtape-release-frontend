@@ -18,6 +18,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useAuth } from "@/lib/auth/AuthContext";
 import {
   useRadarInitiative,
   useUpdateRadarInitiative,
@@ -449,9 +450,11 @@ function ArtifactsZone({ initiativeId }: { initiativeId: string }) {
 function MetaZone({
   initiative,
   initiativeId,
+  atriumHref,
 }: {
   initiative: RadarInitiative;
   initiativeId: string;
+  atriumHref: string;
 }) {
   const { mutate: update } = useUpdateRadarInitiative(initiativeId);
   const { mutate: archive, isPending: archiving } = useArchiveRadarInitiative();
@@ -465,7 +468,7 @@ function MetaZone({
   const isPaused = initiative.status === "paused";
 
   const handleArchive = () => {
-    archive(initiativeId, { onSuccess: () => router.push("/atrium") });
+    archive(initiativeId, { onSuccess: () => router.push(atriumHref) });
   };
 
   return (
@@ -545,6 +548,8 @@ export default function RadarWorkspacePage({
 }) {
   const { initiativeId } = use(params);
   const { data: initiative, isLoading, error } = useRadarInitiative(initiativeId);
+  const { user } = useAuth();
+  const atriumHref = user?.username ? `/${user.username}/atrium` : "/atrium";
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
@@ -568,7 +573,7 @@ export default function RadarWorkspacePage({
       <Box bg={bgColor} minH="100vh">
         <Container maxW="2xl" py={8}>
           <Text color="red.400" fontSize="sm">Initiative not found.</Text>
-          <Link as={NextLink} href="/atrium" fontSize="sm" color={mutedColor} mt={2} display="block">
+          <Link as={NextLink} href={atriumHref} fontSize="sm" color={mutedColor} mt={2} display="block">
             ← Return
           </Link>
         </Container>
@@ -582,7 +587,7 @@ export default function RadarWorkspacePage({
 
         {/* Header */}
         <Box className="riw-header" mb={8}>
-          <Link as={NextLink} href="/atrium" fontSize="sm" color={mutedColor} mb={3} display="block">
+          <Link as={NextLink} href={atriumHref} fontSize="sm" color={mutedColor} mb={3} display="block">
             ← Return
           </Link>
           <HStack gap={3} align="center">
@@ -606,7 +611,7 @@ export default function RadarWorkspacePage({
           <NarrativeZone initiative={initiative} initiativeId={initiativeId} />
           <LastSessionZone initiative={initiative} initiativeId={initiativeId} />
           <ArtifactsZone initiativeId={initiativeId} />
-          <MetaZone initiative={initiative} initiativeId={initiativeId} />
+          <MetaZone initiative={initiative} initiativeId={initiativeId} atriumHref={atriumHref} />
         </VStack>
 
       </Container>

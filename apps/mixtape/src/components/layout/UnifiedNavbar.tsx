@@ -67,7 +67,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "how-it-works", label: "How It Works", href: "/about/how-it-works", section: "about" },
 
   // Authenticated section (members + admins)
-  { key: "atrium", label: "Atrium", href: "/atrium", section: "authenticated", adminOnly: true, shortLabel: "Atrium" },
+  { key: "atrium", label: "Atrium", href: "/{username}/atrium", section: "authenticated", adminOnly: true, shortLabel: "Atrium" },
   { key: "my-landing", label: "Storyline", href: "/members/{username}", section: "authenticated", adminOnly: true, shortLabel: "Story" },
   { key: "my-crossroads", label: "My Crossroads", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
@@ -129,7 +129,7 @@ export default function UnifiedNavbar({
     (pathname.startsWith("/about") ? "about" :
      identity && (pathname.startsWith("/dashboard") ||
                   pathname.startsWith("/groups") ||
-                  pathname.startsWith("/atrium") ||
+                  (identity?.username && pathname.startsWith(`/${identity.username}/atrium`)) ||
                   pathname.startsWith("/radar") ||
                   pathname.startsWith("/constellation") ||
                   pathname.startsWith("/threadworks") ||

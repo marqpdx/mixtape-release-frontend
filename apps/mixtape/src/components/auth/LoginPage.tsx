@@ -106,7 +106,7 @@ const LoginPage: React.FC = () => {
 
       // Superuser always goes to Atrium.
       if (userData.is_superuser) {
-        router.push("/atrium");
+        router.push(`/${userData.username}/atrium`);
         return;
       }
 
