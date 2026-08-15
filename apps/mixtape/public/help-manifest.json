@@ -1579,6 +1579,8 @@
       "metadata": {},
       "routes": [
         "/atrium",
+        "/*/atrium",
+        "/groups/*/atrium",
         "/radar/*",
         "/radar/my/archive"
       ],
@@ -1988,5 +1990,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-08-05T17:27:32.000Z"
+  "generatedAt": "2026-08-14T18:42:50.303Z"
 }

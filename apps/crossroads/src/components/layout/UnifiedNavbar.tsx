@@ -60,6 +60,18 @@ const NAV_ITEMS: NavItem[] = [
   // Public section
   { key: "home", label: "Home", href: "/", section: "public" },
   {
+    key: "products",
+    label: "Products",
+    href: "/products",
+    section: "public",
+    children: [
+      { key: "products-overview", label: "Overview", href: "/products" },
+      { key: "products-flow", label: "Catalyst Flow", href: "/products/flow" },
+      { key: "products-principles", label: "Why Catalyst Works", href: "/products/principles" },
+      { key: "products-rings", label: "Product B: Rings", href: "/products/rings" },
+    ],
+  },
+  {
     key: "about",
     label: "About",
     href: "/about",

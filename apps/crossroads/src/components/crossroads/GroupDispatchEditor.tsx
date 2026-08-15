@@ -130,14 +130,6 @@ export function GroupDispatchEditor({ slug }: Props) {
     }
   }
 
-  function toggleOverride(verbId: string) {
-    if (!draft) return;
-    const next = draft.local_verb_overrides.includes(verbId)
-      ? draft.local_verb_overrides.filter((v) => v !== verbId)
-      : [...draft.local_verb_overrides, verbId];
-    setDraft({ ...draft, local_verb_overrides: next });
-  }
-
   if (error) {
     return (
       <Text color="red.500" fontSize="sm" mt="10">
