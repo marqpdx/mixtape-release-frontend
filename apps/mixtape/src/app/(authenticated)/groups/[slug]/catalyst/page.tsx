@@ -24,10 +24,33 @@ type GroupDetail = {
   quick_intro?: string;
 };
 
-type IntroState = "center" | "animating" | "bubble";
+type IntroState = "center" | "animating" | "bubble" | "confirming";
+
+type RegisterRow = {
+  slug: string;
+  displayName: string;
+  canonSynonym: string;
+  entryCount: number;
+  sourceFile: string;
+};
 
 const BRAND = "#1a1a2e";
 const VERBS = ["Find", "Amend", "Add"];
+
+const PROPOSED_REGISTERS: RegisterRow[] = [
+  { slug: "meals",              displayName: "Meal Register",      canonSynonym: "Final Menu", entryCount: 16,  sourceFile: "2026_Temple_Menu. UPDATED.docx" },
+  { slug: "prep-tasks",         displayName: "Prep Tasks",          canonSynonym: "Live Prep",  entryCount: 42,  sourceFile: "2026_Prep_List..docx" },
+  { slug: "confirmed-partners", displayName: "Confirmed Partners",  canonSynonym: "Confirmed",  entryCount: 25,  sourceFile: "TOB 2026 Fundraising Progress-2.xlsx" },
+  { slug: "partner-outreach",   displayName: "Partner Outreach",    canonSynonym: "Active",     entryCount: 163, sourceFile: "TOB 2026 Fundraising Progress-2.xlsx" },
+  { slug: "staff",              displayName: "Staff",               canonSynonym: "Active",     entryCount: 36,  sourceFile: "Temple 2026 Workbook (ours).xlsx" },
+  { slug: "grants",             displayName: "Grants",              canonSynonym: "Awarded",    entryCount: 5,   sourceFile: "TOB 2026 Fundraising Progress-2.xlsx" },
+  { slug: "meeting-actions",    displayName: "Meeting Actions",     canonSynonym: "Resolved",   entryCount: 8,   sourceFile: "Meeting 7_6_26.docx" },
+];
+
+const CONTEXT_FILES = [
+  { slug: "dietary-restrictions-summary", label: "dietary-restrictions-summary" },
+  { slug: "shift-schedule-2026",          label: "shift-schedule-2026" },
+];
 
 export default function GroupCatalystPage() {
   const params = useParams();
@@ -37,24 +60,30 @@ export default function GroupCatalystPage() {
   const [loading, setLoading] = useState(true);
   const [introState, setIntroState] = useState<IntroState>("center");
   const [cmdInput, setCmdInput] = useState("");
+  const [registers, setRegisters] = useState<RegisterRow[]>(PROPOSED_REGISTERS);
+  const [contextOpen, setContextOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ── color tokens ──────────────────────────────────────────────────────────
-  const shellBg        = useColorModeValue("#f4f5f7", "#111827");
-  const topBarBg       = useColorModeValue("white", "#1a202c");
-  const topBarBorder   = useColorModeValue("#e2e8f0", "#2d3748");
-  const centerBg       = useColorModeValue("#f9fafb", "#111827");
-  const cardBg         = useColorModeValue("white", "#1e2533");
-  const cardBorder     = useColorModeValue("#e2e8f0", "#2d3748");
-  const mutedText      = useColorModeValue("#6b7280", "#9ca3af");
-  const chipBg         = useColorModeValue("#f1f5f9", "#1e2a3a");
-  const chipBorder     = useColorModeValue("#e2e8f0", "#2d3748");
-  const chipText       = useColorModeValue("#374151", "#cbd5e0");
+  const shellBg         = useColorModeValue("#f4f5f7", "#111827");
+  const topBarBg        = useColorModeValue("white", "#1a202c");
+  const topBarBorder    = useColorModeValue("#e2e8f0", "#2d3748");
+  const centerBg        = useColorModeValue("#f9fafb", "#111827");
+  const cardBg          = useColorModeValue("white", "#1e2533");
+  const cardBorder      = useColorModeValue("#e2e8f0", "#2d3748");
+  const mutedText       = useColorModeValue("#6b7280", "#9ca3af");
+  const chipBg          = useColorModeValue("#f1f5f9", "#1e2a3a");
+  const chipBorder      = useColorModeValue("#e2e8f0", "#2d3748");
+  const chipText        = useColorModeValue("#374151", "#cbd5e0");
   const dropZoneHoverBg = useColorModeValue("#eef3ff", "#1a2030");
   const dropZoneBorder  = useColorModeValue("#c7d7fe", "#2d3748");
   const statusBg        = useColorModeValue("#f0fdf4", "#0f2318");
   const statusBorder    = useColorModeValue("#bbf7d0", "#166534");
   const statusText      = useColorModeValue("#15803d", "#4ade80");
+  const badgeBg         = useColorModeValue("#f1f5f9", "#1e2a3a");
+  const badgeText       = useColorModeValue("#64748b", "#94a3b8");
+  const synonymLabel    = useColorModeValue("#9ca3af", "#6b7280");
+  const removeHover     = useColorModeValue("#fee2e2", "#3b1515");
 
   useEffect(() => {
     axiosInstance
@@ -77,6 +106,22 @@ export default function GroupCatalystPage() {
     inputRef.current?.focus();
   }
 
+  function updateRegisterName(idx: number, value: string) {
+    setRegisters((prev) => prev.map((r, i) => i === idx ? { ...r, displayName: value } : r));
+  }
+
+  function updateRegisterSynonym(idx: number, value: string) {
+    setRegisters((prev) => prev.map((r, i) => i === idx ? { ...r, canonSynonym: value } : r));
+  }
+
+  function removeRegister(idx: number) {
+    setRegisters((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function handleMaterialize() {
+    console.log("Materializing:", registers);
+  }
+
   if (loading) {
     return (
       <Box display="flex" alignItems="center" justifyContent="center" minH="100vh" bg={shellBg}>
@@ -84,6 +129,8 @@ export default function GroupCatalystPage() {
       </Box>
     );
   }
+
+  const showBubble = introState === "animating" || introState === "bubble" || introState === "confirming";
 
   return (
     <Box
@@ -122,7 +169,6 @@ export default function GroupCatalystPage() {
         flexShrink={0}
         borderRight="1px solid rgba(255,255,255,0.06)"
       >
-        {/* Codex anchor icon */}
         <Box
           title="Codex anchor"
           fontSize="18px"
@@ -135,12 +181,11 @@ export default function GroupCatalystPage() {
           ◈
         </Box>
 
-        {/* Intro bubble — appears after dissolve, click to restore */}
-        {(introState === "animating" || introState === "bubble") && (
+        {showBubble && (
           <Box
             className="cat-intro-bubble"
-            onClick={introState === "bubble" ? handleRestoreIntro : undefined}
-            cursor={introState === "bubble" ? "pointer" : "default"}
+            onClick={introState !== "animating" ? handleRestoreIntro : undefined}
+            cursor={introState !== "animating" ? "pointer" : "default"}
             w="34px"
             h="34px"
             borderRadius="full"
@@ -150,8 +195,8 @@ export default function GroupCatalystPage() {
             alignItems="center"
             justifyContent="center"
             title="Restore orientation"
-            animation={introState === "bubble" ? "cat-bubble-appear 0.3s ease forwards" : undefined}
-            _hover={introState === "bubble" ? { bg: "rgba(255,255,255,0.18)" } : undefined}
+            animation={introState === "bubble" || introState === "confirming" ? "cat-bubble-appear 0.3s ease forwards" : undefined}
+            _hover={introState !== "animating" ? { bg: "rgba(255,255,255,0.18)" } : undefined}
             transition="background 0.15s"
           >
             <Text fontSize="13px" lineHeight="1">📍</Text>
@@ -162,7 +207,7 @@ export default function GroupCatalystPage() {
       {/* ── MAIN AREA ───────────────────────────────────────────────────── */}
       <Box className="cat-main" flex="1" display="flex" flexDirection="column" overflow="hidden">
 
-        {/* TOP BAR — Catalyst command input (declarative, anchoring) */}
+        {/* TOP BAR */}
         <Box
           className="cat-top-bar"
           bg={topBarBg}
@@ -201,7 +246,6 @@ export default function GroupCatalystPage() {
             _placeholder={{ color: mutedText, opacity: 0.7 }}
           />
 
-          {/* Verb affordances — click seeds the input */}
           <HStack gap={1} flexShrink={0}>
             {VERBS.map((v) => (
               <Box
@@ -228,7 +272,7 @@ export default function GroupCatalystPage() {
           </HStack>
         </Box>
 
-        {/* CENTER — relative container for dissolve overlay */}
+        {/* CENTER */}
         <Box
           className="cat-center"
           flex="1"
@@ -237,7 +281,7 @@ export default function GroupCatalystPage() {
           position="relative"
         >
 
-          {/* ── INTRO CARD — center state, dissolves out in animating state ── */}
+          {/* ── INTRO CARD ── */}
           {(introState === "center" || introState === "animating") && (
             <Box
               className="cat-intro"
@@ -265,7 +309,6 @@ export default function GroupCatalystPage() {
                 overflow="hidden"
                 boxShadow="0 4px 24px rgba(0,0,0,0.06)"
               >
-                {/* Header strip */}
                 <Box bg={BRAND} color="white" px={8} py={6}>
                   <Text
                     fontSize="10px"
@@ -293,7 +336,6 @@ export default function GroupCatalystPage() {
                   )}
                 </Box>
 
-                {/* Body */}
                 <Box px={8} py={6}>
                   <VStack align="stretch" gap={5}>
                     <HStack
@@ -344,7 +386,7 @@ export default function GroupCatalystPage() {
             </Box>
           )}
 
-          {/* ── FILE IMPORT SURFACE — revealed after dissolve ──────────── */}
+          {/* ── FILE IMPORT SURFACE ── */}
           {introState === "bubble" && (
             <Box
               className="cat-import-surface"
@@ -375,7 +417,6 @@ export default function GroupCatalystPage() {
                   </Text>
                 </Box>
 
-                {/* Drop zone */}
                 <Box
                   borderRadius="lg"
                   border="2px dashed"
@@ -394,7 +435,18 @@ export default function GroupCatalystPage() {
                   </Text>
                 </Box>
 
-                {/* What happens next */}
+                <Text
+                  as="button"
+                  fontSize="xs"
+                  color={mutedText}
+                  textAlign="center"
+                  cursor="pointer"
+                  _hover={{ color: BRAND }}
+                  onClick={() => setIntroState("confirming")}
+                >
+                  Skip to Stage 4 → (dev shortcut)
+                </Text>
+
                 <Box>
                   <Text
                     fontSize="10px"
@@ -450,6 +502,201 @@ export default function GroupCatalystPage() {
                 <Text fontSize="xs" color={mutedText} textAlign="center">
                   Files stay in your Codex on your cluster. Nothing is shared without your explicit approval.
                 </Text>
+              </VStack>
+            </Box>
+          )}
+
+          {/* ── STAGE 4 — REGISTER REVIEW ── */}
+          {introState === "confirming" && (
+            <Box
+              className="cat-confirm-surface"
+              maxW="720px"
+              mx="auto"
+              px={6}
+              py={10}
+              animation="cat-work-appear 0.4s ease forwards"
+            >
+              <VStack align="stretch" gap={7}>
+
+                {/* Header */}
+                <Box>
+                  <Text
+                    fontSize="10px"
+                    fontWeight="700"
+                    letterSpacing="0.1em"
+                    textTransform="uppercase"
+                    color={mutedText}
+                    mb={2}
+                  >
+                    Review · Stage 2 of 3
+                  </Text>
+                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
+                    We found {registers.length} registers — does this look right?
+                  </Heading>
+                  <Text fontSize="sm" color={mutedText} lineHeight="1.6">
+                    These are the structures we&apos;ll create from your files. Adjust names or synonyms
+                    before confirming. Nothing is written to disk until you say go.
+                  </Text>
+                </Box>
+
+                {/* Register rows */}
+                <VStack align="stretch" gap={2}>
+                  {registers.map((reg, idx) => (
+                    <Box
+                      key={reg.slug}
+                      bg={cardBg}
+                      border="1px solid"
+                      borderColor={cardBorder}
+                      borderRadius="lg"
+                      px={4}
+                      py={3}
+                    >
+                      <HStack align="start" gap={3}>
+                        {/* Name + source */}
+                        <VStack align="stretch" flex="1" gap={1.5}>
+                          <HStack gap={2} align="center">
+                            <Input
+                              value={reg.displayName}
+                              onChange={(e) => updateRegisterName(idx, e.target.value)}
+                              fontSize="sm"
+                              fontWeight="600"
+                              flex="1"
+                              px={0}
+                              border="none"
+                              background="transparent"
+                              borderRadius={0}
+                              _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
+                            />
+                            <Box
+                              px={2}
+                              py="1px"
+                              bg={badgeBg}
+                              borderRadius="full"
+                              flexShrink={0}
+                            >
+                              <Text fontSize="10px" fontWeight="600" color={badgeText} whiteSpace="nowrap">
+                                {reg.entryCount} entries
+                              </Text>
+                            </Box>
+                          </HStack>
+                          <Text
+                            fontSize="10px"
+                            fontFamily="mono"
+                            color={synonymLabel}
+                            maxW="340px"
+                            overflow="hidden"
+                            textOverflow="ellipsis"
+                            whiteSpace="nowrap"
+                          >
+                            {reg.sourceFile}
+                          </Text>
+                          <HStack gap={2} align="center" mt={0.5}>
+                            <Text fontSize="10px" color={synonymLabel} flexShrink={0}>
+                              Synonym for &ldquo;Canon&rdquo;:
+                            </Text>
+                            <Input
+                              value={reg.canonSynonym}
+                              onChange={(e) => updateRegisterSynonym(idx, e.target.value)}
+                              placeholder="e.g. Final Menu, Live, Confirmed"
+                              fontSize="11px"
+                              flex="1"
+                              px={0}
+                              color={mutedText}
+                              border="none"
+                              background="transparent"
+                              borderRadius={0}
+                              _placeholder={{ color: synonymLabel, opacity: 0.7 }}
+                              _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
+                            />
+                          </HStack>
+                        </VStack>
+
+                        {/* Remove button */}
+                        <Box
+                          as="button"
+                          onClick={() => removeRegister(idx)}
+                          w="24px"
+                          h="24px"
+                          borderRadius="md"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          color={mutedText}
+                          fontSize="14px"
+                          flexShrink={0}
+                          mt="2px"
+                          _hover={{ bg: removeHover, color: "red.500" }}
+                          transition="all 0.12s"
+                          title="Remove this register"
+                        >
+                          ✕
+                        </Box>
+                      </HStack>
+                    </Box>
+                  ))}
+                </VStack>
+
+                {/* Context files — collapsible */}
+                <Box
+                  bg={cardBg}
+                  border="1px solid"
+                  borderColor={cardBorder}
+                  borderRadius="lg"
+                  overflow="hidden"
+                >
+                  <HStack
+                    px={4}
+                    py={3}
+                    as="button"
+                    w="full"
+                    justify="space-between"
+                    onClick={() => setContextOpen((o) => !o)}
+                    cursor="pointer"
+                    _hover={{ bg: chipBg }}
+                    transition="background 0.12s"
+                  >
+                    <Text fontSize="xs" fontWeight="600" color={mutedText}>
+                      Also proposed as context files (not registers)
+                    </Text>
+                    <Text fontSize="10px" color={synonymLabel}>{contextOpen ? "▲" : "▼"}</Text>
+                  </HStack>
+                  {contextOpen && (
+                    <VStack align="stretch" px={4} pb={3} gap={1.5}>
+                      {CONTEXT_FILES.map((cf) => (
+                        <Text key={cf.slug} fontSize="11px" fontFamily="mono" color={mutedText}>
+                          {cf.label}
+                        </Text>
+                      ))}
+                    </VStack>
+                  )}
+                </Box>
+
+                {/* Action row */}
+                <HStack justify="space-between" pt={2} flexWrap="wrap" gap={3}>
+                  <Box
+                    as="button"
+                    onClick={() => setIntroState("bubble")}
+                    fontSize="sm"
+                    color={mutedText}
+                    cursor="pointer"
+                    _hover={{ color: BRAND }}
+                    transition="color 0.12s"
+                  >
+                    ← Back to import
+                  </Box>
+                  <Button
+                    onClick={handleMaterialize}
+                    bg={BRAND}
+                    color="white"
+                    _hover={{ opacity: 0.88 }}
+                    size="md"
+                    fontWeight="600"
+                    flexShrink={0}
+                  >
+                    Looks good — materialize files →
+                  </Button>
+                </HStack>
+
               </VStack>
             </Box>
           )}
