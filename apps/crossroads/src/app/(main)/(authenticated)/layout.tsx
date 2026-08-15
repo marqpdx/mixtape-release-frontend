@@ -40,7 +40,7 @@ export default function AuthenticatedLayout({
         // Pass current URL as catalyst_return so Mixtape login can relay back with hash token.
         // Hard redirect required — destination is a different origin (tenant subdomain).
         const returnTo = encodeURIComponent(window.location.href);
-        window.location.href = `${appUrl}/login?catalyst_return=${returnTo}`;
+        window.location.href = `${appUrl}/app/login?catalyst_return=${returnTo}`;
       } else {
         router.push('/app/login');
       }
