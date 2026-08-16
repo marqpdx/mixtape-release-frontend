@@ -118,6 +118,34 @@ function aggregateFindings(files: { registers: { slug: string; display_name: str
   return Object.values(byType).filter((v) => v.count > 0);
 }
 
+// Consolidate granular parser registers into one row per entity type.
+// e.g. "Confirmed Partners" + "Partner Outreach" + "Grants" → one "Partners & Suppliers" register.
+const ENTITY_ORDER = ["people", "recipes", "tasks", "partners", "meeting notes", "records"];
+
+function consolidateByEntityType(regs: RegisterRow[]): RegisterRow[] {
+  const byType: Record<string, { ec: EntityClass; entryCount: number; sources: string[] }> = {};
+  for (const r of regs) {
+    const ec = classifyRegister(r.slug, r.displayName, []);
+    if (!byType[ec.plural]) byType[ec.plural] = { ec, entryCount: 0, sources: [] };
+    byType[ec.plural].entryCount += r.entryCount;
+    for (const f of r.sourceFile.split(", ")) {
+      if (f.trim() && !byType[ec.plural].sources.includes(f.trim())) byType[ec.plural].sources.push(f.trim());
+    }
+  }
+  return Object.entries(byType)
+    .sort(([a], [b]) => {
+      const ai = ENTITY_ORDER.indexOf(a), bi = ENTITY_ORDER.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    })
+    .map(([, { ec, entryCount, sources }]) => ({
+      slug: ec.plural.replace(/[^a-z0-9]+/g, "-"),
+      displayName: ec.type,
+      canonSynonym: "Active",
+      entryCount,
+      sourceFile: sources.join(", "),
+    }));
+}
+
 const PROPOSED_REGISTERS: RegisterRow[] = [
   { slug: "meals",              displayName: "Meal Register",      canonSynonym: "Final Menu", entryCount: 16,  sourceFile: "2026_Temple_Menu. UPDATED.docx" },
   { slug: "prep-tasks",         displayName: "Prep Tasks",          canonSynonym: "Live Prep",  entryCount: 42,  sourceFile: "2026_Prep_List..docx" },
@@ -406,13 +434,13 @@ export default function GroupCatalystPage() {
         `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
         { body_markdown: body, canonize: true },
       );
-      setSaveResult("Canonized");
+      setSaveResult("Accepted");
       setRegMeta((prev) => prev ? { ...prev, status: "canon" } : prev);
       setRegisterList((prev) =>
         prev.map((r) => r.slug === selectedRegSlug ? { ...r, status: "canon" } : r)
       );
     } catch {
-      setSaveResult("Canonize failed");
+      setSaveResult("Accept failed");
     } finally {
       setCanonizing(false);
     }
@@ -441,13 +469,14 @@ export default function GroupCatalystPage() {
 
       const merged = data.merged_registers ?? [];
       if (merged.length) {
-        setRegisters(merged.map((r) => ({
+        const rawRows = merged.map((r) => ({
           slug: r.slug,
           displayName: r.display_name,
-          canonSynonym: r.canon_synonym || "Canon",
+          canonSynonym: r.canon_synonym || "Active",
           entryCount: r.entry_count,
           sourceFile: r.source_file,
-        })));
+        }));
+        setRegisters(consolidateByEntityType(rawRows));
       }
       setIntroState("confirming");
     } catch (err: unknown) {
@@ -669,7 +698,7 @@ export default function GroupCatalystPage() {
                         fontWeight="600"
                         color={reg.status === "canon" ? canonBadgeText : preCanonText}
                       >
-                        {reg.status === "canon" ? "canon" : "draft"}
+                        {reg.status === "canon" ? "accepted" : "draft"}
                       </Text>
                     </Box>
                   </HStack>
@@ -1163,7 +1192,7 @@ export default function GroupCatalystPage() {
                     {[
                       { step: "1", label: "Parse", body: "We read your files and propose artifact shapes — registers, playbooks, context files." },
                       { step: "2", label: "Review", body: "You confirm the shape before anything is created. Nothing is committed without your say-so." },
-                      { step: "3", label: "Canonize", body: "Confirmed artifacts enter your Codex. You decide what's canon now vs. draft for later." },
+                      { step: "3", label: "Accept", body: "Accepted entries go into your Codex. You can accept now or leave something as a draft to decide later." },
                     ].map(({ step, label, body }) => (
                       <HStack
                         key={step}
@@ -1377,7 +1406,7 @@ export default function GroupCatalystPage() {
                             </Text>
                             <HStack gap={2} align="center" mt={0.5}>
                               <Text fontSize="10px" color={synonymLabel} flexShrink={0}>
-                                Synonym for &ldquo;Canon&rdquo;:
+                                Label when accepted:
                               </Text>
                               <Input
                                 value={reg.canonSynonym}
@@ -1539,7 +1568,7 @@ export default function GroupCatalystPage() {
                       loading={materializing}
                       disabled={materializing}
                     >
-                      Looks right — write {registers.length} register{registers.length !== 1 ? "s" : ""} to Codex →
+                      Accept — create {registers.length} register{registers.length !== 1 ? "s" : ""} in Codex →
                     </Button>
                   </HStack>
                 )}
@@ -1637,7 +1666,7 @@ export default function GroupCatalystPage() {
                           fontWeight="600"
                           color={regMeta.status === "canon" ? canonBadgeText : preCanonText}
                         >
-                          {regMeta.status === "canon" ? "✓ canon" : "draft"}
+                          {regMeta.status === "canon" ? "✓ accepted" : "draft"}
                         </Text>
                       </Box>
                     )}
@@ -1686,7 +1715,7 @@ export default function GroupCatalystPage() {
                       Save
                     </Button>
 
-                    {/* Canonize / Revert button */}
+                    {/* Accept / Move to draft button */}
                     {regMeta?.status !== "canon" ? (
                       <Button
                         onClick={handleCanonize}
@@ -1698,7 +1727,7 @@ export default function GroupCatalystPage() {
                         loading={canonizing}
                         disabled={saving || canonizing || settingsSaving}
                       >
-                        Canonize →
+                        Accept →
                       </Button>
                     ) : (
                       <Button
@@ -1709,7 +1738,7 @@ export default function GroupCatalystPage() {
                         loading={canonizing}
                         disabled={saving || canonizing || settingsSaving}
                       >
-                        Revert to draft
+                        Move to draft
                       </Button>
                     )}
                   </Box>
