@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
+  Avatar,
   Box,
   Button,
   Heading,
@@ -18,10 +19,18 @@ import {
 import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
+type MemberPreview = {
+  username: string;
+  display_name: string;
+  avatar_url: string;
+};
+
 type GroupDetail = {
   title: string;
   slug: string;
   quick_intro?: string;
+  description?: string;
+  member_preview?: MemberPreview[];
 };
 
 type IntroState = "center" | "animating" | "bubble" | "confirming";
@@ -65,7 +74,10 @@ export default function GroupCatalystPage() {
   const [materializing, setMaterializing] = useState(false);
   const [materializeResult, setMaterializeResult] = useState<{ commit: string; registers_written: number } | null>(null);
   const [materializeError, setMaterializeError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── color tokens ──────────────────────────────────────────────────────────
   const shellBg         = useColorModeValue("#f4f5f7", "#111827");
@@ -87,6 +99,8 @@ export default function GroupCatalystPage() {
   const badgeText       = useColorModeValue("#64748b", "#94a3b8");
   const synonymLabel    = useColorModeValue("#9ca3af", "#6b7280");
   const removeHover     = useColorModeValue("#fee2e2", "#3b1515");
+  const startHereBg     = useColorModeValue("#eef4ff", "#1e2a40");
+  const startHereBorder = useColorModeValue("#c3d9ff", "#2a4070");
 
   useEffect(() => {
     axiosInstance
@@ -145,6 +159,18 @@ export default function GroupCatalystPage() {
     } finally {
       setMaterializing(false);
     }
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) setSelectedFiles((prev) => [...prev, ...files]);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length) setSelectedFiles((prev) => [...prev, ...files]);
   }
 
   if (loading) {
@@ -306,14 +332,14 @@ export default function GroupCatalystPage() {
           position="relative"
         >
 
-          {/* ── INTRO CARD ── */}
+          {/* ── INTRO / LANDING ── */}
           {(introState === "center" || introState === "animating") && (
             <Box
               className="cat-intro"
               position="absolute"
               inset={0}
+              overflow="auto"
               display="flex"
-              alignItems="center"
               justifyContent="center"
               p={{ base: 5, md: 8 }}
               animation={
@@ -323,90 +349,165 @@ export default function GroupCatalystPage() {
               }
               pointerEvents={introState === "animating" ? "none" : undefined}
             >
-              <Box
-                className="cat-intro-card"
-                maxW="560px"
-                w="full"
-                bg={cardBg}
-                border="1px solid"
-                borderColor={cardBorder}
-                borderRadius="xl"
-                overflow="hidden"
-                boxShadow="0 4px 24px rgba(0,0,0,0.06)"
-              >
-                <Box bg={BRAND} color="white" px={8} py={6}>
-                  <Text
-                    fontSize="10px"
-                    fontWeight="700"
-                    letterSpacing="0.12em"
-                    textTransform="uppercase"
-                    opacity={0.45}
-                    mb={3}
-                  >
-                    Catalyst · Foundation
-                  </Text>
-                  <Heading
-                    as="h1"
-                    fontSize={{ base: "xl", md: "2xl" }}
-                    fontWeight="700"
-                    letterSpacing="-0.02em"
-                    mb={2}
-                  >
-                    {group?.title}
-                  </Heading>
-                  {group?.quick_intro && (
-                    <Text fontSize="sm" opacity={0.65}>
-                      {group.quick_intro}
-                    </Text>
-                  )}
-                </Box>
+              <Box className="cat-intro-inner" maxW="640px" w="full">
+                <VStack align="stretch" gap={6}>
 
-                <Box px={8} py={6}>
-                  <VStack align="stretch" gap={5}>
-                    <HStack
-                      gap={2}
-                      px={3}
-                      py={2.5}
-                      bg={statusBg}
-                      border="1px solid"
-                      borderColor={statusBorder}
-                      borderRadius="md"
+                  {/* Header */}
+                  <Box
+                    className="cat-intro-header"
+                    bg={BRAND}
+                    color="white"
+                    px={8}
+                    py={7}
+                    borderRadius="xl"
+                    boxShadow="0 4px 24px rgba(0,0,0,0.10)"
+                  >
+                    <Text
+                      fontSize="10px"
+                      fontWeight="700"
+                      letterSpacing="0.12em"
+                      textTransform="uppercase"
+                      opacity={0.45}
+                      mb={3}
                     >
+                      Catalyst · Foundation
+                    </Text>
+                    <Heading
+                      as="h1"
+                      fontSize={{ base: "xl", md: "2xl" }}
+                      fontWeight="700"
+                      letterSpacing="-0.02em"
+                      mb={2}
+                    >
+                      {group?.title}
+                    </Heading>
+                    {group?.quick_intro && (
+                      <Text fontSize="sm" opacity={0.65} mb={4}>
+                        {group.quick_intro}
+                      </Text>
+                    )}
+                    <HStack gap={2}>
                       <Box w="7px" h="7px" borderRadius="full" bg="green.400" flexShrink={0} />
-                      <Text fontSize="xs" fontWeight="500" color={statusText}>
-                        Codex active — 13 starter files indexed
+                      <Text fontSize="xs" fontWeight="500" opacity={0.8}>
+                        Codex active — CORE + FIXTURE indexed
                       </Text>
                     </HStack>
+                  </Box>
 
-                    <Box>
-                      <Text fontWeight="600" fontSize="sm" mb={1}>
-                        Catalyst needs your files to be useful.
-                      </Text>
-                      <Text fontSize="sm" color={mutedText} lineHeight="1.6">
-                        The starter Codex gives you structure, but structure without content is a shell.
-                        Import your documents — recipes, playbooks, supplier lists, anything your team
-                        acts on — and we&apos;ll parse and structure them into your knowledge base.
-                      </Text>
-                    </Box>
+                  {/* Start here */}
+                  <Box
+                    className="cat-start-here"
+                    bg={startHereBg}
+                    border="1px solid"
+                    borderColor={startHereBorder}
+                    borderRadius="lg"
+                    p={5}
+                  >
+                    <HStack gap={3} mb={2}>
+                      <Text fontSize="lg">📍</Text>
+                      <Text fontWeight="700" fontSize="md">Start here</Text>
+                    </HStack>
+                    <Text fontSize="sm" color={mutedText} mb={4}>
+                      Open <strong>START-HERE.md</strong> in your Codex to orient yourself — it maps out
+                      your knowledge structure, key files, and what to build first.
+                    </Text>
+                    <Button
+                      onClick={handleImport}
+                      bg={BRAND}
+                      color="white"
+                      _hover={{ opacity: 0.88 }}
+                      size="sm"
+                      fontWeight="600"
+                    >
+                      Import your files →
+                    </Button>
+                  </Box>
 
-                    <Box borderTop="1px solid" borderColor={cardBorder} pt={5}>
-                      <Button
-                        onClick={handleImport}
-                        bg={BRAND}
-                        color="white"
-                        _hover={{ opacity: 0.88 }}
-                        size="md"
-                        w="full"
-                        fontWeight="600"
+                  {/* Three pillars */}
+                  <Box className="cat-pillars">
+                    <Text
+                      fontSize="10px"
+                      fontWeight="700"
+                      letterSpacing="0.1em"
+                      textTransform="uppercase"
+                      color={mutedText}
+                      mb={3}
+                    >
+                      What&apos;s in your Codex
+                    </Text>
+                    <VStack gap={3} align="stretch">
+                      {[
+                        {
+                          icon: "📚",
+                          title: "Knowledge Base",
+                          body: "Seeded with the Catalyst CORE library — the foundational types, patterns, and structure your team will build on.",
+                        },
+                        {
+                          icon: "🗂",
+                          title: "Context Files",
+                          body: "Who you are, how you work, what you offer. These are the files Beryl draws from when it helps your team.",
+                        },
+                        {
+                          icon: "⚙️",
+                          title: "Operational Files",
+                          body: "Procedures, playbooks, and workflows. Active knowledge — not archive, not notes. Living documents your team acts on.",
+                        },
+                      ].map(({ icon, title, body }) => (
+                        <HStack
+                          key={title}
+                          className="cat-pillar"
+                          align="start"
+                          gap={4}
+                          p={4}
+                          bg={cardBg}
+                          border="1px solid"
+                          borderColor={cardBorder}
+                          borderRadius="md"
+                        >
+                          <Text fontSize="xl" flexShrink={0} mt="1px">{icon}</Text>
+                          <Box>
+                            <Text fontWeight="600" fontSize="sm" mb={1}>{title}</Text>
+                            <Text fontSize="sm" color={mutedText}>{body}</Text>
+                          </Box>
+                        </HStack>
+                      ))}
+                    </VStack>
+                  </Box>
+
+                  {/* Team preview */}
+                  {(group?.member_preview ?? []).length > 0 && (
+                    <Box className="cat-team">
+                      <Text
+                        fontSize="10px"
+                        fontWeight="700"
+                        letterSpacing="0.1em"
+                        textTransform="uppercase"
+                        color={mutedText}
+                        mb={3}
                       >
-                        Import your files →
-                      </Button>
-                      <Text fontSize="xs" color={mutedText} mt={2} textAlign="center">
-                        Markdown, PDF, DOCX, plain text — we&apos;ll sort it out.
+                        Your team
                       </Text>
+                      <HStack gap={3} flexWrap="wrap">
+                        {(group?.member_preview ?? []).map((m) => (
+                          <HStack key={m.username} gap={2}>
+                            <Avatar.Root size="sm">
+                              <Avatar.Image src={m.avatar_url || undefined} />
+                              <Avatar.Fallback>
+                                {(m.display_name || m.username).charAt(0).toUpperCase()}
+                              </Avatar.Fallback>
+                            </Avatar.Root>
+                            <Text fontSize="sm">{m.display_name || m.username}</Text>
+                          </HStack>
+                        ))}
+                      </HStack>
                     </Box>
-                  </VStack>
-                </Box>
+                  )}
+
+                  <Text className="cat-support" fontSize="xs" color={mutedText}>
+                    Questions or need a walkthrough? Reply to your activation email — we&apos;re here.
+                  </Text>
+
+                </VStack>
               </Box>
             </Box>
           )}
@@ -442,23 +543,57 @@ export default function GroupCatalystPage() {
                   </Text>
                 </Box>
 
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".md,.pdf,.docx,.doc,.txt,.xlsx,.xls,.csv"
+                  style={{ display: "none" }}
+                  onChange={handleFileInputChange}
+                />
+
                 <Box
                   borderRadius="lg"
                   border="2px dashed"
-                  borderColor={dropZoneBorder}
+                  borderColor={dragOver ? BRAND : dropZoneBorder}
                   p={12}
                   textAlign="center"
                   cursor="pointer"
-                  bg={cardBg}
+                  bg={dragOver ? dropZoneHoverBg : cardBg}
                   _hover={{ borderColor: BRAND, bg: dropZoneHoverBg }}
                   transition="all 0.15s"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
                 >
                   <Text fontSize="2xl" mb={3}>📂</Text>
-                  <Text fontWeight="600" fontSize="sm" mb={1}>Drop files here</Text>
+                  <Text fontWeight="600" fontSize="sm" mb={1}>
+                    {selectedFiles.length > 0
+                      ? `${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""} selected`
+                      : "Drop files here"}
+                  </Text>
                   <Text fontSize="xs" color={mutedText}>
-                    or click to browse — Markdown, PDF, DOCX, plain text
+                    {selectedFiles.length > 0
+                      ? selectedFiles.map((f) => f.name).join(", ").slice(0, 80)
+                      : "or click to browse — Markdown, PDF, DOCX, XLSX, plain text"}
                   </Text>
                 </Box>
+
+                {selectedFiles.length > 0 && (
+                  <Button
+                    bg={BRAND}
+                    color="white"
+                    _hover={{ opacity: 0.88 }}
+                    size="md"
+                    w="full"
+                    fontWeight="600"
+                    onClick={() => setIntroState("confirming")}
+                  >
+                    Parse {selectedFiles.length} file{selectedFiles.length > 1 ? "s" : ""} →
+                  </Button>
+                )}
 
                 <Text
                   as="button"
