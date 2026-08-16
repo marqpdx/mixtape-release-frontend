@@ -76,6 +76,48 @@ type ParsedFile = {
 const BRAND = "#1a1a2e";
 const VERBS = ["Find", "Amend", "Add"];
 
+// ── Semantic entity classifier ────────────────────────────────────────────────
+type EntityClass = { type: string; icon: string; plural: string };
+
+function classifyRegister(slug: string, displayName: string, columns: string[]): EntityClass {
+  const t = (slug + " " + displayName + " " + columns.join(" ")).toLowerCase();
+  if (/recipe|menu|meal|dish|breakfast|lunch|dinner|sauce|cook|food|ingredient|prep.list|prep-list/.test(t))
+    return { type: "Recipes", icon: "🍽", plural: "recipes" };
+  if (/supplier|vendor|partner|fundrais|outreach|confirmed|grant|sponsor|donation/.test(t))
+    return { type: "Partners & Suppliers", icon: "🤝", plural: "partners" };
+  if (/staff|crew|team|volunteer|people|person|role|contact|worker|member/.test(t))
+    return { type: "People", icon: "👥", plural: "people" };
+  if (/meeting|minutes|action|agenda|carried|notes/.test(t))
+    return { type: "Meeting notes", icon: "📋", plural: "meeting notes" };
+  if (/prep|task|checklist|todo|shift|schedule/.test(t))
+    return { type: "Tasks", icon: "✅", plural: "tasks" };
+  return { type: "Records", icon: "📄", plural: "records" };
+}
+
+function humanSummary(registers: { slug: string; display_name: string; entry_count: number; columns: string[] }[]): string {
+  const byType: Record<string, number> = {};
+  for (const r of registers) {
+    const ec = classifyRegister(r.slug, r.display_name, r.columns);
+    byType[ec.plural] = (byType[ec.plural] ?? 0) + r.entry_count;
+  }
+  const parts = Object.entries(byType)
+    .filter(([, n]) => n > 0)
+    .map(([type, n]) => `${n} ${type}`);
+  return parts.length ? parts.join(" · ") : (registers.length > 0 ? `${registers.length} items` : "nothing detected");
+}
+
+function aggregateFindings(files: { registers: { slug: string; display_name: string; entry_count: number; columns: string[] }[] }[]): { ec: EntityClass; count: number }[] {
+  const byType: Record<string, { ec: EntityClass; count: number }> = {};
+  for (const f of files) {
+    for (const r of f.registers) {
+      const ec = classifyRegister(r.slug, r.display_name, r.columns);
+      if (!byType[ec.plural]) byType[ec.plural] = { ec, count: 0 };
+      byType[ec.plural].count += r.entry_count;
+    }
+  }
+  return Object.values(byType).filter((v) => v.count > 0);
+}
+
 const PROPOSED_REGISTERS: RegisterRow[] = [
   { slug: "meals",              displayName: "Meal Register",      canonSynonym: "Final Menu", entryCount: 16,  sourceFile: "2026_Temple_Menu. UPDATED.docx" },
   { slug: "prep-tasks",         displayName: "Prep Tasks",          canonSynonym: "Live Prep",  entryCount: 42,  sourceFile: "2026_Prep_List..docx" },
@@ -1180,36 +1222,21 @@ export default function GroupCatalystPage() {
                 {/* Bridge narrative header */}
                 <Box>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
-                    Your files have been read
+                    {parsedFiles.length > 0 ? (() => {
+                      const agg = aggregateFindings(parsedFiles);
+                      if (!agg.length) return "Your files have been read";
+                      const parts = agg.map((a) => `${a.count} ${a.ec.plural}`);
+                      const joined = parts.length === 1
+                        ? parts[0]
+                        : parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1];
+                      return `We found ${joined}`;
+                    })() : "Your files have been read"}
                   </Heading>
                   <Text fontSize="sm" color={mutedText} lineHeight="1.7">
-                    Before anything is written to your Codex, here&apos;s what we found —
-                    by file, so you can see exactly where each register comes from.
-                    Your original files are always kept. These registers are inferred shapes,
-                    not authoritative until you say so.
+                    {parsedFiles.length > 0
+                      ? `Here's what we found across your ${parsedFiles.length} file${parsedFiles.length !== 1 ? "s" : ""} — confirm what you want to bring into your Codex, edit the names, or remove anything that doesn't fit. Your original files are always kept.`
+                      : "Before anything is written to your Codex, confirm the registers below. Your original files are always kept — these are proposed shapes, not final."}
                   </Text>
-                  {/* Summary chips */}
-                  <HStack mt={3} gap={2} flexWrap="wrap">
-                    <Box px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
-                      <Text fontSize="10px" fontWeight="600" color={chipText}>
-                        {registers.length} register{registers.length !== 1 ? "s" : ""} proposed
-                      </Text>
-                    </Box>
-                    {parsedFiles.length > 0 && (
-                      <Box px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
-                        <Text fontSize="10px" fontWeight="600" color={chipText}>
-                          {parsedFiles.length} file{parsedFiles.length !== 1 ? "s" : ""} scanned
-                        </Text>
-                      </Box>
-                    )}
-                    {parsedFiles.reduce((s, f) => s + f.skipped.length, 0) > 0 && (
-                      <Box px={2} py="2px" bg={preCanonBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
-                        <Text fontSize="10px" fontWeight="600" color={preCanonText}>
-                          {parsedFiles.reduce((s, f) => s + f.skipped.length, 0)} noise sheets skipped
-                        </Text>
-                      </Box>
-                    )}
-                  </HStack>
                 </Box>
 
                 {/* Per-file breakdown */}
@@ -1236,100 +1263,50 @@ export default function GroupCatalystPage() {
                           overflow="hidden"
                         >
                           {/* File header */}
-                          <HStack px={4} py={3} borderBottom="1px solid" borderColor={cardBorder} gap={3}>
-                            <Text fontSize="lg" flexShrink={0}>
+                          <HStack px={4} py={3} gap={3}>
+                            <Text fontSize="xl" flexShrink={0}>
                               {pf.file_type === "pdf" ? "📑" : pf.file_type === "docx" ? "📝" : "📊"}
                             </Text>
                             <Box flex="1" minW={0}>
                               <Text fontSize="sm" fontWeight="600" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
                                 {pf.filename}
                               </Text>
-                              <Text fontSize="10px" color={mutedText}>
-                                {pf.registers.length} register{pf.registers.length !== 1 ? "s" : ""} found
-                                {pf.skipped.length > 0 ? ` · ${pf.skipped.length} skipped` : ""}
-                                {pf.file_notes ? ` · ${pf.file_notes}` : ""}
+                              {/* Human findings summary */}
+                              <Text fontSize="sm" color={chipText} mt="3px" fontWeight="500">
+                                {humanSummary(pf.registers)}
                               </Text>
-                            </Box>
-                            <Box
-                              px="6px"
-                              py="1px"
-                              bg={chipBg}
-                              borderRadius="md"
-                              flexShrink={0}
-                            >
-                              <Text fontSize="9px" fontWeight="700" color={mutedText} fontFamily="mono">
-                                {pf.file_type}
-                              </Text>
+                              {/* Skipped sheets — plain language */}
+                              {pf.skipped.length > 0 && (
+                                <Text fontSize="11px" color={synonymLabel} mt="2px">
+                                  Also skipped {pf.skipped.length} tab{pf.skipped.length !== 1 ? "s" : ""} that looked like cover pages or summaries
+                                </Text>
+                              )}
                             </Box>
                           </HStack>
 
-                          {/* Register rows */}
-                          <VStack align="stretch" px={4} py={3} gap={3}>
-                            {pf.registers.map((r) => (
-                              <HStack key={r.slug} align="start" gap={3}>
-                                {/* Confidence dot */}
-                                <Box
-                                  w="7px"
-                                  h="7px"
-                                  borderRadius="full"
-                                  flexShrink={0}
-                                  mt="6px"
-                                  bg={
-                                    r.confidence === "high" ? "green.400"
-                                    : r.confidence === "medium" ? "yellow.400"
-                                    : "gray.400"
-                                  }
-                                  title={`${r.confidence} confidence`}
-                                />
-                                <Box flex="1">
-                                  <HStack gap={2} align="baseline">
-                                    <Text fontSize="sm" fontWeight="500">{r.display_name}</Text>
-                                    <Text fontSize="10px" color={mutedText}>{r.entry_count} entries</Text>
-                                  </HStack>
-                                  {r.columns.length > 0 && (
-                                    <Text fontSize="10px" color={synonymLabel} mt="2px" lineHeight="1.5">
-                                      columns: {r.columns.join(", ")}
-                                    </Text>
-                                  )}
-                                  {r.notes && r.notes !== `columns: ${r.columns.join(", ")}` && (
-                                    <Text fontSize="10px" color={synonymLabel} mt="1px" lineHeight="1.5">
-                                      {r.notes}
-                                    </Text>
-                                  )}
-                                </Box>
-                                <Box
-                                  px="6px"
-                                  py="1px"
-                                  borderRadius="full"
-                                  flexShrink={0}
-                                  bg={
-                                    r.confidence === "high" ? statusBg
-                                    : r.confidence === "medium" ? preCanonBg
-                                    : chipBg
-                                  }
-                                >
-                                  <Text
-                                    fontSize="9px"
-                                    fontWeight="700"
-                                    color={
-                                      r.confidence === "high" ? statusText
-                                      : r.confidence === "medium" ? preCanonText
-                                      : mutedText
-                                    }
+                          {/* Entity chips per register */}
+                          {pf.registers.length > 0 && (
+                            <HStack px={4} pb={3} gap={2} flexWrap="wrap">
+                              {pf.registers.map((r) => {
+                                const ec = classifyRegister(r.slug, r.display_name, r.columns);
+                                return (
+                                  <Box
+                                    key={r.slug}
+                                    px={3}
+                                    py="4px"
+                                    bg={chipBg}
+                                    border="1px solid"
+                                    borderColor={chipBorder}
+                                    borderRadius="full"
                                   >
-                                    {r.confidence}
-                                  </Text>
-                                </Box>
-                              </HStack>
-                            ))}
-
-                            {/* Skipped sheets */}
-                            {pf.skipped.length > 0 && (
-                              <Text fontSize="10px" color={synonymLabel} fontStyle="italic" pt={1} borderTop="1px dashed" borderColor={cardBorder}>
-                                Skipped: {pf.skipped.join(" · ")}
-                              </Text>
-                            )}
-                          </VStack>
+                                    <Text fontSize="11px" fontWeight="500" color={chipText}>
+                                      {ec.icon} {r.entry_count > 0 ? `${r.entry_count} ` : ""}{r.entry_count === 1 ? ec.type.replace(/s$/, "") : ec.type}
+                                    </Text>
+                                  </Box>
+                                );
+                              })}
+                            </HStack>
+                          )}
                         </Box>
                       ))}
                     </VStack>
@@ -1364,6 +1341,9 @@ export default function GroupCatalystPage() {
                         py={3}
                       >
                         <HStack align="start" gap={3}>
+                          <Text fontSize="lg" flexShrink={0} mt="6px" title={classifyRegister(reg.slug, reg.displayName, []).type}>
+                            {classifyRegister(reg.slug, reg.displayName, []).icon}
+                          </Text>
                           <VStack align="stretch" flex="1" gap={1.5}>
                             <HStack gap={2} align="center">
                               <Input
