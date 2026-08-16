@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Avatar,
@@ -17,6 +17,8 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 type MemberPreview = {
@@ -33,7 +35,7 @@ type GroupDetail = {
   member_preview?: MemberPreview[];
 };
 
-type IntroState = "center" | "animating" | "bubble" | "confirming";
+type IntroState = "center" | "animating" | "bubble" | "confirming" | "browse";
 
 type RegisterRow = {
   slug: string;
@@ -41,6 +43,15 @@ type RegisterRow = {
   canonSynonym: string;
   entryCount: number;
   sourceFile: string;
+};
+
+type RegisterMeta = {
+  slug: string;
+  title: string;
+  canon_synonym: string;
+  entry_count: number;
+  status: string;
+  source_file: string;
 };
 
 const BRAND = "#1a1a2e";
@@ -76,8 +87,31 @@ export default function GroupCatalystPage() {
   const [materializeError, setMaterializeError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  // Browse state
+  const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
+  const [registerListLoading, setRegisterListLoading] = useState(false);
+  const [selectedRegSlug, setSelectedRegSlug] = useState<string | null>(null);
+  const [regBody, setRegBody] = useState<string>("");
+  const [regMeta, setRegMeta] = useState<RegisterMeta | null>(null);
+  const [regLoading, setRegLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [canonizing, setCanonizing] = useState(false);
+  const [saveResult, setSaveResult] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── TipTap editor ────────────────────────────────────────────────────────────
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: "",
+    editorProps: {
+      attributes: {
+        class: "cat-tiptap-body",
+      },
+    },
+  });
 
   // ── color tokens ──────────────────────────────────────────────────────────
   const shellBg         = useColorModeValue("#f4f5f7", "#111827");
@@ -101,6 +135,17 @@ export default function GroupCatalystPage() {
   const removeHover     = useColorModeValue("#fee2e2", "#3b1515");
   const startHereBg     = useColorModeValue("#eef4ff", "#1e2a40");
   const startHereBorder = useColorModeValue("#c3d9ff", "#2a4070");
+  const navBg           = useColorModeValue("#f0f2f5", "#161d2a");
+  const navBorder       = useColorModeValue("#e2e8f0", "#1e2533");
+  const navItemHover    = useColorModeValue("#e4e9f5", "#1e2a40");
+  const navItemActive   = useColorModeValue("#dde6ff", "#1a2a50");
+  const navActiveText   = useColorModeValue("#1e3a8a", "#93c5fd");
+  const toolbarBg       = useColorModeValue("white", "#1a202c");
+  const toolbarBorder   = useColorModeValue("#e2e8f0", "#2d3748");
+  const canonBadgeBg    = useColorModeValue("#f0fdf4", "#0f2318");
+  const canonBadgeText  = useColorModeValue("#166534", "#4ade80");
+  const preCanonBg      = useColorModeValue("#fefce8", "#1a1600");
+  const preCanonText    = useColorModeValue("#854d0e", "#facc15");
 
   useEffect(() => {
     axiosInstance
@@ -109,6 +154,47 @@ export default function GroupCatalystPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  const loadRegisterList = useCallback(() => {
+    setRegisterListLoading(true);
+    axiosInstance
+      .get(`/api/catalyst/groups/${slug}/registers/`)
+      .then((res) => setRegisterList(res.data))
+      .catch(() => setRegisterList([]))
+      .finally(() => setRegisterListLoading(false));
+  }, [slug]);
+
+  const loadRegister = useCallback((regSlug: string) => {
+    setRegLoading(true);
+    setSaveResult(null);
+    axiosInstance
+      .get(`/api/catalyst/groups/${slug}/registers/${regSlug}/`)
+      .then((res) => {
+        setRegBody(res.data.body_markdown ?? "");
+        setRegMeta({
+          slug: regSlug,
+          title: res.data.frontmatter?.id ?? regSlug,
+          canon_synonym: res.data.canon_synonym ?? "",
+          entry_count: res.data.entry_count ?? 0,
+          status: res.data.status ?? "pre-canon",
+          source_file: res.data.frontmatter?.source_file ?? "",
+        });
+        editor?.commands.setContent(mdToHtml(res.data.body_markdown ?? ""));
+      })
+      .finally(() => setRegLoading(false));
+  }, [slug, editor]);
+
+  useEffect(() => {
+    if (introState === "browse") {
+      loadRegisterList();
+    }
+  }, [introState, loadRegisterList]);
+
+  useEffect(() => {
+    if (selectedRegSlug) {
+      loadRegister(selectedRegSlug);
+    }
+  }, [selectedRegSlug, loadRegister]);
+
   function handleImport() {
     setIntroState("animating");
     setTimeout(() => setIntroState("bubble"), 480);
@@ -116,6 +202,13 @@ export default function GroupCatalystPage() {
 
   function handleRestoreIntro() {
     setIntroState("center");
+  }
+
+  function handleGoToBrowse() {
+    setIntroState("browse");
+    setSelectedRegSlug(null);
+    setRegMeta(null);
+    setRegBody("");
   }
 
   function seedVerb(verb: string) {
@@ -161,6 +254,47 @@ export default function GroupCatalystPage() {
     }
   }
 
+  async function handleSave() {
+    if (!selectedRegSlug || !editor) return;
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      const body = htmlToMd(editor.getHTML());
+      await axiosInstance.patch(
+        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+        { body_markdown: body },
+      );
+      setSaveResult("Saved");
+      setRegBody(body);
+    } catch {
+      setSaveResult("Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCanonize() {
+    if (!selectedRegSlug || !editor) return;
+    setCanonizing(true);
+    setSaveResult(null);
+    try {
+      const body = htmlToMd(editor.getHTML());
+      await axiosInstance.patch(
+        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+        { body_markdown: body, canonize: true },
+      );
+      setSaveResult("Canonized");
+      setRegMeta((prev) => prev ? { ...prev, status: "canon" } : prev);
+      setRegisterList((prev) =>
+        prev.map((r) => r.slug === selectedRegSlug ? { ...r, status: "canon" } : r)
+      );
+    } catch {
+      setSaveResult("Canonize failed");
+    } finally {
+      setCanonizing(false);
+    }
+  }
+
   function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length) setSelectedFiles((prev) => [...prev, ...files]);
@@ -182,6 +316,7 @@ export default function GroupCatalystPage() {
   }
 
   const showBubble = introState === "animating" || introState === "bubble" || introState === "confirming";
+  const showRegNav = introState === "browse";
 
   return (
     <>
@@ -199,6 +334,19 @@ export default function GroupCatalystPage() {
         0%   { opacity: 0; transform: translateY(14px); }
         100% { opacity: 1; transform: translateY(0); }
       }
+      .cat-tiptap-body {
+        outline: none;
+        font-size: 14px;
+        line-height: 1.7;
+        min-height: 320px;
+      }
+      .cat-tiptap-body h1 { font-size: 1.4em; font-weight: 700; margin: 1em 0 0.4em; }
+      .cat-tiptap-body h2 { font-size: 1.15em; font-weight: 600; margin: 0.9em 0 0.35em; }
+      .cat-tiptap-body p  { margin: 0 0 0.6em; }
+      .cat-tiptap-body strong { font-weight: 600; }
+      .cat-tiptap-body em { font-style: italic; }
+      .cat-tiptap-body code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 0.88em; }
+      .cat-tiptap-body ul, .cat-tiptap-body ol { padding-left: 1.4em; margin: 0 0 0.6em; }
     `}</style>
     <Box
       className="cat-shell"
@@ -254,7 +402,135 @@ export default function GroupCatalystPage() {
             <Text fontSize="13px" lineHeight="1">📍</Text>
           </Box>
         )}
+
+        {showRegNav && (
+          <Box
+            as="button"
+            onClick={() => setIntroState("center")}
+            w="34px"
+            h="34px"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.10)"
+            border="1px solid rgba(255,255,255,0.18)"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            title="Back to landing"
+            _hover={{ bg: "rgba(255,255,255,0.18)" }}
+            transition="background 0.15s"
+          >
+            <Text fontSize="13px" lineHeight="1">🏠</Text>
+          </Box>
+        )}
       </Box>
+
+      {/* ── REGISTER NAV PANEL — visible in browse state ─────────────────── */}
+      {showRegNav && (
+        <Box
+          className="cat-reg-nav"
+          width="210px"
+          flexShrink={0}
+          bg={navBg}
+          borderRight="1px solid"
+          borderColor={navBorder}
+          display="flex"
+          flexDirection="column"
+          overflow="hidden"
+        >
+          <Box px={3} py={3} borderBottom="1px solid" borderColor={navBorder}>
+            <Text
+              fontSize="9px"
+              fontWeight="700"
+              letterSpacing="0.12em"
+              textTransform="uppercase"
+              color={mutedText}
+            >
+              Register of Registers
+            </Text>
+            <Text fontSize="xs" color={mutedText} mt={1} lineHeight="1.4">
+              {group?.title}
+            </Text>
+          </Box>
+
+          <Box flex="1" overflowY="auto" py={1}>
+            {registerListLoading ? (
+              <Box px={3} py={4}>
+                <Spinner size="xs" color="blue.400" />
+              </Box>
+            ) : registerList.length === 0 ? (
+              <Box px={3} py={4}>
+                <Text fontSize="xs" color={mutedText}>
+                  No registers yet. Import files to create them.
+                </Text>
+              </Box>
+            ) : (
+              registerList.map((reg) => (
+                <Box
+                  key={reg.slug}
+                  className="cat-reg-nav-item"
+                  as="button"
+                  w="full"
+                  textAlign="left"
+                  px={3}
+                  py="9px"
+                  bg={selectedRegSlug === reg.slug ? navItemActive : "transparent"}
+                  _hover={{ bg: selectedRegSlug === reg.slug ? navItemActive : navItemHover }}
+                  transition="background 0.1s"
+                  onClick={() => setSelectedRegSlug(reg.slug)}
+                  borderLeft="3px solid"
+                  borderColor={selectedRegSlug === reg.slug ? navActiveText : "transparent"}
+                >
+                  <Text
+                    fontSize="12px"
+                    fontWeight={selectedRegSlug === reg.slug ? "600" : "400"}
+                    color={selectedRegSlug === reg.slug ? navActiveText : chipText}
+                    lineHeight="1.3"
+                    mb="2px"
+                  >
+                    {reg.title || reg.slug}
+                  </Text>
+                  <HStack gap={1.5}>
+                    <Text fontSize="10px" color={synonymLabel}>
+                      {reg.entry_count} entries
+                    </Text>
+                    <Box
+                      px="5px"
+                      py="1px"
+                      borderRadius="full"
+                      bg={reg.status === "canon" ? canonBadgeBg : preCanonBg}
+                    >
+                      <Text
+                        fontSize="9px"
+                        fontWeight="600"
+                        color={reg.status === "canon" ? canonBadgeText : preCanonText}
+                      >
+                        {reg.status === "canon" ? "canon" : "draft"}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              ))
+            )}
+          </Box>
+
+          <Box px={3} py={3} borderTop="1px solid" borderColor={navBorder}>
+            <Box
+              as="button"
+              onClick={() => {
+                setIntroState("bubble");
+                setSelectedRegSlug(null);
+              }}
+              fontSize="11px"
+              color={mutedText}
+              _hover={{ color: BRAND }}
+              transition="color 0.12s"
+              cursor="pointer"
+            >
+              + Import more files
+            </Box>
+          </Box>
+        </Box>
+      )}
 
       {/* ── MAIN AREA ───────────────────────────────────────────────────── */}
       <Box className="cat-main" flex="1" display="flex" flexDirection="column" overflow="hidden">
@@ -415,16 +691,26 @@ export default function GroupCatalystPage() {
                       Open <strong>START-HERE.md</strong> in your Codex to orient yourself — it maps out
                       your knowledge structure, key files, and what to build first.
                     </Text>
-                    <Button
-                      onClick={handleImport}
-                      bg={BRAND}
-                      color="white"
-                      _hover={{ opacity: 0.88 }}
-                      size="sm"
-                      fontWeight="600"
-                    >
-                      Import your files →
-                    </Button>
+                    <HStack gap={3} flexWrap="wrap">
+                      <Button
+                        onClick={handleImport}
+                        bg={BRAND}
+                        color="white"
+                        _hover={{ opacity: 0.88 }}
+                        size="sm"
+                        fontWeight="600"
+                      >
+                        Import your files →
+                      </Button>
+                      <Button
+                        onClick={handleGoToBrowse}
+                        variant="outline"
+                        size="sm"
+                        fontWeight="600"
+                      >
+                        View Register of Registers →
+                      </Button>
+                    </HStack>
                   </Box>
 
                   {/* Three pillars */}
@@ -872,9 +1158,9 @@ export default function GroupCatalystPage() {
                           size="sm"
                           fontWeight="600"
                           flex="1"
-                          onClick={() => setIntroState("center")}
+                          onClick={handleGoToBrowse}
                         >
-                          ← Back to Codex home
+                          View Register of Registers →
                         </Button>
                         <Button
                           variant="outline"
@@ -885,6 +1171,8 @@ export default function GroupCatalystPage() {
                             setMaterializeResult(null);
                             setMaterializeError(null);
                             setRegisters(PROPOSED_REGISTERS);
+                            setIntroState("bubble");
+                            setSelectedFiles([]);
                           }}
                         >
                           Import more files
@@ -926,9 +1214,236 @@ export default function GroupCatalystPage() {
             </Box>
           )}
 
+          {/* ── STAGE 7 — BROWSE / REGISTER EDITOR ── */}
+          {introState === "browse" && (
+            <Box
+              className="cat-browse-surface"
+              display="flex"
+              flexDirection="column"
+              height="100%"
+            >
+              {/* No register selected — placeholder */}
+              {!selectedRegSlug && (
+                <Box
+                  flex="1"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  p={8}
+                >
+                  <VStack gap={3} textAlign="center">
+                    <Text fontSize="2xl">◈</Text>
+                    <Text fontWeight="600" fontSize="sm">Select a register</Text>
+                    <Text fontSize="xs" color={mutedText} maxW="260px" lineHeight="1.6">
+                      Choose a register from the panel on the left to view and edit its content.
+                    </Text>
+                  </VStack>
+                </Box>
+              )}
+
+              {/* Register selected — TipTap editor */}
+              {selectedRegSlug && (
+                <Box className="cat-editor-area" display="flex" flexDirection="column" height="100%">
+
+                  {/* Editor toolbar */}
+                  <Box
+                    className="cat-editor-toolbar"
+                    bg={toolbarBg}
+                    borderBottom="1px solid"
+                    borderColor={toolbarBorder}
+                    px={4}
+                    py="6px"
+                    display="flex"
+                    alignItems="center"
+                    gap={2}
+                    flexShrink={0}
+                  >
+                    {/* Format buttons */}
+                    {[
+                      { label: "B", title: "Bold", action: () => editor?.chain().focus().toggleBold().run(), active: editor?.isActive("bold") },
+                      { label: "I", title: "Italic", action: () => editor?.chain().focus().toggleItalic().run(), active: editor?.isActive("italic") },
+                      { label: "H1", title: "Heading 1", action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(), active: editor?.isActive("heading", { level: 1 }) },
+                      { label: "H2", title: "Heading 2", action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(), active: editor?.isActive("heading", { level: 2 }) },
+                    ].map(({ label, title, action, active }) => (
+                      <Box
+                        key={label}
+                        as="button"
+                        onClick={action}
+                        title={title}
+                        px="8px"
+                        py="2px"
+                        borderRadius="4px"
+                        bg={active ? chipBorder : "transparent"}
+                        border="1px solid"
+                        borderColor={active ? BRAND : chipBorder}
+                        fontSize="11px"
+                        fontWeight="700"
+                        color={active ? BRAND : chipText}
+                        cursor="pointer"
+                        _hover={{ borderColor: BRAND, color: BRAND }}
+                        transition="all 0.1s"
+                        fontFamily="mono"
+                      >
+                        {label}
+                      </Box>
+                    ))}
+
+                    <Box flex="1" />
+
+                    {/* Status badge */}
+                    {regMeta && (
+                      <Box
+                        px={2}
+                        py="2px"
+                        borderRadius="full"
+                        bg={regMeta.status === "canon" ? canonBadgeBg : preCanonBg}
+                      >
+                        <Text
+                          fontSize="10px"
+                          fontWeight="600"
+                          color={regMeta.status === "canon" ? canonBadgeText : preCanonText}
+                        >
+                          {regMeta.status === "canon" ? "✓ canon" : "draft"}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {/* Save result feedback */}
+                    {saveResult && (
+                      <Text fontSize="11px" color={saveResult.includes("fail") ? "red.500" : statusText}>
+                        {saveResult}
+                      </Text>
+                    )}
+
+                    {/* Save button */}
+                    <Button
+                      onClick={handleSave}
+                      size="xs"
+                      bg={chipBg}
+                      border="1px solid"
+                      borderColor={chipBorder}
+                      color={chipText}
+                      fontWeight="600"
+                      _hover={{ borderColor: BRAND }}
+                      loading={saving}
+                      disabled={saving || canonizing}
+                    >
+                      Save
+                    </Button>
+
+                    {/* Canonize button */}
+                    {regMeta?.status !== "canon" && (
+                      <Button
+                        onClick={handleCanonize}
+                        size="xs"
+                        bg={BRAND}
+                        color="white"
+                        fontWeight="600"
+                        _hover={{ opacity: 0.88 }}
+                        loading={canonizing}
+                        disabled={saving || canonizing}
+                      >
+                        Canonize →
+                      </Button>
+                    )}
+                  </Box>
+
+                  {/* Register meta header */}
+                  {regMeta && !regLoading && (
+                    <Box
+                      px={6}
+                      py={4}
+                      borderBottom="1px solid"
+                      borderColor={cardBorder}
+                      bg={cardBg}
+                      flexShrink={0}
+                    >
+                      <HStack gap={3} align="baseline">
+                        <Heading as="h2" fontSize="lg" fontWeight="700" letterSpacing="-0.02em">
+                          {regMeta.title || regMeta.slug}
+                        </Heading>
+                        <Text fontSize="xs" color={mutedText}>
+                          {regMeta.entry_count} entries · synonym: <em>{regMeta.canon_synonym || "—"}</em>
+                        </Text>
+                      </HStack>
+                      {regMeta.source_file && (
+                        <Text fontSize="10px" fontFamily="mono" color={synonymLabel} mt={1}>
+                          {regMeta.source_file}
+                        </Text>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* TipTap body */}
+                  {regLoading ? (
+                    <Box flex="1" display="flex" alignItems="center" justifyContent="center">
+                      <Spinner size="md" color="blue.400" />
+                    </Box>
+                  ) : (
+                    <Box
+                      className="cat-tiptap-wrapper"
+                      flex="1"
+                      overflow="auto"
+                      px={6}
+                      py={5}
+                      bg={centerBg}
+                    >
+                      <Box maxW="680px">
+                        <EditorContent editor={editor} />
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+
         </Box>
       </Box>
     </Box>
     </>
   );
+}
+
+// ── Minimal md ↔ HTML round-trip (no external dep) ───────────────────────────
+
+function mdToHtml(md: string): string {
+  return md
+    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/^- (.+)$/gm, "<li>$1</li>")
+    .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
+    .split("\n\n")
+    .map((block) =>
+      block.startsWith("<h") || block.startsWith("<ul") || block.startsWith("<ol")
+        ? block
+        : `<p>${block.replace(/\n/g, "<br>")}</p>`
+    )
+    .join("\n");
+}
+
+function htmlToMd(html: string): string {
+  return html
+    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n")
+    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1\n")
+    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1\n")
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, "**$1**")
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, "*$1*")
+    .replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`")
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n")
+    .replace(/<ul[^>]*>(.*?)<\/ul>/gis, "$1")
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, "$1\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
