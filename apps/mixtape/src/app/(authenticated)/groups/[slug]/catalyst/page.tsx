@@ -831,50 +831,92 @@ export default function GroupCatalystPage() {
                   )}
                 </Box>
 
-                {/* Error / success feedback */}
+                {/* Error feedback */}
                 {materializeError && (
                   <Box px={3} py={2} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="md">
                     <Text fontSize="xs" color="red.700">{materializeError}</Text>
                   </Box>
                 )}
-                {materializeResult && (
-                  <Box px={3} py={2.5} bg={statusBg} border="1px solid" borderColor={statusBorder} borderRadius="md">
-                    <HStack gap={2}>
-                      <Box w="7px" h="7px" borderRadius="full" bg="green.400" flexShrink={0} />
-                      <Text fontSize="xs" fontWeight="500" color={statusText}>
-                        {materializeResult.registers_written} register(s) written — commit {materializeResult.commit}
-                      </Text>
-                    </HStack>
-                  </Box>
-                )}
 
-                {/* Action row */}
-                <HStack justify="space-between" pt={2} flexWrap="wrap" gap={3}>
+                {/* Success — replaces the action row */}
+                {materializeResult ? (
                   <Box
-                    as="button"
-                    onClick={() => setIntroState("bubble")}
-                    fontSize="sm"
-                    color={mutedText}
-                    cursor="pointer"
-                    _hover={{ color: BRAND }}
-                    transition="color 0.12s"
+                    bg={statusBg}
+                    border="1px solid"
+                    borderColor={statusBorder}
+                    borderRadius="lg"
+                    px={5}
+                    py={5}
                   >
-                    ← Back to import
+                    <VStack align="stretch" gap={4}>
+                      <HStack gap={2}>
+                        <Box w="7px" h="7px" borderRadius="full" bg="green.400" flexShrink={0} />
+                        <Text fontSize="sm" fontWeight="600" color={statusText}>
+                          {materializeResult.registers_written} register{materializeResult.registers_written !== 1 ? "s" : ""} written to your Codex
+                        </Text>
+                      </HStack>
+                      <Text fontSize="xs" color={mutedText}>
+                        Commit <code>{materializeResult.commit}</code> — files are in{" "}
+                        <code>CONTENT/registers/</code> in your Codex git repo. Draft entries
+                        are waiting for your review. Canon synonyms are set per register.
+                      </Text>
+                      <HStack gap={3} flexWrap="wrap">
+                        <Button
+                          bg={BRAND}
+                          color="white"
+                          _hover={{ opacity: 0.88 }}
+                          size="sm"
+                          fontWeight="600"
+                          flex="1"
+                          onClick={() => setIntroState("center")}
+                        >
+                          ← Back to Codex home
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          fontWeight="600"
+                          flex="1"
+                          onClick={() => {
+                            setMaterializeResult(null);
+                            setMaterializeError(null);
+                            setRegisters(PROPOSED_REGISTERS);
+                          }}
+                        >
+                          Import more files
+                        </Button>
+                      </HStack>
+                    </VStack>
                   </Box>
-                  <Button
-                    onClick={handleMaterialize}
-                    bg={BRAND}
-                    color="white"
-                    _hover={{ opacity: 0.88 }}
-                    size="md"
-                    fontWeight="600"
-                    flexShrink={0}
-                    loading={materializing}
-                    disabled={materializing || !!materializeResult}
-                  >
-                    {materializeResult ? "Files materialized ✓" : "Looks good — materialize files →"}
-                  </Button>
-                </HStack>
+                ) : (
+                  /* Pre-materialize action row */
+                  <HStack justify="space-between" pt={2} flexWrap="wrap" gap={3}>
+                    <Box
+                      as="button"
+                      onClick={() => setIntroState("bubble")}
+                      fontSize="sm"
+                      color={mutedText}
+                      cursor="pointer"
+                      _hover={{ color: BRAND }}
+                      transition="color 0.12s"
+                    >
+                      ← Back to import
+                    </Box>
+                    <Button
+                      onClick={handleMaterialize}
+                      bg={BRAND}
+                      color="white"
+                      _hover={{ opacity: 0.88 }}
+                      size="md"
+                      fontWeight="600"
+                      flexShrink={0}
+                      loading={materializing}
+                      disabled={materializing}
+                    >
+                      Looks good — materialize files →
+                    </Button>
+                  </HStack>
+                )}
 
               </VStack>
             </Box>
