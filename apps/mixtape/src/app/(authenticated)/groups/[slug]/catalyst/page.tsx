@@ -101,6 +101,13 @@ export default function GroupCatalystPage() {
   const [canonizing, setCanonizing] = useState(false);
   const [saveResult, setSaveResult] = useState<string | null>(null);
 
+  // Settings panel state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSynonym, setSettingsSynonym] = useState("");
+  const [settingsDisplayName, setSettingsDisplayName] = useState("");
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsResult, setSettingsResult] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,14 +179,19 @@ export default function GroupCatalystPage() {
       .get(`/api/catalyst/groups/${slug}/registers/${regSlug}/`)
       .then((res) => {
         setRegBody(res.data.body_markdown ?? "");
-        setRegMeta({
+        const meta: RegisterMeta = {
           slug: regSlug,
           title: res.data.frontmatter?.id ?? regSlug,
           canon_synonym: res.data.canon_synonym ?? "",
           entry_count: res.data.entry_count ?? 0,
           status: res.data.status ?? "pre-canon",
           source_file: res.data.frontmatter?.source_file ?? "",
-        });
+        };
+        setRegMeta(meta);
+        setSettingsSynonym(meta.canon_synonym);
+        setSettingsDisplayName(res.data.frontmatter?.display_name ?? meta.title);
+        setSettingsOpen(false);
+        setSettingsResult(null);
         editor?.commands.setContent(mdToHtml(res.data.body_markdown ?? ""));
       })
       .finally(() => setRegLoading(false));
@@ -272,6 +284,52 @@ export default function GroupCatalystPage() {
       setSaveResult("Save failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveSettings() {
+    if (!selectedRegSlug) return;
+    setSettingsSaving(true);
+    setSettingsResult(null);
+    try {
+      const res = await axiosInstance.patch(
+        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+        { canon_synonym: settingsSynonym, display_name: settingsDisplayName },
+      );
+      setRegMeta((prev) =>
+        prev ? { ...prev, canon_synonym: res.data.canon_synonym ?? settingsSynonym } : prev
+      );
+      setRegisterList((prev) =>
+        prev.map((r) =>
+          r.slug === selectedRegSlug ? { ...r, canon_synonym: res.data.canon_synonym ?? settingsSynonym } : r
+        )
+      );
+      setSettingsResult("Saved");
+    } catch {
+      setSettingsResult("Save failed");
+    } finally {
+      setSettingsSaving(false);
+    }
+  }
+
+  async function handleDecanonize() {
+    if (!selectedRegSlug) return;
+    setCanonizing(true);
+    setSaveResult(null);
+    try {
+      await axiosInstance.patch(
+        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+        { decanonize: true },
+      );
+      setRegMeta((prev) => prev ? { ...prev, status: "pre-canon" } : prev);
+      setRegisterList((prev) =>
+        prev.map((r) => r.slug === selectedRegSlug ? { ...r, status: "pre-canon" } : r)
+      );
+      setSaveResult("Reverted to draft");
+    } catch {
+      setSaveResult("Revert failed");
+    } finally {
+      setCanonizing(false);
     }
   }
 
@@ -1364,6 +1422,27 @@ export default function GroupCatalystPage() {
                       </Text>
                     )}
 
+                    {/* Settings toggle */}
+                    <Box
+                      as="button"
+                      onClick={() => { setSettingsOpen((o) => !o); setSettingsResult(null); }}
+                      px="8px"
+                      py="2px"
+                      borderRadius="4px"
+                      bg={settingsOpen ? chipBorder : "transparent"}
+                      border="1px solid"
+                      borderColor={settingsOpen ? BRAND : chipBorder}
+                      fontSize="11px"
+                      fontWeight="600"
+                      color={settingsOpen ? BRAND : chipText}
+                      cursor="pointer"
+                      _hover={{ borderColor: BRAND, color: BRAND }}
+                      transition="all 0.1s"
+                      title="Register settings"
+                    >
+                      ⚙ Settings
+                    </Box>
+
                     {/* Save button */}
                     <Button
                       onClick={handleSave}
@@ -1375,13 +1454,13 @@ export default function GroupCatalystPage() {
                       fontWeight="600"
                       _hover={{ borderColor: BRAND }}
                       loading={saving}
-                      disabled={saving || canonizing}
+                      disabled={saving || canonizing || settingsSaving}
                     >
                       Save
                     </Button>
 
-                    {/* Canonize button */}
-                    {regMeta?.status !== "canon" && (
+                    {/* Canonize / Revert button */}
+                    {regMeta?.status !== "canon" ? (
                       <Button
                         onClick={handleCanonize}
                         size="xs"
@@ -1390,12 +1469,133 @@ export default function GroupCatalystPage() {
                         fontWeight="600"
                         _hover={{ opacity: 0.88 }}
                         loading={canonizing}
-                        disabled={saving || canonizing}
+                        disabled={saving || canonizing || settingsSaving}
                       >
                         Canonize →
                       </Button>
+                    ) : (
+                      <Button
+                        onClick={handleDecanonize}
+                        size="xs"
+                        variant="outline"
+                        fontWeight="600"
+                        loading={canonizing}
+                        disabled={saving || canonizing || settingsSaving}
+                      >
+                        Revert to draft
+                      </Button>
                     )}
                   </Box>
+
+                  {/* Settings panel */}
+                  {settingsOpen && regMeta && (
+                    <Box
+                      className="cat-settings-panel"
+                      bg={startHereBg}
+                      borderBottom="1px solid"
+                      borderColor={startHereBorder}
+                      px={6}
+                      py={5}
+                      flexShrink={0}
+                    >
+                      <Text
+                        fontSize="9px"
+                        fontWeight="700"
+                        letterSpacing="0.12em"
+                        textTransform="uppercase"
+                        color={mutedText}
+                        mb={4}
+                      >
+                        Register Settings
+                      </Text>
+
+                      <VStack align="stretch" gap={4} maxW="480px">
+                        {/* Display name */}
+                        <Box>
+                          <Text fontSize="11px" fontWeight="600" color={mutedText} mb={1}>
+                            Display name
+                          </Text>
+                          <Input
+                            value={settingsDisplayName}
+                            onChange={(e) => setSettingsDisplayName(e.target.value)}
+                            size="sm"
+                            bg={cardBg}
+                            border="1px solid"
+                            borderColor={cardBorder}
+                            borderRadius="md"
+                            fontSize="sm"
+                            _focus={{ borderColor: BRAND, boxShadow: "none" }}
+                          />
+                        </Box>
+
+                        {/* Canon synonym */}
+                        <Box>
+                          <Text fontSize="11px" fontWeight="600" color={mutedText} mb={1}>
+                            Canon synonym
+                          </Text>
+                          <Text fontSize="10px" color={synonymLabel} mb={2} lineHeight="1.5">
+                            The label used for a confirmed, authoritative entry in this register.
+                            Used in Beryl prompts and export headers.
+                          </Text>
+                          <Input
+                            value={settingsSynonym}
+                            onChange={(e) => setSettingsSynonym(e.target.value)}
+                            placeholder="e.g. Final Menu, Live, Confirmed"
+                            size="sm"
+                            bg={cardBg}
+                            border="1px solid"
+                            borderColor={cardBorder}
+                            borderRadius="md"
+                            fontSize="sm"
+                            _focus={{ borderColor: BRAND, boxShadow: "none" }}
+                          />
+                        </Box>
+
+                        {/* Provenance read-only */}
+                        <Box>
+                          <Text fontSize="11px" fontWeight="600" color={mutedText} mb={2}>
+                            Provenance
+                          </Text>
+                          <VStack align="stretch" gap={1}>
+                            {[
+                              { label: "Source file", value: regMeta.source_file || "—" },
+                              { label: "Entry count", value: String(regMeta.entry_count) },
+                              { label: "Status", value: regMeta.status },
+                            ].map(({ label, value }) => (
+                              <HStack key={label} gap={2}>
+                                <Text fontSize="10px" color={synonymLabel} w="80px" flexShrink={0}>{label}</Text>
+                                <Text fontSize="10px" fontFamily="mono" color={chipText}>{value}</Text>
+                              </HStack>
+                            ))}
+                          </VStack>
+                        </Box>
+
+                        {/* Save settings */}
+                        <HStack gap={3}>
+                          <Button
+                            onClick={handleSaveSettings}
+                            size="sm"
+                            bg={BRAND}
+                            color="white"
+                            fontWeight="600"
+                            _hover={{ opacity: 0.88 }}
+                            loading={settingsSaving}
+                            disabled={settingsSaving}
+                          >
+                            Save settings
+                          </Button>
+                          {settingsResult && (
+                            <Text
+                              fontSize="11px"
+                              color={settingsResult.includes("fail") ? "red.500" : statusText}
+                            >
+                              {settingsResult}
+                            </Text>
+                          )}
+                        </HStack>
+                      </VStack>
+                    </Box>
+                  )}
 
                   {/* Register meta header */}
                   {regMeta && !regLoading && (
