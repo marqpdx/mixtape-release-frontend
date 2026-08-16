@@ -671,17 +671,58 @@ export default function GroupCatalystPage() {
           gap={3}
           flexShrink={0}
         >
-          <Text
-            fontSize="10px"
-            fontWeight="700"
-            letterSpacing="0.1em"
-            textTransform="uppercase"
-            color={mutedText}
-            flexShrink={0}
-            userSelect="none"
-          >
-            {group?.title ?? "Catalyst"}
-          </Text>
+          {/* Breadcrumb trail */}
+          <HStack gap={1} flexShrink={0} align="center">
+            <Text
+              as={introState !== "center" ? "button" : "span"}
+              fontSize="10px"
+              fontWeight="700"
+              letterSpacing="0.1em"
+              textTransform="uppercase"
+              color={introState !== "center" ? BRAND : mutedText}
+              cursor={introState !== "center" ? "pointer" : "default"}
+              userSelect="none"
+              opacity={introState !== "center" ? 1 : 1}
+              _hover={introState !== "center" ? { opacity: 0.7 } : undefined}
+              transition="opacity 0.12s"
+              onClick={introState !== "center" ? () => setIntroState("center") : undefined}
+              title={introState !== "center" ? "← Start Here" : undefined}
+            >
+              {group?.title ?? "Catalyst"}
+            </Text>
+            {(introState === "bubble" || introState === "animating") && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Import</Text>
+              </>
+            )}
+            {introState === "confirming" && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text
+                  as="button"
+                  fontSize="10px"
+                  fontWeight="600"
+                  color={mutedText}
+                  cursor="pointer"
+                  userSelect="none"
+                  _hover={{ color: BRAND }}
+                  transition="color 0.12s"
+                  onClick={() => setIntroState("bubble")}
+                >
+                  Import
+                </Text>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Review</Text>
+              </>
+            )}
+            {introState === "browse" && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Codex</Text>
+              </>
+            )}
+          </HStack>
           <Box w="1px" h="14px" bg={topBarBorder} flexShrink={0} />
 
           <Input
@@ -725,6 +766,53 @@ export default function GroupCatalystPage() {
             ))}
           </HStack>
         </Box>
+
+        {/* STEP STRIP — bubble / confirming only */}
+        {(introState === "bubble" || introState === "animating" || introState === "confirming") && (
+          <Box
+            className="cat-step-strip"
+            bg={topBarBg}
+            borderBottom="1px solid"
+            borderColor={topBarBorder}
+            px={5}
+            py="5px"
+            display="flex"
+            alignItems="center"
+            gap={2}
+            flexShrink={0}
+          >
+            {([
+              { n: 1, label: "Import files", forState: "bubble" },
+              { n: 2, label: "Review findings", forState: "confirming" },
+              { n: 3, label: "Browse Codex", forState: "browse" },
+            ] as const).map(({ n, label, forState }, idx) => {
+              const order: Record<string, number> = { center: 0, animating: 1, bubble: 1, confirming: 2, browse: 3 };
+              const cur = order[introState] ?? 0;
+              const isActive = cur === n;
+              const isDone = cur > n;
+              return (
+                <HStack key={forState} gap={2} align="center">
+                  {idx > 0 && (
+                    <Box flex="1" h="1px" bg={isDone ? "green.300" : topBarBorder} w="32px" />
+                  )}
+                    <Box
+                      w="16px" h="16px" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}
+                      bg={isActive ? BRAND : isDone ? "green.400" : chipBg}
+                      border="1px solid"
+                      borderColor={isActive ? BRAND : isDone ? "green.400" : chipBorder}
+                    >
+                      <Text fontSize="8px" fontWeight="800" color={isActive || isDone ? "white" : mutedText} lineHeight="1">
+                        {isDone ? "✓" : n}
+                      </Text>
+                    </Box>
+                    <Text fontSize="10px" fontWeight={isActive ? "700" : "500"} color={isActive ? chipText : mutedText} userSelect="none">
+                      {label}
+                    </Text>
+                  </HStack>
+              );
+            })}
+          </Box>
+        )}
 
         {/* CENTER */}
         <Box
@@ -937,16 +1025,6 @@ export default function GroupCatalystPage() {
             >
               <VStack align="stretch" gap={7}>
                 <Box>
-                  <Text
-                    fontSize="10px"
-                    fontWeight="700"
-                    letterSpacing="0.1em"
-                    textTransform="uppercase"
-                    color={mutedText}
-                    mb={2}
-                  >
-                    Import · Stage 1 of 3
-                  </Text>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
                     Bring in your files
                   </Heading>
@@ -1101,16 +1179,6 @@ export default function GroupCatalystPage() {
 
                 {/* Bridge narrative header */}
                 <Box>
-                  <Text
-                    fontSize="10px"
-                    fontWeight="700"
-                    letterSpacing="0.1em"
-                    textTransform="uppercase"
-                    color={mutedText}
-                    mb={2}
-                  >
-                    Review · Stage 2 of 3
-                  </Text>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
                     Your files have been read
                   </Heading>
