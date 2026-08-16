@@ -62,6 +62,9 @@ export default function GroupCatalystPage() {
   const [cmdInput, setCmdInput] = useState("");
   const [registers, setRegisters] = useState<RegisterRow[]>(PROPOSED_REGISTERS);
   const [contextOpen, setContextOpen] = useState(false);
+  const [materializing, setMaterializing] = useState(false);
+  const [materializeResult, setMaterializeResult] = useState<{ commit: string; registers_written: number } | null>(null);
+  const [materializeError, setMaterializeError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ── color tokens ──────────────────────────────────────────────────────────
@@ -118,8 +121,30 @@ export default function GroupCatalystPage() {
     setRegisters((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  function handleMaterialize() {
-    console.log("Materializing:", registers);
+  async function handleMaterialize() {
+    setMaterializing(true);
+    setMaterializeError(null);
+    try {
+      const payload = registers.map((r) => ({
+        slug: r.slug,
+        display_name: r.displayName,
+        canon_synonym: r.canonSynonym,
+        entry_count: r.entryCount,
+        source_file: r.sourceFile,
+      }));
+      const res = await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/materialize-registers/`,
+        { registers: payload },
+      );
+      setMaterializeResult(res.data);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Materialization failed — check console.";
+      setMaterializeError(msg);
+    } finally {
+      setMaterializing(false);
+    }
   }
 
   if (loading) {
@@ -671,6 +696,23 @@ export default function GroupCatalystPage() {
                   )}
                 </Box>
 
+                {/* Error / success feedback */}
+                {materializeError && (
+                  <Box px={3} py={2} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="md">
+                    <Text fontSize="xs" color="red.700">{materializeError}</Text>
+                  </Box>
+                )}
+                {materializeResult && (
+                  <Box px={3} py={2.5} bg={statusBg} border="1px solid" borderColor={statusBorder} borderRadius="md">
+                    <HStack gap={2}>
+                      <Box w="7px" h="7px" borderRadius="full" bg="green.400" flexShrink={0} />
+                      <Text fontSize="xs" fontWeight="500" color={statusText}>
+                        {materializeResult.registers_written} register(s) written — commit {materializeResult.commit}
+                      </Text>
+                    </HStack>
+                  </Box>
+                )}
+
                 {/* Action row */}
                 <HStack justify="space-between" pt={2} flexWrap="wrap" gap={3}>
                   <Box
@@ -692,8 +734,10 @@ export default function GroupCatalystPage() {
                     size="md"
                     fontWeight="600"
                     flexShrink={0}
+                    loading={materializing}
+                    disabled={materializing || !!materializeResult}
                   >
-                    Looks good — materialize files →
+                    {materializeResult ? "Files materialized ✓" : "Looks good — materialize files →"}
                   </Button>
                 </HStack>
 
