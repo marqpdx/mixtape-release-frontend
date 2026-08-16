@@ -54,6 +54,25 @@ type RegisterMeta = {
   source_file: string;
 };
 
+type ParsedFileRegister = {
+  slug: string;
+  display_name: string;
+  entry_count: number;
+  source_file: string;
+  canon_synonym: string;
+  notes: string;
+  confidence: "high" | "medium" | "low";
+  columns: string[];
+};
+
+type ParsedFile = {
+  filename: string;
+  file_type: string;
+  registers: ParsedFileRegister[];
+  skipped: string[];
+  file_notes: string;
+};
+
 const BRAND = "#1a1a2e";
 const VERBS = ["Find", "Amend", "Add"];
 
@@ -89,6 +108,7 @@ export default function GroupCatalystPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
 
   // Browse state
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
@@ -115,6 +135,7 @@ export default function GroupCatalystPage() {
   const editor = useEditor({
     extensions: [StarterKit],
     content: "",
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: "cat-tiptap-body",
@@ -367,15 +388,18 @@ export default function GroupCatalystPage() {
         form,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
-      const proposed = res.data.proposed_registers as {
-        slug: string;
-        display_name: string;
-        entry_count: number;
-        source_file: string;
-        canon_synonym: string;
-      }[];
-      if (proposed.length) {
-        setRegisters(proposed.map((r) => ({
+      const data = res.data as {
+        files: ParsedFile[];
+        merged_registers: ParsedFileRegister[];
+        files_processed: number;
+        errors: { file: string; error: string }[];
+      };
+
+      setParsedFiles(data.files ?? []);
+
+      const merged = data.merged_registers ?? [];
+      if (merged.length) {
+        setRegisters(merged.map((r) => ({
           slug: r.slug,
           displayName: r.display_name,
           canonSynonym: r.canon_synonym || "Canon",
@@ -1073,9 +1097,9 @@ export default function GroupCatalystPage() {
               py={10}
               animation="cat-work-appear 0.4s ease forwards"
             >
-              <VStack align="stretch" gap={7}>
+              <VStack align="stretch" gap={8}>
 
-                {/* Header */}
+                {/* Bridge narrative header */}
                 <Box>
                   <Text
                     fontSize="10px"
@@ -1087,111 +1111,266 @@ export default function GroupCatalystPage() {
                   >
                     Review · Stage 2 of 3
                   </Text>
-                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
-                    We found {registers.length} registers — does this look right?
+                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
+                    Your files have been read
                   </Heading>
-                  <Text fontSize="sm" color={mutedText} lineHeight="1.6">
-                    These are the structures we&apos;ll create from your files. Adjust names or synonyms
-                    before confirming. Nothing is written to disk until you say go.
+                  <Text fontSize="sm" color={mutedText} lineHeight="1.7">
+                    Before anything is written to your Codex, here&apos;s what we found —
+                    by file, so you can see exactly where each register comes from.
+                    Your original files are always kept. These registers are inferred shapes,
+                    not authoritative until you say so.
                   </Text>
+                  {/* Summary chips */}
+                  <HStack mt={3} gap={2} flexWrap="wrap">
+                    <Box px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
+                      <Text fontSize="10px" fontWeight="600" color={chipText}>
+                        {registers.length} register{registers.length !== 1 ? "s" : ""} proposed
+                      </Text>
+                    </Box>
+                    {parsedFiles.length > 0 && (
+                      <Box px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
+                        <Text fontSize="10px" fontWeight="600" color={chipText}>
+                          {parsedFiles.length} file{parsedFiles.length !== 1 ? "s" : ""} scanned
+                        </Text>
+                      </Box>
+                    )}
+                    {parsedFiles.reduce((s, f) => s + f.skipped.length, 0) > 0 && (
+                      <Box px={2} py="2px" bg={preCanonBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
+                        <Text fontSize="10px" fontWeight="600" color={preCanonText}>
+                          {parsedFiles.reduce((s, f) => s + f.skipped.length, 0)} noise sheets skipped
+                        </Text>
+                      </Box>
+                    )}
+                  </HStack>
                 </Box>
 
-                {/* Register rows */}
-                <VStack align="stretch" gap={2}>
-                  {registers.map((reg, idx) => (
-                    <Box
-                      key={reg.slug}
-                      bg={cardBg}
-                      border="1px solid"
-                      borderColor={cardBorder}
-                      borderRadius="lg"
-                      px={4}
-                      py={3}
+                {/* Per-file breakdown */}
+                {parsedFiles.length > 0 && (
+                  <Box>
+                    <Text
+                      fontSize="10px"
+                      fontWeight="700"
+                      letterSpacing="0.1em"
+                      textTransform="uppercase"
+                      color={mutedText}
+                      mb={3}
                     >
-                      <HStack align="start" gap={3}>
-                        {/* Name + source */}
-                        <VStack align="stretch" flex="1" gap={1.5}>
-                          <HStack gap={2} align="center">
-                            <Input
-                              value={reg.displayName}
-                              onChange={(e) => updateRegisterName(idx, e.target.value)}
-                              fontSize="sm"
-                              fontWeight="600"
-                              flex="1"
-                              px={0}
-                              border="none"
-                              background="transparent"
-                              borderRadius={0}
-                              _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
-                            />
+                      What each file contributed
+                    </Text>
+                    <VStack align="stretch" gap={3}>
+                      {parsedFiles.map((pf) => (
+                        <Box
+                          key={pf.filename}
+                          bg={cardBg}
+                          border="1px solid"
+                          borderColor={cardBorder}
+                          borderRadius="lg"
+                          overflow="hidden"
+                        >
+                          {/* File header */}
+                          <HStack px={4} py={3} borderBottom="1px solid" borderColor={cardBorder} gap={3}>
+                            <Text fontSize="lg" flexShrink={0}>
+                              {pf.file_type === "pdf" ? "📑" : pf.file_type === "docx" ? "📝" : "📊"}
+                            </Text>
+                            <Box flex="1" minW={0}>
+                              <Text fontSize="sm" fontWeight="600" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                                {pf.filename}
+                              </Text>
+                              <Text fontSize="10px" color={mutedText}>
+                                {pf.registers.length} register{pf.registers.length !== 1 ? "s" : ""} found
+                                {pf.skipped.length > 0 ? ` · ${pf.skipped.length} skipped` : ""}
+                                {pf.file_notes ? ` · ${pf.file_notes}` : ""}
+                              </Text>
+                            </Box>
                             <Box
-                              px={2}
+                              px="6px"
                               py="1px"
-                              bg={badgeBg}
-                              borderRadius="full"
+                              bg={chipBg}
+                              borderRadius="md"
                               flexShrink={0}
                             >
-                              <Text fontSize="10px" fontWeight="600" color={badgeText} whiteSpace="nowrap">
-                                {reg.entryCount} entries
+                              <Text fontSize="9px" fontWeight="700" color={mutedText} fontFamily="mono">
+                                {pf.file_type}
                               </Text>
                             </Box>
                           </HStack>
-                          <Text
-                            fontSize="10px"
-                            fontFamily="mono"
-                            color={synonymLabel}
-                            maxW="340px"
-                            overflow="hidden"
-                            textOverflow="ellipsis"
-                            whiteSpace="nowrap"
-                          >
-                            {reg.sourceFile}
-                          </Text>
-                          <HStack gap={2} align="center" mt={0.5}>
-                            <Text fontSize="10px" color={synonymLabel} flexShrink={0}>
-                              Synonym for &ldquo;Canon&rdquo;:
-                            </Text>
-                            <Input
-                              value={reg.canonSynonym}
-                              onChange={(e) => updateRegisterSynonym(idx, e.target.value)}
-                              placeholder="e.g. Final Menu, Live, Confirmed"
-                              fontSize="11px"
-                              flex="1"
-                              px={0}
-                              color={mutedText}
-                              border="none"
-                              background="transparent"
-                              borderRadius={0}
-                              _placeholder={{ color: synonymLabel, opacity: 0.7 }}
-                              _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
-                            />
-                          </HStack>
-                        </VStack>
 
-                        {/* Remove button */}
-                        <Box
-                          as="button"
-                          onClick={() => removeRegister(idx)}
-                          w="24px"
-                          h="24px"
-                          borderRadius="md"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          color={mutedText}
-                          fontSize="14px"
-                          flexShrink={0}
-                          mt="2px"
-                          _hover={{ bg: removeHover, color: "red.500" }}
-                          transition="all 0.12s"
-                          title="Remove this register"
-                        >
-                          ✕
+                          {/* Register rows */}
+                          <VStack align="stretch" px={4} py={3} gap={3}>
+                            {pf.registers.map((r) => (
+                              <HStack key={r.slug} align="start" gap={3}>
+                                {/* Confidence dot */}
+                                <Box
+                                  w="7px"
+                                  h="7px"
+                                  borderRadius="full"
+                                  flexShrink={0}
+                                  mt="6px"
+                                  bg={
+                                    r.confidence === "high" ? "green.400"
+                                    : r.confidence === "medium" ? "yellow.400"
+                                    : "gray.400"
+                                  }
+                                  title={`${r.confidence} confidence`}
+                                />
+                                <Box flex="1">
+                                  <HStack gap={2} align="baseline">
+                                    <Text fontSize="sm" fontWeight="500">{r.display_name}</Text>
+                                    <Text fontSize="10px" color={mutedText}>{r.entry_count} entries</Text>
+                                  </HStack>
+                                  {r.columns.length > 0 && (
+                                    <Text fontSize="10px" color={synonymLabel} mt="2px" lineHeight="1.5">
+                                      columns: {r.columns.join(", ")}
+                                    </Text>
+                                  )}
+                                  {r.notes && r.notes !== `columns: ${r.columns.join(", ")}` && (
+                                    <Text fontSize="10px" color={synonymLabel} mt="1px" lineHeight="1.5">
+                                      {r.notes}
+                                    </Text>
+                                  )}
+                                </Box>
+                                <Box
+                                  px="6px"
+                                  py="1px"
+                                  borderRadius="full"
+                                  flexShrink={0}
+                                  bg={
+                                    r.confidence === "high" ? statusBg
+                                    : r.confidence === "medium" ? preCanonBg
+                                    : chipBg
+                                  }
+                                >
+                                  <Text
+                                    fontSize="9px"
+                                    fontWeight="700"
+                                    color={
+                                      r.confidence === "high" ? statusText
+                                      : r.confidence === "medium" ? preCanonText
+                                      : mutedText
+                                    }
+                                  >
+                                    {r.confidence}
+                                  </Text>
+                                </Box>
+                              </HStack>
+                            ))}
+
+                            {/* Skipped sheets */}
+                            {pf.skipped.length > 0 && (
+                              <Text fontSize="10px" color={synonymLabel} fontStyle="italic" pt={1} borderTop="1px dashed" borderColor={cardBorder}>
+                                Skipped: {pf.skipped.join(" · ")}
+                              </Text>
+                            )}
+                          </VStack>
                         </Box>
-                      </HStack>
-                    </Box>
-                  ))}
-                </VStack>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Registers to create — editable flat list */}
+                <Box>
+                  <Text
+                    fontSize="10px"
+                    fontWeight="700"
+                    letterSpacing="0.1em"
+                    textTransform="uppercase"
+                    color={mutedText}
+                    mb={1}
+                  >
+                    Registers to create
+                  </Text>
+                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                    Edit names or synonyms, remove any you don&apos;t want.
+                    Nothing is written until you confirm below.
+                  </Text>
+                  <VStack align="stretch" gap={2}>
+                    {registers.map((reg, idx) => (
+                      <Box
+                        key={reg.slug}
+                        bg={cardBg}
+                        border="1px solid"
+                        borderColor={cardBorder}
+                        borderRadius="lg"
+                        px={4}
+                        py={3}
+                      >
+                        <HStack align="start" gap={3}>
+                          <VStack align="stretch" flex="1" gap={1.5}>
+                            <HStack gap={2} align="center">
+                              <Input
+                                value={reg.displayName}
+                                onChange={(e) => updateRegisterName(idx, e.target.value)}
+                                fontSize="sm"
+                                fontWeight="600"
+                                flex="1"
+                                px={0}
+                                border="none"
+                                background="transparent"
+                                borderRadius={0}
+                                _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
+                              />
+                              <Box px={2} py="1px" bg={badgeBg} borderRadius="full" flexShrink={0}>
+                                <Text fontSize="10px" fontWeight="600" color={badgeText} whiteSpace="nowrap">
+                                  {reg.entryCount} entries
+                                </Text>
+                              </Box>
+                            </HStack>
+                            <Text
+                              fontSize="10px"
+                              fontFamily="mono"
+                              color={synonymLabel}
+                              maxW="340px"
+                              overflow="hidden"
+                              textOverflow="ellipsis"
+                              whiteSpace="nowrap"
+                            >
+                              {reg.sourceFile}
+                            </Text>
+                            <HStack gap={2} align="center" mt={0.5}>
+                              <Text fontSize="10px" color={synonymLabel} flexShrink={0}>
+                                Synonym for &ldquo;Canon&rdquo;:
+                              </Text>
+                              <Input
+                                value={reg.canonSynonym}
+                                onChange={(e) => updateRegisterSynonym(idx, e.target.value)}
+                                placeholder="e.g. Final Menu, Live, Confirmed"
+                                fontSize="11px"
+                                flex="1"
+                                px={0}
+                                color={mutedText}
+                                border="none"
+                                background="transparent"
+                                borderRadius={0}
+                                _placeholder={{ color: synonymLabel, opacity: 0.7 }}
+                                _focus={{ outline: "none", boxShadow: "none", borderBottom: `1px solid ${BRAND}` }}
+                              />
+                            </HStack>
+                          </VStack>
+                          <Box
+                            as="button"
+                            onClick={() => removeRegister(idx)}
+                            w="24px"
+                            h="24px"
+                            borderRadius="md"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            color={mutedText}
+                            fontSize="14px"
+                            flexShrink={0}
+                            mt="2px"
+                            _hover={{ bg: removeHover, color: "red.500" }}
+                            transition="all 0.12s"
+                            title="Remove this register"
+                          >
+                            ✕
+                          </Box>
+                        </HStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
 
                 {/* Context files — collapsible */}
                 <Box
@@ -1278,6 +1457,7 @@ export default function GroupCatalystPage() {
                             setMaterializeResult(null);
                             setMaterializeError(null);
                             setRegisters(PROPOSED_REGISTERS);
+                            setParsedFiles([]);
                             setIntroState("bubble");
                             setSelectedFiles([]);
                           }}
@@ -1288,7 +1468,6 @@ export default function GroupCatalystPage() {
                     </VStack>
                   </Box>
                 ) : (
-                  /* Pre-materialize action row */
                   <HStack justify="space-between" pt={2} flexWrap="wrap" gap={3}>
                     <Box
                       as="button"
@@ -1312,7 +1491,7 @@ export default function GroupCatalystPage() {
                       loading={materializing}
                       disabled={materializing}
                     >
-                      Looks good — materialize files →
+                      Looks right — write {registers.length} register{registers.length !== 1 ? "s" : ""} to Codex →
                     </Button>
                   </HStack>
                 )}
