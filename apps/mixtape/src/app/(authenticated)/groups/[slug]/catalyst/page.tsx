@@ -87,6 +87,8 @@ export default function GroupCatalystPage() {
   const [materializeError, setMaterializeError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   // Browse state
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
@@ -292,6 +294,45 @@ export default function GroupCatalystPage() {
       setSaveResult("Canonize failed");
     } finally {
       setCanonizing(false);
+    }
+  }
+
+  async function handleParse() {
+    if (!selectedFiles.length) return;
+    setParsing(true);
+    setParseError(null);
+    try {
+      const form = new FormData();
+      selectedFiles.forEach((f) => form.append("files", f));
+      const res = await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/parse-files/`,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      const proposed = res.data.proposed_registers as {
+        slug: string;
+        display_name: string;
+        entry_count: number;
+        source_file: string;
+        canon_synonym: string;
+      }[];
+      if (proposed.length) {
+        setRegisters(proposed.map((r) => ({
+          slug: r.slug,
+          displayName: r.display_name,
+          canonSynonym: r.canon_synonym || "Canon",
+          entryCount: r.entry_count,
+          sourceFile: r.source_file,
+        })));
+      }
+      setIntroState("confirming");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Parse failed — check file types and try again.";
+      setParseError(msg);
+    } finally {
+      setParsing(false);
     }
   }
 
@@ -871,6 +912,12 @@ export default function GroupCatalystPage() {
                   </Text>
                 </Box>
 
+                {parseError && (
+                  <Box px={3} py={2} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="md">
+                    <Text fontSize="xs" color="red.700">{parseError}</Text>
+                  </Box>
+                )}
+
                 {selectedFiles.length > 0 && (
                   <Button
                     bg={BRAND}
@@ -879,7 +926,9 @@ export default function GroupCatalystPage() {
                     size="md"
                     w="full"
                     fontWeight="600"
-                    onClick={() => setIntroState("confirming")}
+                    onClick={handleParse}
+                    loading={parsing}
+                    disabled={parsing}
                   >
                     Parse {selectedFiles.length} file{selectedFiles.length > 1 ? "s" : ""} →
                   </Button>
@@ -894,7 +943,7 @@ export default function GroupCatalystPage() {
                   _hover={{ color: BRAND }}
                   onClick={() => setIntroState("confirming")}
                 >
-                  Skip to Stage 4 → (dev shortcut)
+                  Skip to Stage 4 → (dev shortcut — uses fixture data)
                 </Text>
 
                 <Box>
