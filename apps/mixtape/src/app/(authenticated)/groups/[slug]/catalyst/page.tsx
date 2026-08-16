@@ -184,6 +184,22 @@ export default function GroupCatalystPage() {
   const showBubble = introState === "animating" || introState === "bubble" || introState === "confirming";
 
   return (
+    <>
+    <style>{`
+      @keyframes cat-dissolve-out {
+        0%   { opacity: 1; transform: scale(1) translateX(0); }
+        60%  { opacity: 0.5; transform: scale(0.55) translateX(-18%); }
+        100% { opacity: 0; transform: scale(0.25) translateX(-32%); }
+      }
+      @keyframes cat-bubble-appear {
+        0%   { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes cat-work-appear {
+        0%   { opacity: 0; transform: translateY(14px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+    `}</style>
     <Box
       className="cat-shell"
       display="flex"
@@ -191,21 +207,6 @@ export default function GroupCatalystPage() {
       minH="calc(100vh - 60px)"
       bg={shellBg}
       overflow="hidden"
-      sx={{
-        "@keyframes cat-dissolve-out": {
-          "0%":   { opacity: 1, transform: "scale(1) translateX(0)" },
-          "60%":  { opacity: 0.5, transform: "scale(0.55) translateX(-18%)" },
-          "100%": { opacity: 0, transform: "scale(0.25) translateX(-32%)" },
-        },
-        "@keyframes cat-bubble-appear": {
-          "0%":   { opacity: 0, transform: "scale(0.3)" },
-          "100%": { opacity: 1, transform: "scale(1)" },
-        },
-        "@keyframes cat-work-appear": {
-          "0%":   { opacity: 0, transform: "translateY(14px)" },
-          "100%": { opacity: 1, transform: "translateY(0)" },
-        },
-      }}
     >
       {/* ── LEFT PANEL — constant persistence anchor ────────────────────── */}
       <Box
@@ -290,10 +291,13 @@ export default function GroupCatalystPage() {
             onChange={(e) => setCmdInput(e.target.value)}
             placeholder="Find, Amend, Add…"
             size="sm"
-            variant="unstyled"
             flex="1"
             fontSize="sm"
             fontFamily="mono"
+            border="none"
+            background="transparent"
+            boxShadow="none"
+            _focus={{ boxShadow: "none", outline: "none" }}
             _placeholder={{ color: mutedText, opacity: 0.7 }}
           />
 
@@ -925,5 +929,6 @@ export default function GroupCatalystPage() {
         </Box>
       </Box>
     </Box>
+    </>
   );
 }
