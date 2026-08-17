@@ -35,7 +35,31 @@ type GroupDetail = {
   member_preview?: MemberPreview[];
 };
 
-type IntroState = "center" | "questions" | "animating" | "bubble" | "confirming" | "browse";
+type IntroState = "center" | "questions" | "animating" | "bubble" | "phase1_review" | "analyzing" | "confirming" | "browse";
+
+type Phase1Register = {
+  slug: string;
+  display_name: string;
+  entry_count: number;
+  source_file: string;
+  canon_synonym: string;
+  notes: string;
+  confidence: "high" | "medium" | "low";
+  columns: string[];
+  matched_declared?: string;
+};
+
+type Phase1Results = {
+  aligned: Phase1Register[];
+  unexpected: Phase1Register[];
+  absent: string[];
+  declared_types: string[];
+};
+
+type ParseJob = {
+  job_id: string;
+  phase1_results: Phase1Results;
+};
 
 type RegisterRow = {
   slug: string;
@@ -181,6 +205,12 @@ export default function GroupCatalystPage() {
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
+  const [parseJob, setParseJob] = useState<ParseJob | null>(null);
+  const [enrichmentContext, setEnrichmentContext] = useState("");
+  const [startingAnalysis, setStartingAnalysis] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<{ done: number; total: number } | null>(null);
+  // Per-item unexpected register decisions: slug → "include" | "skip"
+  const [unexpectedDecisions, setUnexpectedDecisions] = useState<Record<string, "include" | "skip">>({});
 
   // Browse state
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
@@ -467,26 +497,17 @@ export default function GroupCatalystPage() {
         { headers: { "Content-Type": "multipart/form-data" } },
       );
       const data = res.data as {
+        job_id: string;
+        phase1_results: Phase1Results;
         files: ParsedFile[];
-        merged_registers: ParsedFileRegister[];
         files_processed: number;
         errors: { file: string; error: string }[];
       };
-
+      setParseJob({ job_id: data.job_id, phase1_results: data.phase1_results });
       setParsedFiles(data.files ?? []);
-
-      const merged = data.merged_registers ?? [];
-      if (merged.length) {
-        const rawRows = merged.map((r) => ({
-          slug: r.slug,
-          displayName: r.display_name,
-          canonSynonym: r.canon_synonym || "Active",
-          entryCount: r.entry_count,
-          sourceFile: r.source_file,
-        }));
-        setRegisters(consolidateByEntityType(rawRows));
-      }
-      setIntroState("confirming");
+      setUnexpectedDecisions({});
+      setEnrichmentContext("");
+      setIntroState("phase1_review");
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
@@ -496,6 +517,63 @@ export default function GroupCatalystPage() {
       setParsing(false);
     }
   }
+
+  async function handleStartAnalysis() {
+    if (!parseJob) return;
+    setStartingAnalysis(true);
+    setParseError(null);
+    try {
+      await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/start-analysis/`,
+        enrichmentContext.trim() ? { enrichment_context: enrichmentContext.trim() } : {},
+      );
+      setIntroState("analyzing");
+      setAnalysisProgress(null);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Could not start analysis — try again.";
+      setParseError(msg);
+    } finally {
+      setStartingAnalysis(false);
+    }
+  }
+
+  // Poll for Phase 2 completion every 5s
+  useEffect(() => {
+    if (introState !== "analyzing" || !parseJob) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await axiosInstance.get(
+          `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/status/`,
+        );
+        const data = res.data as {
+          status: string;
+          files_done: number;
+          files_total: number;
+          merged_registers?: ParsedFileRegister[];
+        };
+        setAnalysisProgress({ done: data.files_done, total: data.files_total });
+        if (data.status === "complete") {
+          const merged = data.merged_registers ?? [];
+          if (merged.length) {
+            const rawRows = merged.map((r) => ({
+              slug: r.slug,
+              displayName: r.display_name,
+              canonSynonym: r.canon_synonym || "Active",
+              entryCount: r.entry_count,
+              sourceFile: r.source_file,
+            }));
+            setRegisters(consolidateByEntityType(rawRows));
+          }
+          setIntroState("confirming");
+        }
+      } catch {
+        // silent — keep polling
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [introState, parseJob, slug]);
 
   function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -517,7 +595,7 @@ export default function GroupCatalystPage() {
     );
   }
 
-  const showBubble = introState === "questions" || introState === "animating" || introState === "bubble" || introState === "confirming";
+  const showBubble = ["questions", "animating", "bubble", "phase1_review", "analyzing", "confirming"].includes(introState);
   const showRegNav = introState === "browse";
 
   return (
@@ -781,6 +859,18 @@ export default function GroupCatalystPage() {
                 <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Import</Text>
               </>
             )}
+            {introState === "phase1_review" && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Structure review</Text>
+              </>
+            )}
+            {introState === "analyzing" && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Analyzing…</Text>
+              </>
+            )}
             {introState === "confirming" && (
               <>
                 <Text fontSize="10px" color={mutedText}>/</Text>
@@ -798,7 +888,7 @@ export default function GroupCatalystPage() {
                   Import
                 </Text>
                 <Text fontSize="10px" color={mutedText}>/</Text>
-                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Review</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Confirm</Text>
               </>
             )}
             {introState === "browse" && (
@@ -852,8 +942,8 @@ export default function GroupCatalystPage() {
           </HStack>
         </Box>
 
-        {/* STEP STRIP — questions / bubble / confirming only */}
-        {(introState === "questions" || introState === "bubble" || introState === "animating" || introState === "confirming") && (
+        {/* STEP STRIP — questions / bubble / phase1_review / analyzing / confirming */}
+        {(["questions", "bubble", "animating", "phase1_review", "analyzing", "confirming"] as IntroState[]).includes(introState) && (
           <Box
             className="cat-step-strip"
             bg={topBarBg}
@@ -867,33 +957,37 @@ export default function GroupCatalystPage() {
             flexShrink={0}
           >
             {([
-              { n: 1, label: "About your files", forState: "questions" },
-              { n: 2, label: "Import files", forState: "bubble" },
-              { n: 3, label: "Review findings", forState: "confirming" },
-            ] as const).map(({ n, label, forState }, idx) => {
-              const order: Record<string, number> = { center: 0, questions: 1, animating: 2, bubble: 2, confirming: 3, browse: 4 };
+              { n: 1, label: "About your files", states: ["questions"] },
+              { n: 2, label: "Import files",     states: ["bubble", "animating"] },
+              { n: 3, label: "Structure review",  states: ["phase1_review"] },
+              { n: 4, label: "Confirm & accept",  states: ["analyzing", "confirming"] },
+            ] as const).map(({ n, label, states }, idx) => {
+              const order: Record<string, number> = {
+                center: 0, questions: 1, animating: 2, bubble: 2,
+                phase1_review: 3, analyzing: 4, confirming: 4, browse: 5,
+              };
               const cur = order[introState] ?? 0;
-              const isActive = cur === n;
+              const isActive = states.some((s) => s === introState) || (n === 4 && cur === 4);
               const isDone = cur > n;
               return (
-                <HStack key={forState} gap={2} align="center">
+                <HStack key={label} gap={2} align="center">
                   {idx > 0 && (
-                    <Box flex="1" h="1px" bg={isDone ? "green.300" : topBarBorder} w="32px" />
+                    <Box flex="1" h="1px" bg={isDone ? "green.300" : topBarBorder} w="24px" />
                   )}
-                    <Box
-                      w="16px" h="16px" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}
-                      bg={isActive ? BRAND : isDone ? "green.400" : chipBg}
-                      border="1px solid"
-                      borderColor={isActive ? BRAND : isDone ? "green.400" : chipBorder}
-                    >
-                      <Text fontSize="8px" fontWeight="800" color={isActive || isDone ? "white" : mutedText} lineHeight="1">
-                        {isDone ? "✓" : n}
-                      </Text>
-                    </Box>
-                    <Text fontSize="10px" fontWeight={isActive ? "700" : "500"} color={isActive ? chipText : mutedText} userSelect="none">
-                      {label}
+                  <Box
+                    w="16px" h="16px" borderRadius="full" display="flex" alignItems="center" justifyContent="center" flexShrink={0}
+                    bg={isActive ? BRAND : isDone ? "green.400" : chipBg}
+                    border="1px solid"
+                    borderColor={isActive ? BRAND : isDone ? "green.400" : chipBorder}
+                  >
+                    <Text fontSize="8px" fontWeight="800" color={isActive || isDone ? "white" : mutedText} lineHeight="1">
+                      {isDone ? "✓" : n}
                     </Text>
-                  </HStack>
+                  </Box>
+                  <Text fontSize="10px" fontWeight={isActive ? "700" : "500"} color={isActive ? chipText : mutedText} userSelect="none">
+                    {label}
+                  </Text>
+                </HStack>
               );
             })}
           </Box>
@@ -1425,6 +1519,281 @@ export default function GroupCatalystPage() {
 
                 <Text fontSize="xs" color={mutedText} textAlign="center">
                   Files stay in your Codex on your cluster. Nothing is shared without your explicit approval.
+                </Text>
+              </VStack>
+            </Box>
+          )}
+
+          {/* ── PHASE 1 — STRUCTURE REVIEW ── */}
+          {introState === "phase1_review" && parseJob && (
+            <Box
+              className="cat-phase1-surface"
+              maxW="680px"
+              mx="auto"
+              px={6}
+              py={10}
+              animation="cat-work-appear 0.4s ease forwards"
+            >
+              <VStack align="stretch" gap={8}>
+                <Box>
+                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
+                    Here&apos;s what we found
+                  </Heading>
+                  <Text fontSize="sm" color={mutedText} lineHeight="1.7">
+                    This is the structural shape of your files — no AI analysis yet, just the raw
+                    structure. Confirm the shape looks right, add any extra context, then we&apos;ll
+                    do the deep analysis in the background.
+                  </Text>
+                </Box>
+
+                {/* Aligned finds */}
+                {parseJob.phase1_results.aligned.length > 0 && (
+                  <Box>
+                    <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={3}>
+                      Matches what you told us
+                    </Text>
+                    <VStack align="stretch" gap={2}>
+                      {parseJob.phase1_results.aligned.map((r) => {
+                        const ec = classifyRegister(r.slug, r.display_name, r.columns);
+                        return (
+                          <HStack
+                            key={r.slug}
+                            bg={cardBg}
+                            border="1px solid"
+                            borderColor={cardBorder}
+                            borderRadius="lg"
+                            px={4}
+                            py={3}
+                            gap={3}
+                          >
+                            <Text fontSize="xl" flexShrink={0}>{ec.icon}</Text>
+                            <Box flex="1">
+                              <Text fontSize="sm" fontWeight="600">{r.display_name}</Text>
+                              <Text fontSize="xs" color={mutedText}>
+                                {r.entry_count > 0 ? `${r.entry_count} entries · ` : ""}{r.source_file}
+                              </Text>
+                            </Box>
+                            {r.matched_declared && (
+                              <Box px={2} py="1px" bg={statusBg} borderRadius="full" flexShrink={0}>
+                                <Text fontSize="9px" fontWeight="600" color={statusText}>
+                                  matches &ldquo;{r.matched_declared}&rdquo;
+                                </Text>
+                              </Box>
+                            )}
+                          </HStack>
+                        );
+                      })}
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Absent types */}
+                {parseJob.phase1_results.absent.length > 0 && (
+                  <Box
+                    bg={cardBg}
+                    border="1px solid"
+                    borderColor={cardBorder}
+                    borderRadius="lg"
+                    px={4}
+                    py={3}
+                  >
+                    <Text fontSize="xs" fontWeight="600" color={mutedText} mb={2}>
+                      We didn&apos;t find anything that looks like:
+                    </Text>
+                    <HStack gap={2} flexWrap="wrap">
+                      {parseJob.phase1_results.absent.map((a) => (
+                        <Box key={a} px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
+                          <Text fontSize="11px" color={mutedText}>{a}</Text>
+                        </Box>
+                      ))}
+                    </HStack>
+                    <Text fontSize="10px" color={synonymLabel} mt={2}>
+                      You can clarify in the context box below — or it may just not be in these files.
+                    </Text>
+                  </Box>
+                )}
+
+                {/* Unexpected finds */}
+                {parseJob.phase1_results.unexpected.length > 0 && (
+                  <Box>
+                    <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={1}>
+                      We also found
+                    </Text>
+                    <Text fontSize="xs" color={mutedText} mb={3}>
+                      These weren&apos;t in your vocabulary — tell us what to do with each.
+                    </Text>
+                    <VStack align="stretch" gap={2}>
+                      {parseJob.phase1_results.unexpected.map((r) => {
+                        const ec = classifyRegister(r.slug, r.display_name, r.columns);
+                        const decision = unexpectedDecisions[r.slug];
+                        return (
+                          <HStack
+                            key={r.slug}
+                            bg={cardBg}
+                            border="1px solid"
+                            borderColor={decision === "skip" ? chipBorder : cardBorder}
+                            borderRadius="lg"
+                            px={4}
+                            py={3}
+                            gap={3}
+                            opacity={decision === "skip" ? 0.5 : 1}
+                            transition="opacity 0.15s"
+                          >
+                            <Text fontSize="xl" flexShrink={0}>{ec.icon}</Text>
+                            <Box flex="1">
+                              <Text fontSize="sm" fontWeight="600">{r.display_name}</Text>
+                              <Text fontSize="xs" color={mutedText}>
+                                {r.entry_count > 0 ? `${r.entry_count} entries · ` : ""}{r.source_file}
+                              </Text>
+                            </Box>
+                            <HStack gap={1.5} flexShrink={0}>
+                              <Box
+                                as="button"
+                                onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "include" }))}
+                                px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                bg={decision === "include" ? BRAND : chipBg}
+                                border="1px solid"
+                                borderColor={decision === "include" ? BRAND : chipBorder}
+                                fontSize="10px" fontWeight="700"
+                                color={decision === "include" ? "white" : mutedText}
+                                transition="all 0.12s"
+                                _hover={{ borderColor: BRAND }}
+                              >
+                                Include
+                              </Box>
+                              <Box
+                                as="button"
+                                onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "skip" }))}
+                                px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                bg={decision === "skip" ? chipBorder : chipBg}
+                                border="1px solid"
+                                borderColor={chipBorder}
+                                fontSize="10px" fontWeight="700"
+                                color={mutedText}
+                                transition="all 0.12s"
+                                _hover={{ borderColor: mutedText }}
+                              >
+                                Skip
+                              </Box>
+                            </HStack>
+                          </HStack>
+                        );
+                      })}
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Enrichment context */}
+                <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="lg" p={5}>
+                  <Text fontSize="sm" fontWeight="600" mb={1}>Anything else we should know?</Text>
+                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                    Optional — which file is the current version? Anything we should treat differently?
+                    This context goes into the deep analysis.
+                  </Text>
+                  <textarea
+                    value={enrichmentContext}
+                    onChange={(e) => setEnrichmentContext(e.target.value)}
+                    placeholder="e.g. The -2.xlsx is the current version. Ignore the meeting notes files — those are background context only."
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      fontSize: "13px",
+                      lineHeight: "1.65",
+                      resize: "vertical",
+                      border: `1px solid ${cardBorder}`,
+                      borderRadius: "6px",
+                      padding: "10px 12px",
+                      background: "transparent",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      color: "inherit",
+                    }}
+                  />
+                </Box>
+
+                {parseError && (
+                  <Box px={3} py={2} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="md">
+                    <Text fontSize="xs" color="red.700">{parseError}</Text>
+                  </Box>
+                )}
+
+                <HStack justify="space-between" pt={2}>
+                  <Box
+                    as="button"
+                    onClick={() => setIntroState("bubble")}
+                    fontSize="sm" color={mutedText} cursor="pointer"
+                    _hover={{ color: BRAND }} transition="color 0.12s"
+                  >
+                    ← Back to import
+                  </Box>
+                  <Button
+                    onClick={handleStartAnalysis}
+                    bg={BRAND}
+                    color="white"
+                    _hover={{ opacity: 0.88 }}
+                    size="md"
+                    fontWeight="600"
+                    loading={startingAnalysis}
+                    disabled={startingAnalysis}
+                  >
+                    Analyze → (takes a few minutes)
+                  </Button>
+                </HStack>
+              </VStack>
+            </Box>
+          )}
+
+          {/* ── ANALYZING — holding screen ── */}
+          {introState === "analyzing" && (
+            <Box
+              className="cat-analyzing-surface"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              height="100%"
+              p={8}
+              animation="cat-work-appear 0.4s ease forwards"
+            >
+              <VStack gap={6} textAlign="center" maxW="480px">
+                <Spinner size="lg" color="blue.400" />
+                <Box>
+                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={3}>
+                    Reading your files in detail
+                  </Heading>
+                  <Text fontSize="sm" color={mutedText} lineHeight="1.8">
+                    We&apos;re running a full semantic analysis on each file — this takes a few minutes
+                    and happens in the background. You&apos;ll receive an email when it&apos;s ready.
+                  </Text>
+                </Box>
+
+                {analysisProgress && analysisProgress.total > 0 && (
+                  <Box
+                    bg={cardBg}
+                    border="1px solid"
+                    borderColor={cardBorder}
+                    borderRadius="lg"
+                    px={5}
+                    py={3}
+                    w="full"
+                  >
+                    <Text fontSize="xs" color={mutedText}>
+                      {analysisProgress.done} of {analysisProgress.total} files analyzed
+                    </Text>
+                    <Box mt={2} h="4px" bg={chipBg} borderRadius="full" overflow="hidden">
+                      <Box
+                        h="full"
+                        bg={BRAND}
+                        borderRadius="full"
+                        w={`${Math.round((analysisProgress.done / analysisProgress.total) * 100)}%`}
+                        transition="width 0.4s ease"
+                      />
+                    </Box>
+                  </Box>
+                )}
+
+                <Text fontSize="xs" color={synonymLabel} lineHeight="1.6">
+                  You can close this tab — we&apos;ll email you when the analysis is complete.
+                  The review screen will be waiting for you at this link.
                 </Text>
               </VStack>
             </Box>
