@@ -35,7 +35,7 @@ type GroupDetail = {
   member_preview?: MemberPreview[];
 };
 
-type IntroState = "center" | "animating" | "bubble" | "confirming" | "browse";
+type IntroState = "center" | "questions" | "animating" | "bubble" | "confirming" | "browse";
 
 type RegisterRow = {
   slug: string;
@@ -174,6 +174,8 @@ export default function GroupCatalystPage() {
   const [materializing, setMaterializing] = useState(false);
   const [materializeResult, setMaterializeResult] = useState<{ commit: string; registers_written: number } | null>(null);
   const [materializeError, setMaterializeError] = useState<string | null>(null);
+  const [generalContext, setGeneralContext] = useState("");
+  const [entityExpectations, setEntityExpectations] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsing, setParsing] = useState(false);
@@ -299,6 +301,10 @@ export default function GroupCatalystPage() {
       loadRegister(selectedRegSlug);
     }
   }, [selectedRegSlug, loadRegister]);
+
+  function handleStartQuestions() {
+    setIntroState("questions");
+  }
 
   function handleImport() {
     setIntroState("animating");
@@ -453,6 +459,8 @@ export default function GroupCatalystPage() {
     try {
       const form = new FormData();
       selectedFiles.forEach((f) => form.append("files", f));
+      if (generalContext.trim()) form.append("general_context", generalContext.trim());
+      if (entityExpectations.trim()) form.append("entity_expectations", entityExpectations.trim());
       const res = await axiosInstance.post(
         `/api/catalyst/groups/${slug}/parse-files/`,
         form,
@@ -509,7 +517,7 @@ export default function GroupCatalystPage() {
     );
   }
 
-  const showBubble = introState === "animating" || introState === "bubble" || introState === "confirming";
+  const showBubble = introState === "questions" || introState === "animating" || introState === "bubble" || introState === "confirming";
   const showRegNav = introState === "browse";
 
   return (
@@ -761,6 +769,12 @@ export default function GroupCatalystPage() {
             >
               {group?.title ?? "Catalyst"}
             </Text>
+            {introState === "questions" && (
+              <>
+                <Text fontSize="10px" color={mutedText}>/</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">About your files</Text>
+              </>
+            )}
             {(introState === "bubble" || introState === "animating") && (
               <>
                 <Text fontSize="10px" color={mutedText}>/</Text>
@@ -838,8 +852,8 @@ export default function GroupCatalystPage() {
           </HStack>
         </Box>
 
-        {/* STEP STRIP — bubble / confirming only */}
-        {(introState === "bubble" || introState === "animating" || introState === "confirming") && (
+        {/* STEP STRIP — questions / bubble / confirming only */}
+        {(introState === "questions" || introState === "bubble" || introState === "animating" || introState === "confirming") && (
           <Box
             className="cat-step-strip"
             bg={topBarBg}
@@ -853,11 +867,11 @@ export default function GroupCatalystPage() {
             flexShrink={0}
           >
             {([
-              { n: 1, label: "Import files", forState: "bubble" },
-              { n: 2, label: "Review findings", forState: "confirming" },
-              { n: 3, label: "Browse Codex", forState: "browse" },
+              { n: 1, label: "About your files", forState: "questions" },
+              { n: 2, label: "Import files", forState: "bubble" },
+              { n: 3, label: "Review findings", forState: "confirming" },
             ] as const).map(({ n, label, forState }, idx) => {
-              const order: Record<string, number> = { center: 0, animating: 1, bubble: 1, confirming: 2, browse: 3 };
+              const order: Record<string, number> = { center: 0, questions: 1, animating: 2, bubble: 2, confirming: 3, browse: 4 };
               const cur = order[introState] ?? 0;
               const isActive = cur === n;
               const isDone = cur > n;
@@ -975,7 +989,7 @@ export default function GroupCatalystPage() {
                     </Text>
                     <HStack gap={3} flexWrap="wrap">
                       <Button
-                        onClick={handleImport}
+                        onClick={handleStartQuestions}
                         bg={BRAND}
                         color="white"
                         _hover={{ opacity: 0.88 }}
@@ -1081,6 +1095,162 @@ export default function GroupCatalystPage() {
 
                 </VStack>
               </Box>
+            </Box>
+          )}
+
+          {/* ── STEP 1 — PRE-INGEST QUESTIONS ── */}
+          {introState === "questions" && (
+            <Box
+              className="cat-questions-surface"
+              maxW="600px"
+              mx="auto"
+              px={6}
+              py={10}
+              animation="cat-work-appear 0.4s ease forwards"
+            >
+              <VStack align="stretch" gap={7}>
+                <Box>
+                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
+                    Before we start
+                  </Heading>
+                  <Text fontSize="sm" color={mutedText} lineHeight="1.7">
+                    A little context helps us find the right things in your files.
+                    Both questions are optional — you can skip straight to the import.
+                  </Text>
+                </Box>
+
+                {/* Q-A: General context */}
+                <Box
+                  bg={cardBg}
+                  border="1px solid"
+                  borderColor={cardBorder}
+                  borderRadius="lg"
+                  p={5}
+                >
+                  <Text fontSize="sm" fontWeight="600" mb={1}>
+                    What are these files about?
+                  </Text>
+                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                    In plain language — what's the occasion, project, or context they were created for?
+                  </Text>
+                  <textarea
+                    value={generalContext}
+                    onChange={(e) => setGeneralContext(e.target.value)}
+                    placeholder="e.g. These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      fontSize: "13px",
+                      lineHeight: "1.65",
+                      resize: "vertical",
+                      border: `1px solid ${cardBorder}`,
+                      borderRadius: "6px",
+                      padding: "10px 12px",
+                      background: "transparent",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      color: "inherit",
+                    }}
+                  />
+                </Box>
+
+                {/* Q-B: Entity expectations */}
+                <Box
+                  bg={cardBg}
+                  border="1px solid"
+                  borderColor={cardBorder}
+                  borderRadius="lg"
+                  p={5}
+                >
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Text fontSize="sm" fontWeight="600">
+                      What specific things do you expect to find?
+                    </Text>
+                    <Box
+                      as="button"
+                      onClick={() => setEntityExpectations(
+                        "Recipe: a set of instructions with ingredients and an outcome\n\nIngredient: a component of a recipe\n\nMenu: a listing of Recipes\n\nMeal: a time-based offering of recipes\n\nPurveyors: where we get our supplies\n\nPeople: staff, volunteers"
+                      )}
+                      px="8px"
+                      py="2px"
+                      borderRadius="4px"
+                      bg={chipBg}
+                      border="1px solid"
+                      borderColor={chipBorder}
+                      fontSize="10px"
+                      fontWeight="700"
+                      color={mutedText}
+                      cursor="pointer"
+                      letterSpacing="0.04em"
+                      _hover={{ borderColor: BRAND, color: BRAND }}
+                      transition="all 0.12s"
+                      title="Fill with demo vocabulary (Temple of Belonging)"
+                    >
+                      Demo
+                    </Box>
+                  </Box>
+                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                    One type per line. Define what each thing means if it helps — the more specific,
+                    the better we&apos;ll do.
+                  </Text>
+                  <textarea
+                    value={entityExpectations}
+                    onChange={(e) => setEntityExpectations(e.target.value)}
+                    placeholder={"Recipe: a set of instructions with ingredients and an outcome\nPurveyors: where we get our supplies\nPeople: staff, volunteers"}
+                    rows={7}
+                    style={{
+                      width: "100%",
+                      fontSize: "13px",
+                      lineHeight: "1.65",
+                      resize: "vertical",
+                      border: `1px solid ${cardBorder}`,
+                      borderRadius: "6px",
+                      padding: "10px 12px",
+                      background: "transparent",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      color: "inherit",
+                    }}
+                  />
+                </Box>
+
+                <HStack justify="space-between" align="center">
+                  <Box
+                    as="button"
+                    onClick={() => setIntroState("center")}
+                    fontSize="sm"
+                    color={mutedText}
+                    cursor="pointer"
+                    _hover={{ color: BRAND }}
+                    transition="color 0.12s"
+                  >
+                    ← Back
+                  </Box>
+                  <HStack gap={3}>
+                    <Box
+                      as="button"
+                      onClick={handleImport}
+                      fontSize="xs"
+                      color={mutedText}
+                      cursor="pointer"
+                      _hover={{ color: BRAND }}
+                      transition="color 0.12s"
+                    >
+                      Skip →
+                    </Box>
+                    <Button
+                      onClick={handleImport}
+                      bg={BRAND}
+                      color="white"
+                      _hover={{ opacity: 0.88 }}
+                      size="md"
+                      fontWeight="600"
+                    >
+                      Continue to import →
+                    </Button>
+                  </HStack>
+                </HStack>
+              </VStack>
             </Box>
           )}
 
