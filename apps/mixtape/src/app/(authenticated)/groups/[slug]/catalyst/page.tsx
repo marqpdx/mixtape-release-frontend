@@ -83,7 +83,7 @@ function classifyRegister(slug: string, displayName: string, columns: string[]):
   const t = (slug + " " + displayName + " " + columns.join(" ")).toLowerCase();
   if (/recipe|menu|meal|dish|breakfast|lunch|dinner|sauce|cook|food|ingredient|prep.list|prep-list/.test(t))
     return { type: "Recipes", icon: "🍽", plural: "recipes" };
-  if (/supplier|vendor|partner|fundrais|outreach|confirmed|grant|sponsor|donation/.test(t))
+  if (/supplier|vendor|partner|purveyor|fundrais|outreach|confirmed|grant|sponsor|donation/.test(t))
     return { type: "Partners & Suppliers", icon: "🤝", plural: "partners" };
   if (/staff|crew|team|volunteer|people|person|role|contact|worker|member/.test(t))
     return { type: "People", icon: "👥", plural: "people" };
@@ -1445,15 +1445,15 @@ export default function GroupCatalystPage() {
                 {/* Bridge narrative header */}
                 <Box>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
-                    {parsedFiles.length > 0 ? (() => {
-                      const agg = aggregateFindings(parsedFiles);
+                    {(() => {
+                      const agg = registers.filter(r => r.entryCount > 0);
                       if (!agg.length) return "Your files have been read";
-                      const parts = agg.map((a) => `${a.count} ${a.ec.plural}`);
+                      const parts = agg.map(r => `${r.entryCount} ${r.displayName.toLowerCase()}`);
                       const joined = parts.length === 1
                         ? parts[0]
                         : parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1];
                       return `We found ${joined}`;
-                    })() : "Your files have been read"}
+                    })()}
                   </Heading>
                   <Text fontSize="sm" color={mutedText} lineHeight="1.7">
                     {parsedFiles.length > 0
