@@ -1127,9 +1127,33 @@ export default function GroupCatalystPage() {
                   borderRadius="lg"
                   p={5}
                 >
-                  <Text fontSize="sm" fontWeight="600" mb={1}>
-                    What are these files about?
-                  </Text>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Text fontSize="sm" fontWeight="600">
+                      What are these files about?
+                    </Text>
+                    <Box
+                      as="button"
+                      onClick={() => setGeneralContext(
+                        "These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
+                      )}
+                      px="8px"
+                      py="2px"
+                      borderRadius="4px"
+                      bg={chipBg}
+                      border="1px solid"
+                      borderColor={chipBorder}
+                      fontSize="10px"
+                      fontWeight="700"
+                      color={mutedText}
+                      cursor="pointer"
+                      letterSpacing="0.04em"
+                      _hover={{ borderColor: BRAND, color: BRAND }}
+                      transition="all 0.12s"
+                      title="Fill with demo context (Temple of Belonging)"
+                    >
+                      Demo
+                    </Box>
+                  </Box>
                   <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
                     In plain language — what's the occasion, project, or context they were created for?
                   </Text>
