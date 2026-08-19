@@ -1592,6 +1592,51 @@
         "orientation"
       ]
     },
+    "spikes-ocr": {
+      "key": "spikes-ocr",
+      "slug": "spikes-ocr",
+      "feature": "spikes",
+      "title": "OCR Recognition Pilot",
+      "subsystem": "spikes",
+      "area": "ocr",
+      "summary": "The OCR Recognition Pilot is an isolated spike surface for uploading artifacts, running local recognition, reviewing text, and recording evaluation notes.",
+      "excerpt": "The OCR Recognition Pilot is an isolated spike surface for uploading artifacts, running local recognition, reviewing text, and recording evaluation notes.",
+      "plainText": "OCR Recognition Pilot The OCR Recognition Pilot is an isolated evaluation surface. It lets you upload PDFs or images, run local recognition, compare the source page with recognized text, make corrections, and record whether the result was useful. Nothing you upload here enters Catalyst, Stackroom, Find, or any canon workflow. What you can do here - Upload one artifact at a time. - Set privacy sensitivity before recognition. - Run local recognition. - Edit recognized text in place during review. - Escalate a page to cloud recognition when privacy settings allow it. - Mark a page unreadable when transcription is not worth the effort. - Save feedback about the pilot screen itself. Privacy sensitivity Low means cloud escalation is acceptable for the spike if useful. Medium means cloud escalation is allowed only with explicit reviewer confirmation. Complete means the artifact or page must never be sent to cloud AI. Current limitations - This is a spike, not a production document library. - PDF page rendering may still be basic in the first implementation. - Recognition output may use a placeholder adapter until the local OCR engine is fully connected. Related features - Catalyst — Future knowledge workflows may use lessons from this spike. - Stackroom — This spike does not ingest files into Stackroom.",
+      "html": "<h1 id=\"ocr-recognition-pilot\">OCR Recognition Pilot</h1>\n<p>The OCR Recognition Pilot is an isolated evaluation surface. It lets you upload PDFs or images, run local recognition, compare the source page with recognized text, make corrections, and record whether the result was useful.</p>\n<p>Nothing you upload here enters Catalyst, Stackroom, Find, or any canon workflow.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Upload one artifact at a time.</li>\n<li>Set privacy sensitivity before recognition.</li>\n<li>Run local recognition.</li>\n<li>Edit recognized text in place during review.</li>\n<li>Escalate a page to cloud recognition when privacy settings allow it.</li>\n<li>Mark a page unreadable when transcription is not worth the effort.</li>\n<li>Save feedback about the pilot screen itself.</li>\n</ul>\n<h2 id=\"privacy-sensitivity\">Privacy sensitivity</h2>\n<p><strong>Low</strong> means cloud escalation is acceptable for the spike if useful.</p>\n<p><strong>Medium</strong> means cloud escalation is allowed only with explicit reviewer confirmation.</p>\n<p><strong>Complete</strong> means the artifact or page must never be sent to cloud AI.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>This is a spike, not a production document library.</li>\n<li>PDF page rendering may still be basic in the first implementation.</li>\n<li>Recognition output may use a placeholder adapter until the local OCR engine is fully connected.</li>\n</ul>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Catalyst</strong> — Future knowledge workflows may use lessons from this spike.</li>\n<li><strong>Stackroom</strong> — This spike does not ingest files into Stackroom.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Privacy sensitivity",
+          "id": "privacy-sensitivity"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/spikes/document-recognition"
+      ],
+      "workAreas": [],
+      "tags": [
+        "spike",
+        "ocr",
+        "recognition",
+        "catalyst"
+      ]
+    },
     "stackroom-overview": {
       "key": "stackroom-overview",
       "slug": "stackroom",
@@ -1977,6 +2022,9 @@
     "radar": [
       "radar-overview"
     ],
+    "spikes": [
+      "spikes-ocr"
+    ],
     "stackroom": [
       "stackroom-overview"
     ],
@@ -1990,5 +2038,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-08-15T23:58:38.787Z"
+  "generatedAt": "2026-08-19T21:24:24.056Z"
 }

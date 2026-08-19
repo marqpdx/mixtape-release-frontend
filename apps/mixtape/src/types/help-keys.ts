@@ -28,6 +28,7 @@ export type HelpKey =
   | "projects-overview"
   | "puddlejump-overview"
   | "radar-overview"
+  | "spikes-ocr"
   | "stackroom-overview"
   | "studio-overview"
   | "workbench-overview"
