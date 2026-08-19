@@ -49,11 +49,18 @@ type Phase1Register = {
   matched_declared?: string;
 };
 
+type ChildSuggestion = {
+  parent: string;
+  child_candidate: string;
+  source_register: string;
+};
+
 type Phase1Results = {
   aligned: Phase1Register[];
   unexpected: Phase1Register[];
   absent: string[];
   declared_types: string[];
+  child_suggestions: ChildSuggestion[];
 };
 
 type ParseJob = {
@@ -105,15 +112,17 @@ type EntityClass = { type: string; icon: string; plural: string };
 
 function classifyRegister(slug: string, displayName: string, columns: string[]): EntityClass {
   const t = (slug + " " + displayName + " " + columns.join(" ")).toLowerCase();
-  if (/recipe|menu|meal|dish|breakfast|lunch|dinner|sauce|cook|food|ingredient|prep.list|prep-list/.test(t))
+  if (/recipe|menu|meal|dish|breakfast|lunch|dinner|sauce|cook|food|prep/.test(t))
     return { type: "Recipes", icon: "🍽", plural: "recipes" };
+  if (/ingredient|pantry|stock|inventory/.test(t))
+    return { type: "Ingredients", icon: "🥬", plural: "ingredients" };
   if (/supplier|vendor|partner|purveyor|fundrais|outreach|confirmed|grant|sponsor|donation/.test(t))
     return { type: "Partners & Suppliers", icon: "🤝", plural: "partners" };
   if (/staff|crew|team|volunteer|people|person|role|contact|worker|member/.test(t))
     return { type: "People", icon: "👥", plural: "people" };
   if (/meeting|minutes|action|agenda|carried|notes/.test(t))
     return { type: "Meeting notes", icon: "📋", plural: "meeting notes" };
-  if (/prep|task|checklist|todo|shift|schedule/.test(t))
+  if (/task|checklist|todo|shift|schedule/.test(t))
     return { type: "Tasks", icon: "✅", plural: "tasks" };
   return { type: "Records", icon: "📄", plural: "records" };
 }
@@ -130,7 +139,7 @@ function humanSummary(registers: { slug: string; display_name: string; entry_cou
   return parts.length ? parts.join(" · ") : (registers.length > 0 ? `${registers.length} items` : "nothing detected");
 }
 
-function aggregateFindings(files: { registers: { slug: string; display_name: string; entry_count: number; columns: string[] }[] }[]): { ec: EntityClass; count: number }[] {
+function _aggregateFindings(files: { registers: { slug: string; display_name: string; entry_count: number; columns: string[] }[] }[]): { ec: EntityClass; count: number }[] {
   const byType: Record<string, { ec: EntityClass; count: number }> = {};
   for (const f of files) {
     for (const r of f.registers) {
@@ -211,12 +220,15 @@ export default function GroupCatalystPage() {
   const [analysisProgress, setAnalysisProgress] = useState<{ done: number; total: number } | null>(null);
   // Per-item unexpected register decisions: slug → "include" | "skip"
   const [unexpectedDecisions, setUnexpectedDecisions] = useState<Record<string, "include" | "skip">>({});
+  const [alignedNotes, setAlignedNotes] = useState<Record<string, string>>({});
+  const [alignedNoteOpen, setAlignedNoteOpen] = useState<Record<string, boolean>>({});
+  const [unexpectedNotes, setUnexpectedNotes] = useState<Record<string, string>>({});
 
   // Browse state
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
   const [registerListLoading, setRegisterListLoading] = useState(false);
   const [selectedRegSlug, setSelectedRegSlug] = useState<string | null>(null);
-  const [regBody, setRegBody] = useState<string>("");
+  const [_regBody, setRegBody] = useState<string>("");
   const [regMeta, setRegMeta] = useState<RegisterMeta | null>(null);
   const [regLoading, setRegLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1537,163 +1549,292 @@ export default function GroupCatalystPage() {
               <VStack align="stretch" gap={8}>
                 <Box>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
-                    Here&apos;s what we found
+                    Good news — we found your data.
                   </Heading>
                   <Text fontSize="sm" color={mutedText} lineHeight="1.7">
-                    This is the structural shape of your files — no AI analysis yet, just the raw
-                    structure. Confirm the shape looks right, add any extra context, then we&apos;ll
-                    do the deep analysis in the background.
+                    Here&apos;s our first read. Confirm this looks right, add any extra notes,
+                    and we&apos;ll run the full analysis in the background — we&apos;ll email
+                    you when it&apos;s ready.
                   </Text>
                 </Box>
 
-                {/* Aligned finds */}
-                {parseJob.phase1_results.aligned.length > 0 && (
+                {/* Aligned finds — grouped by entity class */}
+                {parseJob.phase1_results.aligned.length > 0 && (() => {
+                  // Group by entity class, summing counts
+                  const grouped: Record<string, {
+                    ec: EntityClass;
+                    totalCount: number;
+                    matchedTerms: string[];
+                    sourceFiles: string[];
+                  }> = {};
+                  for (const r of parseJob.phase1_results.aligned) {
+                    const ec = classifyRegister(r.slug, r.display_name, r.columns);
+                    if (!grouped[ec.plural]) {
+                      grouped[ec.plural] = { ec, totalCount: 0, matchedTerms: [], sourceFiles: [] };
+                    }
+                    grouped[ec.plural].totalCount += r.entry_count ?? 0;
+                    if (r.matched_declared && !grouped[ec.plural].matchedTerms.includes(r.matched_declared)) {
+                      grouped[ec.plural].matchedTerms.push(r.matched_declared);
+                    }
+                    if (!grouped[ec.plural].sourceFiles.includes(r.source_file)) {
+                      grouped[ec.plural].sourceFiles.push(r.source_file);
+                    }
+                  }
+                  return (
+                    <Box>
+                      <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={3}>
+                        What we found
+                      </Text>
+                      <VStack align="stretch" gap={2}>
+                        {Object.values(grouped).map((g) => {
+                          const noteKey = g.ec.plural;
+                          const noteOpen = alignedNoteOpen[noteKey];
+                          // (d) client's word first — use their declared term as the label if available
+                          const primaryLabel = g.matchedTerms.length > 0
+                            ? g.matchedTerms.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(" / ")
+                            : g.ec.type;
+                          // Only show ec.type as a synonym if it adds information (not if it would say "Recipe (Tasks)")
+                          const synonymLabel2 = (g.matchedTerms.length > 0 && g.ec.type.toLowerCase() !== primaryLabel.toLowerCase())
+                            ? g.ec.type
+                            : null;
+                          return (
+                            <Box key={noteKey}>
+                              <HStack
+                                bg={cardBg}
+                                border="1px solid"
+                                borderColor={cardBorder}
+                                borderRadius={noteOpen ? "lg lg 0 0" : "lg"}
+                                px={4}
+                                py={3}
+                                gap={3}
+                              >
+                                <Text fontSize="xl" flexShrink={0}>{g.ec.icon}</Text>
+                                <Box flex="1">
+                                  <HStack gap={2} align="baseline">
+                                    <Text fontSize="sm" fontWeight="600">{primaryLabel}</Text>
+                                    {synonymLabel2 && (
+                                      <Text fontSize="10px" color={mutedText}>({synonymLabel2})</Text>
+                                    )}
+                                  </HStack>
+                                  <Text fontSize="xs" color={mutedText}>
+                                    across {g.sourceFiles.length} {g.sourceFiles.length === 1 ? "file" : "files"}
+                                  </Text>
+                                </Box>
+                                <Box
+                                  as="button"
+                                  onClick={() => setAlignedNoteOpen((prev) => ({ ...prev, [noteKey]: !prev[noteKey] }))}
+                                  px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                  bg={noteOpen ? chipBorder : chipBg}
+                                  border="1px solid" borderColor={chipBorder}
+                                  fontSize="10px" fontWeight="600" color={mutedText}
+                                  flexShrink={0}
+                                  _hover={{ borderColor: mutedText }}
+                                >
+                                  {noteOpen ? "Done" : "Add note"}
+                                </Box>
+                              </HStack>
+                              {noteOpen && (
+                                <Box
+                                  bg={cardBg}
+                                  border="1px solid" borderColor={cardBorder}
+                                  borderTop="none"
+                                  borderRadius="0 0 lg lg"
+                                  px={4} pb={3}
+                                >
+                                  <input
+                                    autoFocus
+                                    value={alignedNotes[noteKey] ?? ""}
+                                    onChange={(e) => setAlignedNotes((prev) => ({ ...prev, [noteKey]: e.target.value }))}
+                                    placeholder={`e.g. "Todos may not be recipes — those are prep tasks"`}
+                                    style={{
+                                      width: "100%", fontSize: "12px", padding: "6px 8px",
+                                      border: `1px solid ${cardBorder}`, borderRadius: "4px",
+                                      background: "transparent", outline: "none", fontFamily: "inherit", color: "inherit",
+                                    }}
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })}
+                      </VStack>
+                    </Box>
+                  );
+                })()}
+
+                {/* Absent types — one card per missing type */}
+                {parseJob.phase1_results.absent.length > 0 && (
                   <Box>
                     <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={3}>
-                      Matches what you told us
+                      We didn&apos;t find
                     </Text>
                     <VStack align="stretch" gap={2}>
-                      {parseJob.phase1_results.aligned.map((r) => {
-                        const ec = classifyRegister(r.slug, r.display_name, r.columns);
-                        return (
-                          <HStack
-                            key={r.slug}
-                            bg={cardBg}
-                            border="1px solid"
-                            borderColor={cardBorder}
-                            borderRadius="lg"
-                            px={4}
-                            py={3}
-                            gap={3}
-                          >
-                            <Text fontSize="xl" flexShrink={0}>{ec.icon}</Text>
-                            <Box flex="1">
-                              <Text fontSize="sm" fontWeight="600">{r.display_name}</Text>
-                              <Text fontSize="xs" color={mutedText}>
-                                {r.entry_count > 0 ? `${r.entry_count} entries · ` : ""}{r.source_file}
-                              </Text>
-                            </Box>
-                            {r.matched_declared && (
-                              <Box px={2} py="1px" bg={statusBg} borderRadius="full" flexShrink={0}>
-                                <Text fontSize="9px" fontWeight="600" color={statusText}>
-                                  matches &ldquo;{r.matched_declared}&rdquo;
-                                </Text>
-                              </Box>
-                            )}
-                          </HStack>
-                        );
-                      })}
-                    </VStack>
-                  </Box>
-                )}
-
-                {/* Absent types */}
-                {parseJob.phase1_results.absent.length > 0 && (
-                  <Box
-                    bg={cardBg}
-                    border="1px solid"
-                    borderColor={cardBorder}
-                    borderRadius="lg"
-                    px={4}
-                    py={3}
-                  >
-                    <Text fontSize="xs" fontWeight="600" color={mutedText} mb={2}>
-                      We didn&apos;t find anything that looks like:
-                    </Text>
-                    <HStack gap={2} flexWrap="wrap">
                       {parseJob.phase1_results.absent.map((a) => (
-                        <Box key={a} px={2} py="2px" bg={chipBg} border="1px solid" borderColor={chipBorder} borderRadius="full">
-                          <Text fontSize="11px" color={mutedText}>{a}</Text>
-                        </Box>
+                        <HStack
+                          key={a}
+                          bg={cardBg}
+                          border="1px solid"
+                          borderColor={chipBorder}
+                          borderRadius="lg"
+                          px={4}
+                          py={3}
+                          gap={3}
+                          opacity={0.7}
+                        >
+                          <Text fontSize="xl" flexShrink={0}>🔍</Text>
+                          <Box flex="1">
+                            <Text fontSize="sm" fontWeight="600">{a.charAt(0).toUpperCase() + a.slice(1)}</Text>
+                            <Text fontSize="xs" color={mutedText}>
+                              Not found in these files — add a note below if we should look differently
+                            </Text>
+                          </Box>
+                        </HStack>
                       ))}
-                    </HStack>
-                    <Text fontSize="10px" color={synonymLabel} mt={2}>
-                      You can clarify in the context box below — or it may just not be in these files.
-                    </Text>
-                  </Box>
-                )}
-
-                {/* Unexpected finds */}
-                {parseJob.phase1_results.unexpected.length > 0 && (
-                  <Box>
-                    <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={1}>
-                      We also found
-                    </Text>
-                    <Text fontSize="xs" color={mutedText} mb={3}>
-                      These weren&apos;t in your vocabulary — tell us what to do with each.
-                    </Text>
-                    <VStack align="stretch" gap={2}>
-                      {parseJob.phase1_results.unexpected.map((r) => {
-                        const ec = classifyRegister(r.slug, r.display_name, r.columns);
-                        const decision = unexpectedDecisions[r.slug];
-                        return (
-                          <HStack
-                            key={r.slug}
-                            bg={cardBg}
-                            border="1px solid"
-                            borderColor={decision === "skip" ? chipBorder : cardBorder}
-                            borderRadius="lg"
-                            px={4}
-                            py={3}
-                            gap={3}
-                            opacity={decision === "skip" ? 0.5 : 1}
-                            transition="opacity 0.15s"
-                          >
-                            <Text fontSize="xl" flexShrink={0}>{ec.icon}</Text>
-                            <Box flex="1">
-                              <Text fontSize="sm" fontWeight="600">{r.display_name}</Text>
-                              <Text fontSize="xs" color={mutedText}>
-                                {r.entry_count > 0 ? `${r.entry_count} entries · ` : ""}{r.source_file}
-                              </Text>
-                            </Box>
-                            <HStack gap={1.5} flexShrink={0}>
-                              <Box
-                                as="button"
-                                onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "include" }))}
-                                px="8px" py="2px" borderRadius="4px" cursor="pointer"
-                                bg={decision === "include" ? BRAND : chipBg}
-                                border="1px solid"
-                                borderColor={decision === "include" ? BRAND : chipBorder}
-                                fontSize="10px" fontWeight="700"
-                                color={decision === "include" ? "white" : mutedText}
-                                transition="all 0.12s"
-                                _hover={{ borderColor: BRAND }}
-                              >
-                                Include
-                              </Box>
-                              <Box
-                                as="button"
-                                onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "skip" }))}
-                                px="8px" py="2px" borderRadius="4px" cursor="pointer"
-                                bg={decision === "skip" ? chipBorder : chipBg}
-                                border="1px solid"
-                                borderColor={chipBorder}
-                                fontSize="10px" fontWeight="700"
-                                color={mutedText}
-                                transition="all 0.12s"
-                                _hover={{ borderColor: mutedText }}
-                              >
-                                Skip
-                              </Box>
-                            </HStack>
-                          </HStack>
-                        );
-                      })}
                     </VStack>
                   </Box>
                 )}
+
+                {/* Unexpected finds — deduplicated by display_name, no file detail */}
+                {parseJob.phase1_results.unexpected.length > 0 && (() => {
+                  // Deduplicate: keep first occurrence of each display_name
+                  const seen = new Set<string>();
+                  const deduped = parseJob.phase1_results.unexpected.filter((r) => {
+                    const key = r.display_name.trim().toLowerCase();
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+                  return (
+                    <Box>
+                      <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={1}>
+                        We also noticed
+                      </Text>
+                      <Text fontSize="xs" color={mutedText} mb={3}>
+                        Not in your list — should we look for these too?
+                      </Text>
+                      <VStack align="stretch" gap={2}>
+                        {deduped.map((r) => {
+                          const ec = classifyRegister(r.slug, r.display_name, r.columns);
+                          const decision = unexpectedDecisions[r.slug];
+                          return (
+                            <Box key={r.slug}>
+                              <HStack
+                                bg={cardBg}
+                                border="1px solid"
+                                borderColor={decision === "skip" ? chipBorder : cardBorder}
+                                borderRadius={decision === "include" ? "lg lg 0 0" : "lg"}
+                                px={4}
+                                py={3}
+                                gap={3}
+                                opacity={decision === "skip" ? 0.5 : 1}
+                                transition="opacity 0.15s"
+                              >
+                                <Text fontSize="xl" flexShrink={0}>{ec.icon}</Text>
+                                <Text fontSize="sm" fontWeight="600" flex="1">{r.display_name}</Text>
+                                <HStack gap={1.5} flexShrink={0}>
+                                  <Box
+                                    as="button"
+                                    onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "include" }))}
+                                    px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                    bg={decision === "include" ? BRAND : chipBg}
+                                    border="1px solid"
+                                    borderColor={decision === "include" ? BRAND : chipBorder}
+                                    fontSize="10px" fontWeight="700"
+                                    color={decision === "include" ? "white" : mutedText}
+                                    transition="all 0.12s"
+                                    _hover={{ borderColor: BRAND }}
+                                  >
+                                    Yes
+                                  </Box>
+                                  <Box
+                                    as="button"
+                                    onClick={() => setUnexpectedDecisions((prev) => ({ ...prev, [r.slug]: "skip" }))}
+                                    px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                    bg={decision === "skip" ? chipBorder : chipBg}
+                                    border="1px solid"
+                                    borderColor={chipBorder}
+                                    fontSize="10px" fontWeight="700"
+                                    color={mutedText}
+                                    transition="all 0.12s"
+                                    _hover={{ borderColor: mutedText }}
+                                  >
+                                    No
+                                  </Box>
+                                </HStack>
+                              </HStack>
+                              {decision === "include" && (
+                                <Box
+                                  bg={cardBg}
+                                  border="1px solid" borderColor={cardBorder}
+                                  borderTop="none"
+                                  borderRadius="0 0 lg lg"
+                                  px={4} pb={3}
+                                >
+                                  <input
+                                    autoFocus
+                                    value={unexpectedNotes[r.slug] ?? ""}
+                                    onChange={(e) => setUnexpectedNotes((prev) => ({ ...prev, [r.slug]: e.target.value }))}
+                                    placeholder="Any context about this? (optional)"
+                                    style={{
+                                      width: "100%", fontSize: "12px", padding: "6px 8px",
+                                      border: `1px solid ${cardBorder}`, borderRadius: "4px",
+                                      background: "transparent", outline: "none", fontFamily: "inherit", color: "inherit",
+                                    }}
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })}
+                      </VStack>
+                    </Box>
+                  );
+                })()}
+
+                {/* Child / sub-type suggestions */}
+                {(parseJob.phase1_results.child_suggestions ?? []).length > 0 && (() => {
+                  // Group by parent, deduplicate child candidates
+                  const byParent: Record<string, string[]> = {};
+                  for (const s of parseJob.phase1_results.child_suggestions) {
+                    if (!byParent[s.parent]) byParent[s.parent] = [];
+                    if (!byParent[s.parent].includes(s.child_candidate)) {
+                      byParent[s.parent].push(s.child_candidate);
+                    }
+                  }
+                  return (
+                    <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="lg" p={4}>
+                      <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={2}>
+                        We may have found more
+                      </Text>
+                      <VStack align="stretch" gap={2}>
+                        {Object.entries(byParent).map(([parent, children]) => (
+                          <Text key={parent} fontSize="xs" color={mutedText} lineHeight="1.7">
+                            Inside <strong>{parent}</strong> we noticed fields that look like sub-types:{" "}
+                            <strong>{children.slice(0, 4).join(", ")}</strong>.
+                            {" "}Should these be their own list, or stay embedded?
+                          </Text>
+                        ))}
+                      </VStack>
+                    </Box>
+                  );
+                })()}
+
+                {/* File safety note */}
+                <Text fontSize="xs" color={mutedText} textAlign="center" px={2}>
+                  Your original files are always kept intact — you can find anything here, anytime.
+                </Text>
 
                 {/* Enrichment context */}
                 <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="lg" p={5}>
-                  <Text fontSize="sm" fontWeight="600" mb={1}>Anything else we should know?</Text>
+                  <Text fontSize="sm" fontWeight="600" mb={1}>Does this look right? Anything we&apos;re missing?</Text>
                   <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
-                    Optional — which file is the current version? Anything we should treat differently?
-                    This context goes into the deep analysis.
+                    All optional — if something looks off, or you use a different word for something,
+                    just tell us here. The more specific you are, the more resourceful we can be with the analysis.
                   </Text>
                   <textarea
                     value={enrichmentContext}
                     onChange={(e) => setEnrichmentContext(e.target.value)}
-                    placeholder="e.g. The -2.xlsx is the current version. Ignore the meeting notes files — those are background context only."
+                    placeholder="e.g. We call our vendors 'purveyors'. The -2.xlsx is the current version. The meeting notes are background only — don't make a register for those."
                     rows={3}
                     style={{
                       width: "100%",
