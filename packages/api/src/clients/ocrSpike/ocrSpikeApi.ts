@@ -6,6 +6,16 @@ export type OcrProvider = "local" | "cloud";
 export type OcrOutcome = "accepted_local" | "corrected_local" | "accepted_cloud" | "corrected_cloud" | "unreadable" | "skipped";
 export type OcrCorrectionEffort = "none" | "minor" | "heavy" | "not_worth_it";
 export type OcrScreen = "upload" | "processing" | "curation" | "complete";
+export type OcrShapeStatus = "processing" | "complete" | "failed";
+
+export interface OcrSpikeShape {
+  shape_id: string;
+  shape_version: string;
+  name: string;
+  vertical: string;
+  status: string;
+  source: string;
+}
 
 export interface OcrSpikeArtifact {
   artifact_id: string;
@@ -46,6 +56,23 @@ export interface OcrSpikeEvaluation {
   updated_at: string;
 }
 
+export interface OcrSpikeShapingAttempt {
+  shaping_attempt_id: string;
+  selected_attempt_id: string | null;
+  shape_id: string;
+  shape_version: string;
+  model_name: string;
+  input_text: string;
+  output_json: Record<string, unknown>;
+  output_markdown: string;
+  validation_errors: string[];
+  processing_time_ms: number | null;
+  status: OcrShapeStatus;
+  error_message: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OcrSpikePage {
   page_id: string;
   page_number: number;
@@ -55,7 +82,13 @@ export interface OcrSpikePage {
   height: number | null;
   preparation_status: string;
   attempts: OcrSpikeAttempt[];
+  shaping_attempts: OcrSpikeShapingAttempt[];
   evaluation?: OcrSpikeEvaluation | null;
+}
+
+export async function listOcrSpikeShapes(): Promise<OcrSpikeShape[]> {
+  const response = await axiosInstance.get<{ shapes: OcrSpikeShape[] }>("/api/spikes/ocr/shapes/");
+  return response.data.shapes;
 }
 
 export async function listOcrSpikeArtifacts(): Promise<OcrSpikeArtifact[]> {
@@ -97,6 +130,18 @@ export async function fetchOcrSpikePageFile(pageId: string): Promise<Blob> {
 
 export async function runCloudOcr(pageId: string): Promise<{ page_id: string; status: string }> {
   const response = await axiosInstance.post<{ page_id: string; status: string }>(`/api/spikes/ocr/pages/${pageId}/cloud-recognize/`);
+  return response.data;
+}
+
+export async function runRecipeShaping(pageId: string, data: {
+  selected_attempt_id?: string | null;
+  reviewed_text?: string;
+  shape_id?: string;
+}): Promise<{ page_id: string; shaping_attempt_id: string; shape_id: string; status: string; queued_task_id: string }> {
+  const response = await axiosInstance.post<{ page_id: string; shaping_attempt_id: string; shape_id: string; status: string; queued_task_id: string }>(
+    `/api/spikes/ocr/pages/${pageId}/shape-recipe/`,
+    data
+  );
   return response.data;
 }
 

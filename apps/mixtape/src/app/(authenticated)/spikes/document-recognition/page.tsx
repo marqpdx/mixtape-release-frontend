@@ -22,9 +22,11 @@ import {
   fetchOcrSpikeArtifact,
   fetchOcrSpikePageFile,
   fetchOcrSpikePages,
+  listOcrSpikeShapes,
   listOcrSpikeArtifacts,
   runCloudOcr,
   runLocalOcr,
+  runRecipeShaping,
   saveOcrEvaluation,
   saveOcrFeedback,
   type OcrCorrectionEffort,
@@ -34,6 +36,8 @@ import {
   type OcrSpikeArtifact,
   type OcrSpikeAttempt,
   type OcrSpikePage,
+  type OcrSpikeShape,
+  type OcrSpikeShapingAttempt,
 } from "@mixtape/api/clients/ocrSpike/ocrSpikeApi";
 
 const privacyOptions: Array<{ value: OcrPrivacySensitivity; label: string; helper: string }> = [
@@ -52,6 +56,7 @@ const effortOptions: Array<{ value: OcrCorrectionEffort; label: string }> = [
 export default function OcrSpikePage() {
   const [artifacts, setArtifacts] = useState<OcrSpikeArtifact[]>([]);
   const [selectedArtifact, setSelectedArtifact] = useState<OcrSpikeArtifact | null>(null);
+  const [shapes, setShapes] = useState<OcrSpikeShape[]>([]);
   const [pages, setPages] = useState<OcrSpikePage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [privacy, setPrivacy] = useState<OcrPrivacySensitivity>("medium");
@@ -80,7 +85,9 @@ export default function OcrSpikePage() {
   const cloudBlocked = selectedArtifact?.privacy_sensitivity === "complete";
   const artifactIsProcessing = selectedArtifact?.status === "preparing" || selectedArtifact?.status === "recognizing";
   const attemptsAreProcessing = pages.some((page) => page.attempts.some((attempt) => attempt.status === "processing"));
-  const shouldPoll = Boolean(selectedArtifactId && (artifactIsProcessing || attemptsAreProcessing));
+  const shapingIsProcessing = pages.some((page) => page.shaping_attempts.some((attempt) => attempt.status === "processing"));
+  const shouldPoll = Boolean(selectedArtifactId && (artifactIsProcessing || attemptsAreProcessing || shapingIsProcessing));
+  const latestShapingAttempt = selectedPage?.shaping_attempts[0] ?? null;
 
   const refreshArtifacts = useCallback(async () => {
     const next = await listOcrSpikeArtifacts();
@@ -102,6 +109,7 @@ export default function OcrSpikePage() {
 
   useEffect(() => {
     void refreshArtifacts().catch(() => setError("Could not load OCR spike artifacts."));
+    void listOcrSpikeShapes().then(setShapes).catch(() => setError("Could not load OCR spike shapes."));
   }, [refreshArtifacts]);
 
   useEffect(() => {
@@ -191,6 +199,24 @@ export default function OcrSpikePage() {
       await refreshSelected();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save evaluation.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleShapeRecipe = async () => {
+    if (!selectedPage) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await runRecipeShaping(selectedPage.page_id, {
+        selected_attempt_id: selectedAttemptId,
+        reviewed_text: workingText,
+        shape_id: "food_service.recipe",
+      });
+      window.setTimeout(() => void refreshSelected(), 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start recipe shaping.");
     } finally {
       setBusy(false);
     }
@@ -325,10 +351,12 @@ export default function OcrSpikePage() {
                         <HStack mt={4} gap={2} flexWrap="wrap">
                           <Button colorPalette="green" onClick={() => void handleSaveEvaluation(selectedAttempt?.provider === "cloud" ? "accepted_cloud" : "accepted_local")}>Accept Text</Button>
                           <Button colorPalette="blue" onClick={() => void handleSaveEvaluation(selectedAttempt?.provider === "cloud" ? "corrected_cloud" : "corrected_local")}>Accept Corrected Text</Button>
+                          <Button colorPalette="purple" onClick={() => void handleShapeRecipe()} disabled={!workingText.trim()}>Shape as Recipe</Button>
                           <Button variant="outline" disabled={cloudBlocked} onClick={() => void handleCloud()}>Send This Page to Cloud</Button>
                           <Button variant="outline" colorPalette="red" onClick={() => void handleSaveEvaluation("unreadable")}>Mark Unreadable</Button>
                         </HStack>
                         {cloudBlocked && <Text mt={3} color="orange.700" fontSize="sm">Cloud escalation is disabled because privacy sensitivity is complete.</Text>}
+                        <RecipeShapePanel shape={shapes.find((item) => item.shape_id === "food_service.recipe") ?? null} attempt={latestShapingAttempt} />
                       </Box>
                     </SimpleGrid>
                   )}
@@ -383,6 +411,12 @@ function ArtifactSummary({
 }
 
 function statusColor(status: OcrSpikeAttempt["status"]) {
+  if (status === "complete") return "green";
+  if (status === "failed") return "red";
+  return "yellow";
+}
+
+function shapeStatusColor(status: OcrSpikeShapingAttempt["status"]) {
   if (status === "complete") return "green";
   if (status === "failed") return "red";
   return "yellow";
@@ -480,6 +514,51 @@ function attemptLabel(attempt: OcrSpikeAttempt) {
   const confidence = attempt.confidence_summary.overall;
   const confidenceLabel = typeof confidence === "number" ? ` · ${Math.round(confidence * 100)}%` : "";
   return `${engine} · ${attempt.status}${confidenceLabel}`;
+}
+
+function RecipeShapePanel({ shape, attempt }: { shape: OcrSpikeShape | null; attempt: OcrSpikeShapingAttempt | null }) {
+  return (
+    <Box className="ocrsp-shape-panel" mt={5} borderTop="1px solid" borderColor="gray.200" pt={4}>
+      <HStack justify="space-between" align="start" mb={3} gap={3}>
+        <Box>
+          <Heading size="sm">Recipe Shape</Heading>
+          <Text color="gray.600" fontSize="sm" mt={1}>
+            {shape ? `${shape.name} · ${shape.shape_id}@${shape.shape_version}` : "food_service.recipe@0.1.0"}
+          </Text>
+        </Box>
+        {attempt && <Badge colorPalette={shapeStatusColor(attempt.status)}>{attempt.status}</Badge>}
+      </HStack>
+
+      {!attempt ? (
+        <Text color="gray.600" fontSize="sm">Use reviewed text above, then shape it into the food-service recipe contract.</Text>
+      ) : attempt.status === "processing" ? (
+        <HStack color="gray.600"><Spinner size="sm" /><Text fontSize="sm">Shaping with local model…</Text></HStack>
+      ) : (
+        <VStack align="stretch" gap={3}>
+          <HStack gap={2} flexWrap="wrap">
+            <Badge>{attempt.model_name || "local model"}</Badge>
+            <Badge>{attempt.processing_time_ms ? `${Math.round(attempt.processing_time_ms / 1000)}s` : "runtime pending"}</Badge>
+            {attempt.validation_errors.length > 0 && <Badge colorPalette="red">{attempt.validation_errors.length} validation issue(s)</Badge>}
+          </HStack>
+          {attempt.error_message && <Box bg="red.50" border="1px solid" borderColor="red.200" p={3}><Text color="red.700" fontSize="sm">{attempt.error_message}</Text></Box>}
+          <SimpleGrid columns={{ base: 1, xl: 2 }} gap={3}>
+            <Box>
+              <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" mb={2}>Markdown</Text>
+              <Box as="pre" bg="gray.950" color="gray.50" p={3} borderRadius="md" maxH="340px" overflow="auto" fontSize="12px" whiteSpace="pre-wrap">
+                {attempt.output_markdown || "No Markdown returned."}
+              </Box>
+            </Box>
+            <Box>
+              <Text fontSize="xs" fontWeight="700" color="gray.500" textTransform="uppercase" mb={2}>JSON</Text>
+              <Box as="pre" bg="gray.950" color="gray.50" p={3} borderRadius="md" maxH="340px" overflow="auto" fontSize="12px" whiteSpace="pre-wrap">
+                {JSON.stringify(attempt.output_json || {}, null, 2)}
+              </Box>
+            </Box>
+          </SimpleGrid>
+        </VStack>
+      )}
+    </Box>
+  );
 }
 
 function FeedbackBox({ value, saved, onChange, onSave }: { value: string; saved: boolean; onChange: (value: string) => void; onSave: () => void }) {
