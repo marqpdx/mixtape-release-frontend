@@ -5,7 +5,7 @@ import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
-import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
+import type { AtriumContextStatus, AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
@@ -69,6 +69,18 @@ export function useUpdateAtriumSession() {
   });
 }
 
+export function useWarmAtriumSession() {
+  return useMutation({
+    mutationFn: (sessionId: string) => atriumApi.warmAtriumSession(sessionId),
+  });
+}
+
+export function useCompactAtriumSession() {
+  return useMutation({
+    mutationFn: (sessionId: string) => atriumApi.compactAtriumSession(sessionId),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Session history (persisted entries)
 // ---------------------------------------------------------------------------
@@ -106,6 +118,8 @@ export function useAtriumExchange(session: AtriumSession | null) {
   const [entries, setEntries] = useState<ExchangeEntry[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activityText, setActivityText] = useState<string | null>(null);
+  const [contextStatus, setContextStatus] = useState<AtriumContextStatus | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load persisted history whenever the active session changes
@@ -123,6 +137,7 @@ export function useAtriumExchange(session: AtriumSession | null) {
       if (!session || streaming) return;
 
       setError(null);
+      setActivityText(null);
       setStreaming(true);
 
       // Optimistically add user turn
@@ -165,10 +180,19 @@ export function useAtriumExchange(session: AtriumSession | null) {
               const payload = JSON.parse(line.slice(6));
               if (payload.type === "delta") {
                 assistantText += payload.text;
+                setActivityText(null);
                 setEntries((prev) => {
                   const next = [...prev];
                   next[next.length - 1] = { role: "assistant", content: assistantText };
                   return next;
+                });
+              } else if (payload.type === "activity") {
+                setActivityText(payload.text as string);
+              } else if (payload.type === "context_status") {
+                setContextStatus({
+                  used: payload.used as number,
+                  total: payload.total as number,
+                  pct: payload.pct as number,
                 });
               } else if (payload.type === "error") {
                 setError(payload.detail ?? "An error occurred.");
@@ -188,6 +212,7 @@ export function useAtriumExchange(session: AtriumSession | null) {
         }
       } finally {
         setStreaming(false);
+        setActivityText(null);
         abortRef.current = null;
       }
     },
@@ -201,6 +226,7 @@ export function useAtriumExchange(session: AtriumSession | null) {
   const reset = useCallback(() => {
     setEntries([]);
     setError(null);
+    setActivityText(null);
   }, []);
 
   // Appends a synthetic, non-persisted entry (e.g. a Grist verb result).
@@ -209,5 +235,5 @@ export function useAtriumExchange(session: AtriumSession | null) {
     setEntries((prev) => [...prev, entry]);
   }, []);
 
-  return { entries, streaming, error, send, cancel, reset, appendLocalEntry };
+  return { entries, streaming, error, activityText, contextStatus, send, cancel, reset, appendLocalEntry };
 }

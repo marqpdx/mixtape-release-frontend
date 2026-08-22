@@ -4,6 +4,21 @@ export type AtriumSessionStatus = "active" | "closed" | "archived";
 
 export type AtriumDialMode = "expressive" | "very_focused" | "vague";
 
+export type AtriumSSEEventType =
+  | "delta"        // response text chunk
+  | "activity"     // tool-call activity line (e.g. "Reading foo.md")
+  | "context_status" // context window usage update
+  | "ready"        // PTY warm — session is ready before first message
+  | "compacted"    // /compact completed
+  | "done"         // exchange complete
+  | "error";       // exchange error
+
+export interface AtriumContextStatus {
+  used: number;
+  total: number;
+  pct: number;
+}
+
 export interface AtriumSessionEntry {
   id: string;
   role: "user" | "assistant";

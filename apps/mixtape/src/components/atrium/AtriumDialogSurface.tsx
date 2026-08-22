@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Button, Flex, IconButton, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
+import { Box, Button, Flex, IconButton, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
@@ -9,6 +9,8 @@ import {
   useCreateAtriumSession,
   useAtriumExchange,
   useUpdateAtriumSession,
+  useWarmAtriumSession,
+  useCompactAtriumSession,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd } from "@mixtape/api/hooks/switchboard";
 import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
@@ -36,9 +38,19 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
 
-  const { entries, streaming, error, send, reset, appendLocalEntry } = useAtriumExchange(activeSession);
+  const { entries, streaming, error, activityText, contextStatus, send, reset, appendLocalEntry } =
+    useAtriumExchange(activeSession);
+  const { mutate: warmSession } = useWarmAtriumSession();
+  const { mutateAsync: compactSession, isPending: compacting } = useCompactAtriumSession();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
+
+  // Pre-warm PTY whenever the active session changes.
+  useEffect(() => {
+    if (activeSession?.id) {
+      warmSession(activeSession.id);
+    }
+  }, [activeSession?.id, warmSession]);
 
   async function handleCompose(message: string) {
     if (message.startsWith("/find")) {
@@ -105,6 +117,15 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
   const editIconColor = useColorModeValue("gray.400", "gray.500");
+  const activityColor = useColorModeValue("blue.500", "blue.300");
+
+  const ctxPct = contextStatus?.pct ?? 0;
+  const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
+
+  async function handleCompact() {
+    if (!activeSession) return;
+    await compactSession(activeSession.id);
+  }
 
   async function handleDialChange(mode: AtriumDialMode) {
     if (!activeSession) return;
@@ -229,6 +250,39 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
         <AtriumContextPreview sessionId={activeSession.id} />
       )}
 
+      {/* Context usage bar — shown when we have a reading, dimmed when idle */}
+      {activeSession && !editingMemory && contextStatus && (
+        <Box px={4} pt={1}>
+          <Flex align="center" gap={2}>
+            <Progress.Root
+              value={contextStatus.pct}
+              max={100}
+              size="xs"
+              colorPalette={ctxColorScheme}
+              flex={1}
+            >
+              <Progress.Track>
+                <Progress.Range />
+              </Progress.Track>
+            </Progress.Root>
+            <Text fontSize="xs" color={subtitleColor} flexShrink={0} whiteSpace="nowrap">
+              {Math.round(contextStatus.pct)}%
+            </Text>
+            {contextStatus.pct >= 50 && (
+              <Button
+                size="2xs"
+                variant="ghost"
+                onClick={handleCompact}
+                loading={compacting}
+                flexShrink={0}
+              >
+                Compact
+              </Button>
+            )}
+          </Flex>
+        </Box>
+      )}
+
       {/* Thread */}
       {activeSession ? (
         <Box px={4} pt={4}>
@@ -256,8 +310,17 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
           </Box>
         )}
 
+      {/* Activity indicator — shows tool-call activity while PTY is working */}
+      {activeSession && activityText && streaming && (
+        <Box px={4} pb={1}>
+          <Text fontSize="xs" color={activityColor} fontStyle="italic" lineClamp={1}>
+            ⯎ {activityText}
+          </Text>
+        </Box>
+      )}
+
       {/* Compose bar */}
-      <Box px={4} pb={4} pt={3}>
+      <Box px={4} pb={4} pt={2}>
         <AtriumComposeBar
           onSend={handleCompose}
           disabled={!activeSession}
