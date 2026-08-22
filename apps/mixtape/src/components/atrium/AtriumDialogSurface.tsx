@@ -19,8 +19,16 @@ import { AtriumContextPreview } from "./AtriumContextPreview";
 import { AtriumDial } from "./AtriumDial";
 import { AtriumOrientRow } from "./AtriumOrientRow";
 
-export function AtriumDialogSurface() {
-  const { sessions, isLoading } = useAtriumSessions();
+interface AtriumDialogSurfaceProps {
+  groupSlug?: string;
+}
+
+export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
+  const { sessions: allSessions, isLoading } = useAtriumSessions();
+  // Show only sessions belonging to this surface (personal or group-scoped).
+  const sessions = allSessions.filter((s) =>
+    groupSlug ? s.group_slug === groupSlug : s.group_slug === null
+  );
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
@@ -106,7 +114,7 @@ export function AtriumDialogSurface() {
   }
 
   async function handleNewSession() {
-    const session = await createSession({});
+    const session = await createSession(groupSlug ? { group_slug: groupSlug } : {});
     reset();
     setEditingMemory(false);
     setOrientDismissed(false);

@@ -17,6 +17,7 @@ export async function fetchAtriumSessionEntries(sessionId: string): Promise<Atri
 export async function createAtriumSession(data: {
   title?: string;
   session_context?: string;
+  group_slug?: string;
 }): Promise<AtriumSession> {
   const response = await axiosInstance.post<AtriumSession>("/api/atrium/sessions/new", data);
   return response.data;

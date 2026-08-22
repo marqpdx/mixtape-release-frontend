@@ -28,7 +28,8 @@ export function useAtriumSessions() {
 export function useCreateAtriumSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: atriumApi.createAtriumSession,
+    mutationFn: (data: { title?: string; session_context?: string; group_slug?: string }) =>
+      atriumApi.createAtriumSession(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
     },

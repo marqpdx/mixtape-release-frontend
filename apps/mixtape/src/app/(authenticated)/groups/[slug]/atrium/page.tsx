@@ -68,7 +68,7 @@ export default function GroupAtriumPage({
 
         {/* Zone B — Dialog surface: session list + compose + thread */}
         <Box mt={6}>
-          <AtriumDialogSurface />
+          <AtriumDialogSurface groupSlug={slug} />
         </Box>
 
         {/* Zone C — AtriumResumeCard */}
