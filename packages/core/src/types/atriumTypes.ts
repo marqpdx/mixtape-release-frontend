@@ -16,7 +16,8 @@ export interface AtriumSession {
   title: string;
   session_context: string;
   dial_mode: AtriumDialMode;
-  group_slug: string | null;
+  sponsor_type: string | null;
+  sponsor_slug: string | null;
   status: AtriumSessionStatus;
   last_activity_at: string | null;
   entry_count: number;

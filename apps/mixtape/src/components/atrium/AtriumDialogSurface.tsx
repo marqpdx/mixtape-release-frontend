@@ -27,7 +27,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const { sessions: allSessions, isLoading } = useAtriumSessions();
   // Show only sessions belonging to this surface (personal or group-scoped).
   const sessions = allSessions.filter((s) =>
-    groupSlug ? s.group_slug === groupSlug : s.group_slug === null
+    groupSlug ? s.sponsor_slug === groupSlug : s.sponsor_slug === null
   );
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
