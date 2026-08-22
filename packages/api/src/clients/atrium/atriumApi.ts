@@ -2,7 +2,7 @@
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "@mixtape/api/lib/utils";
-import type { AtriumSession, AtriumSessionEntry } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, AtriumSession, AtriumSessionEntry } from "@mixtape/core/types/atriumTypes";
 
 export async function fetchAtriumSessions(): Promise<AtriumSession[]> {
   const response = await axiosInstance.get("/api/atrium/sessions/");
@@ -33,7 +33,7 @@ export async function fetchAtriumSessionContext(
 
 export async function updateAtriumSession(
   sessionId: string,
-  data: { title?: string; session_context?: string }
+  data: { title?: string; session_context?: string; dial_mode?: AtriumDialMode }
 ): Promise<AtriumSession> {
   const response = await axiosInstance.patch<AtriumSession>(`/api/atrium/sessions/${sessionId}/`, data);
   return response.data;

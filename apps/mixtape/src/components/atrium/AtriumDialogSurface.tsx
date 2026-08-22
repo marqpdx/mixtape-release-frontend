@@ -8,20 +8,25 @@ import {
   useAtriumSessions,
   useCreateAtriumSession,
   useAtriumExchange,
+  useUpdateAtriumSession,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd } from "@mixtape/api/hooks/switchboard";
-import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
 import { AtriumSessionThread } from "./AtriumSessionThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
 import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
 import { AtriumContextPreview } from "./AtriumContextPreview";
+import { AtriumDial } from "./AtriumDial";
+import { AtriumOrientRow } from "./AtriumOrientRow";
 
 export function AtriumDialogSurface() {
   const { sessions, isLoading } = useAtriumSessions();
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
+  const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
   const [editingMemory, setEditingMemory] = useState(false);
   const [commandPending, setCommandPending] = useState(false);
+  const [orientDismissed, setOrientDismissed] = useState(false);
 
   const { entries, streaming, error, send, reset, appendLocalEntry } = useAtriumExchange(activeSession);
   const { submitAsync: submitFind } = useFind();
@@ -93,10 +98,18 @@ export function AtriumDialogSurface() {
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
   const editIconColor = useColorModeValue("gray.400", "gray.500");
 
+  async function handleDialChange(mode: AtriumDialMode) {
+    if (!activeSession) return;
+    const updated = await updateSession({ sessionId: activeSession.id, data: { dial_mode: mode } });
+    setActiveSession(updated);
+    if (mode !== "very_focused") setOrientDismissed(false);
+  }
+
   async function handleNewSession() {
     const session = await createSession({});
     reset();
     setEditingMemory(false);
+    setOrientDismissed(false);
     setActiveSession(session);
   }
 
@@ -104,6 +117,7 @@ export function AtriumDialogSurface() {
     if (session.id === activeSession?.id) return;
     reset();
     setEditingMemory(false);
+    setOrientDismissed(false);
     setActiveSession(session);
   }
 
@@ -191,6 +205,17 @@ export function AtriumDialogSurface() {
         />
       )}
 
+      {/* Dial — session-level posture selector */}
+      {activeSession && !editingMemory && (
+        <Box px={4} py={2} borderBottomWidth="1px" borderColor={borderColor}>
+          <AtriumDial
+            value={activeSession.dial_mode ?? "expressive"}
+            onChange={handleDialChange}
+            disabled={streaming || commandPending}
+          />
+        </Box>
+      )}
+
       {/* Beryl context preview — collapsed by default, power-user transparency */}
       {activeSession && !editingMemory && (
         <AtriumContextPreview sessionId={activeSession.id} />
@@ -213,6 +238,15 @@ export function AtriumDialogSurface() {
           </Text>
         </Box>
       )}
+
+      {/* Orient row — Very Focused only, dismissed once user sets a target */}
+      {activeSession &&
+        (activeSession.dial_mode ?? "expressive") === "very_focused" &&
+        !orientDismissed && (
+          <Box px={4} pt={2}>
+            <AtriumOrientRow onDismiss={() => setOrientDismissed(true)} />
+          </Box>
+        )}
 
       {/* Compose bar */}
       <Box px={4} pb={4} pt={3}>

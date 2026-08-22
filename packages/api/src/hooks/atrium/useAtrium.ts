@@ -5,7 +5,7 @@ import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
-import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
@@ -55,8 +55,13 @@ export function useAtriumSessionContext(sessionId: string | null) {
 export function useUpdateAtriumSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ sessionId, data }: { sessionId: string; data: { title?: string; session_context?: string } }) =>
-      atriumApi.updateAtriumSession(sessionId, data),
+    mutationFn: ({
+      sessionId,
+      data,
+    }: {
+      sessionId: string;
+      data: { title?: string; session_context?: string; dial_mode?: AtriumDialMode };
+    }) => atriumApi.updateAtriumSession(sessionId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
     },
