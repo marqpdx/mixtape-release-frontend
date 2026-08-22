@@ -72,6 +72,8 @@ export function useUpdateAtriumSession() {
 export function useWarmAtriumSession() {
   return useMutation({
     mutationFn: (sessionId: string) => atriumApi.warmAtriumSession(sessionId),
+    // warmAtriumSession resolves once the HTTP request completes (PTY is warming
+    // in the background — the actual boot finishes a few seconds later).
   });
 }
 
@@ -120,6 +122,7 @@ export function useAtriumExchange(session: AtriumSession | null) {
   const [error, setError] = useState<string | null>(null);
   const [activityText, setActivityText] = useState<string | null>(null);
   const [contextStatus, setContextStatus] = useState<AtriumContextStatus | null>(null);
+  const [usedFallback, setUsedFallback] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load persisted history whenever the active session changes
@@ -194,6 +197,8 @@ export function useAtriumExchange(session: AtriumSession | null) {
                   total: payload.total as number,
                   pct: payload.pct as number,
                 });
+              } else if (payload.type === "fallback") {
+                setUsedFallback(true);
               } else if (payload.type === "error") {
                 setError(payload.detail ?? "An error occurred.");
               }
@@ -227,6 +232,7 @@ export function useAtriumExchange(session: AtriumSession | null) {
     setEntries([]);
     setError(null);
     setActivityText(null);
+    setUsedFallback(false);
   }, []);
 
   // Appends a synthetic, non-persisted entry (e.g. a Grist verb result).
@@ -235,5 +241,5 @@ export function useAtriumExchange(session: AtriumSession | null) {
     setEntries((prev) => [...prev, entry]);
   }, []);
 
-  return { entries, streaming, error, activityText, contextStatus, send, cancel, reset, appendLocalEntry };
+  return { entries, streaming, error, activityText, contextStatus, usedFallback, send, cancel, reset, appendLocalEntry };
 }

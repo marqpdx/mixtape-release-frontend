@@ -38,9 +38,9 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
 
-  const { entries, streaming, error, activityText, contextStatus, send, reset, appendLocalEntry } =
+  const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
-  const { mutate: warmSession } = useWarmAtriumSession();
+  const { mutate: warmSession, isPending: isWarming } = useWarmAtriumSession();
   const { mutateAsync: compactSession, isPending: compacting } = useCompactAtriumSession();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
@@ -310,11 +310,29 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
           </Box>
         )}
 
+      {/* Warming indicator — shown while PTY is booting */}
+      {activeSession && isWarming && !streaming && (
+        <Box px={4} pb={1}>
+          <Text fontSize="xs" color={subtitleColor} fontStyle="italic">
+            Starting up Claude Code…
+          </Text>
+        </Box>
+      )}
+
       {/* Activity indicator — shows tool-call activity while PTY is working */}
       {activeSession && activityText && streaming && (
         <Box px={4} pb={1}>
           <Text fontSize="xs" color={activityColor} fontStyle="italic" lineClamp={1}>
             ⯎ {activityText}
+          </Text>
+        </Box>
+      )}
+
+      {/* Fallback notice — shown briefly after a response completed via timeout */}
+      {activeSession && usedFallback && !streaming && (
+        <Box px={4} pb={1}>
+          <Text fontSize="xs" color={subtitleColor} fontStyle="italic">
+            (prompt detection timed out — response may be truncated)
           </Text>
         </Box>
       )}

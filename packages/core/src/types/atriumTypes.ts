@@ -5,13 +5,14 @@ export type AtriumSessionStatus = "active" | "closed" | "archived";
 export type AtriumDialMode = "expressive" | "very_focused" | "vague";
 
 export type AtriumSSEEventType =
-  | "delta"        // response text chunk
-  | "activity"     // tool-call activity line (e.g. "Reading foo.md")
+  | "delta"          // response text chunk
+  | "activity"       // tool-call activity line (e.g. "Reading foo.md")
   | "context_status" // context window usage update
-  | "ready"        // PTY warm — session is ready before first message
-  | "compacted"    // /compact completed
-  | "done"         // exchange complete
-  | "error";       // exchange error
+  | "ready"          // PTY warm — session is ready before first message
+  | "fallback"       // prompt not detected; 3s silence used to end response
+  | "compacted"      // /compact completed
+  | "done"           // exchange complete
+  | "error";         // exchange error
 
 export interface AtriumContextStatus {
   used: number;
