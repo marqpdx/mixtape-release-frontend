@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Flex, Text, VStack } from "@chakra-ui/react";
 import { IconLayoutSidebarRight } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
@@ -15,6 +15,8 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [trackedItems, setTrackedItems] = useState<string[]>([]);
+  const trackedFetched = useRef(false);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -35,13 +37,19 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
 
   const initiatives = sponsorContext?.initiatives ?? [];
   const drafts = sponsorContext?.recent_drafts ?? [];
-  const hasContent = initiatives.length > 0 || drafts.length > 0;
+  const hasContent = trackedItems.length > 0 || initiatives.length > 0 || drafts.length > 0;
 
   return (
     <Flex className="asw-root" align="flex-start">
       {/* Main dialog surface */}
       <Box className="asw-surface" flex={1} minW={0}>
-        <AtriumDialogSurface groupSlug={groupSlug} />
+        <AtriumDialogSurface
+          groupSlug={groupSlug}
+          onTrackedFetch={(items) => {
+            setTrackedItems(items);
+            trackedFetched.current = true;
+          }}
+        />
       </Box>
 
       {/* Sidebar */}
@@ -88,6 +96,33 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
                   ✕
                 </Text>
               </Flex>
+            )}
+
+            {/* Tracked items */}
+            {(trackedItems.length > 0 || trackedFetched.current) && (
+              <Box mb={4}>
+                <Text
+                  fontSize="2xs"
+                  fontWeight="700"
+                  color={labelColor}
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                  mb={1.5}
+                >
+                  Tracked
+                </Text>
+                {trackedItems.length > 0 ? (
+                  <VStack align="stretch" gap={1}>
+                    {trackedItems.slice(0, sidebarOpen ? 20 : 5).map((item, i) => (
+                      <Text key={i} fontSize="xs" color={itemColor} lineClamp={1} title={item}>
+                        {item}
+                      </Text>
+                    ))}
+                  </VStack>
+                ) : (
+                  <Text fontSize="xs" color={labelColor}>No tracked items yet.</Text>
+                )}
+              </Box>
             )}
 
             {/* Initiatives */}

@@ -14,7 +14,7 @@ import {
   useCompactAtriumSession,
   useResetAtriumSession,
 } from "@mixtape/api/hooks/atrium";
-import { useFind, useAdd } from "@mixtape/api/hooks/switchboard";
+import { useFind, useAdd, useTrack } from "@mixtape/api/hooks/switchboard";
 import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
 import { AtriumSessionThread } from "./AtriumSessionThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
@@ -26,9 +26,10 @@ import { AtriumDistillModal } from "./AtriumDistillModal";
 
 interface AtriumDialogSurfaceProps {
   groupSlug?: string;
+  onTrackedFetch?: (items: string[]) => void;
 }
 
-export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
+export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogSurfaceProps) {
   const { sessions, isLoading } = useAtriumSessions(groupSlug);
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
@@ -49,6 +50,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const { mutateAsync: resetSession, isPending: resetting } = useResetAtriumSession();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
+  const { submitAsync: submitTrack } = useTrack();
 
   // Pre-warm subprocess whenever the active session changes.
   useEffect(() => {
@@ -120,6 +122,32 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
         setCommandPending(false);
       }
       return;
+    }
+
+    if (message.startsWith("/track")) {
+      const rest = message.slice("/track".length).trim();
+      if (!rest) {
+        appendLocalEntry({ role: "user", content: message });
+        setCommandPending(true);
+        try {
+          const result = await submitTrack({ action: "fetch", group_slug: groupSlug });
+          if (result.action === "fetch") {
+            onTrackedFetch?.(result.items);
+            const body = result.items.length
+              ? `Tracked items:\n${result.items.map((item, i) => `${i + 1}. ${item}`).join("\n")}`
+              : "No tracked items yet. Use `/track [text]` to add one.";
+            appendLocalEntry({ role: "assistant", content: body });
+          }
+        } catch (err) {
+          appendLocalEntry({
+            role: "assistant",
+            content: `/track failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+          });
+        } finally {
+          setCommandPending(false);
+        }
+        return;
+      }
     }
 
     send(message);
