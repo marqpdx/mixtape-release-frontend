@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { WarmResult } from "@mixtape/api/clients/atrium/atriumApi";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
-import type { AtriumContextStatus, AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
+import type { AtriumContextStatus, AtriumDialMode, AtriumSession, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
@@ -82,6 +82,13 @@ export function useWarmAtriumSession() {
 export function useCompactAtriumSession() {
   return useMutation({
     mutationFn: (sessionId: string) => atriumApi.compactAtriumSession(sessionId),
+  });
+}
+
+export function useDistillAtriumSession() {
+  return useMutation<Distillate, Error, { sessionId: string; title: string; document_type: DistillateDocumentType }>({
+    mutationFn: ({ sessionId, title, document_type }) =>
+      atriumApi.distillAtriumSession(sessionId, { title, document_type }),
   });
 }
 

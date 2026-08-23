@@ -28,6 +28,31 @@ export interface AtriumSessionEntry {
   created_at: string;
 }
 
+export type DistillateDocumentType =
+  | "field-note"
+  | "finding"
+  | "position-paper"
+  | "draft-adr"
+  | "summary"
+  | "other";
+
+export const DISTILLATE_DOCUMENT_TYPES: { value: DistillateDocumentType; label: string }[] = [
+  { value: "summary", label: "Summary" },
+  { value: "field-note", label: "Field Note" },
+  { value: "finding", label: "Finding" },
+  { value: "position-paper", label: "Position Paper" },
+  { value: "draft-adr", label: "Draft ADR" },
+  { value: "other", label: "Other" },
+];
+
+export interface Distillate {
+  id: string;
+  title: string;
+  body: string;
+  document_type: DistillateDocumentType;
+  created_at: string;
+}
+
 export interface AtriumSession {
   id: string;
   title: string;

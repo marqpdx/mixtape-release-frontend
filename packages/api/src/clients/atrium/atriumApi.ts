@@ -2,7 +2,7 @@
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "@mixtape/api/lib/utils";
-import type { AtriumDialMode, AtriumSession, AtriumSessionEntry } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, AtriumSession, AtriumSessionEntry, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
 export async function fetchAtriumSessions(): Promise<AtriumSession[]> {
   const response = await axiosInstance.get("/api/atrium/sessions/");
@@ -87,6 +87,17 @@ export async function warmAtriumSession(
 export async function compactAtriumSession(sessionId: string): Promise<{ summary: string | null }> {
   const response = await axiosInstance.post<{ summary: string | null }>(
     `/api/atrium/sessions/${sessionId}/compact`
+  );
+  return response.data;
+}
+
+export async function distillAtriumSession(
+  sessionId: string,
+  data: { title: string; document_type: DistillateDocumentType }
+): Promise<Distillate> {
+  const response = await axiosInstance.post<Distillate>(
+    `/api/atrium/sessions/${sessionId}/distill`,
+    data
   );
   return response.data;
 }

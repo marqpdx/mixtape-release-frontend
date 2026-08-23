@@ -20,6 +20,7 @@ import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
 import { AtriumContextPreview } from "./AtriumContextPreview";
 import { AtriumDial } from "./AtriumDial";
 import { AtriumOrientRow } from "./AtriumOrientRow";
+import { AtriumDistillModal } from "./AtriumDistillModal";
 
 interface AtriumDialogSurfaceProps {
   groupSlug?: string;
@@ -38,6 +39,8 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
   const [reconstructedNote, setReconstructedNote] = useState<string | null>(null);
+  const [distillOpen, setDistillOpen] = useState(false);
+  const [compactPromptVisible, setCompactPromptVisible] = useState(false);
 
   const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
@@ -133,9 +136,19 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const ctxPct = contextStatus?.pct ?? 0;
   const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
 
-  async function handleCompact() {
+  function handleCompactClick() {
+    setCompactPromptVisible(true);
+  }
+
+  async function handleCompactOnly() {
     if (!activeSession) return;
+    setCompactPromptVisible(false);
     await compactSession(activeSession.id);
+  }
+
+  function handleDistillBeforeCompact() {
+    setCompactPromptVisible(false);
+    setDistillOpen(true);
   }
 
   async function handleDialChange(mode: AtriumDialMode) {
@@ -263,7 +276,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
         <AtriumContextPreview sessionId={activeSession.id} />
       )}
 
-      {/* Context usage bar — shown when we have a reading, dimmed when idle */}
+      {/* Context usage bar — shown when we have a reading */}
       {activeSession && !editingMemory && contextStatus && (
         <Box px={4} pt={1}>
           <Flex align="center" gap={2}>
@@ -281,11 +294,11 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
             <Text fontSize="xs" color={subtitleColor} flexShrink={0} whiteSpace="nowrap">
               {Math.round(contextStatus.pct)}%
             </Text>
-            {contextStatus.pct >= 50 && (
+            {contextStatus.pct >= 50 && !compactPromptVisible && (
               <Button
                 size="2xs"
                 variant="ghost"
-                onClick={handleCompact}
+                onClick={handleCompactClick}
                 loading={compacting}
                 flexShrink={0}
               >
@@ -293,6 +306,46 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
               </Button>
             )}
           </Flex>
+          {/* Pre-compact Distillate prompt */}
+          {compactPromptVisible && (
+            <Flex align="center" gap={2} pt={1} flexWrap="wrap">
+              <Text fontSize="xs" color={subtitleColor} flex={1}>
+                Good moment to save a Distillate before compressing?
+              </Text>
+              <Button
+                size="2xs"
+                colorPalette="blue"
+                variant="outline"
+                onClick={handleDistillBeforeCompact}
+                flexShrink={0}
+              >
+                Distill →
+              </Button>
+              <Button
+                size="2xs"
+                variant="ghost"
+                onClick={handleCompactOnly}
+                loading={compacting}
+                flexShrink={0}
+              >
+                Compact only
+              </Button>
+            </Flex>
+          )}
+        </Box>
+      )}
+
+      {/* Standalone Distill button — always accessible when a session is active */}
+      {activeSession && !editingMemory && !compactPromptVisible && (
+        <Box px={4} pt={1}>
+          <Button
+            size="2xs"
+            variant="ghost"
+            colorPalette="blue"
+            onClick={() => setDistillOpen(true)}
+          >
+            Distill →
+          </Button>
         </Box>
       )}
 
@@ -384,6 +437,15 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
           streaming={streaming || commandPending}
         />
       </Box>
+
+      {/* Distill modal — portal-rendered, outside the scroll container */}
+      {activeSession && (
+        <AtriumDistillModal
+          sessionId={activeSession.id}
+          open={distillOpen}
+          onClose={() => setDistillOpen(false)}
+        />
+      )}
     </Box>
   );
 }
