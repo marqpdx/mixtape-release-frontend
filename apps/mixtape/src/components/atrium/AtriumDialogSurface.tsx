@@ -30,7 +30,7 @@ interface AtriumDialogSurfaceProps {
 
 export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const { sessions, isLoading } = useAtriumSessions(groupSlug);
-  const { sponsorContext } = useAtriumSponsorContext(groupSlug);
+  const { sponsorContext: _sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
