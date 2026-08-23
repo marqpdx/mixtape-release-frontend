@@ -8,7 +8,6 @@ interface ArtifactImportProps {
   onDraftCreated?: (draftId: string) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ArtifactImport(_props: ArtifactImportProps) {
   return (
     <VStack align="stretch" gap={4}>

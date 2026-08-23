@@ -62,7 +62,7 @@ function timeAgo(iso: string): string {
 
 function CommentThreadCard({
   comment,
-  pieceId: _pieceId, // eslint-disable-line @typescript-eslint/no-unused-vars
+  pieceId: _pieceId,
   editor,
   canResolve,
   currentUserId,

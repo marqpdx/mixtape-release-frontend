@@ -139,18 +139,6 @@ function humanSummary(registers: { slug: string; display_name: string; entry_cou
   return parts.length ? parts.join(" · ") : (registers.length > 0 ? `${registers.length} items` : "nothing detected");
 }
 
-function _aggregateFindings(files: { registers: { slug: string; display_name: string; entry_count: number; columns: string[] }[] }[]): { ec: EntityClass; count: number }[] {
-  const byType: Record<string, { ec: EntityClass; count: number }> = {};
-  for (const f of files) {
-    for (const r of f.registers) {
-      const ec = classifyRegister(r.slug, r.display_name, r.columns);
-      if (!byType[ec.plural]) byType[ec.plural] = { ec, count: 0 };
-      byType[ec.plural].count += r.entry_count;
-    }
-  }
-  return Object.values(byType).filter((v) => v.count > 0);
-}
-
 // Consolidate granular parser registers into one row per entity type.
 // e.g. "Confirmed Partners" + "Partner Outreach" + "Grants" → one "Partners & Suppliers" register.
 const ENTITY_ORDER = ["people", "recipes", "tasks", "partners", "meeting notes", "records"];
