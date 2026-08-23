@@ -184,6 +184,7 @@ export interface FindResult {
   artifact_type: string;
   artifact_id: string;
   source_file_id: string;
+  list_title?: string;
 }
 
 export interface FindRequest {
@@ -192,6 +193,7 @@ export interface FindRequest {
   limit?: number;
   score_threshold?: number;
   surface?: 'mobile' | 'desktop' | 'atrium';
+  group_slug?: string;
 }
 
 export interface FindResponse {

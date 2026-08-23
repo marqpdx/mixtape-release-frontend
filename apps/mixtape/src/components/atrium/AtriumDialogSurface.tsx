@@ -76,10 +76,15 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
       appendLocalEntry({ role: "user", content: message });
       setCommandPending(true);
       try {
-        const result = await submitFind({ query, surface: "atrium" });
+        const result = await submitFind({ query, surface: "atrium", group_slug: groupSlug });
         const body = result.results.length
           ? result.results
-              .map((r, i) => `${i + 1}. ${r.text.slice(0, 200)}${r.text.length > 200 ? "…" : ""} (score: ${r.score.toFixed(2)})`)
+              .map((r, i) => {
+                const source = r.artifact_type === "list"
+                  ? `[List: ${r.list_title ?? "Tracked"}]`
+                  : `(score: ${r.score.toFixed(2)})`;
+                return `${i + 1}. ${r.text.slice(0, 200)}${r.text.length > 200 ? "…" : ""} ${source}`;
+              })
               .join("\n")
           : "No results found.";
         appendLocalEntry({ role: "assistant", content: body });
