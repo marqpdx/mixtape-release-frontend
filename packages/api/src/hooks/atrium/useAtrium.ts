@@ -92,6 +92,12 @@ export function useDistillAtriumSession() {
   });
 }
 
+export function useResetAtriumSession() {
+  return useMutation<{ status: string }, Error, string>({
+    mutationFn: (sessionId: string) => atriumApi.resetAtriumSession(sessionId),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Session history (persisted entries)
 // ---------------------------------------------------------------------------

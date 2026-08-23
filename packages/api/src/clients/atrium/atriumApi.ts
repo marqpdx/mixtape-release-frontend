@@ -101,3 +101,10 @@ export async function distillAtriumSession(
   );
   return response.data;
 }
+
+export async function resetAtriumSession(sessionId: string): Promise<{ status: string }> {
+  const response = await axiosInstance.post<{ status: string }>(
+    `/api/atrium/sessions/${sessionId}/reset`
+  );
+  return response.data;
+}

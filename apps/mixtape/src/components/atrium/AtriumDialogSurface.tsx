@@ -11,6 +11,7 @@ import {
   useUpdateAtriumSession,
   useWarmAtriumSession,
   useCompactAtriumSession,
+  useResetAtriumSession,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd } from "@mixtape/api/hooks/switchboard";
 import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
@@ -41,11 +42,13 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const [reconstructedNote, setReconstructedNote] = useState<string | null>(null);
   const [distillOpen, setDistillOpen] = useState(false);
   const [compactPromptVisible, setCompactPromptVisible] = useState(false);
+  const [freshStartNote, setFreshStartNote] = useState(false);
 
   const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
   const { mutate: warmSession, isPending: isWarming } = useWarmAtriumSession();
   const { mutateAsync: compactSession, isPending: compacting } = useCompactAtriumSession();
+  const { mutateAsync: resetSession, isPending: resetting } = useResetAtriumSession();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
 
@@ -151,6 +154,16 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
     setDistillOpen(true);
   }
 
+  async function handleStartFresh() {
+    if (!activeSession) return;
+    setEditingMemory(false);
+    await resetSession(activeSession.id);
+    reset(); // clear local entries state
+    setFreshStartNote(true);
+    setReconstructedNote(null);
+    setCompactPromptVisible(false);
+  }
+
   async function handleDialChange(mode: AtriumDialMode) {
     if (!activeSession) return;
     const updated = await updateSession({ sessionId: activeSession.id, data: { dial_mode: mode } });
@@ -164,6 +177,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
     setEditingMemory(false);
     setOrientDismissed(false);
     setReconstructedNote(null);
+    setFreshStartNote(false);
     setActiveSession(session);
   }
 
@@ -173,6 +187,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
     setEditingMemory(false);
     setOrientDismissed(false);
     setReconstructedNote(null);
+    setFreshStartNote(false);
     setActiveSession(session);
   }
 
@@ -237,6 +252,19 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
           >
             {editingMemory ? <IconX size={14} /> : <IconPencil size={14} />}
           </IconButton>
+        )}
+        {editingMemory && activeSession && (
+          <Button
+            size="xs"
+            variant="ghost"
+            colorPalette="red"
+            onClick={handleStartFresh}
+            loading={resetting}
+            disabled={streaming}
+            flexShrink={0}
+          >
+            Start fresh
+          </Button>
         )}
         <Button
           size="xs"
@@ -369,6 +397,32 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
             variant="ghost"
             color={reconstructedIconColor}
             onClick={() => setReconstructedNote(null)}
+          >
+            <IconX size={12} />
+          </IconButton>
+        </Flex>
+      )}
+
+      {/* Fresh-start banner — shown briefly after Session Reset */}
+      {activeSession && freshStartNote && (
+        <Flex
+          px={4}
+          py={2}
+          align="center"
+          gap={2}
+          bg={reconstructedBg}
+          borderBottomWidth="1px"
+          borderColor={borderColor}
+        >
+          <Text fontSize="xs" color={reconstructedTextColor} flex={1}>
+            ↺ Session reset — started fresh. Prior conversation is archived in the DB.
+          </Text>
+          <IconButton
+            aria-label="Dismiss"
+            size="2xs"
+            variant="ghost"
+            color={reconstructedIconColor}
+            onClick={() => setFreshStartNote(false)}
           >
             <IconX size={12} />
           </IconButton>
