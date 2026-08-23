@@ -47,7 +47,7 @@ export function GristCommandBar({ onCommand }: GristCommandBarProps) {
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Try /log, /event, /draft…"
+        placeholder="Try /track, /find, /add, /log…"
         variant="flushed"
         fontSize="sm"
         flex="1"

@@ -8,6 +8,7 @@ import {
   submitRefineAsync,
   submitAdd,
   submitFind,
+  submitTrack,
   submitResearchAsync,
   submitPatternAsync,
   submitSynthesizeAsync,
@@ -24,6 +25,8 @@ import {
   type AddResponse,
   type FindRequest,
   type FindResponse,
+  type TrackRequest,
+  type TrackResponse,
   type ResearchAsyncRequest,
   type ResearchActionResult,
   type PatternAsyncRequest,
@@ -50,6 +53,8 @@ export type {
   AddResponse,
   FindRequest,
   FindResponse,
+  TrackRequest,
+  TrackResponse,
   ResearchAsyncRequest,
   ResearchActionResult,
   PatternAsyncRequest,
@@ -221,6 +226,21 @@ export function useAdd() {
 export function useFind() {
   const mutation = useMutation<FindResponse, Error, FindRequest>({
     mutationFn: submitFind,
+  });
+
+  return {
+    submit: mutation.mutate,
+    submitAsync: mutation.mutateAsync,
+    isSubmitting: mutation.isPending,
+    result: mutation.data ?? null,
+    error: mutation.error,
+    reset: mutation.reset,
+  };
+}
+
+export function useTrack() {
+  const mutation = useMutation<TrackResponse, Error, TrackRequest>({
+    mutationFn: submitTrack,
   });
 
   return {

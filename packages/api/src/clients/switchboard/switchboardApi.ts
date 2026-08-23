@@ -142,6 +142,42 @@ export async function submitAdd(payload: AddRequest): Promise<AddResponse> {
   return res.data as AddResponse;
 }
 
+export interface TrackFetchRequest {
+  action: "fetch";
+  group_slug?: string;
+}
+
+export interface TrackAppendRequest {
+  action: "append";
+  text: string;
+  group_slug?: string;
+}
+
+export type TrackRequest = TrackFetchRequest | TrackAppendRequest;
+
+export interface TrackFetchResponse {
+  action: "fetch";
+  items: string[];
+  list_id: string | null;
+  list_title: string;
+  action_run_id: string;
+}
+
+export interface TrackAppendResponse {
+  action: "append";
+  items_added: number;
+  list_id: string;
+  list_title: string;
+  action_run_id: string;
+}
+
+export type TrackResponse = TrackFetchResponse | TrackAppendResponse;
+
+export async function submitTrack(payload: TrackRequest): Promise<TrackResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/track", payload);
+  return res.data as TrackResponse;
+}
+
 export interface FindResult {
   text: string;
   score: number;
