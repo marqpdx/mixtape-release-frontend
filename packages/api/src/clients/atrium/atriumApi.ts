@@ -4,8 +4,14 @@ import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "@mixtape/api/lib/utils";
 import type { AtriumDialMode, AtriumSession, AtriumSessionEntry, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
-export async function fetchAtriumSessions(): Promise<AtriumSession[]> {
-  const response = await axiosInstance.get("/api/atrium/sessions/");
+export async function fetchAtriumSessions(groupSlug?: string): Promise<AtriumSession[]> {
+  const params: Record<string, string> = {};
+  if (groupSlug) {
+    params.group_slug = groupSlug;
+  } else {
+    params.personal = "true";
+  }
+  const response = await axiosInstance.get("/api/atrium/sessions/", { params });
   return unwrapListResponse<AtriumSession>(response.data);
 }
 
@@ -106,5 +112,35 @@ export async function resetAtriumSession(sessionId: string): Promise<{ status: s
   const response = await axiosInstance.post<{ status: string }>(
     `/api/atrium/sessions/${sessionId}/reset`
   );
+  return response.data;
+}
+
+export interface AtriumSponsorInitiative {
+  id: string;
+  title: string;
+  status: string;
+}
+
+export interface AtriumSponsorDraft {
+  id: string;
+  title: string;
+  created_at: string;
+}
+
+export interface AtriumSponsorContext {
+  sponsor_type: "user" | "group";
+  sponsor_slug: string;
+  sponsor_name: string;
+  sponsor_id: string;
+  initiatives: AtriumSponsorInitiative[];
+  recent_drafts: AtriumSponsorDraft[];
+}
+
+export async function fetchAtriumSponsorContext(groupSlug?: string): Promise<AtriumSponsorContext> {
+  const params: Record<string, string> = {};
+  if (groupSlug) params.group_slug = groupSlug;
+  const response = await axiosInstance.get<AtriumSponsorContext>("/api/atrium/sponsor-context/", {
+    params,
+  });
   return response.data;
 }

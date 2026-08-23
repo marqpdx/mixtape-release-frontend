@@ -6,6 +6,7 @@ import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useAtriumSessions,
+  useAtriumSponsorContext,
   useCreateAtriumSession,
   useAtriumExchange,
   useUpdateAtriumSession,
@@ -28,11 +29,8 @@ interface AtriumDialogSurfaceProps {
 }
 
 export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
-  const { sessions: allSessions, isLoading } = useAtriumSessions();
-  // Show only sessions belonging to this surface (personal or group-scoped).
-  const sessions = allSessions.filter((s) =>
-    groupSlug ? s.sponsor_slug === groupSlug : s.sponsor_slug === null
-  );
+  const { sessions, isLoading } = useAtriumSessions(groupSlug);
+  const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);

@@ -3,27 +3,39 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { WarmResult } from "@mixtape/api/clients/atrium/atriumApi";
+import type { AtriumSponsorContext, WarmResult } from "@mixtape/api/clients/atrium/atriumApi";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
 import type { AtriumContextStatus, AtriumDialMode, AtriumSession, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
-  sessions: () => [...atriumQueryKeys.all, "sessions"] as const,
+  sessions: (groupSlug?: string) => [...atriumQueryKeys.all, "sessions", groupSlug ?? "personal"] as const,
+  sponsorContext: (groupSlug?: string) => [...atriumQueryKeys.all, "sponsor-context", groupSlug ?? "personal"] as const,
   context: (sessionId: string) => [...atriumQueryKeys.all, "context", sessionId] as const,
   entries: (sessionId: string) => [...atriumQueryKeys.all, "entries", sessionId] as const,
 };
 
-export function useAtriumSessions() {
+export function useAtriumSessions(groupSlug?: string) {
   const { data: sessions = [], isLoading, error, refetch } = useQuery({
-    queryKey: atriumQueryKeys.sessions(),
-    queryFn: atriumApi.fetchAtriumSessions,
+    queryKey: atriumQueryKeys.sessions(groupSlug),
+    queryFn: () => atriumApi.fetchAtriumSessions(groupSlug),
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
   return { sessions, isLoading, error: error as Error | null, refetch };
+}
+
+export function useAtriumSponsorContext(groupSlug?: string) {
+  const { data, isLoading, error } = useQuery<AtriumSponsorContext, Error>({
+    queryKey: atriumQueryKeys.sponsorContext(groupSlug),
+    queryFn: () => atriumApi.fetchAtriumSponsorContext(groupSlug),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { sponsorContext: data ?? null, isLoading, error };
 }
 
 export function useCreateAtriumSession() {
@@ -32,7 +44,7 @@ export function useCreateAtriumSession() {
     mutationFn: (data: { title?: string; session_context?: string; group_slug?: string }) =>
       atriumApi.createAtriumSession(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+      queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
     },
   });
 }
@@ -65,7 +77,7 @@ export function useUpdateAtriumSession() {
       data: { title?: string; session_context?: string; dial_mode?: AtriumDialMode };
     }) => atriumApi.updateAtriumSession(sessionId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+      queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
     },
   });
 }
@@ -223,8 +235,8 @@ export function useAtriumExchange(session: AtriumSession | null) {
           }
         }
 
-        // Invalidate session list (entry_count) and persisted entries (ids for promotion)
-        queryClient.invalidateQueries({ queryKey: atriumQueryKeys.sessions() });
+        // Invalidate all session list variants (entry_count) + persisted entries (ids for promotion)
+        queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
         queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(session.id) });
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
