@@ -8,7 +8,8 @@ export type AtriumSSEEventType =
   | "delta"          // response text chunk
   | "activity"       // tool-call activity line (e.g. "Reading foo.md")
   | "context_status" // context window usage update
-  | "ready"          // PTY warm — session is ready before first message
+  | "ready"          // warm — subprocess was already live, same context
+  | "reconstructed"  // warm — cold spawn; history injected from ApertureLog + DB entries
   | "fallback"       // prompt not detected; 3s silence used to end response
   | "compacted"      // /compact completed
   | "done"           // exchange complete

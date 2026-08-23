@@ -37,6 +37,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const [editingMemory, setEditingMemory] = useState(false);
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
+  const [reconstructedNote, setReconstructedNote] = useState<string | null>(null);
 
   const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
@@ -45,12 +46,19 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
 
-  // Pre-warm PTY whenever the active session changes.
+  // Pre-warm subprocess whenever the active session changes.
   useEffect(() => {
-    if (activeSession?.id) {
-      warmSession(activeSession.id);
-    }
-  }, [activeSession?.id, warmSession]);
+    if (!activeSession?.id) return;
+    setReconstructedNote(null);
+    warmSession(activeSession.id, {
+      onSuccess: (result) => {
+        if (result.type === "reconstructed" && result.provenance) {
+          setReconstructedNote(result.provenance);
+        }
+      },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSession?.id]);
 
   async function handleCompose(message: string) {
     if (message.startsWith("/find")) {
@@ -118,6 +126,9 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
   const editIconColor = useColorModeValue("gray.400", "gray.500");
   const activityColor = useColorModeValue("blue.500", "blue.300");
+  const reconstructedBg = useColorModeValue("blue.50", "blue.900");
+  const reconstructedTextColor = useColorModeValue("blue.700", "blue.200");
+  const reconstructedIconColor = useColorModeValue("blue.400", "blue.300");
 
   const ctxPct = contextStatus?.pct ?? 0;
   const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
@@ -139,6 +150,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
     reset();
     setEditingMemory(false);
     setOrientDismissed(false);
+    setReconstructedNote(null);
     setActiveSession(session);
   }
 
@@ -147,6 +159,7 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
     reset();
     setEditingMemory(false);
     setOrientDismissed(false);
+    setReconstructedNote(null);
     setActiveSession(session);
   }
 
@@ -281,6 +294,32 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
             )}
           </Flex>
         </Box>
+      )}
+
+      {/* Reconstructed badge — shown once on cold spawn, dismissible */}
+      {activeSession && reconstructedNote && (
+        <Flex
+          px={4}
+          py={2}
+          align="center"
+          gap={2}
+          bg={reconstructedBg}
+          borderBottomWidth="1px"
+          borderColor={borderColor}
+        >
+          <Text fontSize="xs" color={reconstructedTextColor} flex={1}>
+            ↩ {reconstructedNote}
+          </Text>
+          <IconButton
+            aria-label="Dismiss"
+            size="2xs"
+            variant="ghost"
+            color={reconstructedIconColor}
+            onClick={() => setReconstructedNote(null)}
+          >
+            <IconX size={12} />
+          </IconButton>
+        </Flex>
       )}
 
       {/* Thread */}

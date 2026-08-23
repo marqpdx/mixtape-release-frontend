@@ -40,10 +40,48 @@ export async function updateAtriumSession(
   return response.data;
 }
 
-export async function warmAtriumSession(sessionId: string): Promise<void> {
-  // Fire-and-forget SSE — we just want to trigger the PTY spawn.
-  // The ready event is consumed by the SSE listener in the hook.
-  await axiosInstance.post(`/api/atrium/sessions/${sessionId}/warm`);
+export interface WarmResult {
+  type: "ready" | "reconstructed";
+  provenance?: string;
+}
+
+export async function warmAtriumSession(
+  sessionId: string,
+  token: string | null
+): Promise<WarmResult> {
+  const { buildApiUrl } = await import("@mixtape/api/lib/axiosInstance");
+  const resp = await fetch(buildApiUrl(`/api/atrium/sessions/${sessionId}/warm`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: "include",
+  });
+  if (!resp.ok || !resp.body) return { type: "ready" };
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const raw = decoder.decode(value, { stream: true });
+    for (const line of raw.split("\n")) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const payload = JSON.parse(line.slice(6));
+        if (payload.type === "reconstructed") {
+          return { type: "reconstructed", provenance: payload.provenance as string | undefined };
+        }
+        if (payload.type === "ready") {
+          return { type: "ready" };
+        }
+      } catch {
+        // skip malformed line
+      }
+    }
+  }
+  return { type: "ready" };
 }
 
 export async function compactAtriumSession(sessionId: string): Promise<{ summary: string | null }> {

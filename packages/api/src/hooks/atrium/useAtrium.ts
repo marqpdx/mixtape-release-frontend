@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken } from "@mixtape/auth/tokenStorage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { WarmResult } from "@mixtape/api/clients/atrium/atriumApi";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
 import type { AtriumContextStatus, AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
@@ -70,10 +71,11 @@ export function useUpdateAtriumSession() {
 }
 
 export function useWarmAtriumSession() {
-  return useMutation({
-    mutationFn: (sessionId: string) => atriumApi.warmAtriumSession(sessionId),
-    // warmAtriumSession resolves once the HTTP request completes (PTY is warming
-    // in the background — the actual boot finishes a few seconds later).
+  return useMutation<WarmResult, Error, string>({
+    mutationFn: (sessionId: string) => {
+      const token = getAccessToken();
+      return atriumApi.warmAtriumSession(sessionId, token);
+    },
   });
 }
 
