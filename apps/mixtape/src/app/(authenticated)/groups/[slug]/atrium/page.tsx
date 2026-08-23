@@ -8,7 +8,7 @@ import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
-import { AtriumDialogSurface } from "@/components/atrium/AtriumDialogSurface";
+import { AtriumSidebarWrapper } from "@/components/atrium/AtriumSidebarWrapper";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
 import { BerylPresence } from "@/components/atrium/BerylPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
@@ -66,9 +66,9 @@ export default function GroupAtriumPage({
         {/* Zone A — Group sponsor header */}
         <GroupAtriumHeader slug={slug} />
 
-        {/* Zone B — Dialog surface: session list + compose + thread */}
+        {/* Zone B — Dialog surface + context sidebar */}
         <Box mt={6}>
-          <AtriumDialogSurface groupSlug={slug} />
+          <AtriumSidebarWrapper groupSlug={slug} />
         </Box>
 
         {/* Zone C — AtriumResumeCard */}
