@@ -126,10 +126,11 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
 
     if (message.startsWith("/track")) {
       const rest = message.slice("/track".length).trim();
-      if (!rest) {
-        appendLocalEntry({ role: "user", content: message });
-        setCommandPending(true);
-        try {
+      appendLocalEntry({ role: "user", content: message });
+      setCommandPending(true);
+      try {
+        if (!rest) {
+          // Fetch all tracked items
           const result = await submitTrack({ action: "fetch", group_slug: groupSlug });
           if (result.action === "fetch") {
             onTrackedFetch?.(result.items);
@@ -138,16 +139,25 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
               : "No tracked items yet. Use `/track [text]` to add one.";
             appendLocalEntry({ role: "assistant", content: body });
           }
-        } catch (err) {
-          appendLocalEntry({
-            role: "assistant",
-            content: `/track failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-          });
-        } finally {
-          setCommandPending(false);
+        } else {
+          // Append one item
+          const result = await submitTrack({ action: "append", text: rest, group_slug: groupSlug });
+          if (result.action === "append") {
+            appendLocalEntry({ role: "assistant", content: `Tracked: "${rest}"` });
+            // Refresh sidebar by fetching the updated list
+            const fetchResult = await submitTrack({ action: "fetch", group_slug: groupSlug });
+            if (fetchResult.action === "fetch") onTrackedFetch?.(fetchResult.items);
+          }
         }
-        return;
+      } catch (err) {
+        appendLocalEntry({
+          role: "assistant",
+          content: `/track failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+        });
+      } finally {
+        setCommandPending(false);
       }
+      return;
     }
 
     send(message);
