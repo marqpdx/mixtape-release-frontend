@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, IconButton, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconPencil, IconPlus, IconX } from "@tabler/icons-react";
+import { IconPencil, IconPlus, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useAtriumSessions,
@@ -30,7 +30,7 @@ interface AtriumDialogSurfaceProps {
 
 export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const { sessions, isLoading } = useAtriumSessions(groupSlug);
-  const { sponsorContext: _sponsorContext } = useAtriumSponsorContext(groupSlug);
+  const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
@@ -133,6 +133,10 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
   const reconstructedBg = useColorModeValue("blue.50", "blue.900");
   const reconstructedTextColor = useColorModeValue("blue.700", "blue.200");
   const reconstructedIconColor = useColorModeValue("blue.400", "blue.300");
+  const sponsorGroupBg = useColorModeValue("blue.50", "blue.950");
+  const sponsorPersonalBg = useColorModeValue("gray.50", "gray.750");
+  const sponsorGroupColor = useColorModeValue("blue.700", "blue.300");
+  const sponsorPersonalColor = useColorModeValue("gray.600", "gray.400");
 
   const ctxPct = contextStatus?.pct ?? 0;
   const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
@@ -211,6 +215,33 @@ export function AtriumDialogSurface({ groupSlug }: AtriumDialogSurfaceProps) {
       borderRadius="lg"
       overflow="hidden"
     >
+      {/* Sponsor identity badge */}
+      {sponsorContext && (
+        <Flex
+          className="ads-sponsor-badge"
+          px={4}
+          py={1.5}
+          align="center"
+          gap={1.5}
+          bg={sponsorContext.sponsor_type === "group" ? sponsorGroupBg : sponsorPersonalBg}
+          borderBottomWidth="1px"
+          borderColor={borderColor}
+        >
+          {sponsorContext.sponsor_type === "group" ? (
+            <IconUsers size={12} color={sponsorGroupColor} />
+          ) : (
+            <IconUser size={12} color={sponsorPersonalColor} />
+          )}
+          <Text
+            fontSize="xs"
+            fontWeight="500"
+            color={sponsorContext.sponsor_type === "group" ? sponsorGroupColor : sponsorPersonalColor}
+          >
+            {sponsorContext.sponsor_type === "group" ? sponsorContext.sponsor_name : "Personal"}
+          </Text>
+        </Flex>
+      )}
+
       {/* Session picker + new session */}
       <Flex
         px={4}
