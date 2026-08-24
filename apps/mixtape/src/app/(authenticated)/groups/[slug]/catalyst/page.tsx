@@ -72,6 +72,7 @@ type Phase1Results = {
 type ParseJob = {
   job_id: string;
   phase1_results: Phase1Results;
+  skipped_duplicates?: string[];
 };
 
 type RegisterRow = {
@@ -633,9 +634,10 @@ export default function GroupCatalystPage() {
         phase1_results: Phase1Results;
         files: ParsedFile[];
         files_processed: number;
+        skipped_duplicates?: string[];
         errors: { file: string; error: string }[];
       };
-      setParseJob({ job_id: data.job_id, phase1_results: data.phase1_results });
+      setParseJob({ job_id: data.job_id, phase1_results: data.phase1_results, skipped_duplicates: data.skipped_duplicates });
       setParsedFiles(data.files ?? []);
       setUnexpectedDecisions({});
       setEnrichmentContext("");
@@ -1765,6 +1767,25 @@ export default function GroupCatalystPage() {
                     you when it&apos;s ready.
                   </Text>
                 </Box>
+
+                {/* Duplicate file notice */}
+                {(parseJob.skipped_duplicates ?? []).length > 0 && (
+                  <Box
+                    bg="yellow.50"
+                    border="1px solid"
+                    borderColor="yellow.300"
+                    borderRadius="lg"
+                    px={4}
+                    py={3}
+                  >
+                    <Text fontSize="sm" fontWeight="600" color="yellow.800" mb={1}>
+                      Duplicate file{(parseJob.skipped_duplicates ?? []).length > 1 ? "s" : ""} skipped
+                    </Text>
+                    <Text fontSize="xs" color="yellow.700">
+                      {(parseJob.skipped_duplicates ?? []).join(", ")} — identical content to another uploaded file. Counts below reflect deduplicated files only.
+                    </Text>
+                  </Box>
+                )}
 
                 {/* Aligned finds — grouped by entity class */}
                 {parseJob.phase1_results.aligned.length > 0 && (() => {
