@@ -107,6 +107,43 @@ type ParsedFile = {
 const BRAND = "#1a1a2e";
 const VERBS = ["Find", "Amend", "Add"];
 
+// ── Vertical shape library (derived from puddlejump/zz/shape-library/) ────────
+type VerticalEntityType = { slug: string; label: string; description: string };
+type VerticalId = "food-service" | "retail" | "education";
+
+const VERTICALS: { id: VerticalId; label: string; icon: string; description: string }[] = [
+  { id: "food-service", label: "Food Service", icon: "🍽", description: "Restaurants, catering, events, retreats" },
+  { id: "retail",       label: "Retail",       icon: "🛍", description: "Shops, products, vendors, inventory" },
+  { id: "education",    label: "Education",    icon: "📚", description: "Courses, programs, students, resources" },
+];
+
+const VERTICAL_ENTITY_TYPES: Record<VerticalId, VerticalEntityType[]> = {
+  "food-service": [
+    { slug: "recipe",     label: "Recipes",             description: "Named dishes with instructions and an outcome" },
+    { slug: "ingredient", label: "Ingredients",          description: "Components of a recipe" },
+    { slug: "menu",       label: "Menus",               description: "Collections of dishes by meal or occasion" },
+    { slug: "prep-task",  label: "Prep Tasks",           description: "Checklists and preparation schedules" },
+    { slug: "purveyor",   label: "Purveyors & Partners", description: "Suppliers, vendors, sponsors, donors" },
+    { slug: "people",     label: "People",              description: "Staff, volunteers, contacts" },
+  ],
+  "retail": [
+    { slug: "product",    label: "Products",   description: "Items for sale or inventory" },
+    { slug: "category",   label: "Categories", description: "Product groupings or departments" },
+    { slug: "vendor",     label: "Vendors",    description: "Suppliers and trade partners" },
+    { slug: "customer",   label: "Customers",  description: "Customer records or accounts" },
+    { slug: "promotion",  label: "Promotions", description: "Sales, discounts, campaigns" },
+    { slug: "people",     label: "People",     description: "Staff and contacts" },
+  ],
+  "education": [
+    { slug: "course",      label: "Courses",     description: "Educational programs or classes" },
+    { slug: "module",      label: "Modules",     description: "Units or lessons within a course" },
+    { slug: "assignment",  label: "Assignments", description: "Tasks and assessments" },
+    { slug: "student",     label: "Students",    description: "Learner records" },
+    { slug: "resource",    label: "Resources",   description: "Materials, readings, references" },
+    { slug: "people",      label: "People",      description: "Instructors, staff, contacts" },
+  ],
+};
+
 // ── Semantic entity classifier ────────────────────────────────────────────────
 type EntityClass = { type: string; icon: string; plural: string };
 
@@ -197,6 +234,10 @@ export default function GroupCatalystPage() {
   const [materializeError, setMaterializeError] = useState<string | null>(null);
   const [generalContext, setGeneralContext] = useState("");
   const [entityExpectations, setEntityExpectations] = useState("");
+  const [selectedVertical, setSelectedVertical] = useState<VerticalId | null>(null);
+  const [entityToggles, setEntityToggles] = useState<Record<string, boolean>>({});
+  const [entitySynonyms, setEntitySynonyms] = useState<Record<string, string>>({});
+  const [synonymOpenFor, setSynonymOpenFor] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsing, setParsing] = useState(false);
@@ -331,6 +372,29 @@ export default function GroupCatalystPage() {
       loadRegister(selectedRegSlug);
     }
   }, [selectedRegSlug, loadRegister]);
+
+  function handleVerticalSelect(id: VerticalId) {
+    setSelectedVertical(id);
+    const types = VERTICAL_ENTITY_TYPES[id];
+    const defaults: Record<string, boolean> = {};
+    types.forEach((t) => { defaults[t.slug] = true; });
+    setEntityToggles(defaults);
+    setEntitySynonyms({});
+    setSynonymOpenFor(null);
+  }
+
+  function buildEntityExpectations(): string {
+    if (!selectedVertical) return entityExpectations;
+    const types = VERTICAL_ENTITY_TYPES[selectedVertical];
+    return types
+      .filter((t) => entityToggles[t.slug] !== false)
+      .map((t) => {
+        const syn = entitySynonyms[t.slug]?.trim();
+        const synPart = syn ? ` (also called: ${syn})` : "";
+        return `${t.label}${synPart}: ${t.description}`;
+      })
+      .join("\n");
+  }
 
   function handleStartQuestions() {
     setIntroState("questions");
@@ -489,8 +553,9 @@ export default function GroupCatalystPage() {
     try {
       const form = new FormData();
       selectedFiles.forEach((f) => form.append("files", f));
-      if (generalContext.trim()) form.append("general_context", generalContext.trim());
-      if (entityExpectations.trim()) form.append("entity_expectations", entityExpectations.trim());
+      // generalContext is collected after Phase 1 (on phase1_review screen)
+      const builtExpectations = buildEntityExpectations();
+      if (builtExpectations.trim()) form.append("entity_expectations", builtExpectations.trim());
       const res = await axiosInstance.post(
         `/api/catalyst/groups/${slug}/parse-files/`,
         form,
@@ -523,9 +588,12 @@ export default function GroupCatalystPage() {
     setStartingAnalysis(true);
     setParseError(null);
     try {
+      const narrativeContext = generalContext.trim();
+      const enrichment = enrichmentContext.trim();
+      const combinedEnrichment = [narrativeContext, enrichment].filter(Boolean).join("\n\n");
       await axiosInstance.post(
         `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/start-analysis/`,
-        enrichmentContext.trim() ? { enrichment_context: enrichmentContext.trim() } : {},
+        combinedEnrichment ? { enrichment_context: combinedEnrichment } : {},
       );
       setIntroState("analyzing");
       setAnalysisProgress(null);
@@ -847,22 +915,16 @@ export default function GroupCatalystPage() {
             >
               {group?.title ?? "Catalyst"}
             </Text>
-            {introState === "questions" && (
+            {(introState === "questions" || introState === "bubble" || introState === "animating") && (
               <>
                 <Text fontSize="10px" color={mutedText}>/</Text>
-                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">About your files</Text>
-              </>
-            )}
-            {(introState === "bubble" || introState === "animating") && (
-              <>
-                <Text fontSize="10px" color={mutedText}>/</Text>
-                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Import</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Set up</Text>
               </>
             )}
             {introState === "phase1_review" && (
               <>
                 <Text fontSize="10px" color={mutedText}>/</Text>
-                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">Structure review</Text>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} userSelect="none">First pass</Text>
               </>
             )}
             {introState === "analyzing" && (
@@ -957,17 +1019,16 @@ export default function GroupCatalystPage() {
             flexShrink={0}
           >
             {([
-              { n: 1, label: "About your files", states: ["questions"] },
-              { n: 2, label: "Import files",     states: ["bubble", "animating"] },
-              { n: 3, label: "Structure review",  states: ["phase1_review"] },
-              { n: 4, label: "Confirm & accept",  states: ["analyzing", "confirming"] },
+              { n: 1, label: "Set up",           states: ["questions", "bubble", "animating"] },
+              { n: 2, label: "First pass",        states: ["phase1_review"] },
+              { n: 3, label: "Confirm & accept",  states: ["analyzing", "confirming"] },
             ] as const).map(({ n, label, states }, idx) => {
               const order: Record<string, number> = {
-                center: 0, questions: 1, animating: 2, bubble: 2,
-                phase1_review: 3, analyzing: 4, confirming: 4, browse: 5,
+                center: 0, questions: 1, animating: 1, bubble: 1,
+                phase1_review: 2, analyzing: 3, confirming: 3, browse: 4,
               };
               const cur = order[introState] ?? 0;
-              const isActive = states.some((s) => s === introState) || (n === 4 && cur === 4);
+              const isActive = states.some((s) => s === introState) || (n === 3 && cur === 3);
               const isDone = cur > n;
               return (
                 <HStack key={label} gap={2} align="center">
@@ -1090,7 +1151,7 @@ export default function GroupCatalystPage() {
                         size="sm"
                         fontWeight="600"
                       >
-                        Import your files →
+                        Set up your ingest →
                       </Button>
                       <Button
                         onClick={handleGoToBrowse}
@@ -1192,11 +1253,11 @@ export default function GroupCatalystPage() {
             </Box>
           )}
 
-          {/* ── STEP 1 — PRE-INGEST QUESTIONS ── */}
+          {/* ── STEP 1 — SETUP: vertical + files + entity types ── */}
           {introState === "questions" && (
             <Box
-              className="cat-questions-surface"
-              maxW="600px"
+              className="cat-setup-surface"
+              maxW="640px"
               mx="auto"
               px={6}
               py={10}
@@ -1205,132 +1266,219 @@ export default function GroupCatalystPage() {
               <VStack align="stretch" gap={7}>
                 <Box>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
-                    Before we start
+                    Let&apos;s set up your ingest
                   </Heading>
                   <Text fontSize="sm" color={mutedText} lineHeight="1.7">
-                    A little context helps us find the right things in your files.
-                    Both questions are optional — you can skip straight to the import.
+                    Choose your vertical, add your files, and tell us what to look for.
                   </Text>
                 </Box>
 
-                {/* Q-A: General context */}
-                <Box
-                  bg={cardBg}
-                  border="1px solid"
-                  borderColor={cardBorder}
-                  borderRadius="lg"
-                  p={5}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                    <Text fontSize="sm" fontWeight="600">
-                      What are these files about?
-                    </Text>
-                    <Box
-                      as="button"
-                      onClick={() => setGeneralContext(
-                        "These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
-                      )}
-                      px="8px"
-                      py="2px"
-                      borderRadius="4px"
-                      bg={chipBg}
-                      border="1px solid"
-                      borderColor={chipBorder}
-                      fontSize="10px"
-                      fontWeight="700"
-                      color={mutedText}
-                      cursor="pointer"
-                      letterSpacing="0.04em"
-                      _hover={{ borderColor: BRAND, color: BRAND }}
-                      transition="all 0.12s"
-                      title="Fill with demo context (Temple of Belonging)"
-                    >
-                      Demo
-                    </Box>
-                  </Box>
-                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
-                    In plain language — what's the occasion, project, or context they were created for?
+                {/* Vertical selector */}
+                <Box>
+                  <Text fontSize="xs" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" color={mutedText} mb={3}>
+                    What kind of operation is this?
                   </Text>
-                  <textarea
-                    value={generalContext}
-                    onChange={(e) => setGeneralContext(e.target.value)}
-                    placeholder="e.g. These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
-                    rows={4}
-                    style={{
-                      width: "100%",
-                      fontSize: "13px",
-                      lineHeight: "1.65",
-                      resize: "vertical",
-                      border: `1px solid ${cardBorder}`,
-                      borderRadius: "6px",
-                      padding: "10px 12px",
-                      background: "transparent",
-                      outline: "none",
-                      fontFamily: "inherit",
-                      color: "inherit",
-                    }}
-                  />
+                  <HStack gap={3} flexWrap="wrap">
+                    {VERTICALS.map((v) => {
+                      const active = selectedVertical === v.id;
+                      return (
+                        <Box
+                          key={v.id}
+                          as="button"
+                          onClick={() => handleVerticalSelect(v.id)}
+                          px={4}
+                          py={3}
+                          borderRadius="lg"
+                          border="2px solid"
+                          borderColor={active ? BRAND : chipBorder}
+                          bg={active ? BRAND : cardBg}
+                          cursor="pointer"
+                          transition="all 0.15s"
+                          _hover={{ borderColor: BRAND }}
+                          flex="1"
+                          minW="140px"
+                          textAlign="left"
+                        >
+                          <Text fontSize="lg" mb={1}>{v.icon}</Text>
+                          <Text fontSize="sm" fontWeight="700" color={active ? "white" : chipText}>{v.label}</Text>
+                          <Text fontSize="11px" color={active ? "whiteAlpha.700" : mutedText} lineHeight="1.4">{v.description}</Text>
+                        </Box>
+                      );
+                    })}
+                  </HStack>
                 </Box>
 
-                {/* Q-B: Entity expectations */}
-                <Box
-                  bg={cardBg}
-                  border="1px solid"
-                  borderColor={cardBorder}
-                  borderRadius="lg"
-                  p={5}
-                >
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                    <Text fontSize="sm" fontWeight="600">
-                      What specific things do you expect to find?
-                    </Text>
-                    <Box
-                      as="button"
-                      onClick={() => setEntityExpectations(
-                        "Recipe: a set of instructions with ingredients and an outcome\n\nIngredient: a component of a recipe\n\nMenu: a listing of Recipes\n\nMeal: a time-based offering of recipes\n\nPurveyors: where we get our supplies\n\nPeople: staff, volunteers"
-                      )}
-                      px="8px"
-                      py="2px"
-                      borderRadius="4px"
-                      bg={chipBg}
-                      border="1px solid"
-                      borderColor={chipBorder}
-                      fontSize="10px"
-                      fontWeight="700"
-                      color={mutedText}
-                      cursor="pointer"
-                      letterSpacing="0.04em"
-                      _hover={{ borderColor: BRAND, color: BRAND }}
-                      transition="all 0.12s"
-                      title="Fill with demo vocabulary (Temple of Belonging)"
-                    >
-                      Demo
-                    </Box>
-                  </Box>
-                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
-                    One type per line. Define what each thing means if it helps — the more specific,
-                    the better we&apos;ll do.
+                {/* File drop zone */}
+                <Box>
+                  <Text fontSize="xs" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" color={mutedText} mb={3}>
+                    Add your files
                   </Text>
-                  <textarea
-                    value={entityExpectations}
-                    onChange={(e) => setEntityExpectations(e.target.value)}
-                    placeholder={"Recipe: a set of instructions with ingredients and an outcome\nPurveyors: where we get our supplies\nPeople: staff, volunteers"}
-                    rows={7}
-                    style={{
-                      width: "100%",
-                      fontSize: "13px",
-                      lineHeight: "1.65",
-                      resize: "vertical",
-                      border: `1px solid ${cardBorder}`,
-                      borderRadius: "6px",
-                      padding: "10px 12px",
-                      background: "transparent",
-                      outline: "none",
-                      fontFamily: "inherit",
-                      color: "inherit",
-                    }}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".md,.pdf,.docx,.doc,.txt,.xlsx,.xls,.csv"
+                    style={{ display: "none" }}
+                    onChange={handleFileInputChange}
                   />
+                  <Box
+                    borderRadius="lg"
+                    border="2px dashed"
+                    borderColor={dragOver ? BRAND : dropZoneBorder}
+                    p={8}
+                    textAlign="center"
+                    cursor="pointer"
+                    bg={dragOver ? dropZoneHoverBg : cardBg}
+                    _hover={{ borderColor: BRAND, bg: dropZoneHoverBg }}
+                    transition="all 0.15s"
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                  >
+                    <Text fontSize="xl" mb={2}>📂</Text>
+                    <Text fontWeight="600" fontSize="sm" mb={1}>
+                      {selectedFiles.length > 0
+                        ? `${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""} selected`
+                        : "Drop files here, or click to browse"}
+                    </Text>
+                    <Text fontSize="xs" color={mutedText}>
+                      {selectedFiles.length > 0
+                        ? selectedFiles.map((f) => f.name).join(", ").slice(0, 100)
+                        : "Markdown, PDF, DOCX, XLSX, plain text"}
+                    </Text>
+                  </Box>
                 </Box>
+
+                {/* Entity type toggles — shown after vertical is chosen */}
+                {selectedVertical && (
+                  <Box>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+                      <Text fontSize="xs" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" color={mutedText}>
+                        What other things might we find in these files?
+                      </Text>
+                      <Box
+                        as="button"
+                        onClick={() => {
+                          if (selectedVertical === "food-service") {
+                            const defaults: Record<string, boolean> = {};
+                            VERTICAL_ENTITY_TYPES["food-service"].forEach((t) => { defaults[t.slug] = true; });
+                            setEntityToggles(defaults);
+                            setEntitySynonyms({
+                              recipe: "dish, menu item",
+                              purveyor: "partner, vendor",
+                            });
+                          }
+                        }}
+                        px="8px"
+                        py="2px"
+                        borderRadius="4px"
+                        bg={chipBg}
+                        border="1px solid"
+                        borderColor={chipBorder}
+                        fontSize="10px"
+                        fontWeight="700"
+                        color={mutedText}
+                        cursor="pointer"
+                        _hover={{ borderColor: BRAND, color: BRAND }}
+                        transition="all 0.12s"
+                      >
+                        Demo
+                      </Box>
+                    </Box>
+                    <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                      Turn off any types you don&apos;t have in these files. Click a type to add your own word for it.
+                    </Text>
+                    <VStack align="stretch" gap={2}>
+                      {VERTICAL_ENTITY_TYPES[selectedVertical].map((t) => {
+                        const on = entityToggles[t.slug] !== false;
+                        const synOpen = synonymOpenFor === t.slug;
+                        const synonym = entitySynonyms[t.slug] ?? "";
+                        return (
+                          <Box key={t.slug}>
+                            <HStack
+                              bg={cardBg}
+                              border="1px solid"
+                              borderColor={on ? cardBorder : chipBorder}
+                              borderRadius={synOpen ? "lg lg 0 0" : "lg"}
+                              px={4}
+                              py={3}
+                              gap={3}
+                              opacity={on ? 1 : 0.45}
+                              transition="opacity 0.15s"
+                            >
+                              <Box flex="1">
+                                <Text fontSize="sm" fontWeight="600">{t.label}</Text>
+                                <Text fontSize="11px" color={mutedText}>{t.description}</Text>
+                              </Box>
+                              <HStack gap={2} flexShrink={0}>
+                                {on && (
+                                  <Box
+                                    as="button"
+                                    onClick={() => setSynonymOpenFor(synOpen ? null : t.slug)}
+                                    px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                    bg={synOpen ? chipBorder : chipBg}
+                                    border="1px solid" borderColor={chipBorder}
+                                    fontSize="10px" fontWeight="600" color={mutedText}
+                                    _hover={{ borderColor: mutedText }}
+                                    title={synonym ? `Synonym: ${synonym}` : "Add your word for this"}
+                                  >
+                                    {synonym ? `≈ ${synonym.split(",")[0].trim()}` : "Add synonym"}
+                                  </Box>
+                                )}
+                                <Box
+                                  as="button"
+                                  onClick={() => setEntityToggles((prev) => ({ ...prev, [t.slug]: !on }))}
+                                  px="8px" py="2px" borderRadius="4px" cursor="pointer"
+                                  bg={on ? BRAND : chipBg}
+                                  border="1px solid" borderColor={on ? BRAND : chipBorder}
+                                  fontSize="10px" fontWeight="700"
+                                  color={on ? "white" : mutedText}
+                                  transition="all 0.12s"
+                                >
+                                  {on ? "On" : "Off"}
+                                </Box>
+                              </HStack>
+                            </HStack>
+                            {synOpen && (
+                              <Box
+                                bg={cardBg}
+                                border="1px solid" borderColor={cardBorder}
+                                borderTop="none"
+                                borderRadius="0 0 lg lg"
+                                px={4} pb={3}
+                              >
+                                <Text fontSize="11px" color={mutedText} mt={2} mb={1}>
+                                  What do you call {t.label.toLowerCase()} in your operation?
+                                </Text>
+                                <input
+                                  autoFocus
+                                  value={synonym}
+                                  onChange={(e) => setEntitySynonyms((prev) => ({ ...prev, [t.slug]: e.target.value }))}
+                                  placeholder={`e.g. your word for ${t.label.toLowerCase()}`}
+                                  style={{
+                                    width: "100%", fontSize: "12px", padding: "6px 8px",
+                                    border: `1px solid ${cardBorder}`, borderRadius: "4px",
+                                    background: "transparent", outline: "none", fontFamily: "inherit", color: "inherit",
+                                  }}
+                                />
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </VStack>
+                    <Text fontSize="11px" color={mutedText} mt={3} textAlign="center" fontStyle="italic">
+                      Your clarity helps us find things as efficiently as possible.
+                    </Text>
+                  </Box>
+                )}
+
+                {parseError && (
+                  <Box px={3} py={2} bg="red.50" border="1px solid" borderColor="red.200" borderRadius="md">
+                    <Text fontSize="xs" color="red.700">{parseError}</Text>
+                  </Box>
+                )}
 
                 <HStack justify="space-between" align="center">
                   <Box
@@ -1344,29 +1492,20 @@ export default function GroupCatalystPage() {
                   >
                     ← Back
                   </Box>
-                  <HStack gap={3}>
-                    <Box
-                      as="button"
-                      onClick={handleImport}
-                      fontSize="xs"
-                      color={mutedText}
-                      cursor="pointer"
-                      _hover={{ color: BRAND }}
-                      transition="color 0.12s"
-                    >
-                      Skip →
-                    </Box>
-                    <Button
-                      onClick={handleImport}
-                      bg={BRAND}
-                      color="white"
-                      _hover={{ opacity: 0.88 }}
-                      size="md"
-                      fontWeight="600"
-                    >
-                      Continue to import →
-                    </Button>
-                  </HStack>
+                  <Button
+                    onClick={handleParse}
+                    bg={BRAND}
+                    color="white"
+                    _hover={{ opacity: 0.88 }}
+                    size="md"
+                    fontWeight="600"
+                    loading={parsing}
+                    disabled={parsing || !selectedFiles.length}
+                  >
+                    {selectedFiles.length
+                      ? `Parse ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""} →`
+                      : "Add files to continue →"}
+                  </Button>
                 </HStack>
               </VStack>
             </Box>
@@ -1812,12 +1951,49 @@ export default function GroupCatalystPage() {
                   Your original files are always kept intact — you can find anything here, anytime.
                 </Text>
 
+                {/* Narrative question — moved here from pre-ingest screen */}
+                <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="lg" p={5}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Text fontSize="sm" fontWeight="600">Before we go deeper — what are these files about?</Text>
+                    <Box
+                      as="button"
+                      onClick={() => setGeneralContext(
+                        "These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
+                      )}
+                      px="8px" py="2px" borderRadius="4px"
+                      bg={chipBg} border="1px solid" borderColor={chipBorder}
+                      fontSize="10px" fontWeight="700" color={mutedText}
+                      cursor="pointer" letterSpacing="0.04em"
+                      _hover={{ borderColor: BRAND, color: BRAND }} transition="all 0.12s"
+                      title="Fill with demo context (Temple of Belonging)"
+                    >
+                      Demo
+                    </Box>
+                  </Box>
+                  <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
+                    Optional — the occasion, project, or context they were created for.
+                    This helps us understand intent when the full analysis runs.
+                  </Text>
+                  <textarea
+                    value={generalContext}
+                    onChange={(e) => setGeneralContext(e.target.value)}
+                    placeholder="e.g. These are planning files for a 6-day community retreat happening in September 2026 — menus, staffing, and fundraising records."
+                    rows={3}
+                    style={{
+                      width: "100%", fontSize: "13px", lineHeight: "1.65", resize: "vertical",
+                      border: `1px solid ${cardBorder}`, borderRadius: "6px",
+                      padding: "10px 12px", background: "transparent", outline: "none",
+                      fontFamily: "inherit", color: "inherit",
+                    }}
+                  />
+                </Box>
+
                 {/* Enrichment context */}
                 <Box bg={cardBg} border="1px solid" borderColor={cardBorder} borderRadius="lg" p={5}>
-                  <Text fontSize="sm" fontWeight="600" mb={1}>Does this look right? Anything we&apos;re missing?</Text>
+                  <Text fontSize="sm" fontWeight="600" mb={1}>Anything we&apos;re misreading?</Text>
                   <Text fontSize="xs" color={mutedText} mb={3} lineHeight="1.6">
-                    All optional — if something looks off, or you use a different word for something,
-                    just tell us here. The more specific you are, the more resourceful we can be with the analysis.
+                    If something looks off, or you use a different word for something,
+                    tell us here. The more specific you are, the more resourceful we can be.
                   </Text>
                   <textarea
                     value={enrichmentContext}
