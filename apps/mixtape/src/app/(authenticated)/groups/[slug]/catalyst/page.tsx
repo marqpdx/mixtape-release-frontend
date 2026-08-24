@@ -117,6 +117,53 @@ const VERTICALS: { id: VerticalId; label: string; icon: string; description: str
   { id: "education",    label: "Education",    icon: "📚", description: "Courses, programs, students, resources" },
 ];
 
+// ── Per-vertical accent theme ─────────────────────────────────────────────────
+const VERTICAL_THEME: Record<VerticalId, { accent: string; accentMuted: string; setupBg: string }> = {
+  "food-service": { accent: "#92400e", accentMuted: "#b45309", setupBg: "#fef3e2" },
+  "retail":       { accent: "#1e40af", accentMuted: "#2563eb", setupBg: "#eff6ff" },
+  "education":    { accent: "#166534", accentMuted: "#16a34a", setupBg: "#f0fdf4" },
+};
+
+// ── Shape-derived extraction context (from puddlejump/zz/shape-library/) ──────
+// Tells the semantic analysis prompt how entity types nest and what to count.
+const VERTICAL_SHAPE_CONTEXT: Record<VerticalId, string> = {
+  "food-service": `VERTICAL: food-service
+
+Shape relationships — use these to guide extraction:
+- Recipe (primary unit): a named dish with instructions and an outcome.
+  Children to look for inside each recipe: Ingredient (name, quantity, unit),
+  Instruction Step (numbered preparation step), Storage Guidance.
+  COUNT rule: count individual named dishes, NOT meal-occasion headings
+  (e.g. "Wednesday Lunch" is a container — count the dishes listed inside it).
+- Menu: a time-based or occasion-based container of Recipes. Not a recipe itself.
+- Prep Task: a preparation checklist entry, shift schedule item, or action list row.
+- Purveyor / Partner: a confirmed supplier, vendor, sponsor, or donor organization.
+  Distinguished from outreach prospects — confirmed/contracted entities only.
+- People: named individuals (staff, volunteers, contacts). Skip roles without a name.`,
+
+  "retail": `VERTICAL: retail
+
+Shape relationships — use these to guide extraction:
+- Product (primary unit): a named item for sale or in inventory.
+  Children to look for: Variant (size, color, SKU), Category (department/grouping),
+  Pricing tier, Supplier/Vendor reference.
+- Category: a grouping or department containing Products. Not a product itself.
+- Vendor: a confirmed supplier or trade partner with a product relationship.
+- Customer: a named account or individual customer record.
+- Promotion: a named sale, discount, or campaign with date range and scope.`,
+
+  "education": `VERTICAL: education
+
+Shape relationships — use these to guide extraction:
+- Course (primary unit): a named educational program or class.
+  Children: Module (unit/lesson within the course), Assignment (task or assessment),
+  Learning Objective, Resource (reading or material).
+- Module: a discrete unit within a course. Not a course itself.
+- Assignment: a named task, project, or assessment with a deadline.
+- Student: a named learner record. Skip role labels without a name.
+- Resource: a named reading, tool, or reference material.`,
+};
+
 const VERTICAL_ENTITY_TYPES: Record<VerticalId, VerticalEntityType[]> = {
   "food-service": [
     { slug: "recipe",     label: "Recipes",             description: "Named dishes with instructions and an outcome" },
@@ -386,7 +433,7 @@ export default function GroupCatalystPage() {
   function buildEntityExpectations(): string {
     if (!selectedVertical) return entityExpectations;
     const types = VERTICAL_ENTITY_TYPES[selectedVertical];
-    return types
+    const vocabLines = types
       .filter((t) => entityToggles[t.slug] !== false)
       .map((t) => {
         const syn = entitySynonyms[t.slug]?.trim();
@@ -394,6 +441,12 @@ export default function GroupCatalystPage() {
         return `${t.label}${synPart}: ${t.description}`;
       })
       .join("\n");
+    return vocabLines;
+  }
+
+  function buildVerticalContext(): string {
+    if (!selectedVertical) return "";
+    return VERTICAL_SHAPE_CONTEXT[selectedVertical];
   }
 
   function handleStartQuestions() {
@@ -553,7 +606,10 @@ export default function GroupCatalystPage() {
     try {
       const form = new FormData();
       selectedFiles.forEach((f) => form.append("files", f));
-      // generalContext is collected after Phase 1 (on phase1_review screen)
+      // Vertical shape context seeds the parse prompt with domain knowledge + extraction hierarchy
+      const verticalContext = buildVerticalContext();
+      if (verticalContext.trim()) form.append("general_context", verticalContext.trim());
+      // Entity expectations: vocabulary from toggles + synonyms
       const builtExpectations = buildEntityExpectations();
       if (builtExpectations.trim()) form.append("entity_expectations", builtExpectations.trim());
       const res = await axiosInstance.post(
@@ -1264,11 +1320,24 @@ export default function GroupCatalystPage() {
               animation="cat-work-appear 0.4s ease forwards"
             >
               <VStack align="stretch" gap={7}>
-                <Box>
+                {/* Themed header — changes when vertical is selected */}
+                <Box
+                  bg={selectedVertical ? VERTICAL_THEME[selectedVertical].accent : BRAND}
+                  color="white"
+                  px={6}
+                  py={5}
+                  borderRadius="xl"
+                  transition="background 0.3s ease"
+                >
+                  <Text fontSize="10px" fontWeight="700" letterSpacing="0.12em" textTransform="uppercase" opacity={0.5} mb={2}>
+                    {selectedVertical ? VERTICALS.find((v) => v.id === selectedVertical)?.label : "Catalyst"} · Ingest Setup
+                  </Text>
                   <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={1}>
-                    Let&apos;s set up your ingest
+                    {selectedVertical
+                      ? `${VERTICALS.find((v) => v.id === selectedVertical)?.icon} Let's set up your ${VERTICALS.find((v) => v.id === selectedVertical)?.label.toLowerCase()} ingest`
+                      : "Let's set up your ingest"}
                   </Heading>
-                  <Text fontSize="sm" color={mutedText} lineHeight="1.7">
+                  <Text fontSize="sm" opacity={0.75} lineHeight="1.6">
                     Choose your vertical, add your files, and tell us what to look for.
                   </Text>
                 </Box>
@@ -1281,6 +1350,7 @@ export default function GroupCatalystPage() {
                   <HStack gap={3} flexWrap="wrap">
                     {VERTICALS.map((v) => {
                       const active = selectedVertical === v.id;
+                      const theme = VERTICAL_THEME[v.id];
                       return (
                         <Box
                           key={v.id}
@@ -1290,11 +1360,11 @@ export default function GroupCatalystPage() {
                           py={3}
                           borderRadius="lg"
                           border="2px solid"
-                          borderColor={active ? BRAND : chipBorder}
-                          bg={active ? BRAND : cardBg}
+                          borderColor={active ? theme.accent : chipBorder}
+                          bg={active ? theme.accent : cardBg}
                           cursor="pointer"
-                          transition="all 0.15s"
-                          _hover={{ borderColor: BRAND }}
+                          transition="all 0.2s"
+                          _hover={{ borderColor: theme.accentMuted }}
                           flex="1"
                           minW="140px"
                           textAlign="left"
