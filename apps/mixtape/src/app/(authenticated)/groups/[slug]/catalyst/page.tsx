@@ -55,10 +55,16 @@ type ChildSuggestion = {
   source_register: string;
 };
 
+type NestedInParent = {
+  type: string;
+  nested_in: string;
+};
+
 type Phase1Results = {
   aligned: Phase1Register[];
   unexpected: Phase1Register[];
   absent: string[];
+  nested_in_parent: NestedInParent[];
   declared_types: string[];
   child_suggestions: ChildSuggestion[];
 };
@@ -131,10 +137,15 @@ const VERTICAL_SHAPE_CONTEXT: Record<VerticalId, string> = {
 
 Shape relationships — use these to guide extraction:
 - Recipe (primary unit): a named dish with instructions and an outcome.
-  Children to look for inside each recipe: Ingredient (name, quantity, unit),
-  Instruction Step (numbered preparation step), Storage Guidance.
+  REQUIRED composition: every recipe contains Ingredients (name, quantity, unit)
+  as bullet-point lists embedded within the recipe section — they are NOT
+  separate top-level registers. Look for ingredient bullet lists inside each
+  named recipe and count/extract them as children of that recipe.
+  Other children: Instruction Step (numbered preparation step), Storage Guidance.
   COUNT rule: count individual named dishes, NOT meal-occasion headings
   (e.g. "Wednesday Lunch" is a container — count the dishes listed inside it).
+- Ingredient (required child of Recipe): appears as bullet points ("- 2 cups flour",
+  "- 1 tbsp olive oil") inside a recipe section. Always a child, never standalone.
 - Menu: a time-based or occasion-based container of Recipes. Not a recipe itself.
 - Prep Task: a preparation checklist entry, shift schedule item, or action list row.
 - Purveyor / Partner: a confirmed supplier, vendor, sponsor, or donor organization.
@@ -1858,6 +1869,37 @@ export default function GroupCatalystPage() {
                     </Box>
                   );
                 })()}
+
+                {/* Nested types — known children of aligned types, found inside those files */}
+                {(parseJob.phase1_results.nested_in_parent ?? []).length > 0 && (
+                  <Box>
+                    <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={3}>
+                      Nested inside
+                    </Text>
+                    <VStack align="stretch" gap={2}>
+                      {(parseJob.phase1_results.nested_in_parent ?? []).map((n) => (
+                        <HStack
+                          key={n.type}
+                          bg={cardBg}
+                          border="1px solid"
+                          borderColor="green.200"
+                          borderRadius="lg"
+                          px={4}
+                          py={3}
+                          gap={3}
+                        >
+                          <Text fontSize="xl" flexShrink={0}>🪆</Text>
+                          <Box flex="1">
+                            <Text fontSize="sm" fontWeight="600">{n.type.charAt(0).toUpperCase() + n.type.slice(1)}</Text>
+                            <Text fontSize="xs" color={mutedText}>
+                              Embedded inside {n.nested_in} files — extracted in Phase 2, not a top-level register
+                            </Text>
+                          </Box>
+                        </HStack>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
 
                 {/* Absent types — one card per missing type */}
                 {parseJob.phase1_results.absent.length > 0 && (
