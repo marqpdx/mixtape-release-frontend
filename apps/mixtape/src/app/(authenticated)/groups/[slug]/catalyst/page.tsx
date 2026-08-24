@@ -323,6 +323,11 @@ export default function GroupCatalystPage() {
   const [canonizing, setCanonizing] = useState(false);
   const [saveResult, setSaveResult] = useState<string | null>(null);
 
+  // Materialize (extract entries) state — per-register
+  const [materializingReg, setMaterializingReg] = useState<string | null>(null);
+  const [materializeRegResult, setMaterializeRegResult] = useState<string | null>(null);
+  const materializePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Settings panel state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSynonym, setSettingsSynonym] = useState("");
@@ -521,6 +526,43 @@ export default function GroupCatalystPage() {
       setMaterializeError(msg);
     } finally {
       setMaterializing(false);
+    }
+  }
+
+  async function handleMaterializeRegister() {
+    if (!selectedRegSlug) return;
+    setMaterializingReg(selectedRegSlug);
+    setMaterializeRegResult(null);
+    if (materializePollRef.current) clearInterval(materializePollRef.current);
+    try {
+      await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/materialize/`,
+        parseJob?.job_id ? { job_id: parseJob.job_id } : {},
+      );
+      setMaterializeRegResult("Extracting entries… this takes a minute or two.");
+      // Poll every 8s until body_markdown changes from the placeholder
+      const startBody = _regBody;
+      materializePollRef.current = setInterval(async () => {
+        try {
+          const res = await axiosInstance.get(
+            `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+          );
+          const newBody: string = res.data.body_markdown ?? "";
+          if (newBody !== startBody && !newBody.includes("entries materialized here")) {
+            clearInterval(materializePollRef.current!);
+            materializePollRef.current = null;
+            setRegBody(newBody);
+            editor?.commands.setContent(mdToHtml(newBody));
+            setMaterializingReg(null);
+            setMaterializeRegResult("Entries extracted.");
+          }
+        } catch {
+          // ignore poll errors
+        }
+      }, 8000);
+    } catch {
+      setMaterializingReg(null);
+      setMaterializeRegResult("Extract failed — check logs.");
     }
   }
 
@@ -2671,6 +2713,30 @@ export default function GroupCatalystPage() {
                         </Text>
                       </Box>
                     )}
+
+                    {/* Extract entries button */}
+                    <Button
+                      onClick={handleMaterializeRegister}
+                      size="xs"
+                      bg={chipBg}
+                      border="1px solid"
+                      borderColor={chipBorder}
+                      color={chipText}
+                      fontWeight="600"
+                      _hover={{ borderColor: BRAND }}
+                      loading={materializingReg === selectedRegSlug}
+                      disabled={materializingReg !== null}
+                      title="Run AI extraction to populate entries for this register"
+                    >
+                      {materializingReg === selectedRegSlug ? "Extracting…" : "Extract entries"}
+                    </Button>
+
+                    {/* Extract result / in-progress feedback */}
+                    {materializeRegResult && selectedRegSlug === materializingReg || (materializeRegResult && materializingReg === null) ? (
+                      <Text fontSize="11px" color={materializeRegResult.includes("fail") ? "red.500" : statusText}>
+                        {materializeRegResult}
+                      </Text>
+                    ) : null}
 
                     {/* Save result feedback */}
                     {saveResult && (
