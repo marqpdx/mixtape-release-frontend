@@ -316,7 +316,7 @@ export default function GroupCatalystPage() {
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
   const [registerListLoading, setRegisterListLoading] = useState(false);
   const [selectedRegSlug, setSelectedRegSlug] = useState<string | null>(null);
-  const [_regBody, setRegBody] = useState<string>("");
+  const [, setRegBody] = useState<string>("");
   const [regMeta, setRegMeta] = useState<RegisterMeta | null>(null);
   const [regLoading, setRegLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -329,6 +329,7 @@ export default function GroupCatalystPage() {
   const [entryListLoading, setEntryListLoading] = useState(false);
   const [selectedEntrySlug, setSelectedEntrySlug] = useState<string | null>(null);
   const [entryLoading, setEntryLoading] = useState(false);
+  const [shareResult, setShareResult] = useState<string | null>(null);
 
   // Materialize (extract entries) state — per-register
   const [materializingReg, setMaterializingReg] = useState<string | null>(null);
@@ -344,6 +345,24 @@ export default function GroupCatalystPage() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const didInitUrlRef = useRef(false);
+  const pendingUrlEntryRef = useRef<string | null>(null);
+
+  const updateCodexUrl = useCallback((regSlug: string | null, entrySlug?: string | null) => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (regSlug) {
+      url.searchParams.set("register", regSlug);
+    } else {
+      url.searchParams.delete("register");
+    }
+    if (entrySlug) {
+      url.searchParams.set("entry", entrySlug);
+    } else {
+      url.searchParams.delete("entry");
+    }
+    window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
 
   // ── TipTap editor ────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -356,6 +375,27 @@ export default function GroupCatalystPage() {
       },
     },
   });
+
+  const selectRegister = useCallback((regSlug: string, syncUrl = true) => {
+    setSelectedRegSlug(regSlug);
+    setSelectedEntrySlug(null);
+    setShareResult(null);
+    editor?.commands.setContent("");
+    if (syncUrl) updateCodexUrl(regSlug, null);
+  }, [editor, updateCodexUrl]);
+
+  const copyEntryUrl = useCallback(async () => {
+    if (!selectedRegSlug || !selectedEntrySlug || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("register", selectedRegSlug);
+    url.searchParams.set("entry", selectedEntrySlug);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setShareResult("URL copied.");
+    } catch {
+      setShareResult(url.toString());
+    }
+  }, [selectedRegSlug, selectedEntrySlug]);
 
   // ── color tokens ──────────────────────────────────────────────────────────
   const shellBg         = useColorModeValue("#f4f5f7", "#111827");
@@ -443,19 +483,21 @@ export default function GroupCatalystPage() {
       .finally(() => setEntryListLoading(false));
   }, [slug]);
 
-  const loadEntry = useCallback((regSlug: string, entrySlug: string) => {
+  const loadEntry = useCallback((regSlug: string, entrySlug: string, syncUrl = true) => {
     setEntryLoading(true);
     setSaveResult(null);
     axiosInstance
       .get(`/api/catalyst/groups/${slug}/registers/${regSlug}/entries/${entrySlug}/`)
       .then((res) => {
         setSelectedEntrySlug(entrySlug);
+        setShareResult(null);
+        if (syncUrl) updateCodexUrl(regSlug, entrySlug);
         const body = res.data.body_markdown ?? "";
         setRegBody(body);
         editor?.commands.setContent(mdToHtml(body));
       })
       .finally(() => setEntryLoading(false));
-  }, [slug, editor]);
+  }, [slug, editor, updateCodexUrl]);
 
   useEffect(() => {
     if (introState === "browse") {
@@ -464,11 +506,31 @@ export default function GroupCatalystPage() {
   }, [introState, loadRegisterList]);
 
   useEffect(() => {
+    if (didInitUrlRef.current || typeof window === "undefined") return;
+    didInitUrlRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const regSlug = params.get("register");
+    const entrySlug = params.get("entry");
+    if (!regSlug) return;
+    pendingUrlEntryRef.current = entrySlug;
+    setIntroState("browse");
+    selectRegister(regSlug, false);
+  }, [selectRegister]);
+
+  useEffect(() => {
     if (selectedRegSlug) {
       loadRegister(selectedRegSlug);
       loadEntryList(selectedRegSlug);
     }
-  }, [selectedRegSlug, loadRegister]);
+  }, [selectedRegSlug, loadRegister, loadEntryList]);
+
+  useEffect(() => {
+    const pendingEntry = pendingUrlEntryRef.current;
+    if (!selectedRegSlug || !pendingEntry || entryListLoading || selectedEntrySlug) return;
+    if (!entryList.some((entry) => entry.slug === pendingEntry)) return;
+    pendingUrlEntryRef.current = null;
+    loadEntry(selectedRegSlug, pendingEntry, false);
+  }, [selectedRegSlug, selectedEntrySlug, entryList, entryListLoading, loadEntry]);
 
   function handleVerticalSelect(id: VerticalId) {
     setSelectedVertical(id);
@@ -566,30 +628,38 @@ export default function GroupCatalystPage() {
 
   async function handleMaterializeRegister() {
     if (!selectedRegSlug) return;
-    setMaterializingReg(selectedRegSlug);
+    const regSlug = selectedRegSlug;
+    setMaterializingReg(regSlug);
     setMaterializeRegResult(null);
     if (materializePollRef.current) clearInterval(materializePollRef.current);
     try {
-      await axiosInstance.post(
-        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/materialize/`,
+      const res = await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/registers/${regSlug}/materialize/`,
         parseJob?.job_id ? { job_id: parseJob.job_id } : {},
       );
-      setMaterializeRegResult("Extracting entries… this takes a minute or two.");
-      // Poll every 8s until body_markdown changes from the placeholder
-      const startBody = _regBody;
+      const taskId = res.data?.task_id ? ` Task ${res.data.task_id}.` : "";
+      setMaterializeRegResult(`Extracting entries… this can take several minutes.${taskId}`);
+      let pollCount = 0;
       materializePollRef.current = setInterval(async () => {
         try {
-          const res = await axiosInstance.get(
-            `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
+          pollCount += 1;
+          const entriesRes = await axiosInstance.get(
+            `/api/catalyst/groups/${slug}/registers/${regSlug}/entries/`,
           );
-          const newBody: string = res.data.body_markdown ?? "";
-          if (newBody !== startBody && !newBody.includes("entries materialized here")) {
+          const entries = entriesRes.data.entries ?? [];
+          if (entries.length > 0) {
             clearInterval(materializePollRef.current!);
             materializePollRef.current = null;
             setMaterializingReg(null);
-            setMaterializeRegResult("Entries extracted.");
-            // Reload entry list so cards appear
-            if (selectedRegSlug) loadEntryList(selectedRegSlug);
+            setMaterializeRegResult(`Entries extracted: ${entries.length}.`);
+            setEntryList(entries);
+            return;
+          }
+          if (pollCount >= 450) {
+            clearInterval(materializePollRef.current!);
+            materializePollRef.current = null;
+            setMaterializingReg(null);
+            setMaterializeRegResult("Extraction is still running. Refresh the register or check Catalyst logs for batch progress.");
           }
         } catch {
           // ignore poll errors
@@ -830,17 +900,18 @@ export default function GroupCatalystPage() {
       }
       .cat-tiptap-body {
         outline: none;
-        font-size: 14px;
-        line-height: 1.7;
+        font-size: 15px;
+        line-height: 1.75;
         min-height: 320px;
       }
-      .cat-tiptap-body h1 { font-size: 1.4em; font-weight: 700; margin: 1em 0 0.4em; }
-      .cat-tiptap-body h2 { font-size: 1.15em; font-weight: 600; margin: 0.9em 0 0.35em; }
-      .cat-tiptap-body p  { margin: 0 0 0.6em; }
+      .cat-tiptap-body h1 { font-size: 1.65em; font-weight: 750; margin: 0 0 0.7em; letter-spacing: 0; }
+      .cat-tiptap-body h2 { font-size: 1.18em; font-weight: 700; margin: 1.2em 0 0.45em; letter-spacing: 0; }
+      .cat-tiptap-body p  { margin: 0 0 0.75em; }
       .cat-tiptap-body strong { font-weight: 600; }
       .cat-tiptap-body em { font-style: italic; }
       .cat-tiptap-body code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 0.88em; }
-      .cat-tiptap-body ul, .cat-tiptap-body ol { padding-left: 1.4em; margin: 0 0 0.6em; }
+      .cat-tiptap-body ul, .cat-tiptap-body ol { padding-left: 1.35em; margin: 0 0 0.8em; }
+      .cat-tiptap-body li { margin: 0.18em 0; }
     `}</style>
     <Box
       className="cat-shell"
@@ -922,7 +993,7 @@ export default function GroupCatalystPage() {
       {showRegNav && (
         <Box
           className="cat-reg-nav"
-          width="210px"
+          width="286px"
           flexShrink={0}
           bg={navBg}
           borderRight="1px solid"
@@ -946,7 +1017,7 @@ export default function GroupCatalystPage() {
             </Text>
           </Box>
 
-          <Box flex="1" overflowY="auto" py={1}>
+          <Box flex={selectedRegSlug && entryList.length > 0 ? "0 0 36%" : "1"} overflowY="auto" py={1}>
             {registerListLoading ? (
               <Box px={3} py={4}>
                 <Spinner size="xs" color="blue.400" />
@@ -970,7 +1041,7 @@ export default function GroupCatalystPage() {
                   bg={selectedRegSlug === reg.slug ? navItemActive : "transparent"}
                   _hover={{ bg: selectedRegSlug === reg.slug ? navItemActive : navItemHover }}
                   transition="background 0.1s"
-                  onClick={() => setSelectedRegSlug(reg.slug)}
+                  onClick={() => selectRegister(reg.slug)}
                   borderLeft="3px solid"
                   borderColor={selectedRegSlug === reg.slug ? navActiveText : "transparent"}
                 >
@@ -1006,6 +1077,60 @@ export default function GroupCatalystPage() {
               ))
             )}
           </Box>
+
+          {selectedRegSlug && entryList.length > 0 && (
+            <Box
+              className="cat-reg-entry-nav"
+              flex="1"
+              minH="0"
+              borderTop="1px solid"
+              borderColor={navBorder}
+              display="flex"
+              flexDirection="column"
+            >
+              <Box px={3} py={2} flexShrink={0}>
+                <Text
+                  fontSize="9px"
+                  fontWeight="700"
+                  letterSpacing="0.12em"
+                  textTransform="uppercase"
+                  color={mutedText}
+                >
+                  {regMeta?.title ?? selectedRegSlug.replace(/-/g, " ")}
+                </Text>
+                <Text fontSize="10px" color={synonymLabel} mt={0.5}>
+                  {entryList.length} items
+                </Text>
+              </Box>
+              <Box flex="1" minH="0" overflowY="auto" pb={2}>
+                {entryList.map((entry) => (
+                  <Box
+                    key={entry.slug}
+                    as="button"
+                    w="full"
+                    textAlign="left"
+                    px={3}
+                    py="7px"
+                    borderLeft="3px solid"
+                    borderColor={selectedEntrySlug === entry.slug ? BRAND : "transparent"}
+                    bg={selectedEntrySlug === entry.slug ? navItemActive : "transparent"}
+                    _hover={{ bg: selectedEntrySlug === entry.slug ? navItemActive : navItemHover }}
+                    transition="background 0.1s"
+                    onClick={() => loadEntry(selectedRegSlug, entry.slug)}
+                  >
+                    <Text
+                      fontSize="11px"
+                      lineHeight="1.25"
+                      fontWeight={selectedEntrySlug === entry.slug ? "650" : "450"}
+                      color={selectedEntrySlug === entry.slug ? navActiveText : chipText}
+                    >
+                      {entry.title}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
 
           <Box px={3} py={3} borderTop="1px solid" borderColor={navBorder}>
             <Box
@@ -2752,7 +2877,12 @@ export default function GroupCatalystPage() {
                     >
                       <Box
                         as="button"
-                        onClick={() => { setSelectedEntrySlug(null); editor?.commands.setContent(""); }}
+                        onClick={() => {
+                          setSelectedEntrySlug(null);
+                          setShareResult(null);
+                          editor?.commands.setContent("");
+                          updateCodexUrl(selectedRegSlug, null);
+                        }}
                         fontSize="11px" color={mutedText}
                         cursor="pointer" _hover={{ color: BRAND }}
                       >
@@ -2827,6 +2957,37 @@ export default function GroupCatalystPage() {
                           {regMeta.status === "canon" ? "✓ accepted" : "draft"}
                         </Text>
                       </Box>
+                    )}
+
+                    {selectedEntrySlug && (
+                      <>
+                        <Button
+                          onClick={copyEntryUrl}
+                          size="xs"
+                          bg={chipBg}
+                          border="1px solid"
+                          borderColor={chipBorder}
+                          color={chipText}
+                          fontWeight="600"
+                          _hover={{ borderColor: BRAND }}
+                          title="Copy a shareable URL for this Codex entry"
+                        >
+                          Copy URL
+                        </Button>
+                        {shareResult && (
+                          <Text
+                            fontSize="11px"
+                            color={shareResult === "URL copied." ? statusText : mutedText}
+                            maxW="220px"
+                            overflow="hidden"
+                            textOverflow="ellipsis"
+                            whiteSpace="nowrap"
+                            title={shareResult}
+                          >
+                            {shareResult}
+                          </Text>
+                        )}
+                      </>
                     )}
 
                     {/* Extract entries button */}
@@ -3039,20 +3200,36 @@ export default function GroupCatalystPage() {
                   {regMeta && !regLoading && (
                     <Box
                       px={6}
-                      py={4}
+                      py={selectedEntrySlug ? 5 : 4}
                       borderBottom="1px solid"
                       borderColor={cardBorder}
                       bg={cardBg}
                       flexShrink={0}
                     >
-                      <HStack gap={3} align="baseline">
-                        <Heading as="h2" fontSize="lg" fontWeight="700" letterSpacing="-0.02em">
-                          {regMeta.title || regMeta.slug}
-                        </Heading>
+                      <VStack align="stretch" gap={1}>
+                        <HStack gap={3} align="baseline" justify="space-between">
+                          <Heading as="h2" fontSize={selectedEntrySlug ? "xl" : "lg"} fontWeight="750" letterSpacing="0">
+                            {selectedEntrySlug
+                              ? entryList.find((e) => e.slug === selectedEntrySlug)?.title ?? selectedEntrySlug
+                              : regMeta.title || regMeta.slug}
+                          </Heading>
+                          {selectedEntrySlug && (
+                            <Text
+                              fontSize="10px"
+                              fontFamily="mono"
+                              color={synonymLabel}
+                              flexShrink={0}
+                            >
+                              {selectedEntrySlug}
+                            </Text>
+                          )}
+                        </HStack>
                         <Text fontSize="xs" color={mutedText}>
-                          {regMeta.entry_count} entries · synonym: <em>{regMeta.canon_synonym || "—"}</em>
+                          {selectedEntrySlug
+                            ? `${regMeta.title || regMeta.slug} · editable Codex entry`
+                            : `${regMeta.entry_count} entries · synonym: ${regMeta.canon_synonym || "—"}`}
                         </Text>
-                      </HStack>
+                      </VStack>
                       {regMeta.source_file && (
                         <Text fontSize="10px" fontFamily="mono" color={synonymLabel} mt={1}>
                           {regMeta.source_file}
@@ -3071,11 +3248,20 @@ export default function GroupCatalystPage() {
                       className="cat-tiptap-wrapper"
                       flex="1"
                       overflow="auto"
-                      px={6}
-                      py={5}
+                      px={{ base: 4, md: 8 }}
+                      py={6}
                       bg={centerBg}
                     >
-                      <Box maxW="680px">
+                      <Box
+                        maxW={selectedEntrySlug ? "860px" : "720px"}
+                        bg={selectedEntrySlug ? cardBg : "transparent"}
+                        border={selectedEntrySlug ? "1px solid" : "none"}
+                        borderColor={cardBorder}
+                        borderRadius={selectedEntrySlug ? "8px" : 0}
+                        px={selectedEntrySlug ? { base: 5, md: 8 } : 0}
+                        py={selectedEntrySlug ? { base: 5, md: 7 } : 0}
+                        boxShadow={selectedEntrySlug ? "0 1px 2px rgba(15, 23, 42, 0.04)" : "none"}
+                      >
                         <EditorContent editor={editor} />
                       </Box>
                     </Box>
