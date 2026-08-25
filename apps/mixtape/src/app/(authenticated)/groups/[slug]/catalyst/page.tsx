@@ -323,6 +323,13 @@ export default function GroupCatalystPage() {
   const [canonizing, setCanonizing] = useState(false);
   const [saveResult, setSaveResult] = useState<string | null>(null);
 
+  // Entry list state
+  type EntryMeta = { slug: string; title: string; status: string };
+  const [entryList, setEntryList] = useState<EntryMeta[]>([]);
+  const [entryListLoading, setEntryListLoading] = useState(false);
+  const [selectedEntrySlug, setSelectedEntrySlug] = useState<string | null>(null);
+  const [entryLoading, setEntryLoading] = useState(false);
+
   // Materialize (extract entries) state — per-register
   const [materializingReg, setMaterializingReg] = useState<string | null>(null);
   const [materializeRegResult, setMaterializeRegResult] = useState<string | null>(null);
@@ -425,6 +432,31 @@ export default function GroupCatalystPage() {
       .finally(() => setRegLoading(false));
   }, [slug, editor]);
 
+  const loadEntryList = useCallback((regSlug: string) => {
+    setEntryListLoading(true);
+    setEntryList([]);
+    setSelectedEntrySlug(null);
+    axiosInstance
+      .get(`/api/catalyst/groups/${slug}/registers/${regSlug}/entries/`)
+      .then((res) => setEntryList(res.data.entries ?? []))
+      .catch(() => setEntryList([]))
+      .finally(() => setEntryListLoading(false));
+  }, [slug]);
+
+  const loadEntry = useCallback((regSlug: string, entrySlug: string) => {
+    setEntryLoading(true);
+    setSaveResult(null);
+    axiosInstance
+      .get(`/api/catalyst/groups/${slug}/registers/${regSlug}/entries/${entrySlug}/`)
+      .then((res) => {
+        setSelectedEntrySlug(entrySlug);
+        const body = res.data.body_markdown ?? "";
+        setRegBody(body);
+        editor?.commands.setContent(mdToHtml(body));
+      })
+      .finally(() => setEntryLoading(false));
+  }, [slug, editor]);
+
   useEffect(() => {
     if (introState === "browse") {
       loadRegisterList();
@@ -434,6 +466,7 @@ export default function GroupCatalystPage() {
   useEffect(() => {
     if (selectedRegSlug) {
       loadRegister(selectedRegSlug);
+      loadEntryList(selectedRegSlug);
     }
   }, [selectedRegSlug, loadRegister]);
 
@@ -484,6 +517,8 @@ export default function GroupCatalystPage() {
     setSelectedRegSlug(null);
     setRegMeta(null);
     setRegBody("");
+    setEntryList([]);
+    setSelectedEntrySlug(null);
   }
 
   function seedVerb(verb: string) {
@@ -551,10 +586,10 @@ export default function GroupCatalystPage() {
           if (newBody !== startBody && !newBody.includes("entries materialized here")) {
             clearInterval(materializePollRef.current!);
             materializePollRef.current = null;
-            setRegBody(newBody);
-            editor?.commands.setContent(mdToHtml(newBody));
             setMaterializingReg(null);
             setMaterializeRegResult("Entries extracted.");
+            // Reload entry list so cards appear
+            if (selectedRegSlug) loadEntryList(selectedRegSlug);
           }
         } catch {
           // ignore poll errors
@@ -572,10 +607,10 @@ export default function GroupCatalystPage() {
     setSaveResult(null);
     try {
       const body = htmlToMd(editor.getHTML());
-      await axiosInstance.patch(
-        `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`,
-        { body_markdown: body },
-      );
+      const url = selectedEntrySlug
+        ? `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/entries/${selectedEntrySlug}/`
+        : `/api/catalyst/groups/${slug}/registers/${selectedRegSlug}/`;
+      await axiosInstance.patch(url, { body_markdown: body });
       setSaveResult("Saved");
       setRegBody(body);
     } catch {
@@ -2630,13 +2665,7 @@ export default function GroupCatalystPage() {
             >
               {/* No register selected — placeholder */}
               {!selectedRegSlug && (
-                <Box
-                  flex="1"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  p={8}
-                >
+                <Box flex="1" display="flex" alignItems="center" justifyContent="center" p={8}>
                   <VStack gap={3} textAlign="center">
                     <Text fontSize="2xl">◈</Text>
                     <Text fontWeight="600" fontSize="sm">Select a register</Text>
@@ -2647,9 +2676,95 @@ export default function GroupCatalystPage() {
                 </Box>
               )}
 
-              {/* Register selected — TipTap editor */}
-              {selectedRegSlug && (
+              {/* Register selected, entries loaded, no entry selected — show entry list */}
+              {selectedRegSlug && !selectedEntrySlug && entryList.length > 0 && (
+                <Box className="cat-entry-list" display="flex" flexDirection="column" height="100%">
+                  {/* Entry list header */}
+                  <Box
+                    px={5} py={3}
+                    borderBottom="1px solid" borderColor={toolbarBorder}
+                    display="flex" alignItems="center" gap={3} flexShrink={0}
+                    bg={toolbarBg}
+                  >
+                    <Text fontWeight="700" fontSize="sm">
+                      {regMeta?.title ?? selectedRegSlug.replace(/-/g, " ")}
+                    </Text>
+                    <Text fontSize="xs" color={mutedText}>{entryList.length} entries</Text>
+                    <Box flex="1" />
+                    <Button
+                      onClick={handleMaterializeRegister}
+                      size="xs" bg={chipBg} border="1px solid" borderColor={chipBorder}
+                      color={chipText} fontWeight="600" _hover={{ borderColor: BRAND }}
+                      loading={materializingReg === selectedRegSlug}
+                      disabled={materializingReg !== null}
+                    >
+                      {materializingReg === selectedRegSlug ? "Extracting…" : "Re-extract"}
+                    </Button>
+                  </Box>
+                  {/* Entry cards */}
+                  <Box flex="1" overflowY="auto" p={4}>
+                    {entryListLoading ? (
+                      <Box display="flex" justifyContent="center" pt={8}><Spinner size="sm" /></Box>
+                    ) : (
+                      <VStack gap={2} align="stretch">
+                        {entryList.map((entry) => (
+                          <Box
+                            key={entry.slug}
+                            as="button"
+                            textAlign="left"
+                            onClick={() => loadEntry(selectedRegSlug, entry.slug)}
+                            px={4} py={3}
+                            borderRadius="8px"
+                            border="1px solid"
+                            borderColor={chipBorder}
+                            bg={chipBg}
+                            _hover={{ borderColor: BRAND, bg: navItemHover }}
+                            transition="all 0.12s"
+                            cursor="pointer"
+                          >
+                            <Text fontSize="sm" fontWeight="500">{entry.title}</Text>
+                            <Text fontSize="xs" color={mutedText} mt="2px">{entry.status}</Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                    )}
+                  </Box>
+                  {materializeRegResult && (
+                    <Box px={5} py={2} borderTop="1px solid" borderColor={toolbarBorder}>
+                      <Text fontSize="xs" color={mutedText}>{materializeRegResult}</Text>
+                    </Box>
+                  )}
+                </Box>
+              )}
+
+              {/* Register selected, entry selected OR no entries yet — TipTap editor */}
+              {selectedRegSlug && (selectedEntrySlug || entryList.length === 0) && (
                 <Box className="cat-editor-area" display="flex" flexDirection="column" height="100%">
+
+                  {/* Entry breadcrumb — shown when viewing an individual entry */}
+                  {selectedEntrySlug && (
+                    <Box
+                      px={4} py="5px"
+                      borderBottom="1px solid" borderColor={toolbarBorder}
+                      bg={toolbarBg}
+                      display="flex" alignItems="center" gap={2}
+                      flexShrink={0}
+                    >
+                      <Box
+                        as="button"
+                        onClick={() => { setSelectedEntrySlug(null); editor?.commands.setContent(""); }}
+                        fontSize="11px" color={mutedText}
+                        cursor="pointer" _hover={{ color: BRAND }}
+                      >
+                        ← {regMeta?.title ?? selectedRegSlug?.replace(/-/g, " ")}
+                      </Box>
+                      <Text fontSize="11px" color={mutedText}>/</Text>
+                      <Text fontSize="11px" fontWeight="600" color={chipText}>
+                        {entryList.find((e) => e.slug === selectedEntrySlug)?.title ?? selectedEntrySlug}
+                      </Text>
+                      {entryLoading && <Spinner size="xs" ml={1} />}
+                    </Box>
+                  )}
 
                   {/* Editor toolbar */}
                   <Box
