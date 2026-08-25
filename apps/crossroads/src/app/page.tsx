@@ -24,6 +24,7 @@ import {
   IconMap2,
   IconUsers,
 } from "@tabler/icons-react";
+import HomeVariantSwitcher from "@components/home/HomeVariantSwitcher";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 
 const needs = [
@@ -93,7 +94,7 @@ export default function CrossroadsHomepage() {
                     borderRadius="3px"
                     px={2}
                     py={1}
-                    fontSize="10.5px"
+                    fontSize="9.5px"
                     letterSpacing="0.12em"
                     textTransform="uppercase"
                   >
@@ -106,7 +107,7 @@ export default function CrossroadsHomepage() {
                 <Heading
                   as="h1"
                   fontFamily='Georgia, "Times New Roman", serif'
-                  fontSize={{ base: "2xl", md: "4xl", xl: "5xl" }}
+                  fontSize={{ base: "xl", md: "3xl", xl: "4.5xl" }}
                   fontWeight="400"
                   lineHeight="1.04"
                   letterSpacing="0"
@@ -117,7 +118,7 @@ export default function CrossroadsHomepage() {
                 <Heading
                   as="h2"
                   fontFamily='Georgia, "Times New Roman", serif'
-                  fontSize="var(--chakra-font-sizes-2xl)"
+                  fontSize={{ base: "xl", md: "2xl" }}
                   fontWeight="400"
                   lineHeight="1.1"
                   letterSpacing="0"
@@ -129,7 +130,7 @@ export default function CrossroadsHomepage() {
                 </Heading>
                 <Text
                   mt={6}
-                  fontSize={{ base: "lg", md: "xl" }}
+                  fontSize={{ base: "md", md: "lg" }}
                   lineHeight="1.7"
                   color="#5C6880"
                   maxW="65ch"
@@ -138,7 +139,7 @@ export default function CrossroadsHomepage() {
                 </Text>
                 <Text
                   mt={4}
-                  fontSize={{ base: "lg", md: "xl" }}
+                  fontSize={{ base: "md", md: "lg" }}
                   lineHeight="1.7"
                   color="#5C6880"
                   maxW="65ch"
@@ -148,7 +149,7 @@ export default function CrossroadsHomepage() {
               </Box>
 
               <HStack className="crhp-hero-actions" gap={3} flexWrap="wrap">
-                <Button asChild size="lg" bg="#1E4BD2" color="white" borderRadius="3px" _hover={{ bg: "#173AA4" }}>
+                <Button asChild size="md" bg="#1E4BD2" color="white" borderRadius="3px" _hover={{ bg: "#173AA4" }}>
                   <Link as={NextLink} href="/products">
                     <HStack gap={2}>
                       <Text>See the product paths</Text>
@@ -156,7 +157,7 @@ export default function CrossroadsHomepage() {
                     </HStack>
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" borderColor="#B8922A" color="#1A2138" borderRadius="3px">
+                <Button asChild size="md" variant="outline" borderColor="#B8922A" color="#1A2138" borderRadius="3px">
                   <Link as={NextLink} href="/contact?interest=inquiry">
                     <Text>Start an inquiry</Text>
                   </Link>
@@ -193,7 +194,7 @@ export default function CrossroadsHomepage() {
           <VStack align="stretch" gap={8}>
             <Box className="crhp-section-heading" maxW="760px">
               <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
-                What brings people here
+                The product story starts with what we are trying to protect.
               </Text>
               <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize="var(--chakra-font-sizes-2xl)" letterSpacing="0">
                 Crossroads honors that knowledge lives everywhere.
@@ -303,6 +304,8 @@ export default function CrossroadsHomepage() {
           </Box>
         </Container>
       </Box>
+
+      <HomeVariantSwitcher activeHref="/" />
     </Box>
   );
 }
