@@ -16,6 +16,7 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [trackedItems, setTrackedItems] = useState<string[]>([]);
+  const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(null);
   const trackedFetched = useRef(false);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const labelColor = useColorModeValue("gray.500", "gray.400");
   const itemColor = useColorModeValue("gray.700", "gray.200");
+  const activeInitiativeColor = useColorModeValue("blue.600", "blue.300");
   const handleColor = useColorModeValue("gray.400", "gray.500");
 
   const isExpanded = sidebarOpen || hovered;
@@ -45,6 +47,8 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
       <Box className="asw-surface" flex={1} minW={0}>
         <AtriumDialogSurface
           groupSlug={groupSlug}
+          selectedInitiativeId={selectedInitiativeId}
+          onInitiativeSessionChange={setSelectedInitiativeId}
           onTrackedFetch={(items) => {
             setTrackedItems(items);
             trackedFetched.current = true;
@@ -139,11 +143,24 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
                   Initiatives
                 </Text>
                 <VStack align="stretch" gap={1}>
-                  {initiatives.slice(0, sidebarOpen ? 10 : 4).map((item) => (
-                    <Text key={item.id} fontSize="xs" color={itemColor} lineClamp={1} title={item.title}>
-                      {item.title}
-                    </Text>
-                  ))}
+                  {initiatives.slice(0, sidebarOpen ? 10 : 4).map((item) => {
+                    const isActive = selectedInitiativeId === item.id;
+                    return (
+                      <Text
+                        key={item.id}
+                        fontSize="xs"
+                        color={isActive ? activeInitiativeColor : itemColor}
+                        fontWeight={isActive ? "600" : "400"}
+                        lineClamp={1}
+                        title={item.title}
+                        cursor="pointer"
+                        _hover={{ color: activeInitiativeColor }}
+                        onClick={() => setSelectedInitiativeId(isActive ? null : item.id)}
+                      >
+                        {isActive ? "→ " : ""}{item.title}
+                      </Text>
+                    );
+                  })}
                 </VStack>
               </Box>
             )}

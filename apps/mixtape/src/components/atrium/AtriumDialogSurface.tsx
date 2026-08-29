@@ -23,13 +23,16 @@ import { AtriumContextPreview } from "./AtriumContextPreview";
 import { AtriumDial } from "./AtriumDial";
 import { AtriumOrientRow } from "./AtriumOrientRow";
 import { AtriumDistillModal } from "./AtriumDistillModal";
+import { AtriumInitiativeLogPanel } from "./AtriumInitiativeLogPanel";
 
 interface AtriumDialogSurfaceProps {
   groupSlug?: string;
+  selectedInitiativeId?: string | null;
+  onInitiativeSessionChange?: (initiativeId: string | null) => void;
   onTrackedFetch?: (items: string[]) => void;
 }
 
-export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogSurfaceProps) {
+export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiativeSessionChange, onTrackedFetch }: AtriumDialogSurfaceProps) {
   const { sessions, isLoading } = useAtriumSessions(groupSlug);
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
@@ -51,6 +54,32 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
   const { submitAsync: submitTrack } = useTrack();
+
+  async function handleSelectInitiative(initiativeId: string) {
+    const existing = sessions.find((s) => s.initiative_id === initiativeId);
+    if (existing) {
+      handleSelectSession(existing);
+    } else {
+      const session = await createSession(
+        groupSlug
+          ? { group_slug: groupSlug, initiative_id: initiativeId }
+          : { initiative_id: initiativeId }
+      );
+      reset();
+      setEditingMemory(false);
+      setOrientDismissed(false);
+      setReconstructedNote(null);
+      setFreshStartNote(false);
+      setActiveSession(session);
+    }
+  }
+
+  // When the sidebar selects an initiative, sync it into the surface.
+  useEffect(() => {
+    if (!selectedInitiativeId) return;
+    handleSelectInitiative(selectedInitiativeId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInitiativeId]);
 
   // Pre-warm subprocess whenever the active session changes.
   useEffect(() => {
@@ -224,6 +253,7 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
     setReconstructedNote(null);
     setFreshStartNote(false);
     setActiveSession(session);
+    onInitiativeSessionChange?.(null);
   }
 
   function handleSelectSession(session: AtriumSession) {
@@ -234,12 +264,15 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
     setReconstructedNote(null);
     setFreshStartNote(false);
     setActiveSession(session);
+    onInitiativeSessionChange?.(session.initiative_id ?? null);
   }
 
   function handleMemorySaved(updated: AtriumSession) {
     setActiveSession(updated);
     setEditingMemory(false);
   }
+
+  const personalSessions = sessions.filter((s) => !s.initiative_id);
 
   if (isLoading) {
     return (
@@ -285,71 +318,94 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
         </Flex>
       )}
 
-      {/* Session picker + new session */}
-      <Flex
-        px={4}
-        py={3}
-        borderBottomWidth="1px"
-        borderColor={borderColor}
-        align="center"
-        gap={3}
-        overflowX="auto"
-      >
-        {sessions.length === 0 && !activeSession && (
-          <Text fontSize="sm" color={subtitleColor} flexShrink={0}>
-            No sessions yet.
+      {/* Initiative nav — primary navigation */}
+      <Box borderBottomWidth="1px" borderColor={borderColor}>
+        {/* Initiatives list */}
+        {sponsorContext && sponsorContext.initiatives.length > 0 && (
+          <Box px={4} pt={3} pb={1}>
+            <Text fontSize="xs" fontWeight="600" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={1.5}>
+              Initiatives
+            </Text>
+            <Flex direction="column" gap={0.5}>
+              {sponsorContext.initiatives.map((ini) => {
+                const isActive = activeSession?.initiative_id === ini.id;
+                return (
+                  <Button
+                    key={ini.id}
+                    size="sm"
+                    variant={isActive ? "solid" : "ghost"}
+                    colorPalette="blue"
+                    justifyContent="flex-start"
+                    onClick={() => handleSelectInitiative(ini.id)}
+                    w="full"
+                    fontWeight={isActive ? "600" : "400"}
+                  >
+                    <Text lineClamp={1} textAlign="left" flex={1}>{ini.title}</Text>
+                  </Button>
+                );
+              })}
+            </Flex>
+          </Box>
+        )}
+
+        {/* Personal section — unscoped sessions */}
+        <Flex px={4} pt={2} pb={2.5} align="center" gap={2} flexWrap="wrap">
+          <Text fontSize="xs" fontWeight="600" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" flexShrink={0}>
+            Personal
           </Text>
-        )}
-        {sessions.map((s) => (
+          {personalSessions.map((s) => (
+            <Button
+              key={s.id}
+              size="xs"
+              variant={activeSession?.id === s.id ? "solid" : "outline"}
+              colorPalette="blue"
+              onClick={() => handleSelectSession(s)}
+              flexShrink={0}
+              maxW="140px"
+            >
+              <Text lineClamp={1}>{s.title || "Session"}</Text>
+            </Button>
+          ))}
           <Button
-            key={s.id}
             size="xs"
-            variant={activeSession?.id === s.id ? "solid" : "outline"}
-            colorScheme="blue"
-            onClick={() => handleSelectSession(s)}
+            variant="ghost"
+            onClick={handleNewSession}
+            loading={creating}
             flexShrink={0}
-            maxW="160px"
+            ml="auto"
           >
-            <Text lineClamp={1}>{s.title || "Untitled"}</Text>
+            <IconPlus size={14} />
+            New
           </Button>
-        ))}
+        </Flex>
+
+        {/* Session-level controls — memory seed + start fresh */}
         {activeSession && (
-          <IconButton
-            aria-label={editingMemory ? "Close memory seed editor" : "Edit session title and memory seed"}
-            size="xs"
-            variant="ghost"
-            color={editingMemory ? "blue.500" : editIconColor}
-            onClick={() => setEditingMemory((v) => !v)}
-            flexShrink={0}
-          >
-            {editingMemory ? <IconX size={14} /> : <IconPencil size={14} />}
-          </IconButton>
+          <Flex px={4} pb={2} align="center" gap={1}>
+            <IconButton
+              aria-label={editingMemory ? "Close memory seed editor" : "Edit session memory seed"}
+              size="2xs"
+              variant="ghost"
+              color={editingMemory ? "blue.500" : editIconColor}
+              onClick={() => setEditingMemory((v) => !v)}
+            >
+              {editingMemory ? <IconX size={12} /> : <IconPencil size={12} />}
+            </IconButton>
+            {editingMemory && (
+              <Button
+                size="2xs"
+                variant="ghost"
+                colorPalette="red"
+                onClick={handleStartFresh}
+                loading={resetting}
+                disabled={streaming}
+              >
+                Start fresh
+              </Button>
+            )}
+          </Flex>
         )}
-        {editingMemory && activeSession && (
-          <Button
-            size="xs"
-            variant="ghost"
-            colorPalette="red"
-            onClick={handleStartFresh}
-            loading={resetting}
-            disabled={streaming}
-            flexShrink={0}
-          >
-            Start fresh
-          </Button>
-        )}
-        <Button
-          size="xs"
-          variant="ghost"
-          onClick={handleNewSession}
-          loading={creating}
-          flexShrink={0}
-          ml="auto"
-        >
-          <IconPlus size={14} />
-          New
-        </Button>
-      </Flex>
+      </Box>
 
       {/* Memory seed editor — inline, collapsible */}
       {activeSession && editingMemory && (
@@ -501,6 +557,11 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
         </Flex>
       )}
 
+      {/* Initiative log panel — promoted above the live exchange */}
+      {activeSession && activeSession.initiative_id && (
+        <AtriumInitiativeLogPanel session={activeSession} defaultExpanded />
+      )}
+
       {/* Thread */}
       {activeSession ? (
         <Box px={4} pt={4}>
@@ -514,7 +575,7 @@ export function AtriumDialogSurface({ groupSlug, onTrackedFetch }: AtriumDialogS
       ) : (
         <Box px={4} pt={6} pb={2} textAlign="center">
           <Text fontSize="sm" color={subtitleColor}>
-            Select a session above or start a new one.
+            Select an initiative above or start a personal session.
           </Text>
         </Box>
       )}

@@ -24,9 +24,31 @@ export async function createAtriumSession(data: {
   title?: string;
   session_context?: string;
   group_slug?: string;
+  initiative_id?: string;
 }): Promise<AtriumSession> {
   const response = await axiosInstance.post<AtriumSession>("/api/atrium/sessions/new", data);
   return response.data;
+}
+
+export interface ApertureLogEntryRecord {
+  id: string;
+  kind: string;
+  body: string;
+  authored_by: string;
+  source_turn_index: number | null;
+  source_timestamp: string | null;
+  created_at: string;
+  ledger_event_type: string | null;
+  ledger_data: Record<string, unknown> | null;
+}
+
+export async function fetchAtriumInitiativeLog(
+  sessionId: string
+): Promise<ApertureLogEntryRecord[]> {
+  const response = await axiosInstance.get<{ results: ApertureLogEntryRecord[] }>(
+    `/api/atrium/sessions/${sessionId}/initiative-log/`
+  );
+  return response.data.results;
 }
 
 export async function fetchAtriumSessionContext(

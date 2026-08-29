@@ -41,7 +41,7 @@ export function useAtriumSponsorContext(groupSlug?: string) {
 export function useCreateAtriumSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { title?: string; session_context?: string; group_slug?: string }) =>
+    mutationFn: (data: { title?: string; session_context?: string; group_slug?: string; initiative_id?: string }) =>
       atriumApi.createAtriumSession(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
@@ -120,6 +120,18 @@ export function useAtriumSessionEntries(sessionId: string | null) {
     queryFn: () => atriumApi.fetchAtriumSessionEntries(sessionId!),
     enabled: !!sessionId,
     staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return { entries, isLoading, error: error as Error | null };
+}
+
+export function useAtriumInitiativeLog(sessionId: string | null) {
+  const { data: entries = [], isLoading, error } = useQuery({
+    queryKey: [...atriumQueryKeys.all, "initiative-log", sessionId ?? ""],
+    queryFn: () => atriumApi.fetchAtriumInitiativeLog(sessionId!),
+    enabled: !!sessionId,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 

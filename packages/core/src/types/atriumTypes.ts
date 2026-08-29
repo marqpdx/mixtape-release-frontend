@@ -60,6 +60,8 @@ export interface AtriumSession {
   dial_mode: AtriumDialMode;
   sponsor_type: string | null;
   sponsor_slug: string | null;
+  initiative_id: string | null;
+  initiative_title: string | null;
   status: AtriumSessionStatus;
   last_activity_at: string | null;
   entry_count: number;
