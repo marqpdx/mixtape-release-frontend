@@ -10,6 +10,7 @@ const HOME_VARIANTS = [
   { label: "3", href: "/page3" },
   { label: "4", href: "/page4" },
   { label: "5", href: "/page5" },
+  { label: "6", href: "/page6" },
 ];
 
 type HomeVariantSwitcherProps = {
