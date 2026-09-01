@@ -26,7 +26,6 @@ export function MoietyEnvelope({
   const labelColor = useColorModeValue("gray.500", "gray.400");
   const headingColor = useColorModeValue("gray.800", "gray.100");
   const bodyColor = useColorModeValue("gray.700", "gray.200");
-  const sectionBg = useColorModeValue("gray.50", "gray.750");
   const chipBg = useColorModeValue("gray.100", "gray.700");
 
   const myLikenesses = likenesses.filter(l => l.memberIds.includes(moiety.id));

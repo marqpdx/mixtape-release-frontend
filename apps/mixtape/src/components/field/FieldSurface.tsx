@@ -14,8 +14,6 @@ import { LikenessModal } from "./LikenessModal";
 
 const CANVAS_W = 1800;
 const CANVAS_H = 1100;
-const GRID = 20;
-
 interface FieldSurfaceProps {
   groupSlug: string;
 }
@@ -27,8 +25,6 @@ export function FieldSurface({ groupSlug: _ }: FieldSurfaceProps) {
   const labelColor = useColorModeValue("gray.500", "gray.400");
   const headingColor = useColorModeValue("gray.800", "gray.100");
   const toolbarBg = useColorModeValue("gray.50", "gray.900");
-  const activeBtn = useColorModeValue("indigo.600", "indigo.400");
-
   const [moieties, setMoieties] = useState<Moiety[]>(() => INITIAL_MOIETIES);
   const [likenesses, setLikenesses] = useState<LikenessRecord[]>(SEED_LIKENESSES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -94,7 +90,7 @@ export function FieldSurface({ groupSlug: _ }: FieldSurfaceProps) {
     if (selectMode) {
       setSelectedSet(prev => {
         const next = new Set(prev);
-        next.has(id) ? next.delete(id) : next.add(id);
+        if (next.has(id)) { next.delete(id); } else { next.add(id); }
         return next;
       });
     } else {

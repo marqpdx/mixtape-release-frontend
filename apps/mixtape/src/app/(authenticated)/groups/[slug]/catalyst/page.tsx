@@ -431,7 +431,7 @@ export default function GroupCatalystPage() {
   const [materializeResult, setMaterializeResult] = useState<{ commit: string; registers_written: number } | null>(null);
   const [materializeError, setMaterializeError] = useState<string | null>(null);
   const [generalContext, setGeneralContext] = useState("");
-  const [entityExpectations, setEntityExpectations] = useState("");
+  const [entityExpectations, _setEntityExpectations] = useState("");
   const [selectedVertical, setSelectedVertical] = useState<VerticalId | null>(null);
   const [entityToggles, setEntityToggles] = useState<Record<string, boolean>>({});
   const [entitySynonyms, setEntitySynonyms] = useState<Record<string, string>>({});
@@ -785,7 +785,7 @@ export default function GroupCatalystPage() {
     setIntroState("questions");
   }
 
-  function handleImport() {
+  function _handleImport() {
     setIntroState("animating");
     setTimeout(() => setIntroState("bubble"), 480);
   }
