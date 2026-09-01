@@ -129,6 +129,7 @@ export interface PublicWritingPiece {
     avatar_url: string;
   };
   placement_visibility: string;
+  sponsor_group: { slug: string; title: string } | null;
 }
 
 export interface PublicCourseListItem {
