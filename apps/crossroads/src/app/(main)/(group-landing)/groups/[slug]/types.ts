@@ -1,5 +1,7 @@
 // types.ts — Group Public Landing config shape (mirrors GroupPublicConfig API response)
 
+export type GroupPublicTier = "t1" | "t2";
+
 export interface GroupPublicCta {
   label: string;
   action: string; // "scroll:subscribe" | "scroll:featured" | URL
@@ -20,20 +22,23 @@ export interface FeaturedPiece {
 }
 
 export interface GroupPublicLandingConfig {
+  tier: GroupPublicTier;
   group: {
     id: string;
     slug: string;
     title: string;
+    summary: string;
     profile_image_url: string | null;
     background_image_url: string | null;
   };
+  // null for T1
   hero: {
     eyebrow: string;
     headline: string;
     body: string;
     primary_cta: GroupPublicCta;
     secondary_cta: GroupPublicCta;
-  };
+  } | null;
   featured_content: {
     type: string;
     layout: string;
@@ -53,4 +58,7 @@ export interface GroupPublicLandingConfig {
     list_slug: string | null;
     has_list: boolean;
   };
+  // T2: AI-assembled Rows layout. null for T1.
+  rows: unknown[] | null;
+  generation_status: "none" | "pending" | "complete" | "stale";
 }

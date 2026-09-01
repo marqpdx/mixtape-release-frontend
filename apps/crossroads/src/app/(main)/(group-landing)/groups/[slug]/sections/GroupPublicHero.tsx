@@ -1,12 +1,14 @@
 "use client";
 
-// GroupPublicHero — Decision 1 (first section), Decision 11 (no platform chrome)
+// GroupPublicHero — T2 hero. Full-bleed background image is the universal anchor.
+// Hero copy (eyebrow, headline, body, CTAs) renders over the image with a dark overlay.
+// Falls back to an indigo gradient when no background_image_url is set.
+// Decision 11: no platform chrome. Decision 1: first section.
 
-import { Box, Flex, Text, Button, Stack } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
+import { Box, Flex, Text, Button } from "@chakra-ui/react";
 import type { GroupPublicLandingConfig } from "../types";
 
-function resolveCtaHref(action: string, groupSlug: string): string {
+function resolveCtaHref(action: string): string {
   if (action.startsWith("scroll:")) {
     const target = action.replace("scroll:", "");
     return `#gpl-${target}`;
@@ -21,36 +23,53 @@ interface Props {
 
 export function GroupPublicHero({ config, hasFeatured }: Props) {
   const { hero, group } = config;
-  const bg = useColorModeValue("white", "gray.950");
-  const eyebrowColor = useColorModeValue("gray.500", "gray.400");
-  const headlineColor = useColorModeValue("gray.900", "gray.50");
-  const bodyColor = useColorModeValue("gray.600", "gray.300");
-  const borderColor = useColorModeValue("gray.100", "gray.800");
 
-  const primaryHref = hero.primary_cta.action
-    ? resolveCtaHref(hero.primary_cta.action, group.slug)
+  const primaryHref = hero?.primary_cta.action
+    ? resolveCtaHref(hero.primary_cta.action)
     : null;
-  const secondaryHref = hero.secondary_cta.action
-    ? resolveCtaHref(hero.secondary_cta.action, group.slug)
+  const secondaryHref = hero?.secondary_cta.action
+    ? resolveCtaHref(hero.secondary_cta.action)
     : null;
 
   return (
     <Box
       className="gpl-hero"
       as="section"
-      bg={bg}
-      borderBottomWidth="1px"
-      borderColor={borderColor}
-      px={{ base: 6, md: 12, lg: 20 }}
-      py={{ base: 20, md: 28, lg: 36 }}
+      position="relative"
+      minH={{ base: "420px", md: "540px", lg: "600px" }}
+      display="flex"
+      alignItems="flex-end"
+      style={
+        group.background_image_url
+          ? {
+              backgroundImage: `url(${group.background_image_url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : { background: "linear-gradient(135deg, #3730a3 0%, #6d28d9 100%)" }
+      }
     >
-      <Box maxW="760px">
-        {hero.eyebrow && (
+      {/* Dark overlay — keeps text readable against any image */}
+      <Box
+        position="absolute"
+        inset={0}
+        style={{ background: "rgba(0,0,0,0.50)" }}
+      />
+
+      <Box
+        className="gpl-hero-content"
+        position="relative"
+        zIndex={1}
+        px={{ base: 6, md: 12, lg: 20 }}
+        py={{ base: 12, md: 16, lg: 20 }}
+        maxW="800px"
+      >
+        {hero?.eyebrow && (
           <Text
             className="gpl-hero-eyebrow"
             fontSize="xs"
             fontWeight="600"
-            color={eyebrowColor}
+            color="whiteAlpha.700"
             textTransform="uppercase"
             letterSpacing="wider"
             mb={4}
@@ -59,13 +78,13 @@ export function GroupPublicHero({ config, hasFeatured }: Props) {
           </Text>
         )}
 
-        {hero.headline && (
+        {hero?.headline && (
           <Text
             className="gpl-hero-headline"
             as="h1"
             fontSize={{ base: "3xl", md: "4xl", lg: "5xl" }}
             fontWeight="700"
-            color={headlineColor}
+            color="white"
             lineHeight={1.2}
             mb={6}
           >
@@ -73,11 +92,11 @@ export function GroupPublicHero({ config, hasFeatured }: Props) {
           </Text>
         )}
 
-        {hero.body && (
+        {hero?.body && (
           <Text
             className="gpl-hero-body"
             fontSize={{ base: "md", md: "lg" }}
-            color={bodyColor}
+            color="whiteAlpha.800"
             lineHeight={1.7}
             mb={10}
             maxW="620px"
@@ -88,16 +107,20 @@ export function GroupPublicHero({ config, hasFeatured }: Props) {
 
         {(primaryHref || secondaryHref) && (
           <Flex className="gpl-hero-ctas" gap={3} flexWrap="wrap">
-            {primaryHref && hero.primary_cta.label && (
+            {primaryHref && hero?.primary_cta.label && (
               <a href={primaryHref} style={{ textDecoration: "none" }}>
                 <Button size="lg" colorPalette="indigo" variant="solid">
                   {hero.primary_cta.label}
                 </Button>
               </a>
             )}
-            {secondaryHref && hero.secondary_cta.label && (
+            {secondaryHref && hero?.secondary_cta.label && (
               <a href={secondaryHref} style={{ textDecoration: "none" }}>
-                <Button size="lg" variant="outline">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  style={{ color: "white", borderColor: "rgba(255,255,255,0.5)" }}
+                >
                   {hero.secondary_cta.label}
                 </Button>
               </a>

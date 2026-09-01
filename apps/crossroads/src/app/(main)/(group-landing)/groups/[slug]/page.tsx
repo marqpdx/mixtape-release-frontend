@@ -1,7 +1,8 @@
 // src/app/(main)/(group-landing)/groups/[slug]/page.tsx
 //
 // Public Group landing page — server component.
-// Data fetched server-side; rendered for anonymous visitors.
+// T1: synthesized from Group data (background image + name + latest writing).
+// T2: full config with hero/featured/about/engagement, AI-assembled rows.
 // Decision 11: no Crossroads chrome. Group is the tenant; this is their front door.
 
 import { notFound } from "next/navigation";
@@ -12,6 +13,7 @@ import { GroupPublicFeatured } from "./sections/GroupPublicFeatured";
 import { GroupPublicAbout } from "./sections/GroupPublicAbout";
 import { GroupPublicEngagement } from "./sections/GroupPublicEngagement";
 import { GroupPublicFooter } from "./sections/GroupPublicFooter";
+import { GroupPublicT1 } from "./sections/GroupPublicT1";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
   const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
@@ -34,13 +36,17 @@ export async function generateMetadata({
   const { slug } = await params;
   const config = await fetchGroupConfig(slug);
   if (!config) return { title: "Group" };
+  const description =
+    (config.hero?.body || config.about.text || config.group.summary) || undefined;
   return {
     title: config.group.title,
-    description: config.hero.body || config.about.text || undefined,
+    description,
     openGraph: {
-      title: config.hero.headline || config.group.title,
-      description: config.hero.body || config.about.text || undefined,
-      images: config.group.profile_image_url
+      title: config.hero?.headline || config.group.title,
+      description,
+      images: config.group.background_image_url
+        ? [{ url: config.group.background_image_url }]
+        : config.group.profile_image_url
         ? [{ url: config.group.profile_image_url }]
         : undefined,
     },
@@ -56,6 +62,17 @@ export default async function GroupPublicPage({
   const config = await fetchGroupConfig(slug);
   if (!config) notFound();
 
+  // T1: no active config — render lean surface from Group data
+  if (config.tier === "t1") {
+    return (
+      <main className="gpl-root">
+        <GroupPublicT1 config={config} groupSlug={slug} />
+        <GroupPublicFooter groupTitle={config.group.title} />
+      </main>
+    );
+  }
+
+  // T2: active config with hero/sections
   const hasFeatured = config.featured_content.pieces.length > 0;
   const hasAbout = !!(config.about.text || config.about.descriptors.length);
   const hasEngagement = !!(
@@ -66,10 +83,7 @@ export default async function GroupPublicPage({
 
   return (
     <main className="gpl-root">
-      <GroupPublicHero
-        config={config}
-        hasFeatured={hasFeatured}
-      />
+      <GroupPublicHero config={config} hasFeatured={hasFeatured} />
 
       {hasFeatured && (
         <GroupPublicFeatured
@@ -79,9 +93,7 @@ export default async function GroupPublicPage({
         />
       )}
 
-      {hasAbout && (
-        <GroupPublicAbout about={config.about} />
-      )}
+      {hasAbout && <GroupPublicAbout about={config.about} />}
 
       {(hasEngagement || config.subscription.has_list) && (
         <GroupPublicEngagement
