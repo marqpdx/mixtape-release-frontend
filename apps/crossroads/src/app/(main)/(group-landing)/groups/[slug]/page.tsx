@@ -14,6 +14,7 @@ import { GroupPublicAbout } from "./sections/GroupPublicAbout";
 import { GroupPublicEngagement } from "./sections/GroupPublicEngagement";
 import { GroupPublicFooter } from "./sections/GroupPublicFooter";
 import { GroupPublicT1 } from "./sections/GroupPublicT1";
+import { GroupPublicAdminBar } from "./sections/GroupPublicAdminBar";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
   const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
@@ -66,6 +67,7 @@ export default async function GroupPublicPage({
   if (config.tier === "t1") {
     return (
       <main className="gpl-root">
+        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
         <GroupPublicT1 config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -83,6 +85,7 @@ export default async function GroupPublicPage({
 
   return (
     <main className="gpl-root">
+      <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
       <GroupPublicHero config={config} hasFeatured={hasFeatured} />
 
       {hasFeatured && (

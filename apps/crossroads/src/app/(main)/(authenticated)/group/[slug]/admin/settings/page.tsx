@@ -110,9 +110,14 @@ export default function GroupSettingsPage() {
     <Box maxW="3xl" mx="auto" px="6" py="10">
       <HStack mb="6" justify="space-between" align="center">
         <Heading size="lg">Group Settings</Heading>
-        <ChakraLink asChild fontSize="sm" color="blue.500">
-          <NextLink href={`/group/${slug}`}>Back to group</NextLink>
-        </ChakraLink>
+        <HStack gap={4}>
+          <ChakraLink asChild fontSize="sm" color="indigo.500">
+            <NextLink href={`/groups/${slug}`} target="_blank">View public page ↗</NextLink>
+          </ChakraLink>
+          <ChakraLink asChild fontSize="sm" color="blue.500">
+            <NextLink href={`/group/${slug}`}>Back to group</NextLink>
+          </ChakraLink>
+        </HStack>
       </HStack>
 
       <Text fontWeight="600" mb="3">
