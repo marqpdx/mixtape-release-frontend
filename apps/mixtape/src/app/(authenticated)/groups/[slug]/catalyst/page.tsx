@@ -9,6 +9,8 @@ import {
   Avatar,
   Box,
   Button,
+  Collapsible,
+  Dialog,
   Heading,
   HStack,
   Input,
@@ -67,12 +69,145 @@ type Phase1Results = {
   nested_in_parent: NestedInParent[];
   declared_types: string[];
   child_suggestions: ChildSuggestion[];
+  source_inventory?: SourceInventory;
+  strategy_map?: StrategyMap;
+  section_map?: SourceSectionMap;
+  tuning_notes?: TuningNote[];
+};
+
+type TuningNote = {
+  id: string;
+  created_at: string;
+  created_by: string;
+  scope: string;
+  shape?: string;
+  field?: string;
+  value?: string;
+  confidence?: string;
+  note?: string;
 };
 
 type ParseJob = {
   job_id: string;
+  status?: string;
   phase1_results: Phase1Results;
+  source_inventory?: SourceInventory;
+  strategy_map?: StrategyMap;
+  section_map?: SourceSectionMap;
   skipped_duplicates?: string[];
+};
+
+type MaterializationProgress = {
+  source_job_id?: string;
+  register?: string;
+  status?: string;
+  current_file?: string | null;
+  source_files?: string[];
+  completed_files?: string[];
+  entry_count?: number;
+  file_results?: Record<string, {
+    status?: string;
+    extraction_mode?: string;
+    token_posture?: string;
+    entity_count?: number;
+    raw_entity_count?: number;
+    sections_total?: number;
+    sections_complete?: number;
+    bundle?: Record<string, number>;
+    bundle_confidence?: string;
+    bundle_warnings?: string[];
+    bundle_cache?: string;
+    reason?: string;
+    title?: string;
+  }>;
+};
+
+type SourceInventoryFile = {
+  filename: string;
+  file_type: string;
+  size_bytes: number;
+  duplicate_of?: string | null;
+  process_decision: string;
+  text_status: string;
+  text_chars: number;
+  estimated_tokens: number;
+  domain?: string | null;
+  source_shape?: string | null;
+  source_shape_id?: string | null;
+  source_shape_confidence?: "high" | "medium" | "low";
+  evidence?: string[];
+};
+
+type SourceInventory = {
+  version: string;
+  files: SourceInventoryFile[];
+  duplicate_groups?: { sha256: string; filenames: string[] }[];
+  text_duplicate_groups?: { text_sha256: string; filenames: string[] }[];
+};
+
+type StrategyMapRow = {
+  filename: string;
+  domain?: string | null;
+  source_shape?: string | null;
+  source_shape_id?: string | null;
+  duplicate_of?: string | null;
+  process_decision?: string;
+  target_registers?: string[];
+  strategy?: string;
+  strategy_id?: string;
+  strategy_version?: string;
+  strategy_status?: string;
+  primary_target?: string;
+  secondary_targets?: string[];
+  sectioning?: string;
+  extraction_grain?: string;
+  authority_status?: string;
+  token_posture?: string;
+  operator_decision?: "review" | "extract" | "skip" | "hold";
+  operator_intent?: string;
+  notes?: string;
+  validation?: string[];
+  failure_modes?: string[];
+  contract_gaps?: { contract_gap: string; missing_shape?: string; strategy_id?: string; detail?: string }[];
+};
+
+type StrategyMap = {
+  version: string;
+  status: string;
+  expected_categories?: string[];
+  files: Record<string, StrategyMapRow>;
+};
+
+type SourceSection = {
+  section_id: string;
+  title: string;
+  proposed_label: string;
+  operator_label?: string;
+  operator_decision?: "review" | "extract" | "skip" | "hold" | "misc";
+  operator_confidence?: "confident" | "staff_review" | "client_review";
+  operator_notes?: string;
+  merged_into?: string;
+  merged_section_ids?: string[];
+  merged_titles?: string[];
+  evidence?: string[];
+  start_char: number;
+  end_char: number;
+  content_markdown: string;
+  content_chars: number;
+};
+
+type SourceFileSectionMap = {
+  version: string;
+  filename: string;
+  parser: string;
+  status: string;
+  sections: SourceSection[];
+};
+
+type SourceSectionMap = {
+  version: string;
+  status: string;
+  files: Record<string, SourceFileSectionMap>;
 };
 
 type RegisterRow = {
@@ -178,12 +313,16 @@ Shape relationships — use these to guide extraction:
 
 const VERTICAL_ENTITY_TYPES: Record<VerticalId, VerticalEntityType[]> = {
   "food-service": [
-    { slug: "recipe",     label: "Recipes",             description: "Named dishes with instructions and an outcome" },
-    { slug: "ingredient", label: "Ingredients",          description: "Components of a recipe" },
-    { slug: "menu",       label: "Menus",               description: "Collections of dishes by meal or occasion" },
-    { slug: "prep-task",  label: "Prep Tasks",           description: "Checklists and preparation schedules" },
-    { slug: "purveyor",   label: "Purveyors & Partners", description: "Suppliers, vendors, sponsors, donors" },
-    { slug: "people",     label: "People",              description: "Staff, volunteers, contacts" },
+    { slug: "recipe",              label: "Recipes",              description: "Named dishes with instructions and an outcome" },
+    { slug: "meal",                label: "Meals",                description: "Meal occasions by day and service" },
+    { slug: "ingredient",          label: "Ingredients",          description: "Food components with quantities when known" },
+    { slug: "menu",                label: "Menus",                description: "Collections of dishes by meal or occasion" },
+    { slug: "prep-task",           label: "Prep Tasks",           description: "Checklists and preparation schedules" },
+    { slug: "supplier",            label: "Suppliers",            description: "Vendors, purveyors, sponsors, donors" },
+    { slug: "supply",              label: "Supplies",             description: "Non-food items to purchase or have on hand" },
+    { slug: "order",               label: "Orders",               description: "Supplier-linked purchases with supplies or ingredients and amounts" },
+    { slug: "dietary-restriction", label: "Dietary Restrictions", description: "Constraints like vegan, gluten-free, dairy-free, allergies" },
+    { slug: "people",              label: "People",               description: "Staff, volunteers, contacts" },
   ],
   "retail": [
     { slug: "product",    label: "Products",   description: "Items for sale or inventory" },
@@ -300,6 +439,7 @@ export default function GroupCatalystPage() {
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsing, setParsing] = useState(false);
+  const [resumingReview, setResumingReview] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [parseJob, setParseJob] = useState<ParseJob | null>(null);
@@ -311,6 +451,18 @@ export default function GroupCatalystPage() {
   const [alignedNotes, setAlignedNotes] = useState<Record<string, string>>({});
   const [alignedNoteOpen, setAlignedNoteOpen] = useState<Record<string, boolean>>({});
   const [unexpectedNotes, setUnexpectedNotes] = useState<Record<string, string>>({});
+  const [savingSectionIds, setSavingSectionIds] = useState<Record<string, boolean>>({});
+  const [savedSectionIds, setSavedSectionIds] = useState<Record<string, boolean>>({});
+  const [expandedSectionContent, setExpandedSectionContent] = useState<Record<string, boolean>>({});
+  const [openSectionIds, setOpenSectionIds] = useState<Record<string, boolean>>({});
+  const [progressReviewOpen, setProgressReviewOpen] = useState<Record<string, boolean>>({});
+  const [tuneOpen, setTuneOpen] = useState(false);
+  const [tuneShape, setTuneShape] = useState("Recipe");
+  const [tuneField, setTuneField] = useState("yield");
+  const [tuneValue, setTuneValue] = useState("315 persons");
+  const [tuneConfidence, setTuneConfidence] = useState("65%");
+  const [tuneNote, setTuneNote] = useState("");
+  const [savingTune, setSavingTune] = useState(false);
 
   // Browse state
   const [registerList, setRegisterList] = useState<RegisterMeta[]>([]);
@@ -334,6 +486,7 @@ export default function GroupCatalystPage() {
   // Materialize (extract entries) state — per-register
   const [materializingReg, setMaterializingReg] = useState<string | null>(null);
   const [materializeRegResult, setMaterializeRegResult] = useState<string | null>(null);
+  const [materializeProgress, setMaterializeProgress] = useState<MaterializationProgress | null>(null);
   const materializePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Settings panel state
@@ -347,6 +500,9 @@ export default function GroupCatalystPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const didInitUrlRef = useRef(false);
   const pendingUrlEntryRef = useRef<string | null>(null);
+  const sectionNoteDraftsRef = useRef<Record<string, string>>({});
+  const sectionNoteCursorsRef = useRef<Record<string, number>>({});
+  const sectionNoteElementsRef = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
   const updateCodexUrl = useCallback((regSlug: string | null, entrySlug?: string | null) => {
     if (typeof window === "undefined") return;
@@ -431,6 +587,41 @@ export default function GroupCatalystPage() {
   const preCanonBg      = useColorModeValue("#fefce8", "#1a1600");
   const preCanonText    = useColorModeValue("#854d0e", "#facc15");
 
+  const activeParseJobLabel = parseJob
+    ? `${parseJob.job_id.slice(0, 8)}... · ${parseJob.status ?? "unknown"}`
+    : "none";
+  const activeParseJobFiles = parseJob?.source_inventory?.files
+    ?.filter((file) => !file.duplicate_of)
+    .map((file) => file.filename.trim())
+    .filter(Boolean) ?? [];
+  const selectedRegisterSource = String(regMeta?.source_file ?? "").trim();
+  const registerSourceMatchesActiveJob = !selectedRegisterSource || activeParseJobFiles.length === 0
+    ? true
+    : activeParseJobFiles.some((filename) => (
+        selectedRegisterSource.includes(filename) || filename.includes(selectedRegisterSource)
+      ));
+  const materializeCacheHitCount = Object.values(materializeProgress?.file_results ?? {})
+    .filter((result) => result.status === "cache_hit").length;
+  const materializeBlockedCount = Object.values(materializeProgress?.file_results ?? {})
+    .filter((result) => String(result.status ?? "").startsWith("blocked")).length;
+  const materializeWholeFileCount = Object.values(materializeProgress?.file_results ?? {})
+    .filter((result) => result.extraction_mode === "whole_file_chunked").length;
+  const materializeSectionTotal = Object.values(materializeProgress?.file_results ?? {})
+    .reduce((sum, result) => sum + Number(result.sections_total ?? 0), 0);
+  const materializeSectionComplete = Object.values(materializeProgress?.file_results ?? {})
+    .reduce((sum, result) => sum + Number(result.sections_complete ?? 0), 0);
+  const materializeProgressSummary = materializeProgress
+    ? [
+        `status: ${(materializeProgress.status ?? "unknown").replace(/_/g, " ")}`,
+        `entries: ${materializeProgress.entry_count ?? 0}`,
+        materializeSectionTotal ? `sections: ${materializeSectionComplete}/${materializeSectionTotal}` : null,
+        materializeCacheHitCount ? `cache hits: ${materializeCacheHitCount}` : null,
+        materializeWholeFileCount ? `whole-file: ${materializeWholeFileCount}` : null,
+        materializeBlockedCount ? `blocked: ${materializeBlockedCount}` : null,
+        materializeProgress.current_file ? `current: ${materializeProgress.current_file}` : null,
+      ].filter(Boolean).join(" · ")
+    : null;
+
   useEffect(() => {
     axiosInstance
       .get(`/api/public/groups/${slug}`)
@@ -504,6 +695,35 @@ export default function GroupCatalystPage() {
       loadRegisterList();
     }
   }, [introState, loadRegisterList]);
+
+  useEffect(() => {
+    if (introState !== "browse" || parseJob) return;
+    axiosInstance
+      .get(`/api/catalyst/groups/${slug}/parse-jobs/latest-review/`)
+      .then((res) => {
+        const data = res.data as {
+          job_id: string;
+          status?: string;
+          phase1_results: Phase1Results;
+          source_inventory?: SourceInventory;
+          strategy_map?: StrategyMap;
+          section_map?: SourceSectionMap;
+          skipped_duplicates?: string[];
+        };
+        setParseJob({
+          job_id: data.job_id,
+          status: data.status,
+          phase1_results: data.phase1_results,
+          source_inventory: data.source_inventory ?? data.phase1_results.source_inventory,
+          strategy_map: data.strategy_map ?? data.phase1_results.strategy_map,
+          section_map: data.section_map ?? data.phase1_results.section_map,
+          skipped_duplicates: data.skipped_duplicates,
+        });
+      })
+      .catch(() => {
+        // Browse still works without an active parse job; extraction will use API fallback.
+      });
+  }, [introState, parseJob, slug]);
 
   useEffect(() => {
     if (didInitUrlRef.current || typeof window === "undefined") return;
@@ -588,6 +808,90 @@ export default function GroupCatalystPage() {
     inputRef.current?.focus();
   }
 
+  function expandNoteShortcut(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    onValue: (value: string, cursor: number) => void,
+  ) {
+    if (e.key !== "Tab") return;
+    const shortcuts: Record<string, string> = {
+      "/Rec": "Recipe:",
+      "/Recipe": "Recipe:",
+      "/Meal": "Meal:",
+      "/Ing": "Ingredient:",
+      "/Ingredient": "Ingredient:",
+      "/Supplier": "Supplier:",
+      "/Supply": "Supply:",
+      "/Order": "Order:",
+      "/Yield": "recipe.yield:",
+      "r.in": "recipe.ingredients",
+      "r.y": "recipe.yield:",
+      "r.ins": "recipe.instructions",
+      "m.s": "meal.service:",
+      "m.d": "meal.day:",
+      "o.s": "order.supplier:",
+    };
+    const prefixShortcuts: Record<string, string> = {
+      me: "meal",
+      mea: "meal",
+      meal: "meal",
+      rec: "recipe",
+      rep: "recipe",
+      recipe: "recipe",
+      ing: "ingredient",
+      ingr: "ingredient",
+      ingredient: "ingredient",
+      supp: "supplier",
+      supplier: "supplier",
+      sup: "supply",
+      supply: "supply",
+      ord: "order",
+      order: "order",
+      diet: "dietary_restriction",
+      dietary: "dietary_restriction",
+      "meal.re": "meal.recipe",
+      "meal.rec": "meal.recipe",
+      "meal.recipe": "meal.recipe",
+      "meal.s": "meal.service",
+      "meal.se": "meal.service",
+      "meal.service": "meal.service",
+      "meal.d": "meal.date",
+      "meal.da": "meal.date",
+      "meal.date": "meal.date",
+      "meal.a": "meal.attendees",
+      "meal.at": "meal.attendees",
+      "meal.attendees": "meal.attendees",
+      "recipe.in": "recipe.ingredients",
+      "recipe.ing": "recipe.ingredients",
+      "recipe.ingredients": "recipe.ingredients",
+      "recipe.inst": "recipe.instructions",
+      "recipe.instructions": "recipe.instructions",
+      "recipe.n": "recipe.notes",
+      "recipe.no": "recipe.notes",
+      "recipe.notes": "recipe.notes",
+      "recipe.y": "recipe.yield",
+      "recipe.yield": "recipe.yield",
+      "order.s": "order.supplier",
+      "order.supplier": "order.supplier",
+    };
+    const target = e.currentTarget;
+    const cursor = target.selectionStart ?? 0;
+    const before = target.value.slice(0, cursor);
+    const match = before.match(/(?:^|\s)(\/?[A-Za-z._-]+)$/);
+    const token = match?.[1];
+    if (!token) return;
+    const normalizedToken = token.replace(/-/g, "_");
+    const replacement = shortcuts[token] ?? prefixShortcuts[normalizedToken.toLowerCase()];
+    if (!replacement) return;
+    e.preventDefault();
+    const tokenStart = cursor - token.length;
+    const nextValue = `${target.value.slice(0, tokenStart)}${replacement}${target.value.slice(cursor)}`;
+    const nextCursor = tokenStart + replacement.length;
+    onValue(nextValue, nextCursor);
+    requestAnimationFrame(() => {
+      target.setSelectionRange(nextCursor, nextCursor);
+    });
+  }
+
   function updateRegisterName(idx: number, value: string) {
     setRegisters((prev) => prev.map((r, i) => i === idx ? { ...r, displayName: value } : r));
   }
@@ -631,6 +935,7 @@ export default function GroupCatalystPage() {
     const regSlug = selectedRegSlug;
     setMaterializingReg(regSlug);
     setMaterializeRegResult(null);
+    setMaterializeProgress(null);
     if (materializePollRef.current) clearInterval(materializePollRef.current);
     try {
       const res = await axiosInstance.post(
@@ -638,22 +943,41 @@ export default function GroupCatalystPage() {
         parseJob?.job_id ? { job_id: parseJob.job_id } : {},
       );
       const taskId = res.data?.task_id ? ` Task ${res.data.task_id}.` : "";
-      setMaterializeRegResult(`Extracting entries… this can take several minutes.${taskId}`);
+      const queuedJobId = res.data?.job_id ? ` Job ${String(res.data.job_id).slice(0, 8)}....` : "";
+      setMaterializeRegResult(`Extracting entries...${queuedJobId}${taskId}`);
       let pollCount = 0;
       materializePollRef.current = setInterval(async () => {
         try {
           pollCount += 1;
+          const progressRes = await axiosInstance.get(
+            `/api/catalyst/groups/${slug}/registers/${regSlug}/materialize/progress/`,
+          );
+          const progress = progressRes.data as MaterializationProgress;
+          setMaterializeProgress(progress);
+          const progressStatus = progress.status ?? "running";
+          if (progressStatus === "complete" || progressStatus.startsWith("failed")) {
+            clearInterval(materializePollRef.current!);
+            materializePollRef.current = null;
+            setMaterializingReg(null);
+            const entriesRes = await axiosInstance.get(
+              `/api/catalyst/groups/${slug}/registers/${regSlug}/entries/`,
+            );
+            const entries = entriesRes.data.entries ?? [];
+            setEntryList(entries);
+            setMaterializeRegResult(
+              progressStatus === "complete"
+                ? `Entries extracted: ${entries.length}.`
+                : `Extraction ${progressStatus.replace(/_/g, " ")} — check progress details.`,
+            );
+            return;
+          }
           const entriesRes = await axiosInstance.get(
             `/api/catalyst/groups/${slug}/registers/${regSlug}/entries/`,
           );
           const entries = entriesRes.data.entries ?? [];
+          setEntryList(entries);
           if (entries.length > 0) {
-            clearInterval(materializePollRef.current!);
-            materializePollRef.current = null;
-            setMaterializingReg(null);
-            setMaterializeRegResult(`Entries extracted: ${entries.length}.`);
-            setEntryList(entries);
-            return;
+            setMaterializeRegResult(`Extracting entries... ${entries.length} written so far.`);
           }
           if (pollCount >= 450) {
             clearInterval(materializePollRef.current!);
@@ -778,13 +1102,25 @@ export default function GroupCatalystPage() {
       );
       const data = res.data as {
         job_id: string;
+        status?: string;
         phase1_results: Phase1Results;
+        source_inventory?: SourceInventory;
+        strategy_map?: StrategyMap;
+        section_map?: SourceSectionMap;
         files: ParsedFile[];
         files_processed: number;
         skipped_duplicates?: string[];
         errors: { file: string; error: string }[];
       };
-      setParseJob({ job_id: data.job_id, phase1_results: data.phase1_results, skipped_duplicates: data.skipped_duplicates });
+      setParseJob({
+        job_id: data.job_id,
+        status: data.status,
+        phase1_results: data.phase1_results,
+        source_inventory: data.source_inventory ?? data.phase1_results.source_inventory,
+        strategy_map: data.strategy_map ?? data.phase1_results.strategy_map,
+        section_map: data.section_map ?? data.phase1_results.section_map,
+        skipped_duplicates: data.skipped_duplicates,
+      });
       setParsedFiles(data.files ?? []);
       setUnexpectedDecisions({});
       setEnrichmentContext("");
@@ -799,6 +1135,85 @@ export default function GroupCatalystPage() {
     }
   }
 
+  async function handleResumeLatestReview() {
+    setResumingReview(true);
+    setParseError(null);
+    try {
+      const res = await axiosInstance.get(
+        `/api/catalyst/groups/${slug}/parse-jobs/latest-review/`,
+      );
+      const data = res.data as {
+        job_id: string;
+        status?: string;
+        phase1_results: Phase1Results;
+        source_inventory?: SourceInventory;
+        strategy_map?: StrategyMap;
+        section_map?: SourceSectionMap;
+        files?: ParsedFile[];
+        skipped_duplicates?: string[];
+      };
+      setParseJob({
+        job_id: data.job_id,
+        status: data.status,
+        phase1_results: data.phase1_results,
+        source_inventory: data.source_inventory ?? data.phase1_results.source_inventory,
+        strategy_map: data.strategy_map ?? data.phase1_results.strategy_map,
+        section_map: data.section_map ?? data.phase1_results.section_map,
+        skipped_duplicates: data.skipped_duplicates,
+      });
+      setParsedFiles(data.files ?? []);
+      setUnexpectedDecisions({});
+      setEnrichmentContext("");
+      setIntroState("phase1_review");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "No saved inventory review found.";
+      setParseError(msg);
+    } finally {
+      setResumingReview(false);
+    }
+  }
+
+  async function handleSaveTuningNote() {
+    if (!parseJob) return;
+    setSavingTune(true);
+    setParseError(null);
+    try {
+      const res = await axiosInstance.post(
+        `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/tuning-notes/`,
+        {
+          shape: tuneShape.trim(),
+          field: tuneField.trim(),
+          value: tuneValue.trim(),
+          confidence: tuneConfidence.trim(),
+          note: tuneNote.trim(),
+        },
+      );
+      const data = res.data as { tuning_notes?: TuningNote[]; phase1_results?: Phase1Results };
+      setParseJob((prev) => {
+        if (!prev) return prev;
+        const nextPhase1 = data.phase1_results ?? {
+          ...prev.phase1_results,
+          tuning_notes: data.tuning_notes ?? prev.phase1_results.tuning_notes ?? [],
+        };
+        return {
+          ...prev,
+          phase1_results: nextPhase1,
+        };
+      });
+      setTuneNote("");
+      setTuneOpen(false);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Could not save tuning note.";
+      setParseError(msg);
+    } finally {
+      setSavingTune(false);
+    }
+  }
+
   async function handleStartAnalysis() {
     if (!parseJob) return;
     setStartingAnalysis(true);
@@ -809,7 +1224,10 @@ export default function GroupCatalystPage() {
       const combinedEnrichment = [narrativeContext, enrichment].filter(Boolean).join("\n\n");
       await axiosInstance.post(
         `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/start-analysis/`,
-        combinedEnrichment ? { enrichment_context: combinedEnrichment } : {},
+        {
+          ...(combinedEnrichment ? { enrichment_context: combinedEnrichment } : {}),
+          ...(parseJob.strategy_map ? { strategy_map: parseJob.strategy_map } : {}),
+        },
       );
       setIntroState("analyzing");
       setAnalysisProgress(null);
@@ -821,6 +1239,316 @@ export default function GroupCatalystPage() {
     } finally {
       setStartingAnalysis(false);
     }
+  }
+
+  function updateStrategyRow(filename: string, patch: Partial<StrategyMapRow>) {
+    setParseJob((prev) => {
+      if (!prev?.strategy_map) return prev;
+      const existing = prev.strategy_map.files[filename];
+      if (!existing) return prev;
+      const nextStrategyMap = {
+        ...prev.strategy_map,
+        status: "operator_review",
+        files: {
+          ...prev.strategy_map.files,
+          [filename]: { ...existing, ...patch },
+        },
+      };
+      return {
+        ...prev,
+        strategy_map: nextStrategyMap,
+        phase1_results: {
+          ...prev.phase1_results,
+          strategy_map: nextStrategyMap,
+        },
+      };
+    });
+  }
+
+  function updateSectionMapRow(filename: string, sectionId: string, patch: Partial<SourceSection>) {
+    setParseJob((prev) => {
+      if (!prev?.section_map) return prev;
+      const fileMap = prev.section_map.files[filename];
+      if (!fileMap) return prev;
+      const nextFileMap = {
+        ...fileMap,
+        status: "operator_review",
+        sections: fileMap.sections.map((section) => (
+          section.section_id === sectionId ? { ...section, ...patch } : section
+        )),
+      };
+      const nextSectionMap = {
+        ...prev.section_map,
+        status: "operator_review",
+        files: {
+          ...prev.section_map.files,
+          [filename]: nextFileMap,
+        },
+      };
+      return {
+        ...prev,
+        section_map: nextSectionMap,
+        phase1_results: {
+          ...prev.phase1_results,
+          section_map: nextSectionMap,
+        },
+      };
+    });
+  }
+
+  async function saveSectionMapRow(
+    filename: string,
+    section: SourceSection,
+    patch: Partial<SourceSection> = {},
+    options: { applyLocalPatch?: boolean; combineWithNext?: boolean } = {},
+  ) {
+    if (!parseJob) return;
+    const key = `${filename}:${section.section_id}`;
+    const nextPatch = patch.operator_notes === undefined && !options.combineWithNext
+      ? { ...patch, operator_notes: getSectionNoteDraft(key, section) }
+      : patch;
+    const nextSection = { ...section, ...nextPatch };
+    if (Object.keys(nextPatch).length > 0 && options.applyLocalPatch !== false) {
+      updateSectionMapRow(filename, section.section_id, nextPatch);
+    }
+    setSavingSectionIds((prev) => ({ ...prev, [key]: true }));
+    setSavedSectionIds((prev) => ({ ...prev, [key]: false }));
+    try {
+      const res = await axiosInstance.patch(
+        `/api/catalyst/groups/${slug}/parse-jobs/${parseJob.job_id}/section-map/`,
+        {
+          filename,
+          section_id: section.section_id,
+          operator_label: nextSection.operator_label ?? "",
+          operator_decision: nextSection.operator_decision ?? "review",
+          operator_confidence: nextSection.operator_confidence ?? "staff_review",
+          operator_notes: nextSection.operator_notes ?? "",
+          ...(options.combineWithNext ? { combine_with_next: true } : {}),
+        },
+      );
+      const data = res.data as { section_map?: SourceSectionMap };
+      if (data.section_map) {
+        setParseJob((prev) => prev ? {
+          ...prev,
+          section_map: data.section_map,
+          phase1_results: {
+            ...prev.phase1_results,
+            section_map: data.section_map,
+          },
+        } : prev);
+      }
+      setSavedSectionIds((prev) => ({ ...prev, [key]: true }));
+      if (nextPatch.operator_decision === "skip" || nextPatch.operator_decision === "misc") {
+        setOpenSectionIds((prev) => ({ ...prev, [key]: false }));
+      }
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Could not save section note.";
+      setParseError(msg);
+    } finally {
+      setSavingSectionIds((prev) => ({ ...prev, [key]: false }));
+    }
+  }
+
+  function advanceAfterSectionAction(filename: string, sectionId: string) {
+    const sections = parseJob?.section_map?.files[filename]?.sections ?? [];
+    const idx = sections.findIndex((section) => section.section_id === sectionId);
+    const currentKey = `${filename}:${sectionId}`;
+    const nextSection = idx >= 0 ? sections[idx + 1] : null;
+    setOpenSectionIds((prev) => ({
+      ...prev,
+      [currentKey]: false,
+      ...(nextSection ? { [`${filename}:${nextSection.section_id}`]: true } : {}),
+    }));
+  }
+
+  function handleSectionQuickAction(filename: string, section: SourceSection, patch: Partial<SourceSection>) {
+    const key = `${filename}:${section.section_id}`;
+    const draftNotes = getSectionNoteDraft(key, section);
+    const nextPatch = patch.operator_notes === undefined
+      ? { ...patch, operator_notes: draftNotes }
+      : { ...patch, operator_notes: draftNotes.trim() ? draftNotes : patch.operator_notes };
+    updateSectionMapRow(filename, section.section_id, nextPatch);
+    advanceAfterSectionAction(filename, section.section_id);
+    void saveSectionMapRow(filename, section, nextPatch, { applyLocalPatch: false });
+  }
+
+  function getSectionNoteDraft(sectionKey: string, section: SourceSection) {
+    return sectionNoteDraftsRef.current[sectionKey] ?? section.operator_notes ?? "";
+  }
+
+  function writeSectionNoteDraft(sectionKey: string, value: string, cursor?: number) {
+    sectionNoteDraftsRef.current[sectionKey] = value;
+    if (cursor !== undefined) {
+      sectionNoteCursorsRef.current[sectionKey] = cursor;
+    }
+    const target = sectionNoteElementsRef.current[sectionKey];
+    if (!target) return;
+    target.value = value;
+    if (cursor !== undefined) {
+      requestAnimationFrame(() => target.setSelectionRange(cursor, cursor));
+    }
+  }
+
+  function insertSectionNoteAtCursor(
+    filename: string,
+    section: SourceSection,
+    line: string,
+    patch: Partial<SourceSection> = {},
+  ) {
+    const key = `${filename}:${section.section_id}`;
+    const existing = getSectionNoteDraft(key, section);
+    const fallbackCursor = existing.length;
+    const cursor = Math.max(0, Math.min(sectionNoteCursorsRef.current[key] ?? fallbackCursor, existing.length));
+    const prefix = existing.slice(0, cursor);
+    const suffix = existing.slice(cursor);
+    const beforeLineBreak = prefix && !prefix.endsWith("\n") ? "\n" : "";
+    const afterLineBreak = suffix && !suffix.startsWith("\n") ? "\n" : "";
+    const nextNotes = `${prefix}${beforeLineBreak}${line}${afterLineBreak}${suffix}`;
+    const nextCursor = prefix.length + beforeLineBreak.length + line.length;
+
+    writeSectionNoteDraft(key, nextNotes, nextCursor);
+    updateSectionMapRow(filename, section.section_id, {
+      operator_decision: section.operator_decision === "skip" || section.operator_decision === "misc"
+        ? section.operator_decision
+        : "review",
+      ...patch,
+      operator_notes: nextNotes,
+    });
+  }
+
+  function updateSectionNoteCursor(sectionKey: string, target: HTMLTextAreaElement) {
+    sectionNoteDraftsRef.current[sectionKey] = target.value;
+    sectionNoteCursorsRef.current[sectionKey] = target.selectionStart ?? 0;
+  }
+
+  function sectionQuickLabels(): { label: string; noteLine: string; operatorLabel: string }[] {
+    const verticalTypes = selectedVertical ? VERTICAL_ENTITY_TYPES[selectedVertical] : VERTICAL_ENTITY_TYPES["food-service"];
+    const preferredLabels: Record<string, string> = {
+      recipe: "Recipe",
+      meal: "Meal",
+      ingredient: "Ingredients",
+      supplier: "Supplier",
+      supply: "Supply",
+      order: "Order",
+      "dietary-restriction": "Dietary Restriction",
+    };
+    return verticalTypes
+      .filter((type) => ["recipe", "meal", "ingredient", "supplier", "supply", "order", "dietary-restriction"].includes(type.slug))
+      .map((type) => {
+        const label = preferredLabels[type.slug] ?? type.label;
+        return {
+          label,
+          operatorLabel: label,
+          noteLine: `${label}:`,
+        };
+      });
+  }
+
+  function isSectionReviewed(section: SourceSection) {
+    return Boolean(
+      section.operator_label ||
+      section.operator_notes?.trim() ||
+      section.operator_confidence ||
+      (section.operator_decision ?? "review") !== "review",
+    );
+  }
+
+  function reviewSectionProgress(filename: string) {
+    const sections = parseJob?.section_map?.files[filename]?.sections ?? [];
+    const decisions = sections.reduce<Record<string, number>>((acc, section) => {
+      const decision = section.operator_decision ?? "review";
+      acc[decision] = (acc[decision] ?? 0) + 1;
+      return acc;
+    }, {});
+    const touched = sections.filter((section) => (
+      section.operator_label ||
+      section.operator_notes ||
+      section.operator_confidence ||
+      (section.operator_decision ?? "review") !== "review"
+    ));
+    const firstUntouched = sections.find((section) => !(
+      section.operator_label ||
+      section.operator_notes ||
+      section.operator_confidence ||
+      (section.operator_decision ?? "review") !== "review"
+    ));
+    const notes = touched.map((section) => `${section.operator_label ?? ""}\n${section.operator_notes ?? ""}`).join("\n").toLowerCase();
+    const impliedTypes = [
+      ["Meal", /\bmeal\b|meal\.|breakfast|lunch|dinner/],
+      ["Recipe", /\brecipe\b|recipes\s*=/],
+      ["Ingredient", /\bingredient\b|ingredients\s*=/],
+      ["Supplier", /\bsupplier\b|suppliers\s*=/],
+      ["Supply", /\bsupply\b|\bsupplies\b|gloves|plates|utensils/],
+      ["Order", /\border\b|order\.supplier/],
+      ["Dietary Restriction", /dietary|vegan|vegetarian|gluten free|dairy free/],
+    ].filter(([, pattern]) => (pattern as RegExp).test(notes)).map(([label]) => label);
+    return {
+      total: sections.length,
+      touched: touched.length,
+      decisions,
+      firstUntouched,
+      impliedTypes,
+    };
+  }
+
+  function combineSectionWithNext(filename: string, section: SourceSection) {
+    const sections = parseJob?.section_map?.files[filename]?.sections ?? [];
+    const idx = sections.findIndex((candidate) => candidate.section_id === section.section_id);
+    const nextSection = idx >= 0 ? sections[idx + 1] : null;
+    if (!nextSection) return;
+    setParseJob((prev) => {
+      if (!prev?.section_map) return prev;
+      const fileMap = prev.section_map.files[filename];
+      if (!fileMap) return prev;
+      const nextSections = fileMap.sections.map((candidate) => (
+        candidate.section_id === section.section_id
+          ? {
+              ...candidate,
+              title: `${section.title} + ${nextSection.title}`,
+              content_markdown: [section.content_markdown, nextSection.content_markdown].filter(Boolean).join("\n\n"),
+              content_chars: (section.content_markdown?.length ?? 0) + (nextSection.content_markdown?.length ?? 0) + 2,
+              end_char: nextSection.end_char,
+              merged_section_ids: [
+                ...(section.merged_section_ids ?? [section.section_id]),
+                ...(nextSection.merged_section_ids ?? [nextSection.section_id]),
+              ],
+              merged_titles: [
+                ...(section.merged_titles ?? [section.title]),
+                ...(nextSection.merged_titles ?? [nextSection.title]),
+              ],
+            }
+          : candidate
+      )).filter((candidate) => candidate.section_id !== nextSection.section_id);
+      const nextFileMap = {
+        ...fileMap,
+        status: "operator_review",
+        sections: nextSections,
+      };
+      const nextSectionMap = {
+        ...prev.section_map,
+        status: "operator_review",
+        files: {
+          ...prev.section_map.files,
+          [filename]: nextFileMap,
+        },
+      };
+      return {
+        ...prev,
+        section_map: nextSectionMap,
+        phase1_results: {
+          ...prev.phase1_results,
+          section_map: nextSectionMap,
+        },
+      };
+    });
+    setOpenSectionIds((prev) => ({
+      ...prev,
+      [`${filename}:${section.section_id}`]: true,
+      [`${filename}:${nextSection.section_id}`]: false,
+    }));
+    void saveSectionMapRow(filename, section, {}, { applyLocalPatch: false, combineWithNext: true });
   }
 
   // Poll for Phase 2 completion every 5s
@@ -835,8 +1563,25 @@ export default function GroupCatalystPage() {
           status: string;
           files_done: number;
           files_total: number;
+          source_inventory?: SourceInventory;
+          strategy_map?: StrategyMap;
+          section_map?: SourceSectionMap;
           merged_registers?: ParsedFileRegister[];
         };
+        if (data.source_inventory || data.strategy_map || data.section_map) {
+          setParseJob((prev) => prev ? {
+            ...prev,
+            source_inventory: data.source_inventory ?? prev.source_inventory,
+            strategy_map: data.strategy_map ?? prev.strategy_map,
+            section_map: data.section_map ?? prev.section_map,
+            phase1_results: {
+              ...prev.phase1_results,
+              ...(data.source_inventory ? { source_inventory: data.source_inventory } : {}),
+              ...(data.strategy_map ? { strategy_map: data.strategy_map } : {}),
+              ...(data.section_map ? { section_map: data.section_map } : {}),
+            },
+          } : prev);
+        }
         setAnalysisProgress({ done: data.files_done, total: data.files_total });
         if (data.status === "complete") {
           const merged = data.merged_registers ?? [];
@@ -1015,6 +1760,25 @@ export default function GroupCatalystPage() {
             <Text fontSize="xs" color={mutedText} mt={1} lineHeight="1.4">
               {group?.title}
             </Text>
+            <Box
+              className="cat-reg-nav-job-context"
+              mt={2}
+              px={2}
+              py={1}
+              borderRadius="md"
+              bg={chipBg}
+              border="1px solid"
+              borderColor={chipBorder}
+            >
+              <Text fontSize="10px" fontWeight="700" color={chipText} textTransform="uppercase">
+                Active job {activeParseJobLabel}
+              </Text>
+              {activeParseJobFiles.length > 0 && (
+                <Text fontSize="10px" color={mutedText} mt="2px" lineHeight="1.35">
+                  {activeParseJobFiles.join(", ")}
+                </Text>
+              )}
+            </Box>
           </Box>
 
           <Box flex={selectedRegSlug && entryList.length > 0 ? "0 0 36%" : "1"} overflowY="auto" py={1}>
@@ -1432,7 +2196,22 @@ export default function GroupCatalystPage() {
                       >
                         View Register of Registers →
                       </Button>
+                      <Button
+                        onClick={handleResumeLatestReview}
+                        variant="outline"
+                        size="sm"
+                        fontWeight="600"
+                        loading={resumingReview}
+                        disabled={resumingReview}
+                      >
+                        Resume latest inventory review →
+                      </Button>
                     </HStack>
+                    {parseError && (
+                      <Text fontSize="xs" color="red.600" mt={3}>
+                        {parseError}
+                      </Text>
+                    )}
                   </Box>
 
                   {/* Three pillars */}
@@ -1960,14 +2739,71 @@ export default function GroupCatalystPage() {
             >
               <VStack align="stretch" gap={8}>
                 <Box>
-                  <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
-                    Good news — we found your data.
-                  </Heading>
-                  <Text fontSize="sm" color={mutedText} lineHeight="1.7">
-                    Here&apos;s our first read. Confirm this looks right, add any extra notes,
-                    and we&apos;ll run the full analysis in the background — we&apos;ll email
-                    you when it&apos;s ready.
-                  </Text>
+                  <HStack justify="space-between" align="flex-start" gap={4} mb={2}>
+                    <Box>
+                      <Heading as="h2" fontSize="xl" fontWeight="700" letterSpacing="-0.02em" mb={2}>
+                        First pass — file inventory.
+                      </Heading>
+                      <Text fontSize="sm" color={mutedText} lineHeight="1.7">
+                        Here&apos;s our local read of the files: duplicates, source shape,
+                        likely strategy, and rough token weight. Confirm this before
+                        we spend tokens on deeper analysis.
+                      </Text>
+                      <HStack mt={3} gap={2} wrap="wrap">
+                        <Box
+                          className="cat-active-parse-job-chip"
+                          bg={chipBg}
+                          border="1px solid"
+                          borderColor={chipBorder}
+                          borderRadius="md"
+                          px={2}
+                          py={1}
+                        >
+                          <Text fontSize="10px" fontWeight="700" color={chipText} textTransform="uppercase">
+                            Active parse job: {activeParseJobLabel}
+                          </Text>
+                        </Box>
+                        {activeParseJobFiles.length > 0 && (
+                          <Text fontSize="11px" color={mutedText}>
+                            Source: {activeParseJobFiles.join(", ")}
+                          </Text>
+                        )}
+                      </HStack>
+                    </Box>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      fontWeight="600"
+                      flexShrink={0}
+                      onClick={() => setTuneOpen(true)}
+                    >
+                      Tune
+                    </Button>
+                  </HStack>
+                  {(parseJob.phase1_results.tuning_notes ?? []).length > 0 && (
+                    <Box
+                      bg={chipBg}
+                      border="1px solid"
+                      borderColor={chipBorder}
+                      borderRadius="md"
+                      px={3}
+                      py={2}
+                      mt={3}
+                    >
+                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                        Tuning notes
+                      </Text>
+                      <VStack align="stretch" gap={1}>
+                        {(parseJob.phase1_results.tuning_notes ?? []).slice(-3).map((note) => (
+                          <Text key={note.id} fontSize="xs" color={mutedText}>
+                            {note.shape && note.field && note.value
+                              ? `${note.shape}.${note.field}: ${note.value}${note.confidence ? ` (${note.confidence})` : ""}`
+                              : note.note}
+                          </Text>
+                        ))}
+                      </VStack>
+                    </Box>
+                  )}
                 </Box>
 
                 {/* Duplicate file notice */}
@@ -1986,6 +2822,659 @@ export default function GroupCatalystPage() {
                     <Text fontSize="xs" color="yellow.700">
                       {(parseJob.skipped_duplicates ?? []).join(", ")} — identical content to another uploaded file. Counts below reflect deduplicated files only.
                     </Text>
+                  </Box>
+                )}
+
+                {/* Source Inventory + Strategy Review */}
+                {parseJob.strategy_map && (
+                  <Box
+                    className="cat-strategy-review"
+                    bg={cardBg}
+                    border="1px solid"
+                    borderColor={cardBorder}
+                    borderRadius="lg"
+                    p={5}
+                  >
+                    <HStack justify="space-between" align="flex-start" mb={4}>
+                      <Box>
+                        <Text fontSize="10px" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" color={mutedText} mb={1}>
+                          Strategy review
+                        </Text>
+                        <Heading as="h3" fontSize="md" fontWeight="700">
+                          Decide how each source should be used.
+                        </Heading>
+                      </Box>
+                      <Box
+                        px="8px"
+                        py="3px"
+                        borderRadius="4px"
+                        bg={chipBg}
+                        border="1px solid"
+                        borderColor={chipBorder}
+                        fontSize="10px"
+                        fontWeight="700"
+                        color={mutedText}
+                        flexShrink={0}
+                      >
+                        {parseJob.strategy_map.status}
+                      </Box>
+                    </HStack>
+                    <Text fontSize="xs" color={mutedText} lineHeight="1.6" mb={4}>
+                      This is the resourceful pause: confirm the shape of each file,
+                      hold anything uncertain, and leave notes before we spend tokens.
+                    </Text>
+                    <VStack align="stretch" gap={3}>
+                      {Object.entries(parseJob.strategy_map.files).map(([filename, row]) => {
+                        const inventory = parseJob.source_inventory?.files.find((item) => item.filename === filename);
+                        const gaps = row.contract_gaps ?? [];
+                        const duplicateOf = row.duplicate_of ?? inventory?.duplicate_of;
+                        const decision = row.operator_decision ?? "review";
+                        return (
+                          <Collapsible.Root
+                            key={filename}
+                            className="cat-strategy-row"
+                          >
+                            <Box
+                              border="1px solid"
+                              borderColor={gaps.length ? "orange.300" : chipBorder}
+                              borderRadius="md"
+                              overflow="hidden"
+                            >
+                              <Collapsible.Trigger asChild>
+                                <Box
+                                  as="button"
+                                  type="button"
+                                  width="100%"
+                                  textAlign="left"
+                                  px={4}
+                                  py={3}
+                                  cursor="pointer"
+                                  _hover={{ bg: chipBg }}
+                                >
+                                  <HStack align="center" justify="space-between" gap={4}>
+                                    <Box minW={0} flex="1">
+                                      <HStack gap={2} mb={1} minW={0}>
+                                        <Text fontSize="sm" fontWeight="700" noOfLines={1}>
+                                          {filename}
+                                        </Text>
+                                        {duplicateOf && (
+                                          <Box
+                                            px="6px"
+                                            py="1px"
+                                            borderRadius="4px"
+                                            bg="orange.50"
+                                            color="orange.700"
+                                            fontSize="10px"
+                                            fontWeight="700"
+                                            flexShrink={0}
+                                          >
+                                            DUPLICATE
+                                          </Box>
+                                        )}
+                                        {gaps.length > 0 && (
+                                          <Box
+                                            px="6px"
+                                            py="1px"
+                                            borderRadius="4px"
+                                            bg="orange.50"
+                                            color="orange.700"
+                                            fontSize="10px"
+                                            fontWeight="700"
+                                            flexShrink={0}
+                                          >
+                                            CONTRACT GAP
+                                          </Box>
+                                        )}
+                                      </HStack>
+                                      <Text fontSize="xs" color={mutedText} noOfLines={1}>
+                                        {(row.source_shape_id ?? row.source_shape ?? "unknown source")} · {row.strategy_id ?? row.strategy ?? "strategy pending"}
+                                      </Text>
+                                    </Box>
+                                    <HStack gap={2} flexShrink={0}>
+                                      <Box
+                                        px="8px"
+                                        py="3px"
+                                        borderRadius="4px"
+                                        bg={decision === "skip" ? "orange.50" : chipBg}
+                                        border="1px solid"
+                                        borderColor={decision === "skip" ? "orange.200" : chipBorder}
+                                        fontSize="10px"
+                                        fontWeight="700"
+                                        color={decision === "skip" ? "orange.700" : mutedText}
+                                      >
+                                        {decision.toUpperCase()}
+                                      </Box>
+                                      <Text fontSize="xs" color={mutedText} whiteSpace="nowrap">
+                                        {inventory?.estimated_tokens ?? "?"} est. ingest cost
+                                      </Text>
+                                      <Collapsible.Indicator />
+                                    </HStack>
+                                  </HStack>
+                                </Box>
+                              </Collapsible.Trigger>
+
+                              <Collapsible.Content>
+                                <Box px={4} pb={4} pt={1}>
+                                  {duplicateOf && (
+                                    <Text fontSize="xs" color="orange.700" mb={3}>
+                                      Duplicate of {duplicateOf}; this should stay skipped.
+                                    </Text>
+                                  )}
+
+                                  <HStack align="flex-start" justify="space-between" gap={4} mb={3}>
+                                    <Box minW={0}>
+                                      <Text fontSize="xs" color={mutedText}>
+                                        {inventory?.file_type?.toUpperCase() ?? "FILE"} · {inventory?.text_status ?? "unknown"} text · {inventory?.text_chars ?? 0} chars
+                                      </Text>
+                                    </Box>
+                                    <select
+                                      value={decision}
+                                      onChange={(e) => updateStrategyRow(filename, { operator_decision: e.target.value as StrategyMapRow["operator_decision"] })}
+                                      style={{
+                                        fontSize: "12px",
+                                        padding: "6px 8px",
+                                        border: `1px solid ${cardBorder}`,
+                                        borderRadius: "6px",
+                                        background: "transparent",
+                                        color: "inherit",
+                                      }}
+                                    >
+                                      <option value="review">Review</option>
+                                      <option value="extract">Extract</option>
+                                      <option value="hold">Hold</option>
+                                      <option value="skip">Skip</option>
+                                    </select>
+                                  </HStack>
+
+                                  <Box
+                                    className="cat-strategy-fields"
+                                    display="grid"
+                                    gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
+                                    gap={3}
+                                    mb={3}
+                                  >
+                                    <Box>
+                                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                        Source shape
+                                      </Text>
+                                      <Input
+                                        value={row.source_shape_id ?? row.source_shape ?? ""}
+                                        onChange={(e) => updateStrategyRow(filename, { source_shape_id: e.target.value })}
+                                        size="sm"
+                                        fontSize="12px"
+                                      />
+                                    </Box>
+                                    <Box>
+                                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                        Strategy
+                                      </Text>
+                                      <Input
+                                        value={row.strategy_id ?? row.strategy ?? ""}
+                                        onChange={(e) => updateStrategyRow(filename, { strategy_id: e.target.value, strategy: e.target.value })}
+                                        size="sm"
+                                        fontSize="12px"
+                                      />
+                                    </Box>
+                                    <Box>
+                                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                        Authority
+                                      </Text>
+                                      <select
+                                        value={row.authority_status ?? "working_source"}
+                                        onChange={(e) => updateStrategyRow(filename, { authority_status: e.target.value })}
+                                        style={{
+                                          width: "100%",
+                                          fontSize: "12px",
+                                          padding: "7px 8px",
+                                          border: `1px solid ${cardBorder}`,
+                                          borderRadius: "6px",
+                                          background: "transparent",
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        <option value="authoritative">Authoritative</option>
+                                        <option value="working_source">Working source</option>
+                                        <option value="supporting_source">Supporting source</option>
+                                        <option value="duplicate">Duplicate</option>
+                                        <option value="superseded">Superseded</option>
+                                      </select>
+                                    </Box>
+                                    <Box>
+                                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                        Target
+                                      </Text>
+                                      <Text fontSize="xs" color={mutedText} py="8px">
+                                        {row.primary_target ?? row.target_registers?.join(", ") ?? "not selected"}
+                                      </Text>
+                                    </Box>
+                                  </Box>
+
+                                  {(row.sectioning || row.extraction_grain || row.token_posture) && (
+                                    <Text fontSize="xs" color={mutedText} mb={2}>
+                                      {row.sectioning ?? "sectioning pending"} · {row.extraction_grain ?? "grain pending"} · {row.token_posture ?? "token posture pending"}
+                                    </Text>
+                                  )}
+
+                                  {gaps.length > 0 && (
+                                    <Box bg="orange.50" border="1px solid" borderColor="orange.200" borderRadius="md" px={3} py={2} mb={3}>
+                                      <Text fontSize="xs" fontWeight="700" color="orange.800" mb={1}>
+                                        Contract gap
+                                      </Text>
+                                      {gaps.map((gap, idx) => (
+                                        <Text key={`${gap.contract_gap}-${idx}`} fontSize="xs" color="orange.700">
+                                          {gap.contract_gap}{gap.missing_shape ? `: ${gap.missing_shape}` : ""}{gap.strategy_id ? `: ${gap.strategy_id}` : ""}
+                                        </Text>
+                                      ))}
+                                    </Box>
+                                  )}
+
+                                  {(row.validation?.length || row.failure_modes?.length) && (
+                                    <Text fontSize="xs" color={mutedText} mb={3}>
+                                      Validation: {(row.validation ?? []).join(", ") || "none"} · Failure modes: {(row.failure_modes ?? []).slice(0, 2).join(", ")}
+                                      {(row.failure_modes?.length ?? 0) > 2 ? "..." : ""}
+                                    </Text>
+                                  )}
+
+                                  <textarea
+                                    value={row.notes ?? ""}
+                                    onChange={(e) => updateStrategyRow(filename, { notes: e.target.value })}
+                                    placeholder="Operator notes for this file..."
+                                    rows={2}
+                                    style={{
+                                      width: "100%",
+                                      fontSize: "12px",
+                                      lineHeight: "1.55",
+                                      resize: "vertical",
+                                      border: `1px solid ${cardBorder}`,
+                                      borderRadius: "6px",
+                                      padding: "8px 10px",
+                                      background: "transparent",
+                                      outline: "none",
+                                      fontFamily: "inherit",
+                                      color: "inherit",
+                                    }}
+                                  />
+
+                                  {parseJob.section_map?.files[filename]?.sections?.length ? (
+                                    <Box mt={4}>
+                                      <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={2}>
+                                        Source sections
+                                      </Text>
+                                      {(() => {
+                                        const progress = reviewSectionProgress(filename);
+                                        return (
+                                          <Box border="1px solid" borderColor={chipBorder} borderRadius="md" p={3} mb={3}>
+                                            <HStack justify="space-between" align="center" gap={3}>
+                                              <Text fontSize="xs" color={mutedText}>
+                                                {progress.touched} of {progress.total} sections touched · {Object.entries(progress.decisions).map(([key, value]) => `${key}: ${value}`).join(" · ")}
+                                              </Text>
+                                              <Button
+                                                size="xs"
+                                                variant="ghost"
+                                                onClick={() => setProgressReviewOpen((prev) => ({ ...prev, [filename]: !prev[filename] }))}
+                                              >
+                                                {progressReviewOpen[filename] ? "Hide review" : "Review progress"}
+                                              </Button>
+                                            </HStack>
+                                            {progressReviewOpen[filename] && (
+                                              <Box mt={2}>
+                                                <Text fontSize="xs" color={mutedText}>
+                                                  First untouched: {progress.firstUntouched ? `${progress.firstUntouched.section_id} · ${progress.firstUntouched.title}` : "none"}
+                                                </Text>
+                                                <Text fontSize="xs" color={mutedText}>
+                                                  Types implied by notes: {progress.impliedTypes.length ? progress.impliedTypes.join(", ") : "none yet"}
+                                                </Text>
+                                              </Box>
+                                            )}
+                                          </Box>
+                                        );
+                                      })()}
+                                      <VStack align="stretch" gap={2}>
+                                        {parseJob.section_map.files[filename].sections.map((section) => {
+                                          const sectionKey = `${filename}:${section.section_id}`;
+                                          const showFullContent = Boolean(expandedSectionContent[sectionKey]);
+                                          const content = section.content_markdown ?? "";
+                                          const sectionReviewed = isSectionReviewed(section);
+                                          const shouldTruncate = content.length > 900;
+                                          const visibleContent = showFullContent || !shouldTruncate
+                                            ? content
+                                            : `${content.slice(0, 900).trimEnd()}\n\n[Preview truncated. Show full content to inspect the rest.]`;
+                                          return (
+                                            <Collapsible.Root
+                                              key={`${parseJob.job_id}:${sectionKey}`}
+                                              className="cat-source-section-row"
+                                              open={Boolean(openSectionIds[sectionKey])}
+                                              onOpenChange={({ open }) => setOpenSectionIds((prev) => ({ ...prev, [sectionKey]: open }))}
+                                            >
+                                              <Box border="1px solid" borderColor={chipBorder} borderRadius="md" overflow="hidden">
+                                                <Collapsible.Trigger asChild>
+                                                  <Box
+                                                    as="button"
+                                                    type="button"
+                                                    width="100%"
+                                                    textAlign="left"
+                                                    px={3}
+                                                    py={2}
+                                                    cursor="pointer"
+                                                    _hover={{ bg: chipBg }}
+                                                  >
+                                                    <HStack justify="space-between" gap={3}>
+                                                      <Box minW={0}>
+                                                        <Text fontSize="xs" fontWeight="700" noOfLines={1}>
+                                                          {section.title}
+                                                        </Text>
+                                                        <Text fontSize="11px" color={mutedText} noOfLines={1}>
+                                                          {section.operator_label || section.proposed_label} · {section.content_chars} chars
+                                                        </Text>
+                                                      </Box>
+                                                      <HStack gap={2} flexShrink={0}>
+                                                        <Box
+                                                          px="6px"
+                                                          py="1px"
+                                                          borderRadius="4px"
+                                                          bg={sectionReviewed ? "green.50" : chipBg}
+                                                          border="1px solid"
+                                                          borderColor={sectionReviewed ? "green.200" : chipBorder}
+                                                          fontSize="10px"
+                                                          fontWeight="700"
+                                                          color={sectionReviewed ? "green.700" : mutedText}
+                                                        >
+                                                          {sectionReviewed ? "✓ REVIEWED" : (section.operator_decision ?? "review").toUpperCase()}
+                                                        </Box>
+                                                        <Collapsible.Indicator />
+                                                      </HStack>
+                                                    </HStack>
+                                                  </Box>
+                                                </Collapsible.Trigger>
+                                                <Collapsible.Content>
+                                                  <Box px={3} pb={3} pt={1}>
+                                                    {section.evidence?.length ? (
+                                                      <Text fontSize="11px" color={mutedText} mb={2}>
+                                                        Evidence: {section.evidence.join(", ")}
+                                                      </Text>
+                                                    ) : null}
+                                                    <Box
+                                                      bg={chipBg}
+                                                      border="1px solid"
+                                                      borderColor={chipBorder}
+                                                      borderRadius="md"
+                                                      p={3}
+                                                      mb={3}
+                                                      maxH={showFullContent ? "420px" : "220px"}
+                                                      overflowY="auto"
+                                                    >
+                                                      <Text
+                                                        as="pre"
+                                                        fontSize="12px"
+                                                        lineHeight="1.55"
+                                                        whiteSpace="pre-wrap"
+                                                        fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+                                                        color={mutedText}
+                                                      >
+                                                        {visibleContent}
+                                                      </Text>
+                                                    </Box>
+                                                    {shouldTruncate && (
+                                                      <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        mb={3}
+                                                        onClick={() => setExpandedSectionContent((prev) => ({
+                                                          ...prev,
+                                                          [sectionKey]: !showFullContent,
+                                                        }))}
+                                                      >
+                                                        {showFullContent ? "Show preview" : "Show full content"}
+                                                      </Button>
+                                                    )}
+                                                    <Box
+                                                      display="grid"
+                                                      gridTemplateColumns={{ base: "1fr", md: "1fr 150px 160px" }}
+                                                      gap={3}
+                                                      mb={3}
+                                                    >
+                                                      <Box>
+                                                        <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                                          Operator label
+                                                        </Text>
+                                                        <Input
+                                                          value={section.operator_label ?? ""}
+                                                          onChange={(e) => updateSectionMapRow(filename, section.section_id, { operator_label: e.target.value })}
+                                                          placeholder={section.proposed_label}
+                                                          size="sm"
+                                                          fontSize="12px"
+                                                        />
+                                                      </Box>
+                                                      <Box>
+                                                        <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                                          Decision
+                                                        </Text>
+                                                        <select
+                                                          value={section.operator_decision ?? "review"}
+                                                          onChange={(e) => updateSectionMapRow(filename, section.section_id, { operator_decision: e.target.value as SourceSection["operator_decision"] })}
+                                                          style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                            padding: "7px 8px",
+                                                            border: `1px solid ${cardBorder}`,
+                                                            borderRadius: "6px",
+                                                            background: "transparent",
+                                                            color: "inherit",
+                                                          }}
+                                                        >
+                                                          <option value="review">Review</option>
+                                                          <option value="extract">Extract</option>
+                                                          <option value="hold">Hold</option>
+                                                          <option value="skip">Skip</option>
+                                                          <option value="misc">Misc</option>
+                                                        </select>
+                                                      </Box>
+                                                      <Box>
+                                                        <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                                                          Confidence
+                                                        </Text>
+                                                        <select
+                                                          value={section.operator_confidence ?? "staff_review"}
+                                                          onChange={(e) => updateSectionMapRow(filename, section.section_id, { operator_confidence: e.target.value as SourceSection["operator_confidence"] })}
+                                                          style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                            padding: "7px 8px",
+                                                            border: `1px solid ${cardBorder}`,
+                                                            borderRadius: "6px",
+                                                            background: "transparent",
+                                                            color: "inherit",
+                                                          }}
+                                                        >
+                                                          <option value="confident">Confident</option>
+                                                          <option value="staff_review">Staff Review</option>
+                                                          <option value="client_review">Client Review</option>
+                                                        </select>
+                                                      </Box>
+                                                    </Box>
+                                                    <HStack gap={2} flexWrap="wrap" mb={3}>
+                                                      {sectionQuickLabels().map((quick) => (
+                                                        <HStack
+                                                          key={quick.operatorLabel}
+                                                          gap={0}
+                                                          border="1px solid"
+                                                          borderColor={chipBorder}
+                                                          borderRadius="md"
+                                                          overflow="hidden"
+                                                        >
+                                                          <Button
+                                                            size="xs"
+                                                            variant="ghost"
+                                                            borderRadius="0"
+                                                            px={2}
+                                                            onClick={() => updateSectionMapRow(filename, section.section_id, {
+                                                              operator_label: quick.operatorLabel,
+                                                              operator_decision: section.operator_decision === "skip" || section.operator_decision === "misc"
+                                                                ? section.operator_decision
+                                                                : "review",
+                                                            })}
+                                                          >
+                                                            ↑
+                                                          </Button>
+                                                          <Box
+                                                            px={2}
+                                                            fontSize="11px"
+                                                            fontWeight="700"
+                                                            color={mutedText}
+                                                            borderLeft="1px solid"
+                                                            borderRight="1px solid"
+                                                            borderColor={chipBorder}
+                                                          >
+                                                            {quick.label}
+                                                          </Box>
+                                                          <Button
+                                                            size="xs"
+                                                            variant="ghost"
+                                                            borderRadius="0"
+                                                            px={2}
+                                                            onClick={() => insertSectionNoteAtCursor(filename, section, quick.noteLine)}
+                                                          >
+                                                            ↓
+                                                          </Button>
+                                                        </HStack>
+                                                      ))}
+                                                      <HStack
+                                                        gap={0}
+                                                        border="1px solid"
+                                                        borderColor={chipBorder}
+                                                        borderRadius="md"
+                                                        overflow="hidden"
+                                                      >
+                                                        <Button
+                                                          size="xs"
+                                                          variant="ghost"
+                                                          borderRadius="0"
+                                                          px={2}
+                                                          onClick={() => updateSectionMapRow(filename, section.section_id, {
+                                                            operator_label: section.operator_label || "recipe",
+                                                            operator_decision: section.operator_decision === "skip" || section.operator_decision === "misc"
+                                                              ? section.operator_decision
+                                                              : "review",
+                                                          })}
+                                                        >
+                                                          ↑
+                                                        </Button>
+                                                        <Box
+                                                          px={2}
+                                                          fontSize="11px"
+                                                          fontWeight="700"
+                                                          color={mutedText}
+                                                          borderLeft="1px solid"
+                                                          borderRight="1px solid"
+                                                          borderColor={chipBorder}
+                                                        >
+                                                          Yield 315
+                                                        </Box>
+                                                        <Button
+                                                          size="xs"
+                                                          variant="ghost"
+                                                          borderRadius="0"
+                                                          px={2}
+                                                          onClick={() => insertSectionNoteAtCursor(filename, section, "recipe.yield: 315 persons")}
+                                                        >
+                                                          ↓
+                                                        </Button>
+                                                      </HStack>
+                                                    </HStack>
+                                                    <textarea
+                                                      data-section-key={sectionKey}
+                                                      ref={(node) => {
+                                                        sectionNoteElementsRef.current[sectionKey] = node;
+                                                      }}
+                                                      defaultValue={section.operator_notes ?? ""}
+                                                      onChange={(e) => {
+                                                        updateSectionNoteCursor(sectionKey, e.currentTarget);
+                                                      }}
+                                                      onClick={(e) => updateSectionNoteCursor(sectionKey, e.currentTarget)}
+                                                      onKeyUp={(e) => updateSectionNoteCursor(sectionKey, e.currentTarget)}
+                                                      onSelect={(e) => updateSectionNoteCursor(sectionKey, e.currentTarget)}
+                                                      onKeyDown={(e) => expandNoteShortcut(e, (value, cursor) => {
+                                                        e.currentTarget.value = value;
+                                                        sectionNoteDraftsRef.current[sectionKey] = value;
+                                                        sectionNoteCursorsRef.current[sectionKey] = cursor;
+                                                      })}
+                                                      placeholder="What do you see here? What should extraction do with this section?"
+                                                      rows={3}
+                                                      style={{
+                                                        width: "100%",
+                                                        fontSize: "12px",
+                                                        lineHeight: "1.55",
+                                                        resize: "vertical",
+                                                        border: `1px solid ${cardBorder}`,
+                                                        borderRadius: "6px",
+                                                        padding: "8px 10px",
+                                                        background: "transparent",
+                                                        outline: "none",
+                                                        fontFamily: "inherit",
+                                                        color: "inherit",
+                                                      }}
+                                                    />
+                                                    <HStack justify="flex-end" mt={2}>
+                                                      {savedSectionIds[sectionKey] && (
+                                                        <Text fontSize="11px" color={mutedText}>
+                                                          Saved
+                                                        </Text>
+                                                      )}
+                                                      <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => combineSectionWithNext(filename, section)}
+                                                      >
+                                                        Combine next
+                                                      </Button>
+                                                      <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        color="orange.700"
+                                                        onClick={() => handleSectionQuickAction(filename, section, {
+                                                          operator_decision: "skip",
+                                                          operator_label: section.operator_label || "ignore",
+                                                          operator_notes: section.operator_notes || "Ignored during operator section review.",
+                                                        })}
+                                                      >
+                                                        Ignore
+                                                      </Button>
+                                                      <Button
+                                                        size="xs"
+                                                        variant="ghost"
+                                                        onClick={() => handleSectionQuickAction(filename, section, {
+                                                          operator_decision: "misc",
+                                                          operator_label: section.operator_label || "misc",
+                                                          operator_notes: section.operator_notes || "Preserve as a miscellaneous courtesy pointer.",
+                                                        })}
+                                                      >
+                                                        Misc
+                                                      </Button>
+                                                      <Button
+                                                        size="xs"
+                                                        variant="outline"
+                                                        loading={Boolean(savingSectionIds[sectionKey])}
+                                                        onClick={() => saveSectionMapRow(filename, section)}
+                                                      >
+                                                        Save section note
+                                                      </Button>
+                                                    </HStack>
+                                                  </Box>
+                                                </Collapsible.Content>
+                                              </Box>
+                                            </Collapsible.Root>
+                                          );
+                                        })}
+                                      </VStack>
+                                    </Box>
+                                  ) : null}
+                                </Box>
+                              </Collapsible.Content>
+                            </Box>
+                          </Collapsible.Root>
+                        );
+                      })}
+                    </VStack>
                   </Box>
                 )}
 
@@ -2816,6 +4305,25 @@ export default function GroupCatalystPage() {
                     </Text>
                     <Text fontSize="xs" color={mutedText}>{entryList.length} entries</Text>
                     <Box flex="1" />
+                    <Box
+                      className="cat-register-extraction-context"
+                      px={2}
+                      py="2px"
+                      borderRadius="md"
+                      bg={registerSourceMatchesActiveJob ? chipBg : "yellow.50"}
+                      border="1px solid"
+                      borderColor={registerSourceMatchesActiveJob ? chipBorder : "yellow.300"}
+                      title={`Active parse job: ${parseJob?.job_id ?? "none"}`}
+                    >
+                      <Text
+                        fontSize="10px"
+                        fontWeight="700"
+                        color={registerSourceMatchesActiveJob ? chipText : "yellow.800"}
+                        textTransform="uppercase"
+                      >
+                        Job {activeParseJobLabel}
+                      </Text>
+                    </Box>
                     <Button
                       onClick={handleMaterializeRegister}
                       size="xs" bg={chipBg} border="1px solid" borderColor={chipBorder}
@@ -2855,8 +4363,13 @@ export default function GroupCatalystPage() {
                     )}
                   </Box>
                   {materializeRegResult && (
-                    <Box px={5} py={2} borderTop="1px solid" borderColor={toolbarBorder}>
+                    <Box className="cat-materialize-progress" px={5} py={2} borderTop="1px solid" borderColor={toolbarBorder}>
                       <Text fontSize="xs" color={mutedText}>{materializeRegResult}</Text>
+                      {materializeProgressSummary && (
+                        <Text fontSize="11px" color={materializeBlockedCount ? "yellow.700" : mutedText} mt="2px">
+                          {materializeProgressSummary}
+                        </Text>
+                      )}
                     </Box>
                   )}
                 </Box>
@@ -2990,6 +4503,26 @@ export default function GroupCatalystPage() {
                       </>
                     )}
 
+                    <Box
+                      className="cat-register-extraction-context"
+                      px={2}
+                      py="2px"
+                      borderRadius="md"
+                      bg={registerSourceMatchesActiveJob ? chipBg : "yellow.50"}
+                      border="1px solid"
+                      borderColor={registerSourceMatchesActiveJob ? chipBorder : "yellow.300"}
+                      title={`Active parse job: ${parseJob?.job_id ?? "none"}`}
+                    >
+                      <Text
+                        fontSize="10px"
+                        fontWeight="700"
+                        color={registerSourceMatchesActiveJob ? chipText : "yellow.800"}
+                        textTransform="uppercase"
+                      >
+                        Job {activeParseJobLabel}
+                      </Text>
+                    </Box>
+
                     {/* Extract entries button */}
                     <Button
                       onClick={handleMaterializeRegister}
@@ -3008,10 +4541,17 @@ export default function GroupCatalystPage() {
                     </Button>
 
                     {/* Extract result / in-progress feedback */}
-                    {materializeRegResult && selectedRegSlug === materializingReg || (materializeRegResult && materializingReg === null) ? (
-                      <Text fontSize="11px" color={materializeRegResult.includes("fail") ? "red.500" : statusText}>
-                        {materializeRegResult}
-                      </Text>
+                    {(materializeRegResult && selectedRegSlug === materializingReg) || (materializeRegResult && materializingReg === null) ? (
+                      <Box className="cat-materialize-progress" maxW="460px">
+                        <Text fontSize="11px" color={materializeRegResult.includes("fail") ? "red.500" : statusText}>
+                          {materializeRegResult}
+                        </Text>
+                        {materializeProgressSummary && (
+                          <Text fontSize="10px" color={materializeBlockedCount ? "yellow.700" : mutedText}>
+                            {materializeProgressSummary}
+                          </Text>
+                        )}
+                      </Box>
                     ) : null}
 
                     {/* Save result feedback */}
@@ -3274,6 +4814,119 @@ export default function GroupCatalystPage() {
         </Box>
       </Box>
     </Box>
+    <Dialog.Root open={tuneOpen} onOpenChange={({ open }) => setTuneOpen(open)}>
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
+        <Dialog.Content maxW="560px" borderRadius="lg" bg={cardBg} border="1px solid" borderColor={cardBorder}>
+          <Dialog.Header>
+            <Dialog.Title> Tune this review pass</Dialog.Title>
+            <Dialog.CloseTrigger />
+          </Dialog.Header>
+          <Dialog.Body>
+            <Text fontSize="sm" color={mutedText} lineHeight="1.6" mb={4}>
+              Save batch-level guidance once, then use it during extraction instead of typing the same instruction into every section.
+            </Text>
+            <Box
+              display="grid"
+              gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
+              gap={3}
+              mb={3}
+            >
+              <Box>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                  Shape
+                </Text>
+                <Input
+                  value={tuneShape}
+                  onChange={(e) => setTuneShape(e.target.value)}
+                  placeholder="Recipe"
+                  size="sm"
+                  fontSize="12px"
+                />
+              </Box>
+              <Box>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                  Field
+                </Text>
+                <Input
+                  value={tuneField}
+                  onChange={(e) => setTuneField(e.target.value)}
+                  placeholder="yield"
+                  size="sm"
+                  fontSize="12px"
+                />
+              </Box>
+              <Box>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                  Value
+                </Text>
+                <Input
+                  value={tuneValue}
+                  onChange={(e) => setTuneValue(e.target.value)}
+                  placeholder="315 persons"
+                  size="sm"
+                  fontSize="12px"
+                />
+              </Box>
+              <Box>
+                <Text fontSize="10px" fontWeight="700" color={mutedText} textTransform="uppercase" mb={1}>
+                  Confidence
+                </Text>
+                <Input
+                  value={tuneConfidence}
+                  onChange={(e) => setTuneConfidence(e.target.value)}
+                  placeholder="65%"
+                  size="sm"
+                  fontSize="12px"
+                />
+              </Box>
+            </Box>
+            <textarea
+              value={tuneNote}
+              onChange={(e) => setTuneNote(e.target.value)}
+              onKeyDown={(e) => expandNoteShortcut(e, (value) => setTuneNote(value))}
+              placeholder="Optional extra note. Try /Rec + Tab or r.in + Tab."
+              rows={4}
+              style={{
+                width: "100%",
+                fontSize: "13px",
+                lineHeight: "1.65",
+                resize: "vertical",
+                border: `1px solid ${cardBorder}`,
+                borderRadius: "6px",
+                padding: "10px 12px",
+                background: "transparent",
+                outline: "none",
+                fontFamily: "inherit",
+                color: "inherit",
+              }}
+            />
+          </Dialog.Body>
+          <Dialog.Footer>
+            <HStack justify="space-between" w="full">
+              <Text fontSize="xs" color={mutedText}>
+                Saved on this parse job.
+              </Text>
+              <HStack gap={2}>
+                <Button variant="ghost" onClick={() => setTuneOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  bg={BRAND}
+                  color="white"
+                  _hover={{ opacity: 0.88 }}
+                  loading={savingTune}
+                  disabled={savingTune || !(tuneNote.trim() || (tuneShape.trim() && tuneField.trim() && tuneValue.trim()))}
+                  onClick={handleSaveTuningNote}
+                >
+                  Save tuning note
+                </Button>
+              </HStack>
+            </HStack>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Dialog.Root>
     </>
   );
 }
