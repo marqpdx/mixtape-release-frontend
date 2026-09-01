@@ -1,4 +1,4 @@
-// src/app/(root)/(group-public)/groups/[slug]/page.tsx
+// src/app/(main)/(group-landing)/groups/[slug]/page.tsx
 //
 // Public Group landing page — server component.
 // Data fetched server-side; rendered for anonymous visitors.

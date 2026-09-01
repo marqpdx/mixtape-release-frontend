@@ -1,7 +1,7 @@
 "use client";
 
 // GroupPublicFeatured — Featured writing cards (Decision 1, Decision 6)
-// Decision 4: content backed by Collection; this component just renders what the server resolved.
+// Decision 4: content backed by Collection; this component renders what the server resolved.
 
 import { Box, Flex, Text, Grid } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";

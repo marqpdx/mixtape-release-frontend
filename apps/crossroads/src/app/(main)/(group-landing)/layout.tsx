@@ -1,4 +1,4 @@
-// src/app/(root)/(group-public)/layout.tsx
+// (main)/(group-landing)/layout.tsx
 //
 // Layout for public Group landing pages (Group Public Landing ADR).
 // No platform navigation — Decision 11: the page belongs to the Group,
