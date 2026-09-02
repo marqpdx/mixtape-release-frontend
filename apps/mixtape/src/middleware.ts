@@ -148,13 +148,11 @@ export function middleware(request: NextRequest) {
   // Define route categories
   const isAuthPage = pathname.startsWith('/app/login') ||
                      pathname.startsWith('/app/signup') ||
-                     pathname.startsWith('/app/forgot-password');
+                     pathname.startsWith('/app/forgot-password') ||
+                     pathname.startsWith('/app/update-password') ||
+                     pathname.startsWith('/app/invitations/accept');
 
-  const isProtectedPage = pathname.startsWith('/app/console') ||
-                          pathname.startsWith('/app/dashboard') ||
-                          pathname.startsWith('/app/settings') ||
-                          pathname.startsWith('/app/admin') ||
-                          pathname.startsWith('/app/profile');
+  const isProtectedPage = pathname.startsWith('/app/') && !isAuthPage;
 
   // Redirect unauthenticated users trying to access protected pages
   if (isProtectedPage && !isAuthenticated) {
