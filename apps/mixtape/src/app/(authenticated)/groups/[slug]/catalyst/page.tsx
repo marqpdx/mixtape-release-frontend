@@ -2883,7 +2883,6 @@ export default function GroupCatalystPage() {
                               <Collapsible.Trigger asChild>
                                 <Box
                                   as="button"
-                                  type="button"
                                   width="100%"
                                   textAlign="left"
                                   px={4}
@@ -2894,7 +2893,7 @@ export default function GroupCatalystPage() {
                                   <HStack align="center" justify="space-between" gap={4}>
                                     <Box minW={0} flex="1">
                                       <HStack gap={2} mb={1} minW={0}>
-                                        <Text fontSize="sm" fontWeight="700" noOfLines={1}>
+                                        <Text fontSize="sm" fontWeight="700" lineClamp={1}>
                                           {filename}
                                         </Text>
                                         {duplicateOf && (
@@ -2926,7 +2925,7 @@ export default function GroupCatalystPage() {
                                           </Box>
                                         )}
                                       </HStack>
-                                      <Text fontSize="xs" color={mutedText} noOfLines={1}>
+                                      <Text fontSize="xs" color={mutedText} lineClamp={1}>
                                         {(row.source_shape_id ?? row.source_shape ?? "unknown source")} · {row.strategy_id ?? row.strategy ?? "strategy pending"}
                                       </Text>
                                     </Box>
@@ -3150,7 +3149,6 @@ export default function GroupCatalystPage() {
                                                 <Collapsible.Trigger asChild>
                                                   <Box
                                                     as="button"
-                                                    type="button"
                                                     width="100%"
                                                     textAlign="left"
                                                     px={3}
@@ -3160,10 +3158,10 @@ export default function GroupCatalystPage() {
                                                   >
                                                     <HStack justify="space-between" gap={3}>
                                                       <Box minW={0}>
-                                                        <Text fontSize="xs" fontWeight="700" noOfLines={1}>
+                                                        <Text fontSize="xs" fontWeight="700" lineClamp={1}>
                                                           {section.title}
                                                         </Text>
-                                                        <Text fontSize="11px" color={mutedText} noOfLines={1}>
+                                                        <Text fontSize="11px" color={mutedText} lineClamp={1}>
                                                           {section.operator_label || section.proposed_label} · {section.content_chars} chars
                                                         </Text>
                                                       </Box>
