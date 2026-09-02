@@ -402,23 +402,25 @@ export async function fetchUserIdentity(token?: string): Promise<UserIdentity> {
  * Logout user - clears httpOnly cookie and local tokens
  */
 export async function logout(): Promise<void> {
+  // Capture token before clearing so the backend can denylist the JTI.
+  const accessToken = getAccessToken();
+
   try {
-    // Call backend to clear httpOnly cookie
+    const headers = getHeaders();
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
     await fetch(LOGOUT_URL, {
       method: 'POST',
-      headers: getHeaders(), // Includes CSRF token if available
+      headers,
       credentials: 'include',
     });
   } catch (error) {
     console.error('Error calling logout endpoint:', error);
   } finally {
-    // Always clear local tokens
     clearAccessToken();
-
-    // 🔥 Clear axios default Authorization header for safety
     delete axiosInstance.defaults.headers.common["Authorization"];
-
-    csrfToken = null; // Clear CSRF token on logout
+    csrfToken = null;
   }
 }
 

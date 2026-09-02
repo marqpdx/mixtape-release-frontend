@@ -1,6 +1,7 @@
 // lib/socket-shared.ts
 
-import { getValidAccessToken } from "@providers/auth-provider/utils";
+import { getAccessToken } from "@mixtape/auth/tokenStorage";
+import { refreshAccessToken } from "@mixtape/api/clients/auth/api";
 import { io, Socket } from "socket.io-client";
 
 let sharedSocket: Socket | null = null;
@@ -34,7 +35,10 @@ export const initializeSharedSocket = async (): Promise<Socket | null> => {
   connecting = true;
   console.log("SharedSocket: 🚀 Starting new socket connection...");
 
-  const token = await getValidAccessToken();
+  let token = getAccessToken();
+  if (!token) {
+    token = await refreshAccessToken();
+  }
   if (!token) {
     console.warn("SharedSocket: 🛑 No valid access token available for socket.");
     connecting = false;
