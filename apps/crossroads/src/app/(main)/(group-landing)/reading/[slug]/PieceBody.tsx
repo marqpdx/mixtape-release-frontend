@@ -12,7 +12,7 @@ interface Props {
 export function PieceBody({ body_json }: Props) {
   return (
     <TipTapRenderer
-      content={body_json as Parameters<typeof TipTapRenderer>[0]["content"]}
+      content={body_json as unknown as Parameters<typeof TipTapRenderer>[0]["content"]}
     />
   );
 }
