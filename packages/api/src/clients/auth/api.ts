@@ -268,7 +268,14 @@ export async function register(data: RegisterData): Promise<void> {
   const result = await response.json();
 
   if (!response.ok || !result.success) {
-    throw new Error(result.detail || 'Registration failed');
+    if (result.detail) {
+      throw new Error(String(result.detail));
+    }
+    // DRF field-level validation errors: {"password": ["Too common."], "username": [...]}
+    const fieldMessages = Object.entries(result as Record<string, unknown>)
+      .filter(([k]) => k !== 'success')
+      .flatMap(([, v]) => Array.isArray(v) ? v.map(String) : [String(v)]);
+    throw new Error(fieldMessages.join(' ') || 'Registration failed');
   }
 
   // Record successful registration (resets rate limit)

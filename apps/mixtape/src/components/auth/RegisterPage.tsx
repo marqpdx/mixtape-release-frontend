@@ -8,11 +8,14 @@ import {
   Container,
   Heading,
   Input,
+  InputGroup,
+  IconButton,
   Link,
   Stack,
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -24,6 +27,7 @@ const RegisterPage: React.FC = () => {
   const { register } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState<RegisterFormProps>({
     username: "",
@@ -122,16 +126,31 @@ const RegisterPage: React.FC = () => {
                 bg={useColorModeValue("yellow.100", "gray.800")}
                 required
               />
-              <Input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Password"
-                bg={useColorModeValue("yellow.100", "gray.800")}
-                required
-                minLength={8}
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Password"
+                  bg={useColorModeValue("yellow.100", "gray.800")}
+                  required
+                  minLength={8}
+                  pr="3rem"
+                />
+              </InputGroup>
 
               <Button
                 type="submit"
