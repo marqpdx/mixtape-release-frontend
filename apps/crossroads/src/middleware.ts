@@ -4,13 +4,13 @@
 // the Next.js app serves the correct page without a redirect. The browser URL
 // stays as the subdomain — this is a server-side rewrite only.
 //
-// The tenant namespace is *.apps.crossroads.place, keeping platform subdomains
-// (api, www, chat) on the root domain with no collision risk.
+// The public landing namespace is *.go.crossroads.place, keeping platform
+// subdomains and Catalyst tenant routes (*.apps.crossroads.place) separate.
 
 import { NextRequest, NextResponse } from "next/server";
 
 const TENANT_SUFFIX =
-  process.env.NEXT_PUBLIC_TENANT_SUFFIX ?? ".apps.crossroads.place";
+  process.env.NEXT_PUBLIC_TENANT_SUFFIX ?? ".go.crossroads.place";
 
 export function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
