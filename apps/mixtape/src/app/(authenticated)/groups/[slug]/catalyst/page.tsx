@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 import {
   Avatar,
   Box,
@@ -420,6 +421,7 @@ const CONTEXT_FILES = [
 export default function GroupCatalystPage() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
+  const { user } = useAuth();
 
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1620,6 +1622,14 @@ export default function GroupCatalystPage() {
     return (
       <Box display="flex" alignItems="center" justifyContent="center" minH="100vh" bg={shellBg}>
         <Spinner size="lg" color="blue.500" />
+      </Box>
+    );
+  }
+
+  if (!user?.is_superuser) {
+    return (
+      <Box display="flex" alignItems="center" justifyContent="center" minH="100vh" bg={shellBg}>
+        <Text color={mutedText} fontSize="sm">Catalyst is currently staff-only.</Text>
       </Box>
     );
   }
