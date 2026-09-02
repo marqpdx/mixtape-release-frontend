@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const TENANT_SUFFIX =
-  process.env.NEXT_PUBLIC_TENANT_SUFFIX ?? ".go.crossroads.place";
+  process.env.TENANT_SUFFIX ?? ".go.crossroads.place";
 
 export function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
