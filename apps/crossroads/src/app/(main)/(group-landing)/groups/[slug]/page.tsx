@@ -15,6 +15,7 @@ import { GroupPublicEngagement } from "./sections/GroupPublicEngagement";
 import { GroupPublicFooter } from "./sections/GroupPublicFooter";
 import { GroupPublicMasthead } from "./sections/GroupPublicMasthead";
 import { GroupPublicLedger } from "./sections/GroupPublicLedger";
+import { GroupPublicAtlas } from "./sections/GroupPublicAtlas";
 import { GroupPublicAdminBar } from "./sections/GroupPublicAdminBar";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
@@ -98,8 +99,28 @@ export default async function GroupPublicPage({
     );
   }
 
-  // Atlas / Docket — deferred; fall back to Masthead until implemented
-  if (templateId === "atlas" || templateId === "docket") {
+  // Atlas — full-bleed 3:1 banner; falls back to Masthead when no banner image
+  if (templateId === "atlas") {
+    if (config.group.background_image_url) {
+      return (
+        <main className="gpl-root">
+          <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+          <GroupPublicAtlas config={config} groupSlug={slug} />
+          <GroupPublicFooter groupTitle={config.group.title} />
+        </main>
+      );
+    }
+    return (
+      <main className="gpl-root">
+        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        <GroupPublicMasthead config={config} groupSlug={slug} />
+        <GroupPublicFooter groupTitle={config.group.title} />
+      </main>
+    );
+  }
+
+  // Docket — deferred; fall back to Masthead
+  if (templateId === "docket") {
     return (
       <main className="gpl-root">
         <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
