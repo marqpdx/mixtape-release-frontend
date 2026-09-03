@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
-import { journalFont, noticeFont } from "../fonts";
+import { journalFont, noticeFont, tenantFontMap } from "../fonts";
 import { MastheadSubscribeForm } from "./MastheadSubscribeForm";
 import { tenantPalettes } from "../tenantPalettes";
 import type { ThemeColors } from "@mixtape/core";
@@ -101,7 +101,9 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
   const { group, featured_content, about, engagement, subscription } = config;
   const setting: TypographySetting = config.presentation?.typography_setting ?? "journal";
   const typ = TYP[setting];
-  const fontClass = setting === "journal" ? journalFont.className : noticeFont.className;
+  const fontId = config.presentation?.font_id ?? null;
+  const fontClass = (fontId && tenantFontMap[fontId]?.className)
+    ?? (setting === "journal" ? journalFont.className : noticeFont.className);
 
   // Tenant palette — present only when presentation.palette_id is set (Tier 2+).
   // Scoped to .gplm-root so visitor's platform theme choice doesn't bleed in.
