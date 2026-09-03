@@ -546,7 +546,7 @@ export default function SeedCapturePage() {
                               borderRadius="md"
                               px={2}
                               py={1}
-                              animation="seedAudioFade 140ms ease-out"
+                              animation="seedAudioFade var(--transition-duration, 140ms) ease-out"
                             >
                               <audio
                                 controls
@@ -691,26 +691,28 @@ export default function SeedCapturePage() {
           display: none !important;
         }
         .seed-fade-in {
-          animation: seedFadeIn 220ms ease-out;
+          animation: seedFadeIn var(--transition-duration, 220ms) ease-out;
         }
-        @keyframes seedAudioFade {
-          from {
-            opacity: 0;
-            transform: translateY(2px);
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes seedAudioFade {
+            from {
+              opacity: 0;
+              transform: translateY(2px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes seedFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(4px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          @keyframes seedFadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(4px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
         }
       `}</style>

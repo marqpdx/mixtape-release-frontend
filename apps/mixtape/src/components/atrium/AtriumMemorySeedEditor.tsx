@@ -55,6 +55,7 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            aria-label="Session title"
             placeholder="Untitled"
             size="sm"
             disabled={isPending}
@@ -68,6 +69,7 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
           <Textarea
             value={context}
             onChange={(e) => setContext(e.target.value)}
+            aria-label="Memory seed"
             placeholder="Standing context for this session — your role, the project state, working principles, or anything Claude should know at the start of each exchange."
             rows={5}
             fontSize="sm"

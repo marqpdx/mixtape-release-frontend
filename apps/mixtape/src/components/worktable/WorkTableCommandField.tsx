@@ -383,6 +383,7 @@ export function WorkTableCommandField({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          aria-label={isInitiative ? "Log entry" : "Worktable capture"}
           placeholder={isInitiative ? 'Write a log entry — /handoff · /emph "note"' : "Type to capture — or // GroupName to switch context…"}
           minH="80px"
           resize="vertical"

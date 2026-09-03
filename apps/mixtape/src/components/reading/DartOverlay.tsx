@@ -254,7 +254,7 @@ function DartPanel({
                   mb={1}
                   lineClamp={2}
                   borderLeftWidth="2px"
-                  borderColor="blue.300"
+                  borderColor="var(--theme-accent)"
                   pl={2}
                 >
                   &ldquo;{dart.selected_text}&rdquo;
@@ -416,8 +416,8 @@ function SelectionButton({
       top={`${pos.y}px`}
       transform="translate(-50%, -100%)"
       zIndex={200}
-      bg="gray.900"
-      color="white"
+      bg="var(--theme-surface)"
+      color="var(--theme-text)"
       borderRadius="md"
       boxShadow="lg"
       p={showForm ? 3 : 0}
@@ -434,7 +434,7 @@ function SelectionButton({
         </Button>
       ) : (
         <VStack gap={2} align="stretch">
-          <Text fontSize="xs" fontStyle="italic" color="gray.300" lineClamp={2}>
+          <Text fontSize="xs" fontStyle="italic" color="var(--theme-text-secondary)" lineClamp={2}>
             &ldquo;{pending.text}&rdquo;
           </Text>
           <Textarea
@@ -443,17 +443,17 @@ function SelectionButton({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            bg="gray.800"
-            borderColor="gray.600"
-            color="white"
-            _placeholder={{ color: "gray.500" }}
+            bg="var(--theme-bg)"
+            borderColor="var(--theme-border)"
+            color="var(--theme-text)"
+            _placeholder={{ color: "var(--theme-text-muted)" }}
             autoFocus
           />
           <HStack gap={2} justify="flex-end">
             <Button
               size="xs"
               variant="ghost"
-              color="gray.400"
+              color="var(--theme-text-muted)"
               onClick={() => {
                 setPos(null);
                 setPending(null);

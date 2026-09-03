@@ -161,6 +161,7 @@ function NeedsPanel({ context, onBack }: { context: WorkTableContext; onBack: ()
                 <HStack gap={2}>
                   <Input
                     size="sm"
+                    aria-label="List title"
                     placeholder="List title…"
                     value={promoteTitle}
                     onChange={(e) => setPromoteTitle(e.target.value)}
@@ -394,6 +395,7 @@ function HandoverPanel({
       <Textarea
         value={editableBody}
         onChange={(e) => setBody(e.target.value)}
+        aria-label="Action body"
         fontSize="sm"
         minH="260px"
         resize="vertical"

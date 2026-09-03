@@ -108,13 +108,25 @@ export function VoicePlaybackBubble({
   const isSent = variant === 'sent';
   const isNeutral = variant === 'neutral';
 
-  const bubbleBg = isSent ? '#0E5AA7' : isNeutral ? '#ECF4FB' : '#FFFFFF';
-  const bubbleBorder = isSent ? 'none' : '1px solid #E0EAF3';
-  const textColor = isSent ? '#FFFFFF' : '#13293D';
-  const dimColor = isSent ? 'rgba(255,255,255,0.65)' : '#8A9BAB';
-  const btnBg = isSent ? 'rgba(255,255,255,0.22)' : '#0E5AA7';
-  const barPlayed = isSent ? 'rgba(255,255,255,0.9)' : '#0E5AA7';
-  const barUnplayed = isSent ? 'rgba(255,255,255,0.35)' : '#B7C7D6';
+  const bubbleBg = isSent
+    ? 'var(--theme-accent)'
+    : isNeutral
+    ? 'var(--theme-surface)'
+    : 'var(--theme-bg)';
+  const bubbleBorder = isSent ? 'none' : '1px solid var(--theme-border)';
+  const textColor = isSent ? 'var(--theme-accent-text)' : 'var(--theme-text)';
+  const dimColor = isSent
+    ? 'color-mix(in srgb, var(--theme-accent-text) 65%, transparent)'
+    : 'var(--theme-text-secondary)';
+  const btnBg = isSent
+    ? 'color-mix(in srgb, var(--theme-accent-text) 22%, transparent)'
+    : 'var(--theme-accent)';
+  const barPlayed = isSent
+    ? 'color-mix(in srgb, var(--theme-accent-text) 90%, transparent)'
+    : 'var(--theme-accent)';
+  const barUnplayed = isSent
+    ? 'color-mix(in srgb, var(--theme-accent-text) 35%, transparent)'
+    : 'var(--theme-border)';
 
   const playHead = duration > 0 ? Math.round((current / duration) * BAR_COUNT) : 0;
   const timeLabel = playing || current > 0 ? fmt(current) : fmt(duration);
@@ -151,7 +163,7 @@ export function VoicePlaybackBubble({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#FFFFFF',
+            color: isSent ? 'var(--theme-accent-text)' : 'var(--theme-bg)',
             flexShrink: 0,
           }}
         >
@@ -172,7 +184,7 @@ export function VoicePlaybackBubble({
                   height: `${h * 100}%`,
                   borderRadius: 2,
                   background: i < playHead ? barPlayed : barUnplayed,
-                  transition: 'background 0.1s',
+                  transition: 'background var(--transition-duration, 0.1s)',
                 }}
               />
             ))}

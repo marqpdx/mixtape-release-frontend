@@ -414,6 +414,7 @@ function VerbPicker({
                 ) : (
                   <Input
                     size="sm"
+                    aria-label={field.key}
                     placeholder={field.placeholder}
                     value={fieldValues[field.key] ?? ""}
                     onChange={(e) => handleFieldChange(field.key, e.target.value)}
@@ -425,6 +426,7 @@ function VerbPicker({
               <Text fontSize="xs" color={mutedColor} mb={1}>Action label</Text>
               <Input
                 size="sm"
+                aria-label="Action label"
                 value={suggestedLabel}
                 onChange={(e) => onLabelChange(e.target.value)}
                 placeholder="Label shown on the digest item"
@@ -508,12 +510,14 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
           <VStack gap={3} align="stretch">
             <Input
               size="sm"
+              aria-label="Recurring action title"
               placeholder="Title *"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <Textarea
               size="sm"
+              aria-label="Recurring action description"
               placeholder="Description (optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -534,6 +538,7 @@ function RecurringActionsAdmin({ groupSlug }: { groupSlug: string }) {
               <Input
                 size="sm"
                 type="datetime-local"
+                aria-label="First due at"
                 value={nextDueAt}
                 onChange={(e) => setNextDueAt(e.target.value)}
               />

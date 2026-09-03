@@ -13,6 +13,8 @@ export interface ThemeColors {
   bgSecondary?: string;
   surface: string;
   accent: string;
+  /** Text color that achieves WCAG AA contrast on the accent background. */
+  accentText?: string;
   text: string;
   textSecondary: string;
   border: string;
@@ -185,6 +187,7 @@ export function ThemeProvider({
     root.style.setProperty("--theme-bg-subtle", bgSubtle);
     root.style.setProperty("--theme-surface", colors.surface);
     root.style.setProperty("--theme-accent", colors.accent);
+    root.style.setProperty("--theme-accent-text", colors.accentText ?? "#000000");
     root.style.setProperty("--theme-accent-soft", accentSoft);
     root.style.setProperty("--theme-text", colors.text);
     root.style.setProperty("--theme-text-secondary", colors.textSecondary);

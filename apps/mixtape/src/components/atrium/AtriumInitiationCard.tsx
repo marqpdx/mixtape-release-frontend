@@ -45,6 +45,7 @@ export function AtriumInitiationCard() {
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          aria-label="Initiative name"
           placeholder="Name your initiative…"
           size="md"
           mb={2}
