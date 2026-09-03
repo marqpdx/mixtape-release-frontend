@@ -4,6 +4,7 @@
 // Provides quick-edit access to T1 Group fields (title, description, background image)
 // without leaving the public page preview. Calls PATCH /api/groups/{slug} on save,
 // then triggers a server component refresh via router.refresh().
+// Also hosts the "Design" button that opens GroupPresentationPanel for Tier 2 settings.
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,8 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { GroupPresentationPanel } from "./GroupPresentationPanel";
+import type { GroupPublicPresentation } from "../types";
 
 interface MyPerms {
   is_admin: boolean;
@@ -35,9 +38,10 @@ type EditField = "title" | "description" | "background_image_url" | null;
 interface Props {
   groupSlug: string;
   groupTitle: string;
+  initialPresentation?: GroupPublicPresentation | null;
 }
 
-export function GroupPublicAdminBar({ groupSlug, groupTitle }: Props) {
+export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation }: Props) {
   const router = useRouter();
   const [perms, setPerms] = useState<MyPerms | null>(null);
   const [groupData, setGroupData] = useState<GroupData>({
@@ -49,6 +53,7 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showDesignPanel, setShowDesignPanel] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -183,6 +188,23 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle }: Props) {
             >
               ✏ Background
             </Button>
+            <Box
+              w="1px"
+              h="16px"
+              bg="gray.700"
+              mx={1}
+              flexShrink={0}
+            />
+            <Button
+              size="xs"
+              variant={showDesignPanel ? "solid" : "ghost"}
+              colorPalette={showDesignPanel ? "indigo" : undefined}
+              color={showDesignPanel ? undefined : "gray.300"}
+              _hover={showDesignPanel ? undefined : { color: "white", bg: "gray.700" }}
+              onClick={() => setShowDesignPanel((v) => !v)}
+            >
+              ◈ Design
+            </Button>
           </Flex>
 
           <Link href={`/group/${groupSlug}/admin/settings`} style={{ textDecoration: "none" }}>
@@ -195,6 +217,15 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle }: Props) {
 
       {/* Spacer so banner isn't hidden under the fixed bar */}
       <Box h="40px" />
+
+      {/* Design panel */}
+      {showDesignPanel && (
+        <GroupPresentationPanel
+          groupSlug={groupSlug}
+          initialPresentation={initialPresentation ?? {}}
+          onClose={() => setShowDesignPanel(false)}
+        />
+      )}
 
       {/* Edit modal */}
       {editField && (

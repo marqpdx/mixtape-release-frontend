@@ -65,11 +65,19 @@ export default async function GroupPublicPage({
   const config = await fetchGroupConfig(slug);
   if (!config) notFound();
 
+  const adminBar = (
+    <GroupPublicAdminBar
+      groupSlug={slug}
+      groupTitle={config.group.title}
+      initialPresentation={config.presentation ?? null}
+    />
+  );
+
   // T1: synthesized payload — always Masthead
   if (config.tier === "t1") {
     return (
       <main className="gpl-root">
-        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -82,7 +90,7 @@ export default async function GroupPublicPage({
   if (templateId === "ledger") {
     return (
       <main className="gpl-root">
-        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        {adminBar}
         <GroupPublicLedger config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -92,7 +100,7 @@ export default async function GroupPublicPage({
   if (templateId === "masthead" || templateId === null) {
     return (
       <main className="gpl-root">
-        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -104,7 +112,7 @@ export default async function GroupPublicPage({
     if (config.group.background_image_url) {
       return (
         <main className="gpl-root">
-          <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+          {adminBar}
           <GroupPublicAtlas config={config} groupSlug={slug} />
           <GroupPublicFooter groupTitle={config.group.title} />
         </main>
@@ -112,7 +120,7 @@ export default async function GroupPublicPage({
     }
     return (
       <main className="gpl-root">
-        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -123,7 +131,7 @@ export default async function GroupPublicPage({
   if (templateId === "docket") {
     return (
       <main className="gpl-root">
-        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -141,7 +149,7 @@ export default async function GroupPublicPage({
 
   return (
     <main className="gpl-root">
-      <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+      {adminBar}
       <GroupPublicHero config={config} hasFeatured={hasFeatured} />
 
       {hasFeatured && (
