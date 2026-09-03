@@ -14,6 +14,7 @@ import { GroupPublicAbout } from "./sections/GroupPublicAbout";
 import { GroupPublicEngagement } from "./sections/GroupPublicEngagement";
 import { GroupPublicFooter } from "./sections/GroupPublicFooter";
 import { GroupPublicMasthead } from "./sections/GroupPublicMasthead";
+import { GroupPublicLedger } from "./sections/GroupPublicLedger";
 import { GroupPublicAdminBar } from "./sections/GroupPublicAdminBar";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
@@ -63,7 +64,7 @@ export default async function GroupPublicPage({
   const config = await fetchGroupConfig(slug);
   if (!config) notFound();
 
-  // T1: synthesized payload — render Masthead (Tier 1 surface)
+  // T1: synthesized payload — always Masthead
   if (config.tier === "t1") {
     return (
       <main className="gpl-root">
@@ -74,7 +75,41 @@ export default async function GroupPublicPage({
     );
   }
 
-  // T2: active config with hero/sections
+  // T2: route on template_id; default to Masthead when unset or unrecognised
+  const templateId = config.presentation?.template_id ?? null;
+
+  if (templateId === "ledger") {
+    return (
+      <main className="gpl-root">
+        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        <GroupPublicLedger config={config} groupSlug={slug} />
+        <GroupPublicFooter groupTitle={config.group.title} />
+      </main>
+    );
+  }
+
+  if (templateId === "masthead" || templateId === null) {
+    return (
+      <main className="gpl-root">
+        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        <GroupPublicMasthead config={config} groupSlug={slug} />
+        <GroupPublicFooter groupTitle={config.group.title} />
+      </main>
+    );
+  }
+
+  // Atlas / Docket — deferred; fall back to Masthead until implemented
+  if (templateId === "atlas" || templateId === "docket") {
+    return (
+      <main className="gpl-root">
+        <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
+        <GroupPublicMasthead config={config} groupSlug={slug} />
+        <GroupPublicFooter groupTitle={config.group.title} />
+      </main>
+    );
+  }
+
+  // Legacy T2 hero/sections path (pre-tier system)
   const hasFeatured = config.featured_content.pieces.length > 0;
   const hasAbout = !!(config.about.text || config.about.descriptors.length);
   const hasEngagement = !!(
