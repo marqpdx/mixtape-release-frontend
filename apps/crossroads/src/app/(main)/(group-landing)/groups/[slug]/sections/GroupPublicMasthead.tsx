@@ -9,6 +9,8 @@ import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { journalFont, noticeFont } from "../fonts";
 import { MastheadSubscribeForm } from "./MastheadSubscribeForm";
+import { tenantPalettes } from "../tenantPalettes";
+import type { ThemeColors } from "@mixtape/core";
 
 interface Props {
   config: GroupPublicLandingConfig;
@@ -61,6 +63,24 @@ const TYP = {
   },
 } as const;
 
+// Generates scoped CSS custom property overrides for a tenant palette.
+// Mirrors the derived vars in ThemeProvider (color-mix is safe in all evergreen browsers).
+function paletteCSS(selector: string, c: ThemeColors): string {
+  return `${selector} {
+  --theme-bg: ${c.bg};
+  --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
+  --theme-bg-subtle: color-mix(in srgb, ${c.bg} 60%, ${c.border} 40%);
+  --theme-surface: ${c.surface};
+  --theme-accent: ${c.accent};
+  --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
+  --theme-text: ${c.text};
+  --theme-text-secondary: ${c.textSecondary};
+  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
+  --theme-border: ${c.border};
+}`;
+}
+
 function formatDate(iso: string | null): string {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("en-US", {
@@ -82,6 +102,28 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
   const setting: TypographySetting = config.presentation?.typography_setting ?? "journal";
   const typ = TYP[setting];
   const fontClass = setting === "journal" ? journalFont.className : noticeFont.className;
+
+  // Tenant palette — present only when presentation.palette_id is set (Tier 2+).
+  // Scoped to .gplm-root so visitor's platform theme choice doesn't bleed in.
+  // .dark class is set synchronously by next-themes, so dark-mode overrides work at load.
+  const paletteId = config.presentation?.palette_id ?? null;
+  const tenantPalette = paletteId
+    ? (tenantPalettes.find((p) => p.id === paletteId) ?? null)
+    : null;
+  const tenantPaletteCSS = tenantPalette
+    ? [
+        paletteCSS(".gplm-root", tenantPalette.light),
+        paletteCSS(".dark .gplm-root", tenantPalette.dark),
+        tenantPalette.lightHighContrast
+          ? paletteCSS(".high-contrast .gplm-root, [data-high-contrast] .gplm-root", tenantPalette.lightHighContrast)
+          : "",
+        tenantPalette.darkHighContrast
+          ? paletteCSS(".dark.high-contrast .gplm-root, .dark [data-high-contrast] .gplm-root", tenantPalette.darkHighContrast)
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
 
   const deck = group.tagline || group.summary || null;
   const hasBanner = !!group.background_image_url;
@@ -128,7 +170,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
 
   return (
     <>
-      {/* Scoped hover rules — no new CSS variables, uses existing tokens */}
+      {/* Scoped hover rules + optional tenant palette overrides */}
       <style>{`
         .gplm-lead-link:hover .gplm-lead-title { color: var(--theme-accent); }
         .gplm-piece-link:hover .gplm-piece-title { color: var(--theme-accent); }
@@ -137,6 +179,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
           transition: color var(--transition-duration, 200ms) ease;
         }
         .gplm-all-writing { text-underline-offset: 3px; }
+        ${tenantPaletteCSS}
       `}</style>
 
       <div
