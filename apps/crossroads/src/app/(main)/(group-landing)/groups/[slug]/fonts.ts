@@ -1,18 +1,22 @@
-// Tier 1 defaults + Tier 2 tenant font shortlist.
+// Tier 1 defaults + Tier 2 tenant font shortlist (ten faces per spec).
 // All instances must be declared at module top-level (next/font/google constraint).
 // tenantFontMap keys are the canonical font_id values stored in presentation.font_id.
+//
+// Instrument Serif is display-only (spec: titles only, body stays Public Sans).
+// Its entry carries a displayClassName so the Masthead can apply it narrowly to
+// title elements while the root keeps Public Sans for body text.
 
 import {
   Source_Serif_4,
   Public_Sans,
-  Playfair_Display,
+  Newsreader,
+  Literata,
   Lora,
-  EB_Garamond,
-  Libre_Baskerville,
-  Inter,
-  DM_Sans,
-  Nunito_Sans,
-  Outfit,
+  Instrument_Serif,
+  Archivo,
+  Work_Sans,
+  Karla,
+  IBM_Plex_Sans,
 } from "next/font/google";
 
 // Tier 1 defaults (also in tenantFontMap below)
@@ -31,7 +35,14 @@ export const noticeFont = Public_Sans({
 });
 
 // Tenant shortlist — 8 additional faces
-const playfairDisplay = Playfair_Display({
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const literata = Literata({
   subsets: ["latin"],
   weight: ["400", "600"],
   style: ["normal", "italic"],
@@ -45,56 +56,76 @@ const lora = Lora({
   display: "swap",
 });
 
-const ebGaramond = EB_Garamond({
+// Instrument Serif: display face only. One weight (400), no 600.
+// Body font for this combo is Public Sans (noticeFont).
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const archivo = Archivo({
   subsets: ["latin"],
   weight: ["400", "600"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const libreBaskerville = Libre_Baskerville({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-});
-
-const nunitoSans = Nunito_Sans({
+const workSans = Work_Sans({
   subsets: ["latin"],
   weight: ["400", "600"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const outfit = Outfit({
+const karla = Karla({
   subsets: ["latin"],
   weight: ["400", "600"],
+  style: ["normal", "italic"],
   display: "swap",
 });
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+export interface TenantFont {
+  /** Applied to .gplm-root — governs body/base text family. */
+  className: string;
+  /**
+   * Present only for Instrument Serif: the CSS className that makes the
+   * display face available. Apply to .gplm-root alongside className so
+   * the title elements can reference it via fontFamily.
+   */
+  displayClassName?: string;
+  /**
+   * When set, apply this CSS font-family value to title elements only.
+   * Body text uses the root className family.
+   */
+  displayFamily?: string;
+}
 
 // Canonical lookup used by GroupPublicMasthead to resolve presentation.font_id.
-// Includes the two Tier 1 defaults so any font_id can be resolved uniformly.
-export const tenantFontMap: Record<string, { className: string }> = {
-  "source-serif-4": journalFont,    // serif — editorial, professional
-  "playfair-display": playfairDisplay, // serif — elegant, literary
-  "lora": lora,                     // serif — warm, community
-  "eb-garamond": ebGaramond,        // serif — classical, academic
-  "libre-baskerville": libreBaskerville, // serif — clean academic
-  "public-sans": noticeFont,        // sans — civic, government-adjacent
-  "inter": inter,                   // sans — modern professional
-  "dm-sans": dmSans,                // sans — clean, neutral
-  "nunito-sans": nunitoSans,        // sans — friendly, community
-  "outfit": outfit,                 // sans — modern, creative
+export const tenantFontMap: Record<string, TenantFont> = {
+  // Serif text faces
+  "source-serif-4": { className: journalFont.className },
+  "newsreader":     { className: newsreader.className },
+  "literata":       { className: literata.className },
+  "lora":           { className: lora.className },
+  // Display face — body stays Public Sans
+  "instrument-serif": {
+    className: noticeFont.className,
+    displayClassName: instrumentSerif.className,
+    displayFamily: `var(${instrumentSerif.style.fontFamily})`,
+  },
+  // Sans text faces
+  "public-sans":    { className: noticeFont.className },
+  "archivo":        { className: archivo.className },
+  "work-sans":      { className: workSans.className },
+  "karla":          { className: karla.className },
+  "ibm-plex-sans":  { className: ibmPlexSans.className },
 };

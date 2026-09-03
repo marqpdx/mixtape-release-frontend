@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { journalFont, noticeFont, tenantFontMap } from "../fonts";
+import type { TenantFont } from "../fonts";
 import { MastheadSubscribeForm } from "./MastheadSubscribeForm";
 import { tenantPalettes } from "../tenantPalettes";
 import type { ThemeColors } from "@mixtape/core";
@@ -102,8 +103,13 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
   const setting: TypographySetting = config.presentation?.typography_setting ?? "journal";
   const typ = TYP[setting];
   const fontId = config.presentation?.font_id ?? null;
-  const fontClass = (fontId && tenantFontMap[fontId]?.className)
+  const tenantFont: TenantFont | null = (fontId ? (tenantFontMap[fontId] ?? null) : null);
+  const fontClass = tenantFont?.className
     ?? (setting === "journal" ? journalFont.className : noticeFont.className);
+  // Instrument Serif: apply display face to root so the CSS var is available,
+  // then override title elements with displayFamily.
+  const displayExtraClass = tenantFont?.displayClassName ?? "";
+  const displayTitleFamily = tenantFont?.displayFamily ?? undefined;
 
   // Tenant palette — present only when presentation.palette_id is set (Tier 2+).
   // Scoped to .gplm-root so visitor's platform theme choice doesn't bleed in.
@@ -185,7 +191,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
       `}</style>
 
       <div
-        className={`gplm-root ${fontClass}`}
+        className={`gplm-root ${fontClass}${displayExtraClass ? ` ${displayExtraClass}` : ""}`}
         style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}
       >
         {/* ── Zone 1: Masthead ─────────────────────────────────── */}
@@ -254,6 +260,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
               lineHeight: typ.titleLh,
               color: "var(--theme-text)",
               margin: 0,
+              ...(displayTitleFamily ? { fontFamily: displayTitleFamily } : {}),
             }}
           >
             {group.title}
@@ -376,6 +383,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                       lineHeight: setting === "journal" ? "1.2" : "1.15",
                       color: "var(--theme-text)",
                       margin: 0,
+                      ...(displayTitleFamily ? { fontFamily: displayTitleFamily } : {}),
                     }}
                   >
                     {leadPiece.title}
