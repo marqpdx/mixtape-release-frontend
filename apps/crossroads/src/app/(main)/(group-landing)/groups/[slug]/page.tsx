@@ -13,7 +13,7 @@ import { GroupPublicFeatured } from "./sections/GroupPublicFeatured";
 import { GroupPublicAbout } from "./sections/GroupPublicAbout";
 import { GroupPublicEngagement } from "./sections/GroupPublicEngagement";
 import { GroupPublicFooter } from "./sections/GroupPublicFooter";
-import { GroupPublicT1 } from "./sections/GroupPublicT1";
+import { GroupPublicMasthead } from "./sections/GroupPublicMasthead";
 import { GroupPublicAdminBar } from "./sections/GroupPublicAdminBar";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
@@ -38,7 +38,7 @@ export async function generateMetadata({
   const config = await fetchGroupConfig(slug);
   if (!config) return { title: "Group" };
   const description =
-    (config.hero?.body || config.about.text || config.group.summary) || undefined;
+    (config.hero?.body || config.about.text || config.group.tagline || config.group.summary) || undefined;
   return {
     title: config.group.title,
     description,
@@ -63,12 +63,12 @@ export default async function GroupPublicPage({
   const config = await fetchGroupConfig(slug);
   if (!config) notFound();
 
-  // T1: no active config — render lean surface from Group data
+  // T1: synthesized payload — render Masthead (Tier 1 surface)
   if (config.tier === "t1") {
     return (
       <main className="gpl-root">
         <GroupPublicAdminBar groupSlug={slug} groupTitle={config.group.title} />
-        <GroupPublicT1 config={config} groupSlug={slug} />
+        <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
     );

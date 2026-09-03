@@ -21,6 +21,15 @@ export interface FeaturedPiece {
   };
 }
 
+export type TypographySetting = "journal" | "notice";
+
+export interface GroupPublicPresentation {
+  typography_setting?: TypographySetting | null;
+  template_id?: string | null;
+  palette_id?: string | null;
+  font_id?: string | null;
+}
+
 export interface GroupPublicLandingConfig {
   tier: GroupPublicTier;
   group: {
@@ -28,9 +37,11 @@ export interface GroupPublicLandingConfig {
     slug: string;
     title: string;
     summary: string;
+    tagline?: string | null;
     profile_image_url: string | null;
     background_image_url: string | null;
   };
+  presentation?: GroupPublicPresentation | null;
   // null for T1
   hero: {
     eyebrow: string;
