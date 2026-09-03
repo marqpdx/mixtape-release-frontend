@@ -30,10 +30,11 @@ interface MyPerms {
 interface GroupData {
   title: string;
   description: string;
+  tagline: string;
   background_image_url: string | null;
 }
 
-type EditField = "title" | "description" | "background_image_url" | null;
+type EditField = "title" | "description" | "tagline" | "background_image_url" | null;
 
 interface Props {
   groupSlug: string;
@@ -47,6 +48,7 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
   const [groupData, setGroupData] = useState<GroupData>({
     title: groupTitle,
     description: "",
+    tagline: "",
     background_image_url: null,
   });
   const [editField, setEditField] = useState<EditField>(null);
@@ -68,6 +70,7 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
         setGroupData({
           title: r.data.title,
           description: r.data.description || "",
+          tagline: r.data.tagline || "",
           background_image_url: r.data.background_image_url || null,
         });
       })
@@ -97,6 +100,7 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
     const fieldMap: Record<string, string> = {
       title: "title",
       description: "description",
+      tagline: "tagline",
       background_image_url: "background_image",
     };
 
@@ -129,6 +133,11 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
       currentValue: groupData.description,
       multiline: true,
       placeholder: "A short description of your group...",
+    },
+    tagline: {
+      label: "Tagline",
+      currentValue: groupData.tagline,
+      placeholder: "One-line deck shown on the public page (≤160 chars)...",
     },
     background_image_url: {
       label: "Background image URL",
@@ -178,6 +187,15 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
               onClick={() => openEdit("description", "")}
             >
               ✏ Description
+            </Button>
+            <Button
+              size="xs"
+              variant="ghost"
+              color="gray.300"
+              _hover={{ color: "white", bg: "gray.700" }}
+              onClick={() => openEdit("tagline", groupData.tagline)}
+            >
+              ✏ Tagline
             </Button>
             <Button
               size="xs"
@@ -268,15 +286,25 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
               <Input
                 ref={inputRef as React.Ref<HTMLInputElement>}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  const max = editField === "tagline" ? 160 : undefined;
+                  if (max && e.target.value.length > max) return;
+                  setInputValue(e.target.value);
+                }}
                 placeholder={EDIT_CONFIG[editField].placeholder}
-                mb={4}
+                mb={editField === "tagline" ? 1 : 4}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !saving) handleSave();
                   if (e.key === "Escape") closeEdit();
                 }}
               />
+            )}
+
+            {editField === "tagline" && (
+              <Text fontSize="xs" color="gray.400" mb={4} textAlign="right">
+                {inputValue.length}/160
+              </Text>
             )}
 
             {saveError && (
