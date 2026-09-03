@@ -1,49 +1,21 @@
 // apps/mixtape/src/components/lanternmail/NewsletterSignupCard.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Box, Button, HStack, Input, Text, VStack } from "@chakra-ui/react";
-import { useLanternmail } from "@mixtape/api/hooks/lanternmail/useLanternmail";
-import { useDefaultGroup } from "@mixtape/api/hooks/groups/useGroups";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@components/ui/toaster";
 
 export default function NewsletterSignupCard() {
-  const { group: defaultGroup } = useDefaultGroup();
-  const { getGroupLists, sendInvitations, loading } = useLanternmail();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [listId, setListId] = useState<number | null>(null);
-
-  const groupSlug = defaultGroup?.slug || "crossroads";
-
-  useEffect(() => {
-    let mounted = true;
-    const loadLists = async () => {
-      try {
-        const lists = await getGroupLists(groupSlug);
-        const activeList = lists.find((list) => list.is_active);
-        if (mounted) {
-          setListId(activeList?.id ?? lists[0]?.id ?? null);
-        }
-      } catch (error) {
-        console.error("Failed to load newsletter list", error);
-        if (mounted) {
-          setListId(null);
-        }
-      }
-    };
-    loadLists();
-    return () => {
-      mounted = false;
-    };
-  }, [getGroupLists, groupSlug]);
+  const newsletterSlug = process.env.NEXT_PUBLIC_DEFAULT_NEWSLETTER_SLUG;
 
   const handleSubmit = async () => {
     if (!email.trim()) return;
     setIsSubmitting(true);
     try {
-      const resolvedListId = listId;
-      if (!resolvedListId) {
+      if (!newsletterSlug) {
         toaster.create({
           title: "Newsletter list not found",
           description: "Please try again later.",
@@ -53,7 +25,11 @@ export default function NewsletterSignupCard() {
         });
         return;
       }
-      await sendInvitations(groupSlug, resolvedListId, [email.trim()]);
+      await axiosInstance.post("/api/lanternmail/subscribe", {
+        email: email.trim(),
+        list_slug: newsletterSlug,
+        website: "",
+      });
       toaster.create({
         title: "Invitation sent",
         description: "Check your inbox to confirm your subscription.",
@@ -97,8 +73,8 @@ export default function NewsletterSignupCard() {
           />
           <Button
             onClick={handleSubmit}
-            disabled={!email.trim() || isSubmitting || loading}
-            loading={isSubmitting || loading}
+            disabled={!email.trim() || isSubmitting}
+            loading={isSubmitting}
           >
             Subscribe
           </Button>

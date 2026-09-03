@@ -103,6 +103,11 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     description: 'Create a new Lanternmail list',
   },
 
+  'lanternmail-campaigns': {
+    requiredDecorator: 'can__ManageLanternmail',
+    description: 'Create and send Lanternmail campaigns',
+  },
+
   // Almanac - accessible to all stewards
   'mill': {
     requiredRole: 'admin',

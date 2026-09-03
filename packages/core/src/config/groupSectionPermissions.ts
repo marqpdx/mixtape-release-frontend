@@ -103,8 +103,8 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
   },
 
   'lanternmail-campaigns': {
-    requiredRole: 'admin',
-    description: 'Create a new Lanternmail campaign',
+    requiredDecorator: 'can__ManageLanternmail',
+    description: 'Create and send Lanternmail campaigns',
   },
 
   // Broadcasts - stewards can compose and send group broadcasts

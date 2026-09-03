@@ -49,7 +49,11 @@ export default function LanternmailCreateListWorkArea({ group }: { group: Group 
         group.slug,
         group.title,
         listName.trim(),
-        description.trim()
+        description.trim(),
+        {
+          type: listType,
+          optin: optinType,
+        }
       );
 
       setList(result.data);
