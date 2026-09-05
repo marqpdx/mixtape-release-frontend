@@ -13,8 +13,10 @@ import {
   Link as ChakraLink,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import NextLink from "next/link";
+import { GroupSurfaceShell } from "@components/surfaces/GroupSurfaceShell";
 
 type MemberPreview = {
   username: string;
@@ -32,12 +34,7 @@ type GroupDetail = {
 
 const BRAND = "#1a1a2e";
 
-export default function GroupCatalystPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = use(params);
+function CatalystContent({ slug }: { slug: string }) {
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +57,7 @@ export default function GroupCatalystPage({
 
   if (loading) {
     return (
-      <Box className="cat-loading" minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bodyBg}>
+      <Box className="cat-loading" flex="1" display="flex" alignItems="center" justifyContent="center">
         <Spinner size="lg" color="blue.500" />
       </Box>
     );
@@ -77,7 +74,7 @@ export default function GroupCatalystPage({
   const members = group?.member_preview ?? [];
 
   return (
-    <Box className="cat-root" bg={bodyBg} minH="100vh">
+    <Box className="cat-root" bg={bodyBg} flex="1">
       {/* Hero */}
       <Box
         className="cat-hero"
@@ -264,5 +261,41 @@ export default function GroupCatalystPage({
         </VStack>
       </Box>
     </Box>
+  );
+}
+
+export default function GroupCatalystPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+  const { user, isLoading } = useAuth();
+
+  const bg = useColorModeValue("gray.50", "gray.900");
+  const mutedText = useColorModeValue("gray.500", "gray.400");
+
+  if (isLoading) {
+    return (
+      <Box className="cat-auth-loading" minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bg}>
+        <Spinner size="lg" />
+      </Box>
+    );
+  }
+
+  if (!user?.is_superuser) {
+    return (
+      <Box className="cat-gate" minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bg}>
+        <Text color={mutedText} fontSize="sm">
+          Catalyst is not available yet.
+        </Text>
+      </Box>
+    );
+  }
+
+  return (
+    <GroupSurfaceShell groupSlug={slug} currentSurface="catalyst">
+      <CatalystContent slug={slug} />
+    </GroupSurfaceShell>
   );
 }
