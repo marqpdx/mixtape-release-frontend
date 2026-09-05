@@ -5,6 +5,7 @@ import { Box, Spinner, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupSurfaceShell } from "@components/surfaces/GroupSurfaceShell";
+import { WorkshopSurface, WorkshopClioPanel } from "@components/surfaces/WorkshopSurface";
 
 export default function GroupWorkshopPage({
   params,
@@ -36,23 +37,12 @@ export default function GroupWorkshopPage({
   }
 
   return (
-    <GroupSurfaceShell groupSlug={slug} currentSurface="workshop">
-      <Box className="wks-root" px={{ base: 6, md: 10 }} py={8}>
-        <Text
-          className="wks-surface-label"
-          fontSize="xs"
-          fontWeight="600"
-          letterSpacing="0.12em"
-          textTransform="uppercase"
-          color={mutedText}
-          mb={4}
-        >
-          Home Workshop · {slug}
-        </Text>
-        <Text fontSize="sm" color={mutedText}>
-          Surface scaffold — pilot in progress.
-        </Text>
-      </Box>
+    <GroupSurfaceShell
+      groupSlug={slug}
+      currentSurface="workshop"
+      rightPanel={<WorkshopClioPanel />}
+    >
+      <WorkshopSurface groupSlug={slug} />
     </GroupSurfaceShell>
   );
 }
