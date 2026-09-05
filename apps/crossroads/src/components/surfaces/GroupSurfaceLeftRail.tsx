@@ -21,7 +21,7 @@ function buildSurfaces(groupSlug: string): SurfaceDef[] {
   ];
 }
 
-export function GroupSurfaceLeftRail({ groupSlug }: { groupSlug: string }) {
+export function GroupSurfaceLeftRail({ groupSlug, dimmed = false }: { groupSlug: string; dimmed?: boolean }) {
   const pathname = usePathname();
   const surfaces = buildSurfaces(groupSlug);
 
@@ -38,7 +38,7 @@ export function GroupSurfaceLeftRail({ groupSlug }: { groupSlug: string }) {
     <Box
       className="gsr-root"
       as="nav"
-      w={{ base: "56px", md: "168px" }}
+      w={dimmed ? "56px" : { base: "56px", md: "168px" }}
       minH="100%"
       bg={railBg}
       borderRight="1px solid"
@@ -85,7 +85,7 @@ export function GroupSurfaceLeftRail({ groupSlug }: { groupSlug: string }) {
                 </Text>
                 <Text
                   className="gsr-item-label"
-                  display={{ base: "none", md: "block" }}
+                  display={dimmed ? "none" : { base: "none", md: "block" }}
                   fontSize="xs"
                   fontWeight={isActive ? "600" : "400"}
                   color={isActive ? activeLabel : labelColor}
