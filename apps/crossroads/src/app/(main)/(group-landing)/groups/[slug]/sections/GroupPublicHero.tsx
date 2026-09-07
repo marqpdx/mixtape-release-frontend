@@ -21,7 +21,7 @@ interface Props {
   hasFeatured: boolean;
 }
 
-export function GroupPublicHero({ config, hasFeatured }: Props) {
+export function GroupPublicHero({ config }: Props) {
   const { hero, group } = config;
 
   const primaryHref = hero?.primary_cta.action

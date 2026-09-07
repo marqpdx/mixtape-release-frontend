@@ -91,7 +91,6 @@ export function GroupPublicT1({ config, groupSlug }: Props) {
   const overlayColor = "rgba(0,0,0,0.45)";
   const sectionBg = useColorModeValue("white", "gray.950");
   const borderColor = useColorModeValue("gray.100", "gray.800");
-  const titleColor = useColorModeValue("gray.900", "gray.50");
   const bodyColor = useColorModeValue("gray.600", "gray.300");
   const labelColor = useColorModeValue("gray.500", "gray.400");
   const linkColor = useColorModeValue("indigo.600", "indigo.400");

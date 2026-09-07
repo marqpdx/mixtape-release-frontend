@@ -74,7 +74,7 @@ export function GroupSurfaceShell({
         </HStack>
 
         {/* Dim toggle */}
-        <Tooltip content={dimmed ? "Restore outer rim" : "Dim outer rim"} placement="left" openDelay={400}>
+        <Tooltip content={dimmed ? "Restore outer rim" : "Dim outer rim"} positioning={{ placement: "left" }} openDelay={400}>
           <Box
             className="gss-dim-toggle"
             as="button"

@@ -17,30 +17,9 @@ import {
 } from "@chakra-ui/react";
 import {
   IconArrowRight,
-  IconBook2,
-  IconMap2,
-  IconUsers,
 } from "@tabler/icons-react";
 import HomeVariantSwitcher from "@components/home/HomeVariantSwitcher";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
-
-const needs = [
-  {
-    label: "For work that lives in too many places",
-    body: "The knowledge that matters most tends to scatter across files, systems, people's heads, and conversations that were never designed to hold it. Crossroads gives it a home worth tending.",
-    icon: IconBook2,
-  },
-  {
-    label: "For groups that need more than a channel",
-    body: "Most collaboration tools are built for volume and velocity. Some groups need a space that rewards depth, continuity, and care - where the important things do not get buried.",
-    icon: IconUsers,
-  },
-  {
-    label: "For people ready to be found well",
-    body: "Some groups are ready to be discovered by the right neighbors, collaborators, clients, or allies. Tapestry makes that possible on their own terms, when the timing is right.",
-    icon: IconMap2,
-  },
-];
 
 export default function CrossroadsHomepagePrinciplesClone() {
   const backgroundImage = "/homepage/noaa-zdj3p00Rep0-unsplash.jpg";

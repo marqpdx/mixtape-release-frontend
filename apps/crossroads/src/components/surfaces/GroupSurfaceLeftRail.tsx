@@ -54,15 +54,14 @@ export function GroupSurfaceLeftRail({ groupSlug, dimmed = false }: { groupSlug:
             <Tooltip
               key={surface.id}
               content={surface.label}
-              placement="right"
+              positioning={{ placement: "right" }}
               showArrow
               openDelay={400}
               disabled={{ base: false, md: true } as unknown as boolean}
             >
               <Box
                 className={`gsr-item gsr-item-${surface.id}`}
-                as={NextLink}
-                href={surface.href}
+                asChild
                 display="flex"
                 alignItems="center"
                 gap={3}
@@ -75,25 +74,27 @@ export function GroupSurfaceLeftRail({ groupSlug, dimmed = false }: { groupSlug:
                 _hover={{ bg: isActive ? activeItemBg : hoverBg, textDecoration: "none" }}
                 transition="background 0.12s"
               >
-                <Text
-                  className="gsr-item-icon"
-                  fontSize="lg"
-                  lineHeight="1"
-                  color={isActive ? activeIconColor : labelColor}
-                  flexShrink={0}
-                >
-                  {surface.icon}
-                </Text>
-                <Text
-                  className="gsr-item-label"
-                  display={dimmed ? "none" : { base: "none", md: "block" }}
-                  fontSize="xs"
-                  fontWeight={isActive ? "600" : "400"}
-                  color={isActive ? activeLabel : labelColor}
-                  letterSpacing="0.01em"
-                >
-                  {surface.label}
-                </Text>
+                <NextLink href={surface.href}>
+                  <Text
+                    className="gsr-item-icon"
+                    fontSize="lg"
+                    lineHeight="1"
+                    color={isActive ? activeIconColor : labelColor}
+                    flexShrink={0}
+                  >
+                    {surface.icon}
+                  </Text>
+                  <Text
+                    className="gsr-item-label"
+                    display={dimmed ? "none" : { base: "none", md: "block" }}
+                    fontSize="xs"
+                    fontWeight={isActive ? "600" : "400"}
+                    color={isActive ? activeLabel : labelColor}
+                    letterSpacing="0.01em"
+                  >
+                    {surface.label}
+                  </Text>
+                </NextLink>
               </Box>
             </Tooltip>
           );

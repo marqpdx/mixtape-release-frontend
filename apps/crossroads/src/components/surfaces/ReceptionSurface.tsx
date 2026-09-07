@@ -71,13 +71,11 @@ function GristHint({ text }: { text: string }) {
 
 function TrayItem({
   item,
-  groupSlug,
   onEnter,
   onPlace,
   onDelegate,
 }: {
   item: CaptureItem;
-  groupSlug: string;
   onEnter: (id: string, dest: HandoffDestination) => void;
   onPlace: (id: string) => void;
   onDelegate: (id: string) => void;
@@ -373,7 +371,6 @@ export function ReceptionSurface({ groupSlug }: { groupSlug: string }) {
                 <TrayItem
                   key={item.id}
                   item={item}
-                  groupSlug={groupSlug}
                   onEnter={handleEnter}
                   onPlace={handlePlace}
                   onDelegate={handleDelegate}
