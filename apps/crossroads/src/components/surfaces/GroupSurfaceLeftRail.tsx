@@ -2,7 +2,8 @@
 
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { Box, Text, Tooltip, VStack } from "@chakra-ui/react";
+import { Box, Text, VStack } from "@chakra-ui/react";
+import { Tooltip } from "@components/ui/tooltip";
 import { useColorModeValue } from "@components/ui/color-mode";
 
 type SurfaceDef = {
