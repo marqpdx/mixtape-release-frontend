@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { GroupSurfaceShell } from "@components/surfaces/GroupSurfaceShell";
 import {
   Avatar,
   Box,
@@ -1638,6 +1639,7 @@ export default function GroupCatalystPage() {
   const showRegNav = introState === "browse";
 
   return (
+    <GroupSurfaceShell groupSlug={slug} currentSurface="catalyst">
     <>
     <style>{`
       @keyframes cat-dissolve-out {
@@ -1672,7 +1674,7 @@ export default function GroupCatalystPage() {
       className="cat-shell"
       display="flex"
       height="100%"
-      minH="calc(100vh - 60px)"
+      minH="100%"
       bg={shellBg}
       overflow="hidden"
     >
@@ -4936,6 +4938,7 @@ export default function GroupCatalystPage() {
       </Dialog.Positioner>
     </Dialog.Root>
     </>
+    </GroupSurfaceShell>
   );
 }
 
