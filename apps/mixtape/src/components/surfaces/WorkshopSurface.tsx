@@ -142,7 +142,7 @@ function ObjectCard({
 
   function handlePrimary() {
     if (obj.class === "destination" && obj.href) {
-      router.push(`/app/groups/${groupSlug}/${obj.href}`);
+      router.push(`/groups/${groupSlug}/${obj.href}`);
     }
   }
 

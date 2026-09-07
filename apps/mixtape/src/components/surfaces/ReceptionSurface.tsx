@@ -293,7 +293,7 @@ export function ReceptionSurface({ groupSlug }: { groupSlug: string }) {
 
   function handleEnter(id: string, dest: HandoffDestination) {
     setTray((t) => t.filter((i) => i.id !== id));
-    router.push(`/app/groups/${groupSlug}/${dest}`);
+    router.push(`/groups/${groupSlug}/${dest}`);
   }
 
   function handlePlace(id: string) {

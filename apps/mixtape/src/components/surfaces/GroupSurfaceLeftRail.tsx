@@ -15,10 +15,10 @@ type SurfaceDef = {
 
 function buildSurfaces(groupSlug: string): SurfaceDef[] {
   return [
-    { id: "reception", label: "Reception", icon: "↓", href: `/app/groups/${groupSlug}/reception` },
-    { id: "workshop", label: "Workshop", icon: "⊞", href: `/app/groups/${groupSlug}/workshop` },
-    { id: "atrium", label: "Atrium", icon: "◈", href: `/app/groups/${groupSlug}/atrium` },
-    { id: "catalyst", label: "Catalyst", icon: "⦿", href: `/app/groups/${groupSlug}/catalyst` },
+    { id: "reception", label: "Reception", icon: "↓", href: `/groups/${groupSlug}/reception` },
+    { id: "workshop", label: "Workshop", icon: "⊞", href: `/groups/${groupSlug}/workshop` },
+    { id: "atrium", label: "Atrium", icon: "◈", href: `/groups/${groupSlug}/atrium` },
+    { id: "catalyst", label: "Catalyst", icon: "⦿", href: `/groups/${groupSlug}/catalyst` },
   ];
 }
 
@@ -49,7 +49,7 @@ export function GroupSurfaceLeftRail({ groupSlug, dimmed = false }: { groupSlug:
     >
       <VStack className="gsr-items" gap={1} align="stretch" px={2}>
         {surfaces.map((surface) => {
-          const isActive = pathname?.includes(`/groups/${groupSlug}/${surface.id}`);
+          const isActive = pathname?.endsWith(`/groups/${groupSlug}/${surface.id}`);
           return (
             <Tooltip
               key={surface.id}
