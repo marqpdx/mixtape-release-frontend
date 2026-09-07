@@ -1,8 +1,10 @@
 "use client";
 
 import { use, useState } from "react";
-import { Avatar, Box, Container, Flex, Text } from "@chakra-ui/react";
+import { Avatar, Box, Container, Flex, Spinner, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { GroupSurfaceShell } from "@components/surfaces/GroupSurfaceShell";
 import { useGroup } from "@mixtape/api/hooks/groups/useGroups";
 import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
@@ -52,63 +54,83 @@ export default function GroupAtriumPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const { user, isLoading } = useAuth();
   const bgColor = useColorModeValue("gray.50", "gray.900");
+  const mutedText = useColorModeValue("gray.500", "gray.400");
   const [radarOpen, setRadarOpen] = useState(false);
 
   const handleGristCommand = (cmd: string) => {
     if (cmd === "radar") setRadarOpen(true);
   };
 
+  if (isLoading) {
+    return (
+      <Box className="gatrium-loading" minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bgColor}>
+        <Spinner size="lg" />
+      </Box>
+    );
+  }
+
+  if (!user?.is_superuser) {
+    return (
+      <Box className="gatrium-gate" minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bgColor}>
+        <Text color={mutedText} fontSize="sm">Atrium is not available yet.</Text>
+      </Box>
+    );
+  }
+
   return (
-    <Box className="gatrium-root" bg={bgColor} minH="100vh">
-      <Container maxW="860px" px={6} pt={10} pb={12}>
+    <GroupSurfaceShell groupSlug={slug} currentSurface="atrium">
+      <Box className="gatrium-root" bg={bgColor}>
+        <Container maxW="860px" px={6} pt={10} pb={12}>
 
-        {/* Zone A — Group sponsor header */}
-        <GroupAtriumHeader slug={slug} />
+          {/* Zone A — Group sponsor header */}
+          <GroupAtriumHeader slug={slug} />
 
-        {/* Zone B — Dialog surface + context sidebar */}
-        <Box mt={6}>
-          <AtriumSidebarWrapper groupSlug={slug} />
-        </Box>
-
-        {/* Zone C — AtriumResumeCard */}
-        <Box mt={6}>
-          <AtriumResumeCard />
-        </Box>
-
-        {/* Zone C — AtriumOrientationPanel */}
-        <Box mt={5}>
-          <AtriumOrientationPanel />
-        </Box>
-
-        {/* Beryl cross-zone slot */}
-        <Box mt={5}>
-          <BerylPresence />
-        </Box>
-
-        {/* Zones D + E — two-column lower zone */}
-        <Flex
-          mt={5}
-          direction={{ base: "column", md: "row" }}
-          gap={6}
-          align="stretch"
-        >
-          <Box flex="45">
-            <AtriumInitiationCard />
+          {/* Zone B — Dialog surface + context sidebar */}
+          <Box mt={6}>
+            <AtriumSidebarWrapper groupSlug={slug} />
           </Box>
-          <Box flex="55">
-            <AtriumCommunityPulse />
+
+          {/* Zone C — AtriumResumeCard */}
+          <Box mt={6}>
+            <AtriumResumeCard />
           </Box>
-        </Flex>
 
-        {/* Zone F — GristCommandBar */}
-        <Box mt={6}>
-          <GristCommandBar onCommand={handleGristCommand} />
-        </Box>
+          {/* Zone C — AtriumOrientationPanel */}
+          <Box mt={5}>
+            <AtriumOrientationPanel />
+          </Box>
 
-      </Container>
+          {/* Beryl cross-zone slot */}
+          <Box mt={5}>
+            <BerylPresence />
+          </Box>
 
-      <RadarOverlay open={radarOpen} onClose={() => setRadarOpen(false)} />
-    </Box>
+          {/* Zones D + E — two-column lower zone */}
+          <Flex
+            mt={5}
+            direction={{ base: "column", md: "row" }}
+            gap={6}
+            align="stretch"
+          >
+            <Box flex="45">
+              <AtriumInitiationCard />
+            </Box>
+            <Box flex="55">
+              <AtriumCommunityPulse />
+            </Box>
+          </Flex>
+
+          {/* Zone F — GristCommandBar */}
+          <Box mt={6}>
+            <GristCommandBar onCommand={handleGristCommand} />
+          </Box>
+
+        </Container>
+
+        <RadarOverlay open={radarOpen} onClose={() => setRadarOpen(false)} />
+      </Box>
+    </GroupSurfaceShell>
   );
 }
