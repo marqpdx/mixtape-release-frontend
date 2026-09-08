@@ -335,6 +335,32 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     }
   };
 
+  const pushToLanternmail = async () => {
+    if (!recruiterSet || !lanternmailModal.listName.trim()) return;
+    setLanternmailModal((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await axiosInstance.post<{
+        list_id: number;
+        list_name: string;
+        pushed: number;
+        errors: number;
+        dev_override_active: boolean;
+      }>(`${baseUrl}/working-sets/${recruiterSet.id}/push-to-lanternmail`, {
+        list_name: lanternmailModal.listName.trim(),
+      });
+      setLanternmailModal((prev) => ({ ...prev, loading: false, result: res.data }));
+      toaster.create({
+        title: "List created",
+        description: `${res.data.pushed} subscriber(s) added to "${res.data.list_name}"${res.data.dev_override_active ? " [DEV override active]" : ""}.`,
+        type: "success",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Push failed";
+      toaster.create({ title: "Lanternmail push failed", description: message, type: "error" });
+      setLanternmailModal((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
   const verifyNameFromModal = async () => {
     if (!emailModal.thingId) return;
     const thing = recruiterSet?.memberships.find((m) => m.provisional_thing.id === emailModal.thingId)?.provisional_thing;
@@ -345,6 +371,12 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
 
   const [showConfirmed, setShowConfirmed] = useState(false);
   const PENDING_PAGE_SIZE = 6;
+  const [lanternmailModal, setLanternmailModal] = useState<{
+    open: boolean;
+    listName: string;
+    loading: boolean;
+    result: { list_id: number; pushed: number; errors: number; dev_override_active: boolean } | null;
+  }>({ open: false, listName: "", loading: false, result: null });
 
   const verifiedMembers = useMemo(
     () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status === "ready"),
@@ -485,6 +517,16 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                     >
                       {showConfirmed ? "▾" : "▸"} Confirmed list ({verifiedMembers.length})
                     </Button>
+                    {verifiedMembers.length > 0 && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorPalette="teal"
+                        onClick={() => setLanternmailModal({ open: true, listName: "", loading: false, result: null })}
+                      >
+                        Create Lanternmail list
+                      </Button>
+                    )}
                   </HStack>
                   {showConfirmed && (
                     verifiedMembers.length === 0 ? (
@@ -540,6 +582,63 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
           </VStack>
         </Card.Body>
       </Card.Root>
+
+      <DialogRoot
+        open={lanternmailModal.open}
+        onOpenChange={(e) => { if (!e.open) setLanternmailModal((prev) => ({ ...prev, open: false })); }}
+        size="md"
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Lanternmail List</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {lanternmailModal.result ? (
+              <VStack align="stretch" gap={3}>
+                <Text fontSize="sm" color="green.700" fontWeight="semibold">
+                  List created — {lanternmailModal.result.pushed} subscriber(s) added.
+                </Text>
+                {lanternmailModal.result.errors > 0 && (
+                  <Text fontSize="sm" color="red.600">{lanternmailModal.result.errors} error(s) during subscription.</Text>
+                )}
+                {lanternmailModal.result.dev_override_active && (
+                  <Text fontSize="xs" color="orange.600" fontWeight="semibold">
+                    DEV override active — test emails used, not real verified contacts.
+                  </Text>
+                )}
+              </VStack>
+            ) : (
+              <VStack align="stretch" gap={3}>
+                <Text fontSize="sm" color="gray.600">
+                  This will create a new Listmonk list and subscribe all {verifiedMembers.length} confirmed recruiter(s) to it.
+                </Text>
+                <Box>
+                  <Text fontSize="xs" color="gray.500" mb={1}>List name</Text>
+                  <Input
+                    size="sm"
+                    placeholder="e.g. 8Sep-Recruiters"
+                    value={lanternmailModal.listName}
+                    onChange={(e) => setLanternmailModal((prev) => ({ ...prev, listName: e.target.value }))}
+                  />
+                </Box>
+              </VStack>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            {!lanternmailModal.result && (
+              <Button
+                size="sm"
+                loading={lanternmailModal.loading}
+                disabled={!lanternmailModal.listName.trim()}
+                onClick={pushToLanternmail}
+              >
+                Create &amp; Subscribe
+              </Button>
+            )}
+          </DialogFooter>
+          <DialogCloseTrigger />
+        </DialogContent>
+      </DialogRoot>
 
       <DialogRoot open={emailModal.open} onOpenChange={(e) => { if (!e.open) setEmailModal((prev) => ({ ...prev, open: false })); }} size="xl">
         <DialogContent>
