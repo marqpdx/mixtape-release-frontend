@@ -10,6 +10,7 @@ import { ReviewQueueList } from '@/components/workbench/ReviewQueueList';
 import { ComposeTab } from '@/components/workbench/ComposeTab';
 import { MyDraftsTab } from '@/components/workbench/MyDraftsTab';
 import { FilesTab } from '@/components/groups/tabs/FilesTab';
+import { RecruiterSourceWorkArea } from '@/components/sourcework/RecruiterSourceWorkArea';
 
 export default function WorkbenchPage() {
   const { slug } = useParams();
@@ -68,6 +69,7 @@ export default function WorkbenchPage() {
             <Tabs.Trigger value="compose">Compose</Tabs.Trigger>
             <Tabs.Trigger value="my-drafts">My Drafts</Tabs.Trigger>
             <Tabs.Trigger value="files">Files</Tabs.Trigger>
+            <Tabs.Trigger value="recruiter-source">Recruiter Source</Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content value="queue">
@@ -84,6 +86,10 @@ export default function WorkbenchPage() {
 
           <Tabs.Content value="files">
             <FilesTab group={group} />
+          </Tabs.Content>
+
+          <Tabs.Content value="recruiter-source">
+            <RecruiterSourceWorkArea groupSlug={slugStr} />
           </Tabs.Content>
         </Tabs.Root>
       </VStack>
