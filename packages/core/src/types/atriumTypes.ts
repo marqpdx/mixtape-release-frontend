@@ -21,10 +21,14 @@ export interface AtriumContextStatus {
   pct: number;
 }
 
+export type AtriumEntryType = "message" | "document";
+
 export interface AtriumSessionEntry {
   id: string;
   role: "user" | "assistant";
   content: string;
+  entry_type: AtriumEntryType;
+  document_title: string;
   created_at: string;
 }
 

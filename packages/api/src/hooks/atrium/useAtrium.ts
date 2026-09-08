@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AtriumSponsorContext, WarmResult } from "@mixtape/api/clients/atrium/atriumApi";
 import * as atriumApi from "@mixtape/api/clients/atrium/atriumApi";
 import { buildApiUrl } from "@mixtape/api/lib/axiosInstance";
-import type { AtriumContextStatus, AtriumDialMode, AtriumSession, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
+import type { AtriumContextStatus, AtriumDialMode, AtriumEntryType, AtriumSession, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
 export const atriumQueryKeys = {
   all: ["atrium"] as const,
@@ -146,6 +146,8 @@ export interface ExchangeEntry {
   id?: string;
   role: "user" | "assistant";
   content: string;
+  entry_type?: AtriumEntryType;
+  document_title?: string;
 }
 
 const EMPTY_EXCHANGE_ENTRIES: ExchangeEntry[] = [];
@@ -208,8 +210,12 @@ export function useAtriumExchange(session: AtriumSession | null) {
         const decoder = new TextDecoder();
         let assistantText = "";
 
+        // Document envelope detection state
+        let docTitle: string | null = null;
+        let docBodyOffset = -1; // char index in assistantText where body starts
+
         // Add empty assistant entry for streaming-in
-        setEntries((prev) => [...prev, { role: "assistant", content: "" }]);
+        setEntries((prev) => [...prev, { role: "assistant", content: "", entry_type: "message" }]);
 
         while (true) {
           const { done, value } = await reader.read();
@@ -223,9 +229,31 @@ export function useAtriumExchange(session: AtriumSession | null) {
               if (payload.type === "delta") {
                 assistantText += payload.text;
                 setActivityText(null);
+
+                // Detect <document> envelope once opening tag is fully buffered
+                if (docBodyOffset === -1 && assistantText.includes("<document")) {
+                  const tagMatch = assistantText.match(/<document(?:\s+title="([^"]*)")?[^>]*>/);
+                  if (tagMatch && tagMatch.index !== undefined) {
+                    docTitle = tagMatch[1] ?? "";
+                    docBodyOffset = tagMatch.index + tagMatch[0].length;
+                  }
+                }
+
+                // Progressive body: strip envelope tags from displayed content
+                const displayContent =
+                  docBodyOffset >= 0
+                    ? assistantText.slice(docBodyOffset).replace(/<\/document>\s*$/, "")
+                    : assistantText;
+                const displayEntryType: AtriumEntryType = docBodyOffset >= 0 ? "document" : "message";
+
                 setEntries((prev) => {
                   const next = [...prev];
-                  next[next.length - 1] = { role: "assistant", content: assistantText };
+                  next[next.length - 1] = {
+                    role: "assistant",
+                    content: displayContent,
+                    entry_type: displayEntryType,
+                    ...(docTitle !== null ? { document_title: docTitle } : {}),
+                  };
                   return next;
                 });
               } else if (payload.type === "activity") {
@@ -245,6 +273,15 @@ export function useAtriumExchange(session: AtriumSession | null) {
               // malformed SSE line — skip
             }
           }
+        }
+
+        // Fallback: if envelope opened but never closed, render as plain message
+        if (docBodyOffset >= 0 && !assistantText.trimEnd().endsWith("</document>")) {
+          setEntries((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { role: "assistant", content: assistantText, entry_type: "message" };
+            return next;
+          });
         }
 
         // Invalidate all session list variants (entry_count) + persisted entries (ids for promotion)
