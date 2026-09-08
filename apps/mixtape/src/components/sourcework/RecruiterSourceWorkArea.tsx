@@ -108,6 +108,8 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
+  const [isImportingFromSource, setIsImportingFromSource] = useState(false);
 
   const baseUrl = `/api/groups/${groupSlug}/sourcework`;
   const activeConnection = connections[0];
@@ -159,6 +161,20 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     }
   };
 
+  const startGoogleOAuth = async () => {
+    setIsConnectingGoogle(true);
+    try {
+      const res = await axiosInstance.post<{ authorization_url: string }>(`${baseUrl}/google-oauth/start`);
+      window.open(res.data.authorization_url, "_blank", "noopener,noreferrer");
+      toaster.create({ title: "Google authorization opened", description: "Return here and refresh after Google Mail is connected.", type: "success" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to start Google OAuth";
+      toaster.create({ title: "Google connection failed", description: message, type: "error" });
+    } finally {
+      setIsConnectingGoogle(false);
+    }
+  };
+
   const createGrant = async () => {
     if (!activeConnection) return;
     try {
@@ -196,6 +212,24 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
       toaster.create({ title: "Import failed", description: message, type: "error" });
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const importFromSource = async () => {
+    if (!activeGrant) return;
+    setIsImportingFromSource(true);
+    try {
+      await axiosInstance.post(`${baseUrl}/source-grants/${activeGrant.id}/import-from-source`, {
+        adapter: "switchboard_gmail_v1",
+        limit: 5,
+      });
+      await loadAll();
+      toaster.create({ title: "Latest Gmail messages imported", type: "success" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Gmail import failed";
+      toaster.create({ title: "Gmail import failed", description: message, type: "error" });
+    } finally {
+      setIsImportingFromSource(false);
     }
   };
 
@@ -250,6 +284,9 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
             </HStack>
 
             <HStack gap={3} align="end" wrap="wrap">
+              <Button size="sm" onClick={startGoogleOAuth} loading={isConnectingGoogle}>
+                Connect Google Mail
+              </Button>
               <Button size="sm" variant="outline" onClick={createConnection} disabled={!!activeConnection}>
                 Create manual Google connection
               </Button>
@@ -259,6 +296,9 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
               </Box>
               <Button size="sm" onClick={createGrant} disabled={!activeConnection}>
                 Create Source Grant
+              </Button>
+              <Button size="sm" variant="outline" loading={isImportingFromSource} disabled={!activeGrant} onClick={importFromSource}>
+                Import from Gmail
               </Button>
             </HStack>
           </VStack>
