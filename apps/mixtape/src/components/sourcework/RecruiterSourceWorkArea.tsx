@@ -343,6 +343,9 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     setEmailModal((prev) => ({ ...prev, open: false }));
   };
 
+  const [showConfirmed, setShowConfirmed] = useState(false);
+  const PENDING_PAGE_SIZE = 6;
+
   const verifiedMembers = useMemo(
     () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status === "ready"),
     [recruiterSet],
@@ -351,6 +354,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status !== "ready"),
     [recruiterSet],
   );
+  const visiblePending = pendingMembers.slice(0, PENDING_PAGE_SIZE);
 
   return (
     <VStack className="rsw-root" align="stretch" gap={5}>
@@ -470,36 +474,67 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
               <Text color="gray.500" fontSize="sm">No provisional people yet.</Text>
             ) : (
               <VStack align="stretch" gap={4}>
-                {verifiedMembers.length > 0 && (
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={2}>
-                      Confirmed — {verifiedMembers.length}
+                {/* Confirmed — collapsible, one-click access */}
+                <Box>
+                  <HStack justify="space-between" align="center" mb={showConfirmed ? 2 : 0}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorPalette="green"
+                      onClick={() => setShowConfirmed((v) => !v)}
+                    >
+                      {showConfirmed ? "▾" : "▸"} Confirmed list ({verifiedMembers.length})
+                    </Button>
+                  </HStack>
+                  {showConfirmed && (
+                    verifiedMembers.length === 0 ? (
+                      <Text color="gray.400" fontSize="xs" pl={1}>No confirmed recruiters yet.</Text>
+                    ) : (
+                      <MemberTable
+                        memberships={verifiedMembers}
+                        editingNames={editingNames}
+                        setEditingNames={setEditingNames}
+                        baseUrl={baseUrl}
+                        onVerify={verifyName}
+                        onSeeEmail={openEmailModal}
+                      />
+                    )
+                  )}
+                </Box>
+
+                <Separator />
+
+                {/* Pending — capped at 6; fetch more to bring in next batch */}
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={2}>
+                    Pending Review — {pendingMembers.length}
+                  </Text>
+                  {pendingMembers.length === 0 ? (
+                    <Text color="gray.400" fontSize="sm">
+                      All recruiters have been reviewed. Fetch more to continue.
                     </Text>
+                  ) : (
                     <MemberTable
-                      memberships={verifiedMembers}
+                      memberships={visiblePending}
                       editingNames={editingNames}
                       setEditingNames={setEditingNames}
                       baseUrl={baseUrl}
                       onVerify={verifyName}
                       onSeeEmail={openEmailModal}
                     />
-                  </Box>
-                )}
-                {pendingMembers.length > 0 && (
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={2}>
-                      Pending Review — {pendingMembers.length}
-                    </Text>
-                    <MemberTable
-                      memberships={pendingMembers}
-                      editingNames={editingNames}
-                      setEditingNames={setEditingNames}
-                      baseUrl={baseUrl}
-                      onVerify={verifyName}
-                      onSeeEmail={openEmailModal}
-                    />
-                  </Box>
-                )}
+                  )}
+                  <HStack mt={3} justify="flex-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      loading={isImportingFromSource}
+                      disabled={!activeGrant}
+                      onClick={importFromSource}
+                    >
+                      Fetch more from Gmail
+                    </Button>
+                  </HStack>
+                </Box>
               </VStack>
             )}
           </VStack>
