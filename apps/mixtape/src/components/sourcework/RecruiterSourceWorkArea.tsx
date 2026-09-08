@@ -8,6 +8,7 @@ import {
   Card,
   HStack,
   Input,
+  NativeSelect,
   Separator,
   Spinner,
   Table,
@@ -23,6 +24,9 @@ type SourceConnection = {
   display_name: string;
   provider: string;
   status: string;
+  metadata?: {
+    adapter?: string;
+  };
 };
 
 type SourceGrant = {
@@ -31,6 +35,12 @@ type SourceGrant = {
   resource_id: string;
   resource_kind: string;
   status: string;
+};
+
+type GmailLabel = {
+  id: string;
+  name: string;
+  type?: string;
 };
 
 type SourceEvidence = {
@@ -101,9 +111,11 @@ const SAMPLE_MESSAGES = [
 export function RecruiterSourceWorkArea({ groupSlug }: Props) {
   const [connections, setConnections] = useState<SourceConnection[]>([]);
   const [grants, setGrants] = useState<SourceGrant[]>([]);
+  const [gmailLabels, setGmailLabels] = useState<GmailLabel[]>([]);
   const [workingSets, setWorkingSets] = useState<WorkingSet[]>([]);
   const [selectedGrantId, setSelectedGrantId] = useState("");
   const [resourceName, setResourceName] = useState("Recruiters");
+  const [selectedLabelId, setSelectedLabelId] = useState("");
   const [messagesJson, setMessagesJson] = useState(() => JSON.stringify(SAMPLE_MESSAGES, null, 2));
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -118,6 +130,11 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     [grants, selectedGrantId],
   );
   const recruiterSet = workingSets[0];
+
+  const selectedLabel = useMemo(
+    () => gmailLabels.find((label) => label.id === selectedLabelId),
+    [gmailLabels, selectedLabelId],
+  );
 
   const loadAll = async () => {
     setIsLoading(true);
@@ -145,6 +162,42 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupSlug]);
+
+  useEffect(() => {
+    if (
+      !activeConnection
+      || activeConnection.provider !== "google_gmail"
+      || activeConnection.metadata?.adapter !== "switchboard_gmail_v1"
+    ) {
+      setGmailLabels([]);
+      setSelectedLabelId("");
+      return;
+    }
+    let cancelled = false;
+    const loadLabels = async () => {
+      try {
+        const res = await axiosInstance.get<{ labels: GmailLabel[] }>(
+          `${baseUrl}/connections/${activeConnection.id}/gmail-labels`,
+        );
+        if (cancelled) return;
+        setGmailLabels(res.data.labels);
+        if (!selectedLabelId && res.data.labels[0]) {
+          setSelectedLabelId(res.data.labels[0].id);
+          setResourceName(res.data.labels[0].name);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setGmailLabels([]);
+        const message = err instanceof Error ? err.message : "Failed to load Gmail labels";
+        toaster.create({ title: "Gmail labels unavailable", description: message, type: "warning" });
+      }
+    };
+    loadLabels();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConnection?.id, baseUrl]);
 
   const createConnection = async () => {
     try {
@@ -177,12 +230,14 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
 
   const createGrant = async () => {
     if (!activeConnection) return;
+    const resourceId = selectedLabel?.id || resourceName;
+    const displayName = selectedLabel?.name || resourceName;
     try {
       const res = await axiosInstance.post<SourceGrant>(`${baseUrl}/source-grants`, {
         connection: activeConnection.id,
         resource_kind: "gmail_label",
-        resource_id: resourceName,
-        display_name: resourceName,
+        resource_id: resourceId,
+        display_name: displayName,
       });
       setSelectedGrantId(res.data.id);
       await loadAll();
@@ -257,7 +312,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
         <Text fontSize="xl" fontWeight="bold">Recruiter Source to Working Set</Text>
         <Text color="gray.600" fontSize="sm" maxW="780px">
           First slice: bounded Gmail-like source metadata becomes provisional person records in a Working Set.
-          This screen uses the manual latest-5 adapter until the Google OAuth adapter lands.
+          Google imports use a read-only Source Grant; the manual latest-5 adapter remains for local smoke testing.
         </Text>
       </Box>
 
@@ -290,9 +345,29 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
               <Button size="sm" variant="outline" onClick={createConnection} disabled={!!activeConnection}>
                 Create manual Google connection
               </Button>
-              <Box>
-                <Text fontSize="xs" color="gray.500" mb={1}>Label / folder</Text>
-                <Input size="sm" value={resourceName} onChange={(event) => setResourceName(event.target.value)} />
+              <Box className="rsw-label-picker" minW={{ base: "full", md: "260px" }}>
+                <Text fontSize="xs" color="gray.500" mb={1}>Gmail label / folder</Text>
+                {gmailLabels.length > 0 ? (
+                  <NativeSelect.Root size="sm">
+                    <NativeSelect.Field
+                      value={selectedLabelId}
+                      onChange={(event) => {
+                        const nextLabel = gmailLabels.find((label) => label.id === event.target.value);
+                        setSelectedLabelId(event.target.value);
+                        if (nextLabel) setResourceName(nextLabel.name);
+                      }}
+                    >
+                      {gmailLabels.map((label) => (
+                        <option key={label.id} value={label.id}>
+                          {label.name}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                ) : (
+                  <Input size="sm" value={resourceName} onChange={(event) => setResourceName(event.target.value)} />
+                )}
               </Box>
               <Button size="sm" onClick={createGrant} disabled={!activeConnection}>
                 Create Source Grant
