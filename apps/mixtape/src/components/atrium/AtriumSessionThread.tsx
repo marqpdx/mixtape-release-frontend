@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, IconButton, Stack, Text } from "@chakra-ui/react";
-import { IconCheck, IconFileText } from "@tabler/icons-react";
+import { Box, Flex, IconButton, Stack, Text } from "@chakra-ui/react";
+import { IconArrowDown, IconArrowUp, IconCheck, IconFileText } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCreateMillDraft } from "@mixtape/api/hooks/workbench";
@@ -18,9 +18,9 @@ interface AtriumSessionThreadProps {
 
 function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTitle?: string }) {
   const isUser = entry.role === "user";
-  const userBg = useColorModeValue("blue.500", "blue.600");
+  const userBg = "var(--theme-accent-soft)";
   const assistantBg = useColorModeValue("gray.100", "gray.700");
-  const userText = "white";
+  const userText = "var(--theme-text)";
   const assistantText = useColorModeValue("gray.800", "gray.100");
   const actionColor = useColorModeValue("gray.400", "gray.500");
 
@@ -58,11 +58,7 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
   }
 
   return (
-    <Box
-      alignSelf={isUser ? "flex-end" : "flex-start"}
-      maxW="85%"
-      position="relative"
-    >
+    <Box alignSelf={isUser ? "flex-end" : "flex-start"} maxW="85%" position="relative">
       <Box
         bg={isUser ? userBg : assistantBg}
         color={isUser ? userText : assistantText}
@@ -70,7 +66,7 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
         py={3}
         borderRadius={isUser ? "lg lg sm lg" : "lg lg lg sm"}
       >
-        <Text fontSize="sm" whiteSpace="pre-wrap">
+        <Text fontSize="md" whiteSpace="pre-wrap">
           {entry.content}
         </Text>
       </Box>
@@ -93,9 +89,10 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
 }
 
 export function AtriumSessionThread({ entries, streaming, error, sessionTitle }: AtriumSessionThreadProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const errorColor = useColorModeValue("red.500", "red.400");
+  const scrollBtnColor = useColorModeValue("gray.400", "gray.500");
   const userScrolledUp = useRef(false);
 
   useEffect(() => {
@@ -110,6 +107,7 @@ export function AtriumSessionThread({ entries, streaming, error, sessionTitle }:
     return () => container.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Auto-scroll to bottom when new entries arrive (unless user scrolled up)
   useEffect(() => {
     if (!userScrolledUp.current) {
       const el = containerRef.current;
@@ -117,27 +115,61 @@ export function AtriumSessionThread({ entries, streaming, error, sessionTitle }:
     }
   }, [entries, streaming]);
 
+  // Scroll to bottom on initial mount
+  useEffect(() => {
+    const el = containerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
   if (!entries.length && !error) return null;
 
   return (
-    <Box
-      ref={containerRef}
-      maxH="480px"
-      overflowY="auto"
-      px={1}
-      pb={2}
-    >
-      <Stack gap={3} direction="column">
-        {entries.map((e, i) => (
-          <EntryBubble key={e.id ?? i} entry={e} sessionTitle={sessionTitle} />
-        ))}
-        {error && (
-          <Text fontSize="sm" color={errorColor} px={1}>
-            {error}
-          </Text>
-        )}
-      </Stack>
-      <div ref={bottomRef} />
+    <Box flex="1" minH="0" display="flex" flexDirection="column" position="relative">
+      <Box ref={containerRef} flex="1" minH="0" overflowY="auto" px={1} pb={2}>
+        <Stack gap={3} direction="column">
+          {entries.map((e, i) => (
+            <EntryBubble key={e.id ?? i} entry={e} sessionTitle={sessionTitle} />
+          ))}
+          {error && (
+            <Text fontSize="sm" color={errorColor} px={1}>
+              {error}
+            </Text>
+          )}
+        </Stack>
+        <div ref={bottomRef} />
+      </Box>
+
+      {/* Scroll nav buttons */}
+      <Flex
+        position="absolute"
+        right={2}
+        bottom={3}
+        flexDirection="column"
+        gap={1}
+        zIndex={5}
+        opacity={0.5}
+        _hover={{ opacity: 1 }}
+        transition="opacity 0.15s"
+      >
+        <IconButton
+          aria-label="Scroll to top"
+          size="2xs"
+          variant="ghost"
+          color={scrollBtnColor}
+          onClick={() => { if (containerRef.current) containerRef.current.scrollTop = 0; }}
+        >
+          <IconArrowUp size={11} />
+        </IconButton>
+        <IconButton
+          aria-label="Scroll to bottom"
+          size="2xs"
+          variant="ghost"
+          color={scrollBtnColor}
+          onClick={() => { if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight; }}
+        >
+          <IconArrowDown size={11} />
+        </IconButton>
+      </Flex>
     </Box>
   );
 }

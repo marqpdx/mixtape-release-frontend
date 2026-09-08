@@ -58,7 +58,7 @@ export function AtriumComposeBar({ onSend, disabled, streaming }: AtriumComposeB
           border="none"
           outline="none"
           _focus={{ boxShadow: "none" }}
-          fontSize="sm"
+          fontSize="md"
           flex="1"
           disabled={disabled || streaming}
           minH="36px"

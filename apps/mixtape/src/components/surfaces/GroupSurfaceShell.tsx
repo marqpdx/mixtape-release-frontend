@@ -34,7 +34,7 @@ export function GroupSurfaceShell({
 }: GroupSurfaceShellProps) {
   const [dimmed, setDimmed] = useState(false);
 
-  const bg = useColorModeValue("gray.50", "gray.950");
+  const bg = "var(--theme-bg)";
   const topBg = useColorModeValue("white", "gray.900");
   const topBorder = useColorModeValue("gray.200", "gray.700");
   const mutedText = useColorModeValue("gray.400", "gray.500");
@@ -43,7 +43,11 @@ export function GroupSurfaceShell({
   const dimToggleActiveColor = useColorModeValue("indigo.400", "indigo.500");
 
   return (
-    <Box className="gss-root" display="flex" flexDirection="column" minH="calc(100vh - 56px)" bg={bg}>
+    <Box className="gss-root" display="flex" flexDirection="column" h="calc(100vh - 56px)" bg={bg}
+      style={{
+        "--gss-rail-w": dimmed ? "56px" : "168px",
+        "--gss-right-w": rightPanel ? "52px" : "0px",
+      } as React.CSSProperties}>
       {/* Top bar — reduced height + opacity when dimmed */}
       <Box
         className="gss-top"
@@ -98,7 +102,7 @@ export function GroupSurfaceShell({
       </Box>
 
       {/* Body: left rail + main + right */}
-      <Box className="gss-body" display="flex" flex="1" overflow="hidden">
+      <Box className="gss-body" display="flex" flex="1" overflow="hidden" minH="0">
         {/* Left rail — icon-only + reduced opacity when dimmed */}
         <Box
           className="gss-left-wrap"
@@ -115,12 +119,11 @@ export function GroupSurfaceShell({
           {children}
         </Box>
 
-        {/* Right panel — surface-specific context */}
+        {/* Right panel — 52px icon strip; each surface passes its own content via rightPanel prop */}
         {rightPanel && (
           <Box
             className="gss-right"
-            w={{ base: "0", lg: "240px" }}
-            display={{ base: "none", lg: "block" }}
+            w="52px"
             borderLeft="1px solid"
             borderColor={topBorder}
             overflowY="auto"
@@ -128,6 +131,9 @@ export function GroupSurfaceShell({
             flexShrink={0}
             opacity={dimmed ? 0.3 : 1}
             transition="opacity 0.2s ease"
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
           >
             {rightPanel}
           </Box>

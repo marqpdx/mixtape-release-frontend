@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Button, Flex, IconButton, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconPencil, IconPlus, IconUser, IconUsers, IconX } from "@tabler/icons-react";
+import { Box, Button, Flex, IconButton, Popover, Portal, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { IconAdjustmentsHorizontal, IconEye, IconGauge, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useAtriumSessions,
@@ -25,6 +25,9 @@ import { AtriumOrientRow } from "./AtriumOrientRow";
 import { AtriumDistillModal } from "./AtriumDistillModal";
 import { AtriumInitiativeLogPanel } from "./AtriumInitiativeLogPanel";
 
+// Right strip width — icon-only; set as CSS var so fixed compose bar can reference it
+const RIGHT_STRIP_W = "52px";
+
 interface AtriumDialogSurfaceProps {
   groupSlug?: string;
   selectedInitiativeId?: string | null;
@@ -38,7 +41,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
   const { mutateAsync: updateSession } = useUpdateAtriumSession();
   const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
-  const [editingMemory, setEditingMemory] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
   const [reconstructedNote, setReconstructedNote] = useState<string | null>(null);
@@ -66,7 +69,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           : { initiative_id: initiativeId }
       );
       reset();
-      setEditingMemory(false);
+      setMemoryOpen(false);
       setOrientDismissed(false);
       setReconstructedNote(null);
       setFreshStartNote(false);
@@ -74,14 +77,12 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     }
   }
 
-  // When the sidebar selects an initiative, sync it into the surface.
   useEffect(() => {
     if (!selectedInitiativeId) return;
     handleSelectInitiative(selectedInitiativeId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInitiativeId]);
 
-  // Pre-warm subprocess whenever the active session changes.
   useEffect(() => {
     if (!activeSession?.id) return;
     setReconstructedNote(null);
@@ -118,10 +119,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           : "No results found.";
         appendLocalEntry({ role: "assistant", content: body });
       } catch (err) {
-        appendLocalEntry({
-          role: "assistant",
-          content: `/find failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-        });
+        appendLocalEntry({ role: "assistant", content: `/find failed: ${err instanceof Error ? err.message : "Unknown error"}` });
       } finally {
         setCommandPending(false);
       }
@@ -133,25 +131,16 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
       const [listTitle, itemsRaw] = rest.split(":");
       const items = (itemsRaw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
       if (!listTitle?.trim() || items.length === 0) {
-        appendLocalEntry({
-          role: "assistant",
-          content: "Usage: /add <list name>: item one, item two — appends items to a list, creating it if needed.",
-        });
+        appendLocalEntry({ role: "assistant", content: "Usage: /add <list name>: item one, item two — appends items to a list, creating it if needed." });
         return;
       }
       appendLocalEntry({ role: "user", content: message });
       setCommandPending(true);
       try {
         const result = await submitAdd({ list_title: listTitle.trim(), items, surface: "atrium" });
-        appendLocalEntry({
-          role: "assistant",
-          content: `Added ${result.items_added} item${result.items_added === 1 ? "" : "s"} to "${result.title}".`,
-        });
+        appendLocalEntry({ role: "assistant", content: `Added ${result.items_added} item${result.items_added === 1 ? "" : "s"} to "${result.title}".` });
       } catch (err) {
-        appendLocalEntry({
-          role: "assistant",
-          content: `/add failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-        });
+        appendLocalEntry({ role: "assistant", content: `/add failed: ${err instanceof Error ? err.message : "Unknown error"}` });
       } finally {
         setCommandPending(false);
       }
@@ -164,7 +153,6 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
       setCommandPending(true);
       try {
         if (!rest) {
-          // Fetch all tracked items
           const result = await submitTrack({ action: "fetch", group_slug: groupSlug });
           if (result.action === "fetch") {
             onTrackedFetch?.(result.items);
@@ -174,20 +162,15 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
             appendLocalEntry({ role: "assistant", content: body });
           }
         } else {
-          // Append one item
           const result = await submitTrack({ action: "append", text: rest, group_slug: groupSlug });
           if (result.action === "append") {
             appendLocalEntry({ role: "assistant", content: `Tracked: "${rest}"` });
-            // Refresh sidebar by fetching the updated list
             const fetchResult = await submitTrack({ action: "fetch", group_slug: groupSlug });
             if (fetchResult.action === "fetch") onTrackedFetch?.(fetchResult.items);
           }
         }
       } catch (err) {
-        appendLocalEntry({
-          role: "assistant",
-          content: `/track failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-        });
+        appendLocalEntry({ role: "assistant", content: `/track failed: ${err instanceof Error ? err.message : "Unknown error"}` });
       } finally {
         setCommandPending(false);
       }
@@ -200,7 +183,6 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
-  const editIconColor = useColorModeValue("gray.400", "gray.500");
   const activityColor = useColorModeValue("blue.500", "blue.300");
   const reconstructedBg = useColorModeValue("blue.50", "blue.900");
   const reconstructedTextColor = useColorModeValue("blue.700", "blue.200");
@@ -209,13 +191,12 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   const sponsorPersonalBg = useColorModeValue("gray.50", "gray.750");
   const sponsorGroupColor = useColorModeValue("blue.700", "blue.300");
   const sponsorPersonalColor = useColorModeValue("gray.600", "gray.400");
+  const stripBg = useColorModeValue("gray.50", "gray.900");
 
   const ctxPct = contextStatus?.pct ?? 0;
   const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
 
-  function handleCompactClick() {
-    setCompactPromptVisible(true);
-  }
+  function handleCompactClick() { setCompactPromptVisible(true); }
 
   async function handleCompactOnly() {
     if (!activeSession) return;
@@ -230,9 +211,9 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
 
   async function handleStartFresh() {
     if (!activeSession) return;
-    setEditingMemory(false);
+    setMemoryOpen(false);
     await resetSession(activeSession.id);
-    reset(); // clear local entries state
+    reset();
     setFreshStartNote(true);
     setReconstructedNote(null);
     setCompactPromptVisible(false);
@@ -248,7 +229,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   async function handleNewSession() {
     const session = await createSession(groupSlug ? { group_slug: groupSlug } : {});
     reset();
-    setEditingMemory(false);
+    setMemoryOpen(false);
     setOrientDismissed(false);
     setReconstructedNote(null);
     setFreshStartNote(false);
@@ -259,7 +240,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   function handleSelectSession(session: AtriumSession) {
     if (session.id === activeSession?.id) return;
     reset();
-    setEditingMemory(false);
+    setMemoryOpen(false);
     setOrientDismissed(false);
     setReconstructedNote(null);
     setFreshStartNote(false);
@@ -269,14 +250,13 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
 
   function handleMemorySaved(updated: AtriumSession) {
     setActiveSession(updated);
-    setEditingMemory(false);
   }
 
   const personalSessions = sessions.filter((s) => !s.initiative_id);
 
   if (isLoading) {
     return (
-      <Stack gap={2}>
+      <Stack gap={2} flex="1">
         <Skeleton height="48px" borderRadius="md" />
         <Skeleton height="48px" borderRadius="md" />
       </Stack>
@@ -289,9 +269,12 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
       borderWidth="1px"
       borderColor={borderColor}
       borderRadius="lg"
-      overflow="hidden"
+      display="flex"
+      flexDirection="column"
+      flex="1"
+      minH="0"
     >
-      {/* Sponsor identity badge */}
+      {/* Sponsor identity badge — full width */}
       {sponsorContext && (
         <Flex
           className="ads-sponsor-badge"
@@ -302,322 +285,308 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           bg={sponsorContext.sponsor_type === "group" ? sponsorGroupBg : sponsorPersonalBg}
           borderBottomWidth="1px"
           borderColor={borderColor}
+          flexShrink={0}
         >
           {sponsorContext.sponsor_type === "group" ? (
             <IconUsers size={12} color={sponsorGroupColor} />
           ) : (
             <IconUser size={12} color={sponsorPersonalColor} />
           )}
-          <Text
-            fontSize="xs"
-            fontWeight="500"
-            color={sponsorContext.sponsor_type === "group" ? sponsorGroupColor : sponsorPersonalColor}
-          >
+          <Text fontSize="xs" fontWeight="500"
+            color={sponsorContext.sponsor_type === "group" ? sponsorGroupColor : sponsorPersonalColor}>
             {sponsorContext.sponsor_type === "group" ? sponsorContext.sponsor_name : "Personal"}
           </Text>
         </Flex>
       )}
 
-      {/* Initiative nav — primary navigation */}
-      <Box borderBottomWidth="1px" borderColor={borderColor}>
-        {/* Initiatives list */}
-        {sponsorContext && sponsorContext.initiatives.length > 0 && (
-          <Box px={4} pt={3} pb={1}>
-            <Text fontSize="xs" fontWeight="600" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={1.5}>
-              Initiatives
-            </Text>
-            <Flex direction="column" gap={0.5}>
-              {sponsorContext.initiatives.map((ini) => {
-                const isActive = activeSession?.initiative_id === ini.id;
-                return (
-                  <Button
-                    key={ini.id}
-                    size="sm"
-                    variant={isActive ? "solid" : "ghost"}
-                    colorPalette="blue"
-                    justifyContent="flex-start"
-                    onClick={() => handleSelectInitiative(ini.id)}
-                    w="full"
-                    fontWeight={isActive ? "600" : "400"}
-                  >
-                    <Text lineClamp={1} textAlign="left" flex={1}>{ini.title}</Text>
-                  </Button>
-                );
-              })}
-            </Flex>
-          </Box>
-        )}
+      {/* Body: thread (left) + controls strip (right) */}
+      <Flex flex="1" minH="0">
 
-        {/* Personal section — unscoped sessions */}
-        <Flex px={4} pt={2} pb={2.5} align="center" gap={2} flexWrap="wrap">
-          <Text fontSize="xs" fontWeight="600" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" flexShrink={0}>
-            Personal
-          </Text>
-          {personalSessions.map((s) => (
-            <Button
-              key={s.id}
-              size="xs"
-              variant={activeSession?.id === s.id ? "solid" : "outline"}
-              colorPalette="blue"
-              onClick={() => handleSelectSession(s)}
-              flexShrink={0}
-              maxW="140px"
-            >
-              <Text lineClamp={1}>{s.title || "Session"}</Text>
-            </Button>
-          ))}
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={handleNewSession}
-            loading={creating}
-            flexShrink={0}
-            ml="auto"
-          >
-            <IconPlus size={14} />
-            New
-          </Button>
-        </Flex>
+        {/* LEFT — thread column */}
+        <Box flex="1" display="flex" flexDirection="column" minH="0">
 
-        {/* Session-level controls — memory seed + start fresh */}
-        {activeSession && (
-          <Flex px={4} pb={2} align="center" gap={1}>
-            <IconButton
-              aria-label={editingMemory ? "Close memory seed editor" : "Edit session memory seed"}
-              size="2xs"
-              variant="ghost"
-              color={editingMemory ? "blue.500" : editIconColor}
-              onClick={() => setEditingMemory((v) => !v)}
-            >
-              {editingMemory ? <IconX size={12} /> : <IconPencil size={12} />}
-            </IconButton>
-            {editingMemory && (
-              <Button
-                size="2xs"
-                variant="ghost"
-                colorPalette="red"
-                onClick={handleStartFresh}
-                loading={resetting}
-                disabled={streaming}
-              >
-                Start fresh
-              </Button>
-            )}
-          </Flex>
-        )}
-      </Box>
-
-      {/* Memory seed editor — inline, collapsible */}
-      {activeSession && editingMemory && (
-        <AtriumMemorySeedEditor
-          session={activeSession}
-          onSaved={handleMemorySaved}
-          onCancel={() => setEditingMemory(false)}
-        />
-      )}
-
-      {/* Dial — session-level posture selector */}
-      {activeSession && !editingMemory && (
-        <Box px={4} py={2} borderBottomWidth="1px" borderColor={borderColor}>
-          <AtriumDial
-            value={activeSession.dial_mode ?? "expressive"}
-            onChange={handleDialChange}
-            disabled={streaming || commandPending}
-          />
-        </Box>
-      )}
-
-      {/* Beryl context preview — collapsed by default, power-user transparency */}
-      {activeSession && !editingMemory && (
-        <AtriumContextPreview sessionId={activeSession.id} />
-      )}
-
-      {/* Context usage bar — shown when we have a reading */}
-      {activeSession && !editingMemory && contextStatus && (
-        <Box px={4} pt={1}>
-          <Flex align="center" gap={2}>
-            <Progress.Root
-              value={contextStatus.pct}
-              max={100}
-              size="xs"
-              colorPalette={ctxColorScheme}
-              flex={1}
-            >
-              <Progress.Track>
-                <Progress.Range />
-              </Progress.Track>
-            </Progress.Root>
-            <Text fontSize="xs" color={subtitleColor} flexShrink={0} whiteSpace="nowrap">
-              {Math.round(contextStatus.pct)}%
-            </Text>
-            {contextStatus.pct >= 50 && !compactPromptVisible && (
-              <Button
-                size="2xs"
-                variant="ghost"
-                onClick={handleCompactClick}
-                loading={compacting}
-                flexShrink={0}
-              >
-                Compact
-              </Button>
-            )}
-          </Flex>
-          {/* Pre-compact Distillate prompt */}
-          {compactPromptVisible && (
-            <Flex align="center" gap={2} pt={1} flexWrap="wrap">
-              <Text fontSize="xs" color={subtitleColor} flex={1}>
-                Good moment to save a Distillate before compressing?
-              </Text>
-              <Button
-                size="2xs"
-                colorPalette="blue"
-                variant="outline"
-                onClick={handleDistillBeforeCompact}
-                flexShrink={0}
-              >
-                Distill →
-              </Button>
-              <Button
-                size="2xs"
-                variant="ghost"
-                onClick={handleCompactOnly}
-                loading={compacting}
-                flexShrink={0}
-              >
-                Compact only
-              </Button>
+          {/* Status banners */}
+          {activeSession && reconstructedNote && (
+            <Flex px={4} py={2} align="center" gap={2} bg={reconstructedBg} borderBottomWidth="1px" borderColor={borderColor} flexShrink={0}>
+              <Text fontSize="xs" color={reconstructedTextColor} flex={1}>↩ {reconstructedNote}</Text>
+              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" color={reconstructedIconColor} onClick={() => setReconstructedNote(null)}>
+                <IconX size={12} />
+              </IconButton>
             </Flex>
           )}
-        </Box>
-      )}
+          {activeSession && freshStartNote && (
+            <Flex px={4} py={2} align="center" gap={2} bg={reconstructedBg} borderBottomWidth="1px" borderColor={borderColor} flexShrink={0}>
+              <Text fontSize="xs" color={reconstructedTextColor} flex={1}>↺ Session reset — started fresh.</Text>
+              <IconButton aria-label="Dismiss" size="2xs" variant="ghost" color={reconstructedIconColor} onClick={() => setFreshStartNote(false)}>
+                <IconX size={12} />
+              </IconButton>
+            </Flex>
+          )}
 
-      {/* Standalone Distill button — always accessible when a session is active */}
-      {activeSession && !editingMemory && !compactPromptVisible && (
-        <Box px={4} pt={1}>
-          <Button
-            size="2xs"
-            variant="ghost"
-            colorPalette="blue"
-            onClick={() => setDistillOpen(true)}
-          >
-            Distill →
-          </Button>
-        </Box>
-      )}
+          {/* Initiative log panel */}
+          {activeSession && activeSession.initiative_id && (
+            <Box flexShrink={0}>
+              <AtriumInitiativeLogPanel session={activeSession} defaultExpanded />
+            </Box>
+          )}
 
-      {/* Reconstructed badge — shown once on cold spawn, dismissible */}
-      {activeSession && reconstructedNote && (
-        <Flex
-          px={4}
-          py={2}
-          align="center"
-          gap={2}
-          bg={reconstructedBg}
-          borderBottomWidth="1px"
-          borderColor={borderColor}
-        >
-          <Text fontSize="xs" color={reconstructedTextColor} flex={1}>
-            ↩ {reconstructedNote}
-          </Text>
-          <IconButton
-            aria-label="Dismiss"
-            size="2xs"
-            variant="ghost"
-            color={reconstructedIconColor}
-            onClick={() => setReconstructedNote(null)}
-          >
-            <IconX size={12} />
-          </IconButton>
-        </Flex>
-      )}
-
-      {/* Fresh-start banner — shown briefly after Session Reset */}
-      {activeSession && freshStartNote && (
-        <Flex
-          px={4}
-          py={2}
-          align="center"
-          gap={2}
-          bg={reconstructedBg}
-          borderBottomWidth="1px"
-          borderColor={borderColor}
-        >
-          <Text fontSize="xs" color={reconstructedTextColor} flex={1}>
-            ↺ Session reset — started fresh. Prior conversation is archived in the DB.
-          </Text>
-          <IconButton
-            aria-label="Dismiss"
-            size="2xs"
-            variant="ghost"
-            color={reconstructedIconColor}
-            onClick={() => setFreshStartNote(false)}
-          >
-            <IconX size={12} />
-          </IconButton>
-        </Flex>
-      )}
-
-      {/* Initiative log panel — promoted above the live exchange */}
-      {activeSession && activeSession.initiative_id && (
-        <AtriumInitiativeLogPanel session={activeSession} defaultExpanded />
-      )}
-
-      {/* Thread */}
-      {activeSession ? (
-        <Box px={4} pt={4}>
-          <AtriumSessionThread
-            entries={entries}
-            streaming={streaming}
-            error={error}
-            sessionTitle={activeSession.title}
-          />
-        </Box>
-      ) : (
-        <Box px={4} pt={6} pb={2} textAlign="center">
-          <Text fontSize="sm" color={subtitleColor}>
-            Select an initiative above or start a personal session.
-          </Text>
-        </Box>
-      )}
-
-      {/* Orient row — Very Focused only, dismissed once user sets a target */}
-      {activeSession &&
-        (activeSession.dial_mode ?? "expressive") === "very_focused" &&
-        !orientDismissed && (
-          <Box px={4} pt={2}>
-            <AtriumOrientRow onDismiss={() => setOrientDismissed(true)} />
+          {/* Thread — grows and scrolls */}
+          <Box flex="1" minH="0" display="flex" flexDirection="column" px={4} pt={4} pb="80px">
+            {activeSession ? (
+              <AtriumSessionThread
+                entries={entries}
+                streaming={streaming}
+                error={error}
+                sessionTitle={activeSession.title}
+              />
+            ) : (
+              <Box textAlign="center" pt={6}>
+                <Text fontSize="sm" color={subtitleColor}>
+                  Select an initiative or start a personal session.
+                </Text>
+              </Box>
+            )}
           </Box>
-        )}
 
-      {/* Warming indicator — shown while PTY is booting */}
-      {activeSession && isWarming && !streaming && (
-        <Box px={4} pb={1}>
-          <Text fontSize="xs" color={subtitleColor} fontStyle="italic">
-            Starting up Claude Code…
-          </Text>
+          {/* Orient row */}
+          {activeSession && (activeSession.dial_mode ?? "expressive") === "very_focused" && !orientDismissed && (
+            <Box px={4} pt={2} flexShrink={0}>
+              <AtriumOrientRow onDismiss={() => setOrientDismissed(true)} />
+            </Box>
+          )}
+
+          {/* Status indicators */}
+          {activeSession && isWarming && !streaming && (
+            <Box px={4} pb={1} flexShrink={0}>
+              <Text fontSize="xs" color={subtitleColor} fontStyle="italic">Starting up Claude Code…</Text>
+            </Box>
+          )}
+          {activeSession && activityText && streaming && (
+            <Box px={4} pb={1} flexShrink={0}>
+              <Text fontSize="xs" color={activityColor} fontStyle="italic" lineClamp={1}>⯎ {activityText}</Text>
+            </Box>
+          )}
+          {activeSession && usedFallback && !streaming && (
+            <Box px={4} pb={1} flexShrink={0}>
+              <Text fontSize="xs" color={subtitleColor} fontStyle="italic">(prompt detection timed out — response may be truncated)</Text>
+            </Box>
+          )}
         </Box>
-      )}
 
-      {/* Activity indicator — shows tool-call activity while PTY is working */}
-      {activeSession && activityText && streaming && (
-        <Box px={4} pb={1}>
-          <Text fontSize="xs" color={activityColor} fontStyle="italic" lineClamp={1}>
-            ⯎ {activityText}
-          </Text>
+        {/* RIGHT — controls strip */}
+        {/* RIGHT — icon-only strip; popovers open to the left on click, title= gives native rollover label */}
+        <Box
+          className="ads-right-strip"
+          w={RIGHT_STRIP_W}
+          borderLeft="1px solid"
+          borderColor={borderColor}
+          flexShrink={0}
+          bg={stripBg}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          gap={1}
+          py={2}
+          overflowY="auto"
+        >
+          {/* Sessions */}
+          <Popover.Root positioning={{ placement: "left-start" }}>
+            <Popover.Trigger asChild>
+              <IconButton aria-label="Sessions" title="Sessions" size="sm" variant="ghost">
+                <IconHistory size={16} />
+              </IconButton>
+            </Popover.Trigger>
+            <Portal>
+              <Popover.Positioner zIndex={200}>
+                <Popover.Content w="200px">
+                  <Box p={3}>
+                    <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Personal</Text>
+                    <Flex direction="column" gap={1}>
+                      {personalSessions.map((s) => (
+                        <Button key={s.id} size="xs" variant={activeSession?.id === s.id ? "solid" : "outline"}
+                          colorPalette="blue" onClick={() => handleSelectSession(s)} w="full" justifyContent="flex-start">
+                          <Text lineClamp={1}>{s.title || "Session"}</Text>
+                        </Button>
+                      ))}
+                      <Button size="xs" variant="ghost" onClick={handleNewSession} loading={creating} justifyContent="flex-start">
+                        <IconPlus size={12} /> New session
+                      </Button>
+                    </Flex>
+                  </Box>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Portal>
+          </Popover.Root>
+
+          {/* Initiatives */}
+          {sponsorContext && sponsorContext.initiatives.length > 0 && (
+            <Popover.Root positioning={{ placement: "left-start" }}>
+              <Popover.Trigger asChild>
+                <IconButton aria-label="Initiatives" title="Initiatives" size="sm" variant="ghost">
+                  <IconTarget size={16} />
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner zIndex={200}>
+                  <Popover.Content w="200px">
+                    <Box p={3}>
+                      <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Initiatives</Text>
+                      <Flex direction="column" gap={0.5}>
+                        {sponsorContext.initiatives.map((ini) => {
+                          const isActive = activeSession?.initiative_id === ini.id;
+                          return (
+                            <Button key={ini.id} size="sm" variant={isActive ? "solid" : "ghost"} colorPalette="blue"
+                              justifyContent="flex-start" onClick={() => handleSelectInitiative(ini.id)} w="full">
+                              <Text lineClamp={1} textAlign="left" flex={1}>{ini.title}</Text>
+                            </Button>
+                          );
+                        })}
+                      </Flex>
+                    </Box>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+          )}
+
+          {/* Memory seed */}
+          {activeSession && (
+            <Popover.Root open={memoryOpen} onOpenChange={(e) => setMemoryOpen(e.open)} positioning={{ placement: "left-start" }}>
+              <Popover.Trigger asChild>
+                <IconButton aria-label="Memory seed" title="Memory seed" size="sm"
+                  variant={memoryOpen ? "solid" : "ghost"} colorPalette={memoryOpen ? "blue" : undefined}>
+                  <IconPencil size={16} />
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner zIndex={200}>
+                  <Popover.Content w="280px">
+                    <Box p={3}>
+                      <Flex align="center" justify="space-between" mb={2}>
+                        <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider">Memory seed</Text>
+                        <Button size="2xs" variant="ghost" colorPalette="red" onClick={handleStartFresh} loading={resetting} disabled={streaming}>
+                          Start fresh
+                        </Button>
+                      </Flex>
+                      <AtriumMemorySeedEditor
+                        session={activeSession}
+                        onSaved={(updated) => { handleMemorySaved(updated); setMemoryOpen(false); }}
+                        onCancel={() => setMemoryOpen(false)}
+                      />
+                    </Box>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+          )}
+
+          {/* Dial / Mode */}
+          {activeSession && (
+            <Popover.Root positioning={{ placement: "left-start" }}>
+              <Popover.Trigger asChild>
+                <IconButton aria-label="Mode" title="Mode" size="sm" variant="ghost">
+                  <IconAdjustmentsHorizontal size={16} />
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner zIndex={200}>
+                  <Popover.Content w="220px">
+                    <Box p={3}>
+                      <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Mode</Text>
+                      <AtriumDial value={activeSession.dial_mode ?? "expressive"} onChange={handleDialChange} disabled={streaming || commandPending} />
+                    </Box>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+          )}
+
+          {/* Beryl context */}
+          {activeSession && (
+            <Popover.Root positioning={{ placement: "left-start" }}>
+              <Popover.Trigger asChild>
+                <IconButton aria-label="Beryl context" title="Beryl context" size="sm" variant="ghost">
+                  <IconEye size={16} />
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner zIndex={200}>
+                  <Popover.Content w="260px">
+                    <Box p={3}>
+                      <AtriumContextPreview sessionId={activeSession.id} />
+                    </Box>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+          )}
+
+          {/* Context usage */}
+          {activeSession && contextStatus && (
+            <Popover.Root positioning={{ placement: "left-start" }}>
+              <Popover.Trigger asChild>
+                <IconButton
+                  aria-label={`Context ${Math.round(contextStatus.pct)}%`}
+                  title={`Context ${Math.round(contextStatus.pct)}%`}
+                  size="sm" variant="ghost"
+                  color={ctxPct >= 85 ? "red.500" : ctxPct >= 70 ? "orange.500" : undefined}
+                >
+                  <IconGauge size={16} />
+                </IconButton>
+              </Popover.Trigger>
+              <Portal>
+                <Popover.Positioner zIndex={200}>
+                  <Popover.Content w="220px">
+                    <Box p={3}>
+                      <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Context</Text>
+                      <Flex align="center" gap={2} mb={compactPromptVisible ? 2 : 0}>
+                        <Progress.Root value={contextStatus.pct} max={100} size="xs" colorPalette={ctxColorScheme} flex={1}>
+                          <Progress.Track><Progress.Range /></Progress.Track>
+                        </Progress.Root>
+                        <Text fontSize="xs" color={subtitleColor} flexShrink={0}>{Math.round(contextStatus.pct)}%</Text>
+                        {contextStatus.pct >= 50 && !compactPromptVisible && (
+                          <Button size="2xs" variant="ghost" onClick={handleCompactClick} loading={compacting} flexShrink={0}>Compact</Button>
+                        )}
+                      </Flex>
+                      {compactPromptVisible && (
+                        <Flex direction="column" gap={1.5}>
+                          <Text fontSize="xs" color={subtitleColor}>Save a Distillate before compressing?</Text>
+                          <Flex gap={2}>
+                            <Button size="2xs" colorPalette="blue" variant="outline" onClick={handleDistillBeforeCompact}>Distill →</Button>
+                            <Button size="2xs" variant="ghost" onClick={handleCompactOnly} loading={compacting}>Compact only</Button>
+                          </Flex>
+                        </Flex>
+                      )}
+                    </Box>
+                  </Popover.Content>
+                </Popover.Positioner>
+              </Portal>
+            </Popover.Root>
+          )}
+
+          {/* Distill */}
+          {activeSession && (
+            <IconButton aria-label="Distill" title="Distill" size="sm" variant="ghost" colorPalette="blue" onClick={() => setDistillOpen(true)}>
+              <IconSparkles size={16} />
+            </IconButton>
+          )}
         </Box>
-      )}
+      </Flex>
 
-      {/* Fallback notice — shown briefly after a response completed via timeout */}
-      {activeSession && usedFallback && !streaming && (
-        <Box px={4} pb={1}>
-          <Text fontSize="xs" color={subtitleColor} fontStyle="italic">
-            (prompt detection timed out — response may be truncated)
-          </Text>
-        </Box>
-      )}
-
-      {/* Compose bar */}
-      <Box px={4} pb={4} pt={2}>
+      {/* Compose bar — fixed at viewport bottom, spanning thread column only */}
+      <Box
+        position="fixed"
+        bottom={0}
+        left="var(--gss-rail-w, 168px)"
+        right={RIGHT_STRIP_W}
+        zIndex={100}
+        bg={bgColor}
+        borderTop="1px solid"
+        borderColor={borderColor}
+        px={4}
+        pb={4}
+        pt={3}
+      >
         <AtriumComposeBar
           onSend={handleCompose}
           disabled={!activeSession}
@@ -625,13 +594,9 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
         />
       </Box>
 
-      {/* Distill modal — portal-rendered, outside the scroll container */}
+      {/* Distill modal */}
       {activeSession && (
-        <AtriumDistillModal
-          sessionId={activeSession.id}
-          open={distillOpen}
-          onClose={() => setDistillOpen(false)}
-        />
+        <AtriumDistillModal sessionId={activeSession.id} open={distillOpen} onClose={() => setDistillOpen(false)} />
       )}
     </Box>
   );

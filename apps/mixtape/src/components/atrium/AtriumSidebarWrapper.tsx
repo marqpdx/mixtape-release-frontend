@@ -42,9 +42,9 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
   const hasContent = trackedItems.length > 0 || initiatives.length > 0 || drafts.length > 0;
 
   return (
-    <Flex className="asw-root" align="flex-start">
-      {/* Main dialog surface */}
-      <Box className="asw-surface" flex={1} minW={0}>
+    <Flex className="asw-root" align="flex-start" flex="1" minH="0">
+      {/* Dialog surface — controls strip is now built into AtriumDialogSurface */}
+      <Box className="asw-surface" flex={1} minW={0} display="flex" flexDirection="column" minH="0">
         <AtriumDialogSurface
           groupSlug={groupSlug}
           selectedInitiativeId={selectedInitiativeId}
@@ -56,9 +56,10 @@ export function AtriumSidebarWrapper({ groupSlug }: AtriumSidebarWrapperProps) {
         />
       </Box>
 
-      {/* Sidebar */}
+      {/* Sidebar — hidden until needed */}
       <Box
         className="asw-sidebar"
+        display="none"
         flexShrink={0}
         w={sidebarOpen ? "40%" : hovered ? "180px" : "32px"}
         transition="width 0.18s ease"
