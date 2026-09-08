@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Badge,
   Box,
@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
+import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogCloseTrigger } from "@components/ui/dialog";
 
 type SourceConnection = {
   id: string;
@@ -45,12 +46,21 @@ type GmailLabel = {
 
 type SourceEvidence = {
   id: string;
+  provider_message_id: string;
   sender_email: string;
   sender_header_raw: string;
   sent_at: string | null;
   subject: string;
   body_snapshot_status: string;
   bounded_excerpt: string;
+};
+
+type RawEmailData = {
+  provider_message_id: string;
+  from_header: string;
+  subject: string;
+  sent_at: string;
+  body: string;
 };
 
 type ProvisionalThing = {
@@ -122,6 +132,13 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
   const [isImporting, setIsImporting] = useState(false);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isImportingFromSource, setIsImportingFromSource] = useState(false);
+  const [emailModal, setEmailModal] = useState<{
+    open: boolean;
+    evidence: SourceEvidence | null;
+    thingId: string | null;
+    loading: boolean;
+    data: RawEmailData | null;
+  }>({ open: false, evidence: null, thingId: null, loading: false, data: null });
 
   const baseUrl = `/api/groups/${groupSlug}/sourcework`;
   const activeConnection = connections[0];
@@ -306,6 +323,35 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     }
   };
 
+  const openEmailModal = async (evidence: SourceEvidence, thingId: string) => {
+    setEmailModal({ open: true, evidence, thingId, loading: true, data: null });
+    try {
+      const res = await axiosInstance.get<RawEmailData>(`${baseUrl}/source-evidence/${evidence.id}/raw-message`);
+      setEmailModal((prev) => ({ ...prev, loading: false, data: res.data }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch email";
+      toaster.create({ title: "Email fetch failed", description: message, type: "error" });
+      setEmailModal((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  const verifyNameFromModal = async () => {
+    if (!emailModal.thingId) return;
+    const thing = recruiterSet?.memberships.find((m) => m.provisional_thing.id === emailModal.thingId)?.provisional_thing;
+    if (!thing) return;
+    await verifyName(thing);
+    setEmailModal((prev) => ({ ...prev, open: false }));
+  };
+
+  const verifiedMembers = useMemo(
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status === "ready"),
+    [recruiterSet],
+  );
+  const pendingMembers = useMemo(
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status !== "ready"),
+    [recruiterSet],
+  );
+
   return (
     <VStack className="rsw-root" align="stretch" gap={5}>
       <Box className="rsw-intro">
@@ -423,62 +469,176 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
             {!recruiterSet || recruiterSet.memberships.length === 0 ? (
               <Text color="gray.500" fontSize="sm">No provisional people yet.</Text>
             ) : (
-              <Box overflowX="auto">
-                <Table.Root size="sm" variant="outline">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeader>Name</Table.ColumnHeader>
-                      <Table.ColumnHeader>Email</Table.ColumnHeader>
-                      <Table.ColumnHeader>Name Source</Table.ColumnHeader>
-                      <Table.ColumnHeader>Status</Table.ColumnHeader>
-                      <Table.ColumnHeader>Evidence</Table.ColumnHeader>
-                      <Table.ColumnHeader>Verify</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {recruiterSet.memberships.map((membership) => {
-                      const thing = membership.provisional_thing;
-                      const evidence = thing.evidence[0];
-                      return (
-                        <Table.Row key={membership.id}>
-                          <Table.Cell minW="220px">
-                            <Input
-                              size="sm"
-                              value={editingNames[thing.id] ?? thing.preferred_name}
-                              onChange={(event) => setEditingNames((prev) => ({ ...prev, [thing.id]: event.target.value }))}
-                              placeholder="Preferred name"
-                            />
-                          </Table.Cell>
-                          <Table.Cell>{thing.email || "No email"}</Table.Cell>
-                          <Table.Cell>
-                            <Badge colorPalette={thing.name_confidence === "high" ? "green" : thing.name_confidence === "medium" ? "yellow" : "red"}>
-                              {thing.name_source} / {thing.name_confidence}
-                            </Badge>
-                          </Table.Cell>
-                          <Table.Cell>{thing.name_status}</Table.Cell>
-                          <Table.Cell minW="260px">
-                            <Text fontSize="xs" color="gray.600">{evidence?.subject || "No subject"}</Text>
-                            {evidence?.bounded_excerpt ? (
-                              <Box mt={2} p={2} bg="gray.50" borderRadius="md">
-                                <Text fontSize="xs" whiteSpace="pre-wrap">{evidence.bounded_excerpt}</Text>
-                              </Box>
-                            ) : null}
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Button size="xs" variant="outline" onClick={() => verifyName(thing)}>
-                              Verify
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
+              <VStack align="stretch" gap={4}>
+                {verifiedMembers.length > 0 && (
+                  <Box>
+                    <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={2}>
+                      Confirmed — {verifiedMembers.length}
+                    </Text>
+                    <MemberTable
+                      memberships={verifiedMembers}
+                      editingNames={editingNames}
+                      setEditingNames={setEditingNames}
+                      baseUrl={baseUrl}
+                      onVerify={verifyName}
+                      onSeeEmail={openEmailModal}
+                    />
+                  </Box>
+                )}
+                {pendingMembers.length > 0 && (
+                  <Box>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={2}>
+                      Pending Review — {pendingMembers.length}
+                    </Text>
+                    <MemberTable
+                      memberships={pendingMembers}
+                      editingNames={editingNames}
+                      setEditingNames={setEditingNames}
+                      baseUrl={baseUrl}
+                      onVerify={verifyName}
+                      onSeeEmail={openEmailModal}
+                    />
+                  </Box>
+                )}
+              </VStack>
             )}
           </VStack>
         </Card.Body>
       </Card.Root>
+
+      <DialogRoot open={emailModal.open} onOpenChange={(e) => { if (!e.open) setEmailModal((prev) => ({ ...prev, open: false })); }} size="xl">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Email</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            {emailModal.loading ? (
+              <HStack justify="center" py={6}><Spinner /></HStack>
+            ) : emailModal.data ? (
+              <VStack align="stretch" gap={3}>
+                <Box>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold" textTransform="uppercase" letterSpacing="wide">From</Text>
+                  <Text fontSize="sm">{emailModal.data.from_header}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold" textTransform="uppercase" letterSpacing="wide">Subject</Text>
+                  <Text fontSize="sm">{emailModal.data.subject}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold" textTransform="uppercase" letterSpacing="wide">Date</Text>
+                  <Text fontSize="sm">{emailModal.data.sent_at}</Text>
+                </Box>
+                <Separator />
+                <Box>
+                  <Text fontSize="xs" color="gray.500" fontWeight="semibold" textTransform="uppercase" letterSpacing="wide" mb={2}>Body</Text>
+                  <Box p={3} bg="gray.50" borderRadius="md" maxH="340px" overflowY="auto">
+                    <Text fontSize="sm" whiteSpace="pre-wrap" fontFamily="mono">{emailModal.data.body}</Text>
+                  </Box>
+                </Box>
+                <Separator />
+                <Box>
+                  <Text fontSize="xs" color="gray.500" mb={1}>Confirm name for this contact</Text>
+                  <Input
+                    size="sm"
+                    value={emailModal.thingId ? (editingNames[emailModal.thingId] ?? recruiterSet?.memberships.find((m) => m.provisional_thing.id === emailModal.thingId)?.provisional_thing.preferred_name ?? "") : ""}
+                    onChange={(event) => {
+                      if (emailModal.thingId) setEditingNames((prev) => ({ ...prev, [emailModal.thingId!]: event.target.value }));
+                    }}
+                    placeholder="Preferred name"
+                  />
+                </Box>
+              </VStack>
+            ) : (
+              <Text color="gray.500" fontSize="sm">No email data available.</Text>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button size="sm" onClick={verifyNameFromModal} disabled={emailModal.loading || !emailModal.data}>
+              Verify &amp; Confirm
+            </Button>
+          </DialogFooter>
+          <DialogCloseTrigger />
+        </DialogContent>
+      </DialogRoot>
     </VStack>
+  );
+}
+
+
+function MemberTable({
+  memberships,
+  editingNames,
+  setEditingNames,
+  baseUrl: _baseUrl,
+  onVerify,
+  onSeeEmail,
+}: {
+  memberships: WorkingSetMembership[];
+  editingNames: Record<string, string>;
+  setEditingNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  baseUrl: string;
+  onVerify: (thing: ProvisionalThing) => void;
+  onSeeEmail: (evidence: SourceEvidence, thingId: string) => void;
+}) {
+  return (
+    <Box overflowX="auto">
+      <Table.Root size="sm" variant="outline">
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeader>Actions</Table.ColumnHeader>
+            <Table.ColumnHeader>Name</Table.ColumnHeader>
+            <Table.ColumnHeader>Email</Table.ColumnHeader>
+            <Table.ColumnHeader>Name Source</Table.ColumnHeader>
+            <Table.ColumnHeader>Status</Table.ColumnHeader>
+            <Table.ColumnHeader>Evidence</Table.ColumnHeader>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {memberships.map((membership) => {
+            const thing = membership.provisional_thing;
+            const evidence = thing.evidence[0];
+            return (
+              <Table.Row key={membership.id}>
+                <Table.Cell>
+                  <HStack gap={1}>
+                    <Button size="xs" variant="outline" onClick={() => onVerify(thing)}>
+                      Verify
+                    </Button>
+                    {evidence?.provider_message_id ? (
+                      <Button size="xs" variant="ghost" onClick={() => onSeeEmail(evidence, thing.id)}>
+                        See Email
+                      </Button>
+                    ) : null}
+                  </HStack>
+                </Table.Cell>
+                <Table.Cell minW="200px">
+                  <Input
+                    size="sm"
+                    value={editingNames[thing.id] ?? thing.preferred_name}
+                    onChange={(event) => setEditingNames((prev) => ({ ...prev, [thing.id]: event.target.value }))}
+                    placeholder="Preferred name"
+                  />
+                </Table.Cell>
+                <Table.Cell>{thing.email || "No email"}</Table.Cell>
+                <Table.Cell>
+                  <Badge colorPalette={thing.name_confidence === "high" ? "green" : thing.name_confidence === "medium" ? "yellow" : "red"}>
+                    {thing.name_source} / {thing.name_confidence}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>{thing.name_status}</Table.Cell>
+                <Table.Cell minW="240px">
+                  <Text fontSize="xs" color="gray.600">{evidence?.subject || "No subject"}</Text>
+                  {evidence?.bounded_excerpt ? (
+                    <Box mt={1} p={2} bg="gray.50" borderRadius="md">
+                      <Text fontSize="xs" whiteSpace="pre-wrap">{evidence.bounded_excerpt}</Text>
+                    </Box>
+                  ) : null}
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
+        </Table.Body>
+      </Table.Root>
+    </Box>
   );
 }
