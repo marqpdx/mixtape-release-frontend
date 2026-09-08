@@ -284,9 +284,14 @@ export function useAtriumExchange(session: AtriumSession | null) {
           });
         }
 
-        // Invalidate all session list variants (entry_count) + persisted entries (ids for promotion)
+        // Invalidate session list immediately (entry_count badge in sidebar).
         queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
-        queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(session.id) });
+        // Delay entries refetch: the backend saves the assistant entry AFTER yielding
+        // the final `done` SSE chunk, so a zero-delay invalidation races the DB write
+        // and the refetch can return stale data (entry missing), clearing local state.
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(session.id) });
+        }, 600);
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
           setError(err.message);
