@@ -379,11 +379,11 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
   }>({ open: false, listName: "", loading: false, result: null });
 
   const verifiedMembers = useMemo(
-    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_status === "ready"),
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_source === "human_verified"),
     [recruiterSet],
   );
   const pendingMembers = useMemo(
-    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_status !== "ready"),
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_source !== "human_verified"),
     [recruiterSet],
   );
   const visiblePending = pendingMembers.slice(0, PENDING_PAGE_SIZE);
