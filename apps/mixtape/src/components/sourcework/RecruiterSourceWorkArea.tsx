@@ -681,8 +681,13 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                 <Separator />
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" textTransform="uppercase" letterSpacing="wide" mb={2}>Body</Text>
-                  <Box p={3} bg="gray.50" borderRadius="md" maxH="340px" overflowY="auto">
-                    <Text fontSize="sm" whiteSpace="pre-wrap" fontFamily="mono">{emailModal.data.body}</Text>
+                  <Box borderRadius="md" border="1px solid" borderColor="gray.200" overflow="hidden">
+                    <iframe
+                      srcDoc={emailModal.data.body}
+                      sandbox=""
+                      style={{ width: "100%", height: "360px", border: "none", display: "block" }}
+                      title="Email body"
+                    />
                   </Box>
                 </Box>
                 <Separator />
