@@ -63,23 +63,23 @@ type RawEmailData = {
   body: string;
 };
 
-type ProvisionalThing = {
+type ProvisionalData = {
   id: string;
-  status: string;
+  state: string;
   preferred_name: string;
   email: string;
   organization_guess: string;
   name_source: string;
   name_confidence: string;
   name_status: string;
-  evidence: SourceEvidence[];
+  source_evidence: SourceEvidence | null;
 };
 
 type WorkingSetMembership = {
   id: string;
   status: string;
   position: number;
-  provisional_thing: ProvisionalThing;
+  provisional_data: ProvisionalData;
 };
 
 type WorkingSet = {
@@ -305,14 +305,14 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     }
   };
 
-  const verifyName = async (thing: ProvisionalThing) => {
-    const preferredName = (editingNames[thing.id] ?? thing.preferred_name).trim();
+  const verifyName = async (record: ProvisionalData) => {
+    const preferredName = (editingNames[record.id] ?? record.preferred_name).trim();
     if (!preferredName) {
       toaster.create({ title: "Preferred name is required", type: "error" });
       return;
     }
     try {
-      await axiosInstance.patch(`${baseUrl}/provisional-things/${thing.id}/verify-name`, {
+      await axiosInstance.patch(`${baseUrl}/provisional-data/${record.id}/verify-name`, {
         preferred_name: preferredName,
       });
       await loadAll();
@@ -363,9 +363,9 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
 
   const verifyNameFromModal = async () => {
     if (!emailModal.thingId) return;
-    const thing = recruiterSet?.memberships.find((m) => m.provisional_thing.id === emailModal.thingId)?.provisional_thing;
-    if (!thing) return;
-    await verifyName(thing);
+    const record = recruiterSet?.memberships.find((m) => m.provisional_data.id === emailModal.thingId)?.provisional_data;
+    if (!record) return;
+    await verifyName(record);
     setEmailModal((prev) => ({ ...prev, open: false }));
   };
 
@@ -379,11 +379,11 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
   }>({ open: false, listName: "", loading: false, result: null });
 
   const verifiedMembers = useMemo(
-    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status === "ready"),
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_status === "ready"),
     [recruiterSet],
   );
   const pendingMembers = useMemo(
-    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_thing.name_status !== "ready"),
+    () => (recruiterSet?.memberships ?? []).filter((m) => m.provisional_data.name_status !== "ready"),
     [recruiterSet],
   );
   const visiblePending = pendingMembers.slice(0, PENDING_PAGE_SIZE);
@@ -674,7 +674,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                   <Text fontSize="xs" color="gray.500" mb={1}>Confirm name for this contact</Text>
                   <Input
                     size="sm"
-                    value={emailModal.thingId ? (editingNames[emailModal.thingId] ?? recruiterSet?.memberships.find((m) => m.provisional_thing.id === emailModal.thingId)?.provisional_thing.preferred_name ?? "") : ""}
+                    value={emailModal.thingId ? (editingNames[emailModal.thingId] ?? recruiterSet?.memberships.find((m) => m.provisional_data.id === emailModal.thingId)?.provisional_data.preferred_name ?? "") : ""}
                     onChange={(event) => {
                       if (emailModal.thingId) setEditingNames((prev) => ({ ...prev, [emailModal.thingId!]: event.target.value }));
                     }}
@@ -711,8 +711,8 @@ function MemberTable({
   editingNames: Record<string, string>;
   setEditingNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   baseUrl: string;
-  onVerify: (thing: ProvisionalThing) => void;
-  onSeeEmail: (evidence: SourceEvidence, thingId: string) => void;
+  onVerify: (record: ProvisionalData) => void;
+  onSeeEmail: (evidence: SourceEvidence, recordId: string) => void;
 }) {
   return (
     <Box overflowX="auto">
@@ -729,17 +729,17 @@ function MemberTable({
         </Table.Header>
         <Table.Body>
           {memberships.map((membership) => {
-            const thing = membership.provisional_thing;
-            const evidence = thing.evidence[0];
+            const record = membership.provisional_data;
+            const evidence = record.source_evidence;
             return (
               <Table.Row key={membership.id}>
                 <Table.Cell>
                   <HStack gap={1}>
-                    <Button size="xs" variant="outline" onClick={() => onVerify(thing)}>
+                    <Button size="xs" variant="outline" onClick={() => onVerify(record)}>
                       Verify
                     </Button>
                     {evidence?.provider_message_id ? (
-                      <Button size="xs" variant="ghost" onClick={() => onSeeEmail(evidence, thing.id)}>
+                      <Button size="xs" variant="ghost" onClick={() => onSeeEmail(evidence, record.id)}>
                         See Email
                       </Button>
                     ) : null}
@@ -748,18 +748,18 @@ function MemberTable({
                 <Table.Cell minW="200px">
                   <Input
                     size="sm"
-                    value={editingNames[thing.id] ?? thing.preferred_name}
-                    onChange={(event) => setEditingNames((prev) => ({ ...prev, [thing.id]: event.target.value }))}
+                    value={editingNames[record.id] ?? record.preferred_name}
+                    onChange={(event) => setEditingNames((prev) => ({ ...prev, [record.id]: event.target.value }))}
                     placeholder="Preferred name"
                   />
                 </Table.Cell>
-                <Table.Cell>{thing.email || "No email"}</Table.Cell>
+                <Table.Cell>{record.email || "No email"}</Table.Cell>
                 <Table.Cell>
-                  <Badge colorPalette={thing.name_confidence === "high" ? "green" : thing.name_confidence === "medium" ? "yellow" : "red"}>
-                    {thing.name_source} / {thing.name_confidence}
+                  <Badge colorPalette={record.name_confidence === "high" ? "green" : record.name_confidence === "medium" ? "yellow" : "red"}>
+                    {record.name_source} / {record.name_confidence}
                   </Badge>
                 </Table.Cell>
-                <Table.Cell>{thing.name_status}</Table.Cell>
+                <Table.Cell>{record.name_status}</Table.Cell>
                 <Table.Cell minW="240px">
                   <Text fontSize="xs" color="gray.600">{evidence?.subject || "No subject"}</Text>
                   {evidence?.bounded_excerpt ? (
