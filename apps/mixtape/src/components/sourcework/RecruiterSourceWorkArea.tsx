@@ -15,9 +15,9 @@ import {
   Table,
   Text,
   Textarea,
-  Tooltip,
   VStack,
 } from "@chakra-ui/react";
+import { Tooltip } from "@components/ui/tooltip";
 import { X } from "lucide-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
