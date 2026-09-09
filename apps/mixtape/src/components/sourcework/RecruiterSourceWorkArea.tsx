@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   HStack,
+  IconButton,
   Input,
   NativeSelect,
   Separator,
@@ -14,8 +15,10 @@ import {
   Table,
   Text,
   Textarea,
+  Tooltip,
   VStack,
 } from "@chakra-ui/react";
+import { X } from "lucide-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogCloseTrigger } from "@components/ui/dialog";
@@ -369,6 +372,17 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     setEmailModal((prev) => ({ ...prev, open: false }));
   };
 
+  const rejectRecord = async (record: ProvisionalData) => {
+    try {
+      await axiosInstance.post(`${baseUrl}/provisional-data/${record.id}/reject`);
+      await loadAll();
+      toaster.create({ title: "Rejected", description: `${record.preferred_name || record.email} will not appear again.`, type: "info" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Reject failed";
+      toaster.create({ title: "Reject failed", description: message, type: "error" });
+    }
+  };
+
   const [showConfirmed, setShowConfirmed] = useState(false);
   const PENDING_PAGE_SIZE = 6;
   const [lanternmailModal, setLanternmailModal] = useState<{
@@ -538,6 +552,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                         setEditingNames={setEditingNames}
                         baseUrl={baseUrl}
                         onVerify={verifyName}
+                        onReject={rejectRecord}
                         onSeeEmail={openEmailModal}
                       />
                     )
@@ -562,6 +577,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                       setEditingNames={setEditingNames}
                       baseUrl={baseUrl}
                       onVerify={verifyName}
+                      onReject={rejectRecord}
                       onSeeEmail={openEmailModal}
                     />
                   )}
@@ -705,6 +721,7 @@ function MemberTable({
   setEditingNames,
   baseUrl: _baseUrl,
   onVerify,
+  onReject,
   onSeeEmail,
 }: {
   memberships: WorkingSetMembership[];
@@ -712,6 +729,7 @@ function MemberTable({
   setEditingNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   baseUrl: string;
   onVerify: (record: ProvisionalData) => void;
+  onReject: (record: ProvisionalData) => void;
   onSeeEmail: (evidence: SourceEvidence, recordId: string) => void;
 }) {
   return (
@@ -743,6 +761,17 @@ function MemberTable({
                         See Email
                       </Button>
                     ) : null}
+                    <Tooltip content="Reject">
+                      <IconButton
+                        size="xs"
+                        variant="ghost"
+                        colorPalette="red"
+                        aria-label="Reject"
+                        onClick={() => onReject(record)}
+                      >
+                        <X size={14} />
+                      </IconButton>
+                    </Tooltip>
                   </HStack>
                 </Table.Cell>
                 <Table.Cell minW="200px">
