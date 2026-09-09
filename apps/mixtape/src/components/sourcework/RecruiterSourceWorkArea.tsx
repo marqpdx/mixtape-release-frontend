@@ -296,7 +296,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     try {
       await axiosInstance.post(`${baseUrl}/source-grants/${activeGrant.id}/import-from-source`, {
         adapter: "switchboard_gmail_v1",
-        limit: 5,
+        limit: 50,
       });
       await loadAll();
       toaster.create({ title: "Latest Gmail messages imported", type: "success" });
