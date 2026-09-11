@@ -24,7 +24,7 @@ import {
   type Row,
   type Cell,
 } from "@tanstack/react-table";
-import type { GroupSubscriberAggregated } from "@mixtape/core/types/lanternmailTypes";
+import type { ListmonkSubscriber } from "@mixtape/core/types/lanternmailTypes";
 
 interface LanternmailSubscribersTableProps {
   groupSlug: string;
@@ -32,25 +32,26 @@ interface LanternmailSubscribersTableProps {
 }
 
 export default function LanternmailSubscribersTable({ groupSlug, filterListId }: LanternmailSubscribersTableProps) {
-  const [subscribers, setSubscribers] = useState<GroupSubscriberAggregated[]>([]);
+  const [subscribers, setSubscribers] = useState<ListmonkSubscriber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
-  // Fetch subscribers on mount and when filters change
   const fetchSubscribers = useCallback(async () => {
+    if (!filterListId) {
+      setSubscribers([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await lanternmailApi.getAllGroupSubscribers(
-        groupSlug,
-        { list_id: filterListId }
-      );
+      const response = await lanternmailApi.getListSubscribers(groupSlug, filterListId);
       setSubscribers(response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch subscribers:", error);
-      const message = error instanceof Error ? error.message : "Failed to load subscribers";
+    } catch (err) {
+      console.error("Failed to fetch subscribers:", err);
+      const message = err instanceof Error ? err.message : "Failed to load subscribers";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -62,39 +63,30 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
   }, [fetchSubscribers]);
 
   const handleRemoveSubscriber = useCallback(async (email: string) => {
-    if (!filterListId) {
-      return;
-    }
+    if (!filterListId) return;
     const confirmed = window.confirm(`Remove ${email} from this list?`);
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
     try {
       setRemovingEmail(email);
       await lanternmailApi.removeListSubscriber(groupSlug, filterListId, email);
       await fetchSubscribers();
-    } catch (error) {
-      console.error("Failed to remove subscriber:", error);
-      const message = error instanceof Error ? error.message : "Failed to remove subscriber";
+    } catch (err) {
+      console.error("Failed to remove subscriber:", err);
+      const message = err instanceof Error ? err.message : "Failed to remove subscriber";
       setError(message);
     } finally {
       setRemovingEmail(null);
     }
   }, [fetchSubscribers, filterListId, groupSlug]);
 
-  const columns = useMemo<ColumnDef<GroupSubscriberAggregated, unknown>[]>(
+  const columns = useMemo<ColumnDef<ListmonkSubscriber, unknown>[]>(
     () => [
       {
         id: "avatar",
-        accessorKey: "avatar",
         header: "",
         cell: ({ row }) => (
           <Avatar.Root size="md">
-            <Avatar.Image
-              alt={row.original.name}
-              src={row.original.avatar || undefined}
-            />
-            <Avatar.Fallback>{row.original.name.charAt(0)}</Avatar.Fallback>
+            <Avatar.Fallback>{(row.original.name || row.original.email).charAt(0).toUpperCase()}</Avatar.Fallback>
           </Avatar.Root>
         ),
         enableSorting: false,
@@ -103,7 +95,7 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
         id: "name",
         accessorKey: "name",
         header: "Name",
-        cell: (info) => info.getValue() || "-",
+        cell: (info) => (info.getValue() as string) || "-",
       },
       {
         id: "email",
@@ -113,23 +105,17 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
       },
       {
         id: "status",
-        accessorKey: "overall_subscription_status",
+        accessorKey: "subscription_status",
         header: "Status",
         cell: (info) => {
-          const status = info.getValue() as string;
-          return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+          const val = info.getValue() as string;
+          return val.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
         },
       },
       {
-        id: "subscribed",
-        accessorKey: "subscribed_lists_count",
-        header: "Subscribed",
-        cell: (info) => `${info.getValue()} / ${info.row.original.total_lists}`,
-      },
-      {
-        id: "invited",
-        accessorKey: "latest_invited_at",
-        header: "Last Invited",
+        id: "subscribed_at",
+        accessorKey: "subscribed_at",
+        header: "Added",
         cell: (info) => {
           const value = info.getValue() as string | undefined;
           return value?.slice(0, 10) || "-";
@@ -144,7 +130,7 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
             <Button
               size="sm"
               variant="outline"
-              disabled={!filterListId || removingEmail === email}
+              disabled={removingEmail === email}
               loading={removingEmail === email}
               onClick={() => handleRemoveSubscriber(email)}
             >
@@ -155,15 +141,13 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
         enableSorting: false,
       },
     ],
-    [filterListId, removingEmail, handleRemoveSubscriber]
+    [removingEmail, handleRemoveSubscriber]
   );
 
   const table = useReactTable({
     data: subscribers,
     columns,
-    state: {
-      sorting,
-    },
+    state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -196,11 +180,11 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
   return (
     <Box>
       <Heading size="md" mb={4}>
-        {filterListId ? "Filtered Subscribers" : "All Subscribers"} ({subscribers.length})
+        Subscribers ({subscribers.length})
       </Heading>
       <Table.Root variant="outline" size="md">
         <Table.Header>
-          {table.getHeaderGroups().map((headerGroup: HeaderGroup<GroupSubscriberAggregated>) => (
+          {table.getHeaderGroups().map((headerGroup: HeaderGroup<ListmonkSubscriber>) => (
             <Table.Row key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <Table.ColumnHeader
@@ -220,9 +204,9 @@ export default function LanternmailSubscribersTable({ groupSlug, filterListId }:
         </Table.Header>
 
         <Table.Body>
-          {table.getRowModel().rows.map((row: Row<GroupSubscriberAggregated>) => (
+          {table.getRowModel().rows.map((row: Row<ListmonkSubscriber>) => (
             <Table.Row key={row.id}>
-              {row.getVisibleCells().map((cell: Cell<GroupSubscriberAggregated, unknown>) => (
+              {row.getVisibleCells().map((cell: Cell<ListmonkSubscriber, unknown>) => (
                 <Table.Cell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </Table.Cell>

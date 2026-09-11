@@ -8,6 +8,7 @@ import type {
   ListStatsResponse,
   SendInvitationsResponse,
   AllSubscribersResponse,
+  ListSubscribersResponse,
   LanternmailCampaign,
   CampaignsResponse,
 } from "@mixtape/core/types/lanternmailTypes";
@@ -197,6 +198,27 @@ export const lanternmailApi = {
     const res = await axiosInstance.post(
       `/api/groups/${groupSlug}/lanternmail/mailing-lists/${listId}/invitations`,
       { emails }
+    );
+    return res.data;
+  },
+
+  /**
+   * Get all subscribers on a specific Listmonk list, sourced directly from Listmonk.
+   * Returns anyone on the list regardless of group membership — recruiters, external
+   * contacts, and group members alike.
+   *
+   * GET /api/groups/{groupSlug}/lanternmail/mailing-lists/{list_id}/list-subscribers
+   *
+   * @param groupSlug - URL slug of the group
+   * @param listId - Django LanternmailList ID
+   * @returns All subscribers on the Listmonk list
+   */
+  async getListSubscribers(
+    groupSlug: string,
+    listId: number
+  ): Promise<ListSubscribersResponse> {
+    const res = await axiosInstance.get(
+      `/api/groups/${groupSlug}/lanternmail/mailing-lists/${listId}/list-subscribers`
     );
     return res.data;
   },

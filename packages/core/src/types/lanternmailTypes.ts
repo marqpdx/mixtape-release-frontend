@@ -136,3 +136,21 @@ export interface LanternmailCampaign {
 export interface CampaignsResponse {
   data: LanternmailCampaign[];
 }
+
+/**
+ * A subscriber on a Listmonk list — sourced directly from Listmonk, not group membership.
+ * Covers anyone pushed to the list: recruiters, external contacts, group members alike.
+ */
+export interface ListmonkSubscriber {
+  id: number;
+  email: string;
+  name: string;
+  status: string;
+  subscription_status: 'confirmed' | 'unconfirmed' | 'unsubscribed' | 'unknown';
+  subscribed_at?: string;
+}
+
+export interface ListSubscribersResponse {
+  data: ListmonkSubscriber[];
+  total: number;
+}
