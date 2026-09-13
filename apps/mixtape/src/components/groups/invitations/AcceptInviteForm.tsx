@@ -9,6 +9,7 @@ import {
   Heading,
   Image,
   Input,
+  Link,
   Skeleton,
   Stack,
   Text,
@@ -58,19 +59,21 @@ interface AcceptInviteFormProps {
 export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [group, setGroup] = useState<InviteInfoGroup | null>(null);
+  const [inviteIsForExistingUser, setInviteIsForExistingUser] = useState(false);
   const [groupLoading, setGroupLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user } = useAuth();
 
   useEffect(() => {
     if (!shortcode) return;
     axiosInstance
-      .get<{ group: InviteInfoGroup & { name?: string } }>(`/api/auth/invite-info/${shortcode}`)
+      .get<{ is_existing_user?: boolean; group: InviteInfoGroup & { name?: string } }>(`/api/auth/invite-info/${shortcode}`)
       .then((res) => {
         const g = res.data.group;
         // Backend may return 'name' instead of 'title'
         setGroup({ ...g, title: g.title || g.name || "" });
+        setInviteIsForExistingUser(Boolean(res.data.is_existing_user));
       })
       .catch((err) => {
         console.warn("[AcceptInviteForm] invite-info fetch failed:", err?.response?.status, err?.message);
@@ -152,6 +155,8 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
 
   const groupName = group?.title ?? "your group";
   const isDefaultGroup = group?.slug === DEFAULT_GROUP_SLUG;
+  const shouldLoginFirst = inviteIsForExistingUser && !user;
+  const loginHref = `/app/login?redirect=${encodeURIComponent(`/app/invitations/accept/${shortcode}`)}`;
   const initials = groupName
     .split(" ")
     .filter(Boolean)
@@ -231,7 +236,9 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
                   </Text>
                 )}
                 <Text mt="auto" pt={3} color="theme.textSecondary">
-                  {isNewUser
+                  {shouldLoginFirst
+                    ? "This invitation is for an existing account. Log in first, then you can accept the group invitation."
+                    : isNewUser
                     ? "Set your username and password to activate and log in to your account."
                     : "Click below to accept this invitation and join the group."}
                 </Text>
@@ -248,65 +255,13 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
           borderRadius="2xl"
           p={{ base: 6, md: 8 }}
         >
-          <form onSubmit={handleSubmit(onSubmit)}>
+          {shouldLoginFirst ? (
             <Stack gap={4}>
-              {isNewUser && (
-                <>
-                  <Box>
-                    <Input
-                      type="text"
-                      data-testid="username-input"
-                      placeholder="Choose a username"
-                      bg="theme.surface"
-                      borderColor={errors.username ? "red.400" : "theme.border"}
-                      _focus={{ borderColor: errors.username ? "red.400" : "theme.accent", boxShadow: "none" }}
-                      {...register("username", {
-                        required: "Username is required",
-                        validate: async (value) => {
-                          if (!isValidUsername(value))
-                            return "Only letters, numbers, and _ allowed (3–20 characters)";
-                          if (containsProfanity(value))
-                            return "Inappropriate username";
-                          const available = await checkUsernameAvailable(value);
-                          return available || "Username already taken";
-                        },
-                      })}
-                    />
-                    {errors.username && (
-                      <Text color="red.400" fontSize="sm" mt={1}>
-                        {errors.username.message as string}
-                      </Text>
-                    )}
-                  </Box>
-
-                  <Box>
-                    <Input
-                      type="password"
-                      data-testid="password-input"
-                      placeholder="Choose a password (min 8 characters)"
-                      bg="theme.surface"
-                      borderColor={errors.password ? "red.400" : "theme.border"}
-                      _focus={{ borderColor: errors.password ? "red.400" : "theme.accent", boxShadow: "none" }}
-                      {...register("password", {
-                        required: "Password is required",
-                        minLength: {
-                          value: 8,
-                          message: "Password must be at least 8 characters",
-                        },
-                      })}
-                    />
-                    {errors.password && (
-                      <Text color="red.400" fontSize="sm" mt={1}>
-                        {errors.password.message as string}
-                      </Text>
-                    )}
-                  </Box>
-                </>
-              )}
-
+              <Text color="theme.textSecondary">
+                Use the account that received this invitation. After login, you will return here to join {groupName}.
+              </Text>
               <Button
-                type="submit"
-                loading={submitting}
+                asChild
                 bg="theme.accent"
                 color="white"
                 size="md"
@@ -314,10 +269,81 @@ export function AcceptInviteForm({ shortcode, isNewUser }: AcceptInviteFormProps
                 borderRadius="xl"
                 _hover={{ transform: "translateY(-2px)", shadow: "lg" }}
               >
-                {isNewUser ? "Activate and Log In" : "Accept Invitation"}
+                <Link href={loginHref}>Log In to Accept Invitation</Link>
               </Button>
             </Stack>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <Stack gap={4}>
+                {isNewUser && (
+                  <>
+                    <Box>
+                      <Input
+                        type="text"
+                        data-testid="username-input"
+                        placeholder="Choose a username"
+                        bg="theme.surface"
+                        borderColor={errors.username ? "red.400" : "theme.border"}
+                        _focus={{ borderColor: errors.username ? "red.400" : "theme.accent", boxShadow: "none" }}
+                        {...register("username", {
+                          required: "Username is required",
+                          validate: async (value) => {
+                            if (!isValidUsername(value))
+                              return "Only letters, numbers, and _ allowed (3–20 characters)";
+                            if (containsProfanity(value))
+                              return "Inappropriate username";
+                            const available = await checkUsernameAvailable(value);
+                            return available || "Username already taken";
+                          },
+                        })}
+                      />
+                      {errors.username && (
+                        <Text color="red.400" fontSize="sm" mt={1}>
+                          {errors.username.message as string}
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Box>
+                      <Input
+                        type="password"
+                        data-testid="password-input"
+                        placeholder="Choose a password (min 8 characters)"
+                        bg="theme.surface"
+                        borderColor={errors.password ? "red.400" : "theme.border"}
+                        _focus={{ borderColor: errors.password ? "red.400" : "theme.accent", boxShadow: "none" }}
+                        {...register("password", {
+                          required: "Password is required",
+                          minLength: {
+                            value: 8,
+                            message: "Password must be at least 8 characters",
+                          },
+                        })}
+                      />
+                      {errors.password && (
+                        <Text color="red.400" fontSize="sm" mt={1}>
+                          {errors.password.message as string}
+                        </Text>
+                      )}
+                    </Box>
+                  </>
+                )}
+
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  bg="theme.accent"
+                  color="white"
+                  size="md"
+                  alignSelf="flex-start"
+                  borderRadius="xl"
+                  _hover={{ transform: "translateY(-2px)", shadow: "lg" }}
+                >
+                  {isNewUser ? "Activate and Log In" : "Accept Invitation"}
+                </Button>
+              </Stack>
+            </form>
+          )}
         </Box>
       </Box>
     </Box>

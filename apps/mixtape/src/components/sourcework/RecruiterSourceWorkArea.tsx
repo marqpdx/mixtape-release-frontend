@@ -389,7 +389,7 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
     open: boolean;
     listName: string;
     loading: boolean;
-    result: { list_id: number; pushed: number; errors: number; dev_override_active: boolean } | null;
+    result: { list_id: number; pushed: number; errors: number; dev_override_active: boolean; results?: Array<{email: string; status: string; detail?: string; note?: string}> } | null;
   }>({ open: false, listName: "", loading: false, result: null });
 
   const verifiedMembers = useMemo(
@@ -615,7 +615,12 @@ export function RecruiterSourceWorkArea({ groupSlug }: Props) {
                   List created — {lanternmailModal.result.pushed} subscriber(s) added.
                 </Text>
                 {lanternmailModal.result.errors > 0 && (
-                  <Text fontSize="sm" color="red.600">{lanternmailModal.result.errors} error(s) during subscription.</Text>
+                  <VStack align="stretch" gap={1}>
+                    <Text fontSize="sm" color="red.600">{lanternmailModal.result.errors} error(s) during subscription.</Text>
+                    {(lanternmailModal.result.results || []).filter(r => r.status === "error").map((r, i) => (
+                      <Text key={i} fontSize="xs" color="red.500" fontFamily="mono">{r.email}: {r.detail}</Text>
+                    ))}
+                  </VStack>
                 )}
                 {lanternmailModal.result.dev_override_active && (
                   <Text fontSize="xs" color="orange.600" fontWeight="semibold">
