@@ -182,6 +182,7 @@ export default function AtelierShapeTab({
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const activeRun = useActionRun(activeRunId);
+  const [generateError, setGenerateError] = useState<{ field: string; message: string } | null>(null);
 
   // AI generation — classify (tags + category suggestions)
   const [classifyRunId, setClassifyRunId] = useState<string | null>(null);
@@ -465,6 +466,9 @@ export default function AtelierShapeTab({
       setGeneratingFor(null);
       setActiveRunId(null);
     } else if (activeRun.status === "failed") {
+      const message =
+        (activeRun.error_payload?.message as string | undefined) || "Generation failed. Try again.";
+      setGenerateError({ field: generatingFor, message });
       setGeneratingFor(null);
       setActiveRunId(null);
     }
@@ -542,11 +546,16 @@ export default function AtelierShapeTab({
   const handleGenerate = async (field: string) => {
     if (!excerpt || generatingFor) return;
     setGeneratingFor(field);
+    setGenerateError(null);
     try {
       const resp = await submitSummarizeAsync({ text: excerpt, words: SUMMARY_WORDS[field] ?? 60 });
       setActiveRunId(resp.action_run_id);
-    } catch {
+    } catch (err) {
       setGeneratingFor(null);
+      setGenerateError({
+        field,
+        message: err instanceof Error ? err.message : "Failed to submit generation request.",
+      });
     }
   };
 
@@ -716,6 +725,11 @@ export default function AtelierShapeTab({
                     </Button>
                   </HStack>
                 </HStack>
+                {generateError?.field === field && (
+                  <Text fontSize="xs" color="red.500" mb={1}>
+                    {generateError.message}
+                  </Text>
+                )}
                 <Textarea
                   size="sm"
                   rows={3}

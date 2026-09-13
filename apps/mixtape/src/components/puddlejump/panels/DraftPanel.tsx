@@ -16,6 +16,7 @@ import {
 import { SparklesIcon, ClipboardDocumentIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useDraft, type ApprovalMode } from '@mixtape/api/hooks/switchboard';
 import { DraftApprovalModal } from '@components/switchboard/DraftApprovalModal';
+import ExecutionModeBadge from '@components/switchboard/ExecutionModeBadge';
 import type { DraftContentType, DraftTone, DraftLength, DraftAsyncRequest } from '@mixtape/api/clients/switchboard/switchboardApi';
 
 const CONTENT_TYPES: { value: DraftContentType; label: string }[] = [
@@ -57,7 +58,7 @@ function loadApprovalMode(): ApprovalMode {
 }
 
 export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) {
-  const { submit, submitCloud, isSubmitting, isPolling, result, error, reset } = useDraft();
+  const { submit, submitCloud, isSubmitting, isPolling, result, actionRun, error, reset } = useDraft();
 
   const [contentType, setContentType] = useState<DraftContentType>('email');
   const [sourceText, setSourceText] = useState('');
@@ -297,6 +298,7 @@ export default function DraftPanel({ surface = 'puddlejump' }: DraftPanelProps) 
                   {result.model_used}
                 </Badge>
               )}
+              <ExecutionModeBadge actionRun={actionRun} />
             </HStack>
             <HStack gap={2}>
               <Button size="xs" variant="ghost" onClick={handleCopy} title="Copy to clipboard">

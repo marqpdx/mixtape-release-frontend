@@ -17,6 +17,7 @@ import {
 import { ScissorsIcon, ClipboardDocumentIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useRefine, type ApprovalMode } from '@mixtape/api/hooks/switchboard';
 import type { RefineLength, RefineAsyncRequest } from '@mixtape/api/clients/switchboard/switchboardApi';
+import ExecutionModeBadge from '@components/switchboard/ExecutionModeBadge';
 
 const LENGTHS: { value: RefineLength; label: string }[] = [
   { value: 'preserve', label: 'Preserve length' },
@@ -40,7 +41,7 @@ interface RefinePanelProps {
 }
 
 export default function RefinePanel({ surface = 'puddlejump' }: RefinePanelProps) {
-  const { submit, submitCloud, isSubmitting, isPolling, result, error, reset } = useRefine();
+  const { submit, submitCloud, isSubmitting, isPolling, result, actionRun, error, reset } = useRefine();
 
   const [sourceText, setSourceText] = useState('');
   const [instruction, setInstruction] = useState('');
@@ -251,6 +252,7 @@ export default function RefinePanel({ surface = 'puddlejump' }: RefinePanelProps
                   {result.model_used}
                 </Badge>
               )}
+              <ExecutionModeBadge actionRun={actionRun} />
             </HStack>
             <HStack gap={2}>
               <Button size="xs" variant="ghost" onClick={handleCopy} title="Copy to clipboard">
