@@ -11,6 +11,7 @@ import { ComposeTab } from '@/components/workbench/ComposeTab';
 import { MyDraftsTab } from '@/components/workbench/MyDraftsTab';
 import { FilesTab } from '@/components/groups/tabs/FilesTab';
 import { RecruiterSourceWorkArea } from '@/components/sourcework/RecruiterSourceWorkArea';
+import LanternmailCampaignWorkArea from '@/components/lanternmail/LanternmailCampaignWorkArea';
 
 export default function WorkbenchPage() {
   const { slug } = useParams();
@@ -50,11 +51,12 @@ export default function WorkbenchPage() {
   }
 
   return (
-    <Box p={6}>
-      <VStack align="stretch" gap={6}>
+    <Box className="wbp-root" p={6}>
+      <VStack className="wbp-shell" align="stretch" gap={6}>
         <Heading size="lg">Workbench</Heading>
 
         <Tabs.Root
+          className="wbp-tabs"
           value={activeTab}
           onValueChange={(e) => {
             setActiveTab(e.value);
@@ -70,26 +72,31 @@ export default function WorkbenchPage() {
             <Tabs.Trigger value="my-drafts">My Drafts</Tabs.Trigger>
             <Tabs.Trigger value="files">Files</Tabs.Trigger>
             <Tabs.Trigger value="recruiter-source">Recruiter Source</Tabs.Trigger>
+            <Tabs.Trigger value="lanternmail-campaign">Lanternmail Campaign</Tabs.Trigger>
           </Tabs.List>
 
-          <Tabs.Content value="queue">
+          <Tabs.Content className="wbp-tab-content" value="queue">
             <ReviewQueueList groupId={group.id} onOpenDraft={handleOpenDraft} />
           </Tabs.Content>
 
-          <Tabs.Content value="compose">
+          <Tabs.Content className="wbp-tab-content" value="compose">
             <ComposeTab groupId={group.id} onDraftCreated={handleDraftCreated} />
           </Tabs.Content>
 
-          <Tabs.Content value="my-drafts">
+          <Tabs.Content className="wbp-tab-content" value="my-drafts">
             <MyDraftsTab groupId={group.id} editingDraftId={editingDraftId} />
           </Tabs.Content>
 
-          <Tabs.Content value="files">
+          <Tabs.Content className="wbp-tab-content" value="files">
             <FilesTab group={group} />
           </Tabs.Content>
 
-          <Tabs.Content value="recruiter-source">
+          <Tabs.Content className="wbp-tab-content" value="recruiter-source">
             <RecruiterSourceWorkArea groupSlug={slugStr} />
+          </Tabs.Content>
+
+          <Tabs.Content className="wbp-tab-content" value="lanternmail-campaign">
+            <LanternmailCampaignWorkArea group={group} />
           </Tabs.Content>
         </Tabs.Root>
       </VStack>
