@@ -38,7 +38,7 @@ export function AtriumContextPreview({ sessionId }: AtriumContextPreviewProps) {
           <IconSparkles size={13} />
         </Box>
         <Text fontSize="xs" color={labelColor} flex="1" userSelect="none">
-          Beryl context
+          Clio context
           {sources.length > 0 && (
             <Text as="span" color={labelColor}>
               {" "}· {sources.join(", ")}

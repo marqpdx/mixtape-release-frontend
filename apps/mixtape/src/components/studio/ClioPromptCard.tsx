@@ -2,17 +2,17 @@
 
 import { Box, Button, HStack, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useBerylDismiss } from "@mixtape/api/hooks/studio";
-import type { BerylPrompt } from "@mixtape/api/clients/studio/studioApi";
+import { useClioDismiss } from "@mixtape/api/hooks/studio";
+import type { ClioPrompt } from "@mixtape/api/clients/studio/studioApi";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  prompt: BerylPrompt;
+  prompt: ClioPrompt;
 }
 
-export function BerylPromptCard({ prompt }: Props) {
+export function ClioPromptCard({ prompt }: Props) {
   const router = useRouter();
-  const { mutate: dismiss, isPending } = useBerylDismiss();
+  const { mutate: dismiss, isPending } = useClioDismiss();
 
   const bg = useColorModeValue("blue.50", "blue.900");
   const borderColor = useColorModeValue("blue.200", "blue.700");
@@ -20,7 +20,7 @@ export function BerylPromptCard({ prompt }: Props) {
 
   const handleAction = () => {
     const params = new URLSearchParams({ ctx: prompt.action_context });
-    router.push(`/app/studio/beryl?${params.toString()}`);
+    router.push(`/app/studio/clio?${params.toString()}`);
   };
 
   return (

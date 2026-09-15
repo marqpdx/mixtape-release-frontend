@@ -27,7 +27,7 @@ const rings = [
   {
     name: "Reach",
     title: "More material under stewardship",
-    body: "The practice widens. Beryl can see drafts, uploads, references, and Voice Findings while still respecting the canon boundary.",
+    body: "The practice widens. Clio can see drafts, uploads, references, and Voice Findings while still respecting the canon boundary.",
   },
   {
     name: "Knowledge Shaping Engagement",

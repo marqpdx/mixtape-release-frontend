@@ -21,9 +21,9 @@ export interface StudioContentItem {
   updated_at: string | null;
 }
 
-export type BerylDismissMode = "session" | "permanent" | "remind_later";
+export type ClioDismissMode = "session" | "permanent" | "remind_later";
 
-export interface BerylPrompt {
+export interface ClioPrompt {
   message: string;
   action_label: string;
   action_context: string;
@@ -33,7 +33,7 @@ export interface BerylPrompt {
 export interface PersonalStudioResponse {
   activity: StudioActivityItem[];
   my_content: StudioContentItem[];
-  beryl_prompt: BerylPrompt | null;
+  clio_prompt: ClioPrompt | null;
   recurring_actions: RecurringActionItem[];
 }
 
@@ -97,7 +97,7 @@ export interface ScrapItem {
   created_at: string | null;
 }
 
-export interface BerylSessionResponse {
+export interface ClioSessionResponse {
   scraps: ScrapItem[];
   context: string;
 }
@@ -202,8 +202,8 @@ export async function fetchPersonalGroups(): Promise<PersonalGroupItem[]> {
   return data;
 }
 
-export async function dismissBerylPrompt(mode: BerylDismissMode): Promise<void> {
-  await axiosInstance.post("/api/studio/personal/beryl/dismiss", { mode });
+export async function dismissClioPrompt(mode: ClioDismissMode): Promise<void> {
+  await axiosInstance.post("/api/studio/personal/clio/dismiss", { mode });
 }
 
 // ============================================================================
@@ -261,17 +261,17 @@ export async function deleteRecurringAction(groupSlug: string, id: string): Prom
 }
 
 // ============================================================================
-// Beryl session
+// Clio session
 // ============================================================================
 
-export async function fetchBerylSession(ctx: string): Promise<BerylSessionResponse> {
+export async function fetchClioSession(ctx: string): Promise<ClioSessionResponse> {
   const params = new URLSearchParams({ ctx });
-  const { data } = await axiosInstance.get(`/api/studio/beryl/session?${params.toString()}`);
+  const { data } = await axiosInstance.get(`/api/studio/clio/session?${params.toString()}`);
   return data;
 }
 
-export async function updateBerylScrap(id: string, input: ScrapUpdateInput): Promise<ScrapItem> {
-  const { data } = await axiosInstance.patch(`/api/studio/beryl/scraps/${id}`, input);
+export async function updateClioScrap(id: string, input: ScrapUpdateInput): Promise<ScrapItem> {
+  const { data } = await axiosInstance.patch(`/api/studio/clio/scraps/${id}`, input);
   return data;
 }
 

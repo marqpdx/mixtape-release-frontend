@@ -37,7 +37,7 @@ import {
 import type { Group } from "@mixtape/core/types/groupTypes";
 import type { GroupActivityFeedItem } from "@mixtape/api/clients/activity/activityApi";
 import { useRouter } from "next/navigation";
-import { GroupSearchField } from "./BerylSearchField";
+import { GroupSearchField } from "./ClioSearchField";
 import { GroupSwitcher } from "../utils/GroupSwitcher";
 
 interface GroupAdminView2WorkAreaProps {

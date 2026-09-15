@@ -353,7 +353,7 @@ export async function submitSynopsisLinkedInAsync(
   return res.data as SynopsisLinkedInResponse;
 }
 
-// ─── Group Search (Beryl) ─────────────────────────────────────────────────────
+// ─── Group Search (Clio) ─────────────────────────────────────────────────────
 
 export interface GroupSearchRequest {
   group_id: string;

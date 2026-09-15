@@ -16,7 +16,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useBerylSession, useUpdateBerylScrap, useBerylDismiss } from "@mixtape/api/hooks/studio";
+import { useClioSession, useUpdateClioScrap, useClioDismiss } from "@mixtape/api/hooks/studio";
 import { INTENT_TAGS } from "@mixtape/api/clients/studio/studioApi";
 import type { ScrapItem } from "@mixtape/api/clients/studio/studioApi";
 
@@ -34,7 +34,7 @@ function ScrapCard({
   const [retagging, setRetagging] = useState(false);
   const [addingReminder, setAddingReminder] = useState(false);
   const [reminderValue, setReminderValue] = useState("");
-  const { mutate: update, isPending } = useUpdateBerylScrap();
+  const { mutate: update, isPending } = useUpdateClioScrap();
 
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -187,16 +187,16 @@ function ScrapCard({
 }
 
 // ---------------------------------------------------------------------------
-// BerylPage
+// ClioPage
 // ---------------------------------------------------------------------------
 
-export default function BerylPage() {
+export default function ClioPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const ctx = searchParams.get("ctx") ?? "";
 
-  const { data, isLoading, error } = useBerylSession(ctx);
-  const { mutate: dismiss, isPending: dismissing } = useBerylDismiss();
+  const { data, isLoading, error } = useClioSession(ctx);
+  const { mutate: dismiss, isPending: dismissing } = useClioDismiss();
 
   const [actedOnIds, setActedOnIds] = useState<Set<string>>(new Set());
 
@@ -217,7 +217,7 @@ export default function BerylPage() {
       <Container maxW="2xl" py={8}>
         <HStack justify="space-between" mb={6} align="start">
           <Box>
-            <Heading size="lg" mb={1}>Beryl</Heading>
+            <Heading size="lg" mb={1}>Clio</Heading>
             <Text fontSize="sm" color={mutedColor}>
               {data && data.scraps.length > 0
                 ? `${data.scraps.length} capture${data.scraps.length === 1 ? "" : "s"} waiting`

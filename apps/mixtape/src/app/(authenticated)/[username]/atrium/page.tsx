@@ -10,7 +10,7 @@ import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
 import { AtriumSidebarWrapper } from "@/components/atrium/AtriumSidebarWrapper";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
-import { BerylPresence } from "@/components/atrium/BerylPresence";
+import { ClioPresence } from "@/components/atrium/ClioPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
 
 export default function AtriumPage() {
@@ -43,9 +43,9 @@ export default function AtriumPage() {
           <AtriumOrientationPanel />
         </Box>
 
-        {/* Beryl cross-zone slot — between C and D+E */}
+        {/* Clio cross-zone slot — between C and D+E */}
         <Box mt={5}>
-          <BerylPresence />
+          <ClioPresence />
         </Box>
 
         {/* Zones D + E — two-column lower zone */}

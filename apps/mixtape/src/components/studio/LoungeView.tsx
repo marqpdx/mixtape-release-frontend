@@ -2,7 +2,7 @@
 
 import { Box, Skeleton, Text, VStack } from "@chakra-ui/react";
 import { usePersonalStudio, usePersonalGroups } from "@mixtape/api/hooks/studio";
-import { BerylPromptCard } from "./BerylPromptCard";
+import { ClioPromptCard } from "./ClioPromptCard";
 import { PersonalCard } from "./PersonalCard";
 import { GroupContextCard } from "./GroupContextCard";
 import { WritingContextCard } from "./WritingContextCard";
@@ -74,9 +74,9 @@ export function LoungeView() {
 
   return (
     <Box>
-      {/* Position 1 — Beryl prompt (conditional) */}
-      {personal?.beryl_prompt && (
-        <BerylPromptCard prompt={personal.beryl_prompt} />
+      {/* Position 1 — Clio prompt (conditional) */}
+      {personal?.clio_prompt && (
+        <ClioPromptCard prompt={personal.clio_prompt} />
       )}
 
       {/* Position 2 — Personal card (always present) */}

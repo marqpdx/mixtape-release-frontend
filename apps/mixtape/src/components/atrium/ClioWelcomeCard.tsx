@@ -3,7 +3,7 @@
 import { Box, Text } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 
-export function BerylWelcomeCard() {
+export function ClioWelcomeCard() {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");

@@ -59,7 +59,7 @@ export default function ModeratorSummaryQueue({
         <HStack gap={2}>
           <IconSparkles size={14} />
           <Text fontSize="xs" fontWeight="semibold" color={labelColor} textTransform="uppercase" letterSpacing="wide">
-            Beryl candidate
+            Clio candidate
           </Text>
           {deltaPercent && (
             <Badge size="sm" colorScheme={discussion.summary_pending_substantive ? 'orange' : 'gray'}>

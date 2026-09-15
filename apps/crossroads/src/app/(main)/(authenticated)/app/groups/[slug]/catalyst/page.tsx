@@ -195,7 +195,7 @@ function CatalystContent({ slug }: { slug: string }) {
                 {
                   icon: "🗂",
                   title: "Context Files",
-                  body: "Who you are, how you work, what you offer. These are the files Beryl draws from when it helps your team.",
+                  body: "Who you are, how you work, what you offer. These are the files Clio draws from when it helps your team.",
                 },
                 {
                   icon: "⚙️",

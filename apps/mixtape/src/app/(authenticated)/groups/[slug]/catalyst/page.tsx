@@ -2248,7 +2248,7 @@ export default function GroupCatalystPage() {
                         {
                           icon: "🗂",
                           title: "Context Files",
-                          body: "Who you are, how you work, what you offer. These are the files Beryl draws from when it helps your team.",
+                          body: "Who you are, how you work, what you offer. These are the files Clio draws from when it helps your team.",
                         },
                         {
                           icon: "⚙️",
@@ -4684,7 +4684,7 @@ export default function GroupCatalystPage() {
                           </Text>
                           <Text fontSize="10px" color={synonymLabel} mb={2} lineHeight="1.5">
                             The label used for a confirmed, authoritative entry in this register.
-                            Used in Beryl prompts and export headers.
+                            Used in Clio prompts and export headers.
                           </Text>
                           <Input
                             value={settingsSynonym}

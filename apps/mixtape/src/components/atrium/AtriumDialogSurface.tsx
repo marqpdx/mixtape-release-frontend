@@ -501,11 +501,11 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
             </Popover.Root>
           )}
 
-          {/* Beryl context */}
+          {/* Clio context */}
           {activeSession && (
             <Popover.Root positioning={{ placement: "left-start" }}>
               <Popover.Trigger asChild>
-                <IconButton aria-label="Beryl context" title="Beryl context" size="sm" variant="ghost">
+                <IconButton aria-label="Clio context" title="Clio context" size="sm" variant="ghost">
                   <IconEye size={16} />
                 </IconButton>
               </Popover.Trigger>

@@ -3,16 +3,16 @@
 import { Box, Flex, IconButton, Text } from "@chakra-ui/react";
 import { IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { usePersonalStudio, useBerylDismiss } from "@mixtape/api/hooks/studio";
+import { usePersonalStudio, useClioDismiss } from "@mixtape/api/hooks/studio";
 
-export function BerylPresence() {
+export function ClioPresence() {
   const { data } = usePersonalStudio();
-  const { mutate: dismiss, isPending } = useBerylDismiss();
+  const { mutate: dismiss, isPending } = useClioDismiss();
   const borderColor = useColorModeValue("blue.200", "blue.700");
   const bgColor = useColorModeValue("blue.50", "blue.950");
   const textColor = useColorModeValue("blue.800", "blue.200");
 
-  const prompt = data?.beryl_prompt;
+  const prompt = data?.clio_prompt;
   if (!prompt) return null;
 
   return (

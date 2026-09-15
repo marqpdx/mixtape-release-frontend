@@ -8,7 +8,7 @@ import {
   fetchGroupCanon,
   fetchGroupCommand,
   fetchGroupClients,
-  dismissBerylPrompt,
+  dismissClioPrompt,
   fetchGroupRecurringActions,
   createRecurringAction,
   updateRecurringAction,
@@ -17,19 +17,19 @@ import {
   createPersonalRecurringAction,
   updatePersonalRecurringAction,
   deletePersonalRecurringAction,
-  fetchBerylSession,
-  updateBerylScrap,
+  fetchClioSession,
+  updateClioScrap,
   type PersonalStudioResponse,
   type PersonalGroupItem,
   type GroupPulseResponse,
   type GroupCanonResponse,
   type GroupCommandResponse,
   type GroupClientsResponse,
-  type BerylDismissMode,
+  type ClioDismissMode,
   type RecurringActionItem,
   type RecurringActionCreateInput,
   type RecurringActionUpdateInput,
-  type BerylSessionResponse,
+  type ClioSessionResponse,
   type ScrapItem,
   type ScrapUpdateInput,
 } from "../../clients/studio/studioApi";
@@ -52,7 +52,7 @@ export const studioQueryKeys = {
   groupRecurringActions: (slug: string) => [...studioQueryKeys.group(slug), "recurring-actions"] as const,
   personalRecurringActions: () => [...studioQueryKeys.personal(), "recurring-actions"] as const,
 
-  berylSession: (ctx: string) => [...studioQueryKeys.all, "beryl", "session", ctx] as const,
+  clioSession: (ctx: string) => [...studioQueryKeys.all, "clio", "session", ctx] as const,
 };
 
 // ============================================================================
@@ -75,10 +75,10 @@ export function usePersonalGroups() {
   });
 }
 
-export function useBerylDismiss() {
+export function useClioDismiss() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, BerylDismissMode>({
-    mutationFn: (mode) => dismissBerylPrompt(mode),
+  return useMutation<void, Error, ClioDismissMode>({
+    mutationFn: (mode) => dismissClioPrompt(mode),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: studioQueryKeys.personal() });
     },
@@ -221,25 +221,25 @@ export function useDeletePersonalRecurringAction() {
 }
 
 // ============================================================================
-// Beryl session
+// Clio session
 // ============================================================================
 
-export function useBerylSession(ctx: string) {
-  return useQuery<BerylSessionResponse>({
-    queryKey: studioQueryKeys.berylSession(ctx),
-    queryFn: () => fetchBerylSession(ctx),
+export function useClioSession(ctx: string) {
+  return useQuery<ClioSessionResponse>({
+    queryKey: studioQueryKeys.clioSession(ctx),
+    queryFn: () => fetchClioSession(ctx),
     enabled: !!ctx,
     staleTime: 0,
   });
 }
 
-export function useUpdateBerylScrap() {
+export function useUpdateClioScrap() {
   const queryClient = useQueryClient();
   return useMutation<ScrapItem, Error, { id: string; input: ScrapUpdateInput }>({
-    mutationFn: ({ id, input }) => updateBerylScrap(id, input),
+    mutationFn: ({ id, input }) => updateClioScrap(id, input),
     onSuccess: (_data, { id }) => {
-      queryClient.setQueriesData<BerylSessionResponse>(
-        { queryKey: [...studioQueryKeys.all, "beryl", "session"] },
+      queryClient.setQueriesData<ClioSessionResponse>(
+        { queryKey: [...studioQueryKeys.all, "clio", "session"] },
         (prev) => {
           if (!prev) return prev;
           return {

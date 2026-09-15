@@ -27,7 +27,7 @@ interface GroupSearchResultPaneProps {
 function GroupSearchResultPane({ result, onDismiss }: GroupSearchResultPaneProps) {
   return (
     <Box
-      className="beryl-result-pane"
+      className="clio-result-pane"
       position="absolute"
       top="calc(100% + 6px)"
       left={0}

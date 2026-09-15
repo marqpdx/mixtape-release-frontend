@@ -27,7 +27,7 @@ const rings = [
   {
     name: "Reach",
     title: "More material under stewardship",
-    body: "The practice widens. Beryl can see drafts, uploads, references, and Voice Findings alongside canon — without treating all of it as equally trusted. More attention can be applied to more material.",
+    body: "The practice widens. Clio can see drafts, uploads, references, and Voice Findings alongside canon — without treating all of it as equally trusted. More attention can be applied to more material.",
   },
   {
     name: "Knowledge Shaping Engagement",

@@ -11,7 +11,7 @@ import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
 import { AtriumSidebarWrapper } from "@/components/atrium/AtriumSidebarWrapper";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
-import { BerylPresence } from "@/components/atrium/BerylPresence";
+import { ClioPresence } from "@/components/atrium/ClioPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
 
 export default function GroupAtriumPage({
@@ -77,7 +77,7 @@ export default function GroupAtriumPage({
         <Box display="none">
           <AtriumResumeCard />
           <AtriumOrientationPanel />
-          <BerylPresence />
+          <ClioPresence />
           <Flex direction={{ base: "column", md: "row" }} gap={6}>
             <AtriumInitiationCard />
             <AtriumCommunityPulse />
