@@ -63,7 +63,10 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
         .join("\n")
     : "";
 
-  const deck = group.tagline || group.summary || null;
+  const deck =
+    group.tagline ||
+    group.summary ||
+    `Public writing, notes, and current work from ${group.title}.`;
   const hasBanner = !!group.background_image_url;
   const hasStandfirst = !!(about.text || about.descriptors.length);
   const pieces = featured_content.pieces;
@@ -117,6 +120,12 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
           transition: color var(--transition-duration, 200ms) ease;
         }
         .gplm-all-writing { text-underline-offset: 3px; }
+        .gplm-fallback-plate {
+          background:
+            linear-gradient(90deg, var(--theme-border) 0 1px, transparent 1px) 0 0 / 24px 24px,
+            linear-gradient(0deg, var(--theme-border) 0 1px, transparent 1px) 0 0 / 24px 24px,
+            var(--theme-bg-secondary);
+        }
         ${tenantPaletteCSS}
       `}</style>
 
@@ -178,6 +187,57 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {!hasBanner && (
+            <div
+              className="gplm-fallback-plate"
+              aria-hidden
+              style={{
+                position: "relative",
+                height: setting === "journal" ? "148px" : "132px",
+                marginBottom: "40px",
+                borderTop: `${typ.hairline} solid var(--theme-border)`,
+                borderBottom: `${typ.hairline} solid var(--theme-border)`,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: "24px",
+                  bottom: "24px",
+                  width: "72px",
+                  height: "72px",
+                  border: "2px solid var(--theme-accent)",
+                  background: "var(--theme-bg)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--theme-accent)",
+                    fontSize: "1.75rem",
+                    fontWeight: setting === "journal" ? "400" : "600",
+                    fontVariant: setting === "journal" ? "small-caps" : undefined,
+                  }}
+                >
+                  {group.title.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  right: "24px",
+                  top: "24px",
+                  bottom: "24px",
+                  width: "2px",
+                  background: "var(--theme-accent)",
+                }}
+              />
             </div>
           )}
 
@@ -270,7 +330,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
         {hasPieces && (
           <section
             className="gplm-zone-writing"
-            style={{ ...colStyles, marginTop: "72px" }}
+            style={{ ...colStyles, marginTop: "72px", paddingBottom: hasClosing ? 0 : "72px" }}
           >
             {/* Section header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "32px" }}>

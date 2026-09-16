@@ -5,16 +5,68 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { Box, Flex, Text, Grid } from "@chakra-ui/react";
-import type { PublicGroup, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
+import type { PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
+import type { GroupPublicLandingConfig, TypographySetting } from "../types";
+import { tenantPalettes } from "../tenantPalettes";
 
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
 
-async function fetchGroup(slug: string): Promise<PublicGroup | null> {
+const TYP = {
+  journal: {
+    measure: "68ch",
+    titleSize: "3.5rem",
+    titleWeight: "400",
+    titleTracking: "-0.01em",
+    titleLh: "1.12",
+    bodySize: "1.188rem",
+    bodyLh: "1.65",
+    leadSize: "2.813rem",
+    hairline: "0.5px",
+  },
+  notice: {
+    measure: "62ch",
+    titleSize: "2.75rem",
+    titleWeight: "600",
+    titleTracking: "-0.022em",
+    titleLh: "1.1",
+    bodySize: "1.063rem",
+    bodyLh: "1.6",
+    leadSize: "2.313rem",
+    hairline: "1px",
+  },
+} as const;
+
+function paletteCSS(selector: string, c: {
+  bg: string;
+  bgSecondary?: string;
+  surface: string;
+  accent: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+}): string {
+  return `${selector} {
+  --theme-bg: ${c.bg};
+  --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
+  --theme-bg-subtle: color-mix(in srgb, ${c.bg} 60%, ${c.border} 40%);
+  --theme-surface: ${c.surface};
+  --theme-accent: ${c.accent};
+  --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
+  --theme-text: ${c.text};
+  --theme-text-secondary: ${c.textSecondary};
+  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
+  --theme-border: ${c.border};
+}`;
+}
+
+async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
   try {
-    const res = await fetch(`${baseUrl}/api/public/groups/${slug}`, {
+    const res = await fetch(`${baseUrl}/api/public/groups/${slug}/public-config`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return null;
@@ -42,19 +94,29 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const group = await fetchGroup(slug);
-  if (!group) return { title: "Writing" };
+  const config = await fetchGroupConfig(slug);
+  if (!config) return { title: "Writing" };
+  const { group } = config;
+  const description = group.summary || undefined;
+  const url = `${siteUrl}/groups/${slug}/writing`;
+  const image = group.background_image_url || group.profile_image_url || undefined;
   return {
     title: `Writing — ${group.title}`,
-    description: group.quick_intro || undefined,
+    description,
     openGraph: {
       title: `Writing — ${group.title}`,
-      images: group.background_image_url
-        ? [{ url: group.background_image_url }]
-        : group.profile_image_url
-        ? [{ url: group.profile_image_url }]
-        : undefined,
+      description,
+      url,
+      type: "website",
+      ...(image ? { images: [{ url: image }] } : {}),
     },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: `Writing — ${group.title}`,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+    alternates: { canonical: url },
   };
 }
 
@@ -67,157 +129,160 @@ function formatDate(iso: string | null): string {
   });
 }
 
+function byline(piece: PublicLibraryPiece): string {
+  const parts: string[] = [piece.author.display_name];
+  if (piece.published_at) parts.push(formatDate(piece.published_at));
+  if (piece.reading_time) parts.push(`${piece.reading_time} min read`);
+  return parts.join(" · ");
+}
+
+function paletteOverrides(config: GroupPublicLandingConfig): string {
+  const paletteId = config.presentation?.palette_id ?? null;
+  const tenantPalette = paletteId
+    ? (tenantPalettes.find((p) => p.id === paletteId) ?? null)
+    : null;
+  if (!tenantPalette) return "";
+  return [
+    paletteCSS(".gwi-root", tenantPalette.light),
+    paletteCSS(".dark .gwi-root", tenantPalette.dark),
+    tenantPalette.lightHighContrast
+      ? paletteCSS(".high-contrast .gwi-root, [data-high-contrast] .gwi-root", tenantPalette.lightHighContrast)
+      : "",
+    tenantPalette.darkHighContrast
+      ? paletteCSS(".dark.high-contrast .gwi-root, .dark [data-high-contrast] .gwi-root", tenantPalette.darkHighContrast)
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export default async function GroupWritingIndexPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [group, pieces] = await Promise.all([fetchGroup(slug), fetchWriting(slug)]);
-  if (!group) notFound();
+  const [config, pieces] = await Promise.all([fetchGroupConfig(slug), fetchWriting(slug)]);
+  if (!config) notFound();
 
-  const hasBg = !!group.background_image_url;
+  const { group } = config;
+  const setting: TypographySetting = config.presentation?.typography_setting ?? "journal";
+  const typ = TYP[setting];
+  const colStyles: CSSProperties = {
+    maxWidth: typ.measure,
+    margin: "0 auto",
+    padding: "0 16px",
+  };
 
   return (
-    <main className="gwi-root">
-      {/* Full-bleed banner — same pattern as T1 */}
-      <Box
-        className="gwi-banner"
-        as="section"
-        position="relative"
-        minH={{ base: "240px", md: "320px" }}
-        display="flex"
-        alignItems="flex-end"
-        style={
-          hasBg
-            ? {
-                backgroundImage: `url(${group.background_image_url})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : { background: "linear-gradient(135deg, #3730a3 0%, #6d28d9 100%)" }
-        }
-      >
-        <Box
-          position="absolute"
-          inset={0}
-          style={{ background: "rgba(0,0,0,0.45)" }}
-        />
-        <Box
-          className="gwi-banner-content"
-          position="relative"
-          zIndex={1}
-          px={{ base: 6, md: 12, lg: 20 }}
-          py={{ base: 8, md: 12 }}
-          maxW="720px"
-        >
+    <main className="gwi-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}>
+      <style>{`
+        .gwi-piece-link { text-decoration: none; display: block; }
+        .gwi-piece-link:hover .gwi-piece-title { color: var(--theme-accent); }
+        .gwi-piece-title { transition: color var(--transition-duration, 200ms) ease; }
+        .gwi-back { text-underline-offset: 3px; }
+        ${paletteOverrides(config)}
+      `}</style>
+
+      <section className="gwi-header" style={{ ...colStyles, paddingTop: "72px" }}>
+        <div style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
           <Link
             href={`/groups/${slug}`}
-            style={{ textDecoration: "none" }}
+            className="gwi-back"
+            style={{
+              color: "var(--theme-text-muted)",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              textDecoration: "underline",
+              textDecorationColor: "var(--theme-accent)",
+              textDecorationThickness: "2px",
+            }}
           >
-            <Text
-              fontSize="xs"
-              fontWeight="600"
-              color="whiteAlpha.700"
-              textTransform="uppercase"
-              letterSpacing="wider"
-              mb={3}
-              _hover={{ color: "white" }}
-            >
-              ← {group.title}
-            </Text>
+            ← {group.title}
           </Link>
-          <Text
-            as="h1"
-            fontSize={{ base: "2xl", md: "3xl" }}
-            fontWeight="700"
-            color="white"
-            lineHeight={1.2}
+          <h1
+            style={{
+              fontSize: typ.titleSize,
+              fontWeight: typ.titleWeight,
+              letterSpacing: typ.titleTracking,
+              lineHeight: typ.titleLh,
+              color: "var(--theme-text)",
+              margin: "16px 0 0",
+            }}
           >
             Writing
-          </Text>
-        </Box>
-      </Box>
+          </h1>
+          {group.summary && (
+            <p
+              style={{
+                color: "var(--theme-text-secondary)",
+                fontSize: typ.bodySize,
+                lineHeight: typ.bodyLh,
+                margin: "8px 0 0",
+              }}
+            >
+              {group.summary}
+            </p>
+          )}
+        </div>
+      </section>
 
-      {/* Writing list */}
-      <Box
-        className="gwi-list"
-        as="section"
-        px={{ base: 6, md: 12, lg: 20 }}
-        py={{ base: 16, md: 20 }}
-        maxW="860px"
-      >
+      <section className="gwi-list" style={{ ...colStyles, marginTop: "72px", paddingBottom: "72px" }}>
         {pieces.length === 0 ? (
-          <Text fontSize="md" color="gray.500">
-            No published writing yet.
-          </Text>
+          null
         ) : (
-          <Grid templateColumns="1fr" gap={8}>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {pieces.map((piece) => (
-              <Link
+              <li
                 key={piece.id}
-                href={`/reading/${piece.slug}`}
-                style={{ textDecoration: "none" }}
+                className="gwi-piece"
+                style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }}
               >
-                <Box
-                  className="gwi-piece"
-                  borderBottomWidth="1px"
-                  borderColor="gray.200"
-                  pb={8}
-                  _hover={{ "& h2": { textDecoration: "underline" } }}
-                >
-                  <Text
-                    as="h2"
-                    fontSize={{ base: "xl", md: "2xl" }}
-                    fontWeight="700"
-                    lineHeight={1.3}
-                    mb={2}
+                <Link href={`/reading/${piece.slug}`} className="gwi-piece-link" style={{ padding: "16px 0" }}>
+                  <h2
+                    className="gwi-piece-title"
+                    style={{
+                      color: "var(--theme-text)",
+                      fontSize: typ.leadSize,
+                      fontWeight: typ.titleWeight,
+                      lineHeight: setting === "journal" ? "1.2" : "1.15",
+                      margin: 0,
+                    }}
                   >
                     {piece.title}
-                  </Text>
+                  </h2>
                   {piece.excerpt && (
-                    <Text
-                      fontSize="md"
-                      color="gray.600"
-                      lineHeight={1.6}
-                      mb={3}
-                      overflow="hidden"
+                    <p
                       style={{
+                        color: "var(--theme-text-secondary)",
+                        fontSize: typ.bodySize,
+                        lineHeight: typ.bodyLh,
+                        margin: "8px 0 0",
+                        overflow: "hidden",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                       }}
                     >
                       {piece.excerpt}
-                    </Text>
+                    </p>
                   )}
-                  <Flex align="center" gap={2} flexWrap="wrap">
-                    <Text fontSize="sm" color="gray.500">
-                      {piece.author.display_name}
-                    </Text>
-                    {piece.published_at && (
-                      <>
-                        <Text fontSize="sm" color="gray.400">·</Text>
-                        <Text fontSize="sm" color="gray.500">
-                          {formatDate(piece.published_at)}
-                        </Text>
-                      </>
-                    )}
-                    {piece.reading_time && (
-                      <>
-                        <Text fontSize="sm" color="gray.400">·</Text>
-                        <Text fontSize="sm" color="gray.500">
-                          {piece.reading_time} min read
-                        </Text>
-                      </>
-                    )}
-                  </Flex>
-                </Box>
-              </Link>
+                  <p
+                    style={{
+                      color: "var(--theme-text-muted)",
+                      fontSize: "0.875rem",
+                      margin: "8px 0 0",
+                    }}
+                  >
+                    {byline(piece)}
+                  </p>
+                </Link>
+              </li>
             ))}
-          </Grid>
+            <li style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }} aria-hidden />
+          </ul>
         )}
-      </Box>
+      </section>
 
       <GroupPublicFooter groupTitle={group.title} />
     </main>

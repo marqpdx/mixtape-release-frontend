@@ -5,18 +5,82 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { Box, Flex, Text } from "@chakra-ui/react";
 import type { PublicWritingPiece } from "@mixtape/api/clients/public/publicApi";
 import { PieceBody } from "./PieceBody";
 import { GroupPublicFooter } from "../../groups/[slug]/sections/GroupPublicFooter";
+import type { GroupPublicLandingConfig, TypographySetting } from "../../groups/[slug]/types";
+import { tenantPalettes } from "../../groups/[slug]/tenantPalettes";
 
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
+
+const TYP = {
+  journal: {
+    measure: "68ch",
+    titleSize: "3.5rem",
+    titleWeight: "400",
+    titleTracking: "-0.01em",
+    titleLh: "1.12",
+    bodySize: "1.188rem",
+    bodyLh: "1.65",
+    standfirstSize: "1.5rem",
+    hairline: "0.5px",
+  },
+  notice: {
+    measure: "62ch",
+    titleSize: "2.75rem",
+    titleWeight: "600",
+    titleTracking: "-0.022em",
+    titleLh: "1.1",
+    bodySize: "1.063rem",
+    bodyLh: "1.6",
+    standfirstSize: "1.25rem",
+    hairline: "1px",
+  },
+} as const;
+
+function paletteCSS(selector: string, c: {
+  bg: string;
+  bgSecondary?: string;
+  surface: string;
+  accent: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+}): string {
+  return `${selector} {
+  --theme-bg: ${c.bg};
+  --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
+  --theme-bg-subtle: color-mix(in srgb, ${c.bg} 60%, ${c.border} 40%);
+  --theme-surface: ${c.surface};
+  --theme-accent: ${c.accent};
+  --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
+  --theme-text: ${c.text};
+  --theme-text-secondary: ${c.textSecondary};
+  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
+  --theme-border: ${c.border};
+}`;
+}
 
 async function fetchPiece(slug: string): Promise<PublicWritingPiece | null> {
   try {
     const res = await fetch(`${baseUrl}/api/public/writing/${slug}`, {
       next: { revalidate: 120 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
+  try {
+    const res = await fetch(`${baseUrl}/api/public/groups/${slug}/public-config`, {
+      next: { revalidate: 60 },
     });
     if (!res.ok) return null;
     return res.json();
@@ -33,13 +97,29 @@ export async function generateMetadata({
   const { slug } = await params;
   const piece = await fetchPiece(slug);
   if (!piece) return { title: "Writing" };
+  const groupConfig = piece.sponsor_group
+    ? await fetchGroupConfig(piece.sponsor_group.slug)
+    : null;
+  const url = `${siteUrl}/reading/${slug}`;
+  const description = piece.excerpt || undefined;
+  const image = groupConfig?.group.background_image_url || groupConfig?.group.profile_image_url || undefined;
   return {
     title: piece.title,
-    description: piece.excerpt || undefined,
+    description,
     openGraph: {
       title: piece.title,
-      description: piece.excerpt || undefined,
+      description,
+      url,
+      type: "article",
+      ...(image ? { images: [{ url: image }] } : {}),
     },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: piece.title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+    alternates: { canonical: url },
   };
 }
 
@@ -51,6 +131,26 @@ function formatDate(iso: string): string {
   });
 }
 
+function paletteOverrides(config: GroupPublicLandingConfig | null): string {
+  const paletteId = config?.presentation?.palette_id ?? null;
+  const tenantPalette = paletteId
+    ? (tenantPalettes.find((p) => p.id === paletteId) ?? null)
+    : null;
+  if (!tenantPalette) return "";
+  return [
+    paletteCSS(".gpr-root", tenantPalette.light),
+    paletteCSS(".dark .gpr-root", tenantPalette.dark),
+    tenantPalette.lightHighContrast
+      ? paletteCSS(".high-contrast .gpr-root, [data-high-contrast] .gpr-root", tenantPalette.lightHighContrast)
+      : "",
+    tenantPalette.darkHighContrast
+      ? paletteCSS(".dark.high-contrast .gpr-root, .dark [data-high-contrast] .gpr-root", tenantPalette.darkHighContrast)
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export default async function PublicPieceReaderPage({
   params,
 }: {
@@ -59,6 +159,17 @@ export default async function PublicPieceReaderPage({
   const { slug } = await params;
   const piece = await fetchPiece(slug);
   if (!piece) notFound();
+
+  const groupConfig = piece.sponsor_group
+    ? await fetchGroupConfig(piece.sponsor_group.slug)
+    : null;
+  const setting: TypographySetting = groupConfig?.presentation?.typography_setting ?? "journal";
+  const typ = TYP[setting];
+  const colStyles: CSSProperties = {
+    maxWidth: typ.measure,
+    margin: "0 auto",
+    padding: "0 16px",
+  };
 
   const backHref = piece.sponsor_group
     ? `/groups/${piece.sponsor_group.slug}/writing`
@@ -70,70 +181,97 @@ export default async function PublicPieceReaderPage({
   const footerTitle = piece.sponsor_group?.title ?? piece.author.display_name;
 
   return (
-    <main className="gpr-root">
-      <Box
-        className="gpr-content"
-        px={{ base: 6, md: 12, lg: 20 }}
-        py={{ base: 10, md: 14 }}
-        maxW="760px"
-        mx="auto"
-      >
-        {/* Back link */}
-        <Link href={backHref} style={{ textDecoration: "none" }}>
-          <Text
-            fontSize="sm"
-            fontWeight="500"
-            color="indigo.600"
-            mb={8}
-            display="inline-block"
-            _hover={{ textDecoration: "underline" }}
+    <main className="gpr-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}>
+      <style>{`
+        .gpr-back { text-underline-offset: 3px; }
+        .gpr-body {
+          color: var(--theme-text);
+          font-size: ${typ.bodySize};
+          line-height: ${typ.bodyLh};
+        }
+        .gpr-body p { margin: 0 0 1.25em; }
+        .gpr-body h2, .gpr-body h3 {
+          color: var(--theme-text);
+          line-height: 1.22;
+          margin: 2em 0 0.75em;
+        }
+        .gpr-body h2 { font-size: ${setting === "journal" ? "1.875rem" : "1.625rem"}; }
+        .gpr-body h3 { font-size: ${setting === "journal" ? "1.5rem" : "1.313rem"}; }
+        .gpr-body a { color: var(--theme-text); text-decoration-color: var(--theme-accent); text-underline-offset: 3px; }
+        ${paletteOverrides(groupConfig)}
+      `}</style>
+
+      <article className="gpr-content" style={{ ...colStyles, paddingTop: "72px", paddingBottom: "72px" }}>
+        <header className="gpr-header" style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
+          <Link
+            href={backHref}
+            className="gpr-back"
+            style={{
+              color: "var(--theme-text-muted)",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              textDecoration: "underline",
+              textDecorationColor: "var(--theme-accent)",
+              textDecorationThickness: "2px",
+            }}
           >
             {backLabel}
-          </Text>
-        </Link>
+          </Link>
 
-        {/* Header */}
-        <Text
-          as="h1"
-          fontSize={{ base: "3xl", md: "4xl" }}
-          fontWeight="700"
-          lineHeight={1.2}
-          mb={4}
-        >
-          {piece.title}
-        </Text>
+          <h1
+            style={{
+              fontSize: typ.titleSize,
+              fontWeight: typ.titleWeight,
+              letterSpacing: typ.titleTracking,
+              lineHeight: typ.titleLh,
+              color: "var(--theme-text)",
+              margin: "16px 0 0",
+            }}
+          >
+            {piece.title}
+          </h1>
 
-        <Flex
-          className="gpr-meta"
-          align="center"
-          gap={2}
-          flexWrap="wrap"
-          mb={10}
-        >
-          <Text fontSize="sm" color="gray.500">
+          <p
+            className="gpr-meta"
+            style={{
+              color: "var(--theme-text-muted)",
+              fontSize: "0.875rem",
+              margin: "16px 0 0",
+            }}
+          >
             {piece.author.display_name}
-          </Text>
           {piece.published_at && (
             <>
-              <Text fontSize="sm" color="gray.400">·</Text>
-              <Text fontSize="sm" color="gray.500">
+                {" · "}
                 {formatDate(piece.published_at)}
-              </Text>
             </>
           )}
           {piece.writing_kind && (
             <>
-              <Text fontSize="sm" color="gray.400">·</Text>
-              <Text fontSize="sm" color="gray.500" textTransform="capitalize">
+                {" · "}
                 {piece.writing_kind.replace(/_/g, " ")}
-              </Text>
             </>
           )}
-        </Flex>
+          </p>
 
-        {/* Body — rendered via client component to accommodate TipTap hooks */}
-        {piece.body_json && <PieceBody body_json={piece.body_json} />}
-      </Box>
+          {piece.excerpt && (
+            <p
+              style={{
+                color: "var(--theme-text-secondary)",
+                fontSize: typ.standfirstSize,
+                lineHeight: typ.bodyLh,
+                margin: "32px 0 0",
+              }}
+            >
+              {piece.excerpt}
+            </p>
+          )}
+        </header>
+
+        <div className="gpr-body" style={{ marginTop: "72px" }}>
+          {piece.body_json && <PieceBody body_json={piece.body_json} />}
+        </div>
+      </article>
 
       <GroupPublicFooter groupTitle={footerTitle} />
     </main>
