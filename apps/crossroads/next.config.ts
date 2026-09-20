@@ -2,8 +2,29 @@
 
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  images: {
+    // Static/stable-URL assets only — do not point next/image at Stash
+    // presigned URLs (expiring signature query params defeat next/image's
+    // URL-keyed optimizer cache). Signed asset URLs should render via
+    // Chakra Image instead. See decisions/argus/audit-blocks/image-handling-01.md.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "assets.crossroads.place",
+      },
+      // Local MinIO for development
+      ...(!isProd
+        ? [
+            { protocol: "http" as const, hostname: "127.0.0.1", port: "9000" },
+            { protocol: "http" as const, hostname: "localhost", port: "9000" },
+          ]
+        : []),
+    ],
+  },
   transpilePackages: [
     "@mixtape/core",
     "@mixtape/api",
