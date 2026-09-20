@@ -17,6 +17,7 @@ import { GroupPublicMasthead } from "./sections/GroupPublicMasthead";
 import { GroupPublicLedger } from "./sections/GroupPublicLedger";
 import { GroupPublicAtlas } from "./sections/GroupPublicAtlas";
 import { GroupPublicAdminBar } from "./sections/GroupPublicAdminBar";
+import { GroupPublicNav } from "./sections/GroupPublicNav";
 
 async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig | null> {
   const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
@@ -70,6 +71,7 @@ export default async function GroupPublicPage({
       groupSlug={slug}
       groupTitle={config.group.title}
       initialPresentation={config.presentation ?? null}
+      allowDesign={config.tier === "t2"}
     />
   );
 
@@ -91,6 +93,7 @@ export default async function GroupPublicPage({
     return (
       <main className="gpl-root">
         {adminBar}
+        <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
         <GroupPublicLedger config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
       </main>
@@ -113,6 +116,7 @@ export default async function GroupPublicPage({
       return (
         <main className="gpl-root">
           {adminBar}
+          <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
           <GroupPublicAtlas config={config} groupSlug={slug} />
           <GroupPublicFooter groupTitle={config.group.title} />
         </main>
@@ -150,6 +154,7 @@ export default async function GroupPublicPage({
   return (
     <main className="gpl-root">
       {adminBar}
+      <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
       <GroupPublicHero config={config} hasFeatured={hasFeatured} />
 
       {hasFeatured && (

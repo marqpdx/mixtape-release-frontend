@@ -38,7 +38,6 @@ export interface Group {
   author_name?: string;
   group_type: GroupType;
   visibility: GroupVisibility;
-  display_layout: "classic" | "modern" | "minimal";
   status?: GroupStatus;
 
   // Parent group/member info for circles
@@ -180,7 +179,6 @@ export interface GroupFormData {
   body: string;
   group_type: GroupType;
   visibility: GroupVisibility;
-  display_layout: "classic" | "modern" | "minimal";
   status: GroupStatus;
   author_name: string;
 

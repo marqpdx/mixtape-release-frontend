@@ -1,10 +1,9 @@
 // GroupPublicLedger — Tier 2 "Ledger" template.
 // Two-column asymmetric: left rail (≈34%) sticky identity block; right column scrolling content.
 // Inherits the same six constraints and zone language as Masthead.
-// Server component — plain HTML + CSS custom properties; no Chakra.
+// Server component — plain HTML + CSS custom properties; no client component boundary.
 
 import Link from "next/link";
-import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { TYP, paletteCSS, resolveFont } from "../typography";
@@ -146,7 +145,7 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
                 marginBottom: "24px",
                 flexShrink: 0,
               }}>
-                <Image
+                <img
                   src={group.profile_image_url}
                   alt={group.title}
                   width={56}
@@ -246,13 +245,12 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
             {/* Banner — 3:1, contained to right column width */}
             {hasBanner && (
               <div style={{ position: "relative", aspectRatio: "3/1", overflow: "hidden", marginBottom: "40px", background: "var(--theme-bg-subtle)" }}>
-                <Image
+                {/* Stash-backed URLs are signed, so use a plain image to avoid
+                    next/image cache-key churn while preserving server rendering. */}
+                <img
                   src={group.background_image_url!}
                   alt=""
-                  fill
-                  priority
-                  sizes="66vw"
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: "cover", width: "100%", height: "100%", display: "block" }}
                 />
               </div>
             )}

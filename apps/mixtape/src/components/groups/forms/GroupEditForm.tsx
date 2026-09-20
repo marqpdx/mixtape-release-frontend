@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect, useState } from "react";
+import NextLink from "next/link";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { ImageUploadField } from "@components/forms/common/ImageUploadField";
 import { createListCollection } from "@chakra-ui/react";
@@ -46,14 +47,6 @@ const groupTypeCollection = createListCollection({
   items: [
     { label: "Community", value: "community" },
     { label: "Circle", value: "circle" },
-  ],
-});
-
-const displayLayoutCollection = createListCollection({
-  items: [
-    { label: "Classic", value: "classic" },
-    { label: "Modern", value: "modern" },
-    { label: "Minimal", value: "minimal" },
   ],
 });
 
@@ -113,6 +106,11 @@ export default function GroupEditForm({
   const [error, setError] = useState<string | null>(null);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
   const [showEmblemPicker, setShowEmblemPicker] = useState(false);
+  const publicSiteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+  const publicPreviewHref = group?.slug
+    ? `${publicSiteUrl.replace(/\/$/, "")}/groups/${group.slug}`
+    : null;
 
   const [emblemPreview, setEmblemPreview] = useState<EmblemInline | null>(
     group?.emblem ?? null
@@ -142,7 +140,6 @@ export default function GroupEditForm({
     setValue("author_name", group.author_name || "");
     setValue("group_type", group.group_type || "community");
     setValue("visibility", group.visibility || "public");
-    setValue("display_layout", group.display_layout || "classic");
     setValue("profile_image_path", group.profile_image_path);
     setValue("background_image_path", group.background_image_path);
     setEmblemPreview(group.emblem ?? null);
@@ -274,35 +271,52 @@ export default function GroupEditForm({
     >
       {/* Page header */}
       <Box className="gef-header" mb={8}>
-        <Text
-          fontFamily="mono"
-          fontSize="11px"
-          fontWeight="600"
-          letterSpacing="0.14em"
-          textTransform="uppercase"
-          color="theme.textMuted"
-          mb={2}
-        >
-          Group Settings
-        </Text>
-        <Text
-          as="h1"
-          fontFamily="heading"
-          fontSize="38px"
-          fontWeight="400"
-          color="theme.text"
-          lineHeight="1.15"
-          mb={2}
-        >
-          Edit Group
-        </Text>
-        <Text fontFamily="serifBody" fontSize="16px" color="theme.textSecondary">
-          Update how{" "}
-          <Box as="em" fontStyle="italic">
-            {group?.title ?? "your group"}
-          </Box>{" "}
-          appears to members across Mixtape.
-        </Text>
+        <Flex align="flex-start" justify="space-between" gap={4} flexWrap="wrap">
+          <Box>
+            <Text
+              fontFamily="mono"
+              fontSize="11px"
+              fontWeight="600"
+              letterSpacing="0.14em"
+              textTransform="uppercase"
+              color="theme.textMuted"
+              mb={2}
+            >
+              Group Settings
+            </Text>
+            <Text
+              as="h1"
+              fontFamily="heading"
+              fontSize="38px"
+              fontWeight="400"
+              color="theme.text"
+              lineHeight="1.15"
+              mb={2}
+            >
+              Edit Group
+            </Text>
+            <Text fontFamily="serifBody" fontSize="16px" color="theme.textSecondary">
+              Update how{" "}
+              <Box as="em" fontStyle="italic">
+                {group?.title ?? "your group"}
+              </Box>{" "}
+              appears to members across Mixtape and on its public presence page.
+            </Text>
+          </Box>
+
+          {publicPreviewHref && (
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="gef-public-preview-link"
+            >
+              <NextLink href={publicPreviewHref} target="_blank">
+                Preview public page ↗
+              </NextLink>
+            </Button>
+          )}
+        </Flex>
       </Box>
 
       {isDraftMode && (
@@ -534,53 +548,6 @@ export default function GroupEditForm({
               <Field.HelperText>Display name for the group author</Field.HelperText>
             </Field.Root>
           </VStack>
-        </EditCard>
-
-        {/* Publishing & layout */}
-        <EditCard label="Publishing & layout" className="gef-card-publishing">
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            <Field.Root>
-              <Field.Label>Display layout</Field.Label>
-              <Select.Root
-                value={
-                  watch("display_layout")
-                    ? [watch("display_layout")]
-                    : undefined
-                }
-                defaultValue={["classic"]}
-                onValueChange={({ value }) => {
-                  setValue(
-                    "display_layout",
-                    value[0] as "classic" | "modern" | "minimal"
-                  );
-                }}
-                collection={displayLayoutCollection}
-              >
-                <Select.HiddenSelect {...register("display_layout")} />
-                <Select.Control>
-                  <Select.Trigger>
-                    <Select.ValueText placeholder="Select layout…" />
-                  </Select.Trigger>
-                  <Select.IndicatorGroup>
-                    <Select.Indicator />
-                    <Select.ClearTrigger />
-                  </Select.IndicatorGroup>
-                </Select.Control>
-                <Portal>
-                  <Select.Positioner>
-                    <Select.Content>
-                      {displayLayoutCollection.items.map((item) => (
-                        <Select.Item item={item} key={item.value}>
-                          {item.label}
-                          <Select.ItemIndicator />
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Positioner>
-                </Portal>
-              </Select.Root>
-            </Field.Root>
-          </SimpleGrid>
         </EditCard>
 
         {!isDraftMode && (

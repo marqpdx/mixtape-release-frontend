@@ -36,6 +36,7 @@ export interface GroupPublicLandingConfig {
     id: string;
     slug: string;
     title: string;
+    description: string;
     summary: string;
     tagline?: string | null;
     profile_image_url: string | null;

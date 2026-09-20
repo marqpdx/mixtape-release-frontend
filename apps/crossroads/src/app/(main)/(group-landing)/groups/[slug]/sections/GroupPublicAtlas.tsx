@@ -3,7 +3,6 @@
 // Falls back to Masthead in page.tsx when group.background_image_url is absent.
 
 import Link from "next/link";
-import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { TYP, paletteCSS, resolveFont } from "../typography";
@@ -142,13 +141,12 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
             background: "var(--theme-bg-secondary)",
           }}
         >
-          <Image
+          {/* Stash-backed URLs are signed, so use a plain image to avoid
+              next/image cache-key churn while preserving server rendering. */}
+          <img
             src={group.background_image_url!}
             alt=""
-            fill
-            priority
-            sizes="100vw"
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "cover", width: "100%", height: "100%", display: "block" }}
           />
         </div>
 
@@ -164,7 +162,7 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
             {group.profile_image_url && (
               <div style={{ width: "56px", height: "56px", overflow: "hidden", flexShrink: 0 }}>
-                <Image
+                <img
                   src={group.profile_image_url}
                   alt={group.title}
                   width={56}

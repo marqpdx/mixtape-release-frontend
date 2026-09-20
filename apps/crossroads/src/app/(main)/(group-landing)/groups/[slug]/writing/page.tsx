@@ -9,6 +9,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
+import { GroupPublicNav } from "../sections/GroupPublicNav";
 import type { GroupPublicLandingConfig, TypographySetting } from "../types";
 import { tenantPalettes } from "../tenantPalettes";
 
@@ -17,7 +18,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
 
 const TYP = {
   journal: {
-    measure: "68ch",
+    measure: "100ch",
     titleSize: "3.5rem",
     titleWeight: "400",
     titleTracking: "-0.01em",
@@ -28,7 +29,7 @@ const TYP = {
     hairline: "0.5px",
   },
   notice: {
-    measure: "62ch",
+    measure: "100ch",
     titleSize: "2.75rem",
     titleWeight: "600",
     titleTracking: "-0.022em",
@@ -136,6 +137,12 @@ function byline(piece: PublicLibraryPiece): string {
   return parts.join(" · ");
 }
 
+function firstSentence(text: string): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  return normalized.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim() ?? normalized;
+}
+
 function paletteOverrides(config: GroupPublicLandingConfig): string {
   const paletteId = config.presentation?.palette_id ?? null;
   const tenantPalette = paletteId
@@ -183,51 +190,86 @@ export default async function GroupWritingIndexPage({
         .gwi-back { text-underline-offset: 3px; }
         ${paletteOverrides(config)}
       `}</style>
-
-      <section className="gwi-header" style={{ ...colStyles, paddingTop: "72px" }}>
-        <div style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
-          <Link
-            href={`/groups/${slug}`}
-            className="gwi-back"
+      <section className="gwi-header" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "28px" }}>
+        <div
+          className="gwi-group-identity"
+          style={{ display: "flex", alignItems: "center", gap: "20px" }}
+        >
+          <div
+            className="gwi-group-mark"
             style={{
-              color: "var(--theme-text-muted)",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-              textDecoration: "underline",
-              textDecorationColor: "var(--theme-accent)",
-              textDecorationThickness: "2px",
+              width: "96px",
+              height: "96px",
+              overflow: "hidden",
+              background: group.profile_image_url ? undefined : "var(--theme-accent-soft)",
+              flexShrink: 0,
             }}
           >
-            ← {group.title}
+            {group.profile_image_url ? (
+              <img
+                src={group.profile_image_url}
+                alt={group.title}
+                width={96}
+                height={96}
+                style={{ objectFit: "cover", width: "96px", height: "96px", display: "block" }}
+              />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "96px",
+                  height: "96px",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--theme-accent)",
+                    fontSize: "2rem",
+                    fontWeight: setting === "journal" ? "400" : "600",
+                  }}
+                >
+                  {group.title.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+          <Link
+            href={`/groups/${slug}`}
+            className="gwi-group-title"
+            style={{
+              color: "var(--theme-text)",
+              fontSize: "2.75rem",
+              fontWeight: typ.titleWeight,
+              letterSpacing: typ.titleTracking,
+              lineHeight: typ.titleLh,
+              textDecoration: "none",
+            }}
+          >
+            {group.title}
           </Link>
+        </div>
+
+        <div className="gwi-page-heading" style={{ marginTop: "40px" }}>
           <h1
             style={{
-              fontSize: typ.titleSize,
+              fontSize: setting === "journal" ? "2rem" : "1.875rem",
               fontWeight: typ.titleWeight,
               letterSpacing: typ.titleTracking,
               lineHeight: typ.titleLh,
               color: "var(--theme-text)",
-              margin: "16px 0 0",
+              margin: 0,
             }}
           >
             Writing
           </h1>
-          {group.summary && (
-            <p
-              style={{
-                color: "var(--theme-text-secondary)",
-                fontSize: typ.bodySize,
-                lineHeight: typ.bodyLh,
-                margin: "8px 0 0",
-              }}
-            >
-              {group.summary}
-            </p>
-          )}
         </div>
       </section>
 
-      <section className="gwi-list" style={{ ...colStyles, marginTop: "72px", paddingBottom: "72px" }}>
+      <GroupPublicNav groupSlug={slug} groupTitle={group.title} active="writing" />
+
+      <section className="gwi-list" style={{ ...colStyles, marginTop: "48px", paddingBottom: "72px" }}>
         {pieces.length === 0 ? (
           null
         ) : (
@@ -243,7 +285,7 @@ export default async function GroupWritingIndexPage({
                     className="gwi-piece-title"
                     style={{
                       color: "var(--theme-text)",
-                      fontSize: typ.leadSize,
+                      fontSize: setting === "journal" ? "1.75rem" : "1.625rem",
                       fontWeight: typ.titleWeight,
                       lineHeight: setting === "journal" ? "1.2" : "1.15",
                       margin: 0,
@@ -251,31 +293,29 @@ export default async function GroupWritingIndexPage({
                   >
                     {piece.title}
                   </h2>
-                  {piece.excerpt && (
-                    <p
-                      style={{
-                        color: "var(--theme-text-secondary)",
-                        fontSize: typ.bodySize,
-                        lineHeight: typ.bodyLh,
-                        margin: "8px 0 0",
-                        overflow: "hidden",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                    >
-                      {piece.excerpt}
-                    </p>
-                  )}
                   <p
+                    className="gwi-piece-byline"
                     style={{
                       color: "var(--theme-text-muted)",
                       fontSize: "0.875rem",
-                      margin: "8px 0 0",
+                      margin: "3px 0 0",
                     }}
                   >
                     {byline(piece)}
                   </p>
+                  {piece.body_preview && (
+                    <p
+                      className="gwi-piece-excerpt"
+                      style={{
+                        color: "var(--theme-text-secondary)",
+                        fontSize: typ.bodySize,
+                        lineHeight: typ.bodyLh,
+                        margin: "10px 0 0",
+                      }}
+                    >
+                      {firstSentence(piece.body_preview)}
+                    </p>
+                  )}
                 </Link>
               </li>
             ))}

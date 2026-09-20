@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@/components/analytics/Analytics";
+import { getThemePreferenceBootstrapScript } from "@mixtape/core/theme/theme-preferences";
 import {
   Pacifico,
   Allura,
@@ -104,7 +105,16 @@ export default function RootLayout({
         alegreyaSans.variable,
       ].join(" ")}
     >
-      <body style={{ overflowX: 'hidden' }}>
+      <head>
+        <style>{`body { overflow-x: hidden; }`}</style>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: getThemePreferenceBootstrapScript("crossroads"),
+          }}
+        />
+      </head>
+      <body suppressHydrationWarning>
         <Providers>
           <Analytics />
           {children}

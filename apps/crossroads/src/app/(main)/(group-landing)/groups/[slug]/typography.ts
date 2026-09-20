@@ -12,7 +12,7 @@ import type { TenantFont } from "./fonts";
 // Notice title 44px = 2.75rem, body 17px = 1.063rem, lead 37px = 2.313rem, standfirst 20px = 1.25rem
 export const TYP = {
   journal: {
-    measure: "68ch",
+    measure: "100ch",
     titleSize: "3.5rem",
     titleWeight: "400",
     titleTracking: "-0.01em",
@@ -31,7 +31,7 @@ export const TYP = {
     },
   },
   notice: {
-    measure: "62ch",
+    measure: "100ch",
     titleSize: "2.75rem",
     titleWeight: "600",
     titleTracking: "-0.022em",

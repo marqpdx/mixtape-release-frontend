@@ -1,13 +1,12 @@
 // GroupPublicMasthead — Tier 1 surface.
 // Single centred column, measure-governed, four zones (Masthead / Standfirst / Writing / Closing).
-// Server component — plain HTML + CSS custom properties; no client component boundary.
+// Server component — plain HTML + CSS custom properties; no Chakra.
 // Six constraints from the spec are enforced via comments where relevant.
 
 import Link from "next/link";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { TYP, paletteCSS, resolveFont } from "../typography";
-import { GroupPublicNav } from "./GroupPublicNav";
 import { MastheadSubscribeForm } from "./MastheadSubscribeForm";
 import { tenantPalettes } from "../tenantPalettes";
 
@@ -63,11 +62,13 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
         .join("\n")
     : "";
 
-  const deck = group.summary || null;
-  const standfirst = group.description || about.text;
+  const deck =
+    group.tagline ||
+    group.summary ||
+    `Public writing, notes, and current work from ${group.title}.`;
   const hasBanner = !!group.background_image_url;
-  const hasStandfirst = !!(standfirst || about.descriptors.length);
-  const pieces = featured_content.pieces.slice(0, 3);
+  const hasStandfirst = !!(about.text || about.descriptors.length);
+  const pieces = featured_content.pieces;
   const hasPieces = pieces.length > 0;
   const leadPiece = pieces[0] ?? null;
   const listPieces = pieces.slice(1);
@@ -101,8 +102,10 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
         fontFamily: "inherit",
       };
 
+  const wideMeasure = setting === "journal" ? "min(1120px, calc(100vw - 64px))" : "min(1040px, calc(100vw - 64px))";
+  const writingMeasure = "64rem";
   const colStyles: React.CSSProperties = {
-    maxWidth: typ.measure,
+    maxWidth: wideMeasure,
     margin: "0 auto",
     padding: "0 16px",
   };
@@ -118,47 +121,87 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
           transition: color var(--transition-duration, 200ms) ease;
         }
         .gplm-all-writing { text-underline-offset: 3px; }
+        .gplm-fallback-plate {
+          background:
+            linear-gradient(90deg, var(--theme-border) 0 1px, transparent 1px) 0 0 / 24px 24px,
+            linear-gradient(0deg, var(--theme-border) 0 1px, transparent 1px) 0 0 / 24px 24px,
+            var(--theme-bg-secondary);
+        }
+        .gplm-hero-panel {
+          background: color-mix(in srgb, var(--theme-bg) 58%, transparent);
+          border: 1px solid color-mix(in srgb, var(--theme-border) 56%, transparent);
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
+          backdrop-filter: blur(6px);
+        }
         @media (max-width: 767px) {
-          .gplm-zone-masthead { padding-top: 20px !important; }
+          .gplm-zone-masthead {
+            padding-bottom: 48px !important;
+          }
+          .gplm-banner-frame,
+          .gplm-fallback-plate {
+            height: 48vh !important;
+            min-height: 360px !important;
+          }
+          .gplm-hero-panel {
+            left: 16px !important;
+            right: 16px !important;
+            bottom: 24px !important;
+            padding: 24px !important;
+          }
+          .gplm-mark {
+            top: 16px !important;
+            right: 16px !important;
+          }
         }
         ${tenantPaletteCSS}
       `}</style>
 
       <div
         className={`gplm-root ${fontClass}${displayExtraClass ? ` ${displayExtraClass}` : ""}`}
-        style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}
+        style={{
+          background: "var(--bg, var(--theme-bg))",
+          color: "var(--theme-text)",
+        }}
       >
         {/* ── Zone 1: Masthead ─────────────────────────────────── */}
         <section
           className="gplm-zone-masthead"
-          style={{ ...colStyles, paddingTop: "20px" }}
+          style={{
+            ...colStyles,
+            paddingBottom: 0,
+            paddingTop: 0,
+          }}
         >
-          {hasBanner && (
-            <div className="gplm-banner-wrap" style={{ position: "relative", marginBottom: "48px" }}>
-              <div
-                className="gplm-banner-frame"
-                style={{
-                  position: "relative",
-                  aspectRatio: "25/9",
-                  overflow: "hidden",
-                  background: "var(--theme-bg-subtle)",
-                }}
-              >
-                {/* Stash-backed URLs are signed, so use a plain image to avoid
-                    next/image cache-key churn while preserving server rendering. */}
+
+          <div className="gplm-banner-wrap" style={{ position: "relative", marginBottom: 0 }}>
+            <div
+              className={hasBanner ? "gplm-banner-frame" : "gplm-fallback-plate"}
+              style={{
+                position: "relative",
+                width: "100vw",
+                marginLeft: "calc(50% - 50vw)",
+                height: "35vh",
+                minHeight: "320px",
+                maxHeight: "420px",
+                overflow: "hidden",
+                background: hasBanner ? "var(--theme-bg-subtle)" : undefined,
+              }}
+            >
+              {hasBanner && (
+                // Signed asset hosts differ between local/dev/prod storage, so use a
+                // plain image here instead of next/image host allow-listing.
                 <img
                   src={group.background_image_url!}
                   alt=""
                   style={{ objectFit: "cover", width: "100%", height: "100%", display: "block" }}
                 />
-              </div>
-
+              )}
               <div
                 className="gplm-mark"
                 style={{
                   position: "absolute",
-                  bottom: "-36px",
-                  left: "24px",
+                  top: "24px",
+                  right: "24px",
                   width: "72px",
                   height: "72px",
                   border: "3px solid var(--theme-bg)",
@@ -166,7 +209,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   background: group.profile_image_url ? undefined : "var(--theme-accent-soft)",
                   flexShrink: 0,
                 }}
-                >
+              >
                 {group.profile_image_url ? (
                   <img
                     src={group.profile_image_url}
@@ -188,52 +231,53 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   </div>
                 )}
               </div>
+              <div
+                className="gplm-hero-panel"
+                style={{
+                  position: "absolute",
+                  left: "max(32px, calc((100vw - 1120px) / 2))",
+                  bottom: "32px",
+                  width: "min(720px, calc(100vw - 64px))",
+                  padding: "32px",
+                }}
+              >
+                <h1
+                  className="gplm-title"
+                  style={{
+                    fontSize: typ.titleSize,
+                    fontWeight: typ.titleWeight,
+                    letterSpacing: typ.titleTracking,
+                    lineHeight: typ.titleLh,
+                    color: "var(--theme-text)",
+                    margin: 0,
+                    ...(displayTitleFamily ? { fontFamily: displayTitleFamily } : {}),
+                  }}
+                >
+                  {group.title}
+                </h1>
+
+                {deck && (
+                  <p
+                    className="gplm-deck"
+                    style={{
+                      color: "var(--theme-text-secondary)",
+                      fontSize: typ.bodySize,
+                      lineHeight: typ.bodyLh,
+                      marginTop: "8px",
+                      marginBottom: 0,
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
+                    {deck}
+                  </p>
+                )}
+              </div>
             </div>
-          )}
-
-          <h1
-            className="gplm-title"
-            style={{
-              fontSize: "2.75rem",
-              fontWeight: typ.titleWeight,
-              letterSpacing: typ.titleTracking,
-              lineHeight: typ.titleLh,
-              color: "var(--theme-text)",
-              margin: 0,
-              ...(displayTitleFamily ? { fontFamily: displayTitleFamily } : {}),
-            }}
-          >
-            {group.title}
-          </h1>
-
-          {deck && (
-            <p
-              className="gplm-deck"
-              style={{
-                color: "var(--theme-text-secondary)",
-                fontSize: typ.bodySize,
-                lineHeight: typ.bodyLh,
-                marginTop: "8px",
-                marginBottom: 0,
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {deck}
-            </p>
-          )}
-
-          <div style={{ height: "2px", background: "var(--theme-accent)", marginTop: "32px" }} />
+          </div>
         </section>
-
-        <GroupPublicNav
-          groupSlug={groupSlug}
-          groupTitle={group.title}
-          active="home"
-          recentTargetId="recent"
-        />
 
         {/* ── Zone 2: Standfirst ───────────────────────────────── */}
         {hasStandfirst && (
@@ -241,23 +285,21 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
             className="gplm-zone-standfirst"
             style={{ ...colStyles, marginTop: "72px" }}
           >
-            {standfirst && (
+            {about.text && (
               <p style={{
                 color: "var(--theme-text-secondary)",
-                fontSize: "1.35rem",
-                lineHeight: 1.5,
+                fontSize: typ.standfirstSize,
+                lineHeight: typ.bodyLh,
                 margin: 0,
-                borderLeft: "2px solid var(--theme-text-secondary)",
-                paddingLeft: "10px",
               }}>
-                {standfirst}
+                {about.text}
               </p>
             )}
 
             {about.descriptors.length > 0 && (
               <div style={{
                 borderTop: `${typ.hairline} solid var(--theme-border)`,
-                marginTop: standfirst ? "16px" : "0",
+                marginTop: about.text ? "16px" : "0",
                 paddingTop: "7px",
                 display: "flex",
                 gap: "8px",
@@ -288,13 +330,10 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
         {hasPieces && (
           <section
             className="gplm-zone-writing"
-            style={{ ...colStyles, marginTop: "48px", paddingBottom: hasClosing ? 0 : "72px" }}
+            style={{ ...colStyles, maxWidth: writingMeasure, marginTop: "32px", paddingBottom: hasClosing ? 0 : "72px" }}
           >
             {/* Section header */}
-            <div
-              id="recent"
-              style={{ marginBottom: "32px" }}
-            >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "32px" }}>
               <span style={{
                 color: "var(--theme-text-muted)",
                 fontVariant: typ.sectionLabel.fontVariant,
@@ -303,8 +342,23 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                 fontSize: typ.sectionLabel.fontSize,
                 textTransform: typ.sectionLabel.textTransform,
               }}>
-                Recent
+                Writing
               </span>
+              {/* accent underline — third and final accent use (constraint 4) */}
+              <Link
+                href={`/groups/${groupSlug}/writing`}
+                className="gplm-all-writing"
+                style={{
+                  color: "var(--theme-text)",
+                  fontSize: typ.bodySize,
+                  fontWeight: "500",
+                  textDecoration: "underline",
+                  textDecorationColor: "var(--theme-accent)",
+                  textDecorationThickness: "2px",
+                }}
+              >
+                All writing →
+              </Link>
             </div>
 
             {/* Lead piece — display size, excerpt, byline */}
@@ -314,7 +368,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   <h2
                     className="gplm-lead-title"
                     style={{
-                      fontSize: "2rem",
+                      fontSize: typ.leadSize,
                       fontWeight: typ.titleWeight,
                       lineHeight: setting === "journal" ? "1.2" : "1.15",
                       color: "var(--theme-text)",
@@ -324,39 +378,30 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   >
                     {leadPiece.title}
                   </h2>
-                </Link>
-                <p style={{
-                  color: "var(--theme-text-muted)",
-                  fontSize: "0.875rem",
-                  marginTop: "8px",
-                  marginBottom: 0,
-                }}>
-                  {byline(leadPiece)}
-                </p>
-                {leadPiece.excerpt && (
+                  {leadPiece.excerpt && (
+                    <p style={{
+                      color: "var(--theme-text-secondary)",
+                      fontSize: typ.bodySize,
+                      lineHeight: typ.bodyLh,
+                      marginTop: "8px",
+                      marginBottom: 0,
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    }}>
+                      {leadPiece.excerpt}
+                    </p>
+                  )}
                   <p style={{
-                    color: "var(--theme-text-secondary)",
-                    fontSize: typ.bodySize,
-                    lineHeight: typ.bodyLh,
+                    color: "var(--theme-text-muted)",
+                    fontSize: "0.875rem",
                     marginTop: "8px",
                     marginBottom: 0,
                   }}>
-                    {leadPiece.excerpt.slice(0, 80).trimEnd()}…{" "}
-                    <Link
-                      href={`/reading/${leadPiece.slug}`}
-                      className="gplm-read-more"
-                      style={{
-                        color: "var(--theme-text)",
-                        fontWeight: "600",
-                        textDecoration: "underline",
-                        textDecorationColor: "var(--theme-accent)",
-                        textUnderlineOffset: "3px",
-                      }}
-                    >
-                      Read more
-                    </Link>
+                    {byline(leadPiece)}
                   </p>
-                )}
+                </Link>
               </div>
             )}
 
@@ -393,25 +438,9 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                     </Link>
                   </li>
                 ))}
+                <li style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }} aria-hidden />
               </ul>
             )}
-
-            <div style={{ marginTop: "24px", textAlign: "right" }}>
-              <Link
-                href={`/groups/${groupSlug}/writing`}
-                className="gplm-all-writing"
-                style={{
-                  color: "var(--theme-text)",
-                  fontSize: typ.bodySize,
-                  fontWeight: "500",
-                  textDecoration: "underline",
-                  textDecorationColor: "var(--theme-accent)",
-                  textDecorationThickness: "2px",
-                }}
-              >
-                All writing →
-              </Link>
-            </div>
           </section>
         )}
 

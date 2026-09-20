@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupPresentationPanel } from "./GroupPresentationPanel";
 import type { GroupPublicPresentation } from "../types";
 
@@ -40,10 +41,17 @@ interface Props {
   groupSlug: string;
   groupTitle: string;
   initialPresentation?: GroupPublicPresentation | null;
+  allowDesign?: boolean;
 }
 
-export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation }: Props) {
+export function GroupPublicAdminBar({
+  groupSlug,
+  groupTitle,
+  initialPresentation,
+  allowDesign = false,
+}: Props) {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [perms, setPerms] = useState<MyPerms | null>(null);
   const [groupData, setGroupData] = useState<GroupData>({
     title: groupTitle,
@@ -59,14 +67,27 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      setPerms(null);
+      return;
+    }
+
+    let cancelled = false;
+
     axiosInstance
       .get<MyPerms>(`/api/groups/${groupSlug}/my-permissions`)
       .then((r) => {
+        if (cancelled) return null;
         setPerms(r.data);
-        // Fetch group data to pre-fill edit fields
+        const canEdit = r.data.is_admin || r.data.is_owner || r.data.is_steward;
+        if (!canEdit) return null;
+
         return axiosInstance.get<GroupData>(`/api/groups/${groupSlug}`);
       })
       .then((r) => {
+        if (!r || cancelled) return;
         setGroupData({
           title: r.data.title,
           description: r.data.description || "",
@@ -74,8 +95,14 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
           background_image_url: r.data.background_image_url || null,
         });
       })
-      .catch(() => setPerms(null));
-  }, [groupSlug]);
+      .catch(() => {
+        if (!cancelled) setPerms(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, groupSlug, isAuthenticated]);
 
   const isAdmin = perms && (perms.is_admin || perms.is_owner || perms.is_steward);
   if (!isAdmin) return null;
@@ -206,23 +233,27 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
             >
               ✏ Background
             </Button>
-            <Box
-              w="1px"
-              h="16px"
-              bg="gray.700"
-              mx={1}
-              flexShrink={0}
-            />
-            <Button
-              size="xs"
-              variant={showDesignPanel ? "solid" : "ghost"}
-              colorPalette={showDesignPanel ? "indigo" : undefined}
-              color={showDesignPanel ? undefined : "gray.300"}
-              _hover={showDesignPanel ? undefined : { color: "white", bg: "gray.700" }}
-              onClick={() => setShowDesignPanel((v) => !v)}
-            >
-              ◈ Design
-            </Button>
+            {allowDesign && (
+              <>
+                <Box
+                  w="1px"
+                  h="16px"
+                  bg="gray.700"
+                  mx={1}
+                  flexShrink={0}
+                />
+                <Button
+                  size="xs"
+                  variant={showDesignPanel ? "solid" : "ghost"}
+                  colorPalette={showDesignPanel ? "indigo" : undefined}
+                  color={showDesignPanel ? undefined : "gray.300"}
+                  _hover={showDesignPanel ? undefined : { color: "white", bg: "gray.700" }}
+                  onClick={() => setShowDesignPanel((v) => !v)}
+                >
+                  ◈ Design
+                </Button>
+              </>
+            )}
           </Flex>
 
           <Link href={`/group/${groupSlug}/admin/settings`} style={{ textDecoration: "none" }}>
@@ -237,7 +268,7 @@ export function GroupPublicAdminBar({ groupSlug, groupTitle, initialPresentation
       <Box h="40px" />
 
       {/* Design panel */}
-      {showDesignPanel && (
+      {allowDesign && showDesignPanel && (
         <GroupPresentationPanel
           groupSlug={groupSlug}
           initialPresentation={initialPresentation ?? {}}

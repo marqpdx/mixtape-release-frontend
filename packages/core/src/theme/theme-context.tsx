@@ -3,9 +3,16 @@
 
 import * as React from "react";
 import { useColorMode } from "./color-mode";
+import {
+  applyThemePreferences,
+  getThemePreferenceStorageKeys,
+  readStoredThemePreferences,
+  type StoredContrastMode,
+  type StoredFontScale,
+} from "./theme-preferences";
 
-export type ContrastMode = "normal" | "high";
-export type FontScale = 0.875 | 1 | 1.125 | 1.25 | 1.5;
+export type ContrastMode = StoredContrastMode;
+export type FontScale = StoredFontScale;
 export type ColorMode = "light" | "dark";
 
 export interface ThemeColors {
@@ -99,11 +106,7 @@ export function ThemeProvider({
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   const storageKeys = React.useMemo(
-    () => ({
-      theme: `${storageKeyPrefix}-theme`,
-      contrast: `${storageKeyPrefix}-contrast`,
-      fontScale: `${storageKeyPrefix}-font-scale`,
-    }),
+    () => getThemePreferenceStorageKeys(storageKeyPrefix),
     [storageKeyPrefix]
   );
 
@@ -119,25 +122,21 @@ export function ThemeProvider({
     if (typeof window === "undefined") return;
 
     const savedTheme = localStorage.getItem(storageKeys.theme);
-    const savedContrast = localStorage.getItem(storageKeys.contrast) as ContrastMode | null;
-    const savedFontScale = localStorage.getItem(storageKeys.fontScale);
+    const preferences = readStoredThemePreferences(localStorage, storageKeyPrefix);
 
     if (savedTheme && themes.find((theme) => theme.id === savedTheme)) {
       setCurrentThemeId(savedTheme);
     }
-    if (savedContrast === "high") {
-      setContrastModeState("high");
+    if (preferences.contrastMode) {
+      setContrastModeState(preferences.contrastMode);
     }
-    if (savedFontScale) {
-      const scale = parseFloat(savedFontScale) as FontScale;
-      if ([0.875, 1, 1.125, 1.25, 1.5].includes(scale)) {
-        setFontScaleState(scale);
-      }
+    if (preferences.fontScale) {
+      setFontScaleState(preferences.fontScale);
     }
 
     setIsLoaded(true);
     setAvailableThemes(themes);
-  }, [storageKeys, themes]);
+  }, [storageKeyPrefix, storageKeys.theme, themes]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -206,10 +205,8 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const root = document.documentElement;
-    root.style.setProperty("--font-scale", fontScale.toString());
-    root.style.fontSize = `${fontScale * 100}%`;
-  }, [fontScale]);
+    applyThemePreferences(document.documentElement, { contrastMode, fontScale });
+  }, [contrastMode, fontScale]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;

@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { PublicWritingPiece } from "@mixtape/api/clients/public/publicApi";
 import { PieceBody } from "./PieceBody";
 import { GroupPublicFooter } from "../../groups/[slug]/sections/GroupPublicFooter";
+import { GroupPublicNav } from "../../groups/[slug]/sections/GroupPublicNav";
 import type { GroupPublicLandingConfig, TypographySetting } from "../../groups/[slug]/types";
 import { tenantPalettes } from "../../groups/[slug]/tenantPalettes";
 
@@ -200,8 +201,15 @@ export default async function PublicPieceReaderPage({
         .gpr-body a { color: var(--theme-text); text-decoration-color: var(--theme-accent); text-underline-offset: 3px; }
         ${paletteOverrides(groupConfig)}
       `}</style>
+      {piece.sponsor_group && (
+        <GroupPublicNav
+          groupSlug={piece.sponsor_group.slug}
+          groupTitle={piece.sponsor_group.title}
+          active="reading"
+        />
+      )}
 
-      <article className="gpr-content" style={{ ...colStyles, paddingTop: "72px", paddingBottom: "72px" }}>
+      <article className="gpr-content" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "72px" }}>
         <header className="gpr-header" style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
           <Link
             href={backHref}

@@ -102,6 +102,7 @@ export interface PublicLibraryPiece {
   slug: string;
   title: string;
   excerpt: string;
+  body_preview: string;
   writing_kind: string;
   published_at: string | null;
   reading_time: number | null;
