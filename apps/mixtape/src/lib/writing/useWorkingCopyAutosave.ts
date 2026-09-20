@@ -27,10 +27,23 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+interface UseWorkingCopyAutosaveOptions {
+  /**
+   * Called after a successful autosave when the backend filled in a
+   * suggested excerpt (because the field was blank). The caller decides
+   * whether to adopt it — typically only if the field is still blank
+   * locally, so a suggestion arriving after the round-trip never clobbers
+   * something the user just typed.
+   */
+  onExcerptSuggested?: (excerpt: string) => void;
+}
+
 export function useWorkingCopyAutosave(
   pieceId: string,
-  debounceMs: number = 2500
+  debounceMs: number = 2500,
+  options: UseWorkingCopyAutosaveOptions = {}
 ) {
+  const { onExcerptSuggested } = options;
   console.log(`🪝  useWorkingCopyAutosave called with pieceId: ${pieceId}`);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,6 +109,12 @@ export function useWorkingCopyAutosave(
           setSplitSuggestionStatus(suggestionStatus);
         }
 
+        // Field was blank when sent, backend filled in a suggestion — offer it back.
+        const returnedExcerpt = response.data?.excerpt as string | undefined;
+        if (!payload.excerpt && returnedExcerpt) {
+          onExcerptSuggested?.(returnedExcerpt);
+        }
+
         setSaveStatus('saved');
         console.log('✅ Working copy saved successfully');
         scheduleStatusReset('saved', 2000);
@@ -121,7 +140,7 @@ export function useWorkingCopyAutosave(
     }
 
     savingRef.current = false;
-  }, [pieceId, clearResetStatusTimer, scheduleStatusReset]); // Only depend on pieceId + local helpers
+  }, [pieceId, clearResetStatusTimer, scheduleStatusReset, onExcerptSuggested]);
 
   const schedule = useCallback((data: WorkingCopyData) => {
     console.log(`⏰  schedule called with:`, data);

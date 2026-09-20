@@ -69,6 +69,7 @@ export function DraftEditor({
   excerpt,
   onTitleChange,
   onDocChange,
+  onExcerptChange,
   onFirstSave,
   onCopyDeskStateChange,
   sidePadding = "0px",
@@ -119,13 +120,24 @@ export function DraftEditor({
     hasSavedOnceRef.current = false;
   }, [pieceId]);
 
-  // Autosave
-  const { schedule, saveStatus } = useWorkingCopyAutosave(pieceId, 2500);
-
   // Track local state for autosave scheduling
   const titleRef = useRef(title);
   const docRef = useRef(docJSON);
   const excerptRef = useRef(excerpt);
+
+  // Autosave — adopt a backend-suggested excerpt only if the field is still
+  // blank locally, so a suggestion arriving after the round-trip never
+  // clobbers text the user typed in the meantime.
+  const { schedule, saveStatus } = useWorkingCopyAutosave(pieceId, 2500, {
+    onExcerptSuggested: useCallback(
+      (suggested: string) => {
+        if (!excerptRef.current) {
+          onExcerptChange?.(suggested);
+        }
+      },
+      [onExcerptChange]
+    ),
+  });
 
   titleRef.current = title;
   docRef.current = docJSON;
