@@ -9,16 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { IconExternalLink, IconMail, IconUsers, IconUser } from "@tabler/icons-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
-
-type ProseMirrorNode = {
-  type?: string;
-  text?: string;
-  content?: ProseMirrorNode[];
-};
-
-type ProseMirrorDoc = {
-  content?: ProseMirrorNode[];
-};
+import { generateExcerptFromProsemirror, type ProseMirrorDoc } from "@/lib/writing/generateExcerpt";
 
 type DocumentJSON = Record<string, unknown>;
 
@@ -77,30 +68,15 @@ export default function PublishPanel({
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [resultType, setResultType] = useState<'success' | 'error'>('success');
 
-  // Auto-generate excerpt from content if empty
+  // Auto-generate excerpt from content if empty — skips headings/images to
+  // find the first real paragraph, same algorithm as the backend's
+  // generate_excerpt_from_prosemirror() (see src/lib/writing/generateExcerpt.ts).
   useEffect(() => {
     if (!excerpt && docJSON && docJSON.content) {
-      const textContent = extractTextFromDoc(docJSON as ProseMirrorDoc);
-      const autoExcerpt = textContent.slice(0, 200);
-      setExcerpt(autoExcerpt + (textContent.length > 200 ? "..." : ""));
+      const suggested = generateExcerptFromProsemirror(docJSON as ProseMirrorDoc, 200);
+      if (suggested) setExcerpt(suggested);
     }
   }, [docJSON, excerpt]);
-
-  const extractTextFromDoc = (doc: ProseMirrorDoc | null): string => {
-    if (!doc || !doc.content) return "";
-
-    const extractText = (node: ProseMirrorNode): string => {
-      if (node.type === "text") {
-        return node.text || "";
-      }
-      if (node.content) {
-        return node.content.map(extractText).join("");
-      }
-      return "";
-    };
-
-    return doc.content.map(extractText).join(" ").trim();
-  };
 
   const handlePublish = async () => {
     setBusy(true);
