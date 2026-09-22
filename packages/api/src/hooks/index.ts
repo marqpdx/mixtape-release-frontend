@@ -20,6 +20,7 @@ export * from './worksessions'
 export * from './studio'
 export * from './radar'
 export * from './atrium'
+export * from './folio'
 
 // Root-level hooks
 export * from './useAssets'
