@@ -30,10 +30,12 @@ export function inferSubsystemFromPathname(pathname: string): string | null {
   if (pathname.startsWith("/demos")) return "demos";
   if (pathname.startsWith("/dispatch")) return "dispatch";
   if (pathname.startsWith("/feedback")) return "feedback";
+  if (pathname.startsWith("/folio")) return "folio";
   if (pathname.startsWith("/help")) return "help";
   if (pathname.startsWith("/living-books")) return "living-books";
   if (pathname.startsWith("/member")) return "member";
   if (pathname.startsWith("/notifications")) return "notifications";
+  if (pathname.startsWith("/opportunities")) return "opportunities";
   if (pathname.startsWith("/seed")) return "writing";
   if (pathname.startsWith("/settings")) return "member";
   if (pathname.includes("/almanac")) return "almanac";

@@ -877,6 +877,51 @@
         "review"
       ]
     },
+    "folio-overview": {
+      "key": "folio-overview",
+      "slug": "folio",
+      "feature": "folio",
+      "title": "Folio",
+      "subsystem": "folio",
+      "area": "overview",
+      "summary": "Start a new Folio from a raw, unstructured thought, and watch what you wrote get preserved verbatim before anything is interpreted.",
+      "excerpt": "Start a new Folio from a raw, unstructured thought, and watch what you wrote get preserved verbatim before anything is interpreted.",
+      "plainText": "Folio Folio is where a new body of work begins — before it has a title, a shape, or a plan. You start by writing down what's on your mind in plain language; Mixtape keeps that exactly as written, then works out what's material in it. What you can do here - Start a new Folio by describing what you're working on, in your own words - See your raw entry preserved exactly as you wrote it, with nothing rewritten or summarized on your behalf - (Early builds) Inspect an early, deterministic pass over your entry via a debug view, before any model-based interpretation is added Key concepts Inception — The raw, unedited text you enter to start a Folio. Nothing about it is corrected, reformatted, or reinterpreted before it's saved. Materiality — What Mixtape works out is worth acting on from your inception text. This is judged, not assumed — early builds intentionally show you only the preserved raw text and do not yet render that judgment. How to start a Folio 1. Open Folio → New and answer \"What are you working on?\" in your own words — a sentence or a few paragraphs both work. 2. Select Begin. Mixtape saves your entry and takes you to its inception page. 3. On the inception page, confirm your text was preserved exactly as written. This is the current build's guarantee — everything downstream (identifying what's material, shaping a Folio around it) builds on this being trustworthy first. What this build does not do yet This is an early, intentionally minimal build. It does not yet show you a shaped interpretation of your inception, suggest structure, or create Folio content on your behalf — it only proves your raw entry is captured and preserved. Treat anything beyond the preserved text on this page as not yet available, not as missing or broken.",
+      "html": "<h1 id=\"folio\">Folio</h1>\n<p>Folio is where a new body of work begins — before it has a title, a shape, or a plan. You start by writing down what's on your mind in plain language; Mixtape keeps that exactly as written, then works out what's material in it.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Start a new Folio by describing what you're working on, in your own words</li>\n<li>See your raw entry preserved exactly as you wrote it, with nothing rewritten or summarized on your behalf</li>\n<li>(Early builds) Inspect an early, deterministic pass over your entry via a debug view, before any model-based interpretation is added</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Inception</strong> — The raw, unedited text you enter to start a Folio. Nothing about it is corrected, reformatted, or reinterpreted before it's saved.</p>\n<p><strong>Materiality</strong> — What Mixtape works out is worth acting on from your inception text. This is judged, not assumed — early builds intentionally show you only the preserved raw text and do not yet render that judgment.</p>\n<h2 id=\"how-to-start-a-folio\">How to start a Folio</h2>\n<ol>\n<li>Open <strong>Folio → New</strong> and answer \"What are you working on?\" in your own words — a sentence or a few paragraphs both work.</li>\n<li>Select <strong>Begin</strong>. Mixtape saves your entry and takes you to its inception page.</li>\n<li>On the inception page, confirm your text was preserved exactly as written. This is the current build's guarantee — everything downstream (identifying what's material, shaping a Folio around it) builds on this being trustworthy first.</li>\n</ol>\n<h2 id=\"what-this-build-does-not-do-yet\">What this build does not do yet</h2>\n<p>This is an early, intentionally minimal build. It does not yet show you a shaped interpretation of your inception, suggest structure, or create Folio content on your behalf — it only proves your raw entry is captured and preserved. Treat anything beyond the preserved text on this page as not yet available, not as missing or broken.</p>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to start a Folio",
+          "id": "how-to-start-a-folio"
+        },
+        {
+          "depth": 2,
+          "text": "What this build does not do yet",
+          "id": "what-this-build-does-not-do-yet"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/folio/new",
+        "/folio/inception/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "folio",
+        "inception",
+        "materiality"
+      ]
+    },
     "gather-overview": {
       "key": "gather-overview",
       "slug": "gather",
@@ -1402,6 +1447,56 @@
         "notifications",
         "alerts",
         "updates"
+      ]
+    },
+    "opportunities-overview": {
+      "key": "opportunities-overview",
+      "slug": "opportunities",
+      "feature": "opportunities",
+      "title": "Opportunities",
+      "subsystem": "opportunities",
+      "area": "overview",
+      "summary": "Shape a current search profile, run approved opportunity sources, and review findings before deciding what deserves deeper attention.",
+      "excerpt": "Shape a current search profile, run approved opportunity sources, and review findings before deciding what deserves deeper attention.",
+      "plainText": "Opportunities Opportunities is a private workspace for finding and reviewing current work possibilities without handing judgment over to an automated system. What you can do here - Record the roles, technologies, arrangements, and constraints that matter now - Keep the résumé version informing the search visible - Inspect the focused searches Mixtape will run - Search approved external sources and retain the resulting evidence - Mark findings as interesting, pass on them, or request fuller source details Key concepts Search profile — A versioned statement of what you are looking for now. It is informed by your résumé, but it also records current preferences and exclusions that a résumé cannot express. Search lane — One focused query within the broader profile. Separate lanes help Mixtape find adjacent kinds of work without relying on one oversized query. Working Set — The reviewable results of one search run, preserved with the profile version, source, query details, and outcome counts that produced it. Shallow result — The bounded summary returned during initial discovery. Request full details only for a listing that deserves closer attention. How to run a search 1. Open the search profile and identify the résumé version informing it. 2. Add one or more focused search lanes. 3. Record strong technologies, domains, seniority, work arrangements, and exclusions. 4. Save the profile and inspect the searches shown under Next search. 5. Select Search Dice. 6. Review the resulting Working Set before requesting full details or taking action. Important boundaries - Search findings are provisional and require human review. - Fit labels are preliminary signals, not employment decisions. - Mixtape does not apply for a role automatically. - Verify source details directly before corresponding with an employer or recruiter. Current limitations - Dice is the first opportunity source. - Résumé selection is recorded by label and version while managed résumé assets are still being completed. - Deeper fit analysis and outbound application packets will arrive in later phases.",
+      "html": "<h1 id=\"opportunities\">Opportunities</h1>\n<p>Opportunities is a private workspace for finding and reviewing current work possibilities without handing judgment over to an automated system.</p>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Record the roles, technologies, arrangements, and constraints that matter now</li>\n<li>Keep the résumé version informing the search visible</li>\n<li>Inspect the focused searches Mixtape will run</li>\n<li>Search approved external sources and retain the resulting evidence</li>\n<li>Mark findings as interesting, pass on them, or request fuller source details</li>\n</ul>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>Search profile</strong> — A versioned statement of what you are looking for now. It is informed by your résumé, but it also records current preferences and exclusions that a résumé cannot express.</p>\n<p><strong>Search lane</strong> — One focused query within the broader profile. Separate lanes help Mixtape find adjacent kinds of work without relying on one oversized query.</p>\n<p><strong>Working Set</strong> — The reviewable results of one search run, preserved with the profile version, source, query details, and outcome counts that produced it.</p>\n<p><strong>Shallow result</strong> — The bounded summary returned during initial discovery. Request full details only for a listing that deserves closer attention.</p>\n<h2 id=\"how-to-run-a-search\">How to run a search</h2>\n<ol>\n<li>Open the search profile and identify the résumé version informing it.</li>\n<li>Add one or more focused search lanes.</li>\n<li>Record strong technologies, domains, seniority, work arrangements, and exclusions.</li>\n<li>Save the profile and inspect the searches shown under <strong>Next search</strong>.</li>\n<li>Select <strong>Search Dice</strong>.</li>\n<li>Review the resulting Working Set before requesting full details or taking action.</li>\n</ol>\n<h2 id=\"important-boundaries\">Important boundaries</h2>\n<ul>\n<li>Search findings are provisional and require human review.</li>\n<li>Fit labels are preliminary signals, not employment decisions.</li>\n<li>Mixtape does not apply for a role automatically.</li>\n<li>Verify source details directly before corresponding with an employer or recruiter.</li>\n</ul>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Dice is the first opportunity source.</li>\n<li>Résumé selection is recorded by label and version while managed résumé assets are still being completed.</li>\n<li>Deeper fit analysis and outbound application packets will arrive in later phases.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to run a search",
+          "id": "how-to-run-a-search"
+        },
+        {
+          "depth": 2,
+          "text": "Important boundaries",
+          "id": "important-boundaries"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/opportunities"
+      ],
+      "workAreas": [],
+      "tags": [
+        "opportunities",
+        "job search",
+        "working sets",
+        "sourcework"
       ]
     },
     "projects-overview": {
@@ -1988,6 +2083,9 @@
     "feedback": [
       "feedback-overview"
     ],
+    "folio": [
+      "folio-overview"
+    ],
     "gather": [
       "gather-overview"
     ],
@@ -2012,6 +2110,9 @@
     ],
     "notifications": [
       "notifications-overview"
+    ],
+    "opportunities": [
+      "opportunities-overview"
     ],
     "projects": [
       "projects-overview"
@@ -2038,5 +2139,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-09-20T18:04:03.030Z"
+  "generatedAt": "2026-09-22T20:26:30.475Z"
 }
