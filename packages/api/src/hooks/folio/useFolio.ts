@@ -4,8 +4,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   createFolioInception,
   fetchFolioInception,
+  analyzeFolioInception,
   type FolioInception,
   type FolioInceptionCreatePayload,
+  type FolioAnalyzeResult,
 } from "../../clients/folio/folioApi";
 
 export const folioQueryKeys = {
@@ -25,5 +27,11 @@ export function useFolioInception(inceptionId: string) {
     queryFn: () => fetchFolioInception(inceptionId),
     staleTime: 30_000,
     enabled: Boolean(inceptionId),
+  });
+}
+
+export function useAnalyzeFolioInception(inceptionId: string) {
+  return useMutation<FolioAnalyzeResult, Error, { debug: boolean }>({
+    mutationFn: ({ debug }) => analyzeFolioInception(inceptionId, debug),
   });
 }

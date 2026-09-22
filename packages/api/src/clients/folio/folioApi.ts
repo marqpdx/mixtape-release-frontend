@@ -46,6 +46,28 @@ export interface FolioInceptionCreatePayload {
   title?: string;
 }
 
+// Gate 1 — deterministic surface parse (prototype spec §8). Candidate span
+// map, not final structure.
+export interface FolioGate1Output {
+  enumerations: { label: string; start: number; end: number }[];
+  count_cues: { value: number; text: string; start: number; end: number }[];
+  quoted_spans: { text: string; start: number; end: number }[];
+  about_subject: { source_text: string; start: number; end: number } | null;
+}
+
+export interface FolioAnalyzeDebug {
+  gate_1: {
+    output: FolioGate1Output;
+    latency_ms: number;
+  };
+}
+
+export interface FolioAnalyzeResult {
+  inception_id: string;
+  status: string;
+  debug?: FolioAnalyzeDebug;
+}
+
 // ============================================================================
 // Inceptions
 // ============================================================================
@@ -57,5 +79,11 @@ export async function createFolioInception(payload: FolioInceptionCreatePayload)
 
 export async function fetchFolioInception(inceptionId: string): Promise<FolioInception> {
   const res = await axiosInstance.get(`/api/folio/inceptions/${inceptionId}`);
+  return res.data;
+}
+
+export async function analyzeFolioInception(inceptionId: string, debug: boolean): Promise<FolioAnalyzeResult> {
+  const params = debug ? "?debug=1" : "";
+  const res = await axiosInstance.post(`/api/folio/inceptions/${inceptionId}/analyze${params}`);
   return res.data;
 }
