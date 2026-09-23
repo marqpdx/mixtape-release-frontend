@@ -14,6 +14,10 @@ import { useFolioInception, useAnalyzeFolioInception } from "@mixtape/api/hooks/
 // Phase 1 adds Gate 1 (deterministic surface parse, no LLM) behind a debug
 // drawer (?debug=1) per prototype spec §12 — not shown in the primary
 // surface, which stays visually quiet per spec §5.
+//
+// Phase 2 adds Gate 2 (subject/intention extraction, local model via
+// Inkwell) to the same debug drawer. Gates 3-5 are still not built, so
+// this still does not render a State B interpretation.
 export default function FolioInceptionPage({
   params,
 }: {
@@ -74,7 +78,7 @@ export default function FolioInceptionPage({
               onClick={() => analyze({ debug: true })}
               loading={isAnalyzing}
             >
-              Run Gate 1 (deterministic parse)
+              Run Gates 1–2 (deterministic parse + subject/intention extraction)
             </Button>
             {analyzeResult?.debug && (
               <Box
@@ -91,7 +95,7 @@ export default function FolioInceptionPage({
                   whiteSpace="pre"
                   bg="transparent"
                 >
-                  {JSON.stringify(analyzeResult.debug.gate_1, null, 2)}
+                  {JSON.stringify(analyzeResult.debug, null, 2)}
                 </Code>
               </Box>
             )}

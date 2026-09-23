@@ -55,9 +55,28 @@ export interface FolioGate1Output {
   about_subject: { source_text: string; start: number; end: number } | null;
 }
 
+// Gate 2 — subject/intention extraction (prototype spec §8-9). Local-model
+// call via Inkwell; spans are grounded deterministically server-side.
+export interface FolioGate2Span {
+  source_text: string;
+  start: number;
+  end: number;
+}
+
+export interface FolioGate2Output {
+  subject: FolioGate2Span | null;
+  intention: FolioGate2Span | null;
+  method: string | null;
+}
+
 export interface FolioAnalyzeDebug {
   gate_1: {
     output: FolioGate1Output;
+    latency_ms: number;
+  };
+  gate_2: {
+    output: FolioGate2Output | null;
+    error: string | null;
     latency_ms: number;
   };
 }
