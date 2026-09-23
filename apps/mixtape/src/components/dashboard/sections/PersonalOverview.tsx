@@ -62,8 +62,11 @@ export default function PersonalOverview({
   const mutedTextColor = useColorModeValue('gray.700', 'gray.300');
   const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '—';
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return parsed.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'

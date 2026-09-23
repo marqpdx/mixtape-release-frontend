@@ -67,7 +67,7 @@ export interface UserIdentity {
   is_superuser: boolean;
   can_use_beacon?: boolean;
   can_use_lighthouse?: boolean; // backward compat alias
-  date_joined: string;
+  date_joined: string | null;
   roles: Role[];
   profile: UserProfile | null;
   groups?: Array<{

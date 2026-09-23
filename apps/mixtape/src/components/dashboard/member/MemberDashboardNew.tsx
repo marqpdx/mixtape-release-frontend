@@ -52,8 +52,11 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-function memberSinceYear(iso: string): string {
-  return new Date(iso).getFullYear().toString();
+function memberSinceYear(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.getFullYear().toString();
 }
 
 // ── nav config ─────────────────────────────────────────────────────────────
