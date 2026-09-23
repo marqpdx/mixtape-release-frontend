@@ -69,6 +69,21 @@ export interface FolioGate2Output {
   method: string | null;
 }
 
+// Gate 3 — materiality classification (prototype spec §8-9). Decides
+// material/not-material per Gate 1 candidate span; spans are Gate 1's own,
+// never re-derived from the model's output.
+export interface FolioGate3Item {
+  source_start: number;
+  source_end: number;
+  material: boolean;
+  reason_code: string;
+}
+
+export interface FolioGate3Output {
+  items: FolioGate3Item[];
+  method: string | null;
+}
+
 export interface FolioAnalyzeDebug {
   gate_1: {
     output: FolioGate1Output;
@@ -76,6 +91,11 @@ export interface FolioAnalyzeDebug {
   };
   gate_2: {
     output: FolioGate2Output | null;
+    error: string | null;
+    latency_ms: number;
+  };
+  gate_3: {
+    output: FolioGate3Output | null;
     error: string | null;
     latency_ms: number;
   };
