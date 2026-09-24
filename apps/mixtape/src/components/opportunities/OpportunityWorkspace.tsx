@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import {
   Badge,
   Box,
@@ -24,6 +25,8 @@ import {
   BriefcaseBusiness,
   Check,
   ExternalLink,
+  FileText,
+  Link2,
   Plus,
   RefreshCw,
   Save,
@@ -31,6 +34,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { OpportunityApplicationDrawer } from "./OpportunityApplicationDrawer";
@@ -49,6 +53,8 @@ type OpportunityProfile = {
   name: string;
   resume_label: string;
   resume_version: string;
+  resume_asset?: ResumeAsset | null;
+  resume_asset_id?: string | null;
   query_lanes: QueryLane[];
   target_roles: string[];
   geography: string[];
@@ -60,6 +66,22 @@ type OpportunityProfile = {
   exclusions: string[];
   freshness_hours: 24 | 72 | 168;
   preferences: Record<string, unknown>;
+};
+
+type ResumeAsset = {
+  id: string;
+  type: string;
+  file_name: string;
+  file_type: string;
+  file_size: number | null;
+  upload_status: "queued" | "completed" | "failed";
+  privacy: string;
+};
+
+type ProfileAssetRecord = {
+  id: string;
+  title: string;
+  asset: ResumeAsset;
 };
 
 type PlannedQuery = {
@@ -108,6 +130,8 @@ type SearchRun = {
   execution_metadata: {
     query_results?: Array<{ lane_label: string; returned: number; available?: number }>;
     profile_version?: number;
+    acquisition_mode?: "profile_search" | "ad_hoc_query" | "direct_url";
+    ad_hoc_query?: string;
   };
   opportunities: Array<{ id: string; opportunity: Opportunity }>;
   created_at: string;
@@ -117,6 +141,8 @@ const emptyProfile: OpportunityProfile = {
   name: "Current opportunity profile",
   resume_label: "",
   resume_version: "",
+  resume_asset: null,
+  resume_asset_id: null,
   query_lanes: [{ id: "primary", label: "Primary search", keyword: "", enabled: true }],
   target_roles: [],
   geography: ["United States"],
@@ -140,6 +166,7 @@ const EMPLOYMENT_OPTIONS = [
 
 const csv = (values: string[]) => values.join(", ");
 const fromCsv = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
+const delay = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 export function OpportunityWorkspace() {
   const [profile, setProfile] = useState<OpportunityProfile>(emptyProfile);
@@ -151,22 +178,48 @@ export function OpportunityWorkspace() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [busyCandidate, setBusyCandidate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [disclosure, setDisclosure] = useState("");
   const [applicationOpportunity, setApplicationOpportunity] = useState<ApplicationOpportunity | null>(null);
+  const [adHocQuery, setAdHocQuery] = useState("");
+  const [diceURL, setDiceURL] = useState("");
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [resumeAssets, setResumeAssets] = useState<ProfileAssetRecord[]>([]);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+
+  const refreshResumeAssets = useCallback(async (memberProfileId: string) => {
+    const response = await axiosInstance.get(
+      `/api/assets/managed/list?sponsor_type=profile&sponsor_id=${memberProfileId}`,
+    );
+    const records = (response.data as ProfileAssetRecord[]).filter(isPDFAsset);
+    setResumeAssets(records);
+    setProfile((current) => {
+      const selected = records.find((record) => record.asset.id === current.resume_asset_id);
+      return selected ? { ...current, resume_asset: selected.asset } : current;
+    });
+    return records;
+  }, []);
 
   const loadWorkspace = useCallback(async () => {
     setError(null);
     try {
-      const [profileResponse, runsResponse] = await Promise.all([
+      const [profileResponse, runsResponse, memberResponse] = await Promise.all([
         axiosInstance.get("/api/opportunities/profile"),
         axiosInstance.get("/api/opportunities/search-runs"),
+        axiosInstance.get("/api/members/me"),
       ]);
       const savedProfile = profileResponse.data.profile as OpportunityProfile | null;
       const nextRuns = runsResponse.data.runs as SearchRun[];
+      const nextProfileId = String(memberResponse.data.profile_id || "");
+      setProfileId(nextProfileId || null);
+      if (nextProfileId) {
+        await refreshResumeAssets(nextProfileId);
+      }
       if (savedProfile) {
-        setProfile(savedProfile);
+        setProfile(withResumeAssetId(savedProfile));
         setHasProfile(true);
         setEditing(false);
         const planResponse = await axiosInstance.get("/api/opportunities/query-plan");
@@ -180,7 +233,7 @@ export function OpportunityWorkspace() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshResumeAssets]);
 
   useEffect(() => {
     void loadWorkspace();
@@ -201,7 +254,7 @@ export function OpportunityWorkspace() {
     setError(null);
     try {
       const response = await axiosInstance.put("/api/opportunities/profile", profile);
-      setProfile(response.data.profile);
+      setProfile(withResumeAssetId(response.data.profile));
       setHasProfile(true);
       setEditing(false);
       const planResponse = await axiosInstance.get("/api/opportunities/query-plan");
@@ -213,19 +266,99 @@ export function OpportunityWorkspace() {
     }
   };
 
-  const runSearch = async () => {
+  const addRun = (run: SearchRun) => {
+    setRuns((current) => [run, ...current.filter((item) => item.id !== run.id)]);
+    setSelectedRunId(run.id);
+  };
+
+  const runSearch = async (query = "") => {
     setSearching(true);
     setError(null);
     try {
-      const response = await axiosInstance.post("/api/opportunities/search-runs", {});
+      const response = await axiosInstance.post("/api/opportunities/search-runs", query ? { query } : {});
       const run = response.data.run as SearchRun;
-      setRuns((current) => [run, ...current.filter((item) => item.id !== run.id)]);
-      setSelectedRunId(run.id);
+      addRun(run);
+      if (query) setAdHocQuery("");
       setDisclosure(response.data.disclosure ?? disclosure);
     } catch (requestError) {
       setError(apiError(requestError, "Dice search could not be completed."));
     } finally {
       setSearching(false);
+    }
+  };
+
+  const importDiceURL = async () => {
+    setImporting(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.post("/api/opportunities/imports/dice-url", { url: diceURL });
+      addRun(response.data.run as SearchRun);
+      setDiceURL("");
+      setDisclosure(response.data.disclosure ?? disclosure);
+    } catch (requestError) {
+      setError(apiError(requestError, "The Dice opportunity could not be added."));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const uploadResume = async (file: File) => {
+    if (!profileId) {
+      setError("Your member profile is required before uploading a résumé.");
+      return;
+    }
+    if (file.type !== "application/pdf") {
+      setError("Upload the résumé as a PDF.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("The résumé must be no larger than Dice's 2 MB limit.");
+      return;
+    }
+    setUploadingResume(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("type", "document");
+      form.append("privacy", "admins");
+      form.append("folder_path", "resumes");
+      form.append("title", file.name);
+      const response = await axiosInstance.post(
+        `/api/assets/managed/upload?sponsor_type=profile&sponsor_id=${profileId}`,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      const record = response.data as ProfileAssetRecord;
+      setResumeAssets((current) => [record, ...current.filter((item) => item.asset.id !== record.asset.id)]);
+      setProfile((current) => ({
+        ...current,
+        resume_asset: record.asset,
+        resume_asset_id: record.asset.id,
+        resume_label: current.resume_label || file.name.replace(/\.pdf$/i, ""),
+      }));
+      if (record.asset.upload_status === "queued") {
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          await delay(1500);
+          const records = await refreshResumeAssets(profileId);
+          const uploaded = records.find((item) => item.asset.id === record.asset.id);
+          if (!uploaded || uploaded.asset.upload_status !== "queued") break;
+        }
+      }
+    } catch (requestError) {
+      setError(apiError(requestError, "The résumé could not be uploaded."));
+    } finally {
+      setUploadingResume(false);
+      if (resumeInputRef.current) resumeInputRef.current.value = "";
+    }
+  };
+
+  const previewResume = async (assetId: string) => {
+    try {
+      const response = await axiosInstance.get(`/api/assets/managed/${assetId}/presign`);
+      window.open(response.data.url, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setError(apiError(requestError, "The résumé preview could not be opened."));
     }
   };
 
@@ -282,7 +415,7 @@ export function OpportunityWorkspace() {
             </Box>
             <Button
               colorPalette="teal"
-              onClick={runSearch}
+              onClick={() => void runSearch()}
               loading={searching}
               disabled={!hasProfile || editing || queries.length === 0}
             >
@@ -300,6 +433,46 @@ export function OpportunityWorkspace() {
           </Box>
         )}
 
+        <Box className="opws-acquisition" bg="bg" borderWidth="1px" p={{ base: 4, md: 5 }} mb={8}>
+          <Flex justify="space-between" align="center" mb={4} gap={4} wrap="wrap">
+            <Box>
+              <Heading size="md">Find or add an opportunity</Heading>
+              <Text fontSize="sm" color="fg.muted" mt={1}>Use a focused one-off query or bring in a listing you already found.</Text>
+            </Box>
+            {!hasProfile && <Badge colorPalette="orange">Save a Search Profile first</Badge>}
+          </Flex>
+          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={5}>
+            <Field.Root>
+              <Field.Label>Quick Dice search</Field.Label>
+              <HStack align="stretch">
+                <Input value={adHocQuery} onChange={(event) => setAdHocQuery(event.target.value)} placeholder="python AND typescript AND ai" />
+                <Button
+                  variant="outline"
+                  onClick={() => void runSearch(adHocQuery)}
+                  loading={searching && !!adHocQuery}
+                  disabled={!hasProfile || editing || !adHocQuery.trim()}
+                >
+                  <Search size={16} /> Search
+                </Button>
+              </HStack>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>Add Dice URL</Field.Label>
+              <HStack align="stretch">
+                <Input value={diceURL} onChange={(event) => setDiceURL(event.target.value)} placeholder="https://www.dice.com/job-detail/..." />
+                <Button
+                  variant="outline"
+                  onClick={() => void importDiceURL()}
+                  loading={importing}
+                  disabled={!hasProfile || editing || !diceURL.trim()}
+                >
+                  <Link2 size={16} /> Add
+                </Button>
+              </HStack>
+            </Field.Root>
+          </Grid>
+        </Box>
+
         <Grid className="opws-layout" templateColumns={{ base: "1fr", lg: "minmax(300px, 380px) minmax(0, 1fr)" }} gap={8}>
           <Stack className="opws-profile-rail" gap={6}>
             <Box bg="bg" borderWidth="1px" p={5}>
@@ -316,9 +489,19 @@ export function OpportunityWorkspace() {
               </Flex>
 
               {editing ? (
-                <ProfileEditor profile={profile} onChange={setProfile} onSave={saveProfile} saving={saving} />
+                <ProfileEditor
+                  profile={profile}
+                  resumeAssets={resumeAssets}
+                  resumeInputRef={resumeInputRef}
+                  uploadingResume={uploadingResume}
+                  onUploadResume={uploadResume}
+                  onPreviewResume={previewResume}
+                  onChange={setProfile}
+                  onSave={saveProfile}
+                  saving={saving}
+                />
               ) : (
-                <ProfileSummary profile={profile} />
+                <ProfileSummary profile={profile} onPreviewResume={previewResume} />
               )}
             </Box>
 
@@ -401,8 +584,23 @@ export function OpportunityWorkspace() {
   );
 }
 
-function ProfileEditor({ profile, onChange, onSave, saving }: {
+function ProfileEditor({
+  profile,
+  resumeAssets,
+  resumeInputRef,
+  uploadingResume,
+  onUploadResume,
+  onPreviewResume,
+  onChange,
+  onSave,
+  saving,
+}: {
   profile: OpportunityProfile;
+  resumeAssets: ProfileAssetRecord[];
+  resumeInputRef: RefObject<HTMLInputElement | null>;
+  uploadingResume: boolean;
+  onUploadResume: (file: File) => void;
+  onPreviewResume: (assetId: string) => void;
   onChange: (profile: OpportunityProfile) => void;
   onSave: () => void;
   saving: boolean;
@@ -420,6 +618,67 @@ function ProfileEditor({ profile, onChange, onSave, saving }: {
 
   return (
     <Stack gap={5}>
+      <Box className="opws-resume-assets" borderWidth="1px" p={4}>
+        <Flex justify="space-between" align="center" gap={3} mb={3}>
+          <Box>
+            <Text fontWeight="semibold" fontSize="sm">Managed résumé</Text>
+            <Text fontSize="xs" color="fg.muted">PDF · maximum 2 MB</Text>
+          </Box>
+          <Button size="sm" variant="outline" onClick={() => resumeInputRef.current?.click()} loading={uploadingResume}>
+            <Upload size={15} /> Upload PDF
+          </Button>
+          <input
+            ref={resumeInputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onUploadResume(file);
+            }}
+          />
+        </Flex>
+        <NativeSelect.Root size="sm">
+          <NativeSelect.Field
+            value={profile.resume_asset_id ?? ""}
+            onChange={(event) => {
+              const record = resumeAssets.find((item) => item.asset.id === event.target.value);
+              onChange({
+                ...profile,
+                resume_asset_id: record?.asset.id ?? null,
+                resume_asset: record?.asset ?? null,
+                resume_label: record && !profile.resume_label
+                  ? record.title || record.asset.file_name
+                  : profile.resume_label,
+              });
+            }}
+          >
+            <option value="">No résumé selected</option>
+            {resumeAssets.map((record) => (
+              <option key={record.asset.id} value={record.asset.id}>
+                {record.title || record.asset.file_name} · {record.asset.upload_status}
+              </option>
+            ))}
+          </NativeSelect.Field>
+          <NativeSelect.Indicator />
+        </NativeSelect.Root>
+        {profile.resume_asset && (
+          <HStack mt={3} justify="space-between" gap={3}>
+            <HStack gap={2} minW={0}>
+              <FileText size={15} aria-hidden />
+              <Text fontSize="xs" color="fg.muted" truncate>{profile.resume_asset.file_name}</Text>
+            </HStack>
+            <Button
+              size="xs"
+              variant="ghost"
+              disabled={profile.resume_asset.upload_status !== "completed"}
+              onClick={() => onPreviewResume(profile.resume_asset!.id)}
+            >
+              <ExternalLink size={13} /> Preview
+            </Button>
+          </HStack>
+        )}
+      </Box>
       <Grid templateColumns="1fr 90px" gap={3}>
         <Field.Root>
           <Field.Label>Résumé</Field.Label>
@@ -521,12 +780,26 @@ function ProfileEditor({ profile, onChange, onSave, saving }: {
   );
 }
 
-function ProfileSummary({ profile }: { profile: OpportunityProfile }) {
+function ProfileSummary({ profile, onPreviewResume }: {
+  profile: OpportunityProfile;
+  onPreviewResume: (assetId: string) => void;
+}) {
   return (
     <Stack gap={4}>
       <Box>
         <Text fontSize="xs" color="fg.muted">Résumé</Text>
         <Text>{profile.resume_label || "Not linked"}{profile.resume_version ? ` · ${profile.resume_version}` : ""}</Text>
+        {profile.resume_asset && (
+          <Button
+            size="xs"
+            variant="ghost"
+            mt={1}
+            disabled={profile.resume_asset.upload_status !== "completed"}
+            onClick={() => onPreviewResume(profile.resume_asset!.id)}
+          >
+            <FileText size={13} /> {profile.resume_asset.file_name}
+          </Button>
+        )}
       </Box>
       <Box>
         <Text fontSize="xs" color="fg.muted">Search lanes</Text>
@@ -624,4 +897,12 @@ function apiError(error: unknown, fallback: string): string {
     if (response?.data?.detail) return response.data.detail;
   }
   return fallback;
+}
+
+function withResumeAssetId(profile: OpportunityProfile): OpportunityProfile {
+  return { ...profile, resume_asset_id: profile.resume_asset?.id ?? null };
+}
+
+function isPDFAsset(record: ProfileAssetRecord): boolean {
+  return record.asset.type === "document" && record.asset.file_type === "application/pdf";
 }

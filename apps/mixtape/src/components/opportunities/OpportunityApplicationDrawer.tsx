@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { JSONContent } from "@tiptap/react";
 import {
   Badge,
   Box,
@@ -13,21 +14,29 @@ import {
   Spinner,
   Stack,
   Text,
-  Textarea,
 } from "@chakra-ui/react";
-import { Download, ExternalLink, Mail, Save, Sparkles } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, FilePenLine, Mail, Save } from "lucide-react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import TipTapEditor from "@/components/editor/TipTapEditor";
 
 type ApplicationDraft = {
   id: string;
-  status: "draft" | "ready";
+  status: "draft" | "ready" | "submitted";
+  opportunity_title: string;
   recipient_name: string;
   recipient_email: string;
   letter_body: string;
+  letter_body_json: JSONContent;
   generated_by: string;
+  submitted_at: string | null;
   profile_version: number | null;
   resume_label: string;
   resume_version: string;
+  resume_asset: {
+    id: string;
+    file_name: string;
+    upload_status: "queued" | "completed" | "failed";
+  } | null;
   updated_at: string;
 };
 
@@ -56,10 +65,13 @@ export function OpportunityApplicationDrawer({
 }) {
   const [draft, setDraft] = useState<ApplicationDraft | null>(null);
   const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [downloading, setDownloading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoSaveTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!opportunity) {
@@ -81,12 +93,13 @@ export function OpportunityApplicationDrawer({
       });
     return () => {
       active = false;
+      if (autoSaveTimerRef.current) window.clearTimeout(autoSaveTimerRef.current);
     };
   }, [opportunity]);
 
-  const generateDraft = async () => {
+  const createDraft = async () => {
     if (!opportunity) return;
-    setGenerating(true);
+    setCreating(true);
     setError(null);
     try {
       const response = await axiosInstance.post(
@@ -95,9 +108,9 @@ export function OpportunityApplicationDrawer({
       );
       setDraft(response.data.draft);
     } catch (requestError) {
-      setError(apiError(requestError, "Could not draft the cover letter."));
+      setError(apiError(requestError, "Could not create the cover letter."));
     } finally {
-      setGenerating(false);
+      setCreating(false);
     }
   };
 
@@ -109,9 +122,10 @@ export function OpportunityApplicationDrawer({
       const response = await axiosInstance.put(
         `/api/opportunities/candidates/${opportunity.id}/application-draft`,
         {
+          opportunity_title: draft.opportunity_title,
           recipient_name: draft.recipient_name,
           recipient_email: draft.recipient_email,
-          letter_body: draft.letter_body,
+          letter_body_json: draft.letter_body_json,
           status: draft.status,
         },
       );
@@ -123,6 +137,26 @@ export function OpportunityApplicationDrawer({
     } finally {
       setSaving(false);
     }
+  };
+
+  const scheduleAutoSave = (body: JSONContent) => {
+    if (!opportunity) return;
+    setDraft((current) => current ? { ...current, letter_body_json: body } : current);
+    setAutoSaveStatus("idle");
+    if (autoSaveTimerRef.current) window.clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = window.setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      try {
+        await axiosInstance.put(
+          `/api/opportunities/candidates/${opportunity.id}/application-draft`,
+          { letter_body_json: body },
+        );
+        setAutoSaveStatus("saved");
+      } catch (requestError) {
+        setAutoSaveStatus("error");
+        setError(apiError(requestError, "Could not autosave the cover letter."));
+      }
+    }, 1800);
   };
 
   const downloadPDF = async () => {
@@ -150,6 +184,37 @@ export function OpportunityApplicationDrawer({
       setError(apiError(requestError, "Could not download the cover-letter PDF."));
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const markSubmitted = async () => {
+    if (!opportunity || !draft || draft.status === "submitted") return;
+    setSubmitting(true);
+    const saved = await saveDraft();
+    if (!saved) {
+      setSubmitting(false);
+      return;
+    }
+    try {
+      const response = await axiosInstance.put(
+        `/api/opportunities/candidates/${opportunity.id}/application-draft`,
+        { status: "submitted" },
+      );
+      setDraft(response.data.draft);
+    } catch (requestError) {
+      setError(apiError(requestError, "Could not mark the application as submitted."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const previewResume = async () => {
+    if (!draft?.resume_asset) return;
+    try {
+      const response = await axiosInstance.get(`/api/assets/managed/${draft.resume_asset.id}/presign`);
+      window.open(response.data.url, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setError(apiError(requestError, "Could not open the selected résumé."));
     }
   };
 
@@ -183,6 +248,7 @@ export function OpportunityApplicationDrawer({
                 <Box className="opad-source-facts" borderWidth="1px" p={4}>
                   <Text fontSize="xs" color="fg.muted" textTransform="uppercase" mb={2}>Application boundary</Text>
                   <HStack gap={2} wrap="wrap" mb={2}>
+                    {draft?.status === "submitted" && <Badge colorPalette="green">Submitted</Badge>}
                     {opportunity?.payload.easy_apply && <Badge colorPalette="teal">Dice Easy Apply</Badge>}
                     {opportunity?.payload.employer_type && <Badge variant="outline">{opportunity.payload.employer_type}</Badge>}
                     {opportunity?.payload.recruiter_name && <Badge variant="outline">{opportunity.payload.recruiter_name}</Badge>}
@@ -194,17 +260,25 @@ export function OpportunityApplicationDrawer({
 
                 {!draft ? (
                   <Box className="opad-empty" borderWidth="1px" borderStyle="dashed" p={6} textAlign="center">
-                    <Sparkles size={22} style={{ margin: "0 auto 10px" }} aria-hidden />
-                    <Text fontWeight="semibold" mb={2}>Draft from grounded facts</Text>
+                    <FilePenLine size={22} style={{ margin: "0 auto 10px" }} aria-hidden />
+                    <Text fontWeight="semibold" mb={2}>Write a cover letter</Text>
                     <Text fontSize="sm" color="fg.muted" mb={4}>
-                      The suggestion uses the full listing and your current opportunity profile. It must be reviewed before use.
+                      Start with a blank editor. Mixtape will retain the listing context and selected résumé for this application.
                     </Text>
-                    <Button colorPalette="teal" onClick={generateDraft} loading={generating}>
-                      <Sparkles size={16} /> Draft cover letter
+                    <Button colorPalette="teal" onClick={createDraft} loading={creating}>
+                      <FilePenLine size={16} /> Start cover letter
                     </Button>
                   </Box>
                 ) : (
                   <Stack className="opad-editor" gap={4}>
+                    <Field.Root>
+                      <Field.Label>Opportunity title</Field.Label>
+                      <Input
+                        value={draft.opportunity_title}
+                        onChange={(event) => setDraft({ ...draft, opportunity_title: event.target.value })}
+                        placeholder={opportunity?.payload.title || "Opportunity title"}
+                      />
+                    </Field.Root>
                     <HStack gap={3} align="start">
                       <Field.Root>
                         <Field.Label>Recipient</Field.Label>
@@ -231,17 +305,42 @@ export function OpportunityApplicationDrawer({
                     )}
                     <Field.Root>
                       <Field.Label>Cover letter</Field.Label>
-                      <Textarea
-                        value={draft.letter_body}
-                        onChange={(event) => setDraft({ ...draft, letter_body: event.target.value })}
-                        minH="360px"
-                        lineHeight="1.6"
-                      />
+                      <Box className="opad-tiptap-editor" minH="360px">
+                        <TipTapEditor
+                          initialContent={draft.letter_body_json}
+                          onContentChange={scheduleAutoSave}
+                          placeholder="Write your cover letter…"
+                          isCollaborative={false}
+                        />
+                      </Box>
+                      <Text fontSize="xs" color={autoSaveStatus === "error" ? "red.fg" : "fg.muted"} mt={1}>
+                        {autoSaveStatus === "saving" && "Saving…"}
+                        {autoSaveStatus === "saved" && "Saved"}
+                        {autoSaveStatus === "error" && "Autosave failed"}
+                      </Text>
                     </Field.Root>
                     <Text fontSize="xs" color="fg.muted">
-                      Generated from {draft.resume_label || "the current opportunity profile"}
-                      {draft.resume_version ? ` · ${draft.resume_version}` : ""}. Review every claim before downloading.
+                      Application context uses {draft.resume_label || "the current opportunity profile"}
+                      {draft.resume_version ? ` · ${draft.resume_version}` : ""}.
                     </Text>
+                    {draft.resume_asset ? (
+                      <Box className="opad-resume" borderWidth="1px" p={4}>
+                        <Text fontSize="xs" color="fg.muted" textTransform="uppercase">Selected résumé</Text>
+                        <HStack justify="space-between" mt={1} gap={3}>
+                          <Text fontSize="sm" fontWeight="medium">{draft.resume_asset.file_name}</Text>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            disabled={draft.resume_asset.upload_status !== "completed"}
+                            onClick={() => void previewResume()}
+                          >
+                            <ExternalLink size={13} /> Preview
+                          </Button>
+                        </HStack>
+                      </Box>
+                    ) : (
+                      <Text fontSize="sm" color="orange.fg">No managed résumé was attached to this Search Profile version.</Text>
+                    )}
                     <HStack gap={2} wrap="wrap">
                       <Button variant="outline" onClick={() => void saveDraft()} loading={saving}>
                         <Save size={16} /> Save draft
@@ -249,7 +348,22 @@ export function OpportunityApplicationDrawer({
                       <Button colorPalette="teal" onClick={downloadPDF} loading={downloading}>
                         <Download size={16} /> Download PDF
                       </Button>
+                      <Button
+                        colorPalette="green"
+                        variant={draft.status === "submitted" ? "subtle" : "solid"}
+                        onClick={markSubmitted}
+                        loading={submitting}
+                        disabled={draft.status === "submitted"}
+                      >
+                        <CheckCircle2 size={16} />
+                        {draft.status === "submitted" ? "Submitted" : "Mark submitted"}
+                      </Button>
                     </HStack>
+                    {draft.submitted_at && (
+                      <Text fontSize="xs" color="green.fg">
+                        Submitted {new Date(draft.submitted_at).toLocaleString()}
+                      </Text>
+                    )}
                   </Stack>
                 )}
 

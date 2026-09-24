@@ -15,6 +15,7 @@
 export interface MemberProfile {
   // From User
   id: string;
+  profile_id: string;
   username: string;
   email: string;
   first_name: string;
