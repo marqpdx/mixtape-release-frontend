@@ -133,3 +133,32 @@ export async function analyzeFolioInception(inceptionId: string, debug: boolean)
   const res = await axiosInstance.post(`/api/folio/inceptions/${inceptionId}/analyze${params}`);
   return res.data;
 }
+
+// ============================================================================
+// Human curation (prototype spec §6) — edits never mutate the raw inception.
+// ============================================================================
+
+export async function updateFolioTitle(folioId: string, title: string): Promise<Folio> {
+  const res = await axiosInstance.patch(`/api/folio/folios/${folioId}`, { title });
+  return res.data;
+}
+
+export async function updateFolioCandidateDisplayText(
+  candidateId: string,
+  displayText: string,
+): Promise<FolioMaterialCandidate> {
+  const res = await axiosInstance.patch(`/api/folio/material-candidates/${candidateId}`, {
+    display_text: displayText,
+  });
+  return res.data;
+}
+
+export async function confirmFolioCandidate(candidateId: string): Promise<FolioMaterialCandidate> {
+  const res = await axiosInstance.post(`/api/folio/material-candidates/${candidateId}/confirm`);
+  return res.data;
+}
+
+export async function rejectFolioCandidate(candidateId: string): Promise<FolioMaterialCandidate> {
+  const res = await axiosInstance.post(`/api/folio/material-candidates/${candidateId}/reject`);
+  return res.data;
+}
