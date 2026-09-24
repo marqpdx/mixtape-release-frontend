@@ -34,7 +34,10 @@ import {
   type DistributionSource,
   type ShareRecordResult,
 } from '@mixtape/api/clients/distribution/distributionApi'
-import { generateLinkedInCopy } from '@mixtape/api/clients/writing/writingApi'
+import {
+  useSynopsisLinkedIn,
+  useSynopsisPublic,
+} from '@mixtape/api/hooks/switchboard'
 
 interface SimplePublishDialogProps {
   isOpen: boolean
@@ -57,6 +60,13 @@ interface SimplePublishDialogProps {
 type DocumentJSON = Record<string, unknown>
 type AudienceChoice = 'just_me' | 'readers'
 type PublishTiming = 'now' | 'later'
+type SummaryValue = { text: string; confirmed: boolean }
+type SummaryPacket = {
+  public_synopsis: SummaryValue
+  linkedin_synopsis: SummaryValue
+  internal_abstract: SummaryValue
+  excerpt?: string
+}
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error && typeof error === 'object') {
@@ -99,10 +109,14 @@ export function SimplePublishDialog({
   // Distribution state
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
   const [linkedinCopy, setLinkedinCopy] = useState(initialLinkedinCopy)
+  const [publicSynopsis, setPublicSynopsis] = useState('')
+  const [linkedinPacketConfirmed, setLinkedinPacketConfirmed] = useState(false)
   const [synopsisLoading, setSynopsisLoading] = useState(false)
-  const [linkedinCopyGenerating, setLinkedinCopyGenerating] = useState(false)
+  const [synopsisSaving, setSynopsisSaving] = useState(false)
   const [shareResults, setShareResults] = useState<ShareRecordResult[] | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
+  const linkedinAction = useSynopsisLinkedIn()
+  const publicSynopsisAction = useSynopsisPublic()
 
   const { publishPiece } = useWritingMutations(sponsorType, sponsorSlug || 'unknown')
 
@@ -149,6 +163,48 @@ export function SimplePublishDialog({
     enabled: isOpen && !!pieceSlug,
   })
 
+  const {
+    data: summaryPacket,
+    refetch: refetchSummaryPacket,
+  } = useQuery<SummaryPacket>({
+    queryKey: ['atelier', 'summaries', pieceSlug],
+    queryFn: async () => {
+      const res = await axiosInstance.get<SummaryPacket>(`/api/atelier/${pieceSlug}/summaries/`)
+      return res.data
+    },
+    enabled: isOpen && !!pieceSlug,
+  })
+
+  useEffect(() => {
+    if (!summaryPacket) return
+    setPublicSynopsis(summaryPacket.public_synopsis.text || '')
+    setLinkedinCopy((current) => current || summaryPacket.linkedin_synopsis.text || initialLinkedinCopy)
+    setLinkedinPacketConfirmed(
+      summaryPacket.public_synopsis.confirmed && summaryPacket.linkedin_synopsis.confirmed,
+    )
+  }, [summaryPacket, initialLinkedinCopy])
+
+  useEffect(() => {
+    if (!linkedinAction.result) return
+    setLinkedinCopy(linkedinAction.result.short_synopsis || linkedinAction.result.hook)
+    setLinkedinPacketConfirmed(false)
+  }, [linkedinAction.result])
+
+  useEffect(() => {
+    if (!publicSynopsisAction.result?.summary) return
+    setPublicSynopsis(publicSynopsisAction.result.summary)
+    setLinkedinPacketConfirmed(false)
+  }, [publicSynopsisAction.result])
+
+  useEffect(() => {
+    if (!linkedinAction.error && !publicSynopsisAction.error) return
+    toaster.create({
+      title: 'Synopsis generation failed',
+      description: 'You can still write and confirm both fields manually.',
+      type: 'error',
+    })
+  }, [linkedinAction.error, publicSynopsisAction.error])
+
   // Fetch existing placements and welcome pin to pre-populate the dialog on republish
   const { data: existingPlacements } = useQuery({
     queryKey: ['writing', 'placements', 'piece-restore', sponsorType, sponsorSlug],
@@ -182,6 +238,13 @@ export function SimplePublishDialog({
   }, [isOpen, isUpdate, existingWelcomePin, piece.id])
 
   const linkedinShareUrl = shareResults?.find((r) => r.source_kind === 'linkedin')?.channel_response?.linkedin_share_url as string | undefined
+  const linkedinShareRecord = shareResults?.find((r) => r.source_kind === 'linkedin')
+  const hasLinkedInSelected = selectedSourceIds.some(
+    (sourceId) => sources.find((source) => source.id === sourceId)?.kind === 'linkedin',
+  )
+  const publicArticleUrl = sponsorType === 'group' && sponsorSlug && pieceSlug
+    ? `https://www.crossroads.place/groups/${sponsorSlug}/reading/${pieceSlug}`
+    : linkedinShareRecord?.canonical_url || ''
 
   const toggleShelf = (shelfId: string, checked: boolean) => {
     setSelectedShelves((prev) => {
@@ -225,6 +288,7 @@ export function SimplePublishDialog({
       const result = await writingApi.fetchPieceSynopsis(piece.id)
       if (result?.synopsis) {
         setLinkedinCopy(result.synopsis)
+        setLinkedinPacketConfirmed(false)
       } else {
         toaster.create({
           title: 'No synopsis available',
@@ -240,22 +304,61 @@ export function SimplePublishDialog({
   }
 
   const handleGenerateLinkedInCopy = async () => {
-    setLinkedinCopyGenerating(true)
+    linkedinAction.reset()
+    linkedinAction.submit({ piece_id: piece.id, surface: 'writing' })
+  }
+
+  const handleGeneratePublicSynopsis = async () => {
+    publicSynopsisAction.reset()
+    publicSynopsisAction.submit({ piece_id: piece.id, surface: 'writing' })
+  }
+
+  const handleConfirmLinkedInPacket = async () => {
+    if (!pieceSlug || !linkedinCopy.trim() || !publicSynopsis.trim()) {
+      toaster.create({
+        title: 'Both fields are required',
+        description: 'Review the LinkedIn introduction and link-preview description first.',
+        type: 'warning',
+      })
+      return
+    }
+    setSynopsisSaving(true)
     try {
-      const result = await generateLinkedInCopy(piece.id)
-      if (result?.linkedin_copy) {
-        setLinkedinCopy(result.linkedin_copy)
-      } else {
-        toaster.create({ title: 'No copy returned', type: 'warning' })
-      }
-    } catch {
-      toaster.create({ title: 'LinkedIn copy generation failed', type: 'error' })
+      await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, {
+        linkedin_synopsis: linkedinCopy.trim(),
+        public_synopsis: publicSynopsis.trim(),
+      })
+      await axiosInstance.post(`/api/atelier/${pieceSlug}/summaries/confirm/`, {
+        types: ['linkedin_synopsis', 'public_synopsis'],
+      })
+      await refetchSummaryPacket()
+      setLinkedinPacketConfirmed(true)
+      toaster.create({ title: 'LinkedIn packet confirmed', type: 'success' })
+    } catch (error: unknown) {
+      toaster.create({
+        title: 'Could not confirm LinkedIn packet',
+        description: getErrorMessage(error),
+        type: 'error',
+      })
     } finally {
-      setLinkedinCopyGenerating(false)
+      setSynopsisSaving(false)
     }
   }
 
+  const handleCopyLinkedInIntroduction = async () => {
+    await navigator.clipboard.writeText(linkedinCopy)
+    toaster.create({ title: 'LinkedIn introduction copied', type: 'success' })
+  }
+
   const handlePublish = async () => {
+    if (hasLinkedInSelected && !linkedinPacketConfirmed) {
+      toaster.create({
+        title: 'Confirm the LinkedIn packet',
+        description: 'Review and confirm the post introduction and link-preview description before publishing.',
+        type: 'warning',
+      })
+      return
+    }
     if (isScheduling && !scheduledFor) {
       toaster.create({
         title: 'Choose a publish date',
@@ -278,6 +381,7 @@ export function SimplePublishDialog({
     }
 
     setIsPublishing(true)
+    let keepShareResultsOpen = false
     try {
       // In collab mode, flush the current Yjs state to WorkingDocument before
       // publishing so the server WC is authoritative and we don't send a
@@ -343,6 +447,9 @@ export function SimplePublishDialog({
           } else {
             const distributeResult = await distributePiece(piece.id, sourcesConfig)
             setShareResults(distributeResult.share_records)
+            keepShareResultsOpen = distributeResult.share_records.some(
+              (record) => record.source_kind === 'linkedin' && !!record.channel_response?.linkedin_share_url,
+            )
 
             const failed = distributeResult.share_records.filter((r) => r.status === 'failed')
             if (failed.length > 0) {
@@ -380,7 +487,7 @@ export function SimplePublishDialog({
           type: 'success',
         })
         onPublished?.(response.piece)
-        if (!linkedinShareUrl) {
+        if (!keepShareResultsOpen) {
           onClose()
         }
       }
@@ -415,11 +522,38 @@ export function SimplePublishDialog({
                   {linkedinShareUrl ? (
                     <>
                       <Text fontSize="sm" color="gray.600" mb={3}>
-                        Your post copy is ready. Click to open LinkedIn and share.
+                        Copy the reviewed introduction, then open LinkedIn and share the article.
                       </Text>
-                      <Link href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" colorPalette="blue">Open LinkedIn →</Button>
-                      </Link>
+                      <Box
+                        className="spd-linkedin-final-copy"
+                        borderWidth="1px"
+                        borderColor="blue.200"
+                        borderRadius="md"
+                        bg="white"
+                        p={3}
+                        mb={3}
+                      >
+                        <Text fontSize="sm" whiteSpace="pre-wrap">{linkedinCopy}</Text>
+                      </Box>
+                      <HStack gap={2} flexWrap="wrap">
+                        <Button size="sm" variant="outline" onClick={handleCopyLinkedInIntroduction}>
+                          Copy introduction
+                        </Button>
+                        <Link href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" colorPalette="blue">Open LinkedIn →</Button>
+                        </Link>
+                      </HStack>
+                      <Text fontSize="xs" color="gray.500" mt={3}>
+                        If LinkedIn shows an older cached preview, refresh the article URL in the{' '}
+                        <Link
+                          href="https://www.linkedin.com/post-inspector/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          textDecoration="underline"
+                        >
+                          LinkedIn Post Inspector
+                        </Link>.
+                      </Text>
                     </>
                   ) : (
                     <Text fontSize="sm" color="gray.600">
@@ -732,31 +866,45 @@ export function SimplePublishDialog({
 
                               {source.kind === 'linkedin' && checked && (
                                 <Box
+                                  className="spd-linkedin-packet"
                                   ml={6}
                                   mt={1}
-                                  p={3}
+                                  p={4}
                                   borderLeft="3px solid"
                                   borderLeftColor="blue.300"
                                   borderRadius="md"
                                   bg="blue.50"
+                                  _dark={{ bg: 'blue.950', borderLeftColor: 'blue.500' }}
                                 >
-                                  <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={2}>
-                                    Add synopsis for LinkedIn
+                                  <Text fontSize="sm" fontWeight="semibold" color="blue.700" _dark={{ color: 'blue.200' }} mb={1}>
+                                    LinkedIn post introduction
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }} mb={3}>
+                                    Identify the central shift, tension, or insight. Earn attention in the first one or two lines,
+                                    stay faithful to the article, and invite the click naturally.
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.500" mb={3}>
+                                    Target voice: calm, lucid, warm, credible, practical, and human. Avoid hype, hashtags,
+                                    emoji, generic inspiration, and corporate marketing language.
                                   </Text>
 
                                   {initialLinkedinCopy && !linkedinCopy && (
                                     <Text fontSize="xs" color="gray.500" mb={2}>
-                                      Copy generated in the Copy Desk is ready to load.
+                                      An introduction generated in the Copy Desk is ready to load.
                                     </Text>
                                   )}
 
                                   <Textarea
                                     size="sm"
-                                    placeholder="Write post copy, or generate it below…"
+                                    placeholder="Write the introduction, or generate a governed draft below…"
                                     value={linkedinCopy}
-                                    onChange={(e) => setLinkedinCopy(e.target.value)}
-                                    rows={4}
+                                    onChange={(e) => {
+                                      setLinkedinCopy(e.target.value)
+                                      setLinkedinPacketConfirmed(false)
+                                    }}
+                                    rows={6}
                                     bg="white"
+                                    _dark={{ bg: 'gray.900' }}
                                   />
 
                                   <HStack gap={2} mt={2} flexWrap="wrap">
@@ -764,10 +912,10 @@ export function SimplePublishDialog({
                                       size="xs"
                                       variant="outline"
                                       colorPalette="blue"
-                                      loading={linkedinCopyGenerating}
+                                      loading={linkedinAction.isSubmitting || linkedinAction.isPolling}
                                       onClick={handleGenerateLinkedInCopy}
                                     >
-                                      Generate →
+                                      Generate introduction
                                     </Button>
                                     <Button
                                       size="xs"
@@ -780,9 +928,74 @@ export function SimplePublishDialog({
                                     </Button>
                                   </HStack>
 
-                                  <Text fontSize="xs" color="gray.400" mt={2}>
-                                    LinkedIn will attach a link preview automatically.
+                                  <Separator my={4} />
+
+                                  <Text fontSize="xs" fontWeight="semibold" mb={1}>
+                                    Link-preview description
                                   </Text>
+                                  <Text fontSize="xs" color="gray.500" mb={2}>
+                                    LinkedIn reads this from the public article page. Edit it directly before confirming.
+                                  </Text>
+                                  <Textarea
+                                    size="sm"
+                                    placeholder="Describe what readers will find in the article…"
+                                    value={publicSynopsis}
+                                    onChange={(e) => {
+                                      setPublicSynopsis(e.target.value)
+                                      setLinkedinPacketConfirmed(false)
+                                    }}
+                                    rows={4}
+                                    bg="white"
+                                    _dark={{ bg: 'gray.900' }}
+                                  />
+                                  <Button
+                                    size="xs"
+                                    mt={2}
+                                    variant="outline"
+                                    loading={publicSynopsisAction.isSubmitting || publicSynopsisAction.isPolling}
+                                    onClick={handleGeneratePublicSynopsis}
+                                  >
+                                    Generate preview description
+                                  </Button>
+
+                                  <Box
+                                    className="spd-linkedin-preview"
+                                    mt={4}
+                                    borderWidth="1px"
+                                    borderColor="gray.200"
+                                    borderRadius="md"
+                                    bg="white"
+                                    _dark={{ bg: 'gray.900', borderColor: 'gray.700' }}
+                                    overflow="hidden"
+                                  >
+                                    <Box p={3}>
+                                      <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                                        crossroads.place
+                                      </Text>
+                                      <Text fontSize="sm" fontWeight="semibold" mt={1}>{piece.title}</Text>
+                                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }} mt={1}>
+                                        {publicSynopsis || 'Your confirmed public synopsis will appear here.'}
+                                      </Text>
+                                      {publicArticleUrl && (
+                                        <Text fontSize="xs" color="gray.400" mt={2} truncate>{publicArticleUrl}</Text>
+                                      )}
+                                    </Box>
+                                  </Box>
+
+                                  <HStack justify="space-between" align="center" mt={4} gap={3}>
+                                    <Text fontSize="xs" color={linkedinPacketConfirmed ? 'green.600' : 'gray.500'}>
+                                      {linkedinPacketConfirmed ? 'Reviewed and confirmed' : 'Author confirmation required'}
+                                    </Text>
+                                    <Button
+                                      size="xs"
+                                      colorPalette={linkedinPacketConfirmed ? 'green' : 'blue'}
+                                      variant={linkedinPacketConfirmed ? 'outline' : 'solid'}
+                                      loading={synopsisSaving}
+                                      onClick={handleConfirmLinkedInPacket}
+                                    >
+                                      {linkedinPacketConfirmed ? 'Confirmed' : 'Confirm both'}
+                                    </Button>
+                                  </HStack>
                                 </Box>
                               )}
                             </VStack>

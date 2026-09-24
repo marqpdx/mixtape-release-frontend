@@ -82,6 +82,8 @@ export interface LinkedInCopyExtended {
   short_synopsis: string;
   one_line_takeaway: string;
   alt_hook: string;
+  source_claim?: string;
+  human_stake?: string;
 }
 
 export interface WritingSynopsisData {
@@ -93,14 +95,6 @@ export interface WritingSynopsisData {
   linkedin_copy_generated_by: string;
   linkedin_copy_extended: LinkedInCopyExtended | null;
   [key: string]: unknown;
-}
-
-/**
- * Generate AI LinkedIn copy for a piece via Inkwell. Stores result on synopsis.
- */
-export async function generateLinkedInCopy(pieceId: string): Promise<WritingSynopsisData> {
-  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/synopsis/linkedin-copy`);
-  return res.data;
 }
 
 /**

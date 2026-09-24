@@ -342,6 +342,8 @@ export interface SynopsisLinkedInActionResult {
   short_synopsis: string;
   one_line_takeaway: string;
   alt_hook: string;
+  source_claim: string;
+  human_stake: string;
   model_used: string | null;
   refused: boolean;
 }
@@ -351,6 +353,28 @@ export async function submitSynopsisLinkedInAsync(
 ): Promise<SynopsisLinkedInResponse> {
   const res = await axiosInstance.post("/api/switchboard/agent/synopsis/linkedin", payload);
   return res.data as SynopsisLinkedInResponse;
+}
+
+export interface SynopsisPublicRequest {
+  piece_id: string;
+  surface?: 'console' | 'puddlejump' | 'writing';
+}
+
+export interface SynopsisPublicResponse {
+  action_run_id: string;
+}
+
+export interface SynopsisPublicActionResult {
+  summary: string;
+  word_count: number;
+  model_used?: string | null;
+}
+
+export async function submitSynopsisPublicAsync(
+  payload: SynopsisPublicRequest
+): Promise<SynopsisPublicResponse> {
+  const res = await axiosInstance.post("/api/switchboard/agent/synopsis/public", payload);
+  return res.data as SynopsisPublicResponse;
 }
 
 // ─── Group Search (Clio) ─────────────────────────────────────────────────────

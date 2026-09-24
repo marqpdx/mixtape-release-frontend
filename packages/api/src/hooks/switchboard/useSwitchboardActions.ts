@@ -14,6 +14,7 @@ import {
   submitSynthesizeAsync,
   submitSynthesizeNarrativeAsync,
   submitSynopsisLinkedInAsync,
+  submitSynopsisPublicAsync,
   type ClassifyAsyncRequest,
   type SummarizeAsyncRequest,
   type ContextShapeAsyncRequest,
@@ -37,6 +38,8 @@ import {
   type SynthesizeNarrativeActionResult,
   type SynopsisLinkedInRequest,
   type SynopsisLinkedInActionResult,
+  type SynopsisPublicRequest,
+  type SynopsisPublicActionResult,
 } from '../../clients/switchboard/switchboardApi';
 import { approveActionRun, type ActionRun, type ApprovalMode } from '../../clients/switchboard/actionRunApi';
 import { useActionRun } from '../initiatives/useActionRun';
@@ -65,6 +68,8 @@ export type {
   SynthesizeNarrativeActionResult,
   SynopsisLinkedInRequest,
   SynopsisLinkedInActionResult,
+  SynopsisPublicRequest,
+  SynopsisPublicActionResult,
   ApprovalMode,
 };
 
@@ -398,6 +403,38 @@ export function useSynopsisLinkedIn() {
   const result =
     poll.data?.status === 'succeeded'
       ? (poll.data.result_payload as unknown as SynopsisLinkedInActionResult)
+      : null;
+
+  return {
+    submit: submitMutation.mutate,
+    submitAsync: submitMutation.mutateAsync,
+    isSubmitting: submitMutation.isPending,
+    actionRunId,
+    actionRun: (poll.data ?? null) as ActionRun | null,
+    isPolling: poll.isFetching && !!actionRunId,
+    result,
+    error:
+      submitMutation.error ??
+      (poll.data?.status === 'failed' ? poll.data.error_payload : null),
+    reset: () => {
+      setActionRunId(null);
+      submitMutation.reset();
+    },
+  };
+}
+
+export function useSynopsisPublic() {
+  const [actionRunId, setActionRunId] = useState<string | null>(null);
+
+  const submitMutation = useMutation({
+    mutationFn: submitSynopsisPublicAsync,
+    onSuccess: (data) => setActionRunId(data.action_run_id),
+  });
+
+  const poll = useActionRun(actionRunId);
+  const result =
+    poll.data?.status === 'succeeded'
+      ? (poll.data.result_payload as unknown as SynopsisPublicActionResult)
       : null;
 
   return {

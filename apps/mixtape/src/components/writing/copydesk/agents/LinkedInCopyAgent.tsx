@@ -1,6 +1,6 @@
 // src/components/write/copydesk/agents/LinkedInCopyAgent.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   VStack,
   HStack,
@@ -17,7 +17,8 @@ import {
   IconCheck,
 } from '@tabler/icons-react';
 import { AgentContainer, AgentState } from '../shared/AgentContainer';
-import { generateLinkedInCopy, LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
+import { LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
+import { useSynopsisLinkedIn } from '@mixtape/api/hooks/switchboard';
 import { toaster } from '@mixtape/core/lib/toaster';
 
 export interface LinkedInCopyAgentProps {
@@ -28,7 +29,7 @@ export interface LinkedInCopyAgentProps {
   documentWordCount: number;
 }
 
-const MIN_WORDS = 50;
+const MIN_WORDS = 75;
 
 function CopyRow({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
@@ -75,10 +76,36 @@ export function LinkedInCopyAgent({
   onGenerated,
   documentWordCount,
 }: LinkedInCopyAgentProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showExtended, setShowExtended] = useState(false);
+  const appliedActionRunId = useRef<string | null>(null);
+  const linkedinAction = useSynopsisLinkedIn();
 
   const hasContent = !!linkedinCopy;
+  const isGenerating = linkedinAction.isSubmitting || linkedinAction.isPolling;
+
+  useEffect(() => {
+    if (
+      !linkedinAction.result ||
+      !linkedinAction.actionRunId ||
+      appliedActionRunId.current === linkedinAction.actionRunId
+    ) return;
+    appliedActionRunId.current = linkedinAction.actionRunId;
+    const result = linkedinAction.result;
+    const copy = result.short_synopsis || result.hook;
+    onGenerated(copy, {
+      hook: result.hook,
+      short_synopsis: result.short_synopsis,
+      one_line_takeaway: result.one_line_takeaway,
+      alt_hook: result.alt_hook,
+      source_claim: result.source_claim,
+      human_stake: result.human_stake,
+    });
+  }, [linkedinAction.actionRunId, linkedinAction.result, onGenerated]);
+
+  useEffect(() => {
+    if (!linkedinAction.error) return;
+    toaster.create({ title: 'LinkedIn introduction generation failed', type: 'error' });
+  }, [linkedinAction.error]);
 
   const getAgentState = (): AgentState => {
     if (isGenerating) return 'loading';
@@ -94,27 +121,14 @@ export function LinkedInCopyAgent({
 
   const handleGenerate = async () => {
     if (!pieceId) return;
-    setIsGenerating(true);
-    try {
-      const result = await generateLinkedInCopy(pieceId);
-      const extended: LinkedInCopyExtended = result.linkedin_copy_extended ?? {
-        hook: result.linkedin_copy,
-        short_synopsis: '',
-        one_line_takeaway: '',
-        alt_hook: '',
-      };
-      onGenerated(result.linkedin_copy, extended);
-    } catch {
-      toaster.create({ title: 'LinkedIn copy generation failed', type: 'error' });
-    } finally {
-      setIsGenerating(false);
-    }
+    linkedinAction.reset();
+    linkedinAction.submit({ piece_id: pieceId, surface: 'writing' });
   };
 
   return (
     <AgentContainer
       id="linkedin-copy"
-      title="LinkedIn Copy"
+      title="LinkedIn post introduction"
       state={getAgentState()}
       stateMessage={getStateMessage()}
       icon={<IconBrandLinkedin size={16} />}
@@ -138,7 +152,7 @@ export function LinkedInCopyAgent({
               </IconButton>
             </HStack>
 
-            <CopyRow label="Hook" text={linkedinCopy} />
+            <CopyRow label="Post introduction" text={linkedinCopy} />
 
             {linkedinCopyExtended && (
               <>
@@ -172,7 +186,7 @@ export function LinkedInCopyAgent({
         {isGenerating && (
           <VStack gap={2} align="center" py={4}>
             <Text fontSize="sm" color="gray.500" textAlign="center">
-              Generating LinkedIn copy...
+              Generating and reviewing the LinkedIn introduction...
             </Text>
           </VStack>
         )}
@@ -182,12 +196,12 @@ export function LinkedInCopyAgent({
           <VStack gap={2} align="center" py={4}>
             {documentWordCount < MIN_WORDS ? (
               <Text fontSize="sm" color="gray.500" textAlign="center">
-                Write {MIN_WORDS - documentWordCount} more words to generate LinkedIn copy.
+                Write {MIN_WORDS - documentWordCount} more words to generate a LinkedIn introduction.
               </Text>
             ) : (
               <>
                 <Text fontSize="sm" color="gray.500" textAlign="center">
-                  Generate a hook and post copy optimised for LinkedIn.
+                  Generate a grounded introduction for sharing this article on LinkedIn.
                 </Text>
                 <Button
                   size="xs"
@@ -195,7 +209,7 @@ export function LinkedInCopyAgent({
                   colorPalette="blue"
                   onClick={handleGenerate}
                 >
-                  Generate LinkedIn copy
+                  Generate introduction
                 </Button>
               </>
             )}
