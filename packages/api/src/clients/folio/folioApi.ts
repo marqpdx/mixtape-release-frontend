@@ -99,6 +99,13 @@ export interface FolioAnalyzeDebug {
     error: string | null;
     latency_ms: number;
   };
+  gate_4_5: {
+    candidates_persisted: number | null;
+    skipped: boolean;
+    errors: string[];
+    warnings: string[];
+    latency_ms: number;
+  };
 }
 
 export interface FolioAnalyzeResult {

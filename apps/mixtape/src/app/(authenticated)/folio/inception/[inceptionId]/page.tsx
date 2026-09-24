@@ -17,8 +17,10 @@ import { useFolioInception, useAnalyzeFolioInception } from "@mixtape/api/hooks/
 //
 // Phase 2 adds Gate 2 (subject/intention extraction, local model via
 // Inkwell) to the same debug drawer. Phase 3 adds Gate 3 (materiality
-// classification, local model via Inkwell). Gates 4-5 are still not built,
-// so this still does not render a State B interpretation.
+// classification, local model via Inkwell). Phase 4 adds Gate 4-5
+// (deterministic normalization + validation) and persists proposed
+// FolioMaterialCandidate rows, but this page still does not render a
+// State B interpretation — that is Phase 5's rendered surface work.
 export default function FolioInceptionPage({
   params,
 }: {
@@ -79,7 +81,7 @@ export default function FolioInceptionPage({
               onClick={() => analyze({ debug: true })}
               loading={isAnalyzing}
             >
-              Run Gates 1–3 (parse + subject/intention + materiality)
+              Run Gates 1–5 (parse + extraction + materiality + validation)
             </Button>
             {analyzeResult?.debug && (
               <Box
