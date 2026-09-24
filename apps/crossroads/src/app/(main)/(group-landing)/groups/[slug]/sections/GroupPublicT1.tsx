@@ -22,7 +22,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-function T1WritingCard({ piece }: { piece: FeaturedPiece }) {
+function T1WritingCard({ piece, groupSlug }: { piece: FeaturedPiece; groupSlug: string }) {
   const bg = useColorModeValue("white", "gray.900");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const titleColor = useColorModeValue("gray.900", "gray.50");
@@ -30,7 +30,7 @@ function T1WritingCard({ piece }: { piece: FeaturedPiece }) {
   const metaColor = useColorModeValue("gray.400", "gray.500");
 
   return (
-    <Link href={`/reading/${piece.slug}`} style={{ textDecoration: "none" }}>
+    <Link href={`/groups/${groupSlug}/reading/${piece.slug}`} style={{ textDecoration: "none" }}>
       <Box
         className="gpl-t1-card"
         bg={bg}
@@ -191,7 +191,7 @@ export function GroupPublicT1({ config, groupSlug }: Props) {
             gap={5}
           >
             {featured_content.pieces.map((piece) => (
-              <T1WritingCard key={piece.id} piece={piece} />
+              <T1WritingCard key={piece.id} piece={piece} groupSlug={groupSlug} />
             ))}
           </Grid>
         </Box>

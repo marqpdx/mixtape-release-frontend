@@ -1,4 +1,4 @@
-// (group-landing)/reading/[slug]/page.tsx
+// (group-landing)/groups/[slug]/reading/[articleSlug]/page.tsx
 //
 // Public WritingPiece reader. Server component for SSR + metadata.
 // No platform chrome (Decision 11). Back link → sponsoring group when known.
@@ -9,13 +9,14 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { PublicWritingPiece } from "@mixtape/api/clients/public/publicApi";
 import { PieceBody } from "./PieceBody";
-import { GroupPublicFooter } from "../../groups/[slug]/sections/GroupPublicFooter";
-import { GroupPublicNav } from "../../groups/[slug]/sections/GroupPublicNav";
-import type { GroupPublicLandingConfig, TypographySetting } from "../../groups/[slug]/types";
-import { tenantPalettes } from "../../groups/[slug]/tenantPalettes";
+import { GroupPublicFooter } from "../../sections/GroupPublicFooter";
+import { GroupPublicNav } from "../../sections/GroupPublicNav";
+import type { GroupPublicLandingConfig, TypographySetting } from "../../types";
+import { tenantPalettes } from "../../tenantPalettes";
 
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
+type GroupPublicWritingPiece = PublicWritingPiece & { public_synopsis?: string };
 
 const TYP = {
   journal: {
@@ -66,9 +67,9 @@ function paletteCSS(selector: string, c: {
 }`;
 }
 
-async function fetchPiece(slug: string): Promise<PublicWritingPiece | null> {
+async function fetchPiece(groupSlug: string, articleSlug: string): Promise<GroupPublicWritingPiece | null> {
   try {
-    const res = await fetch(`${baseUrl}/api/public/writing/${slug}`, {
+    const res = await fetch(`${baseUrl}/api/public/groups/${groupSlug}/writing/${articleSlug}`, {
       next: { revalidate: 120 },
     });
     if (!res.ok) return null;
@@ -93,16 +94,16 @@ async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; articleSlug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const piece = await fetchPiece(slug);
+  const { slug, articleSlug } = await params;
+  const piece = await fetchPiece(slug, articleSlug);
   if (!piece) return { title: "Writing" };
   const groupConfig = piece.sponsor_group
     ? await fetchGroupConfig(piece.sponsor_group.slug)
     : null;
-  const url = `${siteUrl}/reading/${slug}`;
-  const description = piece.excerpt || undefined;
+  const url = `${siteUrl}/groups/${slug}/reading/${articleSlug}`;
+  const description = piece.public_synopsis || piece.excerpt || undefined;
   const image = groupConfig?.group.background_image_url || groupConfig?.group.profile_image_url || undefined;
   return {
     title: piece.title,
@@ -155,10 +156,10 @@ function paletteOverrides(config: GroupPublicLandingConfig | null): string {
 export default async function PublicPieceReaderPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; articleSlug: string }>;
 }) {
-  const { slug } = await params;
-  const piece = await fetchPiece(slug);
+  const { slug, articleSlug } = await params;
+  const piece = await fetchPiece(slug, articleSlug);
   if (!piece) notFound();
 
   const groupConfig = piece.sponsor_group

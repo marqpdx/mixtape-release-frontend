@@ -25,9 +25,10 @@ function formatDate(iso: string | null): string {
 
 interface CardProps {
   piece: FeaturedPiece;
+  groupSlug: string;
 }
 
-function FeaturedCard({ piece }: CardProps) {
+function FeaturedCard({ piece, groupSlug }: CardProps) {
   const bg = useColorModeValue("white", "gray.900");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const headlineColor = useColorModeValue("gray.900", "gray.50");
@@ -35,7 +36,7 @@ function FeaturedCard({ piece }: CardProps) {
   const metaColor = useColorModeValue("gray.400", "gray.500");
 
   return (
-    <Link href={`/reading/${piece.slug}`} style={{ textDecoration: "none" }}>
+    <Link href={`/groups/${groupSlug}/reading/${piece.slug}`} style={{ textDecoration: "none" }}>
       <Box
         className="gpl-fc-card"
         bg={bg}
@@ -148,7 +149,7 @@ export function GroupPublicFeatured({ pieces, groupSlug }: Props) {
         gap={5}
       >
         {pieces.map((piece) => (
-          <FeaturedCard key={piece.id} piece={piece} />
+          <FeaturedCard key={piece.id} piece={piece} groupSlug={groupSlug} />
         ))}
       </Grid>
     </Box>

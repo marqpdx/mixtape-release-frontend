@@ -310,7 +310,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
             {/* Lead piece — display size, excerpt, byline */}
             {leadPiece && (
               <div className="gplm-lead" style={{ marginBottom: listPieces.length ? "32px" : "0" }}>
-                <Link href={`/reading/${leadPiece.slug}`} className="gplm-lead-link">
+                <Link href={`/groups/${groupSlug}/reading/${leadPiece.slug}`} className="gplm-lead-link">
                   <h2
                     className="gplm-lead-title"
                     style={{
@@ -343,7 +343,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   }}>
                     {leadPiece.excerpt.slice(0, 80).trimEnd()}…{" "}
                     <Link
-                      href={`/reading/${leadPiece.slug}`}
+                      href={`/groups/${groupSlug}/reading/${leadPiece.slug}`}
                       className="gplm-read-more"
                       style={{
                         color: "var(--theme-text)",
@@ -369,7 +369,7 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                     className="gplm-piece-item"
                     style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }}
                   >
-                    <Link href={`/reading/${piece.slug}`} className="gplm-piece-link" style={{ padding: "12px 0" }}>
+                    <Link href={`/groups/${groupSlug}/reading/${piece.slug}`} className="gplm-piece-link" style={{ padding: "12px 0" }}>
                       <span
                         className="gplm-piece-title"
                         style={{

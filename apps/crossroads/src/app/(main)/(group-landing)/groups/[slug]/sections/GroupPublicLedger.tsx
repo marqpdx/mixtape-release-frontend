@@ -311,7 +311,7 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
                       className="gplr-piece-item"
                       style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }}
                     >
-                      <Link href={`/reading/${piece.slug}`} className="gplr-piece-link" style={{ padding: "14px 0" }}>
+                      <Link href={`/groups/${groupSlug}/reading/${piece.slug}`} className="gplr-piece-link" style={{ padding: "14px 0" }}>
                         <span
                           className="gplr-piece-title"
                           style={{

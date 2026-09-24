@@ -311,7 +311,7 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
                       background: isEvenRow ? "var(--theme-surface)" : undefined,
                     }}
                   >
-                    <Link href={`/reading/${left.slug}`} className="gpla-piece-link" style={{ padding: "32px" }}>
+                    <Link href={`/groups/${groupSlug}/reading/${left.slug}`} className="gpla-piece-link" style={{ padding: "32px" }}>
                       <span className="gpla-piece-title" style={tileTitleStyle(isEvenRow)}>
                         {left.title}
                       </span>
@@ -348,7 +348,7 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
                         background: !isEvenRow ? "var(--theme-surface)" : undefined,
                       }}
                     >
-                      <Link href={`/reading/${right.slug}`} className="gpla-piece-link" style={{ padding: "32px" }}>
+                      <Link href={`/groups/${groupSlug}/reading/${right.slug}`} className="gpla-piece-link" style={{ padding: "32px" }}>
                         <span className="gpla-piece-title" style={tileTitleStyle(!isEvenRow)}>
                           {right.title}
                         </span>

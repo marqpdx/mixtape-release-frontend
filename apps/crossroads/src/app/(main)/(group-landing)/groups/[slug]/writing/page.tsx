@@ -280,7 +280,7 @@ export default async function GroupWritingIndexPage({
                 className="gwi-piece"
                 style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }}
               >
-                <Link href={`/reading/${piece.slug}`} className="gwi-piece-link" style={{ padding: "16px 0" }}>
+                <Link href={`/groups/${slug}/reading/${piece.slug}`} className="gwi-piece-link" style={{ padding: "16px 0" }}>
                   <h2
                     className="gwi-piece-title"
                     style={{
