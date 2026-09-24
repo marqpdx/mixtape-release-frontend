@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, use } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Container, Text, Box, Skeleton, VStack, HStack, Button, Code, Input, IconButton } from "@chakra-ui/react";
 import { LuX } from "react-icons/lu";
 import { useColorModeValue } from "@components/ui/color-mode";
@@ -182,9 +183,17 @@ export default function FolioInceptionPage({
               <VStack className="fli-material-list" gap={2} align="stretch" pt={2}>
                 {materialItems.map((item) => (
                   <HStack key={item.id} className="fli-material-item" gap={2}>
-                    <Text as="span" color={mutedColor} minW="24px">
-                      {ordinalLabel(item.ordinal)}
-                    </Text>
+                    <Link href={`/folio/inception/${inceptionId}/item/${item.id}`}>
+                      <Text
+                        as="span"
+                        color={mutedColor}
+                        minW="24px"
+                        _hover={{ textDecoration: "underline" }}
+                        title="Enter this item"
+                      >
+                        {ordinalLabel(item.ordinal)}
+                      </Text>
+                    </Link>
                     <Box flex="1">
                       <InlineEditableText
                         value={item.display_text}
