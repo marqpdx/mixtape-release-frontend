@@ -9,8 +9,10 @@ import {
   Flex,
   HStack,
   Heading,
+  IconButton,
   Input,
   Text,
+  Textarea,
   VStack,
   Badge,
   Spinner,
@@ -26,7 +28,7 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye } from "@tabler/icons-react";
+import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
 import NextLink from "next/link";
@@ -83,6 +85,89 @@ function issueRollupColor(issue: Issue | IssueListItem): DotColor {
     return i.placements.every((p) => p.spellcheck_clean && p.signed_off) ? "green" : "yellow";
   }
   return "yellow";
+}
+
+// ---------------------------------------------------------------------------
+// Plain text <-> TipTap doc — minimal, paragraph-per-blank-line conversion.
+// Good enough for a short welcome/intro; not a rich text editor.
+// ---------------------------------------------------------------------------
+
+function textToTipTapDoc(text: string): Record<string, unknown> {
+  const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  if (paragraphs.length === 0) {
+    return { type: "doc", content: [{ type: "paragraph" }] };
+  }
+  return {
+    type: "doc",
+    content: paragraphs.map((p) => ({
+      type: "paragraph",
+      content: [{ type: "text", text: p }],
+    })),
+  };
+}
+
+function tipTapDocToText(doc: Record<string, unknown> | null | undefined): string {
+  if (!doc || typeof doc !== "object") return "";
+  const content = (doc as { content?: unknown[] }).content;
+  if (!Array.isArray(content)) return "";
+  const paragraphs: string[] = [];
+  for (const node of content) {
+    const n = node as { type?: string; content?: { text?: string }[] };
+    if (n?.type === "paragraph") {
+      paragraphs.push((n.content || []).map((c) => c?.text || "").join(""));
+    }
+  }
+  return paragraphs.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Issue details — designation + description (welcome/intro), inline-editable
+// ---------------------------------------------------------------------------
+
+interface IssueDetailsEditorProps {
+  issue: Issue;
+  onSaveDesignation: (designation: string) => void;
+  onSaveDescription: (description: Record<string, unknown>) => void;
+}
+
+function IssueDetailsEditor({ issue, onSaveDesignation, onSaveDescription }: IssueDetailsEditorProps) {
+  const [designation, setDesignation] = useState(issue.designation || "");
+  const [description, setDescription] = useState(tipTapDocToText(issue.description));
+
+  return (
+    <VStack align="stretch" gap={3} mb={4} pb={4} borderBottomWidth="1px" borderColor="theme.border">
+      <HStack gap={2} align="center">
+        <Text fontSize="11px" fontWeight="700" color="theme.textSecondary" w="90px" flexShrink={0}>
+          Designation
+        </Text>
+        <Input
+          size="xs"
+          maxW="240px"
+          placeholder="e.g. Issue #1"
+          value={designation}
+          onChange={(e) => setDesignation(e.target.value)}
+          onBlur={() => { if (designation !== (issue.designation || "")) onSaveDesignation(designation); }}
+        />
+      </HStack>
+      <Box>
+        <Text fontSize="11px" fontWeight="700" color="theme.textSecondary" mb={1}>
+          Description — welcome / intro (shown at the top of Continuous Read)
+        </Text>
+        <Textarea
+          size="sm"
+          rows={4}
+          placeholder="Write what this Issue is about and why these pieces belong together…"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={() => {
+            if (description !== tipTapDocToText(issue.description)) {
+              onSaveDescription(textToTipTapDoc(description));
+            }
+          }}
+        />
+      </Box>
+    </VStack>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +279,10 @@ interface IssuePanelProps {
   onPublish?: () => void;
   focusedIssueData: Issue | null;
   focusedIssueLoading: boolean;
+  onSaveDesignation?: (designation: string) => void;
+  onSaveDescription?: (description: Record<string, unknown>) => void;
+  onReorder?: (pieceIds: string[]) => void;
+  onSetLead?: (pieceId: string, isLead: boolean) => void;
 }
 
 function IssuePanel({
@@ -208,6 +297,10 @@ function IssuePanel({
   onPublish,
   focusedIssueData,
   focusedIssueLoading,
+  onSaveDesignation,
+  onSaveDescription,
+  onReorder,
+  onSetLead,
 }: IssuePanelProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `issue-${issue.id}` });
   const rollup = issueRollupColor(isZoomed && focusedIssueData ? focusedIssueData : issue);
@@ -269,28 +362,84 @@ function IssuePanel({
         {focusedIssueLoading ? (
           <Spinner size="sm" />
         ) : (
-          <Box ref={setNodeRef}>
-            {focusedIssueData && focusedIssueData.placements.length > 0 ? (
-              <VStack align="stretch" gap={2}>
-                {focusedIssueData.placements.map((placement) => {
-                  const doc = docs.find((d) => d.piece?.id === placement.piece_id);
-                  if (!doc) return null;
-                  return (
-                    <HStack key={placement.id} gap={3} align="center">
-                      <Text fontSize="12px" color="theme.textSecondary" w="24px" textAlign="right" flexShrink={0}>
-                        {placement.order_index + 1}.
-                      </Text>
-                      <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} />
-                    </HStack>
-                  );
-                })}
-              </VStack>
-            ) : (
-              <Text fontSize="sm" color="theme.textSecondary">
-                No Docs in this Issue yet. Drag Docs here from the canvas.
-              </Text>
+          <>
+            {focusedIssueData && onSaveDesignation && onSaveDescription && (
+              <IssueDetailsEditor
+                key={focusedIssueData.id}
+                issue={focusedIssueData}
+                onSaveDesignation={onSaveDesignation}
+                onSaveDescription={onSaveDescription}
+              />
             )}
-          </Box>
+            <Box ref={setNodeRef}>
+              {focusedIssueData && focusedIssueData.placements.length > 0 ? (
+                <VStack align="stretch" gap={2}>
+                  {focusedIssueData.placements.map((placement, idx) => {
+                    const doc = docs.find((d) => d.piece?.id === placement.piece_id);
+                    if (!doc) return null;
+                    const orderedIds = focusedIssueData.placements.map((p) => p.piece_id);
+                    const canMoveUp = idx > 0;
+                    const canMoveDown = idx < orderedIds.length - 1;
+                    return (
+                      <HStack key={placement.id} gap={3} align="center">
+                        <Text fontSize="12px" color="theme.textSecondary" w="24px" textAlign="right" flexShrink={0}>
+                          {placement.order_index + 1}.
+                        </Text>
+                        <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} />
+                        {onSetLead && (
+                          <Tooltip content={placement.is_lead ? "Lead piece — click to unmark" : "Mark as lead piece"}>
+                            <IconButton
+                              aria-label="Toggle lead"
+                              size="xs"
+                              variant="ghost"
+                              colorPalette={placement.is_lead ? "yellow" : "gray"}
+                              onClick={() => onSetLead(placement.piece_id, !placement.is_lead)}
+                            >
+                              {placement.is_lead ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {onReorder && (
+                          <VStack gap={0}>
+                            <IconButton
+                              aria-label="Move up"
+                              size="2xs"
+                              variant="ghost"
+                              disabled={!canMoveUp}
+                              onClick={() => {
+                                const next = [...orderedIds];
+                                [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                onReorder(next);
+                              }}
+                            >
+                              <IconChevronUp size={12} />
+                            </IconButton>
+                            <IconButton
+                              aria-label="Move down"
+                              size="2xs"
+                              variant="ghost"
+                              disabled={!canMoveDown}
+                              onClick={() => {
+                                const next = [...orderedIds];
+                                [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                                onReorder(next);
+                              }}
+                            >
+                              <IconChevronDown size={12} />
+                            </IconButton>
+                          </VStack>
+                        )}
+                      </HStack>
+                    );
+                  })}
+                </VStack>
+              ) : (
+                <Text fontSize="sm" color="theme.textSecondary">
+                  No Docs in this Issue yet. Drag Docs here from the canvas.
+                </Text>
+              )}
+            </Box>
+          </>
         )}
       </Box>
     );
@@ -426,7 +575,17 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
   const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
-  const { issue: focusedIssueData, isLoading: focusedIssueLoading, addPlacement, removePlacement, publishIssue, signOffPiece } = useIssue(zoomedIssueId);
+  const {
+    issue: focusedIssueData,
+    isLoading: focusedIssueLoading,
+    addPlacement,
+    removePlacement,
+    publishIssue,
+    signOffPiece,
+    updateIssue,
+    reorderPlacements,
+    setPlacementLead,
+  } = useIssue(zoomedIssueId);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -536,6 +695,30 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
     }
   }, [zoomedIssueId, signOffPiece]);
 
+  const handleSaveDesignation = useCallback((designation: string) => {
+    updateIssue.mutate({ designation }, {
+      onError: () => toaster.create({ title: "Failed to save designation", type: "error" }),
+    });
+  }, [updateIssue]);
+
+  const handleSaveDescription = useCallback((description: Record<string, unknown>) => {
+    updateIssue.mutate({ description }, {
+      onError: () => toaster.create({ title: "Failed to save description", type: "error" }),
+    });
+  }, [updateIssue]);
+
+  const handleReorder = useCallback((pieceIds: string[]) => {
+    reorderPlacements.mutate(pieceIds, {
+      onError: () => toaster.create({ title: "Failed to reorder", type: "error" }),
+    });
+  }, [reorderPlacements]);
+
+  const handleSetLead = useCallback((pieceId: string, isLead: boolean) => {
+    setPlacementLead.mutate({ pieceId, isLead }, {
+      onError: () => toaster.create({ title: "Failed to update lead", type: "error" }),
+    });
+  }, [setPlacementLead]);
+
   const handleDeleteIssue = useCallback(async (issueId: string) => {
     try {
       await deleteIssue.mutateAsync(issueId);
@@ -588,6 +771,10 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
                     onPublish={handlePublish}
                     focusedIssueData={zoomedIssueId === issue.id ? focusedIssueData ?? null : null}
                     focusedIssueLoading={zoomedIssueId === issue.id && focusedIssueLoading}
+                    onSaveDesignation={handleSaveDesignation}
+                    onSaveDescription={handleSaveDescription}
+                    onReorder={handleReorder}
+                    onSetLead={handleSetLead}
                   />
                 ))}
               </Flex>

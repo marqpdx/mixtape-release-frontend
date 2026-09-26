@@ -66,7 +66,8 @@ export function useIssue(issueId: string | null) {
   });
 
   const setPlacementLead = useMutation({
-    mutationFn: (pieceId: string) => issueBoardApi.setIssuePlacementLead(issueId!, pieceId, true),
+    mutationFn: ({ pieceId, isLead }: { pieceId: string; isLead: boolean }) =>
+      issueBoardApi.setIssuePlacementLead(issueId!, pieceId, isLead),
     onSuccess: () => qc.invalidateQueries({ queryKey: issueKey(issueId!) }),
   });
 
