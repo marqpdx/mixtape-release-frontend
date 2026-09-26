@@ -24,7 +24,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { IconArrowLeft, IconList } from "@tabler/icons-react"
 import { useIssueRead } from "@mixtape/api/hooks/useIssueBoard"
-import { TipTapRenderer } from "@components/tiptap/TipTapRenderer"
+import { TipTapRenderer, TipTapDocument } from "@components/tiptap/TipTapRenderer"
 
 export default function IssueContinuousReadPage() {
   const params = useParams()
@@ -99,7 +99,7 @@ export default function IssueContinuousReadPage() {
                   borderRadius="xl"
                   p={6}
                 >
-                  <TipTapRenderer content={issue.description} />
+                  <TipTapRenderer content={issue.description as unknown as TipTapDocument} />
                 </Box>
               )}
 
@@ -195,7 +195,7 @@ export default function IssueContinuousReadPage() {
 
                       {p.body_json ? (
                         <Box pl="28px">
-                          <TipTapRenderer content={p.body_json} />
+                          <TipTapRenderer content={p.body_json as unknown as TipTapDocument} />
                         </Box>
                       ) : (
                         <Text fontSize="sm" color={mutedColor} pl="28px">
