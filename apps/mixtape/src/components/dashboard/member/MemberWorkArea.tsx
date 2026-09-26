@@ -32,7 +32,7 @@ import { MemberSettings } from "@/components/member/settings/MemberSettings";
 import WorkTable from "@components/initiatives/WorkTable";
 import MemberPreferencesWorkArea from "./MemberPreferencesWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
-import { RunBoardWorkArea } from "@/components/writing/run-board/RunBoardWorkArea";
+import { IssueBoardWorkArea } from "@/components/writing/issue-board/IssueBoardWorkArea";
 
 interface MemberWorkAreaProps extends WorkAreaProps {
   identity?: UserIdentity;
@@ -218,11 +218,11 @@ export default function MemberWorkArea({
     );
   }
 
-  if (section === "run-board") {
+  if (section === "issue-board") {
     if (!identity.is_superuser) {
       return (
         <WorkAreaWrapper>
-          <Text color="gray.500">Run Board is only available to superusers.</Text>
+          <Text color="gray.500">Issue Board is only available to superusers.</Text>
         </WorkAreaWrapper>
       );
     }
@@ -230,7 +230,7 @@ export default function MemberWorkArea({
     return (
       <WorkAreaWrapper padding={0}>
         <Box p={5}>
-          <RunBoardWorkArea
+          <IssueBoardWorkArea
             sponsor={{ type: "member", slug: identity.username, id: identity.id, displayName }}
           />
         </Box>

@@ -44,7 +44,7 @@ import InitiativesWorkArea from "@/components/initiatives/InitiativesWorkArea";
 import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationWorkArea";
 import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
-import { RunBoardWorkArea } from "@/components/writing/run-board/RunBoardWorkArea";
+import { IssueBoardWorkArea } from "@/components/writing/issue-board/IssueBoardWorkArea";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
@@ -512,18 +512,18 @@ export default function GroupWorkArea({
     );
   }
 
-  if (section === "run-board") {
+  if (section === "issue-board") {
     if (!identity?.is_superuser) {
       return (
         <WorkAreaWrapper>
-          <Text>Run Board is only available to superusers.</Text>
+          <Text>Issue Board is only available to superusers.</Text>
         </WorkAreaWrapper>
       );
     }
     return (
       <WorkAreaWrapper padding={0}>
         <Box p={5}>
-          <RunBoardWorkArea
+          <IssueBoardWorkArea
             sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
           />
         </Box>

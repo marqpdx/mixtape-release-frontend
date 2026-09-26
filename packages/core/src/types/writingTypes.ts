@@ -530,15 +530,16 @@ export interface PublishAndPlacePayload {
 }
 
 // ---------------------------------------------------------------------------
-// Writing Assembly (ADR-0054)
+// Writing Assembly (ADR-0054; renamed WritingRun -> Issue per Phase 3 amendment)
 // ---------------------------------------------------------------------------
 
-export type RunStatus = 'draft' | 'published'
+export type IssueStatus = 'draft' | 'published'
 
-export interface RunMember {
+export interface IssuePlacement {
   id: string
   order_index: number
   added_at: string
+  is_lead: boolean
   piece_id: string
   piece_title: string
   piece_status: ContentStatus
@@ -547,24 +548,52 @@ export interface RunMember {
   word_count: number
 }
 
-export interface WritingRun {
+export interface Issue {
   id: string
   title: string
   slug: string
-  status: RunStatus
+  designation: string | null
+  description: Record<string, unknown> | null
+  status: IssueStatus
   published_at: string | null
   created_at: string
   updated_at: string
-  memberships: RunMember[]
+  placements: IssuePlacement[]
   member_count: number
   is_publishable: boolean
 }
 
-export interface WritingRunList {
+export interface IssueReadPlacement {
+  id: string
+  order_index: number
+  is_lead: boolean
+  title: string
+  slug: string
+  status: ContentStatus
+  body_json: Record<string, unknown> | null
+  excerpt: string
+  author: { id: string; username: string; display_name: string }
+  word_count: number
+}
+
+export interface IssueRead {
   id: string
   title: string
   slug: string
-  status: RunStatus
+  designation: string | null
+  description: Record<string, unknown> | null
+  status: IssueStatus
+  published_at: string | null
+  placements: IssueReadPlacement[]
+  is_editor: boolean
+}
+
+export interface IssueListItem {
+  id: string
+  title: string
+  slug: string
+  designation: string | null
+  status: IssueStatus
   published_at: string | null
   created_at: string
   updated_at: string

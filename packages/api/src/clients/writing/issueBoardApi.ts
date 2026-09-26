@@ -1,0 +1,70 @@
+// packages/api/src/clients/writing/issueBoardApi.ts
+// ADR-0054 + Phase 3 amendment: Issue Board API client (renamed from runBoardApi)
+
+import { Issue, IssueListItem, IssuePlacement, IssueRead } from "@mixtape/core/types/writingTypes";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+
+export async function listIssues(): Promise<IssueListItem[]> {
+  const res = await axiosInstance.get("/api/writing/issues");
+  return res.data;
+}
+
+export async function createIssue(title: string): Promise<Issue> {
+  const res = await axiosInstance.post("/api/writing/issues", { title });
+  return res.data;
+}
+
+export async function getIssue(issueId: string): Promise<Issue> {
+  const res = await axiosInstance.get(`/api/writing/issues/${issueId}`);
+  return res.data;
+}
+
+export async function updateIssue(
+  issueId: string,
+  updates: { title?: string; designation?: string; description?: Record<string, unknown> }
+): Promise<Issue> {
+  const res = await axiosInstance.patch(`/api/writing/issues/${issueId}`, updates);
+  return res.data;
+}
+
+export async function deleteIssue(issueId: string): Promise<void> {
+  await axiosInstance.delete(`/api/writing/issues/${issueId}`);
+}
+
+export async function publishIssue(issueId: string): Promise<Issue> {
+  const res = await axiosInstance.post(`/api/writing/issues/${issueId}/publish`);
+  return res.data;
+}
+
+export async function addIssuePlacement(issueId: string, pieceId: string): Promise<IssuePlacement> {
+  const res = await axiosInstance.post(`/api/writing/issues/${issueId}/placements`, { piece_id: pieceId });
+  return res.data;
+}
+
+export async function removeIssuePlacement(issueId: string, pieceId: string): Promise<void> {
+  await axiosInstance.delete(`/api/writing/issues/${issueId}/placements/${pieceId}`);
+}
+
+export async function setIssuePlacementLead(issueId: string, pieceId: string, isLead: boolean): Promise<IssuePlacement> {
+  const res = await axiosInstance.patch(`/api/writing/issues/${issueId}/placements/${pieceId}`, { is_lead: isLead });
+  return res.data;
+}
+
+export async function reorderIssuePlacements(issueId: string, pieceIds: string[]): Promise<Issue> {
+  const res = await axiosInstance.patch(`/api/writing/issues/${issueId}/placements/reorder`, { piece_ids: pieceIds });
+  return res.data;
+}
+
+export async function getIssueRead(issueId: string): Promise<IssueRead> {
+  const res = await axiosInstance.get(`/api/writing/issues/${issueId}/read`);
+  return res.data;
+}
+
+export async function signOffPiece(pieceId: string): Promise<{ signed_off: boolean; piece_id: string }> {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/sign-off`);
+  return res.data;
+}
+
+export async function setSpellcheckClean(pieceId: string, clean: boolean): Promise<void> {
+  await axiosInstance.patch(`/api/writing/pieces/${pieceId}`, { spellcheck_clean: clean });
+}

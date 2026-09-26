@@ -67,7 +67,7 @@ type SectionKey =
   | "writing"
   | "my-drafts"
   | "write"
-  | "run-board"
+  | "issue-board"
   | "my-groups"
   | "messages"
   | "create-group"
@@ -107,7 +107,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
         { key: "writing", label: "My Writing", icon: IconPencil },
         { key: "my-drafts", label: "Drafts", icon: IconFileText },
         { key: "write", label: "New Piece", icon: IconPlus },
-        ...(isSuperuser ? [{ key: "run-board" as SectionKey, label: "Run Board ✦", icon: IconLayoutBoard }] : []),
+        ...(isSuperuser ? [{ key: "issue-board" as SectionKey, label: "Issue Board ✦", icon: IconLayoutBoard }] : []),
       ],
     },
     {

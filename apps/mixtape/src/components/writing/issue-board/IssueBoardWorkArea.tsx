@@ -1,6 +1,6 @@
 "use client";
-// components/writing/run-board/RunBoardWorkArea.tsx
-// ADR-0054: Writing Assembly — Run Board (P1-4 through P1-9)
+// components/writing/issue-board/IssueBoardWorkArea.tsx
+// ADR-0054 (+ Phase 3 amendment): Issue Board (P1-4 through P1-9, renamed from Run Board)
 
 import React, { useState, useCallback, useMemo } from "react";
 import {
@@ -26,12 +26,13 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck } from "@tabler/icons-react";
+import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
-import { useRuns, useRun } from "@mixtape/api/hooks/useRunBoard";
+import NextLink from "next/link";
+import { useIssues, useIssue } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
-import type { WorkingDocument, WritingRun, WritingRunList } from "@mixtape/core/types/writingTypes";
+import type { WorkingDocument, Issue, IssueListItem } from "@mixtape/core/types/writingTypes";
 
 interface Sponsor {
   type: "member" | "group";
@@ -40,7 +41,7 @@ interface Sponsor {
   displayName?: string;
 }
 
-interface RunBoardWorkAreaProps {
+interface IssueBoardWorkAreaProps {
   sponsor: Sponsor;
 }
 
@@ -71,15 +72,15 @@ function StatusDot({ color, label }: { color: DotColor; label?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Run rollup dot — Green only when all members are Green
+// Issue rollup dot — Green only when all placements are Green
 // ---------------------------------------------------------------------------
 
-function runRollupColor(run: WritingRun | WritingRunList): DotColor {
-  if (run.status === "published") return "blue";
-  if ("memberships" in run) {
-    const r = run as WritingRun;
-    if (!r.memberships.length) return "yellow";
-    return r.memberships.every((m) => m.spellcheck_clean && m.signed_off) ? "green" : "yellow";
+function issueRollupColor(issue: Issue | IssueListItem): DotColor {
+  if (issue.status === "published") return "blue";
+  if ("placements" in issue) {
+    const i = issue as Issue;
+    if (!i.placements.length) return "yellow";
+    return i.placements.every((p) => p.spellcheck_clean && p.signed_off) ? "green" : "yellow";
   }
   return "yellow";
 }
@@ -90,7 +91,7 @@ function runRollupColor(run: WritingRun | WritingRunList): DotColor {
 
 interface DocCardProps {
   doc: WorkingDocument;
-  inRun: boolean;
+  inIssue: boolean;
   isDragging?: boolean;
   onSignOff?: (pieceId: string) => void;
 }
@@ -103,7 +104,7 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
 
   return (
     <Box
-      className="rb-doc-card"
+      className="ib-doc-card"
       bg="theme.bg"
       borderWidth="1px"
       borderColor={isDragging ? "blue.400" : "theme.border"}
@@ -161,28 +162,28 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
 
 function DraggableDocCard({
   doc,
-  inRun,
+  inIssue,
   onSignOff,
 }: DocCardProps) {
   const pieceId = doc.piece?.id ?? String(doc.id);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `doc-${pieceId}`,
-    data: { type: "doc", pieceId, fromRun: inRun ? undefined : null },
+    data: { type: "doc", pieceId, fromIssue: inIssue ? undefined : null },
   });
 
   return (
     <Box ref={setNodeRef} {...attributes} {...listeners}>
-      <DocCard doc={doc} inRun={inRun} isDragging={isDragging} onSignOff={onSignOff} />
+      <DocCard doc={doc} inIssue={inIssue} isDragging={isDragging} onSignOff={onSignOff} />
     </Box>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Droppable Run Panel
+// Droppable Issue Panel
 // ---------------------------------------------------------------------------
 
-interface RunPanelProps {
-  run: WritingRunList;
+interface IssuePanelProps {
+  issue: IssueListItem;
   docs: WorkingDocument[];
   isZoomed: boolean;
   otherZoomed: boolean;
@@ -191,12 +192,12 @@ interface RunPanelProps {
   onDelete: () => void;
   onSignOff?: (pieceId: string) => void;
   onPublish?: () => void;
-  focusedRunData: WritingRun | null;
-  focusedRunLoading: boolean;
+  focusedIssueData: Issue | null;
+  focusedIssueLoading: boolean;
 }
 
-function RunPanel({
-  run,
+function IssuePanel({
+  issue,
   docs,
   isZoomed,
   otherZoomed,
@@ -205,17 +206,17 @@ function RunPanel({
   onDelete,
   onSignOff,
   onPublish,
-  focusedRunData,
-  focusedRunLoading,
-}: RunPanelProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: `run-${run.id}` });
-  const rollup = runRollupColor(isZoomed && focusedRunData ? focusedRunData : run);
+  focusedIssueData,
+  focusedIssueLoading,
+}: IssuePanelProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: `issue-${issue.id}` });
+  const rollup = issueRollupColor(isZoomed && focusedIssueData ? focusedIssueData : issue);
 
   // Zoomed panel: 85vw × 85vh, 90% opacity, frosted, elevated
   if (isZoomed) {
     return (
       <Box
-        className="rb-run-panel rb-run-panel--zoomed"
+        className="ib-issue-panel ib-issue-panel--zoomed"
         position="fixed"
         top="50%"
         left="50%"
@@ -235,21 +236,27 @@ function RunPanel({
       >
         <Flex justify="space-between" align="center" mb={4}>
           <HStack gap={3}>
-            <StatusDot color={rollup} label={`Run status: ${rollup}`} />
-            <Heading size="sm">{run.title}</Heading>
-            {run.status === "published" && <Badge colorPalette="blue">Published</Badge>}
+            <StatusDot color={rollup} label={`Issue status: ${rollup}`} />
+            <Heading size="sm">{issue.title}</Heading>
+            {issue.status === "published" && <Badge colorPalette="blue">Published</Badge>}
           </HStack>
           <HStack gap={2}>
-            {run.status === "draft" && onPublish && (
-              <Tooltip content={run.is_publishable ? "Publish Run (all Docs are Green)" : "All Docs must be Green before publishing"}>
+            <NextLink href={`/writing/issues/${issue.id}/read`} target="_blank">
+              <Button size="xs" variant="outline">
+                <IconEye size={12} />
+                Preview
+              </Button>
+            </NextLink>
+            {issue.status === "draft" && onPublish && (
+              <Tooltip content={issue.is_publishable ? "Publish Issue (all Docs are Green)" : "All Docs must be Green before publishing"}>
                 <Button
                   size="xs"
                   colorPalette="blue"
-                  disabled={!run.is_publishable}
+                  disabled={!issue.is_publishable}
                   onClick={onPublish}
                 >
                   <IconLock size={12} />
-                  Publish Run
+                  Publish Issue
                 </Button>
               </Tooltip>
             )}
@@ -259,28 +266,28 @@ function RunPanel({
           </HStack>
         </Flex>
 
-        {focusedRunLoading ? (
+        {focusedIssueLoading ? (
           <Spinner size="sm" />
         ) : (
           <Box ref={setNodeRef}>
-            {focusedRunData && focusedRunData.memberships.length > 0 ? (
+            {focusedIssueData && focusedIssueData.placements.length > 0 ? (
               <VStack align="stretch" gap={2}>
-                {focusedRunData.memberships.map((member) => {
-                  const doc = docs.find((d) => d.piece?.id === member.piece_id);
+                {focusedIssueData.placements.map((placement) => {
+                  const doc = docs.find((d) => d.piece?.id === placement.piece_id);
                   if (!doc) return null;
                   return (
-                    <HStack key={member.id} gap={3} align="center">
+                    <HStack key={placement.id} gap={3} align="center">
                       <Text fontSize="12px" color="theme.textSecondary" w="24px" textAlign="right" flexShrink={0}>
-                        {member.order_index + 1}.
+                        {placement.order_index + 1}.
                       </Text>
-                      <DocCard doc={doc} inRun={true} onSignOff={onSignOff} />
+                      <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} />
                     </HStack>
                   );
                 })}
               </VStack>
             ) : (
               <Text fontSize="sm" color="theme.textSecondary">
-                No Docs in this Run yet. Drag Docs here from the canvas.
+                No Docs in this Issue yet. Drag Docs here from the canvas.
               </Text>
             )}
           </Box>
@@ -292,7 +299,7 @@ function RunPanel({
   // Normal panel
   return (
     <Box
-      className="rb-run-panel"
+      className="ib-issue-panel"
       ref={setNodeRef}
       borderWidth="1.5px"
       borderColor={isOver ? "blue.400" : otherZoomed ? "theme.border" : "theme.border"}
@@ -312,11 +319,11 @@ function RunPanel({
         <HStack gap={2}>
           <StatusDot color={rollup} />
           <Text fontSize="13px" fontWeight="700" color="theme.text">
-            {run.title}
+            {issue.title}
           </Text>
         </HStack>
         <HStack gap={1} onClick={(e) => e.stopPropagation()}>
-          <Badge size="xs" colorPalette="gray">{run.member_count}</Badge>
+          <Badge size="xs" colorPalette="gray">{issue.member_count}</Badge>
           <Box
             as="button"
             p={0.5}
@@ -329,11 +336,11 @@ function RunPanel({
         </HStack>
       </Flex>
       <Text fontSize="11px" color="theme.textSecondary">
-        {run.member_count === 0
+        {issue.member_count === 0
           ? "Drop Docs here"
-          : `${run.member_count} Doc${run.member_count !== 1 ? "s" : ""} — click to expand`}
+          : `${issue.member_count} Doc${issue.member_count !== 1 ? "s" : ""} — click to expand`}
       </Text>
-      {run.status === "published" && (
+      {issue.status === "published" && (
         <Badge size="xs" colorPalette="blue" mt={1}>Published</Badge>
       )}
     </Box>
@@ -349,7 +356,7 @@ function UnassignedPool({ isOver }: { isOver: boolean }) {
   return (
     <Box
       ref={setNodeRef}
-      className="rb-unassigned"
+      className="ib-unassigned"
       borderWidth="1px"
       borderStyle="dashed"
       borderColor={isOver ? "blue.400" : "theme.border"}
@@ -363,10 +370,10 @@ function UnassignedPool({ isOver }: { isOver: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
-// Create Run form
+// Create Issue form
 // ---------------------------------------------------------------------------
 
-function CreateRunForm({ onCreate }: { onCreate: (title: string) => void }) {
+function CreateIssueForm({ onCreate }: { onCreate: (title: string) => void }) {
   const [title, setTitle] = useState("");
   const [active, setActive] = useState(false);
 
@@ -382,7 +389,7 @@ function CreateRunForm({ onCreate }: { onCreate: (title: string) => void }) {
     return (
       <Button size="sm" variant="outline" onClick={() => setActive(true)}>
         <IconPlus size={14} />
-        New Run
+        New Issue
       </Button>
     );
   }
@@ -391,7 +398,7 @@ function CreateRunForm({ onCreate }: { onCreate: (title: string) => void }) {
     <HStack gap={2}>
       <Input
         size="sm"
-        placeholder="Run title…"
+        placeholder="Issue title…"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") submit(); if (e.key === "Escape") setActive(false); }}
@@ -412,35 +419,35 @@ function CreateRunForm({ onCreate }: { onCreate: (title: string) => void }) {
 // Main board
 // ---------------------------------------------------------------------------
 
-export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
-  const { runs, isLoading: runsLoading, createRun, deleteRun } = useRuns();
+export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
+  const { issues, isLoading: issuesLoading, createIssue, deleteIssue } = useIssues();
   const { drafts, isLoading: docsLoading } = useWriting(sponsor.type, sponsor.slug);
 
-  const [zoomedRunId, setZoomedRunId] = useState<string | null>(null);
+  const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
-  const { run: focusedRunData, isLoading: focusedRunLoading, addMember, removeMember, publishRun, signOffPiece } = useRun(zoomedRunId);
+  const { issue: focusedIssueData, isLoading: focusedIssueLoading, addPlacement, removePlacement, publishIssue, signOffPiece } = useIssue(zoomedIssueId);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  // Map piece_id → run_id for quick lookup
-  const pieceRunMap = useMemo(() => {
+  // Map piece_id → issue_id for quick lookup
+  const pieceIssueMap = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const run of runs) {
-      // We only have member_count in list; detailed run data for focused run
-      if (focusedRunData && focusedRunData.id === run.id) {
-        for (const m of focusedRunData.memberships) {
-          map[m.piece_id] = run.id;
+    for (const issue of issues) {
+      // We only have member_count in list; detailed issue data for focused issue
+      if (focusedIssueData && focusedIssueData.id === issue.id) {
+        for (const p of focusedIssueData.placements) {
+          map[p.piece_id] = issue.id;
         }
       }
     }
     return map;
-  }, [runs, focusedRunData]);
+  }, [issues, focusedIssueData]);
 
-  // All piece IDs that are in any run (based on what we know)
-  const assignedPieceIds = useMemo(() => new Set(Object.keys(pieceRunMap)), [pieceRunMap]);
+  // All piece IDs that are in any issue (based on what we know)
+  const assignedPieceIds = useMemo(() => new Set(Object.keys(pieceIssueMap)), [pieceIssueMap]);
 
-  // Unassigned docs = docs not in pieceRunMap
+  // Unassigned docs = docs not in pieceIssueMap
   const unassignedDocs = useMemo(
     () => drafts.filter((d) => !assignedPieceIds.has(d.piece?.id ?? "")),
     [drafts, assignedPieceIds]
@@ -465,48 +472,48 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
     const targetId = String(over.id);
 
     if (targetId === "unassigned") {
-      // If in a run, remove
-      const currentRunId = pieceRunMap[pieceId];
-      if (currentRunId) {
+      // If in an issue, remove
+      const currentIssueId = pieceIssueMap[pieceId];
+      if (currentIssueId) {
         try {
-          // Use the focused run's removeMember if it matches
-          if (zoomedRunId === currentRunId) {
-            await removeMember.mutateAsync(pieceId);
+          // Use the focused issue's removePlacement if it matches
+          if (zoomedIssueId === currentIssueId) {
+            await removePlacement.mutateAsync(pieceId);
           }
         } catch {
-          toaster.create({ title: "Failed to remove from Run", type: "error" });
+          toaster.create({ title: "Failed to remove from Issue", type: "error" });
         }
       }
       return;
     }
 
-    if (targetId.startsWith("run-")) {
-      const runId = targetId.replace("run-", "");
-      const currentRunId = pieceRunMap[pieceId];
-      if (currentRunId === runId) return; // already there
+    if (targetId.startsWith("issue-")) {
+      const issueId = targetId.replace("issue-", "");
+      const currentIssueId = pieceIssueMap[pieceId];
+      if (currentIssueId === issueId) return; // already there
 
       try {
-        // If we're focused on the target run, use addMember
-        if (zoomedRunId === runId) {
-          await addMember.mutateAsync(pieceId);
+        // If we're focused on the target issue, use addPlacement
+        if (zoomedIssueId === issueId) {
+          await addPlacement.mutateAsync(pieceId);
         } else {
-          // Navigate to that run first by zooming in
+          // Navigate to that issue first by zooming in
           // For now: just add via direct API call fallback
           // (The user can also zoom in and drag)
-          setZoomedRunId(runId);
+          setZoomedIssueId(issueId);
         }
       } catch (e) {
         const err = e as { response?: { data?: { detail?: string } } };
-        toaster.create({ title: err?.response?.data?.detail || "Failed to add to Run", type: "error" });
+        toaster.create({ title: err?.response?.data?.detail || "Failed to add to Issue", type: "error" });
       }
     }
-  }, [pieceRunMap, zoomedRunId, addMember, removeMember]);
+  }, [pieceIssueMap, zoomedIssueId, addPlacement, removePlacement]);
 
   const handlePublish = useCallback(async () => {
-    if (!zoomedRunId) return;
+    if (!zoomedIssueId) return;
     try {
-      await publishRun.mutateAsync();
-      toaster.create({ title: "Run published — all Docs are now live", type: "success" });
+      await publishIssue.mutateAsync();
+      toaster.create({ title: "Issue published — all Docs are now live", type: "success" });
     } catch (e) {
       const err = e as { response?: { data?: { detail?: string; not_ready?: string[] } } };
       const detail = err?.response?.data?.detail || "Publish failed";
@@ -517,41 +524,41 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
         type: "error",
       });
     }
-  }, [zoomedRunId, publishRun]);
+  }, [zoomedIssueId, publishIssue]);
 
   const handleSignOff = useCallback(async (pieceId: string) => {
-    if (!zoomedRunId) return;
+    if (!zoomedIssueId) return;
     try {
       await signOffPiece.mutateAsync(pieceId);
       toaster.create({ title: "Doc signed off", type: "success" });
     } catch {
       toaster.create({ title: "Sign-off failed", type: "error" });
     }
-  }, [zoomedRunId, signOffPiece]);
+  }, [zoomedIssueId, signOffPiece]);
 
-  const handleDeleteRun = useCallback(async (runId: string) => {
+  const handleDeleteIssue = useCallback(async (issueId: string) => {
     try {
-      await deleteRun.mutateAsync(runId);
-      if (zoomedRunId === runId) setZoomedRunId(null);
+      await deleteIssue.mutateAsync(issueId);
+      if (zoomedIssueId === issueId) setZoomedIssueId(null);
     } catch {
-      toaster.create({ title: "Failed to delete Run", type: "error" });
+      toaster.create({ title: "Failed to delete Issue", type: "error" });
     }
-  }, [deleteRun, zoomedRunId]);
+  }, [deleteIssue, zoomedIssueId]);
 
-  const isLoading = runsLoading || docsLoading;
+  const isLoading = issuesLoading || docsLoading;
 
   return (
-    <Box className="rb-root" w="full" minH="80vh" position="relative">
+    <Box className="ib-root" w="full" minH="80vh" position="relative">
       {/* Header */}
-      <Flex className="rb-header" align="center" justify="space-between" mb={4} flexWrap="wrap" gap={3}>
+      <Flex className="ib-header" align="center" justify="space-between" mb={4} flexWrap="wrap" gap={3}>
         <VStack align="start" gap={0}>
-          <Heading size="md">Run Board</Heading>
+          <Heading size="md">Issue Board</Heading>
           <Text fontSize="12px" color="theme.textSecondary">
-            Group Docs into Runs and publish them together as a unit.{" "}
+            Group Docs into Issues and publish them together as a unit.{" "}
             <Text as="span" fontWeight="600">Superuser preview.</Text>
           </Text>
         </VStack>
-        <CreateRunForm onCreate={(title) => createRun.mutate(title)} />
+        <CreateIssueForm onCreate={(title) => createIssue.mutate(title)} />
       </Flex>
 
       {isLoading && (
@@ -560,27 +567,27 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
 
       {!isLoading && (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          {/* Canvas — Run panels row */}
-          {runs.length > 0 && (
-            <Box className="rb-canvas-runs" mb={5}>
+          {/* Canvas — Issue panels row */}
+          {issues.length > 0 && (
+            <Box className="ib-canvas-issues" mb={5}>
               <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
-                Runs
+                Issues
               </Text>
               <Flex gap={3} flexWrap="wrap" align="flex-start">
-                {runs.map((run) => (
-                  <RunPanel
-                    key={run.id}
-                    run={run}
+                {issues.map((issue) => (
+                  <IssuePanel
+                    key={issue.id}
+                    issue={issue}
                     docs={drafts}
-                    isZoomed={zoomedRunId === run.id}
-                    otherZoomed={!!zoomedRunId && zoomedRunId !== run.id}
-                    onZoom={() => setZoomedRunId(run.id)}
-                    onZoomOut={() => setZoomedRunId(null)}
-                    onDelete={() => handleDeleteRun(run.id)}
+                    isZoomed={zoomedIssueId === issue.id}
+                    otherZoomed={!!zoomedIssueId && zoomedIssueId !== issue.id}
+                    onZoom={() => setZoomedIssueId(issue.id)}
+                    onZoomOut={() => setZoomedIssueId(null)}
+                    onDelete={() => handleDeleteIssue(issue.id)}
                     onSignOff={handleSignOff}
                     onPublish={handlePublish}
-                    focusedRunData={zoomedRunId === run.id ? focusedRunData ?? null : null}
-                    focusedRunLoading={zoomedRunId === run.id && focusedRunLoading}
+                    focusedIssueData={zoomedIssueId === issue.id ? focusedIssueData ?? null : null}
+                    focusedIssueLoading={zoomedIssueId === issue.id && focusedIssueLoading}
                   />
                 ))}
               </Flex>
@@ -588,23 +595,23 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
           )}
 
           {/* Zoomed overlay backdrop */}
-          {zoomedRunId && (
+          {zoomedIssueId && (
             <Box
-              className="rb-backdrop"
+              className="ib-backdrop"
               position="fixed"
               inset={0}
               bg="blackAlpha.400"
               zIndex={199}
-              onClick={() => setZoomedRunId(null)}
+              onClick={() => setZoomedIssueId(null)}
             />
           )}
 
           {/* Doc canvas — unassigned docs */}
-          <Box className="rb-canvas-docs">
+          <Box className="ib-canvas-docs">
             <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
               Docs ({unassignedDocs.length} unassigned)
             </Text>
-            {unassignedDocs.length === 0 && runs.length === 0 && (
+            {unassignedDocs.length === 0 && issues.length === 0 && (
               <Text fontSize="sm" color="theme.textSecondary" py={4}>
                 No drafts yet. Create some writing pieces to get started.
               </Text>
@@ -614,11 +621,11 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
                 <DraggableDocCard
                   key={doc.piece?.id ?? doc.id}
                   doc={doc}
-                  inRun={false}
-                  onSignOff={zoomedRunId ? handleSignOff : undefined}
+                  inIssue={false}
+                  onSignOff={zoomedIssueId ? handleSignOff : undefined}
                 />
               ))}
-              {/* Unassigned drop zone for removing from runs */}
+              {/* Unassigned drop zone for removing from issues */}
               {assignedPieceIds.size > 0 && (
                 <UnassignedPool isOver={false} />
               )}
@@ -628,14 +635,14 @@ export function RunBoardWorkArea({ sponsor }: RunBoardWorkAreaProps) {
           {/* Drag overlay */}
           <DragOverlay>
             {activeDragDoc && (
-              <DocCard doc={activeDragDoc} inRun={false} isDragging />
+              <DocCard doc={activeDragDoc} inIssue={false} isDragging />
             )}
           </DragOverlay>
         </DndContext>
       )}
 
       {/* Legend */}
-      <Box className="rb-legend" mt={6} pt={4} borderTopWidth="1px" borderColor="theme.border">
+      <Box className="ib-legend" mt={6} pt={4} borderTopWidth="1px" borderColor="theme.border">
         <HStack gap={4} flexWrap="wrap">
           <HStack gap={1.5}><Box w="8px" h="8px" borderRadius="full" bg="yellow.400" /><Text fontSize="11px" color="theme.textSecondary">Not ready</Text></HStack>
           <HStack gap={1.5}><Box w="8px" h="8px" borderRadius="full" bg="green.400" /><Text fontSize="11px" color="theme.textSecondary">Spellcheck clean + signed off</Text></HStack>

@@ -1,6 +1,6 @@
 "use client";
-// app/(root)/writing/run/[runSlug]/RunReaderPageClient.tsx
-// ADR-0054 P1-10: Minimal sequential reader for a published WritingRun
+// app/(root)/writing/issue/[issueSlug]/IssueReaderPageClient.tsx
+// ADR-0054 P1-10 (renamed from WritingRun per Phase 3 amendment): Minimal sequential reader for a published Issue
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,8 +20,9 @@ import { Link } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { formatDistanceToNow } from "date-fns";
 
-interface RunPiece {
+interface IssuePiece {
   order_index: number;
+  is_lead: boolean;
   piece_id: string;
   piece_slug: string;
   piece_title: string;
@@ -30,29 +31,31 @@ interface RunPiece {
   author: { username: string; display_name: string };
 }
 
-interface PublicRun {
+interface PublicIssue {
   id: string;
   slug: string;
   title: string;
+  designation: string | null;
+  description: Record<string, unknown> | null;
   status: string;
   published_at: string | null;
   piece_count: number;
-  pieces: RunPiece[];
+  pieces: IssuePiece[];
 }
 
-function usePublicRun(slug: string) {
-  return useQuery<PublicRun>({
-    queryKey: ["public", "runs", slug],
+function usePublicIssue(slug: string) {
+  return useQuery<PublicIssue>({
+    queryKey: ["public", "issues", slug],
     queryFn: async () => {
-      const res = await axiosInstance.get(`/api/public/writing/runs/${slug}`);
+      const res = await axiosInstance.get(`/api/public/writing/issues/${slug}`);
       return res.data;
     },
     enabled: !!slug,
   });
 }
 
-export default function RunReaderPageClient({ runSlug }: { runSlug: string }) {
-  const { data: run, isLoading, error } = usePublicRun(runSlug);
+export default function IssueReaderPageClient({ issueSlug }: { issueSlug: string }) {
+  const { data: issue, isLoading, error } = usePublicIssue(issueSlug);
 
   if (isLoading) {
     return (
@@ -70,14 +73,14 @@ export default function RunReaderPageClient({ runSlug }: { runSlug: string }) {
     );
   }
 
-  if (error || !run) {
+  if (error || !issue) {
     return (
       <Box minH="100vh" py={12}>
         <Container maxW="3xl">
           <VStack align="center" gap={4} py={16}>
-            <Heading size="md">Run not found</Heading>
+            <Heading size="md">Issue not found</Heading>
             <Text color="gray.500">
-              This run may not be published or may not exist.
+              This issue may not be published or may not exist.
             </Text>
           </VStack>
         </Container>
@@ -89,19 +92,21 @@ export default function RunReaderPageClient({ runSlug }: { runSlug: string }) {
     <Box minH="100vh" py={12}>
       <Container maxW="3xl">
         <VStack gap={8} align="stretch">
-          {/* Run header */}
+          {/* Issue header */}
           <VStack gap={2} align="stretch">
             <HStack gap={2} align="center">
-              <Badge colorPalette="blue" size="sm">Run</Badge>
-              {run.published_at && (
+              <Badge colorPalette="blue" size="sm">
+                {issue.designation || "Issue"}
+              </Badge>
+              {issue.published_at && (
                 <Text fontSize="sm" color="gray.500">
-                  Published {formatDistanceToNow(new Date(run.published_at), { addSuffix: true })}
+                  Published {formatDistanceToNow(new Date(issue.published_at), { addSuffix: true })}
                 </Text>
               )}
             </HStack>
-            <Heading size="2xl">{run.title}</Heading>
+            <Heading size="2xl">{issue.title}</Heading>
             <Text fontSize="sm" color="gray.500">
-              {run.piece_count} piece{run.piece_count !== 1 ? "s" : ""} in this run
+              {issue.piece_count} piece{issue.piece_count !== 1 ? "s" : ""} in this issue
             </Text>
           </VStack>
 
@@ -109,7 +114,7 @@ export default function RunReaderPageClient({ runSlug }: { runSlug: string }) {
 
           {/* Ordered piece list */}
           <VStack gap={6} align="stretch">
-            {run.pieces.map((piece) => (
+            {issue.pieces.map((piece) => (
               <Box
                 key={piece.piece_id}
                 borderWidth="1px"
