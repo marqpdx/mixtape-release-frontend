@@ -133,6 +133,89 @@ export interface PublicWritingPiece {
   sponsor_group: { slug: string; title: string } | null;
 }
 
+export interface PublicSiteSponsor {
+  type: "user" | "group";
+  slug: string;
+  title: string;
+}
+
+export interface PublicSiteCategory {
+  key: string;
+  slug: string;
+  title: string;
+  summary: string;
+  color: string;
+  sponsor: PublicSiteSponsor;
+  count?: number;
+}
+
+export interface PublicSiteCollection {
+  key: string;
+  slug: string;
+  title: string;
+  summary: string;
+  sponsor: PublicSiteSponsor;
+  count?: number;
+}
+
+export interface PublicSiteTag {
+  slug: string;
+  title: string;
+  color: string;
+  count?: number;
+}
+
+export interface PublicSiteWritingItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body_preview: string;
+  cover_image: string;
+  writing_kind: string;
+  published_at: string | null;
+  reading_time: number | null;
+  author: {
+    username: string;
+    display_name: string;
+    avatar_url: string;
+  };
+  sponsor_group: { slug: string; title: string } | null;
+  source_keys: string[];
+  categories: PublicSiteCategory[];
+  collections: PublicSiteCollection[];
+  tags: PublicSiteTag[];
+}
+
+export interface PublicSiteWritingResponse {
+  site: {
+    owner: { username: string; display_name: string };
+    groups: Array<{ slug: string; title: string }>;
+  };
+  count: number;
+  limit: number;
+  offset: number;
+  items: PublicSiteWritingItem[];
+  facets: {
+    categories: Array<PublicSiteCategory & { count: number }>;
+    collections: Array<PublicSiteCollection & { count: number }>;
+    tags: Array<PublicSiteTag & { count: number }>;
+    archives: Array<{ year: number; count: number }>;
+  };
+}
+
+export interface PublicSiteWritingParams {
+  owner: string;
+  groups?: string[];
+  category?: string;
+  collection?: string;
+  tag?: string;
+  kind?: string;
+  year?: number;
+  limit?: number;
+  offset?: number;
+}
+
 export interface PublicCourseListItem {
   id: string;
   title: string;
@@ -266,6 +349,38 @@ export async function fetchPublicWritingPiece(
 ): Promise<PublicWritingPiece> {
   const response = await axiosInstance.get<PublicWritingPiece>(
     `/api/public/writing/${slug}`
+  );
+  return response.data;
+}
+
+export async function fetchPublicSiteWriting(
+  params: PublicSiteWritingParams
+): Promise<PublicSiteWritingResponse> {
+  const { groups, ...query } = params;
+  const response = await axiosInstance.get<PublicSiteWritingResponse>(
+    "/api/public/sites/writing",
+    {
+      params: {
+        ...query,
+        groups: groups?.join(","),
+      },
+    }
+  );
+  return response.data;
+}
+
+export async function fetchPublicSiteWritingPiece(
+  pieceId: string,
+  params: Pick<PublicSiteWritingParams, "owner" | "groups">
+): Promise<PublicWritingPiece> {
+  const response = await axiosInstance.get<PublicWritingPiece>(
+    `/api/public/sites/writing/${pieceId}`,
+    {
+      params: {
+        owner: params.owner,
+        groups: params.groups?.join(","),
+      },
+    }
   );
   return response.data;
 }
