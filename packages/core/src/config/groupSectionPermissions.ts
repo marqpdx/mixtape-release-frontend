@@ -80,6 +80,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredRole: 'admin',
     description: 'Series Writing work area — admin/superuser testing surface',
   },
+  'issue-board': {
+    requiredRole: 'admin',
+    description: 'Issue Board — admin/superuser testing surface (ADR-0054 Phase 3)',
+  },
 
   // Threadworks - accessible to all stewards
   'threadworks-landing': {
