@@ -5,7 +5,7 @@
 // noun (an Issue is a thing you publish), not as a surface/route name. See
 // decisions/writing-assembly-adr/writing-assembly-status.md.
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
   Box,
   Button,
@@ -48,6 +48,8 @@ interface Sponsor {
 
 interface EditorsDeskWorkAreaProps {
   sponsor: Sponsor;
+  initialIssueId?: string;
+  onOpenPiece?: (pieceId: string, issueId?: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,11 +184,13 @@ interface DocCardProps {
   inIssue: boolean;
   isDragging?: boolean;
   onSignOff?: (pieceId: string) => void;
+  onOpenPiece?: (pieceId: string) => void;
 }
 
-function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
+function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardProps) {
   const dotColor = getDocDotColor(doc);
   const pieceId = doc.piece?.id ?? String(doc.id);
+  const editablePieceId = doc.piece?.id;
   const title = doc.piece?.title || doc.title || "Untitled";
   const canSignOff = dotColor !== "blue";
   const previewParagraphs = doc.preview_paragraphs?.length
@@ -210,10 +214,16 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
         boxShadow: "lg",
       }}
       content={
-        <VStack align="stretch" gap={2}>
-          <Text fontSize="sm" fontWeight="600">{title}</Text>
+        <VStack align="stretch" gap={0}>
+          <Text fontSize="sm" fontWeight="600" mb={2}>{title}</Text>
           {previewParagraphs.map((paragraph, index) => (
-            <Text key={index} fontSize="sm" lineHeight="1.5" whiteSpace="pre-line">
+            <Text
+              key={index}
+              fontSize="sm"
+              lineHeight="1.5"
+              whiteSpace="pre-line"
+              mb={index === 0 && previewParagraphs.length > 1 ? "5px" : 0}
+            >
               {paragraph}
             </Text>
           ))}
@@ -227,14 +237,24 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
         borderColor={isDragging ? "blue.400" : "theme.border"}
         borderRadius="lg"
         p={3}
-        cursor="grab"
+        cursor={inIssue && editablePieceId && onOpenPiece ? "pointer" : "grab"}
         opacity={isDragging ? 0.5 : 1}
         boxShadow={isDragging ? "lg" : "sm"}
         transition="all 0.15s"
         minW="180px"
         maxW="220px"
-        tabIndex={0}
+        tabIndex={editablePieceId && onOpenPiece && !isDragging ? 0 : undefined}
         userSelect="none"
+        onClick={() => { if (!isDragging && editablePieceId) onOpenPiece?.(editablePieceId); }}
+        onKeyDown={(event: React.KeyboardEvent) => {
+          if (event.target !== event.currentTarget || !editablePieceId) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpenPiece?.(editablePieceId);
+          }
+        }}
+        role={onOpenPiece && editablePieceId ? "button" : undefined}
+        aria-label={onOpenPiece && editablePieceId ? `Edit ${title}` : undefined}
       >
         <HStack justify="space-between" mb={1.5} align="flex-start">
           <StatusDot
@@ -283,6 +303,7 @@ function DraggableDocCard({
   doc,
   inIssue,
   onSignOff,
+  onOpenPiece,
 }: DocCardProps) {
   const pieceId = doc.piece?.id ?? String(doc.id);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -292,7 +313,7 @@ function DraggableDocCard({
 
   return (
     <Box ref={setNodeRef} {...attributes} {...listeners}>
-      <DocCard doc={doc} inIssue={inIssue} isDragging={isDragging} onSignOff={onSignOff} />
+      <DocCard doc={doc} inIssue={inIssue} isDragging={isDragging} onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
     </Box>
   );
 }
@@ -310,6 +331,7 @@ interface IssuePanelProps {
   onZoomOut: () => void;
   onDelete: () => void;
   onSignOff?: (pieceId: string) => void;
+  onOpenPiece?: (pieceId: string) => void;
   onPublish?: () => void;
   focusedIssueData: Issue | null;
   focusedIssueLoading: boolean;
@@ -328,6 +350,7 @@ function IssuePanel({
   onZoomOut,
   onDelete,
   onSignOff,
+  onOpenPiece,
   onPublish,
   focusedIssueData,
   focusedIssueLoading,
@@ -419,7 +442,7 @@ function IssuePanel({
                         <Text fontSize="12px" color="theme.textSecondary" w="24px" textAlign="right" flexShrink={0}>
                           {placement.order_index + 1}.
                         </Text>
-                        <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} />
+                        <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
                         {onSetLead && (
                           <Tooltip content={placement.is_lead ? "Lead piece — click to unmark" : "Mark as lead piece"}>
                             <IconButton
@@ -602,12 +625,13 @@ function CreateIssueForm({ onCreate }: { onCreate: (title: string) => void }) {
 // Main board
 // ---------------------------------------------------------------------------
 
-export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
+export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: EditorsDeskWorkAreaProps) {
   const { issues, isLoading: issuesLoading, createIssue, deleteIssue } = useIssues();
   const { drafts, isLoading: docsLoading } = useWriting(sponsor.type, sponsor.slug);
 
-  const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(null);
+  const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const ignoreClickUntil = useRef(0);
 
   const {
     issue: focusedIssueData,
@@ -656,7 +680,13 @@ export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
     setActiveDragId(String(event.active.id));
   }, []);
 
+  const handleOpenPiece = useCallback((pieceId: string) => {
+    if (Date.now() < ignoreClickUntil.current) return;
+    onOpenPiece?.(pieceId, zoomedIssueId ?? undefined);
+  }, [onOpenPiece, zoomedIssueId]);
+
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    ignoreClickUntil.current = Date.now() + 350;
     setActiveDragId(null);
     const { active, over } = event;
     if (!over) return;
@@ -783,7 +813,15 @@ export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
       )}
 
       {!isLoading && (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => {
+            ignoreClickUntil.current = Date.now() + 350;
+            setActiveDragId(null);
+          }}
+        >
           {/* Canvas — Issue panels row */}
           {issues.length > 0 && (
             <Box className="edw-canvas-issues" mb={5}>
@@ -802,6 +840,7 @@ export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
                     onZoomOut={() => setZoomedIssueId(null)}
                     onDelete={() => handleDeleteIssue(issue.id)}
                     onSignOff={handleSignOff}
+                    onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                     onPublish={handlePublish}
                     focusedIssueData={zoomedIssueId === issue.id ? focusedIssueData ?? null : null}
                     focusedIssueLoading={zoomedIssueId === issue.id && focusedIssueLoading}
@@ -844,6 +883,7 @@ export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
                   doc={doc}
                   inIssue={false}
                   onSignOff={zoomedIssueId ? handleSignOff : undefined}
+                  onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                 />
               ))}
               {/* Unassigned drop zone for removing from issues */}

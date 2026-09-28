@@ -95,6 +95,7 @@ interface WriteComposerProps {
   onSaved?: (piece: Record<string, unknown>) => void;
   onUnpublished?: (piece: Record<string, unknown>) => void;
   onBack?: () => void;
+  backLabel?: string;
 }
 
 const EMPTY_DOC: DocumentJSON = { type: "doc", content: [] };
@@ -110,6 +111,7 @@ export default function WriteComposer({
   onSaved,
   onUnpublished,
   onBack,
+  backLabel,
 }: WriteComposerProps) {
   const editorRef = useRef<Editor | null>(null);
   const editorWrapperRef = useRef<HTMLDivElement>(null);
@@ -701,7 +703,7 @@ export default function WriteComposer({
                       window.location.href = "/app/dashboard";
                     }}
                   >
-                    ← Back to drafts
+                    ← {backLabel || "Back to drafts"}
                   </Button>
                 </HStack>
 

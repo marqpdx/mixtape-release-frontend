@@ -448,6 +448,11 @@ export default function GroupWorkArea({
 
   if (section === "write") {
     const pieceId = sectionParams?.piece;
+    const returnToEditorsDesk = sectionParams?.returnTo === "editors-desk";
+    const returnToDesk = () => setActiveSection(
+      "editors-desk",
+      sectionParams?.issue ? { issue: sectionParams.issue } : undefined
+    );
     return (
       <WorkAreaWrapper>
         <WritingEditorWrapper
@@ -460,7 +465,8 @@ export default function GroupWorkArea({
           writingKind="post"
           pieceId={pieceId} // If undefined, creates new; if present, loads existing
           onPublished={handlePiecePublished}
-          onBack={() => setActiveSection("writing")}
+          onBack={returnToEditorsDesk ? returnToDesk : () => setActiveSection("writing")}
+          backLabel={returnToEditorsDesk ? "Back to Editor's Desk" : undefined}
           onUnpublished={() => {
             if (typeof window !== "undefined") {
               try {
@@ -525,6 +531,12 @@ export default function GroupWorkArea({
         <Box p={5}>
           <EditorsDeskWorkArea
             sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
+            initialIssueId={sectionParams?.issue}
+            onOpenPiece={(pieceId, issueId) => setActiveSection("write", {
+              piece: pieceId,
+              returnTo: "editors-desk",
+              ...(issueId ? { issue: issueId } : {}),
+            })}
           />
         </Box>
       </WorkAreaWrapper>
