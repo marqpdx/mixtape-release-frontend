@@ -221,6 +221,7 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
         <DashboardLayout
           title={group.title}
           menuItems={menuItems}
+          userRoles={identity?.is_superuser ? ["superuser"] : []}
           WorkAreaComponent={GroupWorkArea as React.ComponentType<WorkAreaProps>}
           workAreaProps={{ group, userRole: effectiveRole }}
           defaultSection="members-roles"
