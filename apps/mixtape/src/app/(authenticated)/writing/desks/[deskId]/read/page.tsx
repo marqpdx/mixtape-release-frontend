@@ -5,6 +5,7 @@
 // generalized from Living Books' Accumulated Read view (LB-9).
 // Editor (sponsor owner or superuser) sees drafts inline; reader sees
 // published-only — split enforced server-side by IssueReadView.
+// Route uses "desk", not "issue" — see decisions/writing-assembly-adr/writing-assembly-status.md.
 
 import { useState } from "react"
 import {
@@ -26,12 +27,12 @@ import { IconArrowLeft, IconList } from "@tabler/icons-react"
 import { useIssueRead } from "@mixtape/api/hooks/useIssueBoard"
 import { TipTapRenderer, TipTapDocument } from "@components/tiptap/TipTapRenderer"
 
-export default function IssueContinuousReadPage() {
+export default function DeskContinuousReadPage() {
   const params = useParams()
-  const issueId = params?.issueId as string
+  const deskId = params?.deskId as string
   const [tocOpen, setTocOpen] = useState(true)
 
-  const { data: issue, isLoading } = useIssueRead(issueId)
+  const { data: issue, isLoading } = useIssueRead(deskId)
 
   const bgColor = useColorModeValue("gray.50", "gray.900")
   const cardBg = useColorModeValue("white", "gray.800")

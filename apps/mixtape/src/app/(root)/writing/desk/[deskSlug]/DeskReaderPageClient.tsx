@@ -1,6 +1,7 @@
 "use client";
-// app/(root)/writing/issue/[issueSlug]/IssueReaderPageClient.tsx
-// ADR-0054 P1-10 (renamed from WritingRun per Phase 3 amendment): Minimal sequential reader for a published Issue
+// app/(root)/writing/desk/[deskSlug]/DeskReaderPageClient.tsx
+// ADR-0054 P1-10 (renamed from WritingRun per Phase 3 amendment): Minimal sequential reader for a published Issue.
+// Route uses "desk", not "issue" -- see decisions/writing-assembly-adr/writing-assembly-status.md.
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -54,8 +55,8 @@ function usePublicIssue(slug: string) {
   });
 }
 
-export default function IssueReaderPageClient({ issueSlug }: { issueSlug: string }) {
-  const { data: issue, isLoading, error } = usePublicIssue(issueSlug);
+export default function DeskReaderPageClient({ deskSlug }: { deskSlug: string }) {
+  const { data: issue, isLoading, error } = usePublicIssue(deskSlug);
 
   if (isLoading) {
     return (

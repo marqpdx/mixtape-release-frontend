@@ -1,6 +1,9 @@
 "use client";
-// components/writing/issue-board/IssueBoardWorkArea.tsx
-// ADR-0054 (+ Phase 3 amendment): Issue Board (P1-4 through P1-9, renamed from Run Board)
+// components/writing/editors-desk/EditorsDeskWorkArea.tsx
+// ADR-0054 (+ Phase 3 amendment): Editor's Desk (P1-4 through P1-9, renamed from Run Board,
+// then renamed from Issue Board -- "Issue" reads as "problem", kept only as the writing-domain
+// noun (an Issue is a thing you publish), not as a surface/route name. See
+// decisions/writing-assembly-adr/writing-assembly-status.md.
 
 import React, { useState, useCallback, useMemo } from "react";
 import {
@@ -43,7 +46,7 @@ interface Sponsor {
   displayName?: string;
 }
 
-interface IssueBoardWorkAreaProps {
+interface EditorsDeskWorkAreaProps {
   sponsor: Sponsor;
 }
 
@@ -189,7 +192,7 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
 
   return (
     <Box
-      className="ib-doc-card"
+      className="edw-doc-card"
       bg="theme.bg"
       borderWidth="1px"
       borderColor={isDragging ? "blue.400" : "theme.border"}
@@ -309,7 +312,7 @@ function IssuePanel({
   if (isZoomed) {
     return (
       <Box
-        className="ib-issue-panel ib-issue-panel--zoomed"
+        className="edw-issue-panel edw-issue-panel--zoomed"
         position="fixed"
         top="50%"
         left="50%"
@@ -334,7 +337,7 @@ function IssuePanel({
             {issue.status === "published" && <Badge colorPalette="blue">Published</Badge>}
           </HStack>
           <HStack gap={2}>
-            <NextLink href={`/writing/issues/${issue.id}/read`} target="_blank">
+            <NextLink href={`/writing/desks/${issue.id}/read`} target="_blank">
               <Button size="xs" variant="outline">
                 <IconEye size={12} />
                 Preview
@@ -448,7 +451,7 @@ function IssuePanel({
   // Normal panel
   return (
     <Box
-      className="ib-issue-panel"
+      className="edw-issue-panel"
       ref={setNodeRef}
       borderWidth="1.5px"
       borderColor={isOver ? "blue.400" : otherZoomed ? "theme.border" : "theme.border"}
@@ -505,7 +508,7 @@ function UnassignedPool({ isOver }: { isOver: boolean }) {
   return (
     <Box
       ref={setNodeRef}
-      className="ib-unassigned"
+      className="edw-unassigned"
       borderWidth="1px"
       borderStyle="dashed"
       borderColor={isOver ? "blue.400" : "theme.border"}
@@ -568,7 +571,7 @@ function CreateIssueForm({ onCreate }: { onCreate: (title: string) => void }) {
 // Main board
 // ---------------------------------------------------------------------------
 
-export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
+export function EditorsDeskWorkArea({ sponsor }: EditorsDeskWorkAreaProps) {
   const { issues, isLoading: issuesLoading, createIssue, deleteIssue } = useIssues();
   const { drafts, isLoading: docsLoading } = useWriting(sponsor.type, sponsor.slug);
 
@@ -731,11 +734,11 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
   const isLoading = issuesLoading || docsLoading;
 
   return (
-    <Box className="ib-root" w="full" minH="80vh" position="relative">
+    <Box className="edw-root" w="full" minH="80vh" position="relative">
       {/* Header */}
-      <Flex className="ib-header" align="center" justify="space-between" mb={4} flexWrap="wrap" gap={3}>
+      <Flex className="edw-header" align="center" justify="space-between" mb={4} flexWrap="wrap" gap={3}>
         <VStack align="start" gap={0}>
-          <Heading size="md">Issue Board</Heading>
+          <Heading size="md">Editor&apos;s Desk</Heading>
           <Text fontSize="12px" color="theme.textSecondary">
             Group Docs into Issues and publish them together as a unit.{" "}
             <Text as="span" fontWeight="600">Superuser preview.</Text>
@@ -752,7 +755,7 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           {/* Canvas — Issue panels row */}
           {issues.length > 0 && (
-            <Box className="ib-canvas-issues" mb={5}>
+            <Box className="edw-canvas-issues" mb={5}>
               <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
                 Issues
               </Text>
@@ -784,7 +787,7 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
           {/* Zoomed overlay backdrop */}
           {zoomedIssueId && (
             <Box
-              className="ib-backdrop"
+              className="edw-backdrop"
               position="fixed"
               inset={0}
               bg="blackAlpha.400"
@@ -794,7 +797,7 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
           )}
 
           {/* Doc canvas — unassigned docs */}
-          <Box className="ib-canvas-docs">
+          <Box className="edw-canvas-docs">
             <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
               Docs ({unassignedDocs.length} unassigned)
             </Text>
@@ -829,7 +832,7 @@ export function IssueBoardWorkArea({ sponsor }: IssueBoardWorkAreaProps) {
       )}
 
       {/* Legend */}
-      <Box className="ib-legend" mt={6} pt={4} borderTopWidth="1px" borderColor="theme.border">
+      <Box className="edw-legend" mt={6} pt={4} borderTopWidth="1px" borderColor="theme.border">
         <HStack gap={4} flexWrap="wrap">
           <HStack gap={1.5}><Box w="8px" h="8px" borderRadius="full" bg="yellow.400" /><Text fontSize="11px" color="theme.textSecondary">Not ready</Text></HStack>
           <HStack gap={1.5}><Box w="8px" h="8px" borderRadius="full" bg="green.400" /><Text fontSize="11px" color="theme.textSecondary">Spellcheck clean + signed off</Text></HStack>
