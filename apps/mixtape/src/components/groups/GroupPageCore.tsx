@@ -19,6 +19,7 @@ import { WorkAreaProps } from "@components/dashboard/shared/types";
 import { GroupOnboardingTour } from "@/features/onboarding/GroupOnboardingTour";
 import { canAccessSection } from "@/config/groupSectionPermissions";
 import { DropTray } from "@/components/groups/drops/DropTray";
+import { useAuth } from "@/lib/auth/AuthContext";
 import type { GroupLayoutVariant } from "@/components/groups/GroupLayoutSwitcher";
 import {
   isGroupMemberViewId,
@@ -32,6 +33,7 @@ interface GroupPageCoreProps {
 }
 
 export function GroupPageCore({ slug }: GroupPageCoreProps) {
+  const { user: identity } = useAuth();
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view") as ViewRole | null;
   const urlLayout = searchParams.get("layout") as GroupLayoutVariant | null;
@@ -154,11 +156,11 @@ export function GroupPageCore({ slug }: GroupPageCoreProps) {
             myPermissions.roles || [],
             myPermissions.decorators || [],
             group.group_type || "community",
-            isSuperuser
+            Boolean(identity?.is_superuser)
           )
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [effectiveRole, myPermissions, group?.group_type, group?.slug]
+    [effectiveRole, myPermissions, group?.group_type, group?.slug, identity?.is_superuser]
   );
 
   if (isLoading) return <Box p={4}>Loading group...</Box>;
