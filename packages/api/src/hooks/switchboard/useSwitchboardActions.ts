@@ -404,6 +404,9 @@ export function useSynopsisLinkedIn() {
     poll.data?.status === 'succeeded'
       ? (poll.data.result_payload as unknown as SynopsisLinkedInActionResult)
       : null;
+  const isPolling =
+    !!actionRunId &&
+    (!poll.data || (poll.data.status !== 'succeeded' && poll.data.status !== 'failed'));
 
   return {
     submit: submitMutation.mutate,
@@ -411,7 +414,7 @@ export function useSynopsisLinkedIn() {
     isSubmitting: submitMutation.isPending,
     actionRunId,
     actionRun: (poll.data ?? null) as ActionRun | null,
-    isPolling: poll.isFetching && !!actionRunId,
+    isPolling,
     result,
     error:
       submitMutation.error ??
