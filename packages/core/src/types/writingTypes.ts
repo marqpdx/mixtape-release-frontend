@@ -160,6 +160,8 @@ export interface WorkingDocument {
   title: string
   excerpt: string
   body_json: Record<string, any>
+  body_preview?: string
+  preview_paragraphs?: string[]
 
   last_saved_at: string // ISO datetime
   auto_save_count: number

@@ -189,62 +189,93 @@ function DocCard({ doc, isDragging, onSignOff }: DocCardProps) {
   const pieceId = doc.piece?.id ?? String(doc.id);
   const title = doc.piece?.title || doc.title || "Untitled";
   const canSignOff = dotColor !== "blue";
+  const previewParagraphs = doc.preview_paragraphs?.length
+    ? doc.preview_paragraphs
+    : doc.body_preview ? [doc.body_preview] : [];
 
   return (
-    <Box
-      className="edw-doc-card"
-      bg="theme.bg"
-      borderWidth="1px"
-      borderColor={isDragging ? "blue.400" : "theme.border"}
-      borderRadius="lg"
-      p={3}
-      cursor="grab"
-      opacity={isDragging ? 0.5 : 1}
-      boxShadow={isDragging ? "lg" : "sm"}
-      transition="all 0.15s"
-      minW="180px"
-      maxW="220px"
-      userSelect="none"
+    <Tooltip
+      disabled={isDragging || previewParagraphs.length === 0}
+      openDelay={300}
+      positioning={{ placement: "right-start" }}
+      contentProps={{
+        maxW: "min(420px, calc(100vw - 32px))",
+        maxH: "320px",
+        overflowY: "auto",
+        p: 3,
+        bg: "theme.bg",
+        color: "theme.text",
+        borderWidth: "1px",
+        borderColor: "theme.border",
+        boxShadow: "lg",
+      }}
+      content={
+        <VStack align="stretch" gap={2}>
+          <Text fontSize="sm" fontWeight="600">{title}</Text>
+          {previewParagraphs.map((paragraph, index) => (
+            <Text key={index} fontSize="sm" lineHeight="1.5" whiteSpace="pre-line">
+              {paragraph}
+            </Text>
+          ))}
+        </VStack>
+      }
     >
-      <HStack justify="space-between" mb={1.5} align="flex-start">
-        <StatusDot
-          color={dotColor}
-          label={
-            dotColor === "blue" ? "Published" :
-            dotColor === "green" ? "Ready — spellcheck clean + signed off" :
-            "Not ready"
-          }
-        />
-        {canSignOff && onSignOff && !doc.piece?.signed_off && (
-          <Tooltip content="Sign off on this doc">
-            <Box
-              as="button"
-              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSignOff(pieceId); }}
-              p={0.5}
-              borderRadius="sm"
-              _hover={{ bg: "green.50" }}
-            >
-              <IconCheck size={13} color="green" />
-            </Box>
-          </Tooltip>
-        )}
-      </HStack>
-      <Text fontSize="12px" fontWeight="600" lineClamp={2} color="theme.text" mb={1}>
-        {title}
-      </Text>
-      <HStack gap={2} mt={1}>
-        {doc.piece?.spellcheck_clean && (
-          <Tooltip content="Spellcheck clean">
-            <IconTextSpellcheck size={11} color="green" />
-          </Tooltip>
-        )}
-        {doc.piece?.signed_off && (
-          <Tooltip content="Signed off">
-            <IconCheck size={11} color="green" />
-          </Tooltip>
-        )}
-      </HStack>
-    </Box>
+      <Box
+        className="edw-doc-card"
+        bg="theme.bg"
+        borderWidth="1px"
+        borderColor={isDragging ? "blue.400" : "theme.border"}
+        borderRadius="lg"
+        p={3}
+        cursor="grab"
+        opacity={isDragging ? 0.5 : 1}
+        boxShadow={isDragging ? "lg" : "sm"}
+        transition="all 0.15s"
+        minW="180px"
+        maxW="220px"
+        tabIndex={0}
+        userSelect="none"
+      >
+        <HStack justify="space-between" mb={1.5} align="flex-start">
+          <StatusDot
+            color={dotColor}
+            label={
+              dotColor === "blue" ? "Published" :
+              dotColor === "green" ? "Ready — spellcheck clean + signed off" :
+              "Not ready"
+            }
+          />
+          {canSignOff && onSignOff && !doc.piece?.signed_off && (
+            <Tooltip content="Sign off on this doc">
+              <Box
+                as="button"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSignOff(pieceId); }}
+                p={0.5}
+                borderRadius="sm"
+                _hover={{ bg: "green.50" }}
+              >
+                <IconCheck size={13} color="green" />
+              </Box>
+            </Tooltip>
+          )}
+        </HStack>
+        <Text fontSize="12px" fontWeight="600" lineClamp={2} color="theme.text" mb={1}>
+          {title}
+        </Text>
+        <HStack gap={2} mt={1}>
+          {doc.piece?.spellcheck_clean && (
+            <Tooltip content="Spellcheck clean">
+              <IconTextSpellcheck size={11} color="green" />
+            </Tooltip>
+          )}
+          {doc.piece?.signed_off && (
+            <Tooltip content="Signed off">
+              <IconCheck size={11} color="green" />
+            </Tooltip>
+          )}
+        </HStack>
+      </Box>
+    </Tooltip>
   );
 }
 
