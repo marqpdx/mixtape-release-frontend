@@ -21,6 +21,7 @@
 .claude*
 apps/mixtape/latest_state.md
 zzz*
+zz/
 
 # debug
 npm-debug.log*
