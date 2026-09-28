@@ -72,7 +72,7 @@ export async function publishPiece(pieceId: string, payload: {
 /**
  * Fetch the AI-generated synopsis for a piece
  */
-export async function fetchPieceSynopsis(pieceId: string): Promise<{ synopsis: string | null }> {
+export async function fetchPieceSynopsis(pieceId: string): Promise<WritingSynopsisData> {
   const res = await axiosInstance.get(`/api/writing/pieces/${pieceId}/synopsis`);
   return res.data;
 }

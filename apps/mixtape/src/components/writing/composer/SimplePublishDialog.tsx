@@ -286,8 +286,8 @@ export function SimplePublishDialog({
     setSynopsisLoading(true)
     try {
       const result = await writingApi.fetchPieceSynopsis(piece.id)
-      if (result?.synopsis) {
-        setLinkedinCopy(result.synopsis)
+      if (result?.linkedin_copy) {
+        setLinkedinCopy(result.linkedin_copy)
         setLinkedinPacketConfirmed(false)
       } else {
         toaster.create({

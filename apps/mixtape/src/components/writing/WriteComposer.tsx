@@ -7,7 +7,10 @@ import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useQueryClient } from "@tanstack/react-query";
 import { Editor } from "@tiptap/react";
-import { exportPiecePdf } from "@mixtape/api/clients/writing/writingApi";
+import {
+  exportPiecePdf,
+  fetchPieceSynopsis,
+} from "@mixtape/api/clients/writing/writingApi";
 
 import { MainEditor } from "@components/writing/composer/MainEditor";
 import { TitleInput } from "@components/writing/composer/TitleInput";
@@ -214,6 +217,27 @@ export default function WriteComposer({
   // LinkedIn copy state (Copy Desk agent)
   const [linkedinCopy, setLinkedinCopy] = useState('');
   const [linkedinCopyExtended, setLinkedinCopyExtended] = useState<import('@mixtape/api/clients/writing/writingApi').LinkedInCopyExtended | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setLinkedinCopy('');
+    setLinkedinCopyExtended(null);
+
+    void fetchPieceSynopsis(pieceId)
+      .then((synopsis) => {
+        if (cancelled) return;
+        setLinkedinCopy(synopsis.linkedin_copy || '');
+        setLinkedinCopyExtended(synopsis.linkedin_copy_extended || null);
+      })
+      .catch(() => {
+        // A piece without a synopsis should leave CopyDesk in its empty state.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pieceId]);
 
   const {
     isCollaborative,
