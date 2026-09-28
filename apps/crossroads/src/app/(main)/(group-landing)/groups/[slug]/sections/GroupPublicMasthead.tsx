@@ -4,6 +4,7 @@
 // Six constraints from the spec are enforced via comments where relevant.
 
 import Link from "next/link";
+import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { TYP, paletteCSS, resolveFont } from "../typography";
@@ -144,12 +145,15 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   background: "var(--theme-bg-subtle)",
                 }}
               >
-                {/* Stash-backed URLs are signed, so use a plain image to avoid
-                    next/image cache-key churn while preserving server rendering. */}
-                <img
+                {/* Signed Stash URLs bypass the Next optimizer to avoid cache-key churn. */}
+                <Image
                   src={group.background_image_url!}
                   alt=""
-                  style={{ objectFit: "cover", width: "100%", height: "100%", display: "block" }}
+                  fill
+                  sizes="100vw"
+                  priority
+                  unoptimized
+                  style={{ objectFit: "cover" }}
                 />
               </div>
 
@@ -168,12 +172,13 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                 }}
                 >
                 {group.profile_image_url ? (
-                  <img
+                  <Image
                     src={group.profile_image_url}
                     alt={group.title}
                     width={72}
                     height={72}
-                    style={{ objectFit: "cover", width: "72px", height: "72px" }}
+                    unoptimized
+                    style={{ objectFit: "cover", display: "block" }}
                   />
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "72px", height: "72px" }}>

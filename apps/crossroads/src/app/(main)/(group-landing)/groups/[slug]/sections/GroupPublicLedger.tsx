@@ -4,6 +4,7 @@
 // Server component — plain HTML + CSS custom properties; no client component boundary.
 
 import Link from "next/link";
+import Image from "next/image";
 import { Fragment } from "react";
 import type { GroupPublicLandingConfig, FeaturedPiece, TypographySetting } from "../types";
 import { TYP, paletteCSS, resolveFont } from "../typography";
@@ -145,12 +146,13 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
                 marginBottom: "24px",
                 flexShrink: 0,
               }}>
-                <img
+                <Image
                   src={group.profile_image_url}
                   alt={group.title}
                   width={56}
                   height={56}
-                  style={{ objectFit: "cover", width: "56px", height: "56px" }}
+                  unoptimized
+                  style={{ objectFit: "cover", display: "block" }}
                 />
               </div>
             )}
@@ -245,12 +247,15 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
             {/* Banner — 3:1, contained to right column width */}
             {hasBanner && (
               <div style={{ position: "relative", aspectRatio: "3/1", overflow: "hidden", marginBottom: "40px", background: "var(--theme-bg-subtle)" }}>
-                {/* Stash-backed URLs are signed, so use a plain image to avoid
-                    next/image cache-key churn while preserving server rendering. */}
-                <img
+                {/* Signed Stash URLs bypass the Next optimizer to avoid cache-key churn. */}
+                <Image
                   src={group.background_image_url!}
                   alt=""
-                  style={{ objectFit: "cover", width: "100%", height: "100%", display: "block" }}
+                  fill
+                  sizes="(max-width: 720px) 100vw, 66vw"
+                  priority
+                  unoptimized
+                  style={{ objectFit: "cover" }}
                 />
               </div>
             )}

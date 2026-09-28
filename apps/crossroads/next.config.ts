@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
   images: {
     // Static/stable-URL assets only — do not point next/image at Stash
     // presigned URLs (expiring signature query params defeat next/image's
-    // URL-keyed optimizer cache). Signed asset URLs should render via
-    // Chakra Image instead. See decisions/argus/audit-blocks/image-handling-01.md.
+    // URL-keyed optimizer cache). Render signed assets with next/image's
+    // `unoptimized` option so the browser requests the signed URL directly.
     remotePatterns: [
       {
         protocol: "https",

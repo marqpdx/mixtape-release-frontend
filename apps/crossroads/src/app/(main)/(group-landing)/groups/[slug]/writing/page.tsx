@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../sections/GroupPublicNav";
@@ -206,12 +207,14 @@ export default async function GroupWritingIndexPage({
             }}
           >
             {group.profile_image_url ? (
-              <img
+              <Image
                 src={group.profile_image_url}
                 alt={group.title}
                 width={96}
                 height={96}
-                style={{ objectFit: "cover", width: "96px", height: "96px", display: "block" }}
+                priority
+                unoptimized
+                style={{ objectFit: "cover", display: "block" }}
               />
             ) : (
               <div
