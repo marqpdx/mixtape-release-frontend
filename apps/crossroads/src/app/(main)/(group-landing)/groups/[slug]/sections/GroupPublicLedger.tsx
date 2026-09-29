@@ -151,7 +151,6 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
                   alt={group.title}
                   width={56}
                   height={56}
-                  unoptimized
                   style={{ objectFit: "cover", display: "block" }}
                 />
               </div>
@@ -247,14 +246,13 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
             {/* Banner — 3:1, contained to right column width */}
             {hasBanner && (
               <div style={{ position: "relative", aspectRatio: "3/1", overflow: "hidden", marginBottom: "40px", background: "var(--theme-bg-subtle)" }}>
-                {/* Signed Stash URLs bypass the Next optimizer to avoid cache-key churn. */}
+                {/* background_image_url is public/unsigned -- see reference/patterns/image-handling-cheatsheet.md (puddlejump) */}
                 <Image
                   src={group.background_image_url!}
                   alt=""
                   fill
                   sizes="(max-width: 720px) 100vw, 66vw"
                   priority
-                  unoptimized
                   style={{ objectFit: "cover" }}
                 />
               </div>

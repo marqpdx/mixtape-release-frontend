@@ -142,14 +142,13 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
             background: "var(--theme-bg-secondary)",
           }}
         >
-          {/* Signed Stash URLs bypass the Next optimizer to avoid cache-key churn. */}
+          {/* background_image_url is public/unsigned -- see reference/patterns/image-handling-cheatsheet.md (puddlejump) */}
           <Image
             src={group.background_image_url!}
             alt=""
             fill
             sizes="100vw"
             priority
-            unoptimized
             style={{ objectFit: "cover" }}
           />
         </div>
@@ -171,7 +170,6 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
                   alt={group.title}
                   width={56}
                   height={56}
-                  unoptimized
                   style={{ objectFit: "cover", display: "block" }}
                 />
               </div>

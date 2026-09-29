@@ -145,14 +145,13 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                   background: "var(--theme-bg-subtle)",
                 }}
               >
-                {/* Signed Stash URLs bypass the Next optimizer to avoid cache-key churn. */}
+                {/* background_image_url is public/unsigned -- see reference/patterns/image-handling-cheatsheet.md (puddlejump) */}
                 <Image
                   src={group.background_image_url!}
                   alt=""
                   fill
                   sizes="100vw"
                   priority
-                  unoptimized
                   style={{ objectFit: "cover" }}
                 />
               </div>
@@ -177,7 +176,6 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
                     alt={group.title}
                     width={72}
                     height={72}
-                    unoptimized
                     style={{ objectFit: "cover", display: "block" }}
                   />
                 ) : (

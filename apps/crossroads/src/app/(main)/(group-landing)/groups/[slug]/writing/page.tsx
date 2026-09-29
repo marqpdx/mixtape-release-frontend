@@ -213,7 +213,6 @@ export default async function GroupWritingIndexPage({
                 width={96}
                 height={96}
                 priority
-                unoptimized
                 style={{ objectFit: "cover", display: "block" }}
               />
             ) : (

@@ -7,16 +7,19 @@ const isProd = process.env.NODE_ENV === "production";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    // Static/stable-URL assets only — do not point next/image at Stash
-    // presigned URLs (expiring signature query params defeat next/image's
-    // URL-keyed optimizer cache). Render signed assets with next/image's
-    // `unoptimized` option so the browser requests the signed URL directly.
+    // Genuinely public content only (group banners, profile avatars) --
+    // these resolve to stable, unsigned URLs via PublicMediaStorage /
+    // public_key_to_url() (mixtape-release-core), so next/image can fully
+    // optimize them. Do not point next/image at a presigned Stash URL --
+    // expiring signature query params defeat next/image's URL-keyed
+    // optimizer cache. See
+    // puddlejump/reference/patterns/image-handling-cheatsheet.md.
     remotePatterns: [
       {
         protocol: "https",
         hostname: "assets.crossroads.place",
       },
-      // Local MinIO for development
+      // Local SeaweedFS S3-compatible gateway for development (not MinIO, despite the look-alike host/port)
       ...(!isProd
         ? [
             { protocol: "http" as const, hostname: "127.0.0.1", port: "9000" },
