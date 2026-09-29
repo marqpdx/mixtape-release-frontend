@@ -36,8 +36,12 @@ import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
 import { useIssues, useIssue, useIssueRead } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
-import type { WorkingDocument, Issue, IssueListItem } from "@mixtape/core/types/writingTypes";
+import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
+import { useQueryClient } from "@tanstack/react-query";
+import type { WorkingDocument, Issue, IssueListItem, IssueReadPlacement } from "@mixtape/core/types/writingTypes";
 import { TipTapRenderer, type TipTapDocument } from "@components/tiptap/TipTapRenderer";
+import { CraftReadinessDots, type CraftReadiness } from "../draft-room/CraftReadinessDots";
+import DraftRoomBodyEditor from "../draft-room/DraftRoomBodyEditor";
 
 interface Sponsor {
   type: "member" | "group";
@@ -182,17 +186,16 @@ function IssueDetailsEditor({ issue, onSaveDesignation, onSaveDescription }: Iss
 interface DocCardProps {
   doc: WorkingDocument;
   inIssue: boolean;
+  readiness?: CraftReadiness;
   isDragging?: boolean;
-  onSignOff?: (pieceId: string) => void;
   onOpenPiece?: (pieceId: string) => void;
 }
 
-function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardProps) {
+function DocCard({ doc, inIssue, readiness, isDragging, onOpenPiece }: DocCardProps) {
   const dotColor = getDocDotColor(doc);
   const pieceId = doc.piece?.id ?? String(doc.id);
   const editablePieceId = doc.piece?.id;
   const title = doc.piece?.title || doc.title || "Untitled";
-  const canSignOff = dotColor !== "blue";
   const previewParagraphs = doc.preview_paragraphs?.length
     ? doc.preview_paragraphs
     : doc.body_preview ? [doc.body_preview] : [];
@@ -257,19 +260,6 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
             }
           />
           <HStack gap={1}>
-            {canSignOff && onSignOff && !doc.piece?.signed_off && (
-              <Tooltip content="Sign off on this doc">
-                <Box
-                  as="button"
-                  onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSignOff(pieceId); }}
-                  p={0.5}
-                  borderRadius="sm"
-                  _hover={{ bg: "green.50" }}
-                >
-                  <IconCheck size={13} color="green" />
-                </Box>
-              </Tooltip>
-            )}
             {editablePieceId && onOpenPiece && !isDragging && (
               <Tooltip content="Edit writing piece">
                 <IconButton
@@ -314,6 +304,7 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
             </Tooltip>
           )}
         </HStack>
+        <Box mt={2}><CraftReadinessDots readiness={readiness} /></Box>
       </Box>
     </Tooltip>
   );
@@ -322,7 +313,7 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
 function DraggableDocCard({
   doc,
   inIssue,
-  onSignOff,
+  readiness,
   onOpenPiece,
 }: DocCardProps) {
   const pieceId = doc.piece?.id ?? String(doc.id);
@@ -333,7 +324,7 @@ function DraggableDocCard({
 
   return (
     <Box ref={setNodeRef} {...attributes} {...listeners}>
-      <DocCard doc={doc} inIssue={inIssue} isDragging={isDragging} onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
+      <DocCard doc={doc} inIssue={inIssue} readiness={readiness} isDragging={isDragging} onOpenPiece={onOpenPiece} />
     </Box>
   );
 }
@@ -345,6 +336,7 @@ function DraggableDocCard({
 interface IssuePanelProps {
   issue: IssueListItem;
   docs: WorkingDocument[];
+  readinessByPiece: Record<string, CraftReadiness>;
   isZoomed: boolean;
   otherZoomed: boolean;
   onZoom: () => void;
@@ -352,7 +344,6 @@ interface IssuePanelProps {
   onPreviewToggle: () => void;
   isPreview: boolean;
   onDelete: () => void;
-  onSignOff?: (pieceId: string) => void;
   onOpenPiece?: (pieceId: string) => void;
   onPublish?: () => void;
   focusedIssueData: Issue | null;
@@ -367,6 +358,7 @@ interface IssuePanelProps {
 function IssuePanel({
   issue,
   docs,
+  readinessByPiece,
   isZoomed,
   otherZoomed,
   onZoom,
@@ -374,7 +366,6 @@ function IssuePanel({
   onPreviewToggle,
   isPreview,
   onDelete,
-  onSignOff,
   onOpenPiece,
   onPublish,
   focusedIssueData,
@@ -414,7 +405,7 @@ function IssuePanel({
               </IconButton>
             </Tooltip>
             {issue.status === "draft" && onPublish && (
-              <Tooltip content={issue.is_publishable ? "Publish Issue (all Docs are Green)" : "All Docs must be Green before publishing"}>
+              <Tooltip content={issue.is_publishable ? "Publish Issue" : "Review spelling and sign off each draft in Preview before publishing"}>
                 <Button
                   size="xs"
                   colorPalette="blue"
@@ -462,11 +453,17 @@ function IssuePanel({
                           </Text>
                           <Box minW={0} flex={1}>
                             {isPreview ? (
-                              <Text fontSize="sm" lineClamp={1}>{placement.piece_title}</Text>
+                              <Box>
+                                <Text fontSize="sm" lineClamp={1}>{placement.piece_title}</Text>
+                                <CraftReadinessDots readiness={readinessByPiece[placement.piece_id]} />
+                              </Box>
                             ) : doc ? (
-                              <DocCard doc={doc} inIssue onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
+                              <DocCard doc={doc} inIssue readiness={readinessByPiece[placement.piece_id]} onOpenPiece={onOpenPiece} />
                             ) : (
-                              <Text fontSize="sm" lineClamp={2}>{placement.piece_title}</Text>
+                              <Box>
+                                <Text fontSize="sm" lineClamp={2}>{placement.piece_title}</Text>
+                                <CraftReadinessDots readiness={readinessByPiece[placement.piece_id]} />
+                              </Box>
                             )}
                           </Box>
                         </HStack>
@@ -573,8 +570,102 @@ function IssuePanel({
 // Unassigned pool — droppable zone
 // ---------------------------------------------------------------------------
 
-function IssuePreview({ issueId, onClose }: { issueId: string; onClose: () => void }) {
+function IssuePreviewPiece({
+  placement, index, isEditor, onReviewSpelling, onSignOff, onDraftSaved,
+}: {
+  placement: IssueReadPlacement;
+  index: number;
+  isEditor: boolean;
+  onReviewSpelling: (pieceId: string, revision: number) => Promise<void>;
+  onSignOff: (pieceId: string, revision: number) => Promise<void>;
+  onDraftSaved: () => void;
+}) {
+  const [revision, setRevision] = useState<number | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [pending, setPending] = useState(false);
+  const dirtyRef = React.useRef(false);
+  const handleBodyLoaded = useCallback(() => undefined, []);
+  const handleBodyChange = useCallback(() => {
+    dirtyRef.current = true;
+    setDirty(true);
+  }, []);
+  const handleRevisionChange = useCallback((nextRevision: number) => {
+    setRevision(nextRevision);
+    if (dirtyRef.current) {
+      dirtyRef.current = false;
+      setDirty(false);
+      onDraftSaved();
+    }
+  }, [onDraftSaved]);
+  const runApproval = async (action: (pieceId: string, revision: number) => Promise<void>) => {
+    if (revision === null || dirty || pending) return;
+    setPending(true);
+    try {
+      await action(placement.id, revision);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Box className="edw-preview-piece" borderTopWidth="1px" borderColor="theme.border" pt={5}>
+      <Text fontSize="xs" color="theme.textSecondary" mb={1}>{index + 1}</Text>
+      <Heading size="md" mb={4}>{placement.title}</Heading>
+      {isEditor && placement.status !== "published" ? (
+        <>
+          <DraftRoomBodyEditor
+            pieceId={placement.id}
+            pieceSlug={placement.slug}
+            title={placement.title}
+            published={false}
+            onBodyLoaded={handleBodyLoaded}
+            onBodyChange={handleBodyChange}
+            onRevisionChange={handleRevisionChange}
+          />
+          <HStack className="edw-preview-approvals" gap={2} mt={3} flexWrap="wrap">
+            <Button
+              size="xs"
+              variant="outline"
+              colorPalette={placement.spellcheck_clean ? "green" : "gray"}
+              disabled={revision === null || dirty || pending || placement.spellcheck_clean}
+              onClick={() => void runApproval(onReviewSpelling)}
+            >
+              <IconTextSpellcheck size={14} />
+              {placement.spellcheck_clean ? "Spelling reviewed" : "Mark spelling reviewed"}
+            </Button>
+            <Button
+              size="xs"
+              variant="outline"
+              colorPalette={placement.signed_off ? "green" : "gray"}
+              disabled={revision === null || dirty || pending || placement.signed_off}
+              onClick={() => void runApproval(onSignOff)}
+            >
+              <IconCheck size={14} />
+              {placement.signed_off ? "Signed off" : "Sign off"}
+            </Button>
+            {dirty && <Text fontSize="xs" color="theme.textSecondary">Saving draft before review...</Text>}
+          </HStack>
+        </>
+      ) : placement.body_json ? (
+        <TipTapRenderer content={placement.body_json as unknown as TipTapDocument} />
+      ) : (
+        <Text color="theme.textSecondary">No content yet.</Text>
+      )}
+    </Box>
+  );
+}
+
+function IssuePreview({ issueId, onClose, onReviewSpelling, onSignOff }: {
+  issueId: string;
+  onClose: () => void;
+  onReviewSpelling: (pieceId: string, revision: number) => Promise<void>;
+  onSignOff: (pieceId: string, revision: number) => Promise<void>;
+}) {
   const { data: issue, isLoading } = useIssueRead(issueId);
+  const queryClient = useQueryClient();
+  const handleDraftSaved = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["writing", "issues"] });
+  }, [queryClient]);
   return (
     <Box className="edw-preview" minW={0}>
       <Flex align="center" justify="space-between" mb={5}>
@@ -593,15 +684,15 @@ function IssuePreview({ issueId, onClose }: { issueId: string; onClose: () => vo
       )}
       <VStack align="stretch" gap={8}>
         {issue?.placements.map((placement, index) => (
-          <Box key={placement.id} borderTopWidth="1px" borderColor="theme.border" pt={5}>
-            <Text fontSize="xs" color="theme.textSecondary" mb={1}>{index + 1}</Text>
-            <Heading size="md" mb={4}>{placement.title}</Heading>
-            {placement.body_json ? (
-              <TipTapRenderer content={placement.body_json as unknown as TipTapDocument} />
-            ) : (
-              <Text color="theme.textSecondary">No content yet.</Text>
-            )}
-          </Box>
+          <IssuePreviewPiece
+            key={placement.id}
+            placement={placement}
+            index={index}
+            isEditor={issue.is_editor}
+            onReviewSpelling={onReviewSpelling}
+            onSignOff={onSignOff}
+            onDraftSaved={handleDraftSaved}
+          />
         ))}
         {issue && issue.placements.length === 0 && (
           <Text color="theme.textSecondary">No pieces in this Issue yet.</Text>
@@ -664,6 +755,7 @@ function CreateIssueForm({ onCreate }: { onCreate: (title: string) => void }) {
 export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: EditorsDeskWorkAreaProps) {
   const { issues, isLoading: issuesLoading, createIssue, deleteIssue, addToIssue, removeFromIssue } = useIssues(sponsor);
   const { drafts, isLoading: docsLoading } = useWriting(sponsor.type, sponsor.slug);
+  const [readinessByPiece, setReadinessByPiece] = useState<Record<string, CraftReadiness>>({});
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [issueDismissed, setIssueDismissed] = useState(false);
@@ -692,10 +784,36 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     isLoading: focusedIssueLoading,
     publishIssue,
     signOffPiece,
+    reviewSpelling,
     updateIssue,
     reorderPlacements,
     setPlacementLead,
   } = useIssue(focusedIssueId);
+
+  const readinessIds = useMemo(() => [...new Set([
+    ...drafts.map((doc) => doc.piece?.id).filter((id): id is string => Boolean(id)),
+    ...(focusedIssueData?.placements.map((placement) => placement.piece_id) ?? []),
+  ])].sort().join(","), [drafts, focusedIssueData]);
+
+  useEffect(() => {
+    if (!readinessIds) {
+      setReadinessByPiece({});
+      return;
+    }
+    let active = true;
+    const ids = readinessIds.split(",");
+    const batches = Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) => ids.slice(index * 100, (index + 1) * 100));
+    void Promise.all(batches.map((batch) =>
+      axiosInstance.get<Record<string, CraftReadiness>>("/api/atelier/readiness/batch/", {
+        params: { ids: batch.join(",") },
+      })
+    )).then((responses) => {
+      if (active) setReadinessByPiece(Object.assign({}, ...responses.map((response) => response.data)));
+    }).catch(() => {
+      if (active) setReadinessByPiece({});
+    });
+    return () => { active = false; };
+  }, [readinessIds]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -784,15 +902,27 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     }
   }, [focusedIssueId, publishIssue]);
 
-  const handleSignOff = useCallback(async (pieceId: string) => {
+  const handleSignOff = useCallback(async (pieceId: string, revision: number) => {
     if (!focusedIssueId) return;
     try {
-      await signOffPiece.mutateAsync(pieceId);
+      await signOffPiece.mutateAsync({ pieceId, revision });
       toaster.create({ title: "Doc signed off", type: "success" });
-    } catch {
-      toaster.create({ title: "Sign-off failed", type: "error" });
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toaster.create({ title: "Sign-off failed", description: detail, type: "error" });
     }
   }, [focusedIssueId, signOffPiece]);
+
+  const handleReviewSpelling = useCallback(async (pieceId: string, revision: number) => {
+    if (!focusedIssueId) return;
+    try {
+      await reviewSpelling.mutateAsync({ pieceId, revision });
+      toaster.create({ title: "Spelling review recorded", type: "success" });
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toaster.create({ title: "Spelling review failed", description: detail, type: "error" });
+    }
+  }, [focusedIssueId, reviewSpelling]);
 
   const handleSaveDesignation = useCallback((designation: string) => {
     updateIssue.mutate({ designation }, {
@@ -881,6 +1011,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                       key={issue.id}
                       issue={issue}
                       docs={drafts}
+                      readinessByPiece={readinessByPiece}
                       isZoomed={false}
                       otherZoomed={false}
                       onZoom={() => {
@@ -902,6 +1033,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                   key={focusedIssueId}
                   issue={issues.find((issue) => issue.id === focusedIssueId)!}
                   docs={drafts}
+                  readinessByPiece={readinessByPiece}
                   isZoomed
                   otherZoomed={false}
                   onZoom={() => undefined}
@@ -912,7 +1044,6 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                   onPreviewToggle={() => setIsPreview((value) => !value)}
                   isPreview={isPreview}
                   onDelete={() => handleDeleteIssue(focusedIssueId)}
-                  onSignOff={handleSignOff}
                   onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                   onPublish={handlePublish}
                   focusedIssueData={focusedIssueData ?? null}
@@ -931,7 +1062,12 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
 
             <Box className="edw-canvas-docs" minW={0}>
               {isPreview && focusedIssueId ? (
-                <IssuePreview issueId={focusedIssueId} onClose={() => setIsPreview(false)} />
+                <IssuePreview
+                  issueId={focusedIssueId}
+                  onClose={() => setIsPreview(false)}
+                  onReviewSpelling={handleReviewSpelling}
+                  onSignOff={handleSignOff}
+                />
               ) : (
                 <>
                   <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
@@ -948,6 +1084,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                         key={doc.piece?.id ?? doc.id}
                         doc={doc}
                         inIssue={false}
+                        readiness={doc.piece?.id ? readinessByPiece[doc.piece.id] : undefined}
                         onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                       />
                     ))}
@@ -960,7 +1097,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
           {/* Drag overlay */}
           <DragOverlay>
             {activeDragDoc && (
-              <DocCard doc={activeDragDoc} inIssue={false} isDragging />
+              <DocCard doc={activeDragDoc} inIssue={false} readiness={activeDragDoc.piece?.id ? readinessByPiece[activeDragDoc.piece.id] : undefined} isDragging />
             )}
           </DragOverlay>
         </DndContext>

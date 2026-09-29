@@ -116,16 +116,23 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
 
   const leftPieceId = leftDoc?.piece.id ?? null;
   const rightPieceId = rightDoc?.piece.id ?? null;
+  const { saveNow, saveStatus, setRevision } = useWorkingCopyAutosave(
+    leftPieceId ?? "",
+    2500
+  );
 
   useEffect(() => {
     if (!leftPieceId) { setLeftBodyJson(null); return; }
     setLeftBodyLoading(true);
     axiosInstance
       .get(`/api/writing/pieces/${leftPieceId}/working-copy`)
-      .then((res) => setLeftBodyJson(res.data.body_json ?? null))
+      .then((res) => {
+        setLeftBodyJson(res.data.body_json ?? null);
+        if (typeof res.data.auto_save_count === "number") setRevision(res.data.auto_save_count);
+      })
       .catch(() => setLeftBodyJson(null))
       .finally(() => setLeftBodyLoading(false));
-  }, [leftPieceId]);
+  }, [leftPieceId, setRevision]);
 
   useEffect(() => {
     if (!rightPieceId) { setRightBodyJson(null); return; }
@@ -140,11 +147,6 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
   const rightSections = useMemo(
     () => (rightBodyJson ? extractSections(rightBodyJson) : []),
     [rightBodyJson]
-  );
-
-  const { saveNow, saveStatus } = useWorkingCopyAutosave(
-    leftDoc?.piece.id ?? "",
-    2500
   );
 
   // Mark dirty on any typing edit — does NOT schedule autosave.

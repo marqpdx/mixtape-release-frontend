@@ -87,6 +87,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
       { key: "series-writing", label: "Series Writing ✦", hidden: false },
       { key: "dual-panel-editor", label: "Draft ↔ Dispatch" },
       { key: "editors-desk", label: "Editor's Desk ✦", superuserOnly: true },
+      { key: "draft-room", label: "Draft Room", superuserOnly: true },
       { key: "comments", label: "Comments", hidden: true },
       { key: "pinned", label: "Pinned Writing", hidden: true },
       { key: "files", label: "File Management", hidden: true },

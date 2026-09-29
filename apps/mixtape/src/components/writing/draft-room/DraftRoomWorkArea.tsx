@@ -1,11 +1,12 @@
 // apps/mixtape/src/components/writing/draft-room/DraftRoomWorkArea.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import {
   Badge,
   Box,
   Button,
+  Grid,
   HStack,
   Input,
   Portal,
@@ -26,10 +27,14 @@ import { Category } from "@components/writing/composer/CategoryInput";
 import { SimplePublishDialog } from "@components/writing/composer/SimplePublishDialog";
 import { formatDistanceToNow } from "date-fns";
 import { Divider } from "@/components/common/Divider";
+import { IconPencil } from "@tabler/icons-react";
+import { Tooltip } from "@components/ui/tooltip";
 import AtelierShapeTab from "./AtelierShapeTab";
+import DraftRoomBodyEditor from "./DraftRoomBodyEditor";
+import { CraftReadinessDots, type CraftReadiness } from "./CraftReadinessDots";
 
 type SponsorConfig = {
-  type: "member";
+  type: "member" | "group";
   id: string;
   slug: string;
   displayName: string;
@@ -56,13 +61,61 @@ type MetadataSnapshot = {
   categoryIds: string[];
 };
 
+function previewFromBody(body: unknown): string[] {
+  const paragraphs: string[] = [];
+  const inlineText = (node: unknown): string => {
+    if (!node || typeof node !== "object") return "";
+    const value = node as { type?: string; text?: string; content?: unknown[] };
+    if (value.type === "text") return value.text || "";
+    if (value.type === "hardBreak") return "\n";
+    return (value.content || []).map(inlineText).join("");
+  };
+  const visit = (node: unknown) => {
+    if (paragraphs.length >= 2 || !node || typeof node !== "object") return;
+    const value = node as { type?: string; content?: unknown[] };
+    if (value.type === "paragraph") {
+      const paragraph = inlineText(value).trim();
+      if (paragraph) paragraphs.push(paragraph.slice(0, 900));
+      return;
+    }
+    (value.content || []).forEach(visit);
+  };
+  visit(body);
+  return paragraphs;
+}
+
+function PiecePreview({ title, paragraphs, children }: {
+  title: string;
+  paragraphs: string[];
+  children: ReactElement;
+}) {
+  return (
+    <Tooltip
+      disabled={paragraphs.length === 0}
+      openDelay={300}
+      positioning={{ placement: "right-start" }}
+      contentProps={{ maxW: "min(420px, calc(100vw - 32px))", maxH: "320px", overflowY: "auto", p: 3, bg: "theme.bg", color: "theme.text", borderWidth: "1px", borderColor: "theme.border", boxShadow: "lg" }}
+      content={
+        <VStack align="stretch" gap="5px">
+          <Text fontSize="sm" fontWeight="600" mb={2}>{title}</Text>
+          {paragraphs.map((paragraph, index) => (
+            <Text key={index} fontSize="sm" lineHeight="1.5" whiteSpace="pre-line">{paragraph}</Text>
+          ))}
+        </VStack>
+      }
+    >
+      {children}
+    </Tooltip>
+  );
+}
+
 export default function DraftRoomWorkArea({
   sponsor,
   setActiveSection,
 }: DraftRoomWorkAreaProps) {
   useHelpRegistration("DraftRoomWorkArea");
   const [activeTab, setActiveTab] = useState("drafts");
-  const [rightTab, setRightTab] = useState<"meta" | "shape">("meta");
+  const [rightTab, setRightTab] = useState<"meta" | "shape">("shape");
   const [selectedPieceId, setSelectedPieceId] = useState<string | undefined>();
   const [selectedPieceSlug, setSelectedPieceSlug] = useState<string | undefined>();
   const [pieceDetail, setPieceDetail] = useState<PieceDetail | null>(null);
@@ -73,7 +126,11 @@ export default function DraftRoomWorkArea({
   const [showTitleSaved, setShowTitleSaved] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [savingMeta, setSavingMeta] = useState(false);
+  const [bodyReady, setBodyReady] = useState(false);
+  const [metadataError, setMetadataError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [showAutoSaved, setShowAutoSaved] = useState(false);
+  const [listReadiness, setListReadiness] = useState<Record<string, CraftReadiness>>({});
 
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const panelBg = useColorModeValue("gray.50", "gray.900");
@@ -114,6 +171,7 @@ export default function DraftRoomWorkArea({
   const excerptRef = useRef<string>("");
   const hydratingMetadataRef = useRef(false);
   const lastSavedSnapshotRef = useRef<MetadataSnapshot | null>(null);
+  const failedSnapshotRef = useRef<MetadataSnapshot | null>(null);
   const autosaveTimeoutRef = useRef<number | null>(null);
 
   const draftItems = useMemo(() => (Array.isArray(drafts) ? drafts : []), [drafts]);
@@ -121,6 +179,32 @@ export default function DraftRoomWorkArea({
     () => (Array.isArray(placements) ? placements : []),
     [placements]
   );
+  const listPieceIds = useMemo(() => Array.from(new Set([
+    ...draftItems.map((draft) => draft.piece?.id).filter((id): id is string => Boolean(id)),
+    ...publishedItems.map((placement) => placement.piece_id).filter((id): id is string => Boolean(id)),
+  ])).sort().join(","), [draftItems, publishedItems]);
+
+  useEffect(() => {
+    if (!listPieceIds) {
+      setListReadiness({});
+      return;
+    }
+    let active = true;
+    const ids = listPieceIds.split(",");
+    const batches = Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) => ids.slice(index * 100, (index + 1) * 100));
+    void Promise.all(batches.map((batch) =>
+      axiosInstance.get<Record<string, CraftReadiness>>("/api/atelier/readiness/batch/", { params: { ids: batch.join(",") } })
+    )).then((responses) => {
+      if (active) setListReadiness(Object.assign({}, ...responses.map((response) => response.data)));
+    }).catch(() => {
+      if (active) setListReadiness({});
+    });
+    return () => { active = false; };
+  }, [listPieceIds]);
+
+  const handleReadinessChange = useCallback((readiness: CraftReadiness) => {
+    if (selectedPieceId) setListReadiness((current) => ({ ...current, [selectedPieceId]: readiness }));
+  }, [selectedPieceId]);
 
   const isDraftsTab = activeTab === "drafts";
   const isLoading = isDraftsTab ? draftsLoading : placementsLoading;
@@ -152,13 +236,26 @@ export default function DraftRoomWorkArea({
     []
   );
 
+  const handleBodyLoaded = useCallback((body: Record<string, unknown>, excerpt: string) => {
+    docJSONRef.current = body;
+    excerptRef.current = excerpt;
+    setBodyReady(true);
+  }, []);
+
+  const handleBodyChange = useCallback((body: Record<string, unknown>) => {
+    docJSONRef.current = body;
+  }, []);
+
   useEffect(() => {
     hydratingMetadataRef.current = true;
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
       autosaveTimeoutRef.current = null;
     }
-    if (!selectedPieceSlug) {
+    setLoadError("");
+    setMetadataError("");
+    failedSnapshotRef.current = null;
+    if (!selectedPieceId) {
       setPieceDetail(null);
       setTags([]);
       setCategories([]);
@@ -171,7 +268,7 @@ export default function DraftRoomWorkArea({
     }
     let mounted = true;
     axiosInstance
-      .get(`/api/writing/pieces/${selectedPieceSlug}`)
+      .get(`/api/writing/pieces/${selectedPieceId}`)
       .then((res) => {
         if (!mounted) return;
         const detail = res.data as PieceDetail;
@@ -180,11 +277,6 @@ export default function DraftRoomWorkArea({
         const persisted = getPersistedAddressedTo();
         setAddressedTo((detail as { addressed_to?: string }).addressed_to || persisted);
         titleRef.current = detail.title || "";
-        excerptRef.current = detail.excerpt || "";
-        docJSONRef.current = (detail.body_json || null) as Record<
-          string,
-          unknown
-        > | null;
         lastSavedSnapshotRef.current = {
           title: (detail.title || "").trim(),
           addressedTo: (detail as { addressed_to?: string }).addressed_to || persisted,
@@ -195,12 +287,14 @@ export default function DraftRoomWorkArea({
       .catch(() => {
         if (!mounted) return;
         setPieceDetail(null);
+        setTitle("");
+        setLoadError("Could not load piece details. Check your access and try selecting it again.");
         hydratingMetadataRef.current = false;
       });
     return () => {
       mounted = false;
     };
-  }, [selectedPieceSlug]);
+  }, [selectedPieceId]);
 
   useEffect(() => {
     if (!selectedPieceId) {
@@ -251,7 +345,7 @@ export default function DraftRoomWorkArea({
       if (!pieceDetail?.id) return;
       setSavingMeta(true);
       try {
-        await axiosInstance.patch(`/api/writing/pieces/${pieceDetail.slug}`, {
+        await axiosInstance.patch(`/api/writing/pieces/${pieceDetail.id}`, {
           title,
           addressed_to: addressedTo || "public",
         });
@@ -276,11 +370,21 @@ export default function DraftRoomWorkArea({
           tagIds: toIdList(tags.map((tag) => tag.id)),
           categoryIds: toIdList(categories.map((category) => category.id)),
         };
+        failedSnapshotRef.current = null;
+        setMetadataError("");
+      } catch {
+        failedSnapshotRef.current = {
+          title: title.trim(),
+          addressedTo: addressedTo || "public",
+          tagIds: toIdList(tags.map((tag) => tag.id)),
+          categoryIds: toIdList(categories.map((category) => category.id)),
+        };
+        setMetadataError("Could not save metadata. Your changes are still here; please retry.");
       } finally {
         setSavingMeta(false);
       }
     },
-    [pieceDetail?.id, pieceDetail?.slug, title, addressedTo, tags, categories, toIdList]
+    [pieceDetail?.id, title, addressedTo, tags, categories, toIdList]
   );
 
   const metadataSnapshot = useMemo<MetadataSnapshot>(
@@ -308,6 +412,7 @@ export default function DraftRoomWorkArea({
     if (savingMeta) return;
     if (hydratingMetadataRef.current) return;
     if (snapshotEquals(lastSavedSnapshotRef.current, metadataSnapshot)) return;
+    if (snapshotEquals(failedSnapshotRef.current, metadataSnapshot)) return;
     if (autosaveTimeoutRef.current) {
       window.clearTimeout(autosaveTimeoutRef.current);
     }
@@ -338,9 +443,16 @@ export default function DraftRoomWorkArea({
   // const isSeriesReady = Boolean(series.trim()) || noneOkSeries;
 
   return (
-    <HStack align="stretch" gap={6} w="100%">
+    <Grid
+      className="drwa-root"
+      templateColumns={{ base: "minmax(0, 1fr)", xl: selectedPieceId ? "minmax(0, 19.5fr) minmax(0, 53.5fr) minmax(0, 27fr)" : "minmax(0, 35fr) minmax(0, 65fr)" }}
+      alignItems="stretch"
+      gap={4}
+      w="100%"
+    >
       <Box
-        w={{ base: "100%", lg: "35%" }}
+        className="drwa-piece-list"
+        minW={0}
         borderWidth="1px"
         borderColor={panelBorder}
         bg={panelBg}
@@ -356,14 +468,18 @@ export default function DraftRoomWorkArea({
               </Text>
               <HelpTip helpKey="writing-overview" />
             </HStack>
-            <Button size="sm" onClick={() => setSelectedPieceId(undefined)}>
-              New draft
+            <Button size="sm" onClick={() => { setSelectedPieceId(undefined); setSelectedPieceSlug(undefined); }}>
+              List
             </Button>
           </HStack>
 
           <Tabs.Root
             value={activeTab}
-            onValueChange={(details) => setActiveTab(details.value)}
+            onValueChange={(details) => {
+              setActiveTab(details.value);
+              setSelectedPieceId(undefined);
+              setSelectedPieceSlug(undefined);
+            }}
           >
             <Tabs.List>
               <Tabs.Trigger value="drafts">Drafts</Tabs.Trigger>
@@ -393,18 +509,27 @@ export default function DraftRoomWorkArea({
 
           <VStack align="stretch" gap={2} maxH="60vh" overflowY="auto">
             {isDraftsTab &&
-              draftItems.map((draft) => (
+              draftItems.map((draft) => {
+                const preview = draft.preview_paragraphs?.length
+                  ? draft.preview_paragraphs
+                  : draft.body_preview ? [draft.body_preview] : [];
+                return <PiecePreview key={draft.id} title={draft.title || "Untitled draft"} paragraphs={preview}>
                 <Box
-                  key={draft.id}
+                  className="drwa-draft-card"
                   p={3}
                   borderWidth="1px"
-                  borderColor={panelBorder}
+                  borderColor={selectedPieceId === draft.piece.id ? "green.500" : panelBorder}
                   borderRadius="md"
+                  bg={selectedPieceId === draft.piece.id ? "green.50" : undefined}
+                  _dark={selectedPieceId === draft.piece.id ? { bg: "green.900" } : undefined}
                   cursor="pointer"
-                  _hover={{ bg: itemHover }}
+                  _hover={{ bg: selectedPieceId === draft.piece.id ? undefined : itemHover }}
                   onClick={() => {
                     const draftSlug = draft.piece.slug || draft.piece.id;
                     const draftTitle = draft.title || draft.piece.title || "";
+                    docJSONRef.current = null;
+                    setBodyReady(false);
+                    setRightTab("shape");
                     setSelectedPieceId(draft.piece.id);
                     setSelectedPieceSlug(draftSlug);
                     setTitle(draftTitle);
@@ -421,22 +546,38 @@ export default function DraftRoomWorkArea({
                   <Text fontSize="sm" color={textSecondary}>
                     Edited {formatDistanceToNow(new Date(draft.last_saved_at))} ago
                   </Text>
+                  {!selectedPieceId && preview[0] && (
+                    <Text fontSize="sm" color={textSecondary} mt={1} lineClamp={2}>
+                      {preview[0]}
+                    </Text>
+                  )}
+                  <Box mt={2}><CraftReadinessDots readiness={listReadiness[draft.piece.id]} /></Box>
                 </Box>
-              ))}
+                </PiecePreview>;
+              })}
 
             {!isDraftsTab &&
-              publishedItems.map((placement) => (
+              publishedItems.map((placement) => {
+                const preview = previewFromBody(placement.display?.body_json ?? placement.piece_body_json);
+                return <PiecePreview key={placement.id} title={placement.piece_title} paragraphs={preview}>
                 <Box
-                  key={placement.id}
+                  className="drwa-published-card"
                   p={3}
                   borderWidth="1px"
-                  borderColor={panelBorder}
+                  borderColor={selectedPieceId === placement.piece_id ? "green.500" : panelBorder}
                   borderRadius="md"
+                  bg={selectedPieceId === placement.piece_id ? "green.50" : undefined}
+                  _dark={selectedPieceId === placement.piece_id ? { bg: "green.900" } : undefined}
                   cursor="pointer"
-                  _hover={{ bg: itemHover }}
+                  _hover={{ bg: selectedPieceId === placement.piece_id ? undefined : itemHover }}
                   onClick={() => {
+                    docJSONRef.current = null;
+                    setBodyReady(false);
+                    setRightTab("shape");
                     setSelectedPieceId(placement.piece_id);
                     setSelectedPieceSlug(placement.piece_slug);
+                    setTitle(placement.piece_title);
+                    setPieceDetail(null);
                   }}
                 >
                   <HStack justify="space-between">
@@ -452,14 +593,42 @@ export default function DraftRoomWorkArea({
                         )} ago`
                       : "Published"}
                   </Text>
+                  {!selectedPieceId && preview[0] && (
+                    <Text fontSize="sm" color={textSecondary} mt={1} lineClamp={2}>{preview[0]}</Text>
+                  )}
+                  <Box mt={2}><CraftReadinessDots readiness={listReadiness[placement.piece_id]} /></Box>
                 </Box>
-              ))}
+                </PiecePreview>;
+              })}
           </VStack>
         </VStack>
       </Box>
 
+      {selectedPieceId && selectedPieceSlug && (
+        <Box
+          className="drwa-body-pane"
+          minW={0}
+          minH="70vh"
+          borderWidth="1px"
+          borderColor={panelBorder}
+          borderRadius="lg"
+          p={4}
+        >
+          <DraftRoomBodyEditor
+            key={selectedPieceId}
+            pieceId={selectedPieceId}
+            pieceSlug={selectedPieceSlug}
+            title={title}
+            published={!isDraftsTab}
+            onBodyLoaded={handleBodyLoaded}
+            onBodyChange={handleBodyChange}
+          />
+        </Box>
+      )}
+
       <Box
-        w={{ base: "100%", lg: "65%" }}
+        className="drwa-details-pane"
+        minW={0}
         borderWidth="1px"
         borderColor={panelBorder}
         borderRadius="lg"
@@ -470,7 +639,7 @@ export default function DraftRoomWorkArea({
           <HStack justify="space-between">
             <HStack gap={2}>
               <Text fontSize="lg" fontWeight="semibold">
-                Draft Room
+                Details
               </Text>
               <HelpTip helpKey="writing-overview" />
             </HStack>
@@ -479,13 +648,17 @@ export default function DraftRoomWorkArea({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setActiveSection("write", { piece: selectedPieceId })}
+                  aria-label="Edit content"
+                  title="Edit content"
+                  onClick={() => setActiveSection("write", { piece: selectedPieceId, returnTo: "draft-room" })}
                 >
-                  Edit content
+                  <IconPencil size={16} />
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
-                  Publish…
-                </Button>
+                {isDraftsTab && (
+                  <Button size="sm" variant="outline" disabled={!bodyReady || !pieceDetail} onClick={() => setDialogOpen(true)}>
+                    Publish…
+                  </Button>
+                )}
               </HStack>
             )}
           </HStack>
@@ -496,15 +669,19 @@ export default function DraftRoomWorkArea({
             </Text>
           )}
 
+          {loadError && <Text fontSize="sm" color="red.600">{loadError}</Text>}
+          {metadataError && <Text fontSize="sm" color="red.600">{metadataError}</Text>}
+
           {selectedPieceId && (
             <>
               <Tabs.Root
+                className="drwa-details-tabs"
                 value={rightTab}
                 onValueChange={(d) => setRightTab(d.value as "meta" | "shape")}
               >
                 <Tabs.List>
-                  <Tabs.Trigger value="meta">Meta</Tabs.Trigger>
                   <Tabs.Trigger value="shape">Shape</Tabs.Trigger>
+                  <Tabs.Trigger value="meta">Meta</Tabs.Trigger>
                 </Tabs.List>
               </Tabs.Root>
 
@@ -583,7 +760,7 @@ export default function DraftRoomWorkArea({
                       size="sm"
                       variant="outline"
                       onClick={() => { void handleSaveMetadata(); }}
-                      disabled={savingMeta}
+                      disabled={savingMeta || !pieceDetail}
                     >
                       {savingMeta ? "Saving..." : "Save"}
                     </Button>
@@ -602,6 +779,7 @@ export default function DraftRoomWorkArea({
                   pieceTitle={title}
                   writingKind={pieceDetail?.writing_kind}
                   authorDisplayName={sponsor.displayName}
+                  onReadinessChange={handleReadinessChange}
                 />
               )}
             </>
@@ -625,6 +803,6 @@ export default function DraftRoomWorkArea({
           onPublished={() => setDialogOpen(false)}
         />
       )}
-    </HStack>
+    </Grid>
   );
 }

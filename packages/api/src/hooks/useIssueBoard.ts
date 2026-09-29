@@ -103,13 +103,26 @@ export function useIssue(issueId: string | null) {
   });
 
   const signOffPiece = useMutation({
-    mutationFn: (pieceId: string) => issueBoardApi.signOffPiece(pieceId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: issueKey(issueId!) }),
+    mutationFn: ({ pieceId, revision }: { pieceId: string; revision: number }) => issueBoardApi.signOffPiece(pieceId, revision),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKey(issueId!) });
+      qc.invalidateQueries({ queryKey: ["writing", "issues", issueId, "read"] });
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+    },
+  });
+
+  const reviewSpelling = useMutation({
+    mutationFn: ({ pieceId, revision }: { pieceId: string; revision: number }) => issueBoardApi.reviewSpelling(pieceId, revision),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKey(issueId!) });
+      qc.invalidateQueries({ queryKey: ["writing", "issues", issueId, "read"] });
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+    },
   });
 
   return {
     issue, isLoading, error, updateIssue, publishIssue,
-    addPlacement, removePlacement, setPlacementLead, reorderPlacements, signOffPiece,
+    addPlacement, removePlacement, setPlacementLead, reorderPlacements, signOffPiece, reviewSpelling,
   };
 }
 

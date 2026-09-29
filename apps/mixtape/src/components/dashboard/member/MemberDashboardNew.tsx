@@ -68,6 +68,7 @@ type SectionKey =
   | "my-drafts"
   | "write"
   | "editors-desk"
+  | "draft-room-v2"
   | "my-groups"
   | "messages"
   | "create-group"
@@ -108,6 +109,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
         { key: "my-drafts", label: "Drafts", icon: IconFileText },
         { key: "write", label: "New Piece", icon: IconPlus },
         ...(isSuperuser ? [{ key: "editors-desk" as SectionKey, label: "Editor's Desk ✦", icon: IconLayoutBoard }] : []),
+        { key: "draft-room-v2", label: "Draft Room V2", icon: IconFileText },
       ],
     },
     {
@@ -907,7 +909,7 @@ function ProfileCompletenessCard({
 // ── Main component ─────────────────────────────────────────────────────────
 
 const VALID_SECTIONS = new Set<string>([
-  "overview", "activity", "writing", "my-drafts", "write",
+  "overview", "activity", "writing", "my-drafts", "write", "editors-desk", "draft-room-v2",
   "my-groups", "messages", "create-group", "preferences", "edit-profile",
 ]);
 

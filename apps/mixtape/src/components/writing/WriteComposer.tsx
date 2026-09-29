@@ -304,10 +304,17 @@ export default function WriteComposer({
   const {
     schedule,
     saveNow,
+    setRevision,
     saveStatus: soloSaveStatus,
     splitSuggestionStatus,
     setSplitSuggestionStatus,
   } = useWorkingCopyAutosave(pieceId, autosaveDebounceMs);
+
+  useEffect(() => {
+    if (typeof initialPiece.auto_save_count === "number") {
+      setRevision(initialPiece.auto_save_count);
+    }
+  }, [initialPiece.auto_save_count, pieceId, setRevision]);
 
   // Stream authoring — activates lazily on first /new command
   const createArtifactForStream = useCallback(

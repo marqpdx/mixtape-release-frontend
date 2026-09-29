@@ -71,11 +71,16 @@ export async function getIssueRead(issueId: string): Promise<IssueRead> {
   return res.data;
 }
 
-export async function signOffPiece(pieceId: string): Promise<{ signed_off: boolean; piece_id: string }> {
-  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/sign-off`);
+export async function signOffPiece(pieceId: string, expectedRevision: number): Promise<{ signed_off: boolean; piece_id: string }> {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/sign-off`, {
+    expected_auto_save_count: expectedRevision,
+  });
   return res.data;
 }
 
-export async function setSpellcheckClean(pieceId: string, clean: boolean): Promise<void> {
-  await axiosInstance.patch(`/api/writing/pieces/${pieceId}`, { spellcheck_clean: clean });
+export async function reviewSpelling(pieceId: string, expectedRevision: number): Promise<{ spellcheck_clean: boolean; piece_id: string }> {
+  const res = await axiosInstance.post(`/api/writing/pieces/${pieceId}/spelling-review`, {
+    expected_auto_save_count: expectedRevision,
+  });
+  return res.data;
 }

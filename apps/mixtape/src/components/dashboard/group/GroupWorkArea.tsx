@@ -45,6 +45,7 @@ import WorkbenchCurationWorkArea from "@/components/workbench/WorkbenchCurationW
 import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 import { EditorsDeskWorkArea } from "@/components/writing/editors-desk/EditorsDeskWorkArea";
+import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
@@ -449,6 +450,7 @@ export default function GroupWorkArea({
   if (section === "write") {
     const pieceId = sectionParams?.piece;
     const returnToEditorsDesk = sectionParams?.returnTo === "editors-desk";
+    const returnToDraftRoom = sectionParams?.returnTo === "draft-room";
     const returnToDesk = () => setActiveSection(
       "editors-desk",
       sectionParams?.issue ? { issue: sectionParams.issue } : undefined
@@ -465,8 +467,8 @@ export default function GroupWorkArea({
           writingKind="post"
           pieceId={pieceId} // If undefined, creates new; if present, loads existing
           onPublished={handlePiecePublished}
-          onBack={returnToEditorsDesk ? returnToDesk : () => setActiveSection("writing")}
-          backLabel={returnToEditorsDesk ? "Back to Editor's Desk" : undefined}
+          onBack={returnToEditorsDesk ? returnToDesk : returnToDraftRoom ? () => setActiveSection("draft-room") : () => setActiveSection("writing")}
+          backLabel={returnToEditorsDesk ? "Back to Editor's Desk" : returnToDraftRoom ? "Back to Draft Room" : undefined}
           onUnpublished={() => {
             if (typeof window !== "undefined") {
               try {
@@ -515,6 +517,24 @@ export default function GroupWorkArea({
       <DualPanelEditorWorkArea
         sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
       />
+    );
+  }
+
+  if (section === "draft-room") {
+    if (!identity?.is_superuser) {
+      return (
+        <WorkAreaWrapper>
+          <Text>Draft Room is only available to superusers.</Text>
+        </WorkAreaWrapper>
+      );
+    }
+    return (
+      <WorkAreaWrapper>
+        <DraftRoomWorkArea
+          sponsor={{ type: "group", id: group.id, slug: group.slug, displayName: group.title }}
+          setActiveSection={setActiveSection}
+        />
+      </WorkAreaWrapper>
     );
   }
 

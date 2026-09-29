@@ -94,7 +94,7 @@ export default function WritingEditorWrapper({
           console.log('✅ Working copy loaded:', workingCopy);
 
           // Transform working copy into WritingPiece shape for WriteComposer
-          const pieceData: WritingPiece = {
+          const pieceData: WritingPiece & { auto_save_count: number } = {
             id: workingCopy.piece.id,
             slug: workingCopy.piece.slug,
             title: workingCopy.title,
@@ -119,6 +119,7 @@ export default function WritingEditorWrapper({
             },
             created_at: '',
             updated_at: workingCopy.last_saved_at,
+            auto_save_count: workingCopy.auto_save_count,
           };
 
           setPiece(pieceData);
@@ -137,7 +138,10 @@ export default function WritingEditorWrapper({
             create_working_copy: true,
           });
 
-          const pieceData = res.data as WritingPiece;
+          const pieceData = {
+            ...res.data,
+            auto_save_count: res.data.working_copy?.auto_save_count ?? 0,
+          } as WritingPiece & { auto_save_count: number };
           setPiece(pieceData);
           console.log('✅ Empty piece created:', pieceData.id);
         }

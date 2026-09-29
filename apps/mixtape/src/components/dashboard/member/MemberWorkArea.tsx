@@ -170,6 +170,7 @@ export default function MemberWorkArea({
 
   if (section === "write") {
     const pieceId = sectionParams?.piece;
+    const returnToDraftRoom = sectionParams?.returnTo === "draft-room";
     const displayName = identity.profile?.display_name || identity.username;
     return (
       <WorkAreaWrapper>
@@ -182,7 +183,12 @@ export default function MemberWorkArea({
           }}
           writingKind="post"
           pieceId={pieceId}
+          backLabel={returnToDraftRoom ? "Back to Draft Room" : undefined}
           onBack={() => {
+            if (returnToDraftRoom) {
+              setActiveSection("draft-room");
+              return;
+            }
             if (typeof window !== "undefined") {
               try {
                 window.localStorage.setItem("writing_active_tab", "drafts");

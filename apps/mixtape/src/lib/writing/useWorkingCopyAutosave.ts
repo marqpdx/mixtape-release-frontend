@@ -36,6 +36,7 @@ interface UseWorkingCopyAutosaveOptions {
    * something the user just typed.
    */
   onExcerptSuggested?: (excerpt: string) => void;
+  onRevisionSaved?: (revision: number) => void;
 }
 
 export function useWorkingCopyAutosave(
@@ -43,7 +44,7 @@ export function useWorkingCopyAutosave(
   debounceMs: number = 2500,
   options: UseWorkingCopyAutosaveOptions = {}
 ) {
-  const { onExcerptSuggested } = options;
+  const { onExcerptSuggested, onRevisionSaved } = options;
   console.log(`🪝  useWorkingCopyAutosave called with pieceId: ${pieceId}`);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,8 +52,17 @@ export function useWorkingCopyAutosave(
   const queuedDataRef = useRef<WorkingCopyData | null>(null);
   const pendingAfterCurrentRef = useRef(false);
   const latestAttemptRef = useRef(0);
+  const revisionRef = useRef<number | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [splitSuggestionStatus, setSplitSuggestionStatus] = useState<SplitSuggestionStatus>(null);
+
+  const setRevision = useCallback((revision: number) => {
+    revisionRef.current = revision;
+  }, []);
+
+  useEffect(() => {
+    revisionRef.current = null;
+  }, [pieceId]);
 
   const clearResetStatusTimer = useCallback(() => {
     if (resetStatusTimer.current) {
@@ -102,7 +112,13 @@ export function useWorkingCopyAutosave(
           title: payload.title,
           body_json: payload.body_json,
           excerpt: payload.excerpt,
+          expected_auto_save_count: revisionRef.current,
         });
+
+        if (typeof response.data?.auto_save_count === 'number') {
+          revisionRef.current = response.data.auto_save_count;
+          onRevisionSaved?.(response.data.auto_save_count);
+        }
 
         const suggestionStatus = response.data?.split_suggestion_status as SplitSuggestionStatus;
         if (suggestionStatus !== undefined) {
@@ -140,7 +156,7 @@ export function useWorkingCopyAutosave(
     }
 
     savingRef.current = false;
-  }, [pieceId, clearResetStatusTimer, scheduleStatusReset, onExcerptSuggested]);
+  }, [pieceId, clearResetStatusTimer, scheduleStatusReset, onExcerptSuggested, onRevisionSaved]);
 
   const schedule = useCallback((data: WorkingCopyData) => {
     console.log(`⏰  schedule called with:`, data);
@@ -178,6 +194,7 @@ export function useWorkingCopyAutosave(
   return useMemo(() => ({
     schedule,
     saveNow,
+    setRevision,
     saveStatus,
     splitSuggestionStatus,
     setSplitSuggestionStatus,

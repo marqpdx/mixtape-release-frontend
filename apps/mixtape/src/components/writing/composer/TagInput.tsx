@@ -22,6 +22,7 @@ import {
 } from '@chakra-ui/react';
 import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { toaster } from '@mixtape/core/lib/toaster';
+import { useColorModeValue } from '@components/ui/color-mode';
 
 export interface Tag {
   id: number;
@@ -54,6 +55,17 @@ export function TagInput({
   inputBorderColor,
   inputFocusBorderColor,
 }: TagInputProps) {
+  const dropdownBg = useColorModeValue('white', 'gray.900');
+  const dropdownBorder = useColorModeValue('gray.200', 'gray.700');
+  const rowHover = useColorModeValue('gray.50', 'gray.800');
+  const rowSelected = useColorModeValue('blue.50', 'blue.900');
+  const warningBg = useColorModeValue('orange.50', 'orange.950');
+  const warningHover = useColorModeValue('orange.100', 'orange.900');
+  const warningBorder = useColorModeValue('orange.200', 'orange.800');
+  const warningText = useColorModeValue('orange.900', 'orange.100');
+  const warningSecondary = useColorModeValue('orange.700', 'orange.200');
+  const secondaryText = useColorModeValue('gray.600', 'gray.400');
+  const accentText = useColorModeValue('blue.600', 'blue.300');
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Tag[]>([]);
   const [similarWarning, setSimilarWarning] = useState<Tag | null>(null);
@@ -422,9 +434,9 @@ export function TagInput({
             left={0}
             right={0}
             mt={1}
-            bg="white"
+            bg={dropdownBg}
             border="1px solid"
-            borderColor="gray.200"
+            borderColor={dropdownBorder}
             borderRadius="md"
             boxShadow="lg"
             maxH="220px"
@@ -435,17 +447,17 @@ export function TagInput({
             {similarWarning && (
               <Box
                 p={2}
-                bg="orange.50"
+                bg={warningBg}
                 borderBottom="1px solid"
-                borderColor="orange.200"
+                borderColor={warningBorder}
                 cursor="pointer"
                 onClick={() => handleSelectTag(similarWarning)}
-                _hover={{ bg: 'orange.100' }}
+                _hover={{ bg: warningHover }}
               >
-                <Text fontSize="xs" color="orange.900" fontWeight="medium">
+                <Text fontSize="xs" color={warningText} fontWeight="medium">
                   ⚠️ Similar tag exists: "{similarWarning.title}"
                 </Text>
-                <Text fontSize="xs" color="orange.700" mt={0.5}>
+                <Text fontSize="xs" color={warningSecondary} mt={0.5}>
                   Click to use this instead
                 </Text>
               </Box>
@@ -459,13 +471,13 @@ export function TagInput({
                     key={tag.id}
                     p={2}
                     cursor="pointer"
-                    bg={index === highlightedIndex ? 'blue.50' : 'white'}
-                    _hover={{ bg: 'gray.50' }}
+                    bg={index === highlightedIndex ? rowSelected : dropdownBg}
+                    _hover={{ bg: rowHover }}
                     onClick={() => handleSelectTag(tag)}
                     borderBottom={
                       index < suggestions.length - 1 ? '1px solid' : 'none'
                     }
-                    borderColor="gray.100"
+                    borderColor={dropdownBorder}
                   >
                     <HStack justify="space-between">
                       <VStack align="start" gap={0}>
@@ -473,13 +485,13 @@ export function TagInput({
                           {tag.title}
                         </Text>
                         {tag.usage_count > 0 && (
-                          <Text fontSize="xs" color="gray.500">
+                          <Text fontSize="xs" color={secondaryText}>
                             Used {tag.usage_count} time{tag.usage_count !== 1 ? 's' : ''}
                           </Text>
                         )}
                       </VStack>
                       {index === highlightedIndex && (
-                        <Text fontSize="xs" color="blue.600">
+                        <Text fontSize="xs" color={accentText}>
                           ↵
                         </Text>
                       )}
@@ -497,7 +509,7 @@ export function TagInput({
                 >
                   Create "{inputValue.trim()}"
                 </Button>
-                <Text fontSize="xs" color="gray.600">
+                <Text fontSize="xs" color={secondaryText}>
                   No existing tags found
                 </Text>
               </HStack>
@@ -507,7 +519,7 @@ export function TagInput({
       </Box>
 
       {/* Helper text */}
-      <Text fontSize="xs" color="gray.500" mt={-2}>
+      <Text fontSize="xs" color={secondaryText} mt={-2}>
         {selectedTags.length} / {maxTags} tags
         {' • '}
         Type to search, Enter to create, Esc to close

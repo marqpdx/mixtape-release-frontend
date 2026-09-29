@@ -72,6 +72,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredDecorator: 'can__ManageWriting',
     description: 'Create or edit writing pieces',
   },
+  'draft-room': {
+    requiredDecorator: 'can__ManageWriting',
+    description: 'Review group writing drafts and metadata',
+  },
   'import-document': {
     requiredRole: 'admin',
     description: 'Import a .docx file as a writing piece',

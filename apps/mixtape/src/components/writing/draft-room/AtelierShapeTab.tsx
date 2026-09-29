@@ -1,9 +1,9 @@
 // components/writing/draft-room/AtelierShapeTab.tsx
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useActionRun } from "@/hooks/useActionRun";
-import { submitSummarizeAsync, submitClassifyAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
+import { submitClassifyAsync, submitSynopsisLinkedInAsync, submitSynopsisPublicAsync } from "@mixtape/api/clients/switchboard/switchboardApi";
 import {
   Badge,
   Box,
@@ -25,12 +25,24 @@ import {
   Category,
 } from "@components/writing/composer/CategoryInput";
 import { Divider } from "@/components/common/Divider";
+import { IconSTurnDown } from "@tabler/icons-react";
+import { SummaryReadinessPie, type SummaryFieldKey, type SummaryFieldReadiness } from "./SummaryReadinessPie";
+import { toaster } from "@components/ui/toaster";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 type ReadinessState = "untouched" | "partial" | "confirmed" | "deferred";
+type ReadinessDimension = "tags" | "category" | "summaries" | "series" | "relations"
+  | `summaries.${SummaryFieldKey}`;
+const readinessColors: Record<ReadinessState, string> = {
+  untouched: "orange.400",
+  partial: "yellow.400",
+  confirmed: "green.400",
+  deferred: "gray.400",
+};
+const summaryDimension = (field: SummaryFieldKey): ReadinessDimension => `summaries.${field}`;
 
 interface Readiness {
   tags: ReadinessState;
@@ -39,6 +51,8 @@ interface Readiness {
   series: ReadinessState;
   relations: ReadinessState;
   overall: ReadinessState;
+  ignored: ReadinessDimension[];
+  summary_fields: SummaryFieldReadiness;
 }
 
 interface SummaryField {
@@ -113,32 +127,54 @@ interface AtelierShapeTabProps {
   pieceTitle?: string;
   writingKind?: string;
   authorDisplayName?: string;
+  onReadinessChange?: (readiness: Readiness) => void;
 }
 
 // ---------------------------------------------------------------------------
 // Readiness circle
 // ---------------------------------------------------------------------------
 
-function ReadinessDot({ state, label }: { state: ReadinessState; label: string }) {
-  const colors: Record<ReadinessState, string> = {
-    untouched: "orange.400",
-    partial: "yellow.400",
-    confirmed: "green.400",
-    deferred: "gray.400",
-  };
+function ReadinessDot({ state, label, ignored, summaryFields }: {
+  state: ReadinessState;
+  label: string;
+  ignored: boolean;
+  summaryFields?: SummaryFieldReadiness;
+}) {
   const textColor = useColorModeValue("gray.600", "gray.300");
   return (
-    <HStack gap={2}>
-      <Box w="8px" h="8px" borderRadius="full" bg={colors[state]} flexShrink={0} />
-      <Text fontSize="xs" color={textColor} w="80px">
-        {label}
-      </Text>
-      {state === "deferred" && (
-        <Text fontSize="xs" color={textColor}>
-          Phase 2
-        </Text>
+    <HStack gap={1.5}>
+      {summaryFields ? (
+        <SummaryReadinessPie states={summaryFields} />
+      ) : (
+        <Box w="10px" h="10px" borderRadius="full" bg={readinessColors[state]} flexShrink={0} />
       )}
+      <Text fontSize="xs" color={textColor}>
+        {label}{ignored ? "*" : ""}
+      </Text>
     </HStack>
+  );
+}
+
+function IgnoreButton({ label, ignored, loading, onClick }: {
+  label: string;
+  ignored: boolean;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  const action = ignored ? `Undo ignore ${label}` : `Ignore ${label}`;
+  return (
+    <Button
+      size="xs"
+      variant="ghost"
+      px={1.5}
+      color={ignored ? "green.500" : undefined}
+      loading={loading}
+      onClick={onClick}
+      aria-label={action}
+      title={action}
+    >
+      <IconSTurnDown size={16} />
+    </Button>
   );
 }
 
@@ -156,6 +192,7 @@ export default function AtelierShapeTab({
   pieceTitle,
   writingKind,
   authorDisplayName,
+  onReadinessChange,
 }: AtelierShapeTabProps) {
   const textSecondary = useColorModeValue("gray.600", "gray.300");
   const inputBg = useColorModeValue("gray.50", "gray.900");
@@ -166,6 +203,7 @@ export default function AtelierShapeTab({
   // Readiness
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [readinessLoading, setReadinessLoading] = useState(false);
+  const [ignoringDimension, setIgnoringDimension] = useState<ReadinessDimension | null>(null);
 
   // Tags / categories (kept in sync with parent via callbacks)
   const [tags, setTags] = useState<Tag[]>(initialTags);
@@ -177,10 +215,12 @@ export default function AtelierShapeTab({
   const [savingSummary, setSavingSummary] = useState<string | null>(null);
   const [excerpt, setExcerpt] = useState<string>("");
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [expandedSummary, setExpandedSummary] = useState<keyof Summaries | null>(null);
 
   // AI generation — summaries
-  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  const [generatingFor, setGeneratingFor] = useState<keyof Summaries | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const handledRunIdRef = useRef<string | null>(null);
   const activeRun = useActionRun(activeRunId);
   const [generateError, setGenerateError] = useState<{ field: string; message: string } | null>(null);
 
@@ -217,10 +257,30 @@ export default function AtelierShapeTab({
     setReadinessLoading(true);
     axiosInstance
       .get(`/api/atelier/${pieceSlug}/readiness/`)
-      .then((res) => setReadiness(res.data as Readiness))
+      .then((res) => {
+        setReadiness(res.data as Readiness);
+        onReadinessChange?.(res.data as Readiness);
+      })
       .catch(() => setReadiness(null))
       .finally(() => setReadinessLoading(false));
-  }, [pieceSlug]);
+  }, [pieceSlug, onReadinessChange]);
+
+  const toggleIgnored = async (dimension: ReadinessDimension) => {
+    if (!readiness || ignoringDimension) return;
+    setIgnoringDimension(dimension);
+    try {
+      const res = await axiosInstance.patch(`/api/atelier/${pieceSlug}/readiness/`, {
+        dimension,
+        ignored: !readiness.ignored?.includes(dimension),
+      });
+      setReadiness(res.data as Readiness);
+      onReadinessChange?.(res.data as Readiness);
+    } catch {
+      toaster.create({ title: "Could not save the ignore decision", type: "error" });
+    } finally {
+      setIgnoringDimension(null);
+    }
+  };
 
   const fetchSummaries = useCallback(() => {
     setSummariesLoading(true);
@@ -318,27 +378,40 @@ export default function AtelierShapeTab({
   };
 
   // Summaries — patch a single field
-  const handleSummaryBlur = (field: keyof Summaries, text: string) => {
+  const handleSummaryBlur = async (field: keyof Summaries, text: string) => {
+    if (text === summaries?.[field].text) return;
     setSavingSummary(field);
-    axiosInstance
-      .patch(`/api/atelier/${pieceSlug}/summaries/`, { [field]: text })
-      .then((res) => {
-        setSummaries(res.data as Summaries);
-        refreshReadiness();
-      })
-      .finally(() => setSavingSummary(null));
+    try {
+      const res = await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [field]: text });
+      setSummaries(res.data as Summaries);
+      refreshReadiness();
+    } catch {
+      setGenerateError({ field, message: "Could not save this summary. Your text is still here." });
+    } finally {
+      setSavingSummary(null);
+    }
   };
 
   // Summaries — confirm
-  const handleConfirm = (type: keyof Summaries) => {
+  const handleConfirm = async (type: keyof Summaries) => {
+    const text = (draftValues[type] ?? summaries?.[type].text ?? "").trim();
+    if (!text) return;
     setSavingSummary(type + "_confirm");
-    axiosInstance
-      .post(`/api/atelier/${pieceSlug}/summaries/confirm/`, { types: [type] })
-      .then((res) => {
-        setSummaries(res.data as Summaries);
-        refreshReadiness();
-      })
-      .finally(() => setSavingSummary(null));
+    try {
+      if (text !== summaries?.[type].text) {
+        await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [type]: text });
+      }
+      const res = await axiosInstance.post(`/api/atelier/${pieceSlug}/summaries/confirm/`, { types: [type] });
+      setSummaries(res.data as Summaries);
+      setDraftValues((values) => ({ ...values, [type]: text }));
+      setExpandedSummary(null);
+      setGenerateError(null);
+      refreshReadiness();
+    } catch {
+      setGenerateError({ field: type, message: "Could not confirm this summary. Your text is still here." });
+    } finally {
+      setSavingSummary(null);
+    }
   };
 
   // Series — set
@@ -449,30 +522,42 @@ export default function AtelierShapeTab({
     s.title.toLowerCase().includes(seriesSearch.toLowerCase())
   );
 
-  // AI: poll for completed run and auto-populate + auto-save
+  // AI: poll for completed run and populate a reviewable, unconfirmed draft.
   useEffect(() => {
-    if (!activeRun || !generatingFor) return;
+    if (!activeRun || !generatingFor || !activeRunId || handledRunIdRef.current === activeRunId) return;
     if (activeRun.status === "succeeded") {
-      const summary = activeRun.result_payload?.summary as string | undefined;
-      if (summary) {
-        setDraftValues((d) => ({ ...d, [generatingFor]: summary }));
-        axiosInstance
-          .patch(`/api/atelier/${pieceSlug}/summaries/`, { [generatingFor]: summary })
+      handledRunIdRef.current = activeRunId;
+      const payload = activeRun.result_payload;
+      const summary = generatingFor === "linkedin_synopsis"
+        ? (payload?.short_synopsis || payload?.hook) as string | undefined
+        : payload?.summary as string | undefined;
+      if (summary?.trim()) {
+        setDraftValues((values) => ({ ...values, [generatingFor]: summary }));
+        setExpandedSummary(generatingFor);
+        void axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [generatingFor]: summary })
           .then((res) => {
             setSummaries(res.data as Summaries);
             refreshReadiness();
+          })
+          .catch(() => setGenerateError({ field: generatingFor, message: "Generated text is here, but could not be saved. Review it and try again." }))
+          .finally(() => {
+            setGeneratingFor(null);
+            setActiveRunId(null);
           });
+      } else {
+        setGenerateError({ field: generatingFor, message: "Generation returned no summary. Try again." });
+        setGeneratingFor(null);
+        setActiveRunId(null);
       }
-      setGeneratingFor(null);
-      setActiveRunId(null);
     } else if (activeRun.status === "failed") {
+      handledRunIdRef.current = activeRunId;
       const message =
         (activeRun.error_payload?.message as string | undefined) || "Generation failed. Try again.";
       setGenerateError({ field: generatingFor, message });
       setGeneratingFor(null);
       setActiveRunId(null);
     }
-  }, [activeRun, generatingFor, pieceSlug, refreshReadiness]);
+  }, [activeRun, activeRunId, generatingFor, pieceSlug, refreshReadiness]);
 
   // Poll classify run and populate suggestions
   useEffect(() => {
@@ -537,18 +622,14 @@ export default function AtelierShapeTab({
     setSuggestedCategory("");
   };
 
-  const SUMMARY_WORDS: Record<string, number> = {
-    public_synopsis: 60,
-    linkedin_synopsis: 50,
-    internal_abstract: 80,
-  };
-
-  const handleGenerate = async (field: string) => {
-    if (!excerpt || generatingFor) return;
+  const handleGenerate = async (field: "public_synopsis" | "linkedin_synopsis") => {
+    if (generatingFor) return;
     setGeneratingFor(field);
     setGenerateError(null);
     try {
-      const resp = await submitSummarizeAsync({ text: excerpt, words: SUMMARY_WORDS[field] ?? 60 });
+      const resp = field === "public_synopsis"
+        ? await submitSynopsisPublicAsync({ piece_id: pieceId, surface: "writing" })
+        : await submitSynopsisLinkedInAsync({ piece_id: pieceId, surface: "writing" });
       setActiveRunId(resp.action_run_id);
     } catch (err) {
       setGeneratingFor(null);
@@ -559,30 +640,34 @@ export default function AtelierShapeTab({
     }
   };
 
-  void pieceId;
-
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
   return (
-    <VStack align="stretch" gap={4}>
+    <VStack className="ast-root" align="stretch" gap={4}>
 
       {/* Readiness overview */}
-      <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
-        <HStack justify="space-between" mb={3}>
+      <Box className="ast-readiness" borderBottomWidth="1px" borderColor={sectionBorder} pb={2}>
+        <HStack justify="space-between" mb={1.5}>
           <Text fontSize="sm" fontWeight="semibold">
             Craft Readiness
           </Text>
           {readinessLoading && <Spinner size="xs" />}
         </HStack>
         {readiness ? (
-          <HStack gap={6} flexWrap="wrap">
-            <ReadinessDot state={readiness.tags} label="Tags" />
-            <ReadinessDot state={readiness.category} label="Category" />
-            <ReadinessDot state={readiness.summaries} label="Summaries" />
-            <ReadinessDot state={readiness.series} label="Series" />
-            <ReadinessDot state={readiness.relations} label="Relations" />
+          <HStack gap={3} flexWrap="wrap">
+            {(["tags", "category", "summaries", "series", "relations"] as const).map((dimension) => (
+              <ReadinessDot
+                key={dimension}
+                state={readiness[dimension]}
+                label={dimension[0].toUpperCase() + dimension.slice(1)}
+                ignored={dimension === "summaries"
+                  ? readiness.ignored?.some((entry) => entry === "summaries" || entry.startsWith("summaries.")) ?? false
+                  : readiness.ignored?.includes(dimension) ?? false}
+                summaryFields={dimension === "summaries" ? readiness.summary_fields : undefined}
+              />
+            ))}
           </HStack>
         ) : (
           !readinessLoading && (
@@ -594,18 +679,28 @@ export default function AtelierShapeTab({
       </Box>
 
       {/* Tags */}
-      <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
+      <Box className="ast-tags" borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
         <HStack justify="space-between" mb={2}>
           <Text fontSize="sm" fontWeight="medium">Tags</Text>
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => void handleSuggestClassify()}
-            loading={classifySuggesting}
-            disabled={!excerpt || classifySuggesting}
-          >
-            Suggest
-          </Button>
+          <HStack gap={1}>
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => void handleSuggestClassify()}
+              loading={classifySuggesting}
+              disabled={!excerpt || classifySuggesting}
+            >
+              Suggest
+            </Button>
+            {readiness && (readiness.ignored?.includes("tags") || readiness.tags !== "confirmed") && (
+              <IgnoreButton
+                label="Tags"
+                ignored={readiness.ignored?.includes("tags") ?? false}
+                loading={ignoringDimension === "tags"}
+                onClick={() => void toggleIgnored("tags")}
+              />
+            )}
+          </HStack>
         </HStack>
         <TagInput
           selectedTags={tags}
@@ -646,8 +741,18 @@ export default function AtelierShapeTab({
       </Box>
 
       {/* Category */}
-      <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>Category</Text>
+      <Box className="ast-category" borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
+        <HStack justify="space-between" mb={2}>
+          <Text fontSize="sm" fontWeight="medium">Category</Text>
+          {readiness && (readiness.ignored?.includes("category") || readiness.category !== "confirmed") && (
+            <IgnoreButton
+              label="Category"
+              ignored={readiness.ignored?.includes("category") ?? false}
+              loading={ignoringDimension === "category"}
+              onClick={() => void toggleIgnored("category")}
+            />
+          )}
+        </HStack>
         <CategoryInput
           selectedCategories={categories}
           onCategoriesChange={handleCategoriesChange}
@@ -672,10 +777,18 @@ export default function AtelierShapeTab({
       </Box>
 
       {/* Summaries */}
-      <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
-        <Text fontSize="sm" fontWeight="medium" mb={3}>
-          Summaries
-        </Text>
+      <Box className="ast-summaries" borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
+        <HStack justify="space-between" mb={3}>
+          <Text fontSize="sm" fontWeight="medium">Summaries</Text>
+          {readiness?.ignored?.includes("summaries") && (
+            <IgnoreButton
+              label="all Summaries"
+              ignored
+              loading={ignoringDimension === "summaries"}
+              onClick={() => void toggleIgnored("summaries")}
+            />
+          )}
+        </HStack>
         {summariesLoading && <Spinner size="sm" />}
         {summaries && (
           <VStack align="stretch" gap={4}>
@@ -694,32 +807,47 @@ export default function AtelierShapeTab({
                       h="6px"
                       borderRadius="full"
                       flexShrink={0}
-                      bg={summaries[field].confirmed ? "green.400" : "orange.400"}
+                      bg={readiness
+                        ? readinessColors[readiness.summary_fields?.[field] ?? "untouched"]
+                        : summaries[field].confirmed ? "green.400" : "orange.400"}
                     />
                     <Text fontSize="xs" fontWeight="medium">
-                      {label}
+                      {label}{readiness?.ignored?.includes("summaries") || readiness?.ignored?.includes(summaryDimension(field)) ? "*" : ""}
                     </Text>
                   </HStack>
                   <HStack gap={1}>
+                    {readiness && !readiness.ignored?.includes("summaries") &&
+                      (readiness.ignored?.includes(summaryDimension(field)) || readiness.summary_fields?.[field] !== "confirmed") && (
+                        <IgnoreButton
+                          label={label}
+                          ignored={readiness.ignored?.includes(summaryDimension(field)) ?? false}
+                          loading={ignoringDimension === summaryDimension(field)}
+                          onClick={() => void toggleIgnored(summaryDimension(field))}
+                        />
+                    )}
                     <Button
                       size="xs"
                       variant="ghost"
-                      onClick={() => void handleGenerate(field)}
+                      onClick={() => {
+                        if (field !== "internal_abstract") void handleGenerate(field);
+                      }}
                       loading={generatingFor === field}
-                      disabled={!excerpt || (!!generatingFor && generatingFor !== field)}
+                      disabled={field === "internal_abstract" || !!generatingFor}
+                      title={field === "internal_abstract" ? "Write the internal abstract manually" : undefined}
                     >
                       Generate
                     </Button>
                     <Button
                       size="xs"
+                      data-summary-confirm={field}
                       variant={summaries[field].confirmed ? "solid" : "outline"}
                       colorScheme={summaries[field].confirmed ? "green" : "gray"}
                       disabled={
                         summaries[field].confirmed ||
-                        !summaries[field].text ||
+                        !(draftValues[field] ?? summaries[field].text).trim() ||
                         savingSummary === field + "_confirm"
                       }
-                      onClick={() => handleConfirm(field)}
+                      onClick={() => { void handleConfirm(field); }}
                     >
                       {summaries[field].confirmed ? "Confirmed" : "Confirm"}
                     </Button>
@@ -732,15 +860,19 @@ export default function AtelierShapeTab({
                 )}
                 <Textarea
                   size="sm"
-                  rows={3}
+                  rows={expandedSummary === field ? 10 : 3}
                   value={draftValues[field] ?? summaries[field].text}
+                  onFocus={() => setExpandedSummary(field)}
                   onChange={(e) => setDraftValues((d) => ({ ...d, [field]: e.target.value }))}
                   placeholder={`Write ${label.toLowerCase()}…`}
                   bg={inputBg}
                   borderColor={inputBorder}
                   _focus={{ borderColor: inputFocusBorder }}
                   fontSize="sm"
-                  onBlur={(e) => handleSummaryBlur(field, e.target.value)}
+                  onBlur={(e) => {
+                    if ((e.relatedTarget as HTMLElement | null)?.dataset.summaryConfirm === field) return;
+                    void handleSummaryBlur(field, e.target.value);
+                  }}
                   disabled={savingSummary === field || generatingFor === field}
                 />
               </Box>
@@ -750,12 +882,22 @@ export default function AtelierShapeTab({
       </Box>
 
       {/* Series */}
-      <Box>
+      <Box className="ast-series">
         <HStack justify="space-between" mb={2}>
           <Text fontSize="sm" fontWeight="medium">
             Series
           </Text>
-          {seriesLoading && <Spinner size="xs" />}
+          <HStack gap={1}>
+            {seriesLoading && <Spinner size="xs" />}
+            {readiness && (readiness.ignored?.includes("series") || readiness.series !== "confirmed") && (
+              <IgnoreButton
+                label="Series"
+                ignored={readiness.ignored?.includes("series") ?? false}
+                loading={ignoringDimension === "series"}
+                onClick={() => void toggleIgnored("series")}
+              />
+            )}
+          </HStack>
         </HStack>
 
         {currentSeries ? (
@@ -826,10 +968,20 @@ export default function AtelierShapeTab({
 
       {/* Relations */}
       {/* TODO AT-11 Phase 2: relation suggestions via semantic search (deferred — needs sufficient corpus) */}
-      <Box borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
+      <Box className="ast-relations" borderBottomWidth="1px" borderColor={sectionBorder} pb={4}>
         <HStack justify="space-between" mb={3}>
           <Text fontSize="sm" fontWeight="medium">Relations</Text>
-          {relationsLoading && <Spinner size="xs" />}
+          <HStack gap={1}>
+            {relationsLoading && <Spinner size="xs" />}
+            {readiness && (readiness.ignored?.includes("relations") || readiness.relations !== "confirmed") && (
+              <IgnoreButton
+                label="Relations"
+                ignored={readiness.ignored?.includes("relations") ?? false}
+                loading={ignoringDimension === "relations"}
+                onClick={() => void toggleIgnored("relations")}
+              />
+            )}
+          </HStack>
         </HStack>
 
         {/* Outgoing */}

@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@mixtape/core/lib/toaster";
+import { useColorModeValue } from "@components/ui/color-mode";
 
 export interface Category {
   id: number;
@@ -51,6 +52,11 @@ export function CategoryInput({
   inputBorderColor,
   inputFocusBorderColor,
 }: CategoryInputProps) {
+  const dropdownBg = useColorModeValue("white", "gray.900");
+  const dropdownBorder = useColorModeValue("gray.200", "gray.700");
+  const rowSelected = useColorModeValue("gray.100", "gray.800");
+  const warningBg = useColorModeValue("orange.50", "orange.950");
+  const secondaryText = useColorModeValue("gray.600", "gray.400");
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<Category[]>([]);
   const [similarWarning, setSimilarWarning] = useState<Category | null>(null);
@@ -257,7 +263,7 @@ export function CategoryInput({
           _focus={{ borderColor: inputFocusBorderColor }}
         />
 
-        <Text fontSize="xs" color="gray.500">
+        <Text fontSize="xs" color={secondaryText}>
           {selectedCategories.length} / {maxCategories} categories
         </Text>
       </VStack>
@@ -269,16 +275,16 @@ export function CategoryInput({
           zIndex={10}
           mt={2}
           w="100%"
-          bg="white"
+          bg={dropdownBg}
           border="1px solid"
-          borderColor="gray.200"
+          borderColor={dropdownBorder}
           borderRadius="md"
           shadow="md"
           maxH="220px"
           overflowY="auto"
         >
           {similarWarning && (
-            <Box p={2} bg="orange.50">
+            <Box p={2} bg={warningBg}>
               <Text fontSize="xs">
                 Similar category exists: <strong>{similarWarning.title}</strong>
               </Text>
@@ -312,13 +318,13 @@ export function CategoryInput({
               <Box
                 key={category.id}
                 p={2}
-                bg={index === highlightedIndex ? "gray.100" : "transparent"}
+                bg={index === highlightedIndex ? rowSelected : "transparent"}
                 cursor="pointer"
                 onMouseEnter={() => setHighlightedIndex(index)}
                 onClick={() => addCategory(category)}
               >
                 <Text fontSize="sm">{category.title}</Text>
-                <Text fontSize="xs" color="gray.500">
+                <Text fontSize="xs" color={secondaryText}>
                   Used {category.usage_count} times
                 </Text>
               </Box>

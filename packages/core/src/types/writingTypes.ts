@@ -572,6 +572,9 @@ export interface IssueReadPlacement {
   title: string
   slug: string
   status: ContentStatus
+  spellcheck_clean: boolean
+  signed_off: boolean
+  signed_off_by: string | null
   body_json: Record<string, unknown> | null
   excerpt: string
   author: { id: string; username: string; display_name: string }
