@@ -119,7 +119,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'assets.crossroads.place',
       },
-      // Local MinIO for development
+      // Local SeaweedFS S3-compatible gateway for development (not MinIO, despite the look-alike host/port)
       ...(!isProd ? [
         { protocol: 'http' as const, hostname: '127.0.0.1', port: '9000' },
         { protocol: 'http' as const, hostname: 'localhost', port: '9000' },
