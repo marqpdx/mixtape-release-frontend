@@ -9,6 +9,7 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import { ADMIN_DASHBOARD_CONFIG } from "@components/dashboard/types";
 import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayout";
 import AdminWorkArea from "@components/dashboard/admin/AdminWorkArea";
+import AdminNavSwitcher from "@components/admin/AdminNavSwitcher";
 import { useUsers } from "@mixtape/api/hooks/useUsers";
 import { useAdminTodos, useCompleteAdminTodo } from "@mixtape/api/hooks/admin/useAdmin";
 
@@ -80,6 +81,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout
       title={ADMIN_DASHBOARD_CONFIG.title}
+      header={<AdminNavSwitcher active="admin" />}
       menuItems={ADMIN_DASHBOARD_CONFIG.menuItems}
       defaultSection={ADMIN_DASHBOARD_CONFIG.defaultSection}
       localStorageKey={ADMIN_DASHBOARD_CONFIG.localStorageKey}

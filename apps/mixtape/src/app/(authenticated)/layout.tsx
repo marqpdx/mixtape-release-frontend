@@ -201,28 +201,23 @@ function AuthenticatedLayoutInner({ children }: { children: React.ReactNode }) {
         <RecordingFloatingControl />
 
         <Box style={{ "--app-topbar": "80px" } as React.CSSProperties}>
-          <UnifiedNavbar compact={isAdminPath} />
-          {(canExitAssume || canStartAssume) ? (
-            <Box px={4} py={2} bg={canExitAssume ? "orange.100" : "blue.100"} borderBottomWidth="1px" borderColor="border">
+          <UnifiedNavbar
+            compact={isAdminPath}
+            showAssumeUserButton={canStartAssume}
+            onAssumeUser={handleAssume}
+          />
+          {canExitAssume ? (
+            <Box px={4} py={2} bg="orange.100" borderBottomWidth="1px" borderColor="border">
               <HStack justify="space-between" wrap="wrap" gap={2}>
                 <Text fontSize="sm" color="gray.800">
                   {isImpersonating
                     ? `Assuming @${user?.username}${impersonatedBy?.username ? ` (by @${impersonatedBy.username})` : ""}`
-                    : canExitAssume
-                      ? "Assume session active. Use Exit assume to return."
-                      : "Superuser mode"}
+                    : "Assume session active. Use Exit assume to return."}
                 </Text>
                 <HStack gap={2}>
-                  {canStartAssume ? (
-                    <Button size="xs" variant="outline" onClick={handleAssume}>
-                      Assume user
-                    </Button>
-                  ) : null}
-                  {canExitAssume ? (
-                    <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
-                      Exit assume
-                    </Button>
-                  ) : null}
+                  <Button size="xs" colorPalette="orange" variant="solid" onClick={handleExitAssume}>
+                    Exit assume
+                  </Button>
                 </HStack>
               </HStack>
             </Box>

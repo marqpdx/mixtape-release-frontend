@@ -392,4 +392,49 @@ export const themes: Theme[] = [
       border: '#CCCCCC'
     }
   },
+  {
+    id: 'big-board',
+    name: 'Big Board',
+    // Puddlejump's tote-board / split-flap knowledge surface. Dark mode is
+    // the board lit at night (amber flaps on a charcoal cabinet); light
+    // mode is the same physical object read in daylight (cream board face,
+    // ink lettering) -- not an inversion of the dark palette.
+    light: {
+      bg: '#F3EEE1', // unbleached board casing
+      surface: '#FFFDF6', // paper-white flap tile
+      accent: '#A6651C', // dark ochre -- reads on cream, still recognizably amber
+      accentText: '#FFFFFF',
+      text: '#241F17', // ink brown-black
+      textSecondary: '#6E6250',
+      border: '#DAD0BB'
+    },
+    dark: {
+      bg: '#0F0D0B', // board cabinet at night
+      bgSecondary: '#1A1712',
+      surface: '#211D16', // raised flap tile face
+      accent: '#E8A33D', // lit amber
+      accentText: '#1A1712',
+      text: '#ECE4D3', // flap cream
+      textSecondary: '#8C8474',
+      border: '#332E25'
+    },
+    lightHighContrast: {
+      bg: '#FFFFFF',
+      surface: '#F5F5F0',
+      accent: '#7A4A10',
+      accentText: '#FFFFFF',
+      text: '#000000',
+      textSecondary: '#1A1A1A',
+      border: '#666666'
+    },
+    darkHighContrast: {
+      bg: '#000000',
+      surface: '#1A1A1A',
+      accent: '#FFC966',
+      accentText: '#000000',
+      text: '#FFFFFF',
+      textSecondary: '#E0E0E0',
+      border: '#CCCCCC'
+    }
+  },
 ];

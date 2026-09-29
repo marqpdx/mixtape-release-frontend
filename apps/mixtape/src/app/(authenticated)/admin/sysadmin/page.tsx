@@ -9,6 +9,7 @@ import { UserIdentity } from "@mixtape/core/types/auth";
 import { SYSADMIN_DASHBOARD_CONFIG } from "@components/dashboard/types";
 import DashboardLayout, { WorkAreaProps } from "@components/common/DashboardLayout";
 import SysadminWorkArea from "@components/dashboard/sysadmin/SysadminWorkArea";
+import AdminNavSwitcher from "@components/admin/AdminNavSwitcher";
 
 /**
  * SYSADMIN DASHBOARD
@@ -60,6 +61,7 @@ function SysadminDashboardClient() {
   return (
     <DashboardLayout
       title={SYSADMIN_DASHBOARD_CONFIG.title}
+      header={<AdminNavSwitcher active="sysadmin" />}
       menuItems={SYSADMIN_DASHBOARD_CONFIG.menuItems}
       defaultSection={SYSADMIN_DASHBOARD_CONFIG.defaultSection}
       localStorageKey={SYSADMIN_DASHBOARD_CONFIG.localStorageKey}
