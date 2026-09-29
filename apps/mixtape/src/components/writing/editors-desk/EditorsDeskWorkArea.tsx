@@ -5,7 +5,7 @@
 // noun (an Issue is a thing you publish), not as a surface/route name. See
 // decisions/writing-assembly-adr/writing-assembly-status.md.
 
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Button,
@@ -31,7 +31,7 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled } from "@tabler/icons-react";
+import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
 import NextLink from "next/link";
@@ -216,17 +216,18 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
       content={
         <VStack align="stretch" gap={0}>
           <Text fontSize="sm" fontWeight="600" mb={2}>{title}</Text>
-          {previewParagraphs.map((paragraph, index) => (
-            <Text
-              key={index}
-              fontSize="sm"
-              lineHeight="1.5"
-              whiteSpace="pre-line"
-              mb={index === 0 && previewParagraphs.length > 1 ? "5px" : 0}
-            >
-              {paragraph}
-            </Text>
-          ))}
+          <VStack align="stretch" gap="5px">
+            {previewParagraphs.map((paragraph, index) => (
+              <Text
+                key={index}
+                fontSize="sm"
+                lineHeight="1.5"
+                whiteSpace="pre-line"
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </VStack>
         </VStack>
       }
     >
@@ -237,24 +238,13 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
         borderColor={isDragging ? "blue.400" : "theme.border"}
         borderRadius="lg"
         p={3}
-        cursor={inIssue && editablePieceId && onOpenPiece ? "pointer" : "grab"}
+        cursor={inIssue ? "default" : "grab"}
         opacity={isDragging ? 0.5 : 1}
         boxShadow={isDragging ? "lg" : "sm"}
         transition="all 0.15s"
         minW="180px"
         maxW="220px"
-        tabIndex={editablePieceId && onOpenPiece && !isDragging ? 0 : undefined}
         userSelect="none"
-        onClick={() => { if (!isDragging && editablePieceId) onOpenPiece?.(editablePieceId); }}
-        onKeyDown={(event: React.KeyboardEvent) => {
-          if (event.target !== event.currentTarget || !editablePieceId) return;
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onOpenPiece?.(editablePieceId);
-          }
-        }}
-        role={onOpenPiece && editablePieceId ? "button" : undefined}
-        aria-label={onOpenPiece && editablePieceId ? `Edit ${title}` : undefined}
       >
         <HStack justify="space-between" mb={1.5} align="flex-start">
           <StatusDot
@@ -265,19 +255,38 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
               "Not ready"
             }
           />
-          {canSignOff && onSignOff && !doc.piece?.signed_off && (
-            <Tooltip content="Sign off on this doc">
-              <Box
-                as="button"
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSignOff(pieceId); }}
-                p={0.5}
-                borderRadius="sm"
-                _hover={{ bg: "green.50" }}
-              >
-                <IconCheck size={13} color="green" />
-              </Box>
-            </Tooltip>
-          )}
+          <HStack gap={1}>
+            {canSignOff && onSignOff && !doc.piece?.signed_off && (
+              <Tooltip content="Sign off on this doc">
+                <Box
+                  as="button"
+                  onClick={(e: React.MouseEvent) => { e.stopPropagation(); onSignOff(pieceId); }}
+                  p={0.5}
+                  borderRadius="sm"
+                  _hover={{ bg: "green.50" }}
+                >
+                  <IconCheck size={13} color="green" />
+                </Box>
+              </Tooltip>
+            )}
+            {editablePieceId && onOpenPiece && !isDragging && (
+              <Tooltip content="Edit writing piece">
+                <IconButton
+                  aria-label={`Edit ${title}`}
+                  size="2xs"
+                  variant="ghost"
+                  cursor="pointer"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenPiece(editablePieceId);
+                  }}
+                >
+                  <IconPencil size={14} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </HStack>
         </HStack>
         <Text fontSize="12px" fontWeight="600" lineClamp={2} color="theme.text" mb={1}>
           {title}
@@ -631,7 +640,6 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
 
   const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const ignoreClickUntil = useRef(0);
 
   const {
     issue: focusedIssueData,
@@ -681,12 +689,10 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
   }, []);
 
   const handleOpenPiece = useCallback((pieceId: string) => {
-    if (Date.now() < ignoreClickUntil.current) return;
     onOpenPiece?.(pieceId, zoomedIssueId ?? undefined);
   }, [onOpenPiece, zoomedIssueId]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    ignoreClickUntil.current = Date.now() + 350;
     setActiveDragId(null);
     const { active, over } = event;
     if (!over) return;
@@ -818,7 +824,6 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
-            ignoreClickUntil.current = Date.now() + 350;
             setActiveDragId(null);
           }}
         >
