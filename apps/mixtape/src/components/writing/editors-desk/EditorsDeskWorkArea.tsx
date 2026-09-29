@@ -5,7 +5,7 @@
 // noun (an Issue is a thing you publish), not as a surface/route name. See
 // decisions/writing-assembly-adr/writing-assembly-status.md.
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -34,10 +34,10 @@ import {
 import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
-import NextLink from "next/link";
-import { useIssues, useIssue } from "@mixtape/api/hooks/useIssueBoard";
+import { useIssues, useIssue, useIssueRead } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
 import type { WorkingDocument, Issue, IssueListItem } from "@mixtape/core/types/writingTypes";
+import { TipTapRenderer, type TipTapDocument } from "@components/tiptap/TipTapRenderer";
 
 interface Sponsor {
   type: "member" | "group";
@@ -242,8 +242,9 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
         opacity={isDragging ? 0.5 : 1}
         boxShadow={isDragging ? "lg" : "sm"}
         transition="all 0.15s"
-        minW="180px"
-        maxW="220px"
+        minW={inIssue ? 0 : { base: "0", sm: "225px" }}
+        maxW={inIssue ? "full" : "275px"}
+        w={inIssue ? "full" : { base: "full", sm: "275px" }}
         userSelect="none"
       >
         <HStack justify="space-between" mb={1.5} align="flex-start">
@@ -276,6 +277,11 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
                   size="2xs"
                   variant="ghost"
                   cursor="pointer"
+                  w="14px"
+                  h="14px"
+                  minW="14px"
+                  minH="14px"
+                  p={0}
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -291,6 +297,11 @@ function DocCard({ doc, inIssue, isDragging, onSignOff, onOpenPiece }: DocCardPr
         <Text fontSize="12px" fontWeight="600" lineClamp={2} color="theme.text" mb={1}>
           {title}
         </Text>
+        {!inIssue && previewParagraphs[0] && (
+          <Text fontSize="11px" color="theme.textSecondary" lineClamp={1} mb={1}>
+            {previewParagraphs[0]}
+          </Text>
+        )}
         <HStack gap={2} mt={1}>
           {doc.piece?.spellcheck_clean && (
             <Tooltip content="Spellcheck clean">
@@ -338,6 +349,8 @@ interface IssuePanelProps {
   otherZoomed: boolean;
   onZoom: () => void;
   onZoomOut: () => void;
+  onPreviewToggle: () => void;
+  isPreview: boolean;
   onDelete: () => void;
   onSignOff?: (pieceId: string) => void;
   onOpenPiece?: (pieceId: string) => void;
@@ -348,6 +361,7 @@ interface IssuePanelProps {
   onSaveDescription?: (description: Record<string, unknown>) => void;
   onReorder?: (pieceIds: string[]) => void;
   onSetLead?: (pieceId: string, isLead: boolean) => void;
+  onRemovePiece?: (pieceId: string) => void;
 }
 
 function IssuePanel({
@@ -357,6 +371,8 @@ function IssuePanel({
   otherZoomed,
   onZoom,
   onZoomOut,
+  onPreviewToggle,
+  isPreview,
   onDelete,
   onSignOff,
   onOpenPiece,
@@ -367,45 +383,36 @@ function IssuePanel({
   onSaveDescription,
   onReorder,
   onSetLead,
+  onRemovePiece,
 }: IssuePanelProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `issue-${issue.id}` });
   const rollup = issueRollupColor(isZoomed && focusedIssueData ? focusedIssueData : issue);
 
-  // Zoomed panel: 85vw × 85vh, 90% opacity, frosted, elevated
   if (isZoomed) {
     return (
       <Box
-        className="edw-issue-panel edw-issue-panel--zoomed"
-        position="fixed"
-        top="50%"
-        left="50%"
-        transform="translate(-50%, -50%)"
-        w="85vw"
-        maxH="85vh"
-        overflowY="auto"
-        bg="theme.bg"
-        opacity={0.9}
-        backdropFilter="blur(8px)"
-        borderWidth="2px"
-        borderColor="blue.400"
-        borderRadius="xl"
-        boxShadow="2xl"
-        zIndex={200}
-        p={5}
+        className="edw-issue-panel edw-issue-panel--selected"
+        ref={setNodeRef}
+        w="full"
+        minH="70vh"
+        bg="theme.bgSecondary"
+        borderWidth="1px"
+        borderColor={isOver ? "blue.400" : "theme.border"}
+        borderRadius="sm"
+        p={4}
       >
-        <Flex justify="space-between" align="center" mb={4}>
-          <HStack gap={3}>
+        <Flex justify="space-between" align="start" mb={4} gap={2} flexWrap="wrap">
+          <HStack gap={3} minW={0}>
             <StatusDot color={rollup} label={`Issue status: ${rollup}`} />
-            <Heading size="sm">{issue.title}</Heading>
+            <Heading size="sm" overflowWrap="anywhere">{issue.title}</Heading>
             {issue.status === "published" && <Badge colorPalette="blue">Published</Badge>}
           </HStack>
-          <HStack gap={2}>
-            <NextLink href={`/writing/desks/${issue.id}/read`} target="_blank">
-              <Button size="xs" variant="outline">
-                <IconEye size={12} />
-                Preview
-              </Button>
-            </NextLink>
+          <HStack gap={1} flexShrink={0}>
+            <Tooltip content={isPreview ? "Dismiss preview" : "Preview Issue"}>
+              <IconButton aria-label={isPreview ? "Dismiss preview" : "Preview Issue"} size="xs" variant="ghost" onClick={onPreviewToggle}>
+                <IconEye size={14} />
+              </IconButton>
+            </Tooltip>
             {issue.status === "draft" && onPublish && (
               <Tooltip content={issue.is_publishable ? "Publish Issue (all Docs are Green)" : "All Docs must be Green before publishing"}>
                 <Button
@@ -419,9 +426,11 @@ function IssuePanel({
                 </Button>
               </Tooltip>
             )}
-            <Button size="xs" variant="ghost" onClick={onZoomOut}>
-              Zoom Out
-            </Button>
+            <Tooltip content="Close Issue">
+              <IconButton aria-label="Close Issue" size="xs" variant="ghost" onClick={onZoomOut}>
+                <IconX size={14} />
+              </IconButton>
+            </Tooltip>
           </HStack>
         </Flex>
 
@@ -437,65 +446,63 @@ function IssuePanel({
                 onSaveDescription={onSaveDescription}
               />
             )}
-            <Box ref={setNodeRef}>
+            <Box>
               {focusedIssueData && focusedIssueData.placements.length > 0 ? (
                 <VStack align="stretch" gap={2}>
                   {focusedIssueData.placements.map((placement, idx) => {
                     const doc = docs.find((d) => d.piece?.id === placement.piece_id);
-                    if (!doc) return null;
                     const orderedIds = focusedIssueData.placements.map((p) => p.piece_id);
                     const canMoveUp = idx > 0;
                     const canMoveDown = idx < orderedIds.length - 1;
                     return (
-                      <HStack key={placement.id} gap={3} align="center">
-                        <Text fontSize="12px" color="theme.textSecondary" w="24px" textAlign="right" flexShrink={0}>
-                          {placement.order_index + 1}.
-                        </Text>
-                        <DocCard doc={doc} inIssue={true} onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
-                        {onSetLead && (
-                          <Tooltip content={placement.is_lead ? "Lead piece — click to unmark" : "Mark as lead piece"}>
-                            <IconButton
-                              aria-label="Toggle lead"
-                              size="xs"
-                              variant="ghost"
-                              colorPalette={placement.is_lead ? "yellow" : "gray"}
-                              onClick={() => onSetLead(placement.piece_id, !placement.is_lead)}
-                            >
-                              {placement.is_lead ? <IconStarFilled size={14} /> : <IconStar size={14} />}
-                            </IconButton>
-                          </Tooltip>
+                      <Box key={placement.id} w="full" borderBottomWidth="1px" borderColor="theme.border" pb={2}>
+                        <HStack gap={2} align="start" w="full">
+                          <Text fontSize="12px" color="theme.textSecondary" w="22px" textAlign="right" flexShrink={0} pt={1}>
+                            {placement.order_index + 1}.
+                          </Text>
+                          <Box minW={0} flex={1}>
+                            {isPreview ? (
+                              <Text fontSize="sm" lineClamp={1}>{placement.piece_title}</Text>
+                            ) : doc ? (
+                              <DocCard doc={doc} inIssue onSignOff={onSignOff} onOpenPiece={onOpenPiece} />
+                            ) : (
+                              <Text fontSize="sm" lineClamp={2}>{placement.piece_title}</Text>
+                            )}
+                          </Box>
+                        </HStack>
+                        {!isPreview && (
+                          <HStack gap={1} justify="flex-end" mt={1}>
+                            {onSetLead && (
+                              <Tooltip content={placement.is_lead ? "Unmark lead piece" : "Mark as lead piece"}>
+                                <IconButton aria-label="Toggle lead" size="2xs" variant="ghost" colorPalette={placement.is_lead ? "yellow" : "gray"} onClick={() => onSetLead(placement.piece_id, !placement.is_lead)}>
+                                  {placement.is_lead ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {onReorder && (
+                              <>
+                                <IconButton aria-label="Move up" size="2xs" variant="ghost" disabled={!canMoveUp} onClick={() => {
+                                  const next = [...orderedIds];
+                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                  onReorder(next);
+                                }}><IconChevronUp size={12} /></IconButton>
+                                <IconButton aria-label="Move down" size="2xs" variant="ghost" disabled={!canMoveDown} onClick={() => {
+                                  const next = [...orderedIds];
+                                  [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                                  onReorder(next);
+                                }}><IconChevronDown size={12} /></IconButton>
+                              </>
+                            )}
+                            {onRemovePiece && (
+                              <Tooltip content="Remove from Issue">
+                                <IconButton aria-label={`Remove ${placement.piece_title} from Issue`} size="2xs" variant="ghost" onClick={() => onRemovePiece(placement.piece_id)}>
+                                  <IconX size={12} />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </HStack>
                         )}
-                        {onReorder && (
-                          <VStack gap={0}>
-                            <IconButton
-                              aria-label="Move up"
-                              size="2xs"
-                              variant="ghost"
-                              disabled={!canMoveUp}
-                              onClick={() => {
-                                const next = [...orderedIds];
-                                [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                                onReorder(next);
-                              }}
-                            >
-                              <IconChevronUp size={12} />
-                            </IconButton>
-                            <IconButton
-                              aria-label="Move down"
-                              size="2xs"
-                              variant="ghost"
-                              disabled={!canMoveDown}
-                              onClick={() => {
-                                const next = [...orderedIds];
-                                [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-                                onReorder(next);
-                              }}
-                            >
-                              <IconChevronDown size={12} />
-                            </IconButton>
-                          </VStack>
-                        )}
-                      </HStack>
+                      </Box>
                     );
                   })}
                 </VStack>
@@ -566,21 +573,41 @@ function IssuePanel({
 // Unassigned pool — droppable zone
 // ---------------------------------------------------------------------------
 
-function UnassignedPool({ isOver }: { isOver: boolean }) {
-  const { setNodeRef } = useDroppable({ id: "unassigned" });
+function IssuePreview({ issueId, onClose }: { issueId: string; onClose: () => void }) {
+  const { data: issue, isLoading } = useIssueRead(issueId);
   return (
-    <Box
-      ref={setNodeRef}
-      className="edw-unassigned"
-      borderWidth="1px"
-      borderStyle="dashed"
-      borderColor={isOver ? "blue.400" : "theme.border"}
-      borderRadius="lg"
-      p={2}
-      minH="40px"
-      bg={isOver ? "blue.50" : "transparent"}
-      transition="all 0.15s"
-    />
+    <Box className="edw-preview" minW={0}>
+      <Flex align="center" justify="space-between" mb={5}>
+        <Heading size="sm">{issue?.title ?? "Issue Preview"}</Heading>
+        <Tooltip content="Dismiss preview">
+          <IconButton aria-label="Dismiss preview" size="sm" variant="ghost" onClick={onClose}>
+            <IconX size={16} />
+          </IconButton>
+        </Tooltip>
+      </Flex>
+      {isLoading && <Spinner size="sm" />}
+      {issue?.description && (
+        <Box mb={6}>
+          <TipTapRenderer content={issue.description as unknown as TipTapDocument} />
+        </Box>
+      )}
+      <VStack align="stretch" gap={8}>
+        {issue?.placements.map((placement, index) => (
+          <Box key={placement.id} borderTopWidth="1px" borderColor="theme.border" pt={5}>
+            <Text fontSize="xs" color="theme.textSecondary" mb={1}>{index + 1}</Text>
+            <Heading size="md" mb={4}>{placement.title}</Heading>
+            {placement.body_json ? (
+              <TipTapRenderer content={placement.body_json as unknown as TipTapDocument} />
+            ) : (
+              <Text color="theme.textSecondary">No content yet.</Text>
+            )}
+          </Box>
+        ))}
+        {issue && issue.placements.length === 0 && (
+          <Text color="theme.textSecondary">No pieces in this Issue yet.</Text>
+        )}
+      </VStack>
+    </Box>
   );
 }
 
@@ -635,39 +662,52 @@ function CreateIssueForm({ onCreate }: { onCreate: (title: string) => void }) {
 // ---------------------------------------------------------------------------
 
 export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: EditorsDeskWorkAreaProps) {
-  const { issues, isLoading: issuesLoading, createIssue, deleteIssue } = useIssues();
+  const { issues, isLoading: issuesLoading, createIssue, deleteIssue, addToIssue, removeFromIssue } = useIssues(sponsor);
   const { drafts, isLoading: docsLoading } = useWriting(sponsor.type, sponsor.slug);
 
-  const [zoomedIssueId, setZoomedIssueId] = useState<string | null>(initialIssueId ?? null);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(initialIssueId ?? null);
+  const [issueDismissed, setIssueDismissed] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const focusedIssueId = issueDismissed
+    ? null
+    : selectedIssueId && issues.some((issue) => issue.id === selectedIssueId)
+      ? selectedIssueId
+      : issues[0]?.id ?? null;
+
+  useEffect(() => {
+    if (!focusedIssueId) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIssueDismissed(true);
+        setIsPreview(false);
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [focusedIssueId]);
 
   const {
     issue: focusedIssueData,
     isLoading: focusedIssueLoading,
-    addPlacement,
-    removePlacement,
     publishIssue,
     signOffPiece,
     updateIssue,
     reorderPlacements,
     setPlacementLead,
-  } = useIssue(zoomedIssueId);
+  } = useIssue(focusedIssueId);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
-  // Map piece_id → issue_id for quick lookup
   const pieceIssueMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const issue of issues) {
-      // We only have member_count in list; detailed issue data for focused issue
-      if (focusedIssueData && focusedIssueData.id === issue.id) {
-        for (const p of focusedIssueData.placements) {
-          map[p.piece_id] = issue.id;
-        }
+      for (const pieceId of issue.piece_ids) {
+        map[pieceId] = issue.id;
       }
     }
     return map;
-  }, [issues, focusedIssueData]);
+  }, [issues]);
 
   // All piece IDs that are in any issue (based on what we know)
   const assignedPieceIds = useMemo(() => new Set(Object.keys(pieceIssueMap)), [pieceIssueMap]);
@@ -689,8 +729,8 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
   }, []);
 
   const handleOpenPiece = useCallback((pieceId: string) => {
-    onOpenPiece?.(pieceId, zoomedIssueId ?? undefined);
-  }, [onOpenPiece, zoomedIssueId]);
+    onOpenPiece?.(pieceId, focusedIssueId ?? undefined);
+  }, [onOpenPiece, focusedIssueId]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     setActiveDragId(null);
@@ -700,46 +740,35 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     const pieceId = String(active.id).replace("doc-", "");
     const targetId = String(over.id);
 
-    if (targetId === "unassigned") {
-      // If in an issue, remove
-      const currentIssueId = pieceIssueMap[pieceId];
-      if (currentIssueId) {
-        try {
-          // Use the focused issue's removePlacement if it matches
-          if (zoomedIssueId === currentIssueId) {
-            await removePlacement.mutateAsync(pieceId);
-          }
-        } catch {
-          toaster.create({ title: "Failed to remove from Issue", type: "error" });
-        }
-      }
-      return;
-    }
-
     if (targetId.startsWith("issue-")) {
       const issueId = targetId.replace("issue-", "");
       const currentIssueId = pieceIssueMap[pieceId];
-      if (currentIssueId === issueId) return; // already there
+      if (currentIssueId) return;
 
       try {
-        // If we're focused on the target issue, use addPlacement
-        if (zoomedIssueId === issueId) {
-          await addPlacement.mutateAsync(pieceId);
-        } else {
-          // Navigate to that issue first by zooming in
-          // For now: just add via direct API call fallback
-          // (The user can also zoom in and drag)
-          setZoomedIssueId(issueId);
-        }
+        await addToIssue.mutateAsync({ issueId, pieceId });
+        setSelectedIssueId(issueId);
+        setIssueDismissed(false);
+        toaster.create({ title: "Added to Issue", type: "success" });
       } catch (e) {
         const err = e as { response?: { data?: { detail?: string } } };
         toaster.create({ title: err?.response?.data?.detail || "Failed to add to Issue", type: "error" });
       }
     }
-  }, [pieceIssueMap, zoomedIssueId, addPlacement, removePlacement]);
+  }, [pieceIssueMap, addToIssue]);
+
+  const handleRemovePiece = useCallback(async (pieceId: string) => {
+    if (!focusedIssueId) return;
+    try {
+      await removeFromIssue.mutateAsync({ issueId: focusedIssueId, pieceId });
+      toaster.create({ title: "Removed from Issue", type: "success" });
+    } catch {
+      toaster.create({ title: "Failed to remove from Issue", type: "error" });
+    }
+  }, [focusedIssueId, removeFromIssue]);
 
   const handlePublish = useCallback(async () => {
-    if (!zoomedIssueId) return;
+    if (!focusedIssueId) return;
     try {
       await publishIssue.mutateAsync();
       toaster.create({ title: "Issue published — all Docs are now live", type: "success" });
@@ -753,17 +782,17 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
         type: "error",
       });
     }
-  }, [zoomedIssueId, publishIssue]);
+  }, [focusedIssueId, publishIssue]);
 
   const handleSignOff = useCallback(async (pieceId: string) => {
-    if (!zoomedIssueId) return;
+    if (!focusedIssueId) return;
     try {
       await signOffPiece.mutateAsync(pieceId);
       toaster.create({ title: "Doc signed off", type: "success" });
     } catch {
       toaster.create({ title: "Sign-off failed", type: "error" });
     }
-  }, [zoomedIssueId, signOffPiece]);
+  }, [focusedIssueId, signOffPiece]);
 
   const handleSaveDesignation = useCallback((designation: string) => {
     updateIssue.mutate({ designation }, {
@@ -792,11 +821,14 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
   const handleDeleteIssue = useCallback(async (issueId: string) => {
     try {
       await deleteIssue.mutateAsync(issueId);
-      if (zoomedIssueId === issueId) setZoomedIssueId(null);
+      if (focusedIssueId === issueId) {
+        setSelectedIssueId(null);
+        setIsPreview(false);
+      }
     } catch {
       toaster.create({ title: "Failed to delete Issue", type: "error" });
     }
-  }, [deleteIssue, zoomedIssueId]);
+  }, [deleteIssue, focusedIssueId]);
 
   const isLoading = issuesLoading || docsLoading;
 
@@ -827,75 +859,102 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
             setActiveDragId(null);
           }}
         >
-          {/* Canvas — Issue panels row */}
-          {issues.length > 0 && (
-            <Box className="edw-canvas-issues" mb={5}>
+          <Box
+            className="edw-workspace"
+            display="grid"
+            gridTemplateColumns={{
+              base: "minmax(0, 1fr)",
+              lg: isPreview ? "minmax(260px, 23%) minmax(0, 1fr)" : "minmax(320px, 35%) minmax(0, 1fr)",
+            }}
+            gap={5}
+            alignItems="stretch"
+            minH="70vh"
+          >
+            <Box className="edw-issue-rail" minW={0}>
               <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
                 Issues
               </Text>
-              <Flex gap={3} flexWrap="wrap" align="flex-start">
-                {issues.map((issue) => (
-                  <IssuePanel
-                    key={issue.id}
-                    issue={issue}
-                    docs={drafts}
-                    isZoomed={zoomedIssueId === issue.id}
-                    otherZoomed={!!zoomedIssueId && zoomedIssueId !== issue.id}
-                    onZoom={() => setZoomedIssueId(issue.id)}
-                    onZoomOut={() => setZoomedIssueId(null)}
-                    onDelete={() => handleDeleteIssue(issue.id)}
-                    onSignOff={handleSignOff}
-                    onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
-                    onPublish={handlePublish}
-                    focusedIssueData={zoomedIssueId === issue.id ? focusedIssueData ?? null : null}
-                    focusedIssueLoading={zoomedIssueId === issue.id && focusedIssueLoading}
-                    onSaveDesignation={handleSaveDesignation}
-                    onSaveDescription={handleSaveDescription}
-                    onReorder={handleReorder}
-                    onSetLead={handleSetLead}
-                  />
-                ))}
-              </Flex>
-            </Box>
-          )}
-
-          {/* Zoomed overlay backdrop */}
-          {zoomedIssueId && (
-            <Box
-              className="edw-backdrop"
-              position="fixed"
-              inset={0}
-              bg="blackAlpha.400"
-              zIndex={199}
-              onClick={() => setZoomedIssueId(null)}
-            />
-          )}
-
-          {/* Doc canvas — unassigned docs */}
-          <Box className="edw-canvas-docs">
-            <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
-              Docs ({unassignedDocs.length} unassigned)
-            </Text>
-            {unassignedDocs.length === 0 && issues.length === 0 && (
-              <Text fontSize="sm" color="theme.textSecondary" py={4}>
-                No drafts yet. Create some writing pieces to get started.
-              </Text>
-            )}
-            <Flex gap={3} flexWrap="wrap" align="flex-start">
-              {unassignedDocs.map((doc) => (
-                <DraggableDocCard
-                  key={doc.piece?.id ?? doc.id}
-                  doc={doc}
-                  inIssue={false}
-                  onSignOff={zoomedIssueId ? handleSignOff : undefined}
-                  onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
-                />
-              ))}
-              {/* Unassigned drop zone for removing from issues */}
-              {assignedPieceIds.size > 0 && (
-                <UnassignedPool isOver={false} />
+              {issues.filter((issue) => issue.id !== focusedIssueId).length > 0 && (
+                <Flex gap={2} flexWrap="wrap" mb={3}>
+                  {issues.filter((issue) => issue.id !== focusedIssueId).map((issue) => (
+                    <IssuePanel
+                      key={issue.id}
+                      issue={issue}
+                      docs={drafts}
+                      isZoomed={false}
+                      otherZoomed={false}
+                      onZoom={() => {
+                        setSelectedIssueId(issue.id);
+                        setIssueDismissed(false);
+                      }}
+                      onZoomOut={() => setIssueDismissed(true)}
+                      onPreviewToggle={() => setIsPreview((value) => !value)}
+                      isPreview={isPreview}
+                      onDelete={() => handleDeleteIssue(issue.id)}
+                      focusedIssueData={null}
+                      focusedIssueLoading={false}
+                    />
+                  ))}
+                </Flex>
               )}
-            </Flex>
+              {focusedIssueId && issues.find((issue) => issue.id === focusedIssueId) && (
+                <IssuePanel
+                  key={focusedIssueId}
+                  issue={issues.find((issue) => issue.id === focusedIssueId)!}
+                  docs={drafts}
+                  isZoomed
+                  otherZoomed={false}
+                  onZoom={() => undefined}
+                  onZoomOut={() => {
+                    setIssueDismissed(true);
+                    setIsPreview(false);
+                  }}
+                  onPreviewToggle={() => setIsPreview((value) => !value)}
+                  isPreview={isPreview}
+                  onDelete={() => handleDeleteIssue(focusedIssueId)}
+                  onSignOff={handleSignOff}
+                  onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
+                  onPublish={handlePublish}
+                  focusedIssueData={focusedIssueData ?? null}
+                  focusedIssueLoading={focusedIssueLoading}
+                  onSaveDesignation={handleSaveDesignation}
+                  onSaveDescription={handleSaveDescription}
+                  onReorder={handleReorder}
+                  onSetLead={handleSetLead}
+                  onRemovePiece={handleRemovePiece}
+                />
+              )}
+              {issues.length === 0 && (
+                <Text fontSize="sm" color="theme.textSecondary">Create an Issue to begin.</Text>
+              )}
+            </Box>
+
+            <Box className="edw-canvas-docs" minW={0}>
+              {isPreview && focusedIssueId ? (
+                <IssuePreview issueId={focusedIssueId} onClose={() => setIsPreview(false)} />
+              ) : (
+                <>
+                  <Text fontSize="11px" fontWeight="700" letterSpacing="wider" textTransform="uppercase" color="theme.textSecondary" mb={2}>
+                    Docs ({unassignedDocs.length} unassigned)
+                  </Text>
+                  {unassignedDocs.length === 0 && issues.length === 0 && (
+                    <Text fontSize="sm" color="theme.textSecondary" py={4}>
+                      No drafts yet. Create some writing pieces to get started.
+                    </Text>
+                  )}
+                  <Flex gap={3} flexWrap="wrap" align="flex-start">
+                    {unassignedDocs.map((doc) => (
+                      <DraggableDocCard
+                        key={doc.piece?.id ?? doc.id}
+                        doc={doc}
+                        inIssue={false}
+                        onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
+                      />
+                    ))}
+                  </Flex>
+                </>
+              )}
+            </Box>
           </Box>
 
           {/* Drag overlay */}

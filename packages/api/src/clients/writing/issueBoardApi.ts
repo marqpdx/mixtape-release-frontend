@@ -4,13 +4,24 @@
 import { Issue, IssueListItem, IssuePlacement, IssueRead } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
-export async function listIssues(): Promise<IssueListItem[]> {
-  const res = await axiosInstance.get("/api/writing/issues");
+export interface IssueSponsor {
+  type: "member" | "group";
+  slug: string;
+}
+
+export async function listIssues(sponsor: IssueSponsor): Promise<IssueListItem[]> {
+  const res = await axiosInstance.get("/api/writing/issues", {
+    params: { sponsor_type: sponsor.type, sponsor_slug: sponsor.slug },
+  });
   return res.data;
 }
 
-export async function createIssue(title: string): Promise<Issue> {
-  const res = await axiosInstance.post("/api/writing/issues", { title });
+export async function createIssue(title: string, sponsor: IssueSponsor): Promise<Issue> {
+  const res = await axiosInstance.post("/api/writing/issues", {
+    title,
+    sponsor_type: sponsor.type,
+    sponsor_slug: sponsor.slug,
+  });
   return res.data;
 }
 

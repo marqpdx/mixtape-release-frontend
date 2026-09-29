@@ -601,4 +601,5 @@ export interface IssueListItem {
   updated_at: string
   member_count: number
   is_publishable: boolean
+  piece_ids: string[]
 }

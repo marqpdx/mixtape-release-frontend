@@ -8,16 +8,18 @@ import * as issueBoardApi from "@mixtape/api/clients/writing/issueBoardApi";
 const ISSUES_KEY = ["writing", "issues"];
 const issueKey = (id: string) => ["writing", "issues", id];
 
-export function useIssues() {
+export function useIssues(sponsor: issueBoardApi.IssueSponsor) {
   const qc = useQueryClient();
+  const listKey = [...ISSUES_KEY, sponsor.type, sponsor.slug];
 
   const { data: issues = [], isLoading, error } = useQuery<IssueListItem[]>({
-    queryKey: ISSUES_KEY,
-    queryFn: issueBoardApi.listIssues,
+    queryKey: listKey,
+    queryFn: () => issueBoardApi.listIssues(sponsor),
+    enabled: !!sponsor.slug,
   });
 
   const createIssue = useMutation({
-    mutationFn: (title: string) => issueBoardApi.createIssue(title),
+    mutationFn: (title: string) => issueBoardApi.createIssue(title, sponsor),
     onSuccess: () => qc.invalidateQueries({ queryKey: ISSUES_KEY }),
   });
 
@@ -26,7 +28,25 @@ export function useIssues() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ISSUES_KEY }),
   });
 
-  return { issues, isLoading, error, createIssue, deleteIssue };
+  const addToIssue = useMutation({
+    mutationFn: ({ issueId, pieceId }: { issueId: string; pieceId: string }) =>
+      issueBoardApi.addIssuePlacement(issueId, pieceId),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+      qc.invalidateQueries({ queryKey: issueKey(issueId) });
+    },
+  });
+
+  const removeFromIssue = useMutation({
+    mutationFn: ({ issueId, pieceId }: { issueId: string; pieceId: string }) =>
+      issueBoardApi.removeIssuePlacement(issueId, pieceId),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+      qc.invalidateQueries({ queryKey: issueKey(issueId) });
+    },
+  });
+
+  return { issues, isLoading, error, createIssue, deleteIssue, addToIssue, removeFromIssue };
 }
 
 export function useIssue(issueId: string | null) {
@@ -57,12 +77,18 @@ export function useIssue(issueId: string | null) {
 
   const addPlacement = useMutation({
     mutationFn: (pieceId: string) => issueBoardApi.addIssuePlacement(issueId!, pieceId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: issueKey(issueId!) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKey(issueId!) });
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+    },
   });
 
   const removePlacement = useMutation({
     mutationFn: (pieceId: string) => issueBoardApi.removeIssuePlacement(issueId!, pieceId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: issueKey(issueId!) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: issueKey(issueId!) });
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+    },
   });
 
   const setPlacementLead = useMutation({
