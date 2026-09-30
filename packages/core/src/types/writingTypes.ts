@@ -202,6 +202,20 @@ export interface WorkingDocumentLight {
   last_saved_at: string
   auto_save_count: number
   client_session_id: string
+  cursor_position?: number
+  scroll_position?: number
+}
+
+/**
+ * RecentDraft - a row from GET /api/writing/drafts/recent (Focus-Centered
+ * Writing Gate). Same shape as WorkingDocument's list serializer, plus
+ * cross-sponsor context and cursor-anchored preview fields.
+ */
+export interface RecentDraft extends WorkingDocument {
+  cursor_position: number
+  scroll_position: number
+  sponsor_type: 'group' | 'member' | null
+  sponsor_label: string | null
 }
 
 /**

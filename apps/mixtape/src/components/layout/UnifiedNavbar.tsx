@@ -72,6 +72,10 @@ const NAV_ITEMS: NavItem[] = [
   // { key: "my-crossroads", label: "My Crossroads!", href: "/member/{username}", section: "authenticated", superuserOnly: true, shortLabel: "My" },
   // { key: "our-community", label: "Community", href: "/{defaultGroupSlug}", section: "authenticated", adminOnly: true, shortLabel: "Community" },
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "authenticated", memberOnly: true, shortLabel: "Dash" },
+  // Focus-Centered Writing (decisions/focus-centered-writing-adr/) FCW-1 —
+  // superuser-only while the backend recent-drafts endpoint is gated;
+  // widen to memberOnly once that endpoint opens up.
+  { key: "write", label: "Write", href: "/write", section: "authenticated", superuserOnly: true, shortLabel: "Write" },
   { key: "help", label: "Help", href: "/help", section: "authenticated", superuserOnly: true, shortLabel: "Help" },
   // { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },

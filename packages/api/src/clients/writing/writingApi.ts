@@ -8,6 +8,7 @@ import {
   PublishAndPlacePayload,
   FlattenedPlacement,
   WorkingDocument,
+  RecentDraft,
   DocxPreviewResult,
   DocxImportPayload,
   DocxImportResult,
@@ -159,6 +160,17 @@ export async function fetchDrafts(
     },
   });
   return unwrapListResponse<WorkingDocument>(response.data);
+}
+
+/**
+ * Fetch cross-sponsor recent drafts for the logged-in user (Focus-Centered
+ * Writing Gate). Superuser-gated on the backend until FCW-1 ships.
+ */
+export async function fetchRecentDrafts(limit = 20): Promise<RecentDraft[]> {
+  const response = await axiosInstance.get('/api/writing/drafts/recent', {
+    params: { limit },
+  });
+  return unwrapListResponse<RecentDraft>(response.data);
 }
 
 /**
