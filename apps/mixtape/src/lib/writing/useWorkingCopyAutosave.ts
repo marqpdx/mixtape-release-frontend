@@ -228,5 +228,5 @@ export function useWorkingCopyAutosave(
     saveStatus,
     splitSuggestionStatus,
     setSplitSuggestionStatus,
-  }), [schedule, saveNow, saveStatus, splitSuggestionStatus]);
+  }), [schedule, saveNow, setRevision, saveStatus, splitSuggestionStatus]);
 }

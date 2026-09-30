@@ -193,7 +193,6 @@ interface DocCardProps {
 
 function DocCard({ doc, inIssue, readiness, isDragging, onOpenPiece }: DocCardProps) {
   const dotColor = getDocDotColor(doc);
-  const pieceId = doc.piece?.id ?? String(doc.id);
   const editablePieceId = doc.piece?.id;
   const title = doc.piece?.title || doc.title || "Untitled";
   const previewParagraphs = doc.preview_paragraphs?.length
