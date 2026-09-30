@@ -60,6 +60,7 @@ export interface MainEditorProps {
 
   /** Only meaningful in collab mode */
   collabReady?: boolean;
+  collabCanWrite?: boolean;
 
   /** Called when the collab editor instance becomes available or null */
   onCollabEditorReady?: (editor: Editor | null) => void;
@@ -94,6 +95,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       ydoc,
       editorMode,
       collabReady = false,
+      collabCanWrite = false,
       debugId,
       streamMode,
       gristMode,
@@ -112,9 +114,8 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
 
     const hasCollabDeps = !!ydoc && !!yjsProvider;
     const showCollabEditor = wantsCollab && hasCollabDeps;
-    const collabEditable = wantsCollab ? !!collabReady : true;
+    const collabEditable = wantsCollab ? !!collabReady && collabCanWrite : true;
     void wantsSolo;
-    void collabEditable;
 
     // Features should run only when:
     // - solo editor exists, or
@@ -288,7 +289,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
                   yjsProvider={yjsProvider}
                   placeholder={placeholder}
                   className="borderless-editor"
-                  editable={collabReady}
+                  editable={collabEditable}
                 />
 
                 {/* {showLoadingUI && !collabReady && (

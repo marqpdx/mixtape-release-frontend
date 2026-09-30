@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 let connectPromise: Promise<Socket | null> | null = null;
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
 // Avoid re-registering verbose loggers over and over
 let didAttachGlobalDebug = false;
@@ -29,6 +30,8 @@ const LIVEWIRE_URL =
 const CONNECT_TIMEOUT_MS = 12000;
 
 function teardownSocket() {
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = null;
   if (!socket) return;
   try {
     socket.off();
@@ -131,6 +134,10 @@ export const initializeSocket = async (): Promise<Socket | null> => {
       if (!socket) return;
       console.log("[socket.ts] ✅ connected:", socket.id);
       didAuthRetry = false;
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => {
+        void refreshSocketAuth();
+      }, 20 * 60 * 1000);
 
       if (!didAttachGlobalDebug) {
         didAttachGlobalDebug = true;
@@ -201,7 +208,8 @@ export const refreshSocketAuth = async (): Promise<void> => {
 
   if (socket) {
     socket.auth = { token };
-    if (!socket.connected) socket.connect();
+    if (socket.connected) socket.emit("dispatch-refresh-token", token);
+    else socket.connect();
   } else {
     await initializeSocket();
   }

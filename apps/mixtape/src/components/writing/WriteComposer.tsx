@@ -290,7 +290,7 @@ export default function WriteComposer({
   const yjsEnabled =
     wantsCollab && !!dispatchContent?.id && !!dispatchContent?.yjs_document_id;
 
-  const { provider: yjsProvider, ydoc, isReady: yjsReady } = useYjsSocketProvider(
+  const { provider: yjsProvider, ydoc, isReady: yjsReady, canWrite: collabCanWrite } = useYjsSocketProvider(
     dispatchContent,
     {
       user: userInfo,
@@ -903,6 +903,7 @@ export default function WriteComposer({
                 yjsProvider={(yjsProvider ?? undefined) as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 ydoc={(ydoc ?? undefined) as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 collabReady={collabReady}
+                collabCanWrite={collabCanWrite}
                 debugId={collabKey}
                 streamMode={wantsCollab ? undefined : streamMode}
                 gristMode={wantsCollab ? undefined : true}

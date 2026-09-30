@@ -39,6 +39,8 @@ export class YjsSocketAdapter {
    */
   private _joined = false;
   private _joinInFlight = false;
+  private _canWrite = false;
+  private _denied = false;
 
   /** Queue outbound local updates until we are joined (server acked). */
   private _outbox: Uint8Array[] = [];
@@ -67,7 +69,7 @@ export class YjsSocketAdapter {
     applyAwarenessUpdate(this.awareness, updateArray, this);
   };
 
-  private _onSynced = (payload?: { documentId?: string } | string) => {
+  private _onSynced = (payload?: { documentId?: string; canWrite?: boolean } | string) => {
     const documentId =
       typeof payload === "string" ? payload : payload?.documentId;
 
@@ -78,6 +80,8 @@ export class YjsSocketAdapter {
     this._synced = true;
     this._joined = true;
     this._joinInFlight = false;
+    this._denied = false;
+    this._canWrite = typeof payload === "string" ? false : payload?.canWrite === true;
 
     console.log("✅ [YjsAdapter] Sync confirmed by server:", {
       documentId: this.roomName,
@@ -86,7 +90,7 @@ export class YjsSocketAdapter {
     });
 
     // Flush buffered updates now that server acks join
-    if (this.socket?.connected && this._outbox.length) {
+    if (this._canWrite && this.socket?.connected && this._outbox.length) {
       for (const u of this._outbox) {
         this.socket.emit("yjs-update", {
           documentId: this.roomName,
@@ -95,6 +99,23 @@ export class YjsSocketAdapter {
       }
       this._outbox = [];
     }
+    if (!this._canWrite) this._outbox = [];
+  };
+
+  private _onDenied = (payload: { documentId?: string; reason?: string }) => {
+    if (payload.documentId !== this.roomName) return;
+    this._canWrite = false;
+    if (payload.reason === "write_denied") return;
+    this._denied = true;
+    this._joined = false;
+    this._joinInFlight = false;
+    this._synced = false;
+    this._outbox = [];
+  };
+
+  private _onPermissions = (payload: { documentId?: string; canWrite?: boolean }) => {
+    if (payload.documentId !== this.roomName) return;
+    this._canWrite = payload.canWrite === true;
   };
 
   private _onConnect = () => {
@@ -104,6 +125,8 @@ export class YjsSocketAdapter {
     // Reset join state; reconnect requires re-init.
     this._joined = false;
     this._joinInFlight = false;
+    this._canWrite = false;
+    this._denied = false;
 
     console.log("✅ [YjsAdapter] Socket connected; ensure join:", {
       documentId: this.roomName,
@@ -187,6 +210,7 @@ export class YjsSocketAdapter {
         return;
       }
 
+      if (!this._canWrite) return;
       this.socket.emit("yjs-update", {
         documentId: this.roomName,
         update: Array.from(update),
@@ -226,6 +250,8 @@ export class YjsSocketAdapter {
     this.socket.on("yjs-update", this._handleYjsUpdate);
     this.socket.on("yjs-awareness", this._onAwareness);
     this.socket.on("yjs-synced", this._onSynced);
+    this.socket.on("yjs-denied", this._onDenied);
+    this.socket.on("yjs-permissions", this._onPermissions);
     this.socket.on("connect", this._onConnect);
     this.socket.on("disconnect", this._onDisconnect);
 
@@ -240,15 +266,14 @@ export class YjsSocketAdapter {
     if (!this.socket?.connected) return;
     if (this._joined) return;
     if (this._joinInFlight) return;
+    if (this._denied) return;
 
     this._joinInFlight = true;
 
     if (!this.contentId) {
-      console.warn(
-        "⚠️ [YjsAdapter] Missing contentId; joining without persistence mapping",
-        { documentId: this.roomName }
-      );
-      this.socket.emit("yjs-init", this.roomName);
+      this._joinInFlight = false;
+      this._denied = true;
+      console.error("[YjsAdapter] Missing Dispatch contentId", { documentId: this.roomName });
     } else {
       this.socket.emit("yjs-init", {
         documentId: this.roomName,
@@ -294,6 +319,8 @@ export class YjsSocketAdapter {
       this.socket.off("yjs-update", this._handleYjsUpdate);
       this.socket.off("yjs-awareness", this._onAwareness);
       this.socket.off("yjs-synced", this._onSynced);
+      this.socket.off("yjs-denied", this._onDenied);
+      this.socket.off("yjs-permissions", this._onPermissions);
       this.socket.off("connect", this._onConnect);
       this.socket.off("disconnect", this._onDisconnect);
     }

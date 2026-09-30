@@ -29,7 +29,7 @@ type YDocWithMeta = Y.Doc & {
   __forceOverwrite?: boolean;
 };
 
-type SyncPayload = { documentId?: string };
+type SyncPayload = { documentId?: string; canWrite?: boolean };
 
 /**
  * Tiny event emitter shim so TipTapCollabEditor can do:
@@ -84,6 +84,7 @@ export function useYjsSocketProvider(
   const [provider, setProvider] = useState<YjsSocketAdapter | null>(null);
   const [ydoc, setYDoc] = useState<Y.Doc | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [canWrite, setCanWrite] = useState(false);
 
   const cleanupRef = useRef<(() => void) | null>(null);
   const userRef = useRef(user);
@@ -97,6 +98,7 @@ export function useYjsSocketProvider(
     if (!enabled || !dispatchContent?.id || !dispatchContent?.yjs_document_id) {
       setStatus("disconnected");
       setIsReady(false);
+      setCanWrite(false);
       return;
     }
 
@@ -126,6 +128,7 @@ export function useYjsSocketProvider(
       setYDoc(null);
       setStatus("disconnected");
       setIsReady(false);
+      setCanWrite(false);
     };
 
     cleanupRef.current = cleanup;
@@ -133,6 +136,7 @@ export function useYjsSocketProvider(
     const boot = async () => {
       setStatus("connecting");
       setIsReady(false);
+      setCanWrite(false);
 
       // 1) Create Y.Doc
       doc = new Y.Doc() as YDocWithMeta;
@@ -188,6 +192,7 @@ export function useYjsSocketProvider(
         console.error("❌ [YjsProvider] adapter.socket missing (cannot sync)");
         setStatus("disconnected");
         setIsReady(false);
+        setCanWrite(false);
         return;
       }
 
@@ -211,6 +216,7 @@ export function useYjsSocketProvider(
         console.log("❌ [YjsProvider] socket disconnected");
         setStatus("disconnected");
         setIsReady(false);
+        setCanWrite(false);
       };
 
       // 🔥 The key change: yjs-synced is the ONLY sync signal.
@@ -224,6 +230,7 @@ export function useYjsSocketProvider(
         if (!doc) return;
 
         doc.__serverSynced = true;
+        setCanWrite(typeof payload === "string" ? false : (payload as SyncPayload | null)?.canWrite === true);
 
         // If adapter tracks a .synced flag, keep it aligned.
         try {
@@ -239,9 +246,23 @@ export function useYjsSocketProvider(
         recompute();
       };
 
+      const onDenied = (payload: { documentId?: string; reason?: string }) => {
+        if (payload.documentId !== roomId) return;
+        setCanWrite(false);
+        if (payload.reason === "write_denied") return;
+        if (doc) doc.__serverSynced = false;
+        setIsReady(false);
+      };
+
+      const onPermissions = (payload: { documentId?: string; canWrite?: boolean }) => {
+        if (payload.documentId === roomId) setCanWrite(payload.canWrite === true);
+      };
+
       s.on("connect", onConnect);
       s.on("disconnect", onDisconnect);
       s.on("yjs-synced", onSynced);
+      s.on("yjs-denied", onDenied);
+      s.on("yjs-permissions", onPermissions);
 
       // Initial compute (will be ready=false until yjs-synced arrives)
       recompute();
@@ -254,6 +275,8 @@ export function useYjsSocketProvider(
           s.off("connect", onConnect);
           s.off("disconnect", onDisconnect);
           s.off("yjs-synced", onSynced);
+          s.off("yjs-denied", onDenied);
+          s.off("yjs-permissions", onPermissions);
         } catch {}
 
         try {
@@ -268,6 +291,7 @@ export function useYjsSocketProvider(
         setYDoc(null);
         setStatus("disconnected");
         setIsReady(false);
+        setCanWrite(false);
       };
     };
 
@@ -290,5 +314,6 @@ export function useYjsSocketProvider(
     ydoc,
     status,
     isReady, // now deterministic: only true after yjs-synced
+    canWrite,
   };
 }
