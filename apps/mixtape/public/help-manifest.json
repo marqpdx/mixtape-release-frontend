@@ -1932,6 +1932,67 @@
         "triage"
       ]
     },
+    "writing-focus-centered": {
+      "key": "writing-focus-centered",
+      "slug": "writing-focus-centered",
+      "feature": "writing",
+      "title": "Write (Focus-Centered Writing)",
+      "subsystem": "writing",
+      "area": "focus-centered",
+      "summary": "A faster, quieter path into writing — start typing immediately, resume exactly where you left off, and pick up classic writing tools only when you need them.",
+      "excerpt": "A faster, quieter path into writing — start typing immediately, resume exactly where you left off, and pick up classic writing tools only when you need them.",
+      "plainText": "Write Write is a second, quieter path into Mixtape's writing tools, built for two moments: starting something new right away, and picking up exactly where you left off. It lives alongside Draft Room, Editor's Desk, and the other classic writing surfaces — those stay exactly as they are, and you can always switch back. --- What you can do here - Start a new doc in one action, with no prompts for title, tags, or where it belongs - Resume your most recently edited doc instantly, cursor and scroll position restored - Browse everything you've recently touched, across every group and personal space - Find a doc by title without leaving the keyboard --- Key concepts The Gate — The /write landing page. Offers New and Resume first; everything else is secondary. The Page — The actual writing surface, reached at /write/doc/:id. Same editor and autosave as Draft Room — nothing about how your writing is saved changes here. Pick up tools — A collapsed tray on the Page for reaching classic tools (like Draft Room) for a doc when you need something Write doesn't offer yet. --- How to start writing immediately 1. Go to Write (or press N while on the Gate). 2. Start typing. There's no title prompt, no tag prompt — just the page. 3. Your work saves automatically, the same way it does in Draft Room. --- How to resume where you left off 1. Go to Write. 2. Press Resume (or hit Enter) to reopen your most recent doc, or pick any doc from the recent list. 3. The cursor and scroll position are restored to where you last were — even if you're on a different device than the one you last edited from. --- How to find a specific doc 1. On the Gate, press /. 2. Type part of the title. 3. Select it from the filtered list. --- Current limitations - This is an early, in-progress surface — currently visible to superusers only while it's being built out. - New docs default to your own personal space; there's no way yet to choose a group from the Gate itself. - The \"Pick up tools\" tray currently only links out to Draft Room — Editor's Desk and Series Writing aren't linked yet. - There's no dedicated Focus view yet (the \"Publishing an Issue\" workflow) — that's a later phase of this surface. --- Related features - Draft Room — The classic, full-featured writing workspace. Write's Page reuses the same editor and autosave; nothing written in one is invisible to the other. - Help Hub — Use the Help drawer or /app/help for broader writing guidance.",
+      "html": "<h1 id=\"write\">Write</h1>\n<p><strong>Write</strong> is a second, quieter path into Mixtape's writing tools, built for two moments: starting something new right away, and picking up exactly where you left off. It lives alongside Draft Room, Editor's Desk, and the other classic writing surfaces — those stay exactly as they are, and you can always switch back.</p>\n<hr>\n<h2 id=\"what-you-can-do-here\">What you can do here</h2>\n<ul>\n<li>Start a new doc in one action, with no prompts for title, tags, or where it belongs</li>\n<li>Resume your most recently edited doc instantly, cursor and scroll position restored</li>\n<li>Browse everything you've recently touched, across every group and personal space</li>\n<li>Find a doc by title without leaving the keyboard</li>\n</ul>\n<hr>\n<h2 id=\"key-concepts\">Key concepts</h2>\n<p><strong>The Gate</strong> — The <code>/write</code> landing page. Offers <strong>New</strong> and <strong>Resume</strong> first; everything else is secondary.</p>\n<p><strong>The Page</strong> — The actual writing surface, reached at <code>/write/doc/:id</code>. Same editor and autosave as Draft Room — nothing about how your writing is saved changes here.</p>\n<p><strong>Pick up tools</strong> — A collapsed tray on the Page for reaching classic tools (like Draft Room) for a doc when you need something Write doesn't offer yet.</p>\n<hr>\n<h2 id=\"how-to-start-writing-immediately\">How to start writing immediately</h2>\n<ol>\n<li>Go to <strong>Write</strong> (or press <code>N</code> while on the Gate).</li>\n<li>Start typing. There's no title prompt, no tag prompt — just the page.</li>\n<li>Your work saves automatically, the same way it does in Draft Room.</li>\n</ol>\n<hr>\n<h2 id=\"how-to-resume-where-you-left-off\">How to resume where you left off</h2>\n<ol>\n<li>Go to <strong>Write</strong>.</li>\n<li>Press <strong>Resume</strong> (or hit <code>Enter</code>) to reopen your most recent doc, or pick any doc from the recent list.</li>\n<li>The cursor and scroll position are restored to where you last were — even if you're on a different device than the one you last edited from.</li>\n</ol>\n<hr>\n<h2 id=\"how-to-find-a-specific-doc\">How to find a specific doc</h2>\n<ol>\n<li>On the Gate, press <code>/</code>.</li>\n<li>Type part of the title.</li>\n<li>Select it from the filtered list.</li>\n</ol>\n<hr>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>This is an early, in-progress surface — currently visible to superusers only while it's being built out.</li>\n<li>New docs default to your own personal space; there's no way yet to choose a group from the Gate itself.</li>\n<li>The \"Pick up tools\" tray currently only links out to Draft Room — Editor's Desk and Series Writing aren't linked yet.</li>\n<li>There's no dedicated Focus view yet (the \"Publishing an Issue\" workflow) — that's a later phase of this surface.</li>\n</ul>\n<hr>\n<h2 id=\"related-features\">Related features</h2>\n<ul>\n<li><strong>Draft Room</strong> — The classic, full-featured writing workspace. Write's Page reuses the same editor and autosave; nothing written in one is invisible to the other.</li>\n<li><strong>Help Hub</strong> — Use the Help drawer or <code>/app/help</code> for broader writing guidance.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "What you can do here",
+          "id": "what-you-can-do-here"
+        },
+        {
+          "depth": 2,
+          "text": "Key concepts",
+          "id": "key-concepts"
+        },
+        {
+          "depth": 2,
+          "text": "How to start writing immediately",
+          "id": "how-to-start-writing-immediately"
+        },
+        {
+          "depth": 2,
+          "text": "How to resume where you left off",
+          "id": "how-to-resume-where-you-left-off"
+        },
+        {
+          "depth": 2,
+          "text": "How to find a specific doc",
+          "id": "how-to-find-a-specific-doc"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        },
+        {
+          "depth": 2,
+          "text": "Related features",
+          "id": "related-features"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/write",
+        "/write/doc/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "writing",
+        "drafts",
+        "capture",
+        "focus-centered"
+      ]
+    },
     "writing-overview": {
       "key": "writing-overview",
       "slug": "writing",
@@ -2136,8 +2197,9 @@
       "workbench-overview"
     ],
     "writing": [
+      "writing-focus-centered",
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-09-29T23:26:30.618Z"
+  "generatedAt": "2026-09-30T16:40:13.789Z"
 }

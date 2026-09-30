@@ -34,4 +34,5 @@ export type HelpKey =
   | "stackroom-overview"
   | "studio-overview"
   | "workbench-overview"
+  | "writing-focus-centered"
   | "writing-overview";
