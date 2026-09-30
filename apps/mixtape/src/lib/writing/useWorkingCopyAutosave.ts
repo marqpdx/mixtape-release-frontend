@@ -55,6 +55,11 @@ export function useWorkingCopyAutosave(
   const resetStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
   const queuedDataRef = useRef<WorkingCopyData | null>(null);
+  // Mirrors whatever schedule() last queued, so the unmount cleanup can
+  // flush it if the debounce timer never got a chance to fire. Cleared once
+  // that data is actually handed to saveNow (whether via the timer or an
+  // unmount flush), so a later unmount never re-sends stale data.
+  const pendingDataRef = useRef<WorkingCopyData | null>(null);
   const pendingAfterCurrentRef = useRef(false);
   const latestAttemptRef = useRef(0);
   const revisionRef = useRef<number | null>(null);
@@ -179,23 +184,41 @@ export function useWorkingCopyAutosave(
 
     console.log(`⏰ Scheduling autosave in ${debounceMs}ms for piece:`, pieceId);
 
+    pendingDataRef.current = data;
+
     // Schedule new save
     saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      pendingDataRef.current = null;
       saveNow(data);
     }, debounceMs);
 
   }, [pieceId, debounceMs, saveNow]); // Include saveNow in dependencies
 
-  // Cleanup effect to clear timer on unmount
+  // Flush-on-unmount: if a debounced save was still pending (the timer
+  // hadn't fired yet) when this unmounts -- e.g. the writer's last
+  // keystroke happened just before navigating away -- cancel the timer and
+  // fire that save immediately instead of silently discarding it. The
+  // request itself is a plain fetch/XHR, so it keeps running in the
+  // browser after an SPA navigation unmounts this component; we just can't
+  // await it here. Found as a real, pre-existing gap via Focus-Centered
+  // Writing FCW-4 testing (decisions/focus-centered-writing-adr/) -- fixed
+  // here, in the shared hook, since classic Draft Room uses this same code
+  // path and had the identical gap.
   useEffect(() => {
     return () => {
       if (saveTimer.current) {
         clearTimeout(saveTimer.current);
         saveTimer.current = null;
+        if (pendingDataRef.current) {
+          const data = pendingDataRef.current;
+          pendingDataRef.current = null;
+          saveNow(data);
+        }
       }
       clearResetStatusTimer();
     };
-  }, [clearResetStatusTimer]);
+  }, [clearResetStatusTimer, saveNow]);
 
   // Return memoized object to prevent reference changes on every render
   return useMemo(() => ({
