@@ -2,7 +2,7 @@
 
 Production frontend monorepo for Mixtape, Crossroads, Catalyst, mobile surfaces, and shared UI packages.
 
-This repository is private technical proof for a live production system. Mixtape has been live since April 2026 with over 99.99% uptime. This frontend repository has over 800 commits and is part of a larger Mixtape release constellation that includes Django core, realtime services, ingestion/classification, semantic memory, research, and Puddlejump governance.
+This is the public frontend monorepo for a live production system, shared for technical review. Mixtape has been live since April 2026 with over 99.99% uptime. This frontend repository has 920 commits and is part of a larger Mixtape release constellation that includes Django core, realtime services, ingestion/classification, semantic memory, research, and Puddlejump governance.
 
 ## What This System Does
 
@@ -14,7 +14,7 @@ The frontend is built for a product where people, groups, and AI agents collabor
 
 - Live production frontend since April 2026.
 - Over 99.99% uptime since launch.
-- Over 800 commits in this frontend repository.
+- 920 commits in this frontend repository.
 - Serves real Mixtape/Crossroads users and groups.
 - Built and maintained by Mark A. Lilly as founder, principal architect, and primary frontend/backend developer.
 
@@ -94,16 +94,16 @@ For frontend architecture review:
 
 This frontend works with:
 
-- `mixtape-release-core` - Django/DRF backend, Celery tasks, Catalyst ingest, service auth.
+- `mixtape-release-core` (also public) - Django/DRF backend, Celery tasks, Catalyst ingest, service auth.
 - Realtime and semantic-memory services for messaging, retrieval, research, and ingestion.
 - Puddlejump - governing memory, ADRs, build plans, status notes, and agent handoff discipline.
 
 Across the larger Mixtape release constellation:
 
-- `mixtape-release-core` has over 500 commits.
-- Puddlejump has over 700 commits.
-- Remaining Mixtape release repositories have over 120 combined commits.
+- `mixtape-release-core` has over 680 commits.
+- Puddlejump has over 990 commits.
+- Remaining Mixtape release repositories have over 110 combined commits.
 
-## Privacy And Access
+## About This Repository
 
-This repository is private because it contains production product implementation and client-facing application code. Access is granted selectively for technical review, hiring evaluation, or trusted collaboration. Sensitive secrets are not committed to the repository.
+This repository is public for technical review, hiring evaluation, and portfolio purposes. It reflects production product implementation and client-facing application code from a live system. No license is granted for reuse, modification, or redistribution of this code; all rights are reserved. Sensitive secrets, credentials, and internal infrastructure details are not committed to the repository.
