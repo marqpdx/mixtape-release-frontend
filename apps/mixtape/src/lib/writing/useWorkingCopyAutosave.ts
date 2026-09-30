@@ -8,6 +8,11 @@ interface WorkingCopyData {
   title: string;
   body_json: unknown;
   excerpt: string;
+  /** Cursor (PM doc position) + scroll offset — optional, piggybacks on the
+   * normal autosave request so Resume works cross-device. See
+   * useCursorMemory's getCursorState(). */
+  cursor_position?: number;
+  scroll_position?: number;
 }
 
 type ApiError = { response?: { data?: { message?: string } } };
@@ -113,6 +118,8 @@ export function useWorkingCopyAutosave(
           body_json: payload.body_json,
           excerpt: payload.excerpt,
           expected_auto_save_count: revisionRef.current,
+          ...(payload.cursor_position !== undefined && { cursor_position: payload.cursor_position }),
+          ...(payload.scroll_position !== undefined && { scroll_position: payload.scroll_position }),
         });
 
         if (typeof response.data?.auto_save_count === 'number') {

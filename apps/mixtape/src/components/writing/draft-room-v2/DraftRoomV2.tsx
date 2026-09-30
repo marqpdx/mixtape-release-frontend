@@ -193,6 +193,8 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
             title={title}
             docJSON={docJSON}
             excerpt={excerpt}
+            initialCursorPosition={piece.cursorPosition}
+            initialScrollPosition={piece.scrollPosition}
             onTitleChange={setTitle}
             onDocChange={setDocJSON}
             onExcerptChange={setExcerpt}

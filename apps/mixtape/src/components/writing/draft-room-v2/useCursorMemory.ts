@@ -1,8 +1,11 @@
 // components/writing/draft-room-v2/useCursorMemory.ts
 //
-// Persists cursor position and scroll offset per draft in localStorage.
-// Restores when the draft is reopened, creating the feeling that the
-// system remembers where the writer left off.
+// Persists cursor position and scroll offset per draft in localStorage,
+// AND (as of the Focus-Centered Writing ADR's verify item, 2026-09-29)
+// exposes the same values so the caller can send them to the server on
+// autosave. localStorage remains the fast optimistic path (restores before
+// any network round-trip); the server copy is what makes Resume work
+// across devices/sessions, not just the browser that last edited.
 
 "use client";
 
@@ -44,33 +47,63 @@ function saveState(pieceId: string, cursor: number, scroll: number) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EditorRef = React.RefObject<any>;
 
+interface ServerPosition {
+  cursor: number;
+  scroll: number;
+}
+
+function readCurrentPosition(editorRef: EditorRef): { cursor: number; scroll: number } | null {
+  const editor = editorRef.current;
+  if (!editor) return null;
+  try {
+    const cursor = editor.state?.selection?.anchor ?? 0;
+    const scrollEl = editor.view?.dom?.closest?.(".ProseMirror")?.parentElement;
+    const scroll = scrollEl?.scrollTop ?? 0;
+    return { cursor, scroll };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Save and restore cursor position + scroll for a draft.
  *
- * Call `saveCursor()` on autosave, blur, or before switching drafts.
- * Cursor is auto-restored on mount after a short delay.
+ * Call `saveCursor()` on autosave, blur, or before switching drafts —
+ * writes to localStorage only (fast, synchronous, no network).
+ * Call `getCursorState()` to read the current position for sending to the
+ * server as part of the normal autosave payload.
+ *
+ * `serverPosition`, when provided (e.g. from the doc's last-fetched working
+ * copy), is preferred over localStorage on restore — it's the source of
+ * truth for cross-device resume; localStorage only wins when no server
+ * value exists yet (a doc never autosaved from any device).
  */
-export function useCursorMemory(pieceId: string, editorRef: EditorRef) {
+export function useCursorMemory(
+  pieceId: string,
+  editorRef: EditorRef,
+  serverPosition?: ServerPosition | null
+) {
   const pieceIdRef = useRef(pieceId);
   pieceIdRef.current = pieceId;
 
   const saveCursor = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor || !pieceIdRef.current) return;
-
-    try {
-      const cursor = editor.state?.selection?.anchor ?? 0;
-      const scrollEl = editor.view?.dom?.closest?.(".ProseMirror")?.parentElement;
-      const scroll = scrollEl?.scrollTop ?? 0;
-      saveState(pieceIdRef.current, cursor, scroll);
-    } catch {
-      // editor may be destroyed
-    }
+    if (!pieceIdRef.current) return;
+    const pos = readCurrentPosition(editorRef);
+    if (!pos) return;
+    saveState(pieceIdRef.current, pos.cursor, pos.scroll);
   }, [editorRef]);
 
-  // Restore on mount
+  const getCursorState = useCallback((): ServerPosition | null => {
+    return readCurrentPosition(editorRef);
+  }, [editorRef]);
+
+  // Restore on mount — server value wins when present and non-zero.
   useEffect(() => {
-    const stored = getStoredState(pieceId);
+    const local = getStoredState(pieceId);
+    const stored =
+      serverPosition && (serverPosition.cursor > 0 || serverPosition.scroll > 0)
+        ? { cursor: serverPosition.cursor, scroll: serverPosition.scroll, timestamp: Date.now() }
+        : local;
     if (!stored) return;
 
     const timer = setTimeout(() => {
@@ -96,6 +129,7 @@ export function useCursorMemory(pieceId: string, editorRef: EditorRef) {
     }, 200);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieceId, editorRef]);
 
   // Save on unmount
@@ -105,5 +139,5 @@ export function useCursorMemory(pieceId: string, editorRef: EditorRef) {
     };
   }, [saveCursor]);
 
-  return { saveCursor };
+  return { saveCursor, getCursorState };
 }

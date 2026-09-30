@@ -45,6 +45,10 @@ interface DraftEditorProps {
   title: string;
   docJSON: Record<string, unknown> | null;
   excerpt: string;
+  /** Server-stored resume state, read once on mount (component is keyed by
+   * pieceId so it remounts per piece switch — safe to treat as initial-only) */
+  initialCursorPosition?: number;
+  initialScrollPosition?: number;
   onTitleChange: (t: string) => void;
   onDocChange: (d: Record<string, unknown> | null) => void;
   onExcerptChange?: (e: string) => void;
@@ -67,6 +71,8 @@ export function DraftEditor({
   title,
   docJSON,
   excerpt,
+  initialCursorPosition,
+  initialScrollPosition,
   onTitleChange,
   onDocChange,
   onExcerptChange,
@@ -91,8 +97,15 @@ export function DraftEditor({
   const [summaryForceUpdate, setSummaryForceUpdate] = useState<(() => void) | null>(null);
   const [documentWordCount, setDocumentWordCount] = useState(0);
 
-  // Cursor memory — saves/restores cursor position per draft
-  const { saveCursor } = useCursorMemory(pieceId, editorRef);
+  // Cursor memory — saves/restores cursor position per draft. Server value
+  // (from the working-copy fetch) wins over localStorage when present.
+  const { saveCursor, getCursorState } = useCursorMemory(
+    pieceId,
+    editorRef,
+    initialCursorPosition !== undefined
+      ? { cursor: initialCursorPosition, scroll: initialScrollPosition ?? 0 }
+      : null
+  );
 
   // Stream authoring — activates lazily on first /new command
   const createArtifact = useCreateArtifact(sponsor);
@@ -145,14 +158,16 @@ export function DraftEditor({
 
   const triggerSave = useMemo(
     () => () => {
+      const position = getCursorState();
       schedule({
         title: titleRef.current,
         body_json: docRef.current || EMPTY_DOC,
         excerpt: excerptRef.current,
+        ...(position && { cursor_position: position.cursor, scroll_position: position.scroll }),
       });
       saveCursor();
     },
-    [schedule, saveCursor]
+    [schedule, saveCursor, getCursorState]
   );
 
   // Fire onFirstSave callback when status transitions to "saved" for the first time

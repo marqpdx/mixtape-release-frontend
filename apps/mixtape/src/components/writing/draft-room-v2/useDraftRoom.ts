@@ -33,6 +33,9 @@ interface PieceState {
   status: string;
   addressedTo: string;
   isEmpty: boolean;
+  /** Server-stored resume state (Focus-Centered Writing ADR verify item) */
+  cursorPosition: number;
+  scrollPosition: number;
 }
 
 interface UseDraftRoomReturn {
@@ -145,6 +148,8 @@ export function useDraftRoom(sponsor: SponsorConfig): UseDraftRoomReturn {
           status: wc.piece.status,
           addressedTo: pieceDetail?.addressed_to || "public",
           isEmpty: wc.piece.is_empty ?? false,
+          cursorPosition: wc.cursor_position ?? 0,
+          scrollPosition: wc.scroll_position ?? 0,
         };
 
         setPiece(pieceState);
