@@ -20,7 +20,7 @@ type GroupPublicWritingPiece = PublicWritingPiece & { public_synopsis?: string }
 
 const TYP = {
   journal: {
-    measure: "68ch",
+    measure: "81ch",
     titleSize: "3.5rem",
     titleWeight: "400",
     titleTracking: "-0.01em",
