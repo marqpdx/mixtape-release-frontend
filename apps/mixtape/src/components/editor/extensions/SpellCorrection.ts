@@ -115,6 +115,7 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
               const { state } = view;
               const { from } = state.selection;
               const $pos = state.doc.resolve(from);
+              if ($pos.parent.type.name === 'codeBlock' || $pos.marks().some((mark) => mark.type.name === 'code' || mark.type.name === 'link')) return false;
               const text = $pos.parent.textContent;
               if (!text) return false;
 
@@ -133,6 +134,8 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
               }
               const word = text.slice(start, end);
               if (!word || word.length < 2) return false;
+              const segment = text.slice(0, end).split(/\s/).pop() ?? '';
+              if (segment.includes('://') || segment.includes('@')) return false;
 
               const correction = getCorrection(word);
               if (!correction || correction === word) return false;

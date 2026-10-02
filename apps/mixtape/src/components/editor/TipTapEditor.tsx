@@ -33,6 +33,8 @@ import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
 import { SpellScanDialog } from "./SpellScanDialog";
+import { SpellFindings } from "./extensions/SpellFindings";
+import { useBackgroundSpellCheck } from "@/hooks/useBackgroundSpellCheck";
 import { useSpellDictionary } from "@/hooks/useSpellDictionary";
 import { useUsers } from "@mixtape/api/hooks";
 import { SegmentBoundary, SegmentBoundaryAttrs } from "./extensions/SegmentBoundary";
@@ -382,6 +384,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
     ...(spellCorrectionEnabled ? [SpellCorrection.configure(spellCorrectionConfig)] : []),
+    SpellFindings,
     // Stream authoring extensions (only when streamMode is active)
     ...(streamMode ? [
       SegmentBoundary.configure({ onDelete: handleBoundaryDelete }),
@@ -569,6 +572,10 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   // The Y.Doc should already be populated by the provider before the editor is created
 
   const editor = useEditor(editorConfig);
+  const spellReplacements = useMemo(() => Object.fromEntries(
+    spellDictionary.corrections.map(({ wrong, correct }) => [wrong.toLocaleLowerCase("en-US"), correct]),
+  ), [spellDictionary.corrections]);
+  const backgroundSpell = useBackgroundSpellCheck(editor, spellDictionary.dictionary.ignores, spellReplacements);
 
   // Expose editor instance via ref
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -740,6 +747,12 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           paddingY: "1em",
           color: textColor,
           lineHeight: 1.7,
+          "& .spell-finding": {
+            textDecorationLine: "underline",
+            textDecorationStyle: "wavy",
+            textDecorationColor: "#c2410c",
+            textUnderlineOffset: "3px",
+          },
           "&.font-serif": {
             fontFamily: "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif",
           },
@@ -843,8 +856,11 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       {spellScanOpen && editor && (
         <SpellScanDialog
           editor={editor}
-          getCorrection={spellDictionary.getCorrection}
           addReplacement={spellDictionary.addReplacement}
+          addIgnore={spellDictionary.addIgnore}
+          findings={backgroundSpell.findings}
+          scanStatus={backgroundSpell.status}
+          onRescan={backgroundSpell.scanNow}
           onClose={() => setSpellScanOpen(false)}
         />
       )}

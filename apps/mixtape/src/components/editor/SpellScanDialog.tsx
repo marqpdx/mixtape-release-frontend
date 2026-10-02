@@ -1,99 +1,54 @@
 // apps/mixtape/src/components/editor/SpellScanDialog.tsx
 //
-// Sequential spell-check dialog — walks the doc top-to-bottom, surfacing each
-// match one at a time with Fix / Fix & Remember / Skip / Skip All / Done.
+// Sequential spell-check dialog over the current dictionary-backed scan.
 //
 // "Fix & Remember" adds the pair to the user's personal corrections (persisted
 // to the backend), so inline autocorrect will catch it on future keystrokes.
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, HStack, IconButton, Text, VStack } from "@chakra-ui/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Box, Button, HStack, IconButton, Input, Text, VStack } from "@chakra-ui/react";
 import { IconTextSpellcheck, IconX } from "@tabler/icons-react";
 import { Editor } from "@tiptap/react";
 import { useColorModeValue } from "@components/ui/color-mode";
+import type { SpellFinding } from "@/lib/spell/scan";
 
 // ─── scan utilities ──────────────────────────────────────────────────────────
-
-type ScanMatch = {
-  text: string;
-  from: number;
-  to: number;
-  suggestion: string;
-};
-
-// Matches standard words AND slash-joined shorthands (b/c, w/, and/or).
-// The trailing `(?:\/[A-Za-zÀ-ɏ]*)*` extends through slashes only
-// when followed by more word chars or at end (handles "w/" → trailing slash ok).
-const TOKEN_RE = /[A-Za-zÀ-ɏ]+(?:\/[A-Za-zÀ-ɏ]*)*/g;
-
-function scanDoc(
-  editor: Editor,
-  getCorrection: (w: string) => string | null,
-  skipSet: ReadonlySet<string>,
-): ScanMatch[] {
-  const out: ScanMatch[] = [];
-  editor.state.doc.descendants((node, pos) => {
-    if (!node.isText || !node.text) return;
-    TOKEN_RE.lastIndex = 0;
-    let m;
-    while ((m = TOKEN_RE.exec(node.text)) !== null) {
-      const word = m[0];
-      if (skipSet.has(word.toLowerCase())) continue;
-      const suggestion = getCorrection(word);
-      if (suggestion && suggestion !== word) {
-        out.push({ text: word, from: pos + m.index, to: pos + m.index + word.length, suggestion });
-      }
-    }
-  });
-  return out;
-}
 
 // ─── component ───────────────────────────────────────────────────────────────
 
 interface SpellScanDialogProps {
   editor: Editor;
-  getCorrection: (w: string) => string | null;
   addReplacement: (wrong: string, correct: string) => void;
+  addIgnore: (word: string) => void;
+  findings: SpellFinding[];
+  scanStatus: "loading" | "ready" | "error";
+  onRescan: () => void;
   onClose: () => void;
 }
 
-export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose }: SpellScanDialogProps) {
-  const skipRef = useRef(new Set<string>());
-  const [matches, setMatches] = useState<ScanMatch[]>([]);
+export function SpellScanDialog({ editor, addReplacement, addIgnore, findings, scanStatus, onRescan, onClose }: SpellScanDialogProps) {
+  const [skipped, setSkipped] = useState<ReadonlySet<string>>(() => new Set());
   const [idx, setIdx] = useState(0);
-  const [isDone, setIsDone] = useState(false);
+  const [suggestion, setSuggestion] = useState("");
+  const matches = useMemo(() => findings.filter((finding) => !skipped.has(finding.text.toLowerCase())), [findings, skipped]);
+  const isDone = scanStatus === "ready" && idx >= matches.length;
 
   const panelBg = useColorModeValue("white", "gray.800");
   const contextBg = useColorModeValue("gray.50", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
 
-  // Scan and find the first match at or after `keepFrom` in the current doc.
-  const doScan = useCallback((keepFrom = 0) => {
-    const found = scanDoc(editor, getCorrection, skipRef.current);
-    setMatches(found);
-    const ni = found.findIndex(m => m.from >= keepFrom);
-    const next = ni === -1 ? found.length : ni;
-    setIdx(next);
-    if (next >= found.length) {
-      setIsDone(true);
-    } else {
-      setIsDone(false);
-      editor.commands.setTextSelection({ from: found[next].from, to: found[next].to });
-    }
-    return { found, next };
-  }, [editor, getCorrection]);
-
-  // Initial scan on open — run exactly once.
-  const didInit = useRef(false);
   useEffect(() => {
-    if (didInit.current) return;
-    didInit.current = true;
-    doScan(0);
-  }, [doScan]);
+    if (scanStatus !== "ready") return;
+    setIdx(0);
+  }, [findings, scanStatus]);
 
-  const current = !isDone && idx < matches.length ? matches[idx] : null;
+  const current = scanStatus === "ready" && !isDone ? matches[idx] : null;
+  useEffect(() => {
+    setSuggestion(current?.suggestions[0] ?? "");
+    if (current) editor.commands.setTextSelection({ from: current.from, to: current.to });
+  }, [current, editor]);
 
   const context = useMemo(() => {
     if (!current) return null;
@@ -104,27 +59,26 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
   }, [current, editor]);
 
   const handleFix = useCallback(() => {
-    if (!current) return;
-    const fixedEnd = current.from + current.suggestion.length;
+    if (!current || !suggestion.trim()) return;
     editor.chain().focus()
       .setTextSelection({ from: current.from, to: current.to })
-      .insertContent(current.suggestion)
+      .insertContent(suggestion.trim())
       .run();
-    doScan(fixedEnd);
-  }, [current, editor, doScan]);
+    onRescan();
+  }, [current, suggestion, editor, onRescan]);
 
   const handleFixAndRemember = useCallback(() => {
     if (!current) return;
-    addReplacement(current.text, current.suggestion);
+    if (!suggestion.trim()) return;
+    addReplacement(current.text, suggestion.trim());
     handleFix();
-  }, [current, addReplacement, handleFix]);
+  }, [current, suggestion, addReplacement, handleFix]);
 
   const handleSkip = useCallback(() => {
     if (!current) return;
     const next = idx + 1;
     setIdx(next);
     if (next >= matches.length) {
-      setIsDone(true);
       editor.commands.focus();
     } else {
       editor.commands.setTextSelection({ from: matches[next].from, to: matches[next].to });
@@ -133,9 +87,16 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
 
   const handleSkipAll = useCallback(() => {
     if (!current) return;
-    skipRef.current.add(current.text.toLowerCase());
-    doScan(current.from);
-  }, [current, doScan]);
+    setSkipped((previous) => new Set(previous).add(current.text.toLowerCase()));
+    setIdx(idx >= matches.length - 1 ? matches.length : idx);
+  }, [current, idx, matches]);
+
+  const handleAddWord = useCallback(() => {
+    if (!current) return;
+    addIgnore(current.text);
+    setSkipped((previous) => new Set(previous).add(current.text.toLowerCase()));
+    setIdx(idx >= matches.length - 1 ? matches.length : idx);
+  }, [current, addIgnore, idx, matches]);
 
   const handleDone = useCallback(() => {
     editor.commands.focus();
@@ -161,7 +122,7 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
         <HStack gap={2}>
           <IconTextSpellcheck size={16} />
           <Text fontWeight="semibold" fontSize="sm">Check Spelling</Text>
-          {!isDone && matches.length > 0 && (
+          {scanStatus === "ready" && !isDone && matches.length > 0 && (
             <Text fontSize="xs" color={mutedColor}>{idx + 1} of {matches.length}</Text>
           )}
         </HStack>
@@ -170,10 +131,10 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
         </IconButton>
       </HStack>
 
-      {isDone || !current ? (
+      {scanStatus !== "ready" || isDone || !current ? (
         <VStack gap={3} align="stretch">
           <Text fontSize="sm" color={mutedColor} textAlign="center" py={2}>
-            {matches.length === 0 && idx === 0 ? "No suggestions found." : "Spell check complete."}
+            {scanStatus === "loading" ? "Checking spelling..." : scanStatus === "error" ? "Spell check unavailable. Try again later." : matches.length === 0 ? "No spelling findings." : "Spell check complete."}
           </Text>
           <Button size="sm" variant="outline" onClick={handleDone}>Close</Button>
         </VStack>
@@ -207,17 +168,17 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
             <Text color={mutedColor} fontSize="sm">→</Text>
             <VStack align="start" gap={0} flex={1}>
               <Text fontSize="10px" color={mutedColor} fontWeight="medium" letterSpacing="wide" textTransform="uppercase">Suggestion</Text>
-              <Text fontFamily="mono" fontSize="sm" color="green.600" _dark={{ color: "green.400" }}>{current.suggestion}</Text>
+              <Input value={suggestion} onChange={(event) => setSuggestion(event.target.value)} size="sm" aria-label="Spelling replacement" />
             </VStack>
           </HStack>
 
           {/* Action buttons */}
           <VStack gap={2} align="stretch">
             <HStack gap={2}>
-              <Button size="sm" colorPalette="blue" flex={1} onClick={handleFix}>
+              <Button size="sm" colorPalette="blue" flex={1} onClick={handleFix} disabled={!suggestion.trim()}>
                 Fix
               </Button>
-              <Button size="sm" colorPalette="teal" flex={1} onClick={handleFixAndRemember}>
+              <Button size="sm" colorPalette="teal" flex={1} onClick={handleFixAndRemember} disabled={!suggestion.trim()}>
                 Fix & Remember
               </Button>
             </HStack>
@@ -229,6 +190,7 @@ export function SpellScanDialog({ editor, getCorrection, addReplacement, onClose
                 Skip All
               </Button>
             </HStack>
+            <Button size="sm" variant="outline" onClick={handleAddWord}>Add to my dictionary</Button>
             <Button size="sm" variant="ghost" onClick={handleDone} color={mutedColor}>
               Done
             </Button>

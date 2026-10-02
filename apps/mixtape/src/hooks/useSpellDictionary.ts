@@ -122,6 +122,10 @@ export function useSpellDictionary() {
   const correctionMap = useMemo(() => {
     const map = new Map<string, string>();
 
+    for (const c of SEED_CORRECTIONS) {
+      map.set(normalizeToken(c.wrong), c.correct);
+    }
+
     for (const c of localDictionary.corrections) {
       const key = normalizeToken(c.wrong);
       if (key) map.set(key, c.correct);
