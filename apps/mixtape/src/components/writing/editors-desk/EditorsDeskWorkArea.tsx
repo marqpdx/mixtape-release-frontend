@@ -661,8 +661,59 @@ function IssuePreviewPiece({
   );
 }
 
-function IssuePreview({ issueId, onClose, onReviewSpelling, onSignOff }: {
+// ---------------------------------------------------------------------------
+// Focus mode -- continuous-scroll reading/editing, body content only. Each
+// piece keeps its own independent TipTap instance and autosave (same model
+// as everywhere else in this codebase); only the chrome around it is
+// stripped, so pieces sit close together and read as near-continuous.
+// ---------------------------------------------------------------------------
+
+function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
+  placement: IssueReadPlacement;
+  isEditor: boolean;
+  onDraftSaved: () => void;
+}) {
+  const [excerpt, setExcerpt] = useState("");
+  const dirtyRef = React.useRef(false);
+  const handleBodyLoaded = useCallback(() => undefined, []);
+  const handleBodyChange = useCallback(() => {
+    dirtyRef.current = true;
+    onDraftSaved();
+  }, [onDraftSaved]);
+
+  if (!isEditor || placement.status === "published") {
+    return (
+      <Box className="edw-focus-piece">
+        {placement.body_json ? (
+          <TipTapRenderer content={placement.body_json as unknown as TipTapDocument} />
+        ) : (
+          <Text color="theme.textSecondary">No content yet.</Text>
+        )}
+      </Box>
+    );
+  }
+
+  return (
+    <Box className="edw-focus-piece">
+      <DraftRoomBodyEditor
+        pieceId={placement.id}
+        pieceSlug={placement.slug}
+        title={placement.title}
+        published={false}
+        excerpt={excerpt}
+        onExcerptChange={setExcerpt}
+        hideSummary
+        onBodyLoaded={handleBodyLoaded}
+        onBodyChange={handleBodyChange}
+      />
+    </Box>
+  );
+}
+
+function IssuePreview({ issueId, mode, onModeChange, onClose, onReviewSpelling, onSignOff }: {
   issueId: string;
+  mode: "review" | "focus";
+  onModeChange: (mode: "review" | "focus") => void;
   onClose: () => void;
   onReviewSpelling: (pieceId: string, revision: number) => Promise<void>;
   onSignOff: (pieceId: string, revision: number) => Promise<void>;
@@ -676,30 +727,52 @@ function IssuePreview({ issueId, onClose, onReviewSpelling, onSignOff }: {
     <Box className="edw-preview" minW={0}>
       <Flex align="center" justify="space-between" mb={5}>
         <Heading size="sm">{issue?.title ?? "Issue Preview"}</Heading>
-        <Tooltip content="Dismiss preview">
-          <IconButton aria-label="Dismiss preview" size="sm" variant="ghost" onClick={onClose}>
-            <IconX size={16} />
-          </IconButton>
-        </Tooltip>
+        <HStack gap={2}>
+          <HStack gap={0} borderWidth="1px" borderColor="theme.border" borderRadius="md" p="2px">
+            <Button
+              size="xs"
+              variant={mode === "review" ? "solid" : "ghost"}
+              onClick={() => onModeChange("review")}
+            >
+              Review
+            </Button>
+            <Button
+              size="xs"
+              variant={mode === "focus" ? "solid" : "ghost"}
+              onClick={() => onModeChange("focus")}
+            >
+              Focus
+            </Button>
+          </HStack>
+          <Tooltip content="Dismiss preview">
+            <IconButton aria-label="Dismiss preview" size="sm" variant="ghost" onClick={onClose}>
+              <IconX size={16} />
+            </IconButton>
+          </Tooltip>
+        </HStack>
       </Flex>
       {isLoading && <Spinner size="sm" />}
-      {issue?.description && (
+      {mode === "review" && issue?.description && (
         <Box mb={6}>
           <TipTapRenderer content={issue.description as unknown as TipTapDocument} />
         </Box>
       )}
-      <VStack align="stretch" gap={8}>
-        {issue?.placements.map((placement, index) => (
-          <IssuePreviewPiece
-            key={placement.id}
-            placement={placement}
-            index={index}
-            isEditor={issue.is_editor}
-            onReviewSpelling={onReviewSpelling}
-            onSignOff={onSignOff}
-            onDraftSaved={handleDraftSaved}
-          />
-        ))}
+      <VStack align="stretch" gap={mode === "focus" ? 3 : 8}>
+        {issue?.placements.map((placement, index) =>
+          mode === "focus" ? (
+            <IssueFocusPiece key={placement.id} placement={placement} isEditor={issue.is_editor} onDraftSaved={handleDraftSaved} />
+          ) : (
+            <IssuePreviewPiece
+              key={placement.id}
+              placement={placement}
+              index={index}
+              isEditor={issue.is_editor}
+              onReviewSpelling={onReviewSpelling}
+              onSignOff={onSignOff}
+              onDraftSaved={handleDraftSaved}
+            />
+          )
+        )}
         {issue && issue.placements.length === 0 && (
           <Text color="theme.textSecondary">No pieces in this Issue yet.</Text>
         )}
@@ -765,7 +838,15 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [issueDismissed, setIssueDismissed] = useState(false);
-  const [isPreview, setIsPreview] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"board" | "review" | "focus">("board");
+  const isPreview = previewMode !== "board";
+  const setIsPreview = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    setPreviewMode((prevMode) => {
+      const prevBool = prevMode !== "board";
+      const nextBool = typeof value === "function" ? value(prevBool) : value;
+      return nextBool ? "review" : "board";
+    });
+  }, []);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const focusedIssueId = issueDismissed
     ? null
@@ -1070,7 +1151,9 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
               {isPreview && focusedIssueId ? (
                 <IssuePreview
                   issueId={focusedIssueId}
-                  onClose={() => setIsPreview(false)}
+                  mode={previewMode === "focus" ? "focus" : "review"}
+                  onModeChange={setPreviewMode}
+                  onClose={() => setPreviewMode("board")}
                   onReviewSpelling={handleReviewSpelling}
                   onSignOff={handleSignOff}
                 />

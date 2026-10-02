@@ -26,9 +26,12 @@ interface DraftRoomBodyEditorProps {
    * Desk's multi-piece preview has no other place to edit title, so it uses
    * this inline field instead. */
   onTitleChange?: (title: string) => void;
+  /** Suppress the Summary field -- used by Editor's Desk's Focus mode, which
+   * wants body content only, no title/summary chrome. */
+  hideSummary?: boolean;
 }
 
-export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, published, excerpt, onExcerptChange, onBodyLoaded, onBodyChange, onRevisionChange, onTitleChange }: DraftRoomBodyEditorProps) {
+export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, published, excerpt, onExcerptChange, onBodyLoaded, onBodyChange, onRevisionChange, onTitleChange, hideSummary }: DraftRoomBodyEditorProps) {
   const [body, setBody] = useState<JSONContent | null>(null);
   const [loadError, setLoadError] = useState(false);
   const titleRef = useRef(title);
@@ -152,7 +155,7 @@ export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, publish
         editable={!published}
         className="drbe-editor"
       />
-      {!published && (
+      {!published && !hideSummary && (
         <Box mt={4}>
           <SummarySection summary={excerpt} setSummary={handleExcerptEdit} />
         </Box>
