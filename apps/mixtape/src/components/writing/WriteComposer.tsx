@@ -1163,6 +1163,7 @@ export default function WriteComposer({
           onTargetWordCountChange={handleTargetWordCountChange}
           onSuggestSplitsChange={handleSuggestSplitsChange}
           pieceId={pieceId}
+          pieceSlug={initialPieceSlug}
           linkedinCopy={linkedinCopy}
           linkedinCopyExtended={linkedinCopyExtended}
           onLinkedInCopyGenerated={(copy, extended) => {

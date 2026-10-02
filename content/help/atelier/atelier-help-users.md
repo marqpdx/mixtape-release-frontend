@@ -25,7 +25,7 @@ Atelier is the shaping layer between writing a piece and publishing it. It's whe
 - See at a glance how "ready" a piece is across five craft dimensions
 - Tag your piece for discovery and search
 - Set a primary category
-- Write and confirm summaries for three contexts: public readers, LinkedIn, and internal use
+- Write and confirm Public synopsis, LinkedIn introduction, and Internal notes — the three fields a reader, LinkedIn, or search engine ever sees (your article's own Summary field is written next to the editor, not here)
 - Assign the piece to a series
 
 ---
@@ -34,7 +34,15 @@ Atelier is the shaping layer between writing a piece and publishing it. It's whe
 
 **Craft readiness** — A live indicator showing how complete a piece is across five dimensions: tags, category, summaries, series, and relations. Each dimension has a color: orange means untouched, yellow means started but not confirmed, green means confirmed, gray means deferred to a later phase. These indicators are informational — a piece can be published at any readiness level.
 
-**Summaries** — Three distinct short texts for different contexts. The **public synopsis** is what readers see before clicking in. The **LinkedIn synopsis** is post copy for social sharing. The **internal abstract** is a private note for your own reference or for collaborators. Each is saved independently and can be confirmed when you're satisfied with it.
+**Summaries** — Three distinct short texts, each for a different audience:
+
+- **Public synopsis** — read by search engines, LinkedIn, and any other service that unfurls a link to your article (crawlers, not people). AI-drafts this well; a quick review is usually enough, and "Use my Summary" seeds it from your article's Summary field if you'd rather start there.
+- **LinkedIn introduction** — the actual post text a human reads on LinkedIn, pasted in by you (or a collaborator) when sharing. AI-first, but worth your own editorial pass since it's the one real people read directly — it also shows "Why this angle" alongside the draft, explaining the core claim and reader stake the AI identified.
+- **Internal notes** — never shown to anyone outside Mixtape. Lowest priority; write it only if it's useful to you or collaborators.
+
+(Your article's own **Summary** field — the one that reads alongside the piece itself, in both the Writing Area and Draft Room — lives next to the editor, not in this Shape tab. It's the one field here that's genuinely part of the article, so it's worth writing yourself.)
+
+Each summary is saved independently and can be confirmed when you're satisfied with it.
 
 **Confirmed** — When you click "Confirm" on a summary, it's marked green in the readiness view. This is a signal to yourself (or collaborators) that this text is ready, not a gate on publishing.
 
@@ -74,7 +82,7 @@ A piece can have one primary category. This is used for organization and discove
 ## How to write and confirm a summary
 
 1. Scroll to the **Summaries** section.
-2. Click into any of the three text areas (Public synopsis, LinkedIn synopsis, Internal abstract) and write your text.
+2. Click into any of the three text areas (Public synopsis, LinkedIn introduction, Internal notes) and write your text, or generate an AI draft first (not available for Internal notes).
 3. Click outside the text area to save. The indicator dot turns orange while unsaved changes are pending.
 4. When you're satisfied with a summary, click **Confirm**. The dot turns green.
 
@@ -111,7 +119,8 @@ When you click **Publish**, the publish dialog checks your craft readiness and s
 
 - **Draft Room** — Atelier lives inside the Draft Room as the Shape tab. The Meta tab (title, audience, save) is the other tab in the same panel.
 - **Publish dialog** — When you publish, the dialog surfaces any untouched Atelier dimensions as a pre-publish advisory.
-- **Distribution** — LinkedIn synopsis text from Atelier can be used as post copy in the publish dialog's LinkedIn distribution step.
+- **Distribution** — LinkedIn introduction text from Atelier can be used as post copy in the publish dialog's LinkedIn distribution step.
+- **Copy Desk** — Public synopsis and LinkedIn introduction can also be generated and edited from the Writing Area's Copy Desk, next to Summary, so you don't need Draft Room open just to shape these fields. Both surfaces write the same underlying text.
 
 ---
 

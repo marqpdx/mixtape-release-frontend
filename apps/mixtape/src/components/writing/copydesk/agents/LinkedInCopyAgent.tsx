@@ -128,7 +128,7 @@ export function LinkedInCopyAgent({
   return (
     <AgentContainer
       id="linkedin-copy"
-      title="LinkedIn post introduction"
+      title="LinkedIn introduction"
       state={getAgentState()}
       stateMessage={getStateMessage()}
       icon={<IconBrandLinkedin size={16} />}
@@ -166,6 +166,29 @@ export function LinkedInCopyAgent({
 
                 {showExtended && (
                   <VStack gap={3} align="stretch">
+                    {(linkedinCopyExtended.source_claim || linkedinCopyExtended.human_stake) && (
+                      <Box
+                        p={2}
+                        bg="gray.50"
+                        borderRadius="md"
+                        borderLeft="3px solid"
+                        borderLeftColor="gray.300"
+                      >
+                        <Text fontSize="xs" color="gray.500" fontWeight="medium" mb={1}>
+                          Why this angle
+                        </Text>
+                        {linkedinCopyExtended.source_claim && (
+                          <Text fontSize="xs" color="gray.600" mb={1}>
+                            <Text as="span" fontWeight="medium">Core claim:</Text> {linkedinCopyExtended.source_claim}
+                          </Text>
+                        )}
+                        {linkedinCopyExtended.human_stake && (
+                          <Text fontSize="xs" color="gray.600">
+                            <Text as="span" fontWeight="medium">What&apos;s at stake for the reader:</Text> {linkedinCopyExtended.human_stake}
+                          </Text>
+                        )}
+                      </Box>
+                    )}
                     {linkedinCopyExtended.short_synopsis && (
                       <CopyRow label="Short synopsis" text={linkedinCopyExtended.short_synopsis} />
                     )}

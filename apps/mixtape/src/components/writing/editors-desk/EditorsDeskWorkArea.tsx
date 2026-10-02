@@ -582,6 +582,8 @@ function IssuePreviewPiece({
   const [revision, setRevision] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
   const [pending, setPending] = useState(false);
+  const [excerpt, setExcerpt] = useState("");
+  const [title, setTitle] = useState(placement.title);
   const dirtyRef = React.useRef(false);
   const handleBodyLoaded = useCallback(() => undefined, []);
   const handleBodyChange = useCallback(() => {
@@ -609,14 +611,19 @@ function IssuePreviewPiece({
   return (
     <Box className="edw-preview-piece" borderTopWidth="1px" borderColor="theme.border" pt={5}>
       <Text fontSize="xs" color="theme.textSecondary" mb={1}>{index + 1}</Text>
-      <Heading size="md" mb={4}>{placement.title}</Heading>
+      {!(isEditor && placement.status !== "published") && (
+        <Heading size="md" mb={4}>{placement.title}</Heading>
+      )}
       {isEditor && placement.status !== "published" ? (
         <>
           <DraftRoomBodyEditor
             pieceId={placement.id}
             pieceSlug={placement.slug}
-            title={placement.title}
+            title={title}
             published={false}
+            excerpt={excerpt}
+            onExcerptChange={setExcerpt}
+            onTitleChange={setTitle}
             onBodyLoaded={handleBodyLoaded}
             onBodyChange={handleBodyChange}
             onRevisionChange={handleRevisionChange}

@@ -61,10 +61,14 @@ type DocumentJSON = Record<string, unknown>
 type AudienceChoice = 'just_me' | 'readers'
 type PublishTiming = 'now' | 'later'
 type SummaryValue = { text: string; confirmed: boolean }
+type LinkedInIntroductionExtended = {
+  source_claim?: string
+  human_stake?: string
+}
 type SummaryPacket = {
   public_synopsis: SummaryValue
-  linkedin_synopsis: SummaryValue
-  internal_abstract: SummaryValue
+  linkedin_introduction: SummaryValue & { extended?: LinkedInIntroductionExtended | null }
+  internal_notes: SummaryValue
   excerpt?: string
 }
 
@@ -178,9 +182,9 @@ export function SimplePublishDialog({
   useEffect(() => {
     if (!summaryPacket) return
     setPublicSynopsis(summaryPacket.public_synopsis.text || '')
-    setLinkedinCopy((current) => current || summaryPacket.linkedin_synopsis.text || initialLinkedinCopy)
+    setLinkedinCopy((current) => current || summaryPacket.linkedin_introduction.text || initialLinkedinCopy)
     setLinkedinPacketConfirmed(
-      summaryPacket.public_synopsis.confirmed && summaryPacket.linkedin_synopsis.confirmed,
+      summaryPacket.public_synopsis.confirmed && summaryPacket.linkedin_introduction.confirmed,
     )
   }, [summaryPacket, initialLinkedinCopy])
 
@@ -325,11 +329,11 @@ export function SimplePublishDialog({
     setSynopsisSaving(true)
     try {
       await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, {
-        linkedin_synopsis: linkedinCopy.trim(),
+        linkedin_introduction: linkedinCopy.trim(),
         public_synopsis: publicSynopsis.trim(),
       })
       await axiosInstance.post(`/api/atelier/${pieceSlug}/summaries/confirm/`, {
-        types: ['linkedin_synopsis', 'public_synopsis'],
+        types: ['linkedin_introduction', 'public_synopsis'],
       })
       await refetchSummaryPacket()
       setLinkedinPacketConfirmed(true)
@@ -354,7 +358,7 @@ export function SimplePublishDialog({
     if (hasLinkedInSelected && !linkedinPacketConfirmed) {
       toaster.create({
         title: 'Confirm the LinkedIn packet',
-        description: 'Review and confirm the post introduction and link-preview description before publishing.',
+        description: 'Review and confirm the LinkedIn introduction and link-preview description before publishing.',
         type: 'warning',
       })
       return
@@ -877,7 +881,7 @@ export function SimplePublishDialog({
                                   _dark={{ bg: 'blue.950', borderLeftColor: 'blue.500' }}
                                 >
                                   <Text fontSize="sm" fontWeight="semibold" color="blue.700" _dark={{ color: 'blue.200' }} mb={1}>
-                                    LinkedIn post introduction
+                                    LinkedIn introduction
                                   </Text>
                                   <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }} mb={3}>
                                     Identify the central shift, tension, or insight. Earn attention in the first one or two lines,
@@ -892,6 +896,35 @@ export function SimplePublishDialog({
                                     <Text fontSize="xs" color="gray.500" mb={2}>
                                       An introduction generated in the Copy Desk is ready to load.
                                     </Text>
+                                  )}
+
+                                  {(summaryPacket?.linkedin_introduction.extended?.source_claim ||
+                                    summaryPacket?.linkedin_introduction.extended?.human_stake) && (
+                                    <Box
+                                      p={2}
+                                      mb={3}
+                                      bg="gray.50"
+                                      _dark={{ bg: 'gray.800' }}
+                                      borderRadius="md"
+                                      borderLeft="3px solid"
+                                      borderLeftColor="gray.300"
+                                    >
+                                      <Text fontSize="xs" color="gray.500" fontWeight="medium" mb={1}>
+                                        Why this angle
+                                      </Text>
+                                      {summaryPacket.linkedin_introduction.extended?.source_claim && (
+                                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }} mb={1}>
+                                          <Text as="span" fontWeight="medium">Core claim:</Text>{' '}
+                                          {summaryPacket.linkedin_introduction.extended.source_claim}
+                                        </Text>
+                                      )}
+                                      {summaryPacket.linkedin_introduction.extended?.human_stake && (
+                                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }}>
+                                          <Text as="span" fontWeight="medium">What&apos;s at stake for the reader:</Text>{' '}
+                                          {summaryPacket.linkedin_introduction.extended.human_stake}
+                                        </Text>
+                                      )}
+                                    </Box>
                                   )}
 
                                   <Textarea

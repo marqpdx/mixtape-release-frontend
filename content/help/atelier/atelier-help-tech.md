@@ -97,32 +97,34 @@ A piece can have one primary category. PUT removes any existing category and add
 **Summary object (GET/PATCH response):**
 ```json
 {
-  "public_synopsis":    { "text": "...", "confirmed": false },
-  "linkedin_synopsis":  { "text": "...", "confirmed": false },
-  "internal_abstract":  { "text": "...", "confirmed": false }
+  "public_synopsis":       { "text": "...", "confirmed": false },
+  "linkedin_introduction": { "text": "...", "confirmed": false, "extended": { "source_claim": "...", "human_stake": "..." } },
+  "internal_notes":        { "text": "...", "confirmed": false }
 }
 ```
 
 **PATCH body** — any subset of:
 - `public_synopsis` — string
-- `linkedin_synopsis` — string
-- `internal_abstract` — string
+- `linkedin_introduction` — string
+- `internal_notes` — string
 
 Patching creates `WritingSynopsis` via `get_or_create` if it doesn't exist.
 
 **POST /confirm/ body:**
-- `types` — list of `"public_synopsis" | "linkedin_synopsis" | "internal_abstract"`
+- `types` — list of `"public_synopsis" | "linkedin_introduction" | "internal_notes"`
 
-**Field mapping to `WritingSynopsis`:**
+**Field mapping to `WritingSynopsis`** (wire keys renamed 2026-10 for UI clarity; DB columns unchanged):
 
-| Atelier field | `WritingSynopsis` DB field |
+| Atelier wire key | `WritingSynopsis` DB field |
 |---------------|---------------------------|
 | `public_synopsis` | `description` |
-| `linkedin_synopsis` | `linkedin_copy` |
-| `internal_abstract` | `internal_abstract` (added in migration 0020) |
-| `public_synopsis_confirmed` | `public_synopsis_confirmed` |
-| `linkedin_synopsis_confirmed` | `linkedin_synopsis_confirmed` |
-| `internal_abstract_confirmed` | `internal_abstract_confirmed` |
+| `linkedin_introduction` | `linkedin_copy` (was wire key `linkedin_synopsis`) |
+| `internal_notes` | `internal_abstract` (added in migration 0020; was wire key `internal_abstract`) |
+| `public_synopsis` confirmed flag | `public_synopsis_confirmed` |
+| `linkedin_introduction` confirmed flag | `linkedin_synopsis_confirmed` |
+| `internal_notes` confirmed flag | `internal_abstract_confirmed` |
+
+`linkedin_introduction.extended` surfaces `WritingSynopsis.linkedin_copy_extended` (hook/short_synopsis/one_line_takeaway/alt_hook/source_claim/human_stake) so the UI can show "Why this angle" (source_claim, human_stake) alongside the generated copy.
 
 **Do not touch:** `WritingSynopsis.teaser` and `WritingSynopsis.excerpt` — these are owned by `synopsis_service.py` and populated at publish time from `WritingPiece.excerpt`.
 

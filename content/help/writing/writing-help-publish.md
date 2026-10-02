@@ -35,9 +35,9 @@ Publishing in Mixtape is a separate, deliberate step — a piece stays private u
 
 **External channel** — A distribution target outside Mixtape, such as LinkedIn. Channels are shown when audience is set to Readers.
 
-**Synopsis** — A short summary of the piece, used as a starting point for external post copy. It is stored separately from the piece and can be loaded into the publish dialog if it has already been generated.
+**Public synopsis** — what search engines, LinkedIn, and other link previews show when this piece is shared. Stored separately from the piece; loads into the publish dialog once generated.
 
-**LinkedIn copy** — A LinkedIn-oriented draft post that can be generated separately from the general synopsis and then edited before sharing.
+**LinkedIn introduction** — the actual post text a human reads on LinkedIn, generated separately from the public synopsis and then edited before sharing. Shows "Why this angle" alongside the draft.
 
 **Scheduled publish** — Publish at a future date and time instead of immediately. The piece goes live automatically; LinkedIn distribution fires a few minutes after.
 
@@ -69,8 +69,8 @@ LinkedIn distribution is available when audience is set to **Readers**.
 3. A text field appears for your post copy — what you want to say on LinkedIn above the link.
    - Leave it blank to share the link with no copy.
    - Write your own copy directly.
-   - Or click **Use synopsis →** to load a saved synopsis as a starting point.
-   - Or click **Generate LinkedIn copy** to create a LinkedIn-oriented draft.
+   - Or click **Use public synopsis →** to load a saved synopsis as a starting point.
+   - Or click **Generate introduction** to create a LinkedIn-oriented draft.
 4. Edit the copy as needed.
 5. Click **Publish**.
 
@@ -80,30 +80,30 @@ After publishing, the dialog shows a green **Open LinkedIn →** button. Click i
 
 ---
 
-## How to use the synopsis as post copy
+## How to use the public synopsis as post copy
 
 The synopsis is a useful starting point, not final copy.
 
 To use it:
 
 1. In the Publish dialog, check **LinkedIn** under Share externally.
-2. Click **Use synopsis →** next to the post copy field.
+2. Click **Use public synopsis →** next to the post copy field.
 3. The synopsis loads into the field. Edit it to suit the LinkedIn format before posting.
 
-If no synopsis exists yet, you will see a message: "Generate a synopsis from the editor first." In that case, save the piece and use the synopsis panel in the editor before returning to Publish.
+If no synopsis exists yet, you will see a message: "generate a public synopsis from the editor first." In that case, save the piece and use the Public synopsis field in the editor before returning to Publish.
 
-> The synopsis is not the same thing as LinkedIn copy. It is a general summary that you can use as a draft, but it is usually worth editing for LinkedIn.
+> Public synopsis is not the same thing as the LinkedIn introduction. It is a general summary that you can use as a draft, but it is usually worth editing for LinkedIn.
 
-## How to generate LinkedIn copy
+## How to generate a LinkedIn introduction
 
 If you want a more LinkedIn-shaped starting point:
 
 1. In the Publish dialog, check **LinkedIn** under Share externally.
-2. Click **Generate LinkedIn copy**.
+2. Click **Generate introduction**.
 3. Wait for the generated copy to appear in the post-copy field.
 4. Edit it before sharing.
 
-If generation fails, you can still write your own post copy or fall back to **Use synopsis →**.
+If generation fails, you can still write your own post copy or fall back to **Use public synopsis →**.
 
 ---
 
@@ -125,7 +125,7 @@ The piece will publish at the scheduled time. LinkedIn distribution fires automa
 - **LinkedIn posting is manual.** Mixtape builds the share link and opens the LinkedIn window; you complete the post. LinkedIn's API does not allow automated posting to personal profiles.
 - **Publishing and placement are separate.** Choosing **Just me** publishes the piece without putting it on any reader-facing destination.
 - **Reader publishing requires a destination.** For member-owned pieces, that means selecting at least one shelf.
-- **Synopsis and LinkedIn copy are different tools.** A synopsis is a general summary; LinkedIn copy is a separate draft for sharing and still benefits from editing.
+- **Public synopsis and LinkedIn introduction are different tools.** A public synopsis is a general, crawler-facing summary; LinkedIn introduction is a separate, human-facing draft for sharing and still benefits from editing.
 - **Distribution channels must be configured by an admin** before they appear in the Publish dialog. If the Share externally section is empty, ask your admin to run the channel setup step.
 - **One LinkedIn share per publish event.** Re-publishing an update to a piece does not automatically re-share to LinkedIn; you would need to share again manually.
 
@@ -134,6 +134,6 @@ The piece will publish at the scheduled time. LinkedIn distribution fires automa
 ## Related features
 
 - **Writing overview** — Covers the full writing lifecycle from seeds through drafts to publishing.
-- **Synopsis panel** — Accessible from the editor inspector. Use it to review and regenerate the auto-synopsis before publishing.
+- **Public synopsis (Copy Desk)** — Generate and edit the public synopsis directly in the Writing Area, next to Summary and LinkedIn introduction.
 - **Series** — Published pieces can belong to a series, which affects how they appear in the group catalog.
 - **Workbench / curation** — For group writing assembled from raw material before publication.

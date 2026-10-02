@@ -168,7 +168,11 @@ export default function DraftRoomWorkArea({
 
   const titleRef = useRef<string>("");
   const docJSONRef = useRef<Record<string, unknown> | null>(null);
+  const [excerpt, setExcerpt] = useState<string>("");
+  // SimplePublishDialog still reads excerpt via a ref prop; mirror state into
+  // it below rather than changing that contract.
   const excerptRef = useRef<string>("");
+  excerptRef.current = excerpt;
   const hydratingMetadataRef = useRef(false);
   const lastSavedSnapshotRef = useRef<MetadataSnapshot | null>(null);
   const failedSnapshotRef = useRef<MetadataSnapshot | null>(null);
@@ -236,9 +240,9 @@ export default function DraftRoomWorkArea({
     []
   );
 
-  const handleBodyLoaded = useCallback((body: Record<string, unknown>, excerpt: string) => {
+  const handleBodyLoaded = useCallback((body: Record<string, unknown>, loadedExcerpt: string) => {
     docJSONRef.current = body;
-    excerptRef.current = excerpt;
+    setExcerpt(loadedExcerpt);
     setBodyReady(true);
   }, []);
 
@@ -620,6 +624,8 @@ export default function DraftRoomWorkArea({
             pieceSlug={selectedPieceSlug}
             title={title}
             published={!isDraftsTab}
+            excerpt={excerpt}
+            onExcerptChange={setExcerpt}
             onBodyLoaded={handleBodyLoaded}
             onBodyChange={handleBodyChange}
           />
@@ -780,6 +786,7 @@ export default function DraftRoomWorkArea({
                   writingKind={pieceDetail?.writing_kind}
                   authorDisplayName={sponsor.displayName}
                   onReadinessChange={handleReadinessChange}
+                  excerpt={excerpt}
                 />
               )}
             </>

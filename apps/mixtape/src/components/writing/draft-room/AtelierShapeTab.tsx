@@ -62,8 +62,8 @@ interface SummaryField {
 
 interface Summaries {
   public_synopsis: SummaryField;
-  linkedin_synopsis: SummaryField;
-  internal_abstract: SummaryField;
+  linkedin_introduction: SummaryField;
+  internal_notes: SummaryField;
 }
 
 interface SeriesOption {
@@ -128,6 +128,10 @@ interface AtelierShapeTabProps {
   writingKind?: string;
   authorDisplayName?: string;
   onReadinessChange?: (readiness: Readiness) => void;
+  /** Live Summary (excerpt) value from the body pane -- single source of
+   * truth, used for the "no public synopsis yet" fallback preview instead of
+   * this tab independently re-fetching it. */
+  excerpt?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +195,7 @@ export default function AtelierShapeTab({
   initialCategories = [],
   pieceTitle,
   writingKind,
+  excerpt: liveExcerpt = "",
   authorDisplayName,
   onReadinessChange,
 }: AtelierShapeTabProps) {
@@ -213,7 +218,6 @@ export default function AtelierShapeTab({
   const [summaries, setSummaries] = useState<Summaries | null>(null);
   const [summariesLoading, setSummariesLoading] = useState(false);
   const [savingSummary, setSavingSummary] = useState<string | null>(null);
-  const [excerpt, setExcerpt] = useState<string>("");
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [expandedSummary, setExpandedSummary] = useState<keyof Summaries | null>(null);
 
@@ -287,13 +291,12 @@ export default function AtelierShapeTab({
     axiosInstance
       .get(`/api/atelier/${pieceSlug}/summaries/`)
       .then((res) => {
-        const data = res.data as Summaries & { excerpt?: string };
+        const data = res.data as Summaries;
         setSummaries(data);
-        setExcerpt(data.excerpt ?? "");
         setDraftValues({
           public_synopsis: data.public_synopsis.text,
-          linkedin_synopsis: data.linkedin_synopsis.text,
-          internal_abstract: data.internal_abstract.text,
+          linkedin_introduction: data.linkedin_introduction.text,
+          internal_notes: data.internal_notes.text,
         });
       })
       .catch(() => setSummaries(null))
@@ -528,7 +531,7 @@ export default function AtelierShapeTab({
     if (activeRun.status === "succeeded") {
       handledRunIdRef.current = activeRunId;
       const payload = activeRun.result_payload;
-      const summary = generatingFor === "linkedin_synopsis"
+      const summary = generatingFor === "linkedin_introduction"
         ? (payload?.short_synopsis || payload?.hook) as string | undefined
         : payload?.summary as string | undefined;
       if (summary?.trim()) {
@@ -576,12 +579,12 @@ export default function AtelierShapeTab({
   }, [classifyRun, classifySuggesting]);
 
   const handleSuggestClassify = async () => {
-    if (!excerpt || classifySuggesting) return;
+    if (!liveExcerpt || classifySuggesting) return;
     setClassifySuggesting(true);
     setSuggestedTags([]);
     setSuggestedCategory("");
     try {
-      const resp = await submitClassifyAsync({ text: excerpt });
+      const resp = await submitClassifyAsync({ text: liveExcerpt });
       setClassifyRunId(resp.action_run_id);
     } catch {
       setClassifySuggesting(false);
@@ -622,7 +625,7 @@ export default function AtelierShapeTab({
     setSuggestedCategory("");
   };
 
-  const handleGenerate = async (field: "public_synopsis" | "linkedin_synopsis") => {
+  const handleGenerate = async (field: "public_synopsis" | "linkedin_introduction") => {
     if (generatingFor) return;
     setGeneratingFor(field);
     setGenerateError(null);
@@ -688,7 +691,7 @@ export default function AtelierShapeTab({
               variant="ghost"
               onClick={() => void handleSuggestClassify()}
               loading={classifySuggesting}
-              disabled={!excerpt || classifySuggesting}
+              disabled={!liveExcerpt || classifySuggesting}
             >
               Suggest
             </Button>
@@ -795,9 +798,9 @@ export default function AtelierShapeTab({
             {(
               [
                 ["public_synopsis", "Public synopsis"],
-                ["linkedin_synopsis", "LinkedIn synopsis"],
-                ["internal_abstract", "Internal abstract"],
-              ] as [keyof Summaries, string][]
+                ["linkedin_introduction", "LinkedIn introduction"],
+                ["internal_notes", "Internal notes"],
+              ] as [SummaryFieldKey, string][]
             ).map(([field, label]) => (
               <Box key={field}>
                 <HStack justify="space-between" mb={1}>
@@ -829,11 +832,11 @@ export default function AtelierShapeTab({
                       size="xs"
                       variant="ghost"
                       onClick={() => {
-                        if (field !== "internal_abstract") void handleGenerate(field);
+                        if (field !== "internal_notes") void handleGenerate(field);
                       }}
                       loading={generatingFor === field}
-                      disabled={field === "internal_abstract" || !!generatingFor}
-                      title={field === "internal_abstract" ? "Write the internal abstract manually" : undefined}
+                      disabled={field === "internal_notes" || !!generatingFor}
+                      title={field === "internal_notes" ? "Write internal notes manually" : undefined}
                     >
                       Generate
                     </Button>
@@ -1241,9 +1244,9 @@ export default function AtelierShapeTab({
                   </Badge>
                 )}
               </HStack>
-              {(summaries?.public_synopsis.text || excerpt) && (
+              {(summaries?.public_synopsis.text || liveExcerpt) && (
                 <Text fontSize="xs" color={textSecondary} lineClamp={2} mb={2}>
-                  {summaries?.public_synopsis.text || excerpt}
+                  {summaries?.public_synopsis.text || liveExcerpt}
                 </Text>
               )}
               <HStack gap={2} fontSize="xs" color={textSecondary} flexWrap="wrap">
@@ -1279,9 +1282,9 @@ export default function AtelierShapeTab({
               >
                 {pieceTitle || "Untitled"}
               </Text>
-              {(summaries?.public_synopsis.text || excerpt) && (
+              {(summaries?.public_synopsis.text || liveExcerpt) && (
                 <Text fontSize="xs" color={textSecondary} lineClamp={3}>
-                  {(summaries?.public_synopsis.text || excerpt || "").slice(0, 200)}
+                  {(summaries?.public_synopsis.text || liveExcerpt || "").slice(0, 200)}
                 </Text>
               )}
               {authorDisplayName && (
