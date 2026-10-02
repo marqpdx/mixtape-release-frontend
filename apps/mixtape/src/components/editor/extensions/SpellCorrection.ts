@@ -12,6 +12,16 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { TextSelection } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
+
+export const CORRECTION_FLASH = {
+  durationMs: 360,
+  lightTint: 'rgba(38, 145, 105, 0.18)',
+  darkTint: 'rgba(89, 205, 153, 0.22)',
+} as const;
+
+type FlashMeta = { from: number; to: number } | { clear: true };
+const flashKey = new PluginKey<DecorationSet>('spellCorrectionFlash');
 
 export interface SpellCorrectionState {
   isOpen: boolean;
@@ -72,12 +82,28 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
       from: number;
       correctionEnd: number;
     } | null = null;
+    let flashTimer: ReturnType<typeof setTimeout> | null = null;
 
     return [
       new Plugin({
-        key: new PluginKey('spellCorrection'),
+        key: flashKey,
+
+        state: {
+          init: () => DecorationSet.empty,
+          apply(transaction, previous) {
+            const meta = transaction.getMeta(flashKey) as FlashMeta | undefined;
+            if (meta && 'clear' in meta) return DecorationSet.empty;
+            if (meta && 'from' in meta) {
+              return DecorationSet.create(transaction.doc, [
+                Decoration.inline(meta.from, meta.to, { class: 'spell-correction-flash' }),
+              ]);
+            }
+            return transaction.docChanged ? DecorationSet.empty : previous;
+          },
+        },
 
         props: {
+          decorations: (state) => flashKey.getState(state) ?? DecorationSet.empty,
           handleDOMEvents: {
             keydown(view, event) {
               // If Backspace fires immediately after an autocorrect and the
@@ -144,9 +170,18 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
               const absoluteFrom = parentStart + start;
               const absoluteTo = parentStart + end;
 
-              const tr = state.tr.insertText(correction, absoluteFrom, absoluteTo);
+              const tr = state.tr.insertText(correction, absoluteFrom, absoluteTo).setMeta(flashKey, {
+                from: absoluteFrom,
+                to: absoluteFrom + correction.length,
+              } satisfies FlashMeta);
               view.dispatch(tr);
               recordUsage?.(word);
+
+              if (flashTimer) clearTimeout(flashTimer);
+              flashTimer = setTimeout(() => {
+                if (!view.isDestroyed) view.dispatch(view.state.tr.setMeta(flashKey, { clear: true } satisfies FlashMeta));
+                flashTimer = null;
+              }, CORRECTION_FLASH.durationMs);
 
               // Record undo window. After insertText the cursor lands at
               // absoluteFrom + correction.length.
@@ -231,6 +266,11 @@ export const SpellCorrection = Extension.create<SpellCorrectionOptions>({
             },
           },
         },
+        view: () => ({
+          destroy: () => {
+            if (flashTimer) clearTimeout(flashTimer);
+          },
+        }),
       }),
     ];
   },

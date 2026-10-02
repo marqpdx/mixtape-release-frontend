@@ -30,7 +30,7 @@ import { OutlineMarker } from "./extensions/OutlineMarker";
 import { LbAnchor } from "./extensions/LbAnchor";
 import TipTapToolbar from "./TipTapToolbar";
 import { AutoCapitalize } from "./extensions/AutoCapitalize";
-import { SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
+import { CORRECTION_FLASH, SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
 import { SpellScanDialog } from "./SpellScanDialog";
 import { SpellFindings } from "./extensions/SpellFindings";
@@ -146,6 +146,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   const bgColorEditor = useColorModeValue("#FBFBFA", "gray.800");
   const toolbarBorderColor = useColorModeValue("gray.200", "gray.700");
   const textColor = useColorModeValue("gray.900", "gray.50");
+  const correctionFlashTint = useColorModeValue(CORRECTION_FLASH.lightTint, CORRECTION_FLASH.darkTint);
 
   // Writing preferences from localStorage
   const [autoCapitalizeEnabled, setAutoCapitalizeEnabled] = useState(true);
@@ -753,6 +754,10 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
             textDecorationColor: "#c2410c",
             textUnderlineOffset: "3px",
           },
+          "& .spell-correction-flash": {
+            animation: `spellCorrectionFlash ${CORRECTION_FLASH.durationMs}ms ease-out both`,
+            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+          },
           "&.font-serif": {
             fontFamily: "ui-serif, Georgia, Cambria, \"Times New Roman\", Times, serif",
           },
@@ -803,7 +808,11 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           "& > *:last-of-type": {
             marginBottom: "0.5em !important",
           }
-        }
+        },
+        "@keyframes spellCorrectionFlash": {
+          "0%": { backgroundColor: correctionFlashTint },
+          "100%": { backgroundColor: "transparent" },
+        },
       }}
     >
       <Box

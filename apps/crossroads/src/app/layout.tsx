@@ -4,77 +4,78 @@ import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@/components/analytics/Analytics";
 import { getThemePreferenceBootstrapScript } from "@mixtape/core/theme/theme-preferences";
-import {
-  Pacifico,
-  Allura,
-  Great_Vibes,
-  Nunito_Sans,
-  Figtree,
-  Sora,
-  Quicksand,
-  Manrope,
-  Alegreya_Sans,
-} from "next/font/google";
+import localFont from "next/font/local";
 
-const pacifico = Pacifico({
-  weight: ["400"],
-  subsets: ["latin"],
+const pacifico = localFont({
+  src: "../fonts/pacifico/latin-normal.woff2",
+  weight: "400",
   variable: "--font-pacifico",
   display: "swap",
+  preload: false,
 });
 
-const allura = Allura({
-  weight: ["400"],
-  subsets: ["latin"],
+const allura = localFont({
+  src: "../fonts/allura/latin-normal.woff2",
+  weight: "400",
   variable: "--font-allura",
   display: "swap",
+  preload: false,
 });
 
-const greatVibes = Great_Vibes({
-  weight: ["400"],
-  subsets: ["latin"],
+const greatVibes = localFont({
+  src: "../fonts/greatvibes/latin-normal.woff2",
+  weight: "400",
   variable: "--font-great-vibes",
   display: "swap",
+  preload: false,
 });
 
-const nunitoSans = Nunito_Sans({
-  weight: ["400", "600"],
-  subsets: ["latin"],
+const nunitoSans = localFont({
+  src: "../fonts/nunitosans/latin-normal.woff2",
+  weight: "400 600",
   variable: "--font-nunito-sans",
   display: "swap",
+  preload: false,
 });
 
-const figtree = Figtree({
-  weight: ["400", "600"],
-  subsets: ["latin"],
+const figtree = localFont({
+  src: "../fonts/figtree/latin-normal.woff2",
+  weight: "400 600",
   variable: "--font-figtree",
   display: "swap",
+  preload: false,
 });
 
-const sora = Sora({
-  weight: ["400", "600"],
-  subsets: ["latin"],
+const sora = localFont({
+  src: "../fonts/sora/latin-normal.woff2",
+  weight: "400 600",
   variable: "--font-sora",
   display: "swap",
+  preload: false,
 });
 
-const quicksand = Quicksand({
-  weight: ["400", "600"],
-  subsets: ["latin"],
+const quicksand = localFont({
+  src: "../fonts/quicksand/latin-normal.woff2",
+  weight: "400 600",
   variable: "--font-quicksand",
   display: "swap",
+  preload: false,
 });
 
-const manrope = Manrope({
-  weight: ["400", "600"],
-  subsets: ["latin"],
+const manrope = localFont({
+  src: "../fonts/manrope/latin-normal.woff2",
+  weight: "400 600",
   variable: "--font-manrope",
   display: "swap",
+  preload: false,
 });
 
-const alegreyaSans = Alegreya_Sans({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
+const alegreyaSans = localFont({
+  src: [
+    { path: "../fonts/alegreyasans/latin-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/alegreyasans/latin-500.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/alegreyasans/latin-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-alegreya-sans",
   display: "swap",
 });

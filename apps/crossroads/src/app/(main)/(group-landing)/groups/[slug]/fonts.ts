@@ -1,96 +1,103 @@
 // Tier 1 defaults + Tier 2 tenant font shortlist (ten faces per spec).
-// All instances must be declared at module top-level (next/font/google constraint).
+// Keep instances at module top-level so Next can emit the font CSS.
 // tenantFontMap keys are the canonical font_id values stored in presentation.font_id.
 //
 // Instrument Serif is display-only (spec: titles only, body stays Public Sans).
 // Its entry carries a displayClassName so the Masthead can apply it narrowly to
 // title elements while the root keeps Public Sans for body text.
 
-import {
-  Source_Serif_4,
-  Public_Sans,
-  Newsreader,
-  Literata,
-  Lora,
-  Instrument_Serif,
-  Archivo,
-  Work_Sans,
-  Karla,
-  IBM_Plex_Sans,
-} from "next/font/google";
+import localFont from "next/font/local";
 
 // Tier 1 defaults (also in tenantFontMap below)
-export const journalFont = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+export const journalFont = localFont({
+  src: [
+    { path: "../../../../../fonts/sourceserif4/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/sourceserif4/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
 });
 
-export const noticeFont = Public_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+export const noticeFont = localFont({
+  src: [
+    { path: "../../../../../fonts/publicsans/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/publicsans/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
 });
 
 // Tenant shortlist — 8 additional faces
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const newsreader = localFont({
+  src: [
+    { path: "../../../../../fonts/newsreader/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/newsreader/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const literata = Literata({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const literata = localFont({
+  src: [
+    { path: "../../../../../fonts/literata/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/literata/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const lora = localFont({
+  src: [
+    { path: "../../../../../fonts/lora/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/lora/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
 // Instrument Serif: display face only. One weight (400), no 600.
 // Body font for this combo is Public Sans (noticeFont).
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
+const instrumentSerif = localFont({
+  src: [
+    { path: "../../../../../fonts/instrumentserif/latin-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../../../../fonts/instrumentserif/latin-italic.woff2", weight: "400", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const archivo = localFont({
+  src: [
+    { path: "../../../../../fonts/archivo/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/archivo/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const workSans = Work_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const workSans = localFont({
+  src: [
+    { path: "../../../../../fonts/worksans/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/worksans/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const karla = Karla({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const karla = localFont({
+  src: [
+    { path: "../../../../../fonts/karla/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/karla/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
+const ibmPlexSans = localFont({
+  src: [
+    { path: "../../../../../fonts/ibmplexsans/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../../../../fonts/ibmplexsans/latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   display: "swap",
+  preload: false,
 });
 
 export interface TenantFont {
@@ -120,7 +127,7 @@ export const tenantFontMap: Record<string, TenantFont> = {
   "instrument-serif": {
     className: noticeFont.className,
     displayClassName: instrumentSerif.className,
-    displayFamily: `var(${instrumentSerif.style.fontFamily})`,
+    displayFamily: instrumentSerif.style.fontFamily,
   },
   // Sans text faces
   "public-sans":    { className: noticeFont.className },
