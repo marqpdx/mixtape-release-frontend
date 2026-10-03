@@ -18,6 +18,7 @@ import MyChatsScreen from '../screens/MyChatsScreen';
 import ListsScreen from '../screens/ListsScreen';
 import BuildScreen from '../screens/BuildScreen';
 import OpsScreen from '../screens/OpsScreen';
+import FolioNotesScreen from '../screens/FolioNotesScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
@@ -47,6 +48,7 @@ export type RootStackParamList = {
   Profile: undefined;
   Console: undefined;
   Ops: undefined;
+  FolioNotes: undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
@@ -228,6 +230,12 @@ export default function AppNavigator() {
             <RootStack.Screen
               name="Ops"
               component={OpsScreen}
+              options={{ headerShown: false, presentation: 'card' }}
+            />
+            {/* Folio Notes PoC — reached from Profile's Tools section until it earns a primary slot */}
+            <RootStack.Screen
+              name="FolioNotes"
+              component={FolioNotesScreen}
               options={{ headerShown: false, presentation: 'card' }}
             />
             <RootStack.Screen

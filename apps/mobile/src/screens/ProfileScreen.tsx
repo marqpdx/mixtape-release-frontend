@@ -118,6 +118,14 @@ export default function ProfileScreen() {
           <Text style={styles.toolRowText}>Ops</Text>
           <Text style={styles.toolRowChevron}>›</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.toolRow}
+          onPress={() => navigationRef.isReady() && navigationRef.navigate('FolioNotes')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.toolRowText}>Folio Notes</Text>
+          <Text style={styles.toolRowChevron}>›</Text>
+        </TouchableOpacity>
       </View>
 
       {isSuperuser ? (

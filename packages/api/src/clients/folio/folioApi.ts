@@ -162,3 +162,73 @@ export async function rejectFolioCandidate(candidateId: string): Promise<FolioMa
   const res = await axiosInstance.post(`/api/folio/material-candidates/${candidateId}/reject`);
   return res.data;
 }
+
+// ============================================================================
+// Folio Notes PoC (puddlejump/decisions/folio/folio-notes-poc-mobile-handoff.md)
+// ============================================================================
+
+// Plain strings server-side (folio/shapes.py) — kept as a string union here
+// so a later Shapes-Library-backed vocabulary is additive, not a rename.
+export type FolioNoteShape = "character" | "scene" | "plot" | "place" | "world" | "meta" | "unplaced";
+
+export interface FolioNote {
+  id: string;
+  folio: string;
+  source_type: "voice" | "text";
+  status: "processing" | "ready" | "failed";
+  /** Resolved projection: raw_text for typed notes, transcript_text for voice. */
+  text: string;
+  raw_text: string;
+  transcript_text: string;
+  transcript_error: string;
+  has_audio: boolean;
+  /** Resolved projection: confirmed_shape, else suggested_shape, else "unplaced". */
+  shape: FolioNoteShape;
+  suggested_shape: FolioNoteShape | "";
+  shape_confidence: number | null;
+  confirmed_shape: FolioNoteShape | "";
+  source: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchFolios(): Promise<Folio[]> {
+  const res = await axiosInstance.get("/api/folio/folios");
+  return res.data;
+}
+
+export async function createFolio(title: string): Promise<Folio> {
+  const res = await axiosInstance.post("/api/folio/folios", { title });
+  return res.data;
+}
+
+export async function fetchFolioNotes(folioId: string, limit = 50): Promise<FolioNote[]> {
+  const res = await axiosInstance.get(`/api/folio/folios/${folioId}/notes`, { params: { limit } });
+  return res.data;
+}
+
+export async function createFolioTextNote(
+  folioId: string,
+  data: { raw_text: string; source?: string },
+): Promise<FolioNote> {
+  const res = await axiosInstance.post(`/api/folio/folios/${folioId}/notes`, data);
+  return res.data;
+}
+
+export async function createFolioVoiceNote(
+  folioId: string,
+  data: { uri: string; fileName?: string; mimeType?: string; source?: string },
+): Promise<FolioNote> {
+  const form = new FormData();
+  form.append("audio_file", {
+    uri: data.uri,
+    name: data.fileName || "folio-note.m4a",
+    type: data.mimeType || "audio/m4a",
+  } as any);
+  form.append("source", data.source || "mobile");
+
+  const res = await axiosInstance.post(`/api/folio/folios/${folioId}/notes`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
