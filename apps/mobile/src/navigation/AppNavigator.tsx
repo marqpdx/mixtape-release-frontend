@@ -40,6 +40,7 @@ export type MainTabParamList = {
   Connect: undefined;
   Lists: undefined;
   Build: undefined;
+  Folio: undefined;
 };
 
 export type RootStackParamList = {
@@ -48,7 +49,6 @@ export type RootStackParamList = {
   Profile: undefined;
   Console: undefined;
   Ops: undefined;
-  FolioNotes: undefined;
   Chat: { conversationId: string; title?: string };
   NewPersonalChat: undefined;
   GroupConversations: { groupSlug: string; groupName: string };
@@ -67,7 +67,7 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // ADR-0048 D2: the app remembers the last visited primary tab.
 const LAST_TAB_KEY = 'mixtape.mobile.lastTab';
-const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Build'] as const;
+const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Build', 'Folio'] as const;
 type TabName = (typeof TAB_NAMES)[number];
 
 function isTabName(value: string | null): value is TabName {
@@ -120,6 +120,7 @@ function MainTabs() {
             Connect: ['chatbubble', 'chatbubble-outline'],
             Lists: ['list', 'list-outline'],
             Build: ['hammer', 'hammer-outline'],
+            Folio: ['library', 'library-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
@@ -155,6 +156,12 @@ function MainTabs() {
         name="Build"
         component={BuildScreen}
         listeners={{ focus: () => persistLastTab('Build') }}
+      />
+      {/* Folio Notes PoC — sixth tab, deliberately separate from Notebook */}
+      <Tab.Screen
+        name="Folio"
+        component={FolioNotesScreen}
+        listeners={{ focus: () => persistLastTab('Folio') }}
       />
     </Tab.Navigator>
   );
@@ -230,12 +237,6 @@ export default function AppNavigator() {
             <RootStack.Screen
               name="Ops"
               component={OpsScreen}
-              options={{ headerShown: false, presentation: 'card' }}
-            />
-            {/* Folio Notes PoC — reached from Profile's Tools section until it earns a primary slot */}
-            <RootStack.Screen
-              name="FolioNotes"
-              component={FolioNotesScreen}
               options={{ headerShown: false, presentation: 'card' }}
             />
             <RootStack.Screen
