@@ -23,6 +23,12 @@ apps/mixtape/latest_state.md
 zzz*
 zz/
 
+# Local AI-tool session-resume scripts — contain a session UUID, local-dev-only
+resume_codex*.sh
+**/resume_codex*.sh
+launch_claude.sh
+**/launch_claude.sh
+
 # debug
 npm-debug.log*
 yarn-debug.log*

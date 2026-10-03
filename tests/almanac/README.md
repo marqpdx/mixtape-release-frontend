@@ -37,20 +37,20 @@ tests/helpers/
 
 **1. Backend server must be running:**
 ```bash
-cd REDACTED-LOCAL-PATH/mixtape-release-core
+cd mixtape-release-core
 source ../env/bin/activate
 python manage.py runserver 127.0.0.1:8010
 ```
 
 **2. Frontend server must be running:**
 ```bash
-cd REDACTED-LOCAL-PATH/mixtape-release-frontend
+cd mixtape-release-frontend
 yarn dev  # Runs on 127.0.0.1:3010
 ```
 
 **3. Test data must exist:**
 ```bash
-cd REDACTED-LOCAL-PATH/mixtape-release-core
+cd mixtape-release-core
 python manage.py bootstrap_mixtape
 ```
 
