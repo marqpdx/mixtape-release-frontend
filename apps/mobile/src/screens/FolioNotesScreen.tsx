@@ -132,9 +132,10 @@ export default function FolioNotesScreen() {
     };
   }, [hasProcessingNote, notesQuery]);
 
-  // Push path: Livewire emits folio_note:transcribed as soon as Celery
-  // finishes. Polling above remains the fallback when the socket is
-  // unavailable — same arrangement as SeedNotebook.
+  // Push path: Livewire emits folio_note:transcribed when Celery finishes
+  // transcription and folio_note:tended when Switchboard → Inkwell tending
+  // lands. Polling above remains the transcription fallback when the socket
+  // is unavailable — same arrangement as SeedNotebook.
   useEffect(() => {
     const socket = socketService.getRawSocket();
     if (!socket) return;
@@ -144,7 +145,11 @@ export default function FolioNotesScreen() {
       }
     };
     socket.on('folio_note:transcribed', handler);
-    return () => { socket.off('folio_note:transcribed', handler); };
+    socket.on('folio_note:tended', handler);
+    return () => {
+      socket.off('folio_note:transcribed', handler);
+      socket.off('folio_note:tended', handler);
+    };
   }, [notesQuery, selectedFolioId]);
 
   const acknowledge = (note: FolioNote) => {

@@ -187,6 +187,12 @@ export interface FolioNote {
   suggested_shape: FolioNoteShape | "";
   shape_confidence: number | null;
   confirmed_shape: FolioNoteShape | "";
+  /** Tending output (Switchboard → Inkwell folio_note_tend) — augments, never replaces, the note. */
+  summary: string;
+  mentions: { surface: string; kind: "character" | "place" | "thing" | "concept" }[];
+  tended_at: string | null;
+  tending_model: string;
+  tending_prompt_version: string;
   source: string;
   created_at: string;
   updated_at: string;
