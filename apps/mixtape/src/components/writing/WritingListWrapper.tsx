@@ -582,6 +582,11 @@ export default function WritingListWrapper({
         <Badge size="sm" bg={badgeBg} color={badgeColor} px={2} py={1} rounded="full">
           Draft
         </Badge>
+        {draft.draft_content_mismatch && (
+          <Tooltip content="Draft content is saved, but its WritingPiece is marked empty." portalled={false}>
+            <Badge size="sm" colorPalette="orange" variant="subtle">Metadata mismatch</Badge>
+          </Tooltip>
+        )}
         {welcomePinnedPieceId && draft.piece.id === welcomePinnedPieceId && (
           <Badge size="sm" colorScheme="orange" px={2} py={1} rounded="full">
             Welcome pin

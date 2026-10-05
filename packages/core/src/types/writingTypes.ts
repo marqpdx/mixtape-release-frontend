@@ -162,6 +162,7 @@ export interface WorkingDocument {
   body_json: Record<string, any>
   body_preview?: string
   preview_paragraphs?: string[]
+  draft_content_mismatch?: boolean
 
   last_saved_at: string // ISO datetime
   auto_save_count: number
