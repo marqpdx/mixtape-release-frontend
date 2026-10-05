@@ -238,3 +238,15 @@ export async function createFolioVoiceNote(
   });
   return res.data;
 }
+
+/** One-tap Shape correction — sets the writer's confirmed_shape ("" clears it). */
+export async function updateFolioNoteShape(
+  folioId: string,
+  noteId: string,
+  confirmedShape: FolioNoteShape | "",
+): Promise<FolioNote> {
+  const res = await axiosInstance.patch(`/api/folio/folios/${folioId}/notes/${noteId}`, {
+    confirmed_shape: confirmedShape,
+  });
+  return res.data;
+}

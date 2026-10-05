@@ -14,7 +14,9 @@ import {
   fetchFolioNotes,
   createFolioTextNote,
   createFolioVoiceNote,
+  updateFolioNoteShape,
   type FolioNote,
+  type FolioNoteShape,
   type FolioInception,
   type FolioInceptionCreatePayload,
   type FolioAnalyzeResult,
@@ -139,6 +141,16 @@ export function useCreateFolioVoiceNote(folioId: string | null) {
   const queryClient = useQueryClient();
   return useMutation<FolioNote, Error, { uri: string; fileName?: string; mimeType?: string; source?: string }>({
     mutationFn: (data) => createFolioVoiceNote(folioId as string, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: folioQueryKeys.notes(folioId ?? "") });
+    },
+  });
+}
+
+export function useUpdateFolioNoteShape(folioId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation<FolioNote, Error, { noteId: string; confirmedShape: FolioNoteShape | "" }>({
+    mutationFn: ({ noteId, confirmedShape }) => updateFolioNoteShape(folioId as string, noteId, confirmedShape),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: folioQueryKeys.notes(folioId ?? "") });
     },

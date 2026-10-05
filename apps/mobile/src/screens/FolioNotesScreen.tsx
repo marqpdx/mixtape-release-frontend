@@ -28,6 +28,7 @@ import {
   useCreateFolioVoiceNote,
   useFolioNotes,
   useFolios,
+  useUpdateFolioNoteShape,
 } from '@mixtape/api/hooks/folio/useFolio';
 import type { FolioNote, FolioNoteShape } from '@mixtape/api/clients/folio/folioApi';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
@@ -50,6 +51,8 @@ const SHAPE_LABELS: Record<FolioNoteShape, string> = {
   unplaced: 'Unplaced',
 };
 
+const SHAPE_ORDER = Object.keys(SHAPE_LABELS) as FolioNoteShape[];
+
 function formatNoteTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
@@ -68,6 +71,40 @@ function NoteBody({ note }: { note: FolioNote }) {
   return <Text style={styles.noteBody}>{note.text || 'Empty note'}</Text>;
 }
 
+function ShapePicker({
+  note,
+  disabled,
+  onPick,
+}: {
+  note: FolioNote;
+  disabled: boolean;
+  onPick: (shape: FolioNoteShape | '') => void;
+}) {
+  // One tap sets the writer's Shape; tapping the confirmed one again clears it
+  // back to the model's suggestion (build plan §4.6 — no repair workflow).
+  return (
+    <View style={styles.shapePicker}>
+      {SHAPE_ORDER.map((shape) => {
+        const isConfirmed = note.confirmed_shape === shape;
+        const isActive = note.shape === shape;
+        return (
+          <TouchableOpacity
+            key={shape}
+            style={[styles.shapeChip, isActive && styles.shapeChipActive]}
+            onPress={() => onPick(isConfirmed ? '' : shape)}
+            disabled={disabled}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.shapeChipText, isActive && styles.shapeChipTextActive]}>
+              {SHAPE_LABELS[shape]}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function FolioNotesScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const foliosQuery = useFolios();
@@ -82,6 +119,8 @@ export default function FolioNotesScreen() {
   const notesQuery = useFolioNotes(selectedFolioId);
   const createTextNote = useCreateFolioTextNote(selectedFolioId);
   const createVoiceNote = useCreateFolioVoiceNote(selectedFolioId);
+  const updateNoteShape = useUpdateFolioNoteShape(selectedFolioId);
+  const [pickingShapeNoteId, setPickingShapeNoteId] = useState<string | null>(null);
   const notes = useMemo(() => notesQuery.data ?? [], [notesQuery.data]);
   const folios = useMemo(() => foliosQuery.data ?? [], [foliosQuery.data]);
 
@@ -275,14 +314,40 @@ export default function FolioNotesScreen() {
           renderItem={({ item }) => (
             <View style={styles.noteRow}>
               <View style={styles.noteHeader}>
-                <Text style={[styles.noteShape, item.shape === 'unplaced' && styles.noteShapeUnplaced]}>
-                  {SHAPE_LABELS[item.shape] ?? item.shape}
-                </Text>
+                <TouchableOpacity
+                  onPress={() => setPickingShapeNoteId((current) => (current === item.id ? null : item.id))}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={[styles.noteShape, item.shape === 'unplaced' && styles.noteShapeUnplaced]}>
+                    {SHAPE_LABELS[item.shape] ?? item.shape}
+                    {item.confirmed_shape ? ' ✓' : ' ▾'}
+                  </Text>
+                </TouchableOpacity>
                 <Text style={styles.noteMeta}>
                   {item.source_type === 'voice' ? '🎙 ' : ''}{formatNoteTime(item.created_at)}
                 </Text>
               </View>
+              {pickingShapeNoteId === item.id ? (
+                <ShapePicker
+                  note={item}
+                  disabled={updateNoteShape.isPending}
+                  onPick={(shape) => {
+                    setPickingShapeNoteId(null);
+                    updateNoteShape.mutate({ noteId: item.id, confirmedShape: shape });
+                  }}
+                />
+              ) : null}
               <NoteBody note={item} />
+              {item.mentions?.length ? (
+                <View style={styles.mentionRow}>
+                  {item.mentions.map((mention) => (
+                    <View key={`${mention.kind}:${mention.surface}`} style={styles.mentionChip}>
+                      <Text style={styles.mentionText}>{mention.surface}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </View>
           )}
         />
@@ -445,6 +510,46 @@ const styles = StyleSheet.create({
   // Unplaced is healthy (build plan §4.5, §33) — quieter, never alarm-colored.
   noteShapeUnplaced: {
     color: '#7D8C99',
+  },
+  shapePicker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  shapeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#F2F6FA',
+    borderWidth: 1,
+    borderColor: '#D7E0EA',
+  },
+  shapeChipActive: {
+    backgroundColor: '#0E5AA7',
+    borderColor: '#0E5AA7',
+  },
+  shapeChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#315E87',
+  },
+  shapeChipTextActive: {
+    color: '#FFFFFF',
+  },
+  mentionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  mentionChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: '#EEF4F8',
+  },
+  mentionText: {
+    fontSize: 12,
+    color: '#34516B',
   },
   noteMeta: {
     fontSize: 12,
