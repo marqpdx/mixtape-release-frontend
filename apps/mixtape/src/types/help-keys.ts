@@ -32,6 +32,7 @@ export type HelpKey =
   | "radar-overview"
   | "spikes-ocr"
   | "stackroom-overview"
+  | "storyboard-overview"
   | "studio-overview"
   | "workbench-overview"
   | "writing-focus-centered"
