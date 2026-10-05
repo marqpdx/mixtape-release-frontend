@@ -192,7 +192,7 @@ export function WritingPieceDetailView({ groupSlug, pieceSlug }: WritingPieceDet
           fontSize="md"
           lineHeight="1.85"
           css={{
-            '& p + p': { marginTop: '1.25em' },
+            '& p + p:not(.ttr-code-paragraph)': { marginTop: '1.25em' },
           }}
         >
           <TipTapRenderer content={piece.body_json as TipTapDocument} />

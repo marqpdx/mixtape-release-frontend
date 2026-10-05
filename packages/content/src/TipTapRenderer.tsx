@@ -47,13 +47,14 @@ export interface TipTapRenderIssue {
 
 interface TipTapRendererProps {
   content: TipTapDocument
+  paragraphLineHeight?: string
   /** Show inline fallback badges and a summary banner for unknown/failed nodes. */
   showNodeWarnings?: boolean
   /** Called after render with any issues found. Useful for import previews to surface counts. */
   onRenderIssues?: (issues: TipTapRenderIssue[]) => void
 }
 
-export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssues }: TipTapRendererProps) {
+export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeWarnings = false, onRenderIssues }: TipTapRendererProps) {
   const codeBlockBg = useColorModeValue('gray.100', 'gray.900')
   const blockquoteBg = useColorModeValue('gray.50', 'gray.800')
   const blockquoteBorderColor = useColorModeValue('gray.300', 'gray.600')
@@ -118,6 +119,7 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
         styleProps.borderRadius = 'sm'
         styleProps.fontFamily = 'mono'
         styleProps.fontSize = 'sm'
+        styleProps.whiteSpace = 'pre-wrap'
       }
       else if (mark.type === 'strike' || mark.type === 'strikethrough') styleProps.textDecoration = 'line-through'
       else if (mark.type === 'underline') styleProps.textDecoration = 'underline'
@@ -191,12 +193,21 @@ export function TipTapRenderer({ content, showNodeWarnings = false, onRenderIssu
           )
         }
 
-        case 'paragraph':
+        case 'paragraph': {
+          const codeOnly = !!node.content?.length && node.content.every(
+            (child) => child.type === 'text' && child.marks?.some((mark) => mark.type === 'code')
+          )
           return (
-            <Text key={index} mb={4} lineHeight="1.8">
+            <Text
+              key={index}
+              className={codeOnly ? 'ttr-code-paragraph' : undefined}
+              mb={codeOnly ? 0 : 4}
+              lineHeight={codeOnly ? '1.35' : paragraphLineHeight}
+            >
               {renderContent(node.content)}
             </Text>
           )
+        }
 
         case 'bulletList':
           return (

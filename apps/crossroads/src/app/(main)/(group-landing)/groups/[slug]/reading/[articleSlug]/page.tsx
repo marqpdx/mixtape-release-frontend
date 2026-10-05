@@ -26,7 +26,7 @@ const TYP = {
     titleTracking: "-0.01em",
     titleLh: "1.12",
     bodySize: "1.188rem",
-    bodyLh: "1.65",
+    bodyLh: "1.32",
     standfirstSize: "1.5rem",
     hairline: "0.5px",
   },
@@ -37,7 +37,7 @@ const TYP = {
     titleTracking: "-0.022em",
     titleLh: "1.1",
     bodySize: "1.063rem",
-    bodyLh: "1.6",
+    bodyLh: "1.28",
     standfirstSize: "1.25rem",
     hairline: "1px",
   },
@@ -191,7 +191,8 @@ export default async function PublicPieceReaderPage({
           font-size: ${typ.bodySize};
           line-height: ${typ.bodyLh};
         }
-        .gpr-body p { margin: 0 0 1.25em; }
+        .gpr-body p:not(.ttr-code-paragraph) { margin: 0 0 1.25em; }
+        .gpr-body p.ttr-code-paragraph { margin: 0; }
         .gpr-body h2, .gpr-body h3 {
           color: var(--theme-text);
           line-height: 1.22;

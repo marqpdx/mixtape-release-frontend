@@ -3,10 +3,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, Flex, HStack, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Dialog, Flex, HStack, Text, VStack } from "@chakra-ui/react";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useQueryClient } from "@tanstack/react-query";
 import { Editor } from "@tiptap/react";
+import { IconEye } from "@tabler/icons-react";
+import { TipTapRenderer, type TipTapDocument } from "@mixtape/content/TipTapRenderer";
 import {
   exportPiecePdf,
   fetchPieceSynopsis,
@@ -120,6 +122,7 @@ export default function WriteComposer({
   const [title, setTitle] = useState<string>(initialPiece?.title || "");
   const [docJSON, setDocJSON] = useState<DocumentJSON | null>(initialPiece?.body_json || EMPTY_DOC);
   const [excerpt, setExcerpt] = useState<string>(initialPiece?.excerpt || "");
+  const [preview, setPreview] = useState<{ title: string; excerpt: string; body: TipTapDocument } | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [targetWordCount, setTargetWordCount] = useState<number | null>(
     initialPiece?.target_wordcount ?? null
@@ -145,6 +148,7 @@ export default function WriteComposer({
     setTitle(newTitle);
     setDocJSON(newDocJSON);
     setExcerpt(newExcerpt);
+    setPreview(null);
     setLastSavedState({
       title: newTitle,
       docJSON: newDocJSON,
@@ -674,7 +678,7 @@ export default function WriteComposer({
           <VStack gap={4} align="stretch" maxW="none" minH="80vh">
             <Box mb={2}>
               <Flex justify={"space-between"}>
-                <HStack gap={3} align="center">
+                <HStack gap={3} align="center" flexWrap="wrap">
                   <Button
                     size="xs"
                     variant="ghost"
@@ -686,6 +690,18 @@ export default function WriteComposer({
                   <Box fontSize="sm" color="gray.600">
                     Writing for {sponsor.displayName || sponsor.name || `${sponsor.type} ${sponsor.id}`}
                   </Box>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={editorMode === "pending"}
+                    onClick={() => setPreview({
+                      title,
+                      excerpt,
+                      body: (editorRef.current?.getJSON() ?? docJSON ?? EMPTY_DOC) as TipTapDocument,
+                    })}
+                  >
+                    <IconEye size={14} /> Preview
+                  </Button>
                   <Button
                     size="xs"
                     variant="outline"
@@ -1172,6 +1188,30 @@ export default function WriteComposer({
           }}
         />
       </HStack>
+      <Dialog.Root open={preview !== null} onOpenChange={({ open }) => !open && setPreview(null)}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content className="mwc-preview" maxW="min(900px, calc(100vw - 32px))" maxH="90vh">
+            <Dialog.Header>
+              <Dialog.Title>Preview</Dialog.Title>
+              <Button size="xs" variant="ghost" onClick={() => setPreview(null)}>Close</Button>
+            </Dialog.Header>
+            <Dialog.Body className="mwc-preview-body" overflowY="auto" px={{ base: 5, md: 10 }} pb={10}>
+              {preview && (
+                <Box maxW="81ch" mx="auto">
+                  <Text as="h1" fontSize="3xl" lineHeight="1.15" fontWeight="bold" mb={4}>
+                    {preview.title || "Untitled"}
+                  </Text>
+                  {preview.excerpt && (
+                    <Text fontSize="xl" lineHeight="1.6" mb={8}>{preview.excerpt}</Text>
+                  )}
+                  <TipTapRenderer content={preview.body} />
+                </Box>
+              )}
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
     </Box>
   );
 }
