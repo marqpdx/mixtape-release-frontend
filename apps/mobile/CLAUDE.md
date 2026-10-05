@@ -27,7 +27,7 @@ npx expo prebuild --clean --platform android
 npx expo run:android --device
 
 # Build portable release APK for QA and install via adb
-bash android_release_install.sh
+bash run_android_release_install.sh
 # Optional flags: --clean (rebuild android/), --debug, --device <DEVICE_ID>
 
 # EAS cloud builds
