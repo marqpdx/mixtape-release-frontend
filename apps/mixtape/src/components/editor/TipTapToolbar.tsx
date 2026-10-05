@@ -10,6 +10,7 @@ import {
   IconUnderline,
   IconShare,
   IconStrikethrough,
+  IconCode,
   IconList,
   IconListNumbers,
   IconH1,
@@ -188,6 +189,14 @@ export default function TipTapToolbar({
           icon={<IconStrikethrough size={16} />}
           onClick={() => editor.chain().focus().toggleMark("strike").run()}
           isActive={editor.isActive("strike")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Inline code"
+          icon={<IconCode size={16} />}
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          isActive={editor.isActive("code")}
           tabIndex={-1}
           size="xs"
         />
