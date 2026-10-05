@@ -864,7 +864,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
-  }, [focusedIssueId]);
+  }, [focusedIssueId, setIsPreview]);
 
   const {
     issue: focusedIssueData,
@@ -1045,7 +1045,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     } catch {
       toaster.create({ title: "Failed to delete Issue", type: "error" });
     }
-  }, [deleteIssue, focusedIssueId]);
+  }, [deleteIssue, focusedIssueId, setIsPreview]);
 
   const isLoading = issuesLoading || docsLoading;
 
