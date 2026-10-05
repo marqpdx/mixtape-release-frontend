@@ -148,9 +148,6 @@ export const COMMON_TYPOS: CommonTypo[] = [
   { wrong: 'im',        correct: "I'm" },
   { wrong: 'youll',     correct: "you'll" },
   { wrong: 'theyll',    correct: "they'll" },
-  { wrong: 'well',      correct: "we'll" },
-  { wrong: 'shell',     correct: "she'll" },
-  { wrong: 'hell',      correct: "he'll" },
   { wrong: 'itll',      correct: "it'll" },
   { wrong: 'thatll',    correct: "that'll" },
 

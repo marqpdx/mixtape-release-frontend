@@ -19,6 +19,12 @@ import {
 import { COMMON_TYPOS } from '@/lib/spell/commonTypos';
 
 const STORAGE_KEY = 'mixtape-spell-dictionary';
+const DICTIONARY_VERSION = 3;
+const RETIRED_SEED_CORRECTIONS = new Map([
+  ['well', "we'll"],
+  ['shell', "she'll"],
+  ['hell', "he'll"],
+]);
 
 function normalizeToken(token: string): string {
   return token
@@ -40,8 +46,15 @@ export interface SpellDictionary {
   ignores: string[];
 }
 
+function migrateCorrections(corrections: SpellCorrection[], version?: number): SpellCorrection[] {
+  if (version === DICTIONARY_VERSION) return corrections;
+  return corrections.filter(
+    ({ wrong, correct }) => RETIRED_SEED_CORRECTIONS.get(normalizeToken(wrong)) !== correct
+  );
+}
+
 const DEFAULT_DICTIONARY: SpellDictionary = {
-  version: 2,
+  version: DICTIONARY_VERSION,
   corrections: [],
   ignores: [],
 };
@@ -64,13 +77,15 @@ export function useSpellDictionary() {
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<SpellDictionary>;
         setLocalDictionary({
-          version: 2,
-          corrections: Array.isArray(parsed.corrections) ? parsed.corrections : [],
+          version: DICTIONARY_VERSION,
+          corrections: Array.isArray(parsed.corrections)
+            ? migrateCorrections(parsed.corrections, parsed.version)
+            : [],
           ignores: Array.isArray(parsed.ignores) ? parsed.ignores : [],
         });
       } else {
         const seeded: SpellDictionary = {
-          version: 2,
+          version: DICTIONARY_VERSION,
           corrections: SEED_CORRECTIONS.map(c => ({
             ...c,
             addedAt: new Date().toISOString(),
@@ -307,8 +322,8 @@ export function useSpellDictionary() {
       const parsed = JSON.parse(json) as Partial<SpellDictionary>;
       if (parsed.corrections && Array.isArray(parsed.corrections)) {
         setLocalDictionary({
-          version: 2,
-          corrections: parsed.corrections,
+          version: DICTIONARY_VERSION,
+          corrections: migrateCorrections(parsed.corrections, parsed.version),
           ignores: Array.isArray(parsed.ignores) ? parsed.ignores.map(normalizeToken).filter(Boolean) : [],
         });
         return true;
