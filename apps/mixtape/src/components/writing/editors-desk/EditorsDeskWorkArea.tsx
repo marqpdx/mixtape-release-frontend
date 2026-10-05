@@ -590,6 +590,11 @@ function IssuePreviewPiece({
     dirtyRef.current = true;
     setDirty(true);
   }, []);
+  const handleTitleChange = useCallback((nextTitle: string) => {
+    setTitle(nextTitle);
+    dirtyRef.current = true;
+    setDirty(true);
+  }, []);
   const handleRevisionChange = useCallback((nextRevision: number) => {
     setRevision(nextRevision);
     if (dirtyRef.current) {
@@ -623,7 +628,8 @@ function IssuePreviewPiece({
             published={false}
             excerpt={excerpt}
             onExcerptChange={setExcerpt}
-            onTitleChange={setTitle}
+            onTitleLoaded={setTitle}
+            onTitleChange={handleTitleChange}
             onBodyLoaded={handleBodyLoaded}
             onBodyChange={handleBodyChange}
             onRevisionChange={handleRevisionChange}
@@ -674,10 +680,9 @@ function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
   onDraftSaved: () => void;
 }) {
   const [excerpt, setExcerpt] = useState("");
-  const dirtyRef = React.useRef(false);
   const handleBodyLoaded = useCallback(() => undefined, []);
-  const handleBodyChange = useCallback(() => {
-    dirtyRef.current = true;
+  const handleBodyChange = useCallback(() => undefined, []);
+  const handleRevisionChange = useCallback(() => {
     onDraftSaved();
   }, [onDraftSaved]);
 
@@ -705,6 +710,7 @@ function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
         hideSummary
         onBodyLoaded={handleBodyLoaded}
         onBodyChange={handleBodyChange}
+        onRevisionChange={handleRevisionChange}
       />
     </Box>
   );

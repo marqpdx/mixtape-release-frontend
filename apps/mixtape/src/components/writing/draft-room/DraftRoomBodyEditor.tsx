@@ -20,6 +20,7 @@ interface DraftRoomBodyEditorProps {
   onBodyLoaded: (body: JSONContent, excerpt: string) => void;
   onBodyChange: (body: JSONContent) => void;
   onRevisionChange?: (revision: number) => void;
+  onTitleLoaded?: (title: string) => void;
   /** When set, renders an editable title field above the editor and routes
    * edits back through this callback + autosave. Classic Draft Room already
    * has its own Title field in the Meta tab, so it leaves this unset; Editor's
@@ -31,7 +32,7 @@ interface DraftRoomBodyEditorProps {
   hideSummary?: boolean;
 }
 
-export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, published, excerpt, onExcerptChange, onBodyLoaded, onBodyChange, onRevisionChange, onTitleChange, hideSummary }: DraftRoomBodyEditorProps) {
+export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, published, excerpt, onExcerptChange, onBodyLoaded, onBodyChange, onRevisionChange, onTitleLoaded, onTitleChange, hideSummary }: DraftRoomBodyEditorProps) {
   const [body, setBody] = useState<JSONContent | null>(null);
   const [loadError, setLoadError] = useState(false);
   const titleRef = useRef(title);
@@ -72,6 +73,10 @@ export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, publish
       const nextBody = data.body_json && typeof data.body_json === "object"
         ? data.body_json as JSONContent
         : EMPTY_DOC;
+      if (typeof data.title === "string") {
+        titleRef.current = data.title;
+        onTitleLoaded?.(data.title);
+      }
       const loadedExcerpt = data.excerpt || "";
       onExcerptChange(loadedExcerpt);
       if (typeof data.auto_save_count === "number") {
@@ -89,7 +94,7 @@ export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, publish
     });
 
     return () => { active = false; };
-    // onExcerptChange/onBodyLoaded intentionally excluded: this load effect
+    // Parent callbacks intentionally excluded: this load effect
     // should only re-run when the piece identity or mode changes, not when
     // the parent's excerpt-setter identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
