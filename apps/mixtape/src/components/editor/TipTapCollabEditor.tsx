@@ -44,6 +44,7 @@ const CustomParagraph = Paragraph.extend({
 const CollabStarterKit = StarterKit.configure({
   undoRedo: false,
   paragraph: false,
+  link: { openOnClick: false },
 });
 
 interface TipTapCollabEditorProps {
@@ -332,7 +333,6 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
 
 TipTapCollabEditor.displayName = "TipTapCollabEditor";
 export default TipTapCollabEditor;
-
 
 
 

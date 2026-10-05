@@ -16,7 +16,6 @@ import * as Y from "yjs";
 import Underline from "@tiptap/extension-underline";
 import BulletList from "@tiptap/extension-bullet-list";
 import ListItem from "@tiptap/extension-list-item";
-import Link from "@tiptap/extension-link";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
 import Image from "@tiptap/extension-image";
@@ -56,8 +55,7 @@ type ToolbarOption =
   | "underline"
   | "strike"
   | "bulletList"
-  | "orderedList"
-  | "link";
+  | "orderedList";
 
 // Default toolbar options - defined outside component to maintain stable reference
 const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [
@@ -372,6 +370,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       heading: false,
       bold: false,
       italic: false,
+      link: { openOnClick: false },
       // Keep bulletList and listItem - needed for existing document content
       // bulletList: false,
       // listItem: false,
@@ -432,13 +431,6 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     ...(toolbarOptions.includes("strike") ? [Strike] : []),
     ...(toolbarOptions.includes("bulletList") ? [BulletList, ListItem] : []),
     ...(toolbarOptions.includes("orderedList") ? [OrderedList, ListItem] : []),
-    ...(toolbarOptions.includes("link") ? [
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        linkOnPaste: true,
-      }),
-    ] : []),
   ], [toolbarOptions]);
 
   // Combine base extensions with toolbar extensions - memoized to prevent editor recreation

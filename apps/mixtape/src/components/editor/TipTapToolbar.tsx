@@ -2,11 +2,12 @@
 
 import { Editor } from "@tiptap/react";
 import NextLink from "next/link";
-import { Box, HStack, IconButton, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Dialog, Field, HStack, IconButton, Input, Link, Text } from "@chakra-ui/react";
 import {
   IconBold,
   IconItalic,
   IconLink,
+  IconUnlink,
   IconUnderline,
   IconShare,
   IconStrikethrough,
@@ -29,6 +30,25 @@ import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 
+function normalizeLinkHref(value: string): string | null {
+  const href = value.trim();
+  if (!href || href.startsWith("//")) return null;
+  if (href.startsWith("/")) return href;
+  if (/^(mailto|tel):/i.test(href)) {
+    const target = href.slice(href.indexOf(":") + 1);
+    return target && !/\s/.test(target) ? href : null;
+  }
+  if (/^[a-z][a-z\d+.-]*:/i.test(href) && !/^https?:\/\//i.test(href)) return null;
+
+  const candidate = /^https?:\/\//i.test(href) ? href : `https://${href}`;
+  try {
+    const url = new URL(candidate);
+    return url.hostname ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function TipTapToolbar({
   editor,
   gristMode = false,
@@ -45,6 +65,11 @@ export default function TipTapToolbar({
   const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
   const [showHelp, setShowHelp] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkError, setLinkError] = useState("");
+  const [editingLink, setEditingLink] = useState(false);
+  const [linkSelection, setLinkSelection] = useState<{ from: number; to: number } | null>(null);
   const [, setEditorTick] = useState(0);
   const fontModeKey = "writing_font_mode";
   const SerifIcon = (
@@ -120,9 +145,41 @@ export default function TipTapToolbar({
     [editor]
   );
 
+  const openLinkDialog = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const active = editor.isActive("link");
+    if (from === to && !active) return;
+    setLinkSelection({ from, to });
+    setEditingLink(active);
+    setLinkUrl(active ? String(editor.getAttributes("link").href ?? "") : "");
+    setLinkError("");
+    setLinkDialogOpen(true);
+  };
+
+  const applyLink = () => {
+    if (!editor || !linkSelection) return;
+    const href = normalizeLinkHref(linkUrl);
+    if (!href) {
+      setLinkError("Enter a valid web address, email link, phone link, or site path.");
+      return;
+    }
+    const chain = editor.chain().focus().setTextSelection(linkSelection);
+    if (editingLink) chain.extendMarkRange("link");
+    chain.setLink({ href }).run();
+    setLinkDialogOpen(false);
+  };
+
+  const removeLink = () => {
+    if (!editor || !linkSelection) return;
+    editor.chain().focus().setTextSelection(linkSelection).extendMarkRange("link").unsetLink().run();
+    setLinkDialogOpen(false);
+  };
+
   if (!editor) return null;
 
   return (
+    <>
     <HStack p={1} pt={2} gap={0.5} justify="space-between" align="start" wrap="wrap">
       <HStack gap={0.5}>
         <EditorToolbarButton
@@ -219,8 +276,9 @@ export default function TipTapToolbar({
         <EditorToolbarButton
           tooltip="Link"
           icon={<IconLink size={16} />}
-          onClick={() => editor.chain().focus().setMark("link", { href: "https://example.com" }).run()}
+          onClick={openLinkDialog}
           isActive={editor.isActive("link")}
+          disabled={editor.state.selection.empty && !editor.isActive("link")}
           tabIndex={-1}
           size="xs"
         />
@@ -372,5 +430,50 @@ Sessions are created automatically on your first /new command. Autosave keeps th
         </Box>
       ) : null}
     </HStack>
+    <Dialog.Root open={linkDialogOpen} onOpenChange={({ open }) => setLinkDialogOpen(open)}>
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
+        <Dialog.Content maxW="440px">
+          <Dialog.Header>
+            <Dialog.Title>{editingLink ? "Edit link" : "Add link"}</Dialog.Title>
+          </Dialog.Header>
+          <Dialog.Body>
+            <Field.Root invalid={!!linkError}>
+              <Field.Label>Destination URL</Field.Label>
+              <Input
+                autoFocus
+                type="text"
+                inputMode="url"
+                value={linkUrl}
+                placeholder="https://..."
+                onChange={(event) => {
+                  setLinkUrl(event.target.value);
+                  setLinkError("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applyLink();
+                  }
+                }}
+              />
+              {linkError && <Field.ErrorText>{linkError}</Field.ErrorText>}
+            </Field.Root>
+          </Dialog.Body>
+          <Dialog.Footer justifyContent="space-between">
+            {editingLink ? (
+              <Button size="sm" variant="ghost" onClick={removeLink}>
+                <IconUnlink size={16} /> Remove link
+              </Button>
+            ) : <Box />}
+            <HStack gap={2}>
+              <Button size="sm" variant="ghost" onClick={() => setLinkDialogOpen(false)}>Cancel</Button>
+              <Button size="sm" onClick={applyLink}>{editingLink ? "Save link" : "Add link"}</Button>
+            </HStack>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Dialog.Root>
+    </>
   );
 }
