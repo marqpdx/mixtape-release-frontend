@@ -668,13 +668,17 @@ function IssuePreviewPiece({
 }
 
 // ---------------------------------------------------------------------------
-// Focus mode -- continuous-scroll reading/editing, body content only. Each
+// Gist mode -- continuous-scroll reading/editing, body content only. Each
 // piece keeps its own independent TipTap instance and autosave (same model
 // as everywhere else in this codebase); only the chrome around it is
 // stripped, so pieces sit close together and read as near-continuous.
+// Named "Gist mode" (not "Focus mode") to avoid colliding with the
+// Focus-Centered Writing ADR's unrelated `Focus` model (verb+object that
+// organizes attention until resolved) -- decided 2026-10-06, see
+// puddlejump decisions/focus-centered-writing-adr/focus-centered-writing-handoff-02.md.
 // ---------------------------------------------------------------------------
 
-function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
+function IssueGistPiece({ placement, isEditor, onDraftSaved }: {
   placement: IssueReadPlacement;
   isEditor: boolean;
   onDraftSaved: () => void;
@@ -688,7 +692,7 @@ function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
 
   if (!isEditor || placement.status === "published") {
     return (
-      <Box className="edw-focus-piece">
+      <Box className="edw-gist-piece">
         {placement.body_json ? (
           <TipTapRenderer content={placement.body_json as unknown as TipTapDocument} />
         ) : (
@@ -699,7 +703,7 @@ function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
   }
 
   return (
-    <Box className="edw-focus-piece">
+    <Box className="edw-gist-piece">
       <DraftRoomBodyEditor
         pieceId={placement.id}
         pieceSlug={placement.slug}
@@ -718,8 +722,8 @@ function IssueFocusPiece({ placement, isEditor, onDraftSaved }: {
 
 function IssuePreview({ issueId, mode, onModeChange, onClose, onReviewSpelling, onSignOff }: {
   issueId: string;
-  mode: "review" | "focus";
-  onModeChange: (mode: "review" | "focus") => void;
+  mode: "review" | "gist";
+  onModeChange: (mode: "review" | "gist") => void;
   onClose: () => void;
   onReviewSpelling: (pieceId: string, revision: number) => Promise<void>;
   onSignOff: (pieceId: string, revision: number) => Promise<void>;
@@ -744,10 +748,10 @@ function IssuePreview({ issueId, mode, onModeChange, onClose, onReviewSpelling, 
             </Button>
             <Button
               size="xs"
-              variant={mode === "focus" ? "solid" : "ghost"}
-              onClick={() => onModeChange("focus")}
+              variant={mode === "gist" ? "solid" : "ghost"}
+              onClick={() => onModeChange("gist")}
             >
-              Focus
+              Gist
             </Button>
           </HStack>
           <Tooltip content="Dismiss preview">
@@ -763,10 +767,10 @@ function IssuePreview({ issueId, mode, onModeChange, onClose, onReviewSpelling, 
           <TipTapRenderer content={issue.description as unknown as TipTapDocument} />
         </Box>
       )}
-      <VStack align="stretch" gap={mode === "focus" ? 3 : 8}>
+      <VStack align="stretch" gap={mode === "gist" ? 3 : 8}>
         {issue?.placements.map((placement, index) =>
-          mode === "focus" ? (
-            <IssueFocusPiece key={placement.id} placement={placement} isEditor={issue.is_editor} onDraftSaved={handleDraftSaved} />
+          mode === "gist" ? (
+            <IssueGistPiece key={placement.id} placement={placement} isEditor={issue.is_editor} onDraftSaved={handleDraftSaved} />
           ) : (
             <IssuePreviewPiece
               key={placement.id}
@@ -844,7 +848,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [issueDismissed, setIssueDismissed] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"board" | "review" | "focus">("board");
+  const [previewMode, setPreviewMode] = useState<"board" | "review" | "gist">("board");
   const isPreview = previewMode !== "board";
   const setIsPreview = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
     setPreviewMode((prevMode) => {
@@ -1157,7 +1161,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
               {isPreview && focusedIssueId ? (
                 <IssuePreview
                   issueId={focusedIssueId}
-                  mode={previewMode === "focus" ? "focus" : "review"}
+                  mode={previewMode === "gist" ? "gist" : "review"}
                   onModeChange={setPreviewMode}
                   onClose={() => setPreviewMode("board")}
                   onReviewSpelling={handleReviewSpelling}

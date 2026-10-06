@@ -27,8 +27,9 @@ interface DraftRoomBodyEditorProps {
    * Desk's multi-piece preview has no other place to edit title, so it uses
    * this inline field instead. */
   onTitleChange?: (title: string) => void;
-  /** Suppress the Summary field -- used by Editor's Desk's Focus mode, which
-   * wants body content only, no title/summary chrome. */
+  /** Suppress the Summary field -- used by Editor's Desk's Gist mode and the
+   * Storyboard Linear View, both of which want body content only, no
+   * title/summary chrome. */
   hideSummary?: boolean;
 }
 
