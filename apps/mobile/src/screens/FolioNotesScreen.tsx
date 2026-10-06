@@ -45,7 +45,7 @@ const SHAPE_LABELS: Record<FolioNoteShape, string> = {
   character: 'Character',
   scene: 'Scene',
   plot: 'Plot',
-  place: 'Place',
+  setting: 'Setting',
   world: 'World',
   meta: 'Meta',
   unplaced: 'Unplaced',

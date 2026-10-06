@@ -169,7 +169,7 @@ export async function rejectFolioCandidate(candidateId: string): Promise<FolioMa
 
 // Plain strings server-side (folio/shapes.py) — kept as a string union here
 // so a later Shapes-Library-backed vocabulary is additive, not a rename.
-export type FolioNoteShape = "character" | "scene" | "plot" | "place" | "world" | "meta" | "unplaced";
+export type FolioNoteShape = "character" | "scene" | "plot" | "setting" | "world" | "meta" | "unplaced";
 
 export interface FolioNote {
   id: string;
@@ -189,7 +189,14 @@ export interface FolioNote {
   confirmed_shape: FolioNoteShape | "";
   /** Tending output (Switchboard → Inkwell folio_note_tend) — augments, never replaces, the note. */
   summary: string;
-  mentions: { surface: string; kind: "character" | "place" | "thing" | "concept" }[];
+  mentions: {
+    surface: string;
+    kind: "character" | "setting" | "place" | "thing" | "concept";
+    confidence?: number;
+    existing_entity_id?: string | null;
+    confirmed_entity_id?: string;
+    confirmed_kind?: string;
+  }[];
   tended_at: string | null;
   tending_model: string;
   tending_prompt_version: string;
