@@ -6,6 +6,7 @@ excerpt: A faster, quieter path into writing — start typing immediately, resum
 routes:
   - /write
   - /write/doc/*
+  - /focus/*
 workAreas: []
 tags:
   - writing
@@ -36,6 +37,19 @@ tags:
 **The Page** — The actual writing surface, reached at `/write/doc/:id`. Same editor and autosave as Draft Room — nothing about how your writing is saved changes here.
 
 **Pick up tools** — A collapsed tray on the Page for reaching classic tools (like Draft Room) for a doc when you need something Write doesn't offer yet.
+
+**Focus** — A dedicated view for one piece of work until it's finished — today, that's publishing an Issue. Reached at `/focus/:id`, it shows the Issue's sequence of pieces, lets you reorder them, mark one as primary, and pull in unassigned drafts from the same space.
+
+---
+
+## Working on a Focus
+
+A Focus gathers everything needed to finish one task — right now, publishing an Issue — in one place.
+
+1. Open a Focus (from wherever it was started — Focus entry points are still being built out).
+2. The **sequence** lists the Issue's pieces in order. Use the up/down arrows to reorder, and the star to mark one piece as primary.
+3. **Unassigned docs** below the sequence lists other drafts from the same space — select **Add to issue** to pull one in.
+4. Selecting a piece in the sequence highlights it and remembers your place, so returning to this Focus picks up where you left off.
 
 ---
 
@@ -68,7 +82,8 @@ tags:
 - This is an early, in-progress surface — currently visible to superusers only while it's being built out.
 - New docs default to your own personal space; there's no way yet to choose a group from the Gate itself.
 - The "Pick up tools" tray currently only links out to Draft Room — Editor's Desk and Series Writing aren't linked yet.
-- There's no dedicated Focus view yet (the "Publishing an Issue" workflow) — that's a later phase of this surface.
+- The Focus view doesn't yet have its own entry points (starting one, or "Continue this focus" / "Add to issue…") — those are a later phase of this surface.
+- Selecting a piece in a Focus doesn't yet open editing tools in place (Edit, Shape, Sections, Preview) — that's also a later phase.
 
 ---
 

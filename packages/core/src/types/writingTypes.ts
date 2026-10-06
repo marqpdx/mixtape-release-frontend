@@ -578,6 +578,8 @@ export interface Issue {
   placements: IssuePlacement[]
   member_count: number
   is_publishable: boolean
+  sponsor_type: 'member' | 'group' | null
+  sponsor_slug: string | null
 }
 
 export interface IssueReadPlacement {

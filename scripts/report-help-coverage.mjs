@@ -79,6 +79,7 @@ function inferSubsystemFromPathname(pathname) {
   if (pathname.startsWith("/seed")) return "writing";
   if (pathname.startsWith("/settings")) return "member";
   if (pathname.startsWith("/storyboard")) return "storyboard";
+  if (pathname.startsWith("/focus")) return "writing";
   if (pathname.includes("/almanac")) return "almanac";
   if (pathname.includes("/projects")) return "projects";
   if (pathname.includes("/mobile")) return "mobile";
