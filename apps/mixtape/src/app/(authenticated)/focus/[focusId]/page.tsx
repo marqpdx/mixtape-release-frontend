@@ -12,20 +12,29 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { IconChevronDown, IconChevronUp, IconStar, IconStarFilled } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconEye, IconLayoutSidebar, IconPencil, IconStack2, IconStar, IconStarFilled, IconTag } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { TipTapRenderer, type TipTapDocument } from "@components/tiptap/TipTapRenderer";
 import { useFocus } from "@mixtape/api/hooks/useFocus";
 import { useIssue } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
+import FocusToolPanel, { type FocusTool } from "./FocusToolPanel";
 
 // Focus-Centered Writing ADR (decisions/focus-centered-writing-adr/,
-// puddlejump), Phase 2, FCW-6: the Focus view itself -- issue header,
-// reorderable sequence with a starred primary piece, and an
-// unassigned-docs candidate panel. Deliberately NOT built here (later
-// checkpoints): row tools / Shape-Meta panel (FCW-7), the Edit instrument
-// (FCW-8), the Sections instrument (FCW-9), Focus entry points (FCW-10),
-// and Resolution (FCW-11).
+// puddlejump), Phase 2: the Focus view (FCW-6) plus its selection row
+// tools and the reused Shape/Meta panel (FCW-7). Deliberately NOT built
+// here (later checkpoints): the Edit instrument's full-screen Page +
+// Focus trail (FCW-8), the Sections instrument's real behavior (FCW-9),
+// Focus entry points (FCW-10), and Resolution (FCW-11) -- Edit and
+// Sections appear as row tools but render a placeholder until then.
+
+const TOOLS: { key: FocusTool; label: string; icon: typeof IconPencil }[] = [
+  { key: "edit", label: "Edit", icon: IconPencil },
+  { key: "shape", label: "Shape", icon: IconTag },
+  { key: "meta", label: "Meta", icon: IconLayoutSidebar },
+  { key: "sections", label: "Sections", icon: IconStack2 },
+  { key: "preview", label: "Preview", icon: IconEye },
+];
 
 export default function FocusViewPage({ params }: { params: Promise<{ focusId: string }> }) {
   const { focusId } = use(params);
@@ -34,14 +43,20 @@ export default function FocusViewPage({ params }: { params: Promise<{ focusId: s
   const { issue, isLoading: issueLoading, addPlacement, removePlacement, setPlacementLead, reorderPlacements } = useIssue(issueId);
 
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState<FocusTool | null>(null);
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
+  const toolActiveBg = useColorModeValue("blue.50", "blue.900");
 
-  // Restore the last selection from Focus.state on load (exact resume --
-  // ADR §6's `state` JSON) even though there's no dedicated piece route yet.
+  // Restore the last selection and open tool from Focus.state on load
+  // (exact resume -- ADR §6's `state` JSON) even though there's no
+  // dedicated piece route yet.
   useEffect(() => {
     if (focus?.state?.selected_piece_id && selectedPieceId === null) {
       setSelectedPieceId(focus.state.selected_piece_id);
+      if (focus.state.open_tool) {
+        setActiveTool(focus.state.open_tool as FocusTool);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.id]);
@@ -137,58 +152,91 @@ export default function FocusViewPage({ params }: { params: Promise<{ focusId: s
               No pieces in this Issue yet -- add one from the candidates below.
             </Text>
           )}
-          {ordered.map((placement, index) => (
-            <HStack
-              key={placement.id}
-              className="focus-sequence-row"
-              p={3}
-              gap={3}
-              borderTopWidth={index === 0 ? "0" : "1px"}
-              borderColor={borderColor}
-              bg={selectedPieceId === placement.piece_id ? "theme.bgSecondary" : undefined}
-              cursor="pointer"
-              onClick={() => handleSelect(placement.piece_id)}
-            >
-              <VStack gap={0}>
-                <IconButton
-                  aria-label="Move up"
-                  size="2xs"
-                  variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); handleMove(placement.piece_id, -1); }}
+          {ordered.map((placement, index) => {
+            const isSelected = selectedPieceId === placement.piece_id;
+            return (
+              <Box key={placement.id} borderTopWidth={index === 0 ? "0" : "1px"} borderColor={borderColor}>
+                <HStack
+                  className="focus-sequence-row"
+                  p={3}
+                  gap={3}
+                  bg={isSelected ? "theme.bgSecondary" : undefined}
+                  cursor="pointer"
+                  onClick={() => handleSelect(placement.piece_id)}
                 >
-                  <IconChevronUp size={14} />
-                </IconButton>
-                <IconButton
-                  aria-label="Move down"
-                  size="2xs"
-                  variant="ghost"
-                  onClick={(e) => { e.stopPropagation(); handleMove(placement.piece_id, 1); }}
-                >
-                  <IconChevronDown size={14} />
-                </IconButton>
-              </VStack>
-              <IconButton
-                aria-label={placement.is_lead ? "Primary piece" : "Mark as primary"}
-                size="xs"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPlacementLead.mutate({ pieceId: placement.piece_id, isLead: !placement.is_lead });
-                }}
-              >
-                {placement.is_lead ? <IconStarFilled size={16} /> : <IconStar size={16} />}
-              </IconButton>
-              <Text flex="1">{placement.piece_title || "Untitled"}</Text>
-              <Text fontSize="xs" color={mutedColor}>{placement.word_count} words</Text>
-              <Button
-                size="xs"
-                variant="ghost"
-                onClick={(e) => { e.stopPropagation(); removePlacement.mutate(placement.piece_id); }}
-              >
-                Remove
-              </Button>
-            </HStack>
-          ))}
+                  <VStack gap={0}>
+                    <IconButton
+                      aria-label="Move up"
+                      size="2xs"
+                      variant="ghost"
+                      onClick={(e) => { e.stopPropagation(); handleMove(placement.piece_id, -1); }}
+                    >
+                      <IconChevronUp size={14} />
+                    </IconButton>
+                    <IconButton
+                      aria-label="Move down"
+                      size="2xs"
+                      variant="ghost"
+                      onClick={(e) => { e.stopPropagation(); handleMove(placement.piece_id, 1); }}
+                    >
+                      <IconChevronDown size={14} />
+                    </IconButton>
+                  </VStack>
+                  <IconButton
+                    aria-label={placement.is_lead ? "Primary piece" : "Mark as primary"}
+                    size="xs"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPlacementLead.mutate({ pieceId: placement.piece_id, isLead: !placement.is_lead });
+                    }}
+                  >
+                    {placement.is_lead ? <IconStarFilled size={16} /> : <IconStar size={16} />}
+                  </IconButton>
+                  <Text flex="1">{placement.piece_title || "Untitled"}</Text>
+                  <Text fontSize="xs" color={mutedColor}>{placement.word_count} words</Text>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={(e) => { e.stopPropagation(); removePlacement.mutate(placement.piece_id); }}
+                  >
+                    Remove
+                  </Button>
+                </HStack>
+
+                {isSelected && (
+                  <Box className="focus-row-tools" px={3} pb={3}>
+                    <HStack gap={1} mb={activeTool ? 3 : 0}>
+                      {TOOLS.map(({ key, label, icon: Icon }) => (
+                        <Button
+                          key={key}
+                          size="xs"
+                          variant={activeTool === key ? "solid" : "ghost"}
+                          bg={activeTool === key ? toolActiveBg : undefined}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = activeTool === key ? null : key;
+                            setActiveTool(next);
+                            updateState.mutate({ selected_piece_id: placement.piece_id, open_tool: next ?? undefined });
+                          }}
+                        >
+                          <Icon size={14} />
+                          {label}
+                        </Button>
+                      ))}
+                    </HStack>
+                    {activeTool && (
+                      <FocusToolPanel
+                        tool={activeTool}
+                        pieceId={placement.piece_id}
+                        pieceSlug={placement.piece_slug}
+                      />
+                    )}
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </VStack>
       </Box>
 

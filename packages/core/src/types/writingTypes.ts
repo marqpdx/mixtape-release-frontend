@@ -558,6 +558,7 @@ export interface IssuePlacement {
   added_at: string
   is_lead: boolean
   piece_id: string
+  piece_slug: string
   piece_title: string
   piece_status: ContentStatus
   spellcheck_clean: boolean
