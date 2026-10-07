@@ -181,9 +181,9 @@ export function WritePage({ pieceId }: WritePageProps) {
         display="flex"
         flexDirection="column"
         css={{
-          "& .main-editor-prose": { flex: 1, display: "flex", flexDirection: "column" },
-          "& .reggie": { height: "100% !important", flex: 1 },
-          "& .reggie .ProseMirror": { height: "100% !important" },
+          "& .main-editor-prose:not(.main-editor-gist)": { flex: 1, display: "flex", flexDirection: "column" },
+          "& .main-editor-prose:not(.main-editor-gist) .reggie": { height: "100% !important", flex: 1 },
+          "& .main-editor-prose:not(.main-editor-gist) .reggie .ProseMirror": { height: "100% !important" },
         }}
       >
         <MainEditor
@@ -194,6 +194,7 @@ export function WritePage({ pieceId }: WritePageProps) {
           placeholder="Start writing…"
           autoSave={autoSave}
           editorMode="solo"
+          enableGist
         />
       </Box>
 

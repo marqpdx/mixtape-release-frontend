@@ -2,7 +2,8 @@
 
 import React, { forwardRef } from "react";
 import type { Editor } from "@tiptap/react";
-import { Box } from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
+import { IconMaximize, IconMinimize } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapEditor from "@components/editor/TipTapEditor";
@@ -80,6 +81,8 @@ export interface MainEditorProps {
   gristMode?: boolean;
   /** Inline image uploader (solo only) — returns stable serve URL to embed */
   imageUpload?: (file: File) => Promise<string>;
+  /** Keep the same editor mounted while showing the distraction-free Gist view. */
+  enableGist?: boolean;
 }
 
 export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
@@ -100,6 +103,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       streamMode,
       gristMode,
       imageUpload,
+      enableGist = false,
       onCollabEditorReady,
     },
     ref
@@ -107,6 +111,17 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
     const bgColor = useColorModeValue("gray.50", "gray.900");
     const focusBorderColor = useColorModeValue("theme.accent", "theme.accent");
     const editorBorderColor = useColorModeValue("gray.200", "gray.700");
+    const gistBackdrop = "color-mix(in srgb, var(--theme-bg, #F7FAFC) 55%, transparent)";
+    const [gistOpen, setGistOpen] = React.useState(false);
+
+    React.useEffect(() => {
+      if (!gistOpen) return;
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") setGistOpen(false);
+      };
+      window.addEventListener("keydown", onKeyDown);
+      return () => window.removeEventListener("keydown", onKeyDown);
+    }, [gistOpen]);
 
     const isPending = editorMode === "pending";
     const wantsCollab = editorMode === "collab";
@@ -175,7 +190,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const backgroundSummaryData = useBackgroundSummary(editorInstance as any, {
-      enabled: !!editorInstance && editorFeaturesEnabled,
+      enabled: !!editorInstance && editorFeaturesEnabled && !gistOpen,
       debounceMs: 9000,
       summaryWords: 40,
       minWordsToSummarize: 50,
@@ -241,7 +256,20 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
 
     // ---------- Render ----------
     return (
-      <Prose className="main-editor-prose" maxW={"none"}>
+      <Prose
+        className={`main-editor-prose${gistOpen ? " main-editor-gist" : ""}`}
+        maxW="none"
+        position={gistOpen ? "fixed" : undefined}
+        inset={gistOpen ? 0 : undefined}
+        zIndex={gistOpen ? 1500 : undefined}
+        bg={gistOpen ? gistBackdrop : undefined}
+        display={gistOpen ? "flex" : undefined}
+        alignItems={gistOpen ? "center" : undefined}
+        justifyContent={gistOpen ? "center" : undefined}
+        h={gistOpen ? "100dvh" : undefined}
+        w={gistOpen ? "100vw" : undefined}
+        css={gistOpen ? { "& > *": { marginBlock: 0 } } : undefined}
+      >
         <Box
           className="reggie"
           borderWidth="1px"
@@ -250,13 +278,15 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
           bg={bgColor}
           overflow="hidden"
           transition="all 0.2s"
-          height="56vh"
+          height={gistOpen ? "96dvh" : "56vh"}
+          width={gistOpen ? "min(960px, 92vw)" : undefined}
+          flexShrink={gistOpen ? 0 : undefined}
           position="relative"
           _focusWithin={{ borderColor: focusBorderColor }}
           css={{
             "& .ProseMirror": {
-              height: "calc(52vh - 4px)",
-              padding: "24px",
+              height: gistOpen ? "calc(96dvh - 4px)" : "calc(52vh - 4px)",
+              padding: gistOpen ? "48px max(24px, calc((100% - 70ch) / 2))" : "24px",
               paddingBottom: "40px",
               outline: "none",
               fontSize: "16px",
@@ -267,6 +297,30 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             "& .prose": { maxWidth: "none" },
           }}
         >
+          {enableGist && (
+            <Button
+              className="main-editor-gist-toggle"
+              aria-label={gistOpen ? "Exit Gist view" : "Enter Gist view"}
+              title={gistOpen ? "Exit Gist (Esc)" : "Gist view"}
+              size="sm"
+              variant="subtle"
+              position="absolute"
+              top={gistOpen ? 3 : undefined}
+              bottom={gistOpen ? undefined : 3}
+              right={3}
+              zIndex={12}
+              aria-pressed={gistOpen}
+              onClick={() => {
+                setGistOpen((open) => !open);
+                requestAnimationFrame(() => {
+                  (editorRef.current as Editor | null)?.commands?.focus?.();
+                });
+              }}
+            >
+              {gistOpen ? <IconMinimize size={16} /> : <IconMaximize size={16} />}
+              {gistOpen ? "Exit Gist" : "Gist"}
+            </Button>
+          )}
           {isPending ? (
             showLoadingUI ? (
               <Box p="24px" opacity={0.8}>
@@ -290,6 +344,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
                   placeholder={placeholder}
                   className="borderless-editor"
                   editable={collabEditable}
+                  minimalChrome={gistOpen}
                 />
 
                 {/* {showLoadingUI && !collabReady && (
@@ -330,6 +385,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
               streamMode={streamMode ?? undefined}
               gristMode={gristMode}
               imageUpload={imageUpload}
+              minimalChrome={gistOpen}
             />
           )}
 

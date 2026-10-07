@@ -103,6 +103,7 @@ interface TipTapEditorProps {
   // handling, and a toolbar button. Receives the dropped/picked File and returns
   // the URL to embed (a stable /api/files/<id>/serve URL).
   imageUpload?: (file: File) => Promise<string>;
+  minimalChrome?: boolean;
 }
 
 type MentionState = {
@@ -128,6 +129,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   streamMode,
   gristMode,
   imageUpload,
+  minimalChrome = false,
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
   const isUpdatingContentRef = useRef(false);
@@ -812,16 +814,18 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         borderColor={toolbarBorderColor}
         borderRadius="lg"
         overflow="hidden"
-        pt={1}
+        pt={2}
         pl={1}
         position="relative"
       >
-        <TipTapToolbar
-          editor={editor}
-          gristMode={!!gristMode}
-          onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}
-          onSpellScan={() => setSpellScanOpen(true)}
-        />
+        {!minimalChrome && (
+          <TipTapToolbar
+            editor={editor}
+            gristMode={!!gristMode}
+            onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}
+            onSpellScan={() => setSpellScanOpen(true)}
+          />
+        )}
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
           css={{ '& > *': { marginBlock: 0 } }}>
             <EditorContent editor={editor} />

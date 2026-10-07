@@ -54,6 +54,7 @@ interface TipTapCollabEditorProps {
   editable?: boolean;
   placeholder?: string;
   className?: string;
+  minimalChrome?: boolean;
 }
 
 type YDocWithMeta = Y.Doc & {
@@ -72,6 +73,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
       editable = true,
       placeholder = "Type here...",
       className = "",
+      minimalChrome = false,
     },
     ref
   ) => {
@@ -113,6 +115,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
         attributes: {
           class: "editor-content",
           placeholder,
+          spellcheck: "true",
         },
       },
     });
@@ -261,10 +264,10 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
             borderColor={toolbarBorderColor}
             borderRadius="lg"
             overflow="hidden"
-            pt={1}
+            pt={2}
             pl={1}
           >
-            <TipTapToolbar editor={editor} />
+            {!minimalChrome && <TipTapToolbar editor={editor} />}
             <Prose
               className="editor-content-prose"
               bg={bgColorEditor}
@@ -333,6 +336,4 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
 
 TipTapCollabEditor.displayName = "TipTapCollabEditor";
 export default TipTapCollabEditor;
-
-
 

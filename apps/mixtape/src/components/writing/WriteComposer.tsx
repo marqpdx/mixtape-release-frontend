@@ -907,6 +907,7 @@ export default function WriteComposer({
                 key={collabKey}
                 ref={editorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 editorMode={editorMode}
+                enableGist
                 docJSON={docJSON as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 onContentChange={soloOnChange}
                 placeholder="Start writing your story..."
