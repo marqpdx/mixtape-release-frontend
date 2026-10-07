@@ -988,6 +988,8 @@ export default function WritingListWrapper({
   const groupByCollection = useMemo(() => createListCollection({
     items: [
       { value: 'by-list', label: 'None' },
+      // Issue ordering is a Lens candidate: reusable saved search/filter/sort is not specified yet.
+      // See puddlejump/zz/idea-writing-list-issue-lens.md and decisions/positions/context-curation-surface-brief.md.
       { value: 'by-issue', label: 'Issue' },
       { value: 'by-series', label: 'Series' },
       { value: 'by-category', label: 'Category' },
