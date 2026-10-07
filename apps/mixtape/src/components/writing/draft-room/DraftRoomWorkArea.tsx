@@ -8,13 +8,9 @@ import {
   Button,
   Grid,
   HStack,
-  Input,
-  Portal,
-  Select,
   Tabs,
   Text,
   VStack,
-  createListCollection,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 // import { Tooltip } from "@components/ui/tooltip";
@@ -30,6 +26,7 @@ import { Divider } from "@/components/common/Divider";
 import { IconPencil } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import AtelierShapeTab from "./AtelierShapeTab";
+import AtelierMetaTab from "./AtelierMetaTab";
 import DraftRoomBodyEditor from "./DraftRoomBodyEditor";
 import { CraftReadinessDots, type CraftReadiness } from "./CraftReadinessDots";
 
@@ -136,20 +133,6 @@ export default function DraftRoomWorkArea({
   const panelBg = useColorModeValue("gray.50", "gray.900");
   const panelBorder = useColorModeValue("gray.200", "gray.700");
   const itemHover = useColorModeValue("gray.100", "gray.800");
-  const inputBg = useColorModeValue("gray.50", "gray.900");
-  const inputBorder = useColorModeValue("gray.200", "gray.700");
-  const inputFocusBorder = useColorModeValue("blue.400", "blue.300");
-  const selectCollection = useMemo(
-    () =>
-      createListCollection({
-        items: [
-          { label: "Crossroads community", value: "crossroads" },
-          { label: "Public", value: "public" },
-          { label: "Myself", value: "self" },
-        ],
-      }),
-    []
-  );
 
   const {
     placements,
@@ -439,9 +422,6 @@ export default function DraftRoomWorkArea({
     };
   }, []);
 
-  const readinessColor = (isReady: boolean) => (isReady ? "green.400" : "orange.400");
-  const isTitleReady = Boolean(title.trim());
-  const isAudienceReady = Boolean(addressedTo.trim());
   // const isTagsReady = tags.length > 0 || noneOkTags;
   // const isCategoriesReady = categories.length > 0 || noneOkCategories;
   // const isSeriesReady = Boolean(series.trim()) || noneOkSeries;
@@ -694,84 +674,20 @@ export default function DraftRoomWorkArea({
               <Divider />
 
               {rightTab === "meta" && (
-                <VStack align="stretch" gap={4}>
-                  <Box>
-                    <HStack align="center" gap={3} mb={2}>
-                      <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isTitleReady)} />
-                      <Text fontSize="sm" fontWeight="medium">
-                        Title
-                      </Text>
-                      <Input
-                        size="sm"
-                        value={title}
-                        onChange={(event) => setTitle(event.target.value)}
-                        placeholder="Untitled"
-                        bg={inputBg}
-                        borderColor={inputBorder}
-                        _focus={{ borderColor: inputFocusBorder }}
-                        flex="1"
-                      />
-                      {showTitleSaved && (
-                        <Text fontSize="xs" color={textSecondary}>saved</Text>
-                      )}
-                      {showAutoSaved && (
-                        <Text fontSize="xs" color={textSecondary}>autosaved</Text>
-                      )}
-                    </HStack>
-                  </Box>
-
-                  <Box>
-                    <HStack align="center" gap={3} mb={2}>
-                      <Box w="8px" h="8px" borderRadius="full" bg={readinessColor(isAudienceReady)} />
-                      <Text fontSize="sm" fontWeight="medium">Audience</Text>
-                    </HStack>
-                    <Select.Root
-                      collection={selectCollection}
-                      value={addressedTo ? [addressedTo] : []}
-                      onValueChange={({ value }) => {
-                        const nextValue = value[0] ?? "public";
-                        setAddressedTo(nextValue);
-                        persistAddressedTo(nextValue);
-                      }}
-                    >
-                      <Select.HiddenSelect />
-                      <Select.Control>
-                        <Select.Trigger>
-                          <Select.ValueText placeholder="Select audience" />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                          <Select.Indicator />
-                          <Select.ClearTrigger />
-                        </Select.IndicatorGroup>
-                      </Select.Control>
-                      <Portal>
-                        <Select.Positioner>
-                          <Select.Content>
-                            {selectCollection.items.map((item) => (
-                              <Select.Item item={item} key={item.value}>
-                                {item.label}
-                                <Select.ItemIndicator />
-                              </Select.Item>
-                            ))}
-                          </Select.Content>
-                        </Select.Positioner>
-                      </Portal>
-                    </Select.Root>
-                  </Box>
-
-                  <Divider />
-
-                  <HStack justify="flex-end">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { void handleSaveMetadata(); }}
-                      disabled={savingMeta || !pieceDetail}
-                    >
-                      {savingMeta ? "Saving..." : "Save"}
-                    </Button>
-                  </HStack>
-                </VStack>
+                <AtelierMetaTab
+                  title={title}
+                  onTitleChange={setTitle}
+                  addressedTo={addressedTo}
+                  onAddressedToChange={(value) => {
+                    setAddressedTo(value);
+                    persistAddressedTo(value);
+                  }}
+                  onSave={() => { void handleSaveMetadata(); }}
+                  saving={savingMeta}
+                  saveDisabled={!pieceDetail}
+                  showTitleSaved={showTitleSaved}
+                  showAutoSaved={showAutoSaved}
+                />
               )}
 
               {rightTab === "shape" && selectedPieceSlug && (
