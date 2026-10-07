@@ -692,7 +692,6 @@ export default function DraftRoomWorkArea({
 
               {rightTab === "shape" && selectedPieceSlug && (
                 <AtelierShapeTab
-                  pieceSlug={selectedPieceSlug}
                   pieceId={selectedPieceId}
                   initialTags={tags}
                   initialCategories={categories}

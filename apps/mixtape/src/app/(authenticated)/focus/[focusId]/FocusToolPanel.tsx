@@ -70,7 +70,7 @@ function usePieceDetail(pieceId: string | null) {
   return { detail, tags, setTags, categories, setCategories, loading };
 }
 
-function FocusShapeTool({ pieceId, pieceSlug }: { pieceId: string; pieceSlug: string }) {
+function FocusShapeTool({ pieceId }: { pieceId: string }) {
   const { detail, tags, setTags, categories, setCategories, loading } = usePieceDetail(pieceId);
 
   if (loading || !detail) return <Skeleton height="200px" />;
@@ -90,7 +90,6 @@ function FocusShapeTool({ pieceId, pieceSlug }: { pieceId: string; pieceSlug: st
 
   return (
     <AtelierShapeTab
-      pieceSlug={pieceSlug}
       pieceId={pieceId}
       initialTags={tags}
       initialCategories={categories}
@@ -169,7 +168,6 @@ function FocusComingSoonTool({ label, nextCheckpoint }: { label: string; nextChe
 export default function FocusToolPanel({
   tool,
   pieceId,
-  pieceSlug,
 }: {
   tool: FocusTool;
   pieceId: string;
@@ -180,7 +178,7 @@ export default function FocusToolPanel({
   return (
     <Box className="focus-tool-panel" borderWidth="1px" borderColor={borderColor} borderRadius="md" p={4}>
       <VStack align="stretch" gap={3}>
-        {tool === "shape" && <FocusShapeTool pieceId={pieceId} pieceSlug={pieceSlug} />}
+        {tool === "shape" && <FocusShapeTool pieceId={pieceId} />}
         {tool === "meta" && <FocusMetaTool pieceId={pieceId} />}
         {tool === "preview" && <FocusPreviewTool pieceId={pieceId} />}
         {tool === "edit" && <FocusComingSoonTool label="Edit" nextCheckpoint="FCW-8" />}

@@ -118,7 +118,6 @@ const VERB_OPTIONS = [
 ];
 
 interface AtelierShapeTabProps {
-  pieceSlug: string;
   pieceId: string;
   onTagsChange?: (tags: Tag[]) => void;
   onCategoriesChange?: (categories: Category[]) => void;
@@ -187,7 +186,6 @@ function IgnoreButton({ label, ignored, loading, onClick }: {
 // ---------------------------------------------------------------------------
 
 export default function AtelierShapeTab({
-  pieceSlug,
   pieceId,
   onTagsChange,
   onCategoriesChange,
@@ -260,20 +258,20 @@ export default function AtelierShapeTab({
   const fetchReadiness = useCallback(() => {
     setReadinessLoading(true);
     axiosInstance
-      .get(`/api/atelier/${pieceSlug}/readiness/`)
+      .get(`/api/atelier/${pieceId}/readiness/`)
       .then((res) => {
         setReadiness(res.data as Readiness);
         onReadinessChange?.(res.data as Readiness);
       })
       .catch(() => setReadiness(null))
       .finally(() => setReadinessLoading(false));
-  }, [pieceSlug, onReadinessChange]);
+  }, [pieceId, onReadinessChange]);
 
   const toggleIgnored = async (dimension: ReadinessDimension) => {
     if (!readiness || ignoringDimension) return;
     setIgnoringDimension(dimension);
     try {
-      const res = await axiosInstance.patch(`/api/atelier/${pieceSlug}/readiness/`, {
+      const res = await axiosInstance.patch(`/api/atelier/${pieceId}/readiness/`, {
         dimension,
         ignored: !readiness.ignored?.includes(dimension),
       });
@@ -289,7 +287,7 @@ export default function AtelierShapeTab({
   const fetchSummaries = useCallback(() => {
     setSummariesLoading(true);
     axiosInstance
-      .get(`/api/atelier/${pieceSlug}/summaries/`)
+      .get(`/api/atelier/${pieceId}/summaries/`)
       .then((res) => {
         const data = res.data as Summaries;
         setSummaries(data);
@@ -301,12 +299,12 @@ export default function AtelierShapeTab({
       })
       .catch(() => setSummaries(null))
       .finally(() => setSummariesLoading(false));
-  }, [pieceSlug]);
+  }, [pieceId]);
 
   const fetchSeries = useCallback(() => {
     setSeriesLoading(true);
     axiosInstance
-      .get(`/api/atelier/${pieceSlug}/series/`)
+      .get(`/api/atelier/${pieceId}/series/`)
       .then((res) => {
         const data = res.data as { current: SeriesOption | null; available: SeriesOption[] };
         setCurrentSeries(data.current);
@@ -317,12 +315,12 @@ export default function AtelierShapeTab({
         setAvailableSeries([]);
       })
       .finally(() => setSeriesLoading(false));
-  }, [pieceSlug]);
+  }, [pieceId]);
 
   const fetchRelations = useCallback(() => {
     setRelationsLoading(true);
     axiosInstance
-      .get(`/api/atelier/${pieceSlug}/relations/`)
+      .get(`/api/atelier/${pieceId}/relations/`)
       .then((res) => {
         const data = res.data as { outgoing: OutgoingRelation[]; incoming: IncomingRelation[] };
         setOutgoing(data.outgoing);
@@ -333,12 +331,12 @@ export default function AtelierShapeTab({
         setIncoming([]);
       })
       .finally(() => setRelationsLoading(false));
-  }, [pieceSlug]);
+  }, [pieceId]);
 
   const fetchMarkers = useCallback(() => {
     setMarkersLoading(true);
     axiosInstance
-      .get(`/api/atelier/${pieceSlug}/markers/`)
+      .get(`/api/atelier/${pieceId}/markers/`)
       .then((res) => {
         const data = res.data as WritingMarkerOccurrence[];
         setMarkers(data);
@@ -350,16 +348,16 @@ export default function AtelierShapeTab({
       })
       .catch(() => setMarkers([]))
       .finally(() => setMarkersLoading(false));
-  }, [pieceSlug]);
+  }, [pieceId]);
 
   useEffect(() => {
-    if (!pieceSlug) return;
+    if (!pieceId) return;
     fetchReadiness();
     fetchSummaries();
     fetchSeries();
     fetchRelations();
     fetchMarkers();
-  }, [pieceSlug, fetchReadiness, fetchSummaries, fetchSeries, fetchRelations, fetchMarkers]);
+  }, [pieceId, fetchReadiness, fetchSummaries, fetchSeries, fetchRelations, fetchMarkers]);
 
   // Refresh readiness after any mutation
   const refreshReadiness = useCallback(() => {
@@ -385,7 +383,7 @@ export default function AtelierShapeTab({
     if (text === summaries?.[field].text) return;
     setSavingSummary(field);
     try {
-      const res = await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [field]: text });
+      const res = await axiosInstance.patch(`/api/atelier/${pieceId}/summaries/`, { [field]: text });
       setSummaries(res.data as Summaries);
       refreshReadiness();
     } catch {
@@ -402,9 +400,9 @@ export default function AtelierShapeTab({
     setSavingSummary(type + "_confirm");
     try {
       if (text !== summaries?.[type].text) {
-        await axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [type]: text });
+        await axiosInstance.patch(`/api/atelier/${pieceId}/summaries/`, { [type]: text });
       }
-      const res = await axiosInstance.post(`/api/atelier/${pieceSlug}/summaries/confirm/`, { types: [type] });
+      const res = await axiosInstance.post(`/api/atelier/${pieceId}/summaries/confirm/`, { types: [type] });
       setSummaries(res.data as Summaries);
       setDraftValues((values) => ({ ...values, [type]: text }));
       setExpandedSummary(null);
@@ -420,7 +418,7 @@ export default function AtelierShapeTab({
   // Series — set
   const handleSetSeries = (series: SeriesOption) => {
     axiosInstance
-      .put(`/api/atelier/${pieceSlug}/series/`, { series_id: series.id })
+      .put(`/api/atelier/${pieceId}/series/`, { series_id: series.id })
       .then(() => {
         setCurrentSeries(series);
         refreshReadiness();
@@ -430,7 +428,7 @@ export default function AtelierShapeTab({
   // Series — clear
   const handleClearSeries = () => {
     axiosInstance
-      .delete(`/api/atelier/${pieceSlug}/series/`)
+      .delete(`/api/atelier/${pieceId}/series/`)
       .then(() => {
         setCurrentSeries(null);
         refreshReadiness();
@@ -459,7 +457,7 @@ export default function AtelierShapeTab({
     if (!relTarget) return;
     setAddingRelation(true);
     axiosInstance
-      .post(`/api/atelier/${pieceSlug}/relations/`, {
+      .post(`/api/atelier/${pieceId}/relations/`, {
         target_slug: relTarget.slug,
         verb: relVerb,
       })
@@ -478,7 +476,7 @@ export default function AtelierShapeTab({
 
   const handleRemoveRelation = (relationId: string) => {
     axiosInstance
-      .delete(`/api/atelier/${pieceSlug}/relations/${relationId}/`)
+      .delete(`/api/atelier/${pieceId}/relations/${relationId}/`)
       .then(() => {
         setOutgoing((prev) => prev.filter((r) => r.id !== relationId));
         refreshReadiness();
@@ -487,7 +485,7 @@ export default function AtelierShapeTab({
 
   const handleAcknowledge = (relationId: string) => {
     axiosInstance
-      .post(`/api/atelier/${pieceSlug}/relations/${relationId}/acknowledge/`)
+      .post(`/api/atelier/${pieceId}/relations/${relationId}/acknowledge/`)
       .then((res) => {
         setIncoming((prev) =>
           prev.map((r) => r.id === relationId ? res.data as IncomingRelation : r)
@@ -497,7 +495,7 @@ export default function AtelierShapeTab({
 
   const handleDismiss = (relationId: string) => {
     axiosInstance
-      .post(`/api/atelier/${pieceSlug}/relations/${relationId}/dismiss/`)
+      .post(`/api/atelier/${pieceId}/relations/${relationId}/dismiss/`)
       .then(() => {
         setIncoming((prev) => prev.filter((r) => r.id !== relationId));
       });
@@ -507,7 +505,7 @@ export default function AtelierShapeTab({
     const draft = markerDrafts[marker.id];
     if (!draft?.label?.trim()) return;
     axiosInstance
-      .patch(`/api/atelier/${pieceSlug}/markers/${marker.id}/`, {
+      .patch(`/api/atelier/${pieceId}/markers/${marker.id}/`, {
         action: "affirm",
         label: draft.label.trim(),
         body: draft.body,
@@ -517,7 +515,7 @@ export default function AtelierShapeTab({
 
   const handleDismissMarker = (markerId: string) => {
     axiosInstance
-      .patch(`/api/atelier/${pieceSlug}/markers/${markerId}/`, { action: "dismiss" })
+      .patch(`/api/atelier/${pieceId}/markers/${markerId}/`, { action: "dismiss" })
       .then(() => setMarkers((prev) => prev.filter((m) => m.id !== markerId)));
   };
 
@@ -537,7 +535,7 @@ export default function AtelierShapeTab({
       if (summary?.trim()) {
         setDraftValues((values) => ({ ...values, [generatingFor]: summary }));
         setExpandedSummary(generatingFor);
-        void axiosInstance.patch(`/api/atelier/${pieceSlug}/summaries/`, { [generatingFor]: summary })
+        void axiosInstance.patch(`/api/atelier/${pieceId}/summaries/`, { [generatingFor]: summary })
           .then((res) => {
             setSummaries(res.data as Summaries);
             refreshReadiness();
@@ -560,7 +558,7 @@ export default function AtelierShapeTab({
       setGeneratingFor(null);
       setActiveRunId(null);
     }
-  }, [activeRun, activeRunId, generatingFor, pieceSlug, refreshReadiness]);
+  }, [activeRun, activeRunId, generatingFor, pieceId, refreshReadiness]);
 
   // Poll classify run and populate suggestions
   useEffect(() => {
