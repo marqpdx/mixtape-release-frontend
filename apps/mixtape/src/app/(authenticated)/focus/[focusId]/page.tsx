@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -21,12 +22,13 @@ import { useWriting } from "@mixtape/api/hooks/useWriting";
 import FocusToolPanel, { type FocusTool } from "./FocusToolPanel";
 
 // Focus-Centered Writing ADR (decisions/focus-centered-writing-adr/,
-// puddlejump), Phase 2: the Focus view (FCW-6) plus its selection row
-// tools and the reused Shape/Meta panel (FCW-7). Deliberately NOT built
-// here (later checkpoints): the Edit instrument's full-screen Page +
-// Focus trail (FCW-8), the Sections instrument's real behavior (FCW-9),
-// Focus entry points (FCW-10), and Resolution (FCW-11) -- Edit and
-// Sections appear as row tools but render a placeholder until then.
+// puddlejump), Phase 2: the Focus view (FCW-6), its selection row tools
+// and the reused Shape/Meta panel (FCW-7), and the Edit instrument
+// (FCW-8, full-screen Page + Focus trail -- see
+// components/writing/focus/FocusEditPage.tsx). Deliberately NOT built
+// here (later checkpoints): the Sections instrument's real behavior
+// (FCW-9), Focus entry points (FCW-10), and Resolution (FCW-11) --
+// Sections appears as a row tool but renders a placeholder until then.
 
 const TOOLS: { key: FocusTool; label: string; icon: typeof IconPencil }[] = [
   { key: "edit", label: "Edit", icon: IconPencil },
@@ -38,6 +40,7 @@ const TOOLS: { key: FocusTool; label: string; icon: typeof IconPencil }[] = [
 
 export default function FocusViewPage({ params }: { params: Promise<{ focusId: string }> }) {
   const { focusId } = use(params);
+  const router = useRouter();
   const { focus, isLoading: focusLoading, updateState } = useFocus(focusId);
   const issueId = focus?.object_type === "issue" ? focus.object_id : null;
   const { issue, isLoading: issueLoading, addPlacement, removePlacement, setPlacementLead, reorderPlacements } = useIssue(issueId);
@@ -215,6 +218,13 @@ export default function FocusViewPage({ params }: { params: Promise<{ focusId: s
                           bg={activeTool === key ? toolActiveBg : undefined}
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (key === "edit") {
+                              // Edit is a full-screen instrument (ADR §4/§7),
+                              // not an inline row panel -- navigate instead
+                              // of toggling activeTool.
+                              router.push(`/focus/${focusId}/piece/${placement.piece_id}/edit`);
+                              return;
+                            }
                             const next = activeTool === key ? null : key;
                             setActiveTool(next);
                             updateState.mutate({ selected_piece_id: placement.piece_id, open_tool: next ?? undefined });
