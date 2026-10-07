@@ -111,7 +111,10 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
     const bgColor = useColorModeValue("gray.50", "gray.900");
     const focusBorderColor = useColorModeValue("theme.accent", "theme.accent");
     const editorBorderColor = useColorModeValue("gray.200", "gray.700");
-    const gistBackdrop = "color-mix(in srgb, var(--theme-bg, #F7FAFC) 55%, transparent)";
+    const gistBackdrop = useColorModeValue(
+      "color-mix(in srgb, color-mix(in srgb, var(--theme-bg, #F7FAFC) 80%, var(--theme-text, #2D3748) 20%) 55%, transparent)",
+      "color-mix(in srgb, var(--theme-bg, #F7FAFC) 55%, transparent)"
+    );
     const [gistOpen, setGistOpen] = React.useState(false);
 
     React.useEffect(() => {
@@ -286,7 +289,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
           css={{
             "& .ProseMirror": {
               height: gistOpen ? "calc(96dvh - 4px)" : "calc(52vh - 4px)",
-              padding: gistOpen ? "48px max(24px, calc((100% - 70ch) / 2))" : "24px",
+              padding: gistOpen ? "43px max(21px, calc((100% - 71ch) / 2))" : "24px",
               paddingBottom: "40px",
               outline: "none",
               fontSize: "16px",
