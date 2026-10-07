@@ -65,6 +65,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as writingApi from "@mixtape/api/clients/writing/writingApi";
 import type { WritingSeries, WritingCategoryWithMeta } from "@mixtape/core/types/writingTypes";
+import type { IssueGrouping } from "@mixtape/core/types/writingTypes";
+import { listIssueGrouping } from "@mixtape/api/clients/writing/issueBoardApi";
 import { useGroupPermissions } from "@mixtape/api/hooks/groups/useGroupSectionPermissions";
 import { ScreencastCaptureButton } from "@components/MediaCapture/ScreencastCaptureButton";
 // import { postsColumns } from "@components/groups/writing/tabs/columns/postsColumns";
@@ -91,7 +93,26 @@ type Collaborator = {
   user: CollaboratorUser;
 };
 
-type GroupingMode = "by-list" | "by-tag" | "by-where" | "by-series" | "by-category";
+type GroupingMode = "by-list" | "by-tag" | "by-where" | "by-series" | "by-category" | "by-issue";
+
+function groupItemsByIssue<T>(items: T[], issues: IssueGrouping[], pieceId: (item: T) => string) {
+  const byPiece = new Map<string, T[]>();
+  for (const item of items) {
+    const id = pieceId(item);
+    const matches = byPiece.get(id) ?? [];
+    matches.push(item);
+    byPiece.set(id, matches);
+  }
+  const assigned = new Set<string>();
+  const groups = issues.map((issue) => {
+    const orderedItems = issue.piece_ids.flatMap((id) => byPiece.get(id) ?? []);
+    issue.piece_ids.forEach((id) => {
+      if (byPiece.has(id)) assigned.add(id);
+    });
+    return { issue, items: orderedItems };
+  }).filter((group) => group.items.length > 0);
+  return { groups, unassigned: items.filter((item) => !assigned.has(pieceId(item))) };
+}
 
 interface SponsorConfig {
   type: 'group' | 'member';
@@ -180,6 +201,16 @@ export default function WritingListWrapper({
     enabled: groupingMode === 'by-category',
   });
 
+  const {
+    data: issueGrouping = [],
+    isLoading: issuesLoading,
+    error: issuesError,
+  } = useQuery<IssueGrouping[]>({
+    queryKey: ["writing", "issues", "grouping", sponsor.type, sponsor.slug],
+    queryFn: () => listIssueGrouping(sponsor),
+    enabled: groupingMode === "by-issue" && !!sponsor.slug,
+  });
+
   // Load persisted tab from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -201,7 +232,7 @@ export default function WritingListWrapper({
         setDateSortField(savedDateSortField);
       }
       const savedGroupingMode = window.localStorage.getItem("writing_group_mode");
-      const validModes: GroupingMode[] = ["by-list", "by-tag", "by-where", "by-series", "by-category"];
+      const validModes: GroupingMode[] = ["by-list", "by-tag", "by-where", "by-series", "by-category", "by-issue"];
       if (validModes.includes(savedGroupingMode as GroupingMode)) {
         setGroupingMode(savedGroupingMode as GroupingMode);
       }
@@ -778,6 +809,15 @@ export default function WritingListWrapper({
     return sorted;
   }, [processedDrafts, dateSortField, dateSortOrder]);
 
+  const publishedByIssue = useMemo(
+    () => groupItemsByIssue(listPublishedPieces, issueGrouping, (item) => item.piece_id),
+    [listPublishedPieces, issueGrouping]
+  );
+  const draftsByIssue = useMemo(
+    () => groupItemsByIssue(listDrafts, issueGrouping, (item) => item.piece.id),
+    [listDrafts, issueGrouping]
+  );
+
   const tagGroups = useMemo(() => {
     const groups = new Map<string, FlattenedPlacement[]>();
     const untagged: FlattenedPlacement[] = [];
@@ -948,12 +988,34 @@ export default function WritingListWrapper({
   const groupByCollection = useMemo(() => createListCollection({
     items: [
       { value: 'by-list', label: 'None' },
+      { value: 'by-issue', label: 'Issue' },
       { value: 'by-series', label: 'Series' },
       { value: 'by-category', label: 'Category' },
       { value: 'by-tag', label: 'Tag' },
       { value: 'by-where', label: 'Where' },
     ],
   }), []);
+
+  const publishedIssueSections = [
+    ...publishedByIssue.groups.map(({ issue, items }) => ({
+      key: issue.id, title: issue.title, status: issue.status,
+      sponsorLabel: issue.sponsor_label, items,
+    })),
+    ...(publishedByIssue.unassigned.length ? [{
+      key: "no-issue", title: "No Issue", status: null,
+      sponsorLabel: null, items: publishedByIssue.unassigned,
+    }] : []),
+  ];
+  const draftIssueSections = [
+    ...draftsByIssue.groups.map(({ issue, items }) => ({
+      key: issue.id, title: issue.title, status: issue.status,
+      sponsorLabel: issue.sponsor_label, items,
+    })),
+    ...(draftsByIssue.unassigned.length ? [{
+      key: "no-issue", title: "No Issue", status: null,
+      sponsorLabel: null, items: draftsByIssue.unassigned,
+    }] : []),
+  ];
 
   return (
     <Box>
@@ -1090,6 +1152,46 @@ export default function WritingListWrapper({
               pageSize={25}
               defaultSort={{ field: "post_info", order: "desc" }}
             />
+          ) : groupingMode === "by-issue" ? (
+            issuesError ? <Text color="red.500">Could not load Issue grouping.</Text> :
+            issuesLoading ? <Text color={textSecondary}>Loading Issues...</Text> :
+            publishedIssueSections.length === 0 ? <Text color={textSecondary}>No published content found.</Text> : (
+              <Accordion.Root className="wlw-published-issues" collapsible multiple defaultValue={[publishedIssueSections[0].key]}>
+                {publishedIssueSections.map((section) => (
+                  <Accordion.Item className="wlw-published-issue" key={section.key} value={section.key}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={2} minW={0}>
+                          <Text fontWeight="semibold" lineClamp={1}>{section.title}</Text>
+                          {section.status && <Badge size="sm" variant="subtle">{section.status}</Badge>}
+                          {sponsor.type === "member" && section.sponsorLabel && (
+                            <Text color={textSecondary} fontSize="xs">{section.sponsorLabel}</Text>
+                          )}
+                          <Badge size="sm" variant="subtle">{section.items.length}</Badge>
+                        </HStack>
+                        <Accordion.ItemIndicator />
+                      </HStack>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box className="wlw-published-issue-body" pt={3}>
+                        <UniversalDataTable<FlattenedPlacement>
+                          key={section.key}
+                          data={section.items}
+                          title=""
+                          columns={postsColumns(handleRowClick, canManagePosts ? handlePublishedEdit : undefined, welcomePinnedPieceId)}
+                          showAvatar={false}
+                          onRowClick={handleRowClick}
+                          canView={() => true}
+                          canEdit={() => canManagePosts}
+                          showCreateButton={false}
+                          preserveOrder
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+            )
           ) : groupingMode === "by-tag" ? (
             <>
               <Accordion.Root
@@ -1440,6 +1542,59 @@ export default function WritingListWrapper({
               renderMetadata={renderDraftMetadata}
               defaultSort={{ field: "item_info", order: "desc" }}
             />
+          ) : groupingMode === "by-issue" ? (
+            issuesError ? <Text color="red.500">Could not load Issue grouping.</Text> :
+            issuesLoading ? <Text color={textSecondary}>Loading Issues...</Text> :
+            draftIssueSections.length === 0 ? <Text color={textSecondary}>No drafts found.</Text> : (
+              <Accordion.Root className="wlw-draft-issues" collapsible multiple defaultValue={[draftIssueSections[0].key]}>
+                {draftIssueSections.map((section) => (
+                  <Accordion.Item className="wlw-draft-issue" key={section.key} value={section.key}>
+                    <Accordion.ItemTrigger>
+                      <HStack justify="space-between" w="full">
+                        <HStack gap={2} minW={0}>
+                          <Text fontWeight="semibold" lineClamp={1}>{section.title}</Text>
+                          {section.status && <Badge size="sm" variant="subtle">{section.status}</Badge>}
+                          {sponsor.type === "member" && section.sponsorLabel && (
+                            <Text color={textSecondary} fontSize="xs">{section.sponsorLabel}</Text>
+                          )}
+                          <Badge size="sm" variant="subtle">{section.items.length}</Badge>
+                        </HStack>
+                        <Accordion.ItemIndicator />
+                      </HStack>
+                    </Accordion.ItemTrigger>
+                    <Accordion.ItemContent>
+                      <Box className="wlw-draft-issue-body" pt={3}>
+                        <UniversalDataTable<WorkingDocument>
+                          key={section.key}
+                          data={section.items}
+                          title=""
+                          showAvatar
+                          renderAvatar={(draft) => (
+                            <Avatar.Root size="lg" bg={draft.is_collaborative ? "purple.100" : "gray.100"}>
+                              <Avatar.Fallback>
+                                {draft.is_collaborative ? <IconUsersGroup size={20} color="purple" /> : <IconUser size={20} color="gray" />}
+                              </Avatar.Fallback>
+                            </Avatar.Root>
+                          )}
+                          actions={[
+                            { label: "Edit Draft", icon: <IconEdit size={16} />, onClick: handleDraftClick as any, variant: "ghost", colorScheme: "green" }, // eslint-disable-line @typescript-eslint/no-explicit-any
+                            { label: "Delete Draft", icon: <IconTrash size={16} />, onClick: handleDeleteDraft as any, variant: "ghost", colorScheme: "red" }, // eslint-disable-line @typescript-eslint/no-explicit-any
+                          ]}
+                          onRowClick={handleDraftClick as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+                          canEdit={() => true}
+                          canView={() => true}
+                          showCreateButton={false}
+                          renderTitle={renderDraftTitle}
+                          renderDescription={renderDraftDescription}
+                          renderMetadata={renderDraftMetadata}
+                          preserveOrder
+                        />
+                      </Box>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+              </Accordion.Root>
+            )
           ) : groupingMode === "by-tag" ? (
             <>
               <Accordion.Root

@@ -1,7 +1,7 @@
 // packages/api/src/clients/writing/issueBoardApi.ts
 // ADR-0054 + Phase 3 amendment: Issue Board API client (renamed from runBoardApi)
 
-import { Issue, IssueListItem, IssuePlacement, IssueRead } from "@mixtape/core/types/writingTypes";
+import { Issue, IssueGrouping, IssueListItem, IssuePlacement, IssueRead } from "@mixtape/core/types/writingTypes";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 
 export interface IssueSponsor {
@@ -11,6 +11,13 @@ export interface IssueSponsor {
 
 export async function listIssues(sponsor: IssueSponsor): Promise<IssueListItem[]> {
   const res = await axiosInstance.get("/api/writing/issues", {
+    params: { sponsor_type: sponsor.type, sponsor_slug: sponsor.slug },
+  });
+  return res.data;
+}
+
+export async function listIssueGrouping(sponsor: IssueSponsor): Promise<IssueGrouping[]> {
+  const res = await axiosInstance.get("/api/writing/issues/grouping", {
     params: { sponsor_type: sponsor.type, sponsor_slug: sponsor.slug },
   });
   return res.data;

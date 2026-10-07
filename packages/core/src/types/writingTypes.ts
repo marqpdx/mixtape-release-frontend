@@ -624,3 +624,12 @@ export interface IssueListItem {
   is_publishable: boolean
   piece_ids: string[]
 }
+
+export interface IssueGrouping {
+  id: string
+  title: string
+  designation: string | null
+  status: IssueStatus
+  sponsor_label: string
+  piece_ids: string[]
+}

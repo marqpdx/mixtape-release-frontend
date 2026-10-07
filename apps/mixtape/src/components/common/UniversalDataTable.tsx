@@ -79,6 +79,7 @@ interface UniversalDataTableProps<T extends BaseItem> {
   // Table Configuration
   pageSize?: number;
   defaultSort?: { field: string; order: "asc" | "desc" };
+  preserveOrder?: boolean;
 
   // Custom Renderers
   renderTitle?: (item: T) => ReactNode;
@@ -109,6 +110,7 @@ export default function UniversalDataTable<T extends BaseItem>({
   canView = () => true,
   pageSize = 10,
   defaultSort = { field: "item_info", order: "desc" },
+  preserveOrder = false,
   renderTitle,
   renderDescription,
   renderMetadata,
@@ -118,7 +120,7 @@ export default function UniversalDataTable<T extends BaseItem>({
   void pageSize;
   const router = useRouter();
   const columnHelper = createColumnHelper<T>();
-  const [sorting, setSorting] = useState<SortingState>([
+  const [sorting, setSorting] = useState<SortingState>(preserveOrder ? [] : [
     { id: defaultSort.field, desc: defaultSort.order === "desc" }
   ]);
 
@@ -310,6 +312,8 @@ export default function UniversalDataTable<T extends BaseItem>({
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    manualSorting: preserveOrder,
+    enableSorting: !preserveOrder,
     enableSortingRemoval: false,
     enableMultiSort: false,
   });
