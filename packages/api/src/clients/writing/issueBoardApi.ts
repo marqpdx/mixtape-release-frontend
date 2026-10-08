@@ -54,6 +54,11 @@ export async function publishIssue(issueId: string): Promise<Issue> {
   return res.data;
 }
 
+export async function unpublishIssue(issueId: string, cascade: boolean): Promise<Issue> {
+  const res = await axiosInstance.post(`/api/writing/issues/${issueId}/unpublish`, { cascade });
+  return res.data;
+}
+
 export async function addIssuePlacement(issueId: string, pieceId: string): Promise<IssuePlacement> {
   const res = await axiosInstance.post(`/api/writing/issues/${issueId}/placements`, { piece_id: pieceId });
   return res.data;

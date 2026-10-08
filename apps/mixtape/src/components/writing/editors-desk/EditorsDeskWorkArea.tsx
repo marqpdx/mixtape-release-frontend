@@ -19,6 +19,10 @@ import {
   VStack,
   Badge,
   Spinner,
+  MenuRoot,
+  MenuTrigger,
+  MenuContent,
+  MenuItem,
 } from "@chakra-ui/react";
 import {
   DndContext,
@@ -31,9 +35,10 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil } from "@tabler/icons-react";
+import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil, IconDotsVertical } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
+import { DialogRoot, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogCloseTrigger } from "@components/ui/dialog";
 import { useIssues, useIssue, useIssueRead } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@mixtape/api/hooks/useWriting";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
@@ -345,6 +350,7 @@ interface IssuePanelProps {
   onDelete: () => void;
   onOpenPiece?: (pieceId: string) => void;
   onPublish?: () => void;
+  onUnpublish?: (cascade: boolean) => void;
   focusedIssueData: Issue | null;
   focusedIssueLoading: boolean;
   onSaveDesignation?: (designation: string) => void;
@@ -367,6 +373,7 @@ function IssuePanel({
   onDelete,
   onOpenPiece,
   onPublish,
+  onUnpublish,
   focusedIssueData,
   focusedIssueLoading,
   onSaveDesignation,
@@ -415,6 +422,27 @@ function IssuePanel({
                   Publish Issue
                 </Button>
               </Tooltip>
+            )}
+            {onUnpublish && (issue.status === "published" || focusedIssueData?.placements.some((placement) => placement.piece_status === "published")) && (
+              <MenuRoot positioning={{ placement: "bottom-end" }}>
+                <MenuTrigger asChild>
+                  <IconButton aria-label="Issue publication actions" size="xs" variant="ghost">
+                    <IconDotsVertical size={15} />
+                  </IconButton>
+                </MenuTrigger>
+                <MenuContent>
+                  {issue.status === "published" && (
+                    <MenuItem value="unpublish-issue" onClick={() => onUnpublish(false)}>
+                      Unpublish Issue
+                    </MenuItem>
+                  )}
+                  {focusedIssueData?.placements.some((placement) => placement.piece_status === "published") && (
+                    <MenuItem value="return-to-drafts" onClick={() => onUnpublish(true)}>
+                      Return Issue and pieces to Drafts
+                    </MenuItem>
+                  )}
+                </MenuContent>
+              </MenuRoot>
             )}
             <Tooltip content="Close Issue">
               <IconButton aria-label="Close Issue" size="xs" variant="ghost" onClick={onZoomOut}>
@@ -848,6 +876,11 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(initialIssueId ?? null);
   const [issueDismissed, setIssueDismissed] = useState(false);
+  const [unpublishRequest, setUnpublishRequest] = useState<{
+    issueId: string;
+    cascade: boolean;
+    titles: string[];
+  } | null>(null);
   const [previewMode, setPreviewMode] = useState<"board" | "review" | "gist">("board");
   const isPreview = previewMode !== "board";
   const setIsPreview = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
@@ -867,19 +900,20 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
   useEffect(() => {
     if (!focusedIssueId) return;
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && unpublishRequest === null) {
         setIssueDismissed(true);
         setIsPreview(false);
       }
     };
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
-  }, [focusedIssueId, setIsPreview]);
+  }, [focusedIssueId, setIsPreview, unpublishRequest]);
 
   const {
     issue: focusedIssueData,
     isLoading: focusedIssueLoading,
     publishIssue,
+    unpublishIssue,
     signOffPiece,
     reviewSpelling,
     updateIssue,
@@ -998,6 +1032,28 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
       });
     }
   }, [focusedIssueId, publishIssue]);
+
+  const handleUnpublish = useCallback(async () => {
+    if (!unpublishRequest) return;
+    try {
+      await unpublishIssue.mutateAsync({
+        issueId: unpublishRequest.issueId,
+        cascade: unpublishRequest.cascade,
+      });
+      toaster.create({
+        title: unpublishRequest.cascade ? "Issue and pieces returned to Drafts" : "Issue returned to draft; pieces remain published",
+        type: "success",
+      });
+      setUnpublishRequest(null);
+    } catch (error) {
+      const data = (error as { response?: { data?: { detail?: string; shared_pieces?: string[] } } })?.response?.data;
+      toaster.create({
+        title: data?.detail || "Could not unpublish Issue",
+        description: data?.shared_pieces?.join(", "),
+        type: "error",
+      });
+    }
+  }, [unpublishRequest, unpublishIssue]);
 
   const handleSignOff = useCallback(async (pieceId: string, revision: number) => {
     if (!focusedIssueId) return;
@@ -1143,6 +1199,11 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                   onDelete={() => handleDeleteIssue(focusedIssueId)}
                   onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                   onPublish={handlePublish}
+                  onUnpublish={(cascade) => setUnpublishRequest({
+                    issueId: focusedIssueId,
+                    cascade,
+                    titles: focusedIssueData?.placements.map((placement) => placement.piece_title) ?? [],
+                  })}
                   focusedIssueData={focusedIssueData ?? null}
                   focusedIssueLoading={focusedIssueLoading}
                   onSaveDesignation={handleSaveDesignation}
@@ -1210,6 +1271,34 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
           <HStack gap={1.5}><Box w="8px" h="8px" borderRadius="full" bg="blue.400" /><Text fontSize="11px" color="theme.textSecondary">Published</Text></HStack>
         </HStack>
       </Box>
+
+      <DialogRoot open={unpublishRequest !== null} onOpenChange={({ open }) => !open && setUnpublishRequest(null)}>
+        <DialogContent>
+          <DialogHeader>{unpublishRequest?.cascade ? "Return Issue and pieces to Drafts?" : "Unpublish Issue?"}</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody>
+            {unpublishRequest?.cascade ? (
+              <>
+                <Text mb={2}>These pieces will also become drafts and disappear from their published destinations:</Text>
+                <VStack align="start" gap={1}>
+                  {unpublishRequest.titles.map((title, index) => (
+                    <Text key={`${index}-${title}`} fontSize="sm">{title}</Text>
+                  ))}
+                </VStack>
+                <Text mt={3} fontSize="sm">Pieces used by another published Issue cannot be returned to drafts.</Text>
+              </>
+            ) : (
+              <Text>The Issue will return to draft. Its pieces will remain published and visible in their current destinations.</Text>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setUnpublishRequest(null)}>Cancel</Button>
+            <Button colorPalette="orange" onClick={handleUnpublish} disabled={unpublishIssue.isPending}>
+              {unpublishIssue.isPending ? "Updating..." : unpublishRequest?.cascade ? "Return all to Drafts" : "Unpublish Issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
     </Box>
   );
 }

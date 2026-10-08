@@ -71,7 +71,16 @@ export function useIssue(issueId: string | null) {
     mutationFn: () => issueBoardApi.publishIssue(issueId!),
     onSuccess: (updated) => {
       qc.setQueryData(issueKey(issueId!), updated);
-      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+      qc.invalidateQueries({ queryKey: ["writing"] });
+    },
+  });
+
+  const unpublishIssue = useMutation({
+    mutationFn: ({ issueId: targetId, cascade }: { issueId: string; cascade: boolean }) =>
+      issueBoardApi.unpublishIssue(targetId, cascade),
+    onSuccess: (updated) => {
+      qc.setQueryData(issueKey(updated.id), updated);
+      qc.invalidateQueries({ queryKey: ["writing"] });
     },
   });
 
@@ -121,7 +130,7 @@ export function useIssue(issueId: string | null) {
   });
 
   return {
-    issue, isLoading, error, updateIssue, publishIssue,
+    issue, isLoading, error, updateIssue, publishIssue, unpublishIssue,
     addPlacement, removePlacement, setPlacementLead, reorderPlacements, signOffPiece, reviewSpelling,
   };
 }
