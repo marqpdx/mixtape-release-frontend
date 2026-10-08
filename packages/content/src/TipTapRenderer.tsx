@@ -263,20 +263,31 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
             </Box>
           )
 
-        case 'blockquote':
+        case 'blockquote': {
+          const role = node.attrs?.role === 'querent' || node.attrs?.role === 'respondent'
+            ? node.attrs.role
+            : null
           return (
             <Blockquote.Root key={index} mb={4}>
               <Blockquote.Content
-                bg={blockquoteBg}
+                bg={role ? 'bg.subtle' : blockquoteBg}
                 pl={4}
-                py={2}
-                borderLeftWidth="4px"
-                borderLeftColor={blockquoteBorderColor}
+                py={role ? 3 : 2}
+                borderLeftWidth={role ? '3px' : '4px'}
+                borderLeftColor={role === 'querent' ? 'teal.500' : role === 'respondent' ? 'blue.500' : blockquoteBorderColor}
+                borderRadius={role ? 'sm' : undefined}
+                fontStyle={role ? 'normal' : undefined}
               >
+                {role && (
+                  <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color={role === 'querent' ? 'teal.600' : 'blue.600'} mb={2}>
+                    {role === 'querent' ? 'Querent' : 'Respondent'}
+                  </Text>
+                )}
                 {renderContent(node.content)}
               </Blockquote.Content>
             </Blockquote.Root>
           )
+        }
 
         case 'image':
           return (

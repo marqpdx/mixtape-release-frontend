@@ -22,6 +22,9 @@ import {
   IconScissors,
   IconPhoto,
   IconTextSpellcheck,
+  IconBlockquote,
+  IconMessageQuestion,
+  IconMessageReply,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
@@ -29,6 +32,7 @@ import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import type { ConversationRole } from "./extensions/ConversationBlockquote";
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -176,6 +180,28 @@ export default function TipTapToolbar({
     setLinkDialogOpen(false);
   };
 
+  const toggleConversationRole = (role: ConversationRole) => {
+    if (!editor) return;
+    if (editor.isActive("blockquote", { role })) {
+      editor.chain().focus().toggleBlockquote().run();
+    } else if (editor.isActive("blockquote")) {
+      editor.chain().focus().updateAttributes("blockquote", { role }).run();
+    } else {
+      editor.chain().focus().toggleBlockquote().updateAttributes("blockquote", { role }).run();
+    }
+  };
+
+  const togglePlainBlockquote = () => {
+    if (!editor) return;
+    if (editor.isActive("blockquote") && !editor.getAttributes("blockquote").role) {
+      editor.chain().focus().toggleBlockquote().run();
+    } else if (editor.isActive("blockquote")) {
+      editor.chain().focus().updateAttributes("blockquote", { role: null }).run();
+    } else {
+      editor.chain().focus().toggleBlockquote().run();
+    }
+  };
+
   if (!editor) return null;
 
   return (
@@ -246,6 +272,30 @@ export default function TipTapToolbar({
           icon={<IconStrikethrough size={16} />}
           onClick={() => editor.chain().focus().toggleMark("strike").run()}
           isActive={editor.isActive("strike")}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Blockquote"
+          icon={<IconBlockquote size={16} />}
+          onClick={togglePlainBlockquote}
+          isActive={editor.isActive("blockquote") && !editor.getAttributes("blockquote").role}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Chat: Querent"
+          icon={<IconMessageQuestion size={16} />}
+          onClick={() => toggleConversationRole("querent")}
+          isActive={editor.isActive("blockquote", { role: "querent" })}
+          tabIndex={-1}
+          size="xs"
+        />
+        <EditorToolbarButton
+          tooltip="Chat: Respondent"
+          icon={<IconMessageReply size={16} />}
+          onClick={() => toggleConversationRole("respondent")}
+          isActive={editor.isActive("blockquote", { role: "respondent" })}
           tabIndex={-1}
           size="xs"
         />
