@@ -26,6 +26,8 @@ import {
 } from "@chakra-ui/react";
 import {
   DndContext,
+  pointerWithin,
+  type CollisionDetection,
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
@@ -35,7 +37,7 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
-import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil, IconDotsVertical } from "@tabler/icons-react";
+import { IconPlus, IconX, IconCheck, IconLock, IconTextSpellcheck, IconEye, IconChevronUp, IconChevronDown, IconStar, IconStarFilled, IconPencil, IconDotsVertical, IconBrandLinkedin, IconGripVertical } from "@tabler/icons-react";
 import { Tooltip } from "@components/ui/tooltip";
 import { toaster } from "@components/ui/toaster";
 import { DialogRoot, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogCloseTrigger } from "@components/ui/dialog";
@@ -47,6 +49,7 @@ import type { WorkingDocument, Issue, IssueListItem, IssueReadPlacement } from "
 import { TipTapRenderer, type TipTapDocument } from "@components/tiptap/TipTapRenderer";
 import { CraftReadinessDots, type CraftReadiness } from "../draft-room/CraftReadinessDots";
 import DraftRoomBodyEditor from "../draft-room/DraftRoomBodyEditor";
+import { IssueLinkedInPrep } from "./IssueLinkedInPrep";
 
 interface Sponsor {
   type: "member" | "group";
@@ -333,6 +336,43 @@ function DraggableDocCard({
   );
 }
 
+function IssueDropPosition({ issueId, index }: { issueId: string; index: number }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `issue-gap-${issueId}-${index}`,
+    data: { type: "issue-gap", issueId, index },
+  });
+  return (
+    <Box ref={setNodeRef} className="edw-issue-drop-position" h="14px" w="full" position="relative" aria-label={`Insert at position ${index + 1}`}>
+      <Box position="absolute" top="6px" left={0} right={0} h="2px" bg={isOver ? "blue.400" : "transparent"} pointerEvents="none" />
+    </Box>
+  );
+}
+
+function DraggableIssuePiece({ issueId, pieceId, title, children }: { issueId: string; pieceId: string; title: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `issue-piece-${pieceId}`,
+    data: { type: "issue-piece", issueId, pieceId },
+  });
+  return (
+    <Box ref={setNodeRef} className="edw-issue-piece" opacity={isDragging ? 0.4 : 1} transform={transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined}>
+      <Flex align="start" gap={1}>
+        <Tooltip content={`Move ${title} within Issue`}>
+          <IconButton aria-label={`Reorder ${title}`} size="2xs" variant="ghost" cursor="grab" flexShrink={0} {...attributes} {...listeners}>
+            <IconGripVertical size={14} />
+          </IconButton>
+        </Tooltip>
+        <Box flex={1} minW={0}>{children}</Box>
+      </Flex>
+    </Box>
+  );
+}
+
+const issueCollisionDetection: CollisionDetection = (args) => {
+  const collisions = pointerWithin(args);
+  const gap = collisions.find(({ id }) => args.droppableContainers.find((container) => container.id === id)?.data.current?.type === "issue-gap");
+  return gap ? [gap] : collisions;
+};
+
 // ---------------------------------------------------------------------------
 // Droppable Issue Panel
 // ---------------------------------------------------------------------------
@@ -350,6 +390,7 @@ interface IssuePanelProps {
   onDelete: () => void;
   onOpenPiece?: (pieceId: string) => void;
   onPublish?: () => void;
+  onPrepareLinkedIn?: () => void;
   onUnpublish?: (cascade: boolean) => void;
   focusedIssueData: Issue | null;
   focusedIssueLoading: boolean;
@@ -373,6 +414,7 @@ function IssuePanel({
   onDelete,
   onOpenPiece,
   onPublish,
+  onPrepareLinkedIn,
   onUnpublish,
   focusedIssueData,
   focusedIssueLoading,
@@ -382,7 +424,7 @@ function IssuePanel({
   onSetLead,
   onRemovePiece,
 }: IssuePanelProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: `issue-${issue.id}` });
+  const { setNodeRef, isOver } = useDroppable({ id: `issue-${issue.id}`, data: { type: "issue", issueId: issue.id } });
   const rollup = issueRollupColor(isZoomed && focusedIssueData ? focusedIssueData : issue);
 
   if (isZoomed) {
@@ -421,6 +463,13 @@ function IssuePanel({
                   <IconLock size={12} />
                   Publish Issue
                 </Button>
+              </Tooltip>
+            )}
+            {issue.status === "published" && onPrepareLinkedIn && (
+              <Tooltip content="Prepare selected pieces for LinkedIn sharing">
+                <IconButton aria-label="Prepare LinkedIn shares" size="xs" variant="ghost" onClick={onPrepareLinkedIn}>
+                  <IconBrandLinkedin size={15} />
+                </IconButton>
               </Tooltip>
             )}
             {onUnpublish && (issue.status === "published" || focusedIssueData?.placements.some((placement) => placement.piece_status === "published")) && (
@@ -472,8 +521,8 @@ function IssuePanel({
                     const orderedIds = focusedIssueData.placements.map((p) => p.piece_id);
                     const canMoveUp = idx > 0;
                     const canMoveDown = idx < orderedIds.length - 1;
-                    return (
-                      <Box key={placement.id} w="full" borderBottomWidth="1px" borderColor="theme.border" pb={2}>
+                    const pieceRow = (
+                      <Box w="full" borderBottomWidth="1px" borderColor="theme.border" pb={2}>
                         <HStack gap={2} align="start" w="full">
                           <Text fontSize="12px" color="theme.textSecondary" w="22px" textAlign="right" flexShrink={0} pt={1}>
                             {placement.order_index + 1}.
@@ -528,7 +577,18 @@ function IssuePanel({
                         )}
                       </Box>
                     );
+                    return (
+                      <React.Fragment key={placement.id}>
+                        {!isPreview && <IssueDropPosition issueId={issue.id} index={idx} />}
+                        {isPreview ? pieceRow : (
+                          <DraggableIssuePiece issueId={issue.id} pieceId={placement.piece_id} title={placement.piece_title}>
+                            {pieceRow}
+                          </DraggableIssuePiece>
+                        )}
+                      </React.Fragment>
+                    );
                   })}
+                  {!isPreview && <IssueDropPosition issueId={issue.id} index={focusedIssueData.placements.length} />}
                 </VStack>
               ) : (
                 <Text fontSize="sm" color="theme.textSecondary">
@@ -881,6 +941,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     cascade: boolean;
     titles: string[];
   } | null>(null);
+  const [linkedinPrepIssue, setLinkedinPrepIssue] = useState<Issue | null>(null);
   const [previewMode, setPreviewMode] = useState<"board" | "review" | "gist">("board");
   const isPreview = previewMode !== "board";
   const setIsPreview = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
@@ -985,26 +1046,46 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     setActiveDragId(null);
     const { active, over } = event;
     if (!over) return;
+    const source = active.data.current;
+    const target = over.data.current;
+    if (!source || !target || (target.type !== "issue" && target.type !== "issue-gap")) return;
 
-    const pieceId = String(active.id).replace("doc-", "");
-    const targetId = String(over.id);
+    const pieceId = String(source.pieceId);
+    const issueId = String(target.issueId);
+    const orderedIds = focusedIssueId === issueId
+      ? (focusedIssueData?.placements.map((placement) => placement.piece_id) ?? [])
+      : [];
+    const targetIndex = target.type === "issue-gap" ? Number(target.index) : orderedIds.length;
 
-    if (targetId.startsWith("issue-")) {
-      const issueId = targetId.replace("issue-", "");
-      const currentIssueId = pieceIssueMap[pieceId];
-      if (currentIssueId) return;
-
+    if (source.type === "issue-piece") {
+      if (String(source.issueId) !== issueId || focusedIssueId !== issueId) return;
+      const sourceIndex = orderedIds.indexOf(pieceId);
+      if (sourceIndex < 0) return;
+      const next = [...orderedIds];
+      next.splice(sourceIndex, 1);
+      next.splice(targetIndex - (sourceIndex < targetIndex ? 1 : 0), 0, pieceId);
+      if (next.every((id, index) => id === orderedIds[index])) return;
       try {
-        await addToIssue.mutateAsync({ issueId, pieceId });
-        setSelectedIssueId(issueId);
-        setIssueDismissed(false);
-        toaster.create({ title: "Added to Issue", type: "success" });
-      } catch (e) {
-        const err = e as { response?: { data?: { detail?: string } } };
-        toaster.create({ title: err?.response?.data?.detail || "Failed to add to Issue", type: "error" });
+        await reorderPlacements.mutateAsync(next);
+        toaster.create({ title: "Issue order updated", type: "success" });
+      } catch {
+        toaster.create({ title: "Failed to reorder Issue", type: "error" });
       }
+      return;
     }
-  }, [pieceIssueMap, addToIssue]);
+
+    if (source.type !== "doc" || pieceIssueMap[pieceId]) return;
+    const beforePieceId = target.type === "issue-gap" ? orderedIds[targetIndex] : undefined;
+    try {
+      await addToIssue.mutateAsync({ issueId, pieceId, beforePieceId });
+      setSelectedIssueId(issueId);
+      setIssueDismissed(false);
+      toaster.create({ title: "Added to Issue", type: "success" });
+    } catch (e) {
+      const err = e as { response?: { data?: { detail?: string } } };
+      toaster.create({ title: err?.response?.data?.detail || "Failed to add to Issue", type: "error" });
+    }
+  }, [pieceIssueMap, addToIssue, focusedIssueId, focusedIssueData, reorderPlacements]);
 
   const handleRemovePiece = useCallback(async (pieceId: string) => {
     if (!focusedIssueId) return;
@@ -1136,6 +1217,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
       {!isLoading && (
         <DndContext
           sensors={sensors}
+          collisionDetection={issueCollisionDetection}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
@@ -1199,6 +1281,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
                   onDelete={() => handleDeleteIssue(focusedIssueId)}
                   onOpenPiece={onOpenPiece ? handleOpenPiece : undefined}
                   onPublish={handlePublish}
+                  onPrepareLinkedIn={sponsor.type === "group" && focusedIssueData ? () => setLinkedinPrepIssue(focusedIssueData) : undefined}
                   onUnpublish={(cascade) => setUnpublishRequest({
                     issueId: focusedIssueId,
                     cascade,
@@ -1299,6 +1382,13 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
           </DialogFooter>
         </DialogContent>
       </DialogRoot>
+      {linkedinPrepIssue && sponsor.type === "group" && (
+        <IssueLinkedInPrep
+          issue={linkedinPrepIssue}
+          groupSlug={sponsor.slug}
+          onClose={() => setLinkedinPrepIssue(null)}
+        />
+      )}
     </Box>
   );
 }

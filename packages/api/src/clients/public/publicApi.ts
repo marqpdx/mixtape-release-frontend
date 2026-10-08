@@ -116,6 +116,29 @@ export interface PublicLibraryPiece {
   } | null;
 }
 
+export interface PublicGroupIssuePiece {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  published_at: string | null;
+  order_index: number;
+  is_lead: boolean;
+  author: string;
+  body_json?: Record<string, unknown>;
+}
+
+export interface PublicGroupIssue {
+  id: string;
+  slug: string;
+  title: string;
+  designation: string | null;
+  description: Record<string, unknown> | null;
+  published_at: string | null;
+  piece_count: number;
+  pieces: PublicGroupIssuePiece[];
+}
+
 export interface PublicWritingPiece {
   id: string;
   slug: string;

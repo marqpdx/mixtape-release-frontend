@@ -59,8 +59,11 @@ export async function unpublishIssue(issueId: string, cascade: boolean): Promise
   return res.data;
 }
 
-export async function addIssuePlacement(issueId: string, pieceId: string): Promise<IssuePlacement> {
-  const res = await axiosInstance.post(`/api/writing/issues/${issueId}/placements`, { piece_id: pieceId });
+export async function addIssuePlacement(issueId: string, pieceId: string, beforePieceId?: string): Promise<IssuePlacement> {
+  const res = await axiosInstance.post(`/api/writing/issues/${issueId}/placements`, {
+    piece_id: pieceId,
+    ...(beforePieceId ? { before_piece_id: beforePieceId } : {}),
+  });
   return res.data;
 }
 

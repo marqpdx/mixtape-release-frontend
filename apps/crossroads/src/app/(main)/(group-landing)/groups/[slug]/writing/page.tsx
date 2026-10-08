@@ -8,9 +8,10 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
+import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../sections/GroupPublicNav";
+import { PieceBody } from "../reading/[articleSlug]/PieceBody";
 import type { GroupPublicLandingConfig, TypographySetting } from "../types";
 import { tenantPalettes } from "../tenantPalettes";
 
@@ -81,6 +82,18 @@ async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig 
 async function fetchWriting(slug: string): Promise<PublicLibraryPiece[]> {
   try {
     const res = await fetch(`${baseUrl}/api/public/groups/${slug}/writing`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchIssues(slug: string): Promise<PublicGroupIssue[]> {
+  try {
+    const res = await fetch(`${baseUrl}/api/public/groups/${slug}/writing/issues`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
@@ -170,8 +183,13 @@ export default async function GroupWritingIndexPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [config, pieces] = await Promise.all([fetchGroupConfig(slug), fetchWriting(slug)]);
+  const [config, pieces, issues] = await Promise.all([
+    fetchGroupConfig(slug), fetchWriting(slug), fetchIssues(slug),
+  ]);
   if (!config) notFound();
+
+  const issuePieceIds = new Set(issues.flatMap((issue) => issue.pieces.map((piece) => piece.id)));
+  const standalonePieces = pieces.filter((piece) => !issuePieceIds.has(piece.id));
 
   const { group } = config;
   const setting: TypographySetting = config.presentation?.typography_setting ?? "journal";
@@ -189,6 +207,11 @@ export default async function GroupWritingIndexPage({
         .gwi-piece-link:hover .gwi-piece-title { color: var(--theme-accent); }
         .gwi-piece-title { transition: color var(--transition-duration, 200ms) ease; }
         .gwi-back { text-underline-offset: 3px; }
+        .gwi-issue summary { cursor: pointer; list-style: none; }
+        .gwi-issue summary::-webkit-details-marker { display: none; }
+        .gwi-issue summary::after { content: "+"; float: right; color: var(--theme-accent); }
+        .gwi-issue[open] summary::after { content: "−"; }
+        .gwi-issue a:hover { color: var(--theme-accent); }
         ${paletteOverrides(config)}
       `}</style>
       <section className="gwi-header" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "28px" }}>
@@ -272,11 +295,45 @@ export default async function GroupWritingIndexPage({
       <GroupPublicNav groupSlug={slug} groupTitle={group.title} active="writing" />
 
       <section className="gwi-list" style={{ ...colStyles, marginTop: "48px", paddingBottom: "72px" }}>
-        {pieces.length === 0 ? (
+        {issues.length > 0 && (
+          <div className="gwi-issues" style={{ marginBottom: "48px" }}>
+            <h2 style={{ fontSize: "1.35rem", fontWeight: 600, margin: "0 0 12px" }}>Issues</h2>
+            {issues.map((issue) => (
+              <details key={issue.id} className="gwi-issue" style={{ borderTop: `${typ.hairline} solid var(--theme-border)`, padding: "16px 0" }}>
+                <summary style={{ fontSize: "1.5rem", lineHeight: "1.3" }}>
+                  {issue.title}
+                  <span style={{ display: "block", color: "var(--theme-text-muted)", fontSize: "0.875rem", marginTop: "4px" }}>
+                    {[issue.designation, formatDate(issue.published_at), `${issue.piece_count} pieces`].filter(Boolean).join(" · ")}
+                  </span>
+                </summary>
+                {issue.description && (
+                  <div className="gwi-issue-introduction" style={{ marginTop: "16px", color: "var(--theme-text-secondary)" }}>
+                    <PieceBody body_json={issue.description} />
+                  </div>
+                )}
+                <ol style={{ margin: "16px 0 12px", paddingLeft: "24px" }}>
+                  {issue.pieces.map((piece) => (
+                    <li key={piece.id} style={{ padding: "3px 0" }}>
+                      <Link href={`/groups/${slug}/writing/issues/${issue.slug}?piece=${encodeURIComponent(piece.slug)}#piece-${piece.slug}`} style={{ color: "var(--theme-text)", textDecoration: "none" }}>
+                        {piece.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+                <Link href={`/groups/${slug}/writing/issues/${issue.slug}`} style={{ color: "var(--theme-accent)", textUnderlineOffset: "3px" }}>
+                  Read Issue →
+                </Link>
+              </details>
+            ))}
+          </div>
+        )}
+        {standalonePieces.length === 0 ? (
           null
         ) : (
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {pieces.map((piece) => (
+          <div className="gwi-standalone">
+            {issues.length > 0 && <h2 style={{ fontSize: "1.35rem", fontWeight: 600, margin: "0 0 12px" }}>More writing</h2>}
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {standalonePieces.map((piece) => (
               <li
                 key={piece.id}
                 className="gwi-piece"
@@ -322,7 +379,8 @@ export default async function GroupWritingIndexPage({
               </li>
             ))}
             <li style={{ borderTop: `${typ.hairline} solid var(--theme-border)` }} aria-hidden />
-          </ul>
+            </ul>
+          </div>
         )}
       </section>
 

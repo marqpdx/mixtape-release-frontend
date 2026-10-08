@@ -29,8 +29,8 @@ export function useIssues(sponsor: issueBoardApi.IssueSponsor) {
   });
 
   const addToIssue = useMutation({
-    mutationFn: ({ issueId, pieceId }: { issueId: string; pieceId: string }) =>
-      issueBoardApi.addIssuePlacement(issueId, pieceId),
+    mutationFn: ({ issueId, pieceId, beforePieceId }: { issueId: string; pieceId: string; beforePieceId?: string }) =>
+      issueBoardApi.addIssuePlacement(issueId, pieceId, beforePieceId),
     onSuccess: (_, { issueId }) => {
       qc.invalidateQueries({ queryKey: ISSUES_KEY });
       qc.invalidateQueries({ queryKey: issueKey(issueId) });
@@ -108,7 +108,10 @@ export function useIssue(issueId: string | null) {
 
   const reorderPlacements = useMutation({
     mutationFn: (pieceIds: string[]) => issueBoardApi.reorderIssuePlacements(issueId!, pieceIds),
-    onSuccess: (updated) => qc.setQueryData(issueKey(issueId!), updated),
+    onSuccess: (updated) => {
+      qc.setQueryData(issueKey(issueId!), updated);
+      qc.invalidateQueries({ queryKey: ISSUES_KEY });
+    },
   });
 
   const signOffPiece = useMutation({
