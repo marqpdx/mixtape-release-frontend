@@ -257,3 +257,81 @@ export async function updateFolioNoteShape(
   });
   return res.data;
 }
+
+// ============================================================================
+// Folio Notes Workbench (desktop, PoC Phase 5)
+// ============================================================================
+
+export type FolioNoteSearchMode = "semantic" | "literal";
+
+export interface FolioNoteSearchParams {
+  q?: string;
+  mode?: FolioNoteSearchMode;
+  shape?: FolioNoteShape;
+  entity?: string;
+  limit?: number;
+}
+
+/** A FolioNote plus its Stackroom similarity score (null outside semantic search). */
+export type FolioNoteHit = FolioNote & { score: number | null };
+
+export interface FolioNoteSearchResult {
+  mode: "recent" | "semantic" | "literal";
+  results: FolioNoteHit[];
+}
+
+export interface FolioNoteFacets {
+  total: number;
+  shapes: { shape: FolioNoteShape; count: number }[];
+  entities: { id: string; name: string; kind: string; count: number }[];
+}
+
+/** The writer's own Entities — the same rows Storyboard participants use. */
+export interface WriterEntity {
+  id: string;
+  kind: string;
+  name: string;
+  aliases: string[];
+}
+
+export async function searchFolioNotes(folioId: string, params: FolioNoteSearchParams): Promise<FolioNoteSearchResult> {
+  const res = await axiosInstance.get(`/api/folio/folios/${folioId}/notes/search`, { params });
+  return res.data;
+}
+
+export async function fetchFolioNoteFacets(folioId: string): Promise<FolioNoteFacets> {
+  const res = await axiosInstance.get(`/api/folio/folios/${folioId}/notes/facets`);
+  return res.data;
+}
+
+export async function fetchRelatedFolioNotes(folioId: string, noteId: string): Promise<FolioNoteHit[]> {
+  const res = await axiosInstance.get(`/api/folio/folios/${folioId}/notes/${noteId}/related`);
+  return res.data.results;
+}
+
+export async function fetchWriterEntities(): Promise<WriterEntity[]> {
+  const res = await axiosInstance.get("/api/folio/entities");
+  return res.data;
+}
+
+/** Link a tended mention to an existing Entity ({entity_id}) or a new one ({name, kind?}). */
+export async function confirmFolioNoteMention(
+  folioId: string,
+  noteId: string,
+  index: number,
+  payload: { entity_id: string } | { name: string; kind?: string },
+): Promise<FolioNote> {
+  const res = await axiosInstance.post(`/api/folio/folios/${folioId}/notes/${noteId}/mentions/${index}`, payload);
+  return res.data;
+}
+
+export async function unlinkFolioNoteMention(folioId: string, noteId: string, index: number): Promise<FolioNote> {
+  const res = await axiosInstance.delete(`/api/folio/folios/${folioId}/notes/${noteId}/mentions/${index}`);
+  return res.data;
+}
+
+/** Move a note to another of the writer's Folios. */
+export async function moveFolioNote(folioId: string, noteId: string, targetFolioId: string): Promise<FolioNote> {
+  const res = await axiosInstance.patch(`/api/folio/folios/${folioId}/notes/${noteId}`, { folio: targetFolioId });
+  return res.data;
+}

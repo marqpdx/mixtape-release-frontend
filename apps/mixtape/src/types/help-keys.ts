@@ -17,6 +17,7 @@ export type HelpKey =
   | "dispatch-overview"
   | "feedback-overview"
   | "folio-overview"
+  | "folio-workbench"
   | "gather-overview"
   | "groups-overview"
   | "help-overview"

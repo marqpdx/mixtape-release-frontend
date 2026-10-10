@@ -76,6 +76,7 @@ const NAV_ITEMS: NavItem[] = [
   // superuser-only while the backend recent-drafts endpoint is gated;
   // widen to memberOnly once that endpoint opens up.
   { key: "write", label: "Write", href: "/write", section: "authenticated", superuserOnly: true, shortLabel: "Write" },
+  { key: "folio", label: "Folio", href: "/folio", section: "authenticated", superuserOnly: true, shortLabel: "Folio" },
   { key: "help", label: "Help", href: "/help", section: "authenticated", superuserOnly: true, shortLabel: "Help" },
   // { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
@@ -151,6 +152,7 @@ export default function UnifiedNavbar({
                   pathname.startsWith("/member") ||
                   pathname.startsWith("/map") ||
                   pathname.startsWith("/workbench") ||
+                  pathname.startsWith("/folio") ||
                   pathname.startsWith("/admin")) ? "authenticated" :
      "public");
 
