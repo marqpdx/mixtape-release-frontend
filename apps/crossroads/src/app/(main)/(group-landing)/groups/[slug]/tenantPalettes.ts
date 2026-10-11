@@ -166,4 +166,12 @@ export const tenantPalettes: ThemeDefinition[] = [
       border: "#C7D2CB",
     },
   },
-];
+].map((palette) => ({
+  ...palette,
+  // These palettes guarantee 4.5:1 between accent and bg in every mode.
+  // Reuse that background role for labels on solid accent controls.
+  light: { ...palette.light, accentText: palette.light.bg },
+  dark: { ...palette.dark, accentText: palette.dark.bg },
+  lightHighContrast: { ...palette.lightHighContrast, accentText: palette.lightHighContrast.bg },
+  darkHighContrast: { ...palette.darkHighContrast, accentText: palette.darkHighContrast.bg },
+}));

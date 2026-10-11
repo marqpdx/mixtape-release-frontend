@@ -239,8 +239,13 @@ export const config = defineConfig({
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
+          accentText: { value: "var(--theme-accent-text)" },
+          accentSoft: { value: "var(--theme-accent-soft)" },
+          bgSubtle: { value: "var(--theme-bg-subtle)" },
           text: { value: "var(--theme-text, #111827)" },
           textSecondary: { value: "var(--theme-text-secondary, #1F2937)" },
+          textMuted: { value: "var(--theme-text-muted)" },
+          textFaint: { value: "var(--theme-text-faint)" },
         },
       },
     },
@@ -342,11 +347,26 @@ export const config = defineConfig({
         "theme.accent": {
           value: "{colors.userTheme.accent}",
         },
+        "theme.accentText": {
+          value: "{colors.userTheme.accentText}",
+        },
+        "theme.accentSoft": {
+          value: "{colors.userTheme.accentSoft}",
+        },
+        "theme.bgSubtle": {
+          value: "{colors.userTheme.bgSubtle}",
+        },
         "theme.text": {
           value: "{colors.userTheme.text}",
         },
         "theme.textSecondary": {
           value: "{colors.userTheme.textSecondary}",
+        },
+        "theme.textMuted": {
+          value: "{colors.userTheme.textMuted}",
+        },
+        "theme.textFaint": {
+          value: "{colors.userTheme.textFaint}",
         },
 
         // Focus indicators (accessible)

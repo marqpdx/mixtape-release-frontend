@@ -11,7 +11,8 @@ import Image from "next/image";
 import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../sections/GroupPublicNav";
-import { PieceBody } from "../reading/[articleSlug]/PieceBody";
+import { IssueCollection } from "./IssueCollection";
+import issueStyles from "./IssueCollection.module.css";
 import type { GroupPublicLandingConfig, TypographySetting } from "../types";
 import { tenantPalettes } from "../tenantPalettes";
 
@@ -48,6 +49,7 @@ function paletteCSS(selector: string, c: {
   bgSecondary?: string;
   surface: string;
   accent: string;
+  accentText?: string;
   text: string;
   textSecondary: string;
   border: string;
@@ -58,6 +60,7 @@ function paletteCSS(selector: string, c: {
   --theme-bg-subtle: color-mix(in srgb, ${c.bg} 60%, ${c.border} 40%);
   --theme-surface: ${c.surface};
   --theme-accent: ${c.accent};
+  --theme-accent-text: ${c.accentText ?? c.bg};
   --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
   --theme-text: ${c.text};
   --theme-text-secondary: ${c.textSecondary};
@@ -207,11 +210,6 @@ export default async function GroupWritingIndexPage({
         .gwi-piece-link:hover .gwi-piece-title { color: var(--theme-accent); }
         .gwi-piece-title { transition: color var(--transition-duration, 200ms) ease; }
         .gwi-back { text-underline-offset: 3px; }
-        .gwi-issue summary { cursor: pointer; list-style: none; }
-        .gwi-issue summary::-webkit-details-marker { display: none; }
-        .gwi-issue summary::after { content: "+"; float: right; color: var(--theme-accent); }
-        .gwi-issue[open] summary::after { content: "−"; }
-        .gwi-issue a:hover { color: var(--theme-accent); }
         ${paletteOverrides(config)}
       `}</style>
       <section className="gwi-header" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "28px" }}>
@@ -270,6 +268,8 @@ export default async function GroupWritingIndexPage({
               letterSpacing: typ.titleTracking,
               lineHeight: typ.titleLh,
               textDecoration: "none",
+              minWidth: 0,
+              overflowWrap: "anywhere",
             }}
           >
             {group.title}
@@ -294,44 +294,13 @@ export default async function GroupWritingIndexPage({
 
       <GroupPublicNav groupSlug={slug} groupTitle={group.title} active="writing" />
 
-      <section className="gwi-list" style={{ ...colStyles, marginTop: "48px", paddingBottom: "72px" }}>
-        {issues.length > 0 && (
-          <div className="gwi-issues" style={{ marginBottom: "48px" }}>
-            <h2 style={{ fontSize: "1.35rem", fontWeight: 600, margin: "0 0 12px" }}>Issues</h2>
-            {issues.map((issue) => (
-              <details key={issue.id} className="gwi-issue" style={{ borderTop: `${typ.hairline} solid var(--theme-border)`, padding: "16px 0" }}>
-                <summary style={{ fontSize: "1.5rem", lineHeight: "1.3" }}>
-                  {issue.title}
-                  <span style={{ display: "block", color: "var(--theme-text-muted)", fontSize: "0.875rem", marginTop: "4px" }}>
-                    {[issue.designation, formatDate(issue.published_at), `${issue.piece_count} pieces`].filter(Boolean).join(" · ")}
-                  </span>
-                </summary>
-                {issue.description && (
-                  <div className="gwi-issue-introduction" style={{ marginTop: "16px", color: "var(--theme-text-secondary)" }}>
-                    <PieceBody body_json={issue.description} />
-                  </div>
-                )}
-                <ol style={{ margin: "16px 0 12px", paddingLeft: "24px" }}>
-                  {issue.pieces.map((piece) => (
-                    <li key={piece.id} style={{ padding: "3px 0" }}>
-                      <Link href={`/groups/${slug}/writing/issues/${issue.slug}?piece=${encodeURIComponent(piece.slug)}#piece-${piece.slug}`} style={{ color: "var(--theme-text)", textDecoration: "none" }}>
-                        {piece.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ol>
-                <Link href={`/groups/${slug}/writing/issues/${issue.slug}`} style={{ color: "var(--theme-accent)", textUnderlineOffset: "3px" }}>
-                  Read Issue →
-                </Link>
-              </details>
-            ))}
-          </div>
-        )}
+      <section className={`gwi-list ${issueStyles.scope}`} style={{ ...colStyles, maxWidth: "54rem", marginTop: "48px", paddingBottom: "72px" }}>
+        <IssueCollection issues={issues} groupSlug={slug} writing={pieces} />
         {standalonePieces.length === 0 ? (
           null
         ) : (
           <div className="gwi-standalone">
-            {issues.length > 0 && <h2 style={{ fontSize: "1.35rem", fontWeight: 600, margin: "0 0 12px" }}>More writing</h2>}
+            {issues.length > 0 && <h2 className={issueStyles.sectionHeading}>More writing</h2>}
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {standalonePieces.map((piece) => (
               <li
