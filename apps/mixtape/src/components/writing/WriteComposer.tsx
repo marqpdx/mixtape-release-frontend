@@ -1017,6 +1017,7 @@ export default function WriteComposer({
                   {showPublishingControls && (
                     <PublishingControls
                       pieceId={pieceId}
+                      pieceSlug={initialPieceSlug}
                       sponsor={sponsor}
                       piece={{ id: pieceId, title }}
                       pieceStatus={initialPiece?.status as string | undefined}

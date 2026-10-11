@@ -19,6 +19,7 @@ interface SponsorConfig {
 
 interface PublishingControlsProps {
   pieceId: string
+  pieceSlug?: string
   piece: { id: string; title: string }
   pieceStatus?: string
   sponsor: SponsorConfig
@@ -44,6 +45,7 @@ type PublishSavePayload = {
 
 export function PublishingControls({
   pieceId,
+  pieceSlug,
   piece,
   pieceStatus,
   sponsor,
@@ -131,6 +133,7 @@ export function PublishingControls({
         isOpen={dialogOpen}
         onClose={() => setDialogOpen(false)}
         piece={piece}
+        pieceSlug={pieceSlug}
         sponsorId={sponsor.id}
         sponsorSlug={sponsor.slug}  // Pass slug for cache invalidation
         sponsorType={sponsor.type}

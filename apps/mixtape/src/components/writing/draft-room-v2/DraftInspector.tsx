@@ -390,6 +390,7 @@ export function DraftInspector({
           isOpen={dialogOpen}
           onClose={() => setDialogOpen(false)}
           piece={{ id: piece.id, title }}
+          pieceSlug={piece.slug}
           sponsorId={sponsor.id}
           sponsorSlug={sponsor.slug}
           sponsorType={sponsor.type}

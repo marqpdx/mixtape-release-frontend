@@ -318,7 +318,15 @@ export function SimplePublishDialog({
   }
 
   const handleConfirmLinkedInPacket = async () => {
-    if (!pieceSlug || !linkedinCopy.trim() || !publicSynopsis.trim()) {
+    if (!pieceSlug) {
+      toaster.create({
+        title: 'Could not identify the article',
+        description: 'Reopen the article and try confirming again.',
+        type: 'error',
+      })
+      return
+    }
+    if (!linkedinCopy.trim() || !publicSynopsis.trim()) {
       toaster.create({
         title: 'Both fields are required',
         description: 'Review the LinkedIn introduction and link-preview description first.',
