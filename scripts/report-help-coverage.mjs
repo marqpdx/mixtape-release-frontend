@@ -62,6 +62,7 @@ function inferSubsystemFromPathname(pathname) {
   if (pathname.startsWith("/puddlejump")) return "puddlejump";
   if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/aperture")) return "aperture";
+  if (pathname.startsWith("/ariadne")) return "ariadne";
   if (pathname.startsWith("/bazaar")) return "bazaar";
   if (pathname.startsWith("/clients")) return "clients";
   if (pathname.startsWith("/community-hub")) return "community-hub";

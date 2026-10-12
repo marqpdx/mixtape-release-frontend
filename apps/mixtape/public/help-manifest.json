@@ -161,6 +161,30 @@
         "workflow"
       ]
     },
+    "ariadne-overview": {
+      "key": "ariadne-overview",
+      "slug": "ariadne",
+      "feature": "ariadne",
+      "title": "Ariadne",
+      "subsystem": "ariadne",
+      "area": "overview",
+      "summary": "Ariadne is a concept-discovery tool over the Puddlejump canon corpus, for superusers. Still a scaffold -- there is no concept data to browse yet.",
+      "excerpt": "Ariadne is a concept-discovery tool over the Puddlejump canon corpus, for superusers. Still a scaffold -- there is no concept data to browse yet.",
+      "plainText": "Ariadne Ariadne is a superuser-only tool for discovering and curating ideas across the Puddlejump canon corpus -- surfacing related material, evidence, and relationships without requiring anyone to reread the whole corpus by hand. Current state: scaffold only. The page is reachable and gated to superusers, but there is no concept data, search, or curation workflow to use yet. Corpus access and infrastructure isolation are built behind the scenes; the schema and Lens/Run mechanics that would give this page something to show are still being built. Check back as this build progresses -- this help entry will be rewritten once there is a real workflow to describe.",
+      "html": "<h1 id=\"ariadne\">Ariadne</h1>\n<p>Ariadne is a superuser-only tool for discovering and curating ideas across the Puddlejump canon corpus -- surfacing related material, evidence, and relationships without requiring anyone to reread the whole corpus by hand.</p>\n<p><strong>Current state:</strong> scaffold only. The page is reachable and gated to superusers, but there is no concept data, search, or curation workflow to use yet. Corpus access and infrastructure isolation are built behind the scenes; the schema and Lens/Run mechanics that would give this page something to show are still being built.</p>\n<p>Check back as this build progresses -- this help entry will be rewritten once there is a real workflow to describe.</p>",
+      "headings": [],
+      "metadata": {},
+      "routes": [
+        "/ariadne",
+        "/ariadne/*"
+      ],
+      "workAreas": [],
+      "tags": [
+        "ariadne",
+        "puddlejump",
+        "superuser"
+      ]
+    },
     "atelier-overview": {
       "key": "atelier-overview",
       "slug": "atelier",
@@ -2207,6 +2231,9 @@
     "aperture": [
       "aperture-overview"
     ],
+    "ariadne": [
+      "ariadne-overview"
+    ],
     "atelier": [
       "atelier-overview"
     ],
@@ -2301,5 +2328,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-10-10T02:28:57.529Z"
+  "generatedAt": "2026-10-12T02:41:44.785Z"
 }
