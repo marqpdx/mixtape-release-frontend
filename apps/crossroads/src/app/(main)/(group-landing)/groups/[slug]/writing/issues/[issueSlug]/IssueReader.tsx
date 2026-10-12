@@ -5,6 +5,21 @@ import { presentIssue } from "../../issuePresentation";
 import { heading, body, mono } from "../../issueFonts";
 import styles from "./IssueReader.module.css";
 
+function PieceDate({ publishedAt }: { publishedAt: string | null }) {
+  if (!publishedAt) return null;
+  const date = new Date(publishedAt);
+  if (Number.isNaN(date.getTime())) return null;
+  const format = (options: Intl.DateTimeFormatOptions) => date.toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
+  return (
+    <time className={`gwir-piece-date ${styles.pieceDate}`} dateTime={publishedAt} aria-label={format({ weekday: "long", year: "numeric", month: "long", day: "numeric" })}>
+      <span className={styles.dateWeekday}>{format({ weekday: "short" })}</span>
+      <span className={styles.dateMonth}>{format({ month: "short" })}</span>
+      <span className={styles.dateYear}>{format({ year: "numeric" })}</span>
+      <span className={styles.dateDay}>{format({ day: "numeric" })}</span>
+    </time>
+  );
+}
+
 export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
   issue: PublicGroupIssue;
   groupSlug: string;
@@ -52,11 +67,12 @@ export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
           const number = String(index + 1).padStart(2, "0");
           return (
             <section key={piece.id} id={`piece-${number}`} className={`gwir-piece ${styles.piece}`} aria-labelledby={`piece-title-${number}`}>
-              <p className={`${styles.eyebrow} ${styles.accent}`}>{number} of {total}</p>
+              <p className={`${styles.eyebrow} ${styles.accent} ${styles.position}`}>{number} of {total}</p>
               <h2 id={`piece-title-${number}`} className={styles.pieceTitle}>
                 <Link href={`/groups/${groupSlug}/reading/${piece.slug}`}>{piece.title}</Link>
               </h2>
-              {piece.author && <p className={styles.meta}>{piece.author}</p>}
+              <PieceDate publishedAt={piece.published_at} />
+              {piece.author && <p className={`gwir-piece-author ${styles.meta} ${styles.author}`}>{piece.author}</p>}
               {piece.body_json && <div className={`gwir-piece-content ${styles.prose}`}><PieceBody body_json={piece.body_json} /></div>}
               {index < pieces.length - 1 && <div className={styles.separator} aria-hidden="true">· · ·</div>}
             </section>

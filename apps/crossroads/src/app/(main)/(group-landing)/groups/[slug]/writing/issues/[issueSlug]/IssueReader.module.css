@@ -29,9 +29,17 @@
 .number { color: var(--chakra-colors-theme-accent); }
 .minutes { color: var(--chakra-colors-theme-text-muted); white-space: nowrap; }
 .titlePage { border-bottom: 1px solid var(--chakra-colors-theme-border); padding-bottom: 2.5rem; margin-bottom: 3rem; }
-.piece { scroll-margin-top: 2rem; }
-.pieceTitle { margin: 1rem 0; font-size: 2.25rem; }
+.piece { scroll-margin-top: 2rem; display: grid; grid-template-columns: 5rem minmax(0, 1fr); column-gap: 1rem; }
+.position { grid-column: 1 / -1; }
+.pieceTitle { grid-column: 2; margin: 1rem 0; font-size: 2.25rem; }
 .pieceTitle a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.author { grid-column: 2; grid-row: 3; margin: -5px 0 10px; }
+.pieceDate { grid-column: 1; grid-row: 3 / 5; align-self: start; display: grid; grid-template-columns: auto auto; grid-template-rows: repeat(3, auto); column-gap: 0.375rem; font-family: var(--issue-font-mono), monospace; font-size: 0.6875rem; line-height: 1.45; color: var(--chakra-colors-theme-text-muted); }
+.dateWeekday { grid-column: 1; grid-row: 1; }
+.dateMonth { grid-column: 1; grid-row: 2; }
+.dateYear { grid-column: 1; grid-row: 3; }
+.dateDay { grid-column: 2; grid-row: 1 / 4; align-self: start; padding-left: 0.375rem; border-left: 1px solid var(--chakra-colors-theme-border); font-family: var(--issue-font-heading), serif; font-size: 1.875rem; line-height: 1.15; color: var(--chakra-colors-theme-accent); }
+.piece > .prose { grid-column: 2; grid-row: 4; min-width: 0; }
 .prose { font-size: 1.1875rem; line-height: 1.6; }
 .prose p:not(:global(.ttr-code-paragraph)) { margin: 0 0 1.25em; }
 .prose p:global(.ttr-code-paragraph) { margin: 0; }
@@ -41,7 +49,7 @@
 .prose a { text-decoration-color: var(--chakra-colors-theme-accent); }
 .prose pre { max-width: 100%; overflow-x: auto; }
 .prose img { max-width: 100%; height: auto; }
-.separator { color: var(--chakra-colors-theme-accent); text-align: center; font-size: 1.5rem; letter-spacing: 0.2em; margin: 3rem 0; }
+.separator { grid-column: 1 / -1; color: var(--chakra-colors-theme-accent); text-align: center; font-size: 1.5rem; letter-spacing: 0.2em; margin: 3rem 0; }
 @media (max-width: 600px) {
   .scope { padding-top: 1.5rem; }
   .title { font-size: 2.5rem; }
@@ -49,4 +57,8 @@
   .contents { padding: 1rem; }
   .contentsLink { grid-template-columns: 1.75rem minmax(0, 1fr); }
   .minutes { grid-column: 2; }
+  .piece { grid-template-columns: 4.5rem minmax(0, 1fr); column-gap: 0.625rem; }
+  .pieceTitle { grid-column: 1 / -1; }
+  .piece > .prose { grid-column: 1 / -1; grid-row: 4; }
+  .pieceDate { grid-row: 3; margin-bottom: 0.75rem; }
 }

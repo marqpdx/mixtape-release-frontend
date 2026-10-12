@@ -38,3 +38,5 @@ Lightweight checks completed on 2026-10-11 with user approval:
 - Page diff review confirmed fetch URLs, cache options and standalone deduplication were unchanged.
 
 The temporary fixture and runner are in `/tmp/gp10-issue-check`; screenshots are `/tmp/gp10-issue-desktop.png` and `/tmp/gp10-issue-mobile-xl.png`. This exercised the Issue components rather than the complete application providers or production API. Full-page standalone/draft-Issue behavior, default visitor themes and live acceptance remain checks for deployment/GP-10.5. Production must first return the published Issues API successfully. No production build or full test suite was run.
+
+First live-review adjustment: compact inline contents links to a 28px minimum height on desktop mouse/trackpad devices. Narrow screens and touch devices retain 44px targets. The existing isolated Chromium index checks passed again, including 375px/XL touch targets and disclosure behavior; this adjustment awaits deployment.

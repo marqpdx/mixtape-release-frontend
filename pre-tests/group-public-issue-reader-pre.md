@@ -24,3 +24,7 @@ Scratch fixture/runners: `/tmp/gp10-issue-check/app/reader`, `reader-check.cjs`,
 ## Deployment acceptance — GP-10.5
 
 Check the real published Issue via an anonymous browser, including all rich content, custom palette and default visitor themes, Dark/Contrast, XL text and 375px. Confirm contents scrolling with the real group header, reading-time totals against the index, piece title links back to GP-10.3 navigation, and standalone/draft-Issue visibility. This slice has not been deployed or verified against the live API; no production build was run.
+
+## First live-review adjustments
+
+Added a publication-date gutter beside the piece author: stacked weekday/month/year with a larger day numeral, formatted in UTC and exposed as an accessible `<time>`. Missing/invalid dates are omitted. The author uses the requested `margin: -5px 0 10px`; desktop body text shares the author column, while mobile body text uses the full width. Scoped lint, Crossroads TypeScript and the reader Chromium checks passed again, including exact author margins, date text/datetime, anchor navigation, 375px/XL layout and all 16 tenant modes. Screenshot reviewed; these adjustments await deployment.
