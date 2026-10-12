@@ -1,33 +1,9 @@
 import Link from "next/link";
-import localFont from "next/font/local";
+import { heading, body, mono } from "./issueFonts";
 import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { IssueCard } from "./IssueCard";
 import { presentIssue } from "./issuePresentation";
 import styles from "./IssueCollection.module.css";
-
-const heading = localFont({
-  src: "./fonts/dm-serif-display-latin-400-normal.woff2",
-  weight: "400",
-  variable: "--issue-font-heading",
-  display: "swap",
-});
-const body = localFont({
-  src: [
-    { path: "./fonts/inter-latin-400-normal.woff2", weight: "400" },
-    { path: "./fonts/inter-latin-500-normal.woff2", weight: "500" },
-    { path: "./fonts/inter-latin-600-normal.woff2", weight: "600" },
-  ],
-  variable: "--issue-font-body",
-  display: "swap",
-});
-const mono = localFont({
-  src: [
-    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500" },
-    { path: "./fonts/ibm-plex-mono-latin-600-normal.woff2", weight: "600" },
-  ],
-  variable: "--issue-font-mono",
-  display: "swap",
-});
 
 export function IssueCollection({ issues, groupSlug, writing }: {
   issues: PublicGroupIssue[];

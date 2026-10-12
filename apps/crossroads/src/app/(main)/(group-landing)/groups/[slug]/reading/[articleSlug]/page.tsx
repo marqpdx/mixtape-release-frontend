@@ -7,8 +7,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { PublicWritingPiece } from "@mixtape/api/clients/public/publicApi";
+import type { PublicGroupIssue, PublicWritingPiece } from "@mixtape/api/clients/public/publicApi";
 import { PieceBody } from "./PieceBody";
+import { PieceIssueBar, PieceIssueContinue, pieceIssueContext } from "./PieceIssueNavigation";
 import { GroupPublicFooter } from "../../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../../sections/GroupPublicNav";
 import type { GroupPublicLandingConfig, TypographySetting } from "../../types";
@@ -91,6 +92,19 @@ async function fetchGroupConfig(slug: string): Promise<GroupPublicLandingConfig 
   }
 }
 
+async function fetchIssues(groupSlug: string): Promise<PublicGroupIssue[]> {
+  try {
+    const res = await fetch(`${baseUrl}/api/public/groups/${groupSlug}/writing/issues`, {
+      next: { revalidate: 120 },
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    // Issue navigation is optional; an unavailable endpoint must not hide the article.
+    return [];
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -162,9 +176,10 @@ export default async function PublicPieceReaderPage({
   const piece = await fetchPiece(slug, articleSlug);
   if (!piece) notFound();
 
-  const groupConfig = piece.sponsor_group
-    ? await fetchGroupConfig(piece.sponsor_group.slug)
-    : null;
+  const [groupConfig, issues] = piece.sponsor_group
+    ? await Promise.all([fetchGroupConfig(piece.sponsor_group.slug), fetchIssues(piece.sponsor_group.slug)])
+    : [null, []];
+  const issueContext = pieceIssueContext(issues, piece.id);
   const setting: TypographySetting = groupConfig?.presentation?.typography_setting ?? "journal";
   const typ = TYP[setting];
   const colStyles: CSSProperties = {
@@ -183,7 +198,7 @@ export default async function PublicPieceReaderPage({
   const footerTitle = piece.sponsor_group?.title ?? piece.author.display_name;
 
   return (
-    <main className="gpr-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}>
+    <main className="gpr-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", "--piece-measure": typ.measure } as CSSProperties}>
       <style>{`
         .gpr-back { text-underline-offset: 3px; }
         .gpr-body {
@@ -209,6 +224,9 @@ export default async function PublicPieceReaderPage({
           groupTitle={piece.sponsor_group.title}
           active="reading"
         />
+      )}
+      {issueContext && piece.sponsor_group && (
+        <PieceIssueBar context={issueContext} groupSlug={piece.sponsor_group.slug} />
       )}
 
       <article className="gpr-content" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "72px" }}>
@@ -281,6 +299,9 @@ export default async function PublicPieceReaderPage({
         <div className="gpr-body" style={{ marginTop: "72px" }}>
           {piece.body_json && <PieceBody body_json={piece.body_json} />}
         </div>
+        {issueContext && piece.sponsor_group && (
+          <PieceIssueContinue context={issueContext} groupSlug={piece.sponsor_group.slug} />
+        )}
       </article>
 
       <GroupPublicFooter groupTitle={footerTitle} />
