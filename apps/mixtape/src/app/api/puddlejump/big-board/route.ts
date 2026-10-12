@@ -64,7 +64,7 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-// ADRs in this repo carry a blockquote header block, not YAML frontmatter:
+// Legacy ADR convention (being migrated to YAML, see parseDocFields):
 //   > **Status:** Ratified
 //   > **Created:** 2026-06-04
 //   > **Last Updated:** 2026-06-09
@@ -81,6 +81,32 @@ function parseHeaderBlock(content: string): Record<string, string> {
   return fields;
 }
 
+// Puddlejump is migrating to YAML frontmatter
+// (puddlejump/decisions/spikes/puddlejump-frontmatter-vocabulary-proposal.md).
+// Read YAML first, falling back to the legacy blockquote block, and expose
+// both under the blockquote field names the rest of this file uses.
+const YAML_TO_HEADER_FIELD: Record<string, string> = {
+  status: "Status",
+  created: "Created",
+  last_updated: "Last Updated",
+  uuid: "UUID",
+  id: "ADR Number",
+  timely: "Timely",
+};
+
+function parseDocFields(content: string): Record<string, string> {
+  const fields = parseHeaderBlock(content);
+  const fm = parseFrontmatter(content);
+  for (const [yamlKey, headerKey] of Object.entries(YAML_TO_HEADER_FIELD)) {
+    if (fm[yamlKey]) fields[headerKey] = fm[yamlKey];
+  }
+  return fields;
+}
+
+function stripFrontmatter(content: string): string {
+  return content.replace(/^---\n[\s\S]*?\n---\n?/, "");
+}
+
 function extractAdrNumber(title: string, content: string, headerFields: Record<string, string>): number | null {
   // Preference order: a declared `> **ADR Number:** ADR-0054` header field
   // (some ADRs have this, most don't -- no canonical requirement yet) is
@@ -95,7 +121,7 @@ function extractAdrNumber(title: string, content: string, headerFields: Record<s
   const titleMatch = title.match(/ADR-0*(\d{2,5})/i);
   if (titleMatch) return parseInt(titleMatch[1], 10);
 
-  const bodyOnly = content.replace(/^>.*$/gm, "").slice(0, 2000);
+  const bodyOnly = stripFrontmatter(content).replace(/^>.*$/gm, "").slice(0, 2000);
   const bodyMatch = bodyOnly.match(/ADR-0*(\d{2,5})/i);
   return bodyMatch ? parseInt(bodyMatch[1], 10) : null;
 }
@@ -105,7 +131,7 @@ function extractAdrNumber(title: string, content: string, headerFields: Record<s
 // There's no canonical `summary:` field for the ADR shape yet -- this is a
 // mechanical stand-in, named as a gap in the shape/process-contract spike.
 function extractSummary(content: string): string | null {
-  const body = content
+  const body = stripFrontmatter(content)
     .replace(/^>.*$/gm, "") // header blockquote lines
     .replace(/^#\s+.+$/m, "") // H1
     .replace(/^\*\*(Scope|Audience):\*\*.*$/gm, "");
@@ -190,7 +216,7 @@ async function loadAdrs(): Promise<AdrEntry[]> {
         // leave content empty; entry still renders with bundle-only fields
       }
 
-      const headerFields = content ? parseHeaderBlock(content) : {};
+      const headerFields = content ? parseDocFields(content) : {};
       const headingMatch = content.match(/^#\s+(.+)$/m);
       const title = headingMatch ? headingMatch[1].trim() : titleFromPath(doc.logical_path);
       const status = doc.status_label || headerFields["Status"] || "Unknown";
@@ -245,7 +271,7 @@ async function loadSpikes(): Promise<SpikeEntry[]> {
         class: fm.class || "spike",
         uuid: fm.uuid || null,
         created: fm.created || null,
-        updated: fm.created || stat.mtime.toISOString(),
+        updated: fm.last_updated || fm.created || stat.mtime.toISOString(),
         timely: isTimely(fm.timely),
       };
     })
