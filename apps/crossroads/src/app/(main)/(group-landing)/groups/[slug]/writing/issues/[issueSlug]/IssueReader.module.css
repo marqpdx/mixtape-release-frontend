@@ -1,0 +1,52 @@
+.scope {
+  --chakra-colors-theme-text: var(--theme-text);
+  --chakra-colors-theme-text-secondary: var(--theme-text-secondary);
+  --chakra-colors-theme-text-muted: var(--theme-text-muted);
+  --chakra-colors-theme-accent: var(--theme-accent);
+  --chakra-colors-theme-accent-soft: var(--theme-accent-soft);
+  --chakra-colors-theme-border: var(--theme-border);
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2.75rem 16px 5.5rem;
+  font-family: var(--issue-font-body), sans-serif;
+  color: var(--chakra-colors-theme-text);
+  overflow-wrap: anywhere;
+}
+.scope a { color: inherit; text-underline-offset: 3px; }
+.scope a:focus-visible { outline: 3px solid var(--chakra-colors-theme-accent); outline-offset: 3px; }
+.scope a:hover { text-decoration: underline; }
+.back { display: inline-flex; align-items: center; min-height: 44px; color: var(--chakra-colors-theme-accent) !important; margin-bottom: 1rem; }
+.eyebrow { margin: 0; font-family: var(--issue-font-mono), monospace; font-size: 0.71875rem; font-weight: 600; letter-spacing: 0.13em; line-height: 1.6; text-transform: uppercase; color: var(--chakra-colors-theme-text-muted); }
+.accent { color: var(--chakra-colors-theme-accent); }
+.title, .pieceTitle { font-family: var(--issue-font-heading), serif; font-weight: 400; line-height: 1.12; }
+.title { font-size: 3.25rem; margin: 1.25rem 0; }
+.introduction { color: var(--chakra-colors-theme-text-secondary); margin: 1.25rem 0; }
+.meta { margin: 1rem 0; font-family: var(--issue-font-mono), monospace; font-size: 0.75rem; line-height: 1.6; color: var(--chakra-colors-theme-text-muted); }
+.contents { padding: 1.25rem 1.5rem; border-radius: 16px; background: var(--chakra-colors-theme-accent-soft); margin-top: 1.5rem; }
+.contents ol { margin: 0; padding: 0; list-style: none; }
+.contentsLink { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; gap: 0.625rem; align-items: baseline; min-height: 44px; padding: 0.625rem 0; text-decoration: none; line-height: 1.5; }
+.number, .minutes { font-family: var(--issue-font-mono), monospace; font-size: 0.75rem; }
+.number { color: var(--chakra-colors-theme-accent); }
+.minutes { color: var(--chakra-colors-theme-text-muted); white-space: nowrap; }
+.titlePage { border-bottom: 1px solid var(--chakra-colors-theme-border); padding-bottom: 2.5rem; margin-bottom: 3rem; }
+.piece { scroll-margin-top: 2rem; }
+.pieceTitle { margin: 1rem 0; font-size: 2.25rem; }
+.pieceTitle a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.prose { font-size: 1.1875rem; line-height: 1.6; }
+.prose p:not(:global(.ttr-code-paragraph)) { margin: 0 0 1.25em; }
+.prose p:global(.ttr-code-paragraph) { margin: 0; }
+.prose h2, .prose h3 { line-height: 1.22; margin: 2em 0 0.75em; }
+.prose h2 { font-size: 1.875rem; }
+.prose h3 { font-size: 1.5rem; }
+.prose a { text-decoration-color: var(--chakra-colors-theme-accent); }
+.prose pre { max-width: 100%; overflow-x: auto; }
+.prose img { max-width: 100%; height: auto; }
+.separator { color: var(--chakra-colors-theme-accent); text-align: center; font-size: 1.5rem; letter-spacing: 0.2em; margin: 3rem 0; }
+@media (max-width: 600px) {
+  .scope { padding-top: 1.5rem; }
+  .title { font-size: 2.5rem; }
+  .pieceTitle { font-size: 1.875rem; }
+  .contents { padding: 1rem; }
+  .contentsLink { grid-template-columns: 1.75rem minmax(0, 1fr); }
+  .minutes { grid-column: 2; }
+}
