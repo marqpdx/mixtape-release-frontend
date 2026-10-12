@@ -30,6 +30,7 @@ import * as writingApi from '@mixtape/api/clients/writing/writingApi'
 import * as groupApi from '@mixtape/api/clients/group/groupApi'
 import {
   fetchDistributionSources,
+  fetchDistributionHistory,
   distributePiece,
   type DistributionSource,
   type ShareRecordResult,
@@ -222,6 +223,13 @@ export function SimplePublishDialog({
     enabled: isOpen && isUpdate && sponsorType === 'group' && !!sponsorSlug,
   })
 
+  const { data: distributionHistory = [] } = useQuery({
+    queryKey: ['distribution', 'history', piece.id],
+    queryFn: () => fetchDistributionHistory(piece.id),
+    enabled: isOpen && isUpdate,
+    retry: false,
+  })
+
   // Seed audience + destination checkboxes from prior publish when dialog opens for an update
   useEffect(() => {
     if (!isOpen || !isUpdate || !existingPlacements) return
@@ -249,6 +257,11 @@ export function SimplePublishDialog({
   const publicArticleUrl = sponsorType === 'group' && sponsorSlug && pieceSlug
     ? `https://www.crossroads.place/groups/${sponsorSlug}/reading/${pieceSlug}`
     : linkedinShareRecord?.canonical_url || ''
+  const hasPriorLinkedInShare = !!publicArticleUrl && distributionHistory.some((event) =>
+    event.share_records.some((record) => record.source_kind === 'linkedin'
+      && record.status === 'success' && record.canonical_url === publicArticleUrl),
+  )
+  const showLinkedInUpdateNote = isUpdate && hasPriorLinkedInShare
 
   const toggleShelf = (shelfId: string, checked: boolean) => {
     setSelectedShelves((prev) => {
@@ -360,6 +373,15 @@ export function SimplePublishDialog({
   const handleCopyLinkedInIntroduction = async () => {
     await navigator.clipboard.writeText(linkedinCopy)
     toaster.create({ title: 'LinkedIn introduction copied', type: 'success' })
+  }
+
+  const handleCopyArticleUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(publicArticleUrl)
+      toaster.create({ title: 'Article URL copied', type: 'success' })
+    } catch {
+      toaster.create({ title: 'Could not copy the article URL', description: 'Copy it from the article in your browser.', type: 'error' })
+    }
   }
 
   const handlePublish = async () => {
@@ -481,6 +503,11 @@ export function SimplePublishDialog({
         }
       }
 
+      if (!isScheduling && audience === 'readers' && showLinkedInUpdateNote) {
+        setShareResults((current) => current ?? [])
+        keepShareResultsOpen = true
+      }
+
       if (isScheduling && scheduledFor) {
         toaster.create({
           title: 'Scheduled',
@@ -524,12 +551,12 @@ export function SimplePublishDialog({
             <Dialog.Header>
               <Heading size="md">Published</Heading>
               <Text fontSize="sm" color="gray.500" mt={2}>
-                Your piece is live. Share it now.
+                {linkedinShareUrl ? 'Your piece is live. Share it now.' : 'Your updates are live.'}
               </Text>
             </Dialog.Header>
             <Dialog.Body>
-              <VStack gap={4} align="stretch">
-                <Box borderWidth="1px" borderRadius="md" p={4} bg="green.50">
+              <VStack className="spd-publish-results" gap={4} align="stretch">
+                {linkedinShareRecord && <Box className="spd-linkedin-share-result" borderWidth="1px" borderRadius="md" p={4} bg="green.50">
                   <Text fontWeight="semibold" fontSize="sm" mb={1}>LinkedIn</Text>
                   {linkedinShareUrl ? (
                     <>
@@ -572,7 +599,23 @@ export function SimplePublishDialog({
                       Published. Check your email for the LinkedIn share link.
                     </Text>
                   )}
-                </Box>
+                </Box>}
+                {showLinkedInUpdateNote && (
+                  <Box className="spd-linkedin-update-note" borderWidth="1px" borderColor="theme.border" borderRadius="md" p={4}>
+                    <Text fontWeight="semibold" fontSize="sm" mb={2}>Already shared on LinkedIn?</Text>
+                    <Text fontSize="sm" color="theme.textSecondary" mb={3}>
+                      Your existing LinkedIn link still opens this updated article. If you changed its preview title,
+                      description, or image, check the preview with LinkedIn Post Inspector. Body edits and added links
+                      don’t need a preview refresh. This doesn’t rewrite your existing LinkedIn post’s introduction.
+                    </Text>
+                    <HStack className="spd-linkedin-update-actions" gap={2} flexWrap="wrap">
+                      <Button size="sm" variant="outline" onClick={handleCopyArticleUrl}>Copy article URL</Button>
+                      <Button asChild size="sm" variant="outline">
+                        <a href="https://www.linkedin.com/post-inspector/" target="_blank" rel="noopener noreferrer">Open Post Inspector</a>
+                      </Button>
+                    </HStack>
+                  </Box>
+                )}
               </VStack>
             </Dialog.Body>
             <Dialog.Footer>

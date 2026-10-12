@@ -235,7 +235,6 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
           groupSlug={groupSlug}
           groupTitle={group.title}
           active="home"
-          recentTargetId="recent"
         />
 
         {/* ── Zone 2: Standfirst ───────────────────────────────── */}

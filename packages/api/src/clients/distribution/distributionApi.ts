@@ -56,7 +56,18 @@ export async function cancelPublishEvent(
   await axiosInstance.delete(`/api/distribution/pieces/${pieceId}/publish-events/${eventId}`)
 }
 
-export async function fetchDistributionHistory(pieceId: string) {
-  const res = await axiosInstance.get(`/api/distribution/pieces/${pieceId}/distribution-history`)
-  return res.data
+export interface DistributionHistoryEvent {
+  share_records: Pick<ShareRecordResult, 'source_kind' | 'status' | 'canonical_url'>[]
+}
+
+export async function fetchDistributionHistory(pieceId: string): Promise<DistributionHistoryEvent[]> {
+  type HistoryPage = DistributionHistoryEvent[] | { results: DistributionHistoryEvent[]; next?: string | null }
+  const history: DistributionHistoryEvent[] = []
+  let next: string | null = `/api/distribution/pieces/${pieceId}/distribution-history`
+  while (next) {
+    const res: { data: HistoryPage } = await axiosInstance.get(next)
+    history.push(...(Array.isArray(res.data) ? res.data : res.data.results))
+    next = Array.isArray(res.data) ? null : res.data.next || null
+  }
+  return history
 }

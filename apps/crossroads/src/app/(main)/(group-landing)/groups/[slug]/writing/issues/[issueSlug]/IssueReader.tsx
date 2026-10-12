@@ -68,9 +68,12 @@ export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
           return (
             <section key={piece.id} id={`piece-${number}`} className={`gwir-piece ${styles.piece}`} aria-labelledby={`piece-title-${number}`}>
               <p className={`${styles.eyebrow} ${styles.accent} ${styles.position}`}>{number} of {total}</p>
-              <h2 id={`piece-title-${number}`} className={styles.pieceTitle}>
-                <Link href={`/groups/${groupSlug}/reading/${piece.slug}`}>{piece.title}</Link>
-              </h2>
+              <div className={`gwir-piece-heading ${styles.pieceHeading}`}>
+                <h2 id={`piece-title-${number}`} className={styles.pieceTitle}>
+                  <Link href={`/groups/${groupSlug}/reading/${piece.slug}`}>{piece.title}</Link>
+                </h2>
+                {piece.excerpt?.trim() && <p className={`gwir-piece-summary ${styles.summary}`}>{piece.excerpt}</p>}
+              </div>
               <PieceDate publishedAt={piece.published_at} />
               {piece.author && <p className={`gwir-piece-author ${styles.meta} ${styles.author}`}>{piece.author}</p>}
               {piece.body_json && <div className={`gwir-piece-content ${styles.prose}`}><PieceBody body_json={piece.body_json} /></div>}

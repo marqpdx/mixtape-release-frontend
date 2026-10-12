@@ -4,7 +4,6 @@
 // This is not Crossroads platform chrome. It gives visitors local movement
 // within a Group presence plus reader controls that do not override tenant palette.
 
-import Link from "next/link";
 import { useTheme, type FontScale } from "@mixtape/core";
 import { SurfaceTransitionLink } from "../../../SurfaceTransition";
 
@@ -12,7 +11,6 @@ interface Props {
   groupSlug: string;
   groupTitle: string;
   active: "home" | "writing" | "reading";
-  recentTargetId?: string;
 }
 
 const fontScales: { label: string; value: FontScale }[] = [
@@ -22,7 +20,7 @@ const fontScales: { label: string; value: FontScale }[] = [
   { label: "XL", value: 1.25 },
 ];
 
-export function GroupPublicNav({ groupSlug, groupTitle, active, recentTargetId }: Props) {
+export function GroupPublicNav({ groupSlug, groupTitle, active }: Props) {
   const theme = useTheme();
   const colorMode = theme?.colorMode ?? "light";
   const contrastMode = theme?.contrastMode ?? "normal";
@@ -83,22 +81,6 @@ export function GroupPublicNav({ groupSlug, groupTitle, active, recentTargetId }
           <SurfaceTransitionLink href={`/groups/${groupSlug}`} style={linkStyle("home")}>
             Home
           </SurfaceTransitionLink>
-          <Link
-            href={recentTargetId ? `#${recentTargetId}` : `/groups/${groupSlug}#recent`}
-            style={linkStyle("reading")}
-            onClick={
-              recentTargetId
-                ? (event) => {
-                    event.preventDefault();
-                    document
-                      .getElementById(recentTargetId)
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
-                : undefined
-            }
-          >
-            Recent
-          </Link>
           <SurfaceTransitionLink
             href={`/groups/${groupSlug}/writing`}
             style={linkStyle("writing")}
