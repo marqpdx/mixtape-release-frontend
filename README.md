@@ -49,7 +49,7 @@ Representative areas:
 
 ### Crossroads
 
-Public-facing orientation and product surfaces for Crossroads, Catalyst, Mixtape, and Tapestry.
+The public site for Crossroads Place (`crossroads.place`), the reference community running on Mixtape: orientation and product pages for Mixtape, Catalyst and Tapestry, plus Group presence pages. See `apps/crossroads/README.md` for naming (Mixtape is the ecology; Crossroads is its people-and-groups layer).
 
 Representative areas:
 
@@ -81,7 +81,7 @@ For product and UX review:
 - Catalyst ingestion page for human/AI workflow design.
 - Writing and Dispatch surfaces for editorial workflows.
 - Group pages for authenticated community/product structure.
-- Crossroads pages for public positioning and product storytelling.
+- Crossroads Place pages for public positioning and product storytelling.
 
 For frontend architecture review:
 
