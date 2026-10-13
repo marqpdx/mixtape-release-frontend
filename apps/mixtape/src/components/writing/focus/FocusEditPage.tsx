@@ -267,6 +267,7 @@ export function FocusEditPage({ focusId, pieceId }: FocusEditPageProps) {
         }}
       >
         <MainEditor
+          attic={{ pieceId, title }}
           key={pieceId}
           ref={editorRef}
           docJSON={docJSON}

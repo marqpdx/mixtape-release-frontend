@@ -33,6 +33,7 @@ import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { ConversationRole } from "./extensions/ConversationBlockquote";
+import { AtticControls, type AtticContext } from "./AtticControls";
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -58,11 +59,13 @@ export default function TipTapToolbar({
   gristMode = false,
   onImagePick,
   onSpellScan,
+  attic,
 }: {
   editor: Editor | null
   gristMode?: boolean
   onImagePick?: (file: File) => void
   onSpellScan?: () => void
+  attic?: AtticContext
 }) {
   const { user } = useAuth();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -307,6 +310,7 @@ export default function TipTapToolbar({
           tabIndex={-1}
           size="xs"
         />
+        {attic && <AtticControls key={attic.pieceId} editor={editor} {...attic} />}
         <EditorToolbarButton
           tooltip="Bullet list"
           icon={<IconList size={16} />}

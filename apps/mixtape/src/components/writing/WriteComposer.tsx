@@ -904,6 +904,7 @@ export default function WriteComposer({
 
             <Box ref={editorWrapperRef} position="relative" w="100%" onClick={handleEditorAreaClick}>
               <MainEditor
+                attic={{ pieceId, title }}
                 key={collabKey}
                 ref={editorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 editorMode={editorMode}

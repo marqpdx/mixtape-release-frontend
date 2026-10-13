@@ -28,6 +28,7 @@ import { BlockId } from "./extensions/BlockId";
 import { OutlineMarker } from "./extensions/OutlineMarker";
 import { LbAnchor } from "./extensions/LbAnchor";
 import TipTapToolbar from "./TipTapToolbar";
+import type { AtticContext } from "./AtticControls";
 import { AutoCapitalize } from "./extensions/AutoCapitalize";
 import { CORRECTION_FLASH, SpellCorrection, SpellCorrectionState } from "./extensions/SpellCorrection";
 import { SpellCorrectionPopup } from "./SpellCorrectionPopup";
@@ -70,6 +71,7 @@ const DEFAULT_TOOLBAR_OPTIONS: ToolbarOption[] = [
 ];
 
 interface TipTapEditorProps {
+  attic?: AtticContext;
   initialContent?: JSONContent | string;
   onContentChange?: (content: JSONContent) => void;
   autoSave?: {
@@ -131,6 +133,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
   gristMode,
   imageUpload,
   minimalChrome = false,
+  attic,
 }, ref) => {
   const latestContentRef = useRef<JSONContent | null>(null);
   const isUpdatingContentRef = useRef(false);
@@ -855,6 +858,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       >
         {!minimalChrome && (
           <TipTapToolbar
+            attic={attic}
             editor={editor}
             gristMode={!!gristMode}
             onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}

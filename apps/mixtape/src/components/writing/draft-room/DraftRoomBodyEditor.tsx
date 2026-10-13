@@ -155,6 +155,7 @@ export default function DraftRoomBodyEditor({ pieceId, pieceSlug, title, publish
         />
       )}
       <TipTapEditor
+        attic={{ pieceId, title }}
         key={pieceId}
         initialContent={body}
         onContentChange={published ? undefined : handleContentChange}

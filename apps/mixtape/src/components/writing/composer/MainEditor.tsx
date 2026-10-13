@@ -7,6 +7,7 @@ import { IconMaximize, IconMinimize } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapEditor from "@components/editor/TipTapEditor";
+import type { AtticContext } from "@components/editor/AtticControls";
 import TipTapCollabEditor from "@components/editor/TipTapCollabEditor";
 import type { SegmentBoundaryAttrs } from "@components/editor/extensions/SegmentBoundary";
 import { useTextSelection, TextSelection } from "../hooks/useTextSelection";
@@ -34,6 +35,7 @@ type EditorInstance = {
 } & Record<string, unknown>;
 
 export interface MainEditorProps {
+  attic?: AtticContext;
   // ✅ Solo-only
   docJSON?: DocumentJSON | null;
   onContentChange?: (json: DocumentJSON) => void;
@@ -104,6 +106,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       gristMode,
       imageUpload,
       enableGist = false,
+      attic,
       onCollabEditorReady,
     },
     ref
@@ -336,6 +339,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             showCollabEditor ? (
               <Box position="relative">
                 <TipTapCollabEditor
+                  attic={attic}
                   // ✅ force remount if ydoc changes identity
                   key={`${ydoc?.guid ?? "no-ydoc"}:${String(collabReady)}`} // ✅ force remount when ready flips
                   ref={handleEditorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -379,6 +383,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             )
           ) : (
             <TipTapEditor
+              attic={attic}
               ref={handleEditorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
               initialContent={docJSON ?? undefined}
               onContentChange={(json: DocumentJSON) => onContentChange?.(json)}

@@ -23,6 +23,7 @@ import { Box } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { Prose } from "@components/ui/prose";
 import TipTapToolbar from "./TipTapToolbar";
+import type { AtticContext } from "./AtticControls";
 import { LbAnchor } from "./extensions/LbAnchor";
 import { CommentMark } from "./extensions/CommentMark";
 import { ConversationBlockquote } from "./extensions/ConversationBlockquote";
@@ -50,6 +51,7 @@ const CollabStarterKit = StarterKit.configure({
 });
 
 interface TipTapCollabEditorProps {
+  attic?: AtticContext;
   initialContent?: JSONContent | string;
   yjsProvider: Record<string, unknown>;
   ydoc: Y.Doc;
@@ -76,6 +78,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
       placeholder = "Type here...",
       className = "",
       minimalChrome = false,
+      attic,
     },
     ref
   ) => {
@@ -270,7 +273,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
             pt={2}
             pl={1}
           >
-            {!minimalChrome && <TipTapToolbar editor={editor} />}
+            {!minimalChrome && <TipTapToolbar editor={editor} attic={attic} />}
             <Prose
               className="editor-content-prose"
               bg={bgColorEditor}

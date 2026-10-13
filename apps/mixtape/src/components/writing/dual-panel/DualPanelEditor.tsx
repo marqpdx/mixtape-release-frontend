@@ -288,6 +288,7 @@ export function DualPanelEditor({ sponsor }: DualPanelEditorProps) {
             </Flex>
           ) : (
             <TipTapEditor
+              attic={leftDoc.piece ? { pieceId: leftDoc.piece.id, title: leftDoc.title } : undefined}
               key={String(leftDoc.id)}
               ref={leftEditorRef}
               initialContent={leftBodyJson ?? undefined}

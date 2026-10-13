@@ -274,6 +274,7 @@ export function DraftEditor({
         transition="padding 0.25s ease"
       >
         <MainEditor
+          attic={{ pieceId, title }}
           key={pieceId}
           ref={editorRef}
           docJSON={docJSON}
