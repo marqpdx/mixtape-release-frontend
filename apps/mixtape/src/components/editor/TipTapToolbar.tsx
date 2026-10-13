@@ -284,7 +284,7 @@ export default function TipTapToolbar({
           size="xs"
         />
         <EditorToolbarButton
-          tooltip="Chat: Querent"
+          tooltip="Dialogue: Me"
           icon={<IconMessageQuestion size={16} />}
           onClick={() => toggleConversationRole("querent")}
           isActive={editor.isActive("blockquote", { role: "querent" })}
@@ -292,7 +292,7 @@ export default function TipTapToolbar({
           size="xs"
         />
         <EditorToolbarButton
-          tooltip="Chat: Respondent"
+          tooltip="Dialogue: Chat"
           icon={<IconMessageReply size={16} />}
           onClick={() => toggleConversationRole("respondent")}
           isActive={editor.isActive("blockquote", { role: "respondent" })}

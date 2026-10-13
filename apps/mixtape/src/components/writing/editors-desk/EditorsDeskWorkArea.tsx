@@ -343,20 +343,31 @@ function IssueDropPosition({ issueId, index }: { issueId: string; index: number 
   );
 }
 
-function DraggableIssuePiece({ issueId, pieceId, title, children }: { issueId: string; pieceId: string; title: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+function DraggableIssuePiece({ issueId, pieceId, title, index, children }: { issueId: string; pieceId: string; title: string; index: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({
     id: `issue-piece-${pieceId}`,
     data: { type: "issue-piece", issueId, pieceId },
   });
+  const before = useDroppable({
+    id: `issue-row-before-${pieceId}`,
+    data: { type: "issue-gap", issueId, index },
+  });
+  const after = useDroppable({
+    id: `issue-row-after-${pieceId}`,
+    data: { type: "issue-gap", issueId, index: index + 1 },
+  });
   return (
-    <Box ref={setNodeRef} className="edw-issue-piece" opacity={isDragging ? 0.4 : 1} transform={transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined}>
-      <Flex align="start" gap={1}>
-        <Tooltip content={`Move ${title} within Issue`}>
-          <IconButton aria-label={`Reorder ${title}`} size="2xs" variant="ghost" cursor="grab" flexShrink={0} {...attributes} {...listeners}>
-            <IconGripVertical size={14} />
+    <Box ref={setNodeRef} className="edw-issue-piece" position="relative" opacity={isDragging ? 0.4 : 1}>
+      {/* Keep row geometry fixed while dragging so insertion targets do not move. */}
+      <Box ref={before.setNodeRef} className="edw-issue-row-before" position="absolute" top={0} left={0} right={0} h="50%" pointerEvents="none" borderTopWidth="2px" borderColor={before.isOver ? "theme.accent" : "transparent"} />
+      <Box ref={after.setNodeRef} className="edw-issue-row-after" position="absolute" bottom={0} left={0} right={0} h="50%" pointerEvents="none" borderBottomWidth="2px" borderColor={after.isOver ? "theme.accent" : "transparent"} />
+      <Flex className="edw-issue-piece-content" align="start" gap={1}>
+        <Tooltip content={`Drag to reorder ${title}`}>
+          <IconButton ref={setActivatorNodeRef} aria-label={`Reorder ${title}`} size="xs" minW="36px" minH="44px" variant="ghost" cursor={isDragging ? "grabbing" : "grab"} touchAction="none" flexShrink={0} {...attributes} {...listeners}>
+            <IconGripVertical size={18} />
           </IconButton>
         </Tooltip>
-        <Box flex={1} minW={0}>{children}</Box>
+        <Box className="edw-issue-piece-body" flex={1} minW={0}>{children}</Box>
       </Flex>
     </Box>
   );
@@ -508,9 +519,14 @@ function IssuePanel({
                 onSaveDescription={onSaveDescription}
               />
             )}
-            <Box>
+            <Box className="edw-issue-layout">
+              {!isPreview && focusedIssueData && focusedIssueData.placements.length > 1 && (
+                <Text fontSize="xs" color="theme.textSecondary" mb={2}>
+                  Drag the handles to reorder articles. Drop on the top or bottom half of a row to place it before or after.
+                </Text>
+              )}
               {focusedIssueData && focusedIssueData.placements.length > 0 ? (
-                <VStack align="stretch" gap={2}>
+                <VStack className="edw-issue-layout-rows" align="stretch" gap={2}>
                   {focusedIssueData.placements.map((placement, idx) => {
                     const doc = docs.find((d) => d.piece?.id === placement.piece_id);
                     const orderedIds = focusedIssueData.placements.map((p) => p.piece_id);
@@ -576,7 +592,7 @@ function IssuePanel({
                       <React.Fragment key={placement.id}>
                         {!isPreview && <IssueDropPosition issueId={issue.id} index={idx} />}
                         {isPreview ? pieceRow : (
-                          <DraggableIssuePiece issueId={issue.id} pieceId={placement.piece_id} title={placement.piece_title}>
+                          <DraggableIssuePiece issueId={issue.id} pieceId={placement.piece_id} title={placement.piece_title} index={idx}>
                             {pieceRow}
                           </DraggableIssuePiece>
                         )}

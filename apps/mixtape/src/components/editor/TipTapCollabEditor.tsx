@@ -310,14 +310,14 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
                     borderLeftColor: "var(--chakra-colors-teal-500)",
                   },
                   "& blockquote[data-chat-role='querent']::before": {
-                    content: '"Querent"',
+                    content: '"Me"',
                     color: "var(--chakra-colors-teal-600)",
                   },
                   "& blockquote[data-chat-role='respondent']": {
                     borderLeftColor: "var(--chakra-colors-blue-500)",
                   },
                   "& blockquote[data-chat-role='respondent']::before": {
-                    content: '"Respondent"',
+                    content: '"Chat"',
                     color: "var(--chakra-colors-blue-600)",
                   },
                   "& h1": {

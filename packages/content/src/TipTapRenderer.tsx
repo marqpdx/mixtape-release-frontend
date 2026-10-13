@@ -280,7 +280,7 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
               >
                 {role && (
                   <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" color={role === 'querent' ? 'teal.600' : 'blue.600'} mb={2}>
-                    {role === 'querent' ? 'Querent' : 'Respondent'}
+                    {role === 'querent' ? 'Me' : 'Chat'}
                   </Text>
                 )}
                 {renderContent(node.content)}
