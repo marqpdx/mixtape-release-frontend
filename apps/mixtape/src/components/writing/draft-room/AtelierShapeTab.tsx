@@ -209,8 +209,10 @@ export default function AtelierShapeTab({
   const [ignoringDimension, setIgnoringDimension] = useState<ReadinessDimension | null>(null);
 
   // Tags / categories (kept in sync with parent via callbacks)
-  const [tags, setTags] = useState<Tag[]>(initialTags);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [localTags, setTags] = useState<Tag[]>(initialTags);
+  const [localCategories, setCategories] = useState<Category[]>(initialCategories);
+  const tags = onTagsChange ? initialTags : localTags;
+  const categories = onCategoriesChange ? initialCategories : localCategories;
 
   // Summaries
   const [summaries, setSummaries] = useState<Summaries | null>(null);

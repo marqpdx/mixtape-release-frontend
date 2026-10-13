@@ -97,6 +97,11 @@ export interface AdmissionStatus {
   is_parent_member: boolean;
 }
 
+export interface PublicWritingTag {
+  slug: string;
+  title: string;
+}
+
 export interface PublicLibraryPiece {
   id: string;
   slug: string;
@@ -106,6 +111,7 @@ export interface PublicLibraryPiece {
   writing_kind: string;
   published_at: string | null;
   reading_time: number | null;
+  tags?: PublicWritingTag[];
   author: {
     username: string;
     display_name: string;
@@ -144,6 +150,7 @@ export interface PublicWritingPiece {
   slug: string;
   title: string;
   excerpt: string;
+  tags?: PublicWritingTag[];
   body_json: Record<string, unknown>;
   writing_kind: string;
   published_at: string;

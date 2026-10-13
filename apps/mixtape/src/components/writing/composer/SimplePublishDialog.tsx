@@ -371,8 +371,12 @@ export function SimplePublishDialog({
   }
 
   const handleCopyLinkedInIntroduction = async () => {
-    await navigator.clipboard.writeText(linkedinCopy)
-    toaster.create({ title: 'LinkedIn introduction copied', type: 'success' })
+    try {
+      await navigator.clipboard.writeText(linkedinCopy)
+      toaster.create({ title: 'Introduction copied', description: 'Paste it into the LinkedIn post composer before clicking Post.', type: 'success' })
+    } catch {
+      toaster.create({ title: 'Could not copy the introduction', description: 'Select and copy the text shown here, then paste it into LinkedIn.', type: 'error' })
+    }
   }
 
   const handleCopyArticleUrl = async () => {
@@ -549,37 +553,42 @@ export function SimplePublishDialog({
         <Dialog.Positioner>
           <Dialog.Content maxW="520px">
             <Dialog.Header>
-              <Heading size="md">Published</Heading>
+              <Heading size="md">Published on Crossroads</Heading>
               <Text fontSize="sm" color="gray.500" mt={2}>
-                {linkedinShareUrl ? 'Your piece is live. Share it now.' : 'Your updates are live.'}
+                {linkedinShareUrl ? 'Your article is live. Finish your LinkedIn post below.' : 'Your updates are live.'}
               </Text>
             </Dialog.Header>
             <Dialog.Body>
               <VStack className="spd-publish-results" gap={4} align="stretch">
-                {linkedinShareRecord && <Box className="spd-linkedin-share-result" borderWidth="1px" borderRadius="md" p={4} bg="green.50">
+                {linkedinShareRecord && <Box className="spd-linkedin-share-result" borderWidth="1px" borderColor="theme.border" borderRadius="md" p={4} bg="theme.accentSoft">
                   <Text fontWeight="semibold" fontSize="sm" mb={1}>LinkedIn</Text>
                   {linkedinShareUrl ? (
                     <>
-                      <Text fontSize="sm" color="gray.600" mb={3}>
-                        Copy the reviewed introduction, then open LinkedIn and share the article.
+                      <Text fontSize="sm" color="theme.textSecondary" mb={3}>
+                        LinkedIn receives the article link, but doesn’t fill in your introduction or publish the post for you.
                       </Text>
+                      <List.Root className="spd-linkedin-share-steps" as="ol" listStyleType="decimal" ps={5} gap={1} fontSize="sm" mb={3}>
+                        <List.Item>Copy your introduction below.</List.Item>
+                        <List.Item>Open LinkedIn using the button below.</List.Item>
+                        <List.Item>Paste the introduction above the article preview, then click <strong>Post</strong> in LinkedIn.</List.Item>
+                      </List.Root>
                       <Box
                         className="spd-linkedin-final-copy"
                         borderWidth="1px"
-                        borderColor="blue.200"
+                        borderColor="theme.border"
                         borderRadius="md"
-                        bg="white"
+                        bg="theme.bg"
                         p={3}
                         mb={3}
                       >
                         <Text fontSize="sm" whiteSpace="pre-wrap">{linkedinCopy}</Text>
                       </Box>
-                      <HStack gap={2} flexWrap="wrap">
+                      <HStack className="spd-linkedin-share-actions" gap={2} flexWrap="wrap">
                         <Button size="sm" variant="outline" onClick={handleCopyLinkedInIntroduction}>
-                          Copy introduction
+                          1. Copy introduction
                         </Button>
                         <Link href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" colorPalette="blue">Open LinkedIn →</Button>
+                          <Button size="sm" colorPalette="blue">2. Open LinkedIn →</Button>
                         </Link>
                       </HStack>
                       <Text fontSize="xs" color="gray.500" mt={3}>
@@ -596,7 +605,8 @@ export function SimplePublishDialog({
                     </>
                   ) : (
                     <Text fontSize="sm" color="gray.600">
-                      Published. Check your email for the LinkedIn share link.
+                      Your article is live on Crossroads. If you receive a LinkedIn share email, copy its introduction,
+                      open the share link, paste the introduction above the preview, and click Post in LinkedIn.
                     </Text>
                   )}
                 </Box>}

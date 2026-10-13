@@ -46,7 +46,7 @@
 .prose p:not(:global(.ttr-code-paragraph)) { margin: 0 0 1.25em; }
 .prose p:global(.ttr-code-paragraph) { margin: 0; }
 .prose h2, .prose h3 { line-height: 1.22; margin: 2em 0 0.75em; }
-.prose h2 { font-size: 1.875rem; }
+.prose :global(.tiptap-content) h2 { font-size: 1.875rem; margin: 2em 0 0.5em; }
 .prose h3 { font-size: 1.5rem; }
 .prose a { text-decoration-color: var(--chakra-colors-theme-accent); }
 .prose pre { max-width: 100%; overflow-x: auto; }

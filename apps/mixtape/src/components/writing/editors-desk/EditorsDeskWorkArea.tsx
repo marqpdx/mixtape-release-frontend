@@ -91,17 +91,12 @@ function StatusDot({ color, label }: { color: DotColor; label?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Issue rollup dot — Green only when all placements are Green
+// Issue rollup dot — Green when every article is published
 // ---------------------------------------------------------------------------
 
 function issueRollupColor(issue: Issue | IssueListItem): DotColor {
   if (issue.status === "published") return "blue";
-  if ("placements" in issue) {
-    const i = issue as Issue;
-    if (!i.placements.length) return "yellow";
-    return i.placements.every((p) => p.spellcheck_clean && p.signed_off) ? "green" : "yellow";
-  }
-  return "yellow";
+  return issue.is_publishable ? "green" : "yellow";
 }
 
 // ---------------------------------------------------------------------------
@@ -453,7 +448,7 @@ function IssuePanel({
               </IconButton>
             </Tooltip>
             {issue.status === "draft" && onPublish && (
-              <Tooltip content={issue.is_publishable ? "Publish Issue" : "Review spelling and sign off each draft in Preview before publishing"}>
+              <Tooltip content={issue.is_publishable ? "Publish Issue" : "Add articles and publish every article before publishing this Issue"}>
                 <Button
                   size="xs"
                   colorPalette="blue"
@@ -1101,7 +1096,7 @@ export function EditorsDeskWorkArea({ sponsor, initialIssueId, onOpenPiece }: Ed
     if (!focusedIssueId) return;
     try {
       await publishIssue.mutateAsync();
-      toaster.create({ title: "Issue published — all Docs are now live", type: "success" });
+      toaster.create({ title: "Issue published", type: "success" });
     } catch (e) {
       const err = e as { response?: { data?: { detail?: string; not_ready?: string[] } } };
       const detail = err?.response?.data?.detail || "Publish failed";

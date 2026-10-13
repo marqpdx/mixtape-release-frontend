@@ -4,6 +4,7 @@ import { PieceBody } from "../../../reading/[articleSlug]/PieceBody";
 import { presentIssue } from "../../issuePresentation";
 import { heading, body, mono } from "../../issueFonts";
 import styles from "./IssueReader.module.css";
+import { PublicWritingTags } from "../../../sections/PublicWritingTags";
 
 function PieceDate({ publishedAt }: { publishedAt: string | null }) {
   if (!publishedAt) return null;
@@ -73,6 +74,7 @@ export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
                   <Link href={`/groups/${groupSlug}/reading/${piece.slug}`}>{piece.title}</Link>
                 </h2>
                 {piece.excerpt?.trim() && <p className={`gwir-piece-summary ${styles.summary}`}>{piece.excerpt}</p>}
+                <PublicWritingTags tags={piece.tags} />
               </div>
               <PieceDate publishedAt={piece.published_at} />
               {piece.author && <p className={`gwir-piece-author ${styles.meta} ${styles.author}`}>{piece.author}</p>}

@@ -12,6 +12,7 @@ import { PieceBody } from "./PieceBody";
 import { PieceIssueBar, PieceIssueContinue, pieceIssueContext } from "./PieceIssueNavigation";
 import { GroupPublicFooter } from "../../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../../sections/GroupPublicNav";
+import { PublicWritingTags } from "../../sections/PublicWritingTags";
 import type { GroupPublicLandingConfig, TypographySetting } from "../../types";
 import { tenantPalettes } from "../../tenantPalettes";
 
@@ -213,7 +214,7 @@ export default async function PublicPieceReaderPage({
           line-height: 1.22;
           margin: 2em 0 0.75em;
         }
-        .gpr-body h2 { font-size: ${setting === "journal" ? "1.875rem" : "1.625rem"}; }
+        .gpr-body .tiptap-content h2 { font-size: ${setting === "journal" ? "1.875rem" : "1.625rem"}; margin: 2em 0 0.5em; }
         .gpr-body h3 { font-size: ${setting === "journal" ? "1.5rem" : "1.313rem"}; }
         .gpr-body a { color: var(--theme-text); text-decoration-color: var(--theme-accent); text-underline-offset: 3px; }
         ${paletteOverrides(groupConfig)}
@@ -294,6 +295,7 @@ export default async function PublicPieceReaderPage({
               {piece.excerpt}
             </p>
           )}
+          <PublicWritingTags tags={piece.tags} />
         </header>
 
         <div className="gpr-body" style={{ marginTop: "72px" }}>

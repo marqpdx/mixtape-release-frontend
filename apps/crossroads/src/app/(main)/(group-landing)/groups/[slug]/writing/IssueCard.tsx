@@ -3,6 +3,7 @@ import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/
 import { IssueContents, IssueContentsToggle, IssueDisclosure } from "./IssueContentsToggle";
 import { issueIntroduction, presentIssue } from "./issuePresentation";
 import styles from "./IssueCollection.module.css";
+import { PublicWritingTags } from "../sections/PublicWritingTags";
 
 export function IssueCard({ issue, groupSlug, writing }: {
   issue: PublicGroupIssue;
@@ -64,6 +65,7 @@ export function IssueCard({ issue, groupSlug, writing }: {
                 <div className={styles.pieceDetail}>
                   <Link href={pieceUrl(piece.slug)} className={styles.pieceTitle}>{piece.title}</Link>
                   {piece.excerpt && <p className={styles.excerpt}>{piece.excerpt}</p>}
+                  <PublicWritingTags tags={piece.tags} />
                 </div>
                 {piece.readingTime !== null && <span className={styles.minutes}>{piece.readingTime} min</span>}
               </li>

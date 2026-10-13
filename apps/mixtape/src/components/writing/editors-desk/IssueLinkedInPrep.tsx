@@ -158,12 +158,16 @@ export function IssueLinkedInPrep({ issue, groupSlug, onClose }: {
                   </Checkbox.Root>
                   {row.error && <Text color="red.500" fontSize="sm" mt={2}>{row.error}</Text>}
                   {row.shareUrl ? (
-                    <HStack gap={3} mt={2} flexWrap="wrap">
+                    <VStack className="ilp-share-handoff" align="stretch" gap={2} mt={2}>
+                    <Text fontSize="sm" color="theme.textSecondary">The share link includes the article preview. You still need to paste your introduction and click Post in LinkedIn.</Text>
+                    <HStack className="ilp-share-actions" gap={3} flexWrap="wrap">
                       <Button size="xs" variant="outline" onClick={() => void navigator.clipboard.writeText(row.introduction)}>
-                        <IconCopy size={14} /> Copy introduction
+                        <IconCopy size={14} /> 1. Copy introduction
                       </Button>
-                      <a href={row.shareUrl} target="_blank" rel="noopener noreferrer">Open LinkedIn</a>
+                      <a href={row.shareUrl} target="_blank" rel="noopener noreferrer">2. Open LinkedIn</a>
                     </HStack>
+                    <Text fontSize="sm" color="theme.textSecondary">3. Paste the introduction above the article preview, then click <strong>Post</strong>.</Text>
+                    </VStack>
                   ) : (
                     <VStack align="stretch" gap={3} mt={3}>
                       <Box>

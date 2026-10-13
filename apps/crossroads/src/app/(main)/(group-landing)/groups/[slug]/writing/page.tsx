@@ -11,6 +11,7 @@ import Image from "next/image";
 import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
 import { GroupPublicFooter } from "../sections/GroupPublicFooter";
 import { GroupPublicNav } from "../sections/GroupPublicNav";
+import { PublicWritingTags } from "../sections/PublicWritingTags";
 import { IssueCollection } from "./IssueCollection";
 import issueStyles from "./IssueCollection.module.css";
 import type { GroupPublicLandingConfig, TypographySetting } from "../types";
@@ -331,6 +332,7 @@ export default async function GroupWritingIndexPage({
                   >
                     {byline(piece)}
                   </p>
+                  <PublicWritingTags tags={piece.tags} />
                   {piece.body_preview && (
                     <p
                       className="gwi-piece-excerpt"

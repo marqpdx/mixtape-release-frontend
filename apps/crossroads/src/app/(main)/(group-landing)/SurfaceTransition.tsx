@@ -50,6 +50,15 @@ export function SurfaceTransitionProvider({ children }: { children: ReactNode })
     (href: string, source: HTMLElement) => {
       if (transitioning) return;
 
+      // Same-page navigation cannot complete the pathname-based transition.
+      // Let Next handle refreshes, query changes and fragments without covering the page.
+      const destination = new URL(href, window.location.href);
+      const normalizePath = (path: string) => path.replace(/\/+$/, "") || "/";
+      if (normalizePath(destination.pathname) === normalizePath(pathname)) {
+        router.push(href);
+        return;
+      }
+
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         router.push(href);
         return;

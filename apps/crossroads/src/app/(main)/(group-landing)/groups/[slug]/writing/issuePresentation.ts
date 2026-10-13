@@ -7,6 +7,7 @@ export function presentIssue(issue: PublicGroupIssue, writing: PublicLibraryPiec
     .map((piece) => ({
       ...piece,
       readingTime: writingById.get(piece.id)?.reading_time ?? null,
+      tags: writingById.get(piece.id)?.tags ?? [],
     }));
   const number = issue.designation?.match(/^issue\s*#?\s*(\d+)\s*$/i)?.[1] ?? null;
   const label = number ? `Issue #${number}` : issue.designation || "Issue";
