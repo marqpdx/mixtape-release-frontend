@@ -39,21 +39,30 @@
     const hue = l => LAYERS[l].hue;
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
 
-    // Scaffold: intro and detail panel share the top row, then controls, the full-width diagram, layer cards.
+    // Scaffold: a pinned strip (intro beside the detail panel, then controls), the zoomable diagram, layer cards.
     const keyItems = status
       ? Object.entries(status.labels).map(([k, label]) => `<span><i class="sdot" style="background:var(--st-${k})"></i>${esc(label)}</span>`).join('')
         + (status.untracked ? `<span><i class="sdot untracked"></i>${esc(status.untracked)}</span>` : '')
       : '';
     mount.innerHTML = `
-      <div class="tk-top">
-        <div class="tk-intro"></div>
-        <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
-          'Select a node to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
+      <div class="tk-sticky">
+        <div class="tk-top">
+          <div class="tk-intro"></div>
+          <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
+            'Select a node to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
+        </div>
+        <div class="controls">
+          ${status ? `<label><input type="checkbox" data-tk="showStatus" checked> Show build state</label>
+          <span class="status-key">${keyItems}</span>` : ''}
+          <span class="tk-zoom" role="group" aria-label="Map size">
+            <button type="button" data-zoom="out" aria-label="Smaller">−</button>
+            <span class="tk-zoom-label" aria-live="polite"></span>
+            <button type="button" data-zoom="in" aria-label="Larger">+</button>
+            <button type="button" data-zoom="width">Fit width</button>
+            <button type="button" data-zoom="all">Fit all</button>
+          </span>
+        </div>
       </div>
-      ${status ? `<div class="controls">
-        <label><input type="checkbox" data-tk="showStatus" checked> Show build state</label>
-        <span class="status-key">${keyItems}</span>
-      </div>` : ''}
       <div class="stage">
         <div class="tk-diagram" role="img" aria-label="${esc(cfg.ariaLabel || 'Topology diagram')}"></div>
       </div>
@@ -65,7 +74,6 @@
     else mount.querySelector('.tk-top').classList.add('no-intro');
 
     const svg = el('svg', { viewBox: `0 0 ${VW} ${VH}`, xmlns: NS });
-    svg.style.minWidth = (cfg.minWidth || 820) + 'px';
     const defs = el('defs', {}, svg);
     for (const [id, color] of [['tkArrow', 'var(--edge)'], ['tkArrowHot', 'var(--edge-hot)']]) {
       const m = el('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
@@ -190,7 +198,7 @@
         <div class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</div>
         <h2>${esc(n.label)}</h2>
         <p>${n.desc}</p>
-        <div class="p-links"><b>From:</b> ${names(ins)}<br><b>To:</b> ${names(outs)}</div>
+        <div class="p-links"><b>From:</b> ${names(ins)}<span class="sep">·</span><b>To:</b> ${names(outs)}</div>
         ${refs}${st}`;
     }
     function select(id) {
@@ -232,6 +240,31 @@
       const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
       root.dataset.theme = dark ? 'light' : 'dark';
     }));
+
+    // Map size. 'width' fits the frame's width (never below minWidth, so small screens scroll sideways);
+    // 'all' fits the whole map under the pinned strip; − and + step from wherever it is.
+    const sticky = mount.querySelector('.tk-sticky');
+    const zoomLabel = mount.querySelector('.tk-zoom-label');
+    const minW = cfg.minWidth || 820;
+    let zoomMode = 'width', scale = 1;
+    const frameW = () => diagram.clientWidth - 16;
+    const pinnedH = () => getComputedStyle(sticky).position === 'sticky' ? sticky.offsetHeight : 0;
+    function applyZoom() {
+      if (zoomMode === 'width') scale = Math.max(frameW(), minW) / VW;
+      if (zoomMode === 'all') scale = Math.min(frameW() / VW, (window.innerHeight - pinnedH() - 32) / VH);
+      scale = Math.min(3, Math.max(0.3, scale));
+      svg.style.width = Math.round(VW * scale) + 'px';
+      zoomLabel.textContent = Math.round(scale * 100) + '%';
+    }
+    mount.querySelectorAll('[data-zoom]').forEach(btn => btn.addEventListener('click', () => {
+      const z = btn.dataset.zoom;
+      if (z === 'in' || z === 'out') { zoomMode = 'manual'; scale *= z === 'in' ? 1.2 : 1 / 1.2; }
+      else zoomMode = z;
+      applyZoom();
+      if (z === 'all') window.scrollTo({ top: diagram.getBoundingClientRect().top + window.scrollY - pinnedH() - 8, behavior: 'smooth' });
+    }));
+    applyZoom();
+    window.addEventListener('resize', () => { if (zoomMode !== 'manual') applyZoom(); });
 
     // Deep link: #ID selects that node.
     const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)); if (byId[id]) select(id); };

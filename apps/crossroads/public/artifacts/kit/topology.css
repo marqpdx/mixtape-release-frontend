@@ -82,16 +82,25 @@ h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
 .theme-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--fg-muted);
                 border-radius: 8px; padding: 0.35rem 0.65rem; font-size: 1rem; cursor: pointer; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; margin-bottom: 0.75rem;
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; padding-bottom: 0.6rem;
             font-size: 0.85rem; color: var(--fg-muted); }
 .controls label { display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
 .status-key { display: inline-flex; gap: 0.9rem; flex-wrap: wrap; }
 .status-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .sdot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.tk-zoom { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; }
+.tk-zoom button { background: var(--surface); border: 1px solid var(--border); color: var(--fg-muted); border-radius: 6px;
+                  padding: 0.15rem 0.55rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.tk-zoom button:hover { color: var(--fg); }
+.tk-zoom-label { min-width: 3.2em; text-align: center; font-variant-numeric: tabular-nums; }
 .sdot.untracked { background: transparent; border: 1.5px dashed var(--fg-faint); }
 
 /* Top row: intro (left ~35%) beside the detail panel (right ~65%); stacks on narrow screens. */
-.tk-top { display: grid; grid-template-columns: minmax(0, 35fr) minmax(0, 65fr); gap: 1.25rem; align-items: start; margin-bottom: 1rem; }
+/* Pinned strip: intro, detail panel and controls stay put while the map scrolls underneath. */
+.tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.75rem; margin-top: -0.75rem;
+             box-shadow: 0 1px 0 var(--border); margin-bottom: 0.75rem; }
+@media (max-width: 860px), (max-height: 620px) { .tk-sticky { position: static; box-shadow: none; } }
+.tk-top { display: grid; grid-template-columns: minmax(0, 35fr) minmax(0, 65fr); gap: 1.25rem; align-items: start; margin-bottom: 0.6rem; }
 .tk-top.no-intro { grid-template-columns: minmax(0, 1fr); }
 .tk-intro header { margin-bottom: 0; }
 .tk-intro .subtitle { max-width: none; }
@@ -100,7 +109,7 @@ h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
 .stage > * { min-width: 0; }
 .tk-diagram { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
               overflow-x: auto; padding: 0.5rem; }
-.tk-diagram svg { display: block; width: 100%; height: auto; }
+.tk-diagram svg { display: block; height: auto; margin: 0 auto; }
 
 .band-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .band-tag { pointer-events: none; }
@@ -120,14 +129,15 @@ svg.focusing .node:not(.lit) { opacity: 0.35; }
 svg.show-status .badge { display: inline; }
 
 .tk-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 0.85rem 1.1rem; }
+            padding: 0.7rem 1rem; }
 .tk-panel .p-layer { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.tk-panel h2 { font-size: 1.15rem; margin: 0.2rem 0 0.5rem; letter-spacing: -0.01em; }
-.tk-panel p { font-size: 0.88rem; color: var(--fg); }
-.tk-panel .p-status { margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--fg-muted); }
+.tk-panel h2 { font-size: 1.05rem; margin: 0.1rem 0 0.3rem; letter-spacing: -0.01em; }
+.tk-panel p { font-size: 0.85rem; color: var(--fg); line-height: 1.45; }
+.tk-panel .p-status { margin-top: 0.5rem; padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--fg-muted); }
 .tk-panel .p-status strong { color: var(--fg); }
-.tk-panel .p-links { margin-top: 0.75rem; font-size: 0.8rem; color: var(--fg-muted); }
-.tk-panel .p-refs { margin-top: 0.5rem; font-size: 0.8rem; color: var(--fg-muted); }
+.tk-panel .p-links { margin-top: 0.45rem; font-size: 0.8rem; color: var(--fg-muted); }
+.tk-panel .p-links .sep { margin: 0 0.5rem; }
+.tk-panel .p-refs { margin-top: 0.3rem; font-size: 0.8rem; color: var(--fg-muted); }
 .tk-panel .empty { color: var(--fg-muted); font-size: 0.88rem; }
 
 .layers { margin-top: 2.25rem; }
