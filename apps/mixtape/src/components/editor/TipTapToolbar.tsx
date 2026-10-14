@@ -2,7 +2,7 @@
 
 import { Editor } from "@tiptap/react";
 import NextLink from "next/link";
-import { Box, Button, Dialog, Field, HStack, IconButton, Input, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Dialog, Field, HStack, IconButton, Input, Link, Table, Text } from "@chakra-ui/react";
 import {
   IconBold,
   IconItalic,
@@ -31,7 +31,6 @@ import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/lib/auth/AuthContext";
 import type { ConversationRole } from "./extensions/ConversationBlockquote";
 import { AtticControls, type AtticContext } from "./AtticControls";
 
@@ -67,9 +66,7 @@ export default function TipTapToolbar({
   onSpellScan?: () => void
   attic?: AtticContext
 }) {
-  const { user } = useAuth();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
-  const isSuperuser = !!user?.is_superuser;
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
   const [showHelp, setShowHelp] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -209,8 +206,8 @@ export default function TipTapToolbar({
 
   return (
     <>
-    <HStack p={1} pt={2} gap={0.5} justify="space-between" align="start" wrap="wrap">
-      <HStack gap={0.5}>
+    <HStack className="ttb-toolbar" px={2} py={2} flexShrink={0} gap={1} justify="space-between" align="center" wrap="wrap">
+      <HStack className="ttb-format-tools" gap={0.5} flexWrap="wrap">
         <EditorToolbarButton
           tooltip="Heading 1"
           icon={<IconH1 size={16} />}
@@ -398,7 +395,7 @@ export default function TipTapToolbar({
         />
       </HStack>
 
-      <HStack gap={0.5} align="start">
+      <HStack className="ttb-utility-tools" gap={0.5} align="center">
         <Tooltip content="Publish as Section">
           <IconButton
             size="xs"
@@ -434,7 +431,6 @@ export default function TipTapToolbar({
             </IconButton>
           </Tooltip>
         )}
-        {isSuperuser ? (
           <Tooltip content="Writing Help">
             <IconButton
               size="xs"
@@ -447,10 +443,10 @@ export default function TipTapToolbar({
               <IconHelpCircle size={16} />
             </IconButton>
           </Tooltip>
-        ) : null}
       </HStack>
-      {isSuperuser && showHelp ? (
+      {showHelp ? (
         <Box
+          className="ttb-writing-help"
           w="100%"
           mt={1}
           p={2}
@@ -458,7 +454,21 @@ export default function TipTapToolbar({
           borderColor="border"
           borderRadius="md"
           bg="bg.subtle"
+          maxH="35vh"
+          overflowY="auto"
         >
+          <Text fontSize="sm" fontWeight="semibold" mb={2}>Heading shortcuts</Text>
+          <Table.Root size="sm" mb={2}>
+            <Table.Header><Table.Row><Table.ColumnHeader>Format</Table.ColumnHeader><Table.ColumnHeader>Mac</Table.ColumnHeader><Table.ColumnHeader>Windows/Linux</Table.ColumnHeader></Table.Row></Table.Header>
+            <Table.Body>
+              {["Paragraph", "Heading 1", "Heading 2", "Heading 3", "Heading 4"].map((label, level) => (
+                <Table.Row key={label}><Table.Cell>{label}</Table.Cell><Table.Cell>⌘⌥{level}</Table.Cell><Table.Cell>Ctrl+Alt+{level}</Table.Cell></Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+          <Text fontSize="xs" mb={2}>Heading shortcuts toggle the format of the current paragraph or selected blocks. ⌘⌥0 (Ctrl+Alt+0) returns to a paragraph.</Text>
+          <Text fontSize="xs" mb={2}>At the beginning of a paragraph, type ## followed by Space for Heading 2 (or #, ###, #### for Heading 1, 3, 4).</Text>
+          <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option.</Text>
           <Text fontSize="xs" color="fg.muted" whiteSpace="pre-wrap">
             {`Spelling helpers
 Manual popup: Cmd/Ctrl + double-click a word.

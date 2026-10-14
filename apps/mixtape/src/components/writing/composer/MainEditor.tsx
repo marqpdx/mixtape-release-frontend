@@ -283,6 +283,8 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
           borderRadius="lg"
           bg={bgColor}
           overflow="hidden"
+          display="flex"
+          flexDirection="column"
           transition="all 0.2s"
           height={gistOpen ? "96dvh" : "56vh"}
           width={gistOpen ? "min(960px, 92vw)" : undefined}
@@ -291,7 +293,8 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
           _focusWithin={{ borderColor: focusBorderColor }}
           css={{
             "& .ProseMirror": {
-              height: gistOpen ? "calc(96dvh - 4px)" : "calc(52vh - 4px)",
+              height: "100%",
+              minHeight: 0,
               padding: gistOpen ? "43px max(21px, calc((100% - 71ch) / 2))" : "24px",
               paddingBottom: "40px",
               outline: "none",
@@ -337,7 +340,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             )
           ) : wantsCollab ? (
             showCollabEditor ? (
-              <Box position="relative">
+              <Box className="med-collab-editor" position="relative" display="flex" flexDirection="column" flex={1} minH={0}>
                 <TipTapCollabEditor
                   attic={attic}
                   // ✅ force remount if ydoc changes identity

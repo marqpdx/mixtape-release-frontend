@@ -734,13 +734,16 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
   return (
     <Box
-      className={className}
+      className={`tte-root ${className}`}
+      display="flex"
+      flexDirection="column"
+      flex={isBorderless ? 1 : undefined}
+      minH={isBorderless ? 0 : "300px"}
       {...(!isBorderless && {
         borderWidth: "1px",
         borderRadius: "md",
         p: 4
       })}
-      minH={isBorderless ? "auto" : "300px"}
       css={{
         // Custom styles for the editor
         "& .ProseMirror": {
@@ -848,12 +851,15 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       }}
     >
       <Box
+        className="tte-editor-frame"
         borderWidth="1px"
         borderColor={toolbarBorderColor}
         borderRadius="lg"
         overflow="hidden"
-        pt={2}
-        pl={1}
+        display="flex"
+        flexDirection="column"
+        flex={1}
+        minH={0}
         position="relative"
       >
         {!minimalChrome && (
@@ -866,7 +872,8 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           />
         )}
         <Prose className="editor-content-prose" bg={bgColorEditor} maxW="full"
-          css={{ '& > *': { marginBlock: 0 } }}>
+          flex={1} minH={0}
+          css={{ '& > *': { marginBlock: 0, height: "100%", minHeight: 0 } }}>
             <EditorContent editor={editor} />
         </Prose>
         {streamMode && compositionSegments.length > 0 && (

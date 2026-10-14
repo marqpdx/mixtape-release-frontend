@@ -257,29 +257,37 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
     return (
       <React.Fragment>
         <Box
-          className={className}
+          className={`ttc-root ${className}`}
+          display="flex"
+          flexDirection="column"
+          flex={isBorderless ? 1 : undefined}
+          minH={isBorderless ? 0 : "300px"}
           {...(!isBorderless && {
             borderWidth: "1px",
             borderRadius: "md",
             p: 4,
           })}
-          minH={isBorderless ? "auto" : "300px"}
         >
           <Box
+            className="ttc-editor-frame"
             borderWidth="1px"
             borderColor={toolbarBorderColor}
             borderRadius="lg"
             overflow="hidden"
-            pt={2}
-            pl={1}
+            display="flex"
+            flexDirection="column"
+            flex={1}
+            minH={0}
           >
             {!minimalChrome && <TipTapToolbar editor={editor} attic={attic} />}
             <Prose
               className="editor-content-prose"
               bg={bgColorEditor}
               maxW="full"
+              flex={1}
+              minH={0}
               css={{
-                "& > *": { marginBlock: 0 },
+                "& > *": { marginBlock: 0, height: "100%", minHeight: 0 },
                 "& .ProseMirror": {
                   paddingX: "1.4em",
                   paddingY: "1em",
