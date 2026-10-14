@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.6)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.7)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
-    <span class="pill">Topology library · System · v2.0.6</span>
+    <span class="pill">Topology library · System · v2.0.7</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform concept map</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.6 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.7 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
@@ -75,7 +75,7 @@
     { layer: 'realtime', x: 760, y: 410, w: 260,  h: 120, label: 'Realtime' },
     { layer: 'memory',   x: 20,  y: 556, w: 480,  h: 120 },
     { layer: 'research', x: 520, y: 556, w: 500,  h: 120 },
-    { layer: 'gov',      x: 1040, y: 20, w: 200, h: 656, solid: true, opacity: 0.8 },
+    { layer: 'gov',      x: 1040, y: 20, w: 200, h: 656, solid: true, opacity: 0.75 },
   ];
 
   const H = 48;
@@ -89,7 +89,7 @@
       governance: { text: 'Only people Accept what enters the Codex. Delivery is guided managed import, not self-service. Reach is client-owned and service-managed: the client’s own AI account, run per tenant on the server.', docs: ['reference/glossary/hand-touch/catalyst.md', 'decisions/catalyst/catalyst-delivery-model.md', 'decisions/catalyst-reach-runtime-adr/'] } },
     { id: 'TA', layer: 'pillars', x: 720, y: 60, w: 240, hue: 'grey', label: 'Tapestry', sub: 'situated knowledge',
       desc: 'Mixtape\'s substrate for situated knowledge: a geographic commons for tellings whose meaning is bound up with place. A peer pillar, not part of Crossroads. Discovery between organizations is a subordinate capability.',
-      status: 'planned', evidence: 'Only the <code>tapestry.Place</code> stub exists. TP-4, the full build plan, is not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
+      status: 'partial', evidence: 'A little beyond planning: ADR ratified, <code>tapestry.Place</code> in code, TP-9 and TP-10 closed; TP-4, the full build plan, not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
 
     { id: 'FC', layer: 'frontend', x: 80, y: 190, w: 240, label: 'apps/crossroads', sub: 'public site · crossroads.place',
       desc: 'The public Crossroads Place site, Group public pages at <code>{slug}.go.crossroads.place</code>, and published artifacts such as these maps.', status: 'built', evidence: 'Live.' },
@@ -129,11 +129,11 @@
       status: 'planned', evidence: 'ADR ratified; HL-1 to HL-9 pending.' },
 
     { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, label: 'Puddlejump', sub: 'the canon',
-      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through. Runs alongside every layer, not in the call path. Synced into Mixtape by puddlejump-sync and imported into Stackroom.',
-      status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['puddlejump/ (this repo)', 'reference/knowledge-architecture/system-topology.md'] },
+      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a pillar and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
+      status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['reference/glossary/hand-touch/puddlejump.md', 'puddlejump/ (this repo)'] },
     { id: 'AR', layer: 'gov', x: 1056, y: 190, w: 168, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Concept discovery over the Puddlejump corpus (the Idea Matrix): Discovery Runs through versioned Lenses, proposed concepts for human curation. Hand-touch glossary entries seed its Concepts. Lives in core; its vectors are in Qdrant.',
-      status: 'built', evidence: 'Built and ongoing: P0 to P5 in core, first real Run 2026-10-12; curation workbench (P6) and Keeper passes (P7) are next.' },
+      status: 'partial', evidence: 'P0 to P5 built in core, first real Run 2026-10-12; curation workbench (P6) and Keeper passes (P7) are next.' },
     { id: 'AG', layer: 'gov', x: 1056, y: 320, w: 168, label: 'Argus', sub: 'audit blocks',
       desc: 'Audits: help fidelity, memory fidelity, implementation and architecture checks, run as audit blocks over the whole system.',
       status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the Argus UI is still to come.' },
