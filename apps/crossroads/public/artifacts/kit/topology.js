@@ -73,7 +73,7 @@
       <div class="stage">
         <div class="tk-diagram" role="img" aria-label="${esc(cfg.ariaLabel || 'Topology diagram')}"></div>
       </div>
-      <section class="layers"><h3>Layer reference</h3><div class="layer-grid"></div></section>`;
+      <section class="layers"><h3>Layer reference</h3><p class="layers-hint">Top to bottom, as on the map. Select a layer to read it in full.</p><div class="layer-list"></div></section>`;
     const panel = mount.querySelector('.tk-panel');
     const diagram = mount.querySelector('.tk-diagram');
     const introEl = cfg.intro === null ? null : document.querySelector(cfg.intro || 'body > header');
@@ -361,14 +361,46 @@
     };
     window.addEventListener('hashchange', fromHash); fromHash();
 
-    const grid = mount.querySelector('.layer-grid');
+    // Layer reference: a top-down list; each layer shows its first line and expands in place.
+    const list = mount.querySelector('.layer-list');
     for (const k of cfg.layerOrder || Object.keys(LAYERS)) {
       const L = LAYERS[k];
-      const d = document.createElement('div');
-      d.className = 'layer-card';
-      d.style.borderLeftColor = `var(--${L.hue}-s)`;
-      d.innerHTML = `<b style="color:var(--${L.hue}-s)">${esc(L.full)}</b><span>${L.desc}</span>`;
-      grid.appendChild(d);
+      const d = document.createElement('details');
+      d.className = 'layer-item';
+      d.style.setProperty('--li', `var(--${L.hue}-s)`);
+      d.innerHTML = `<summary><span class="li-name">${esc(L.full)}</span><span class="li-first">${L.desc.replace(/<[^>]+>/g, '')}</span></summary><div class="li-body">${L.desc}</div>`;
+      list.appendChild(d);
+    }
+
+    // Header buttons: the theme toggle plus, when the page has notes, an "About this map" modal.
+    const toggleBtn = document.querySelector('[data-theme-toggle]');
+    const notes = document.querySelector('section.notes');
+    if (toggleBtn) {
+      const actions = document.createElement('span');
+      actions.className = 'tk-head-actions';
+      toggleBtn.replaceWith(actions);
+      if (notes) {
+        const help = document.createElement('button');
+        help.type = 'button';
+        help.className = 'theme-toggle tk-iconbtn';
+        help.textContent = '?';
+        help.setAttribute('aria-label', 'About this map');
+        help.dataset.tip = 'About this map';
+        const dlg = document.createElement('dialog');
+        dlg.className = 'tk-modal';
+        dlg.setAttribute('aria-label', 'About this map');
+        const body = notes.cloneNode(true);
+        body.querySelector('h3')?.remove();
+        dlg.innerHTML = `<div class="tk-modal-head"><h2>About this map</h2><button type="button" class="tk-iconbtn tk-modal-close" aria-label="Close" data-tip="Close">×</button></div><div class="tk-modal-body">${body.innerHTML}</div>`;
+        document.body.appendChild(dlg);
+        help.addEventListener('click', () => dlg.showModal());
+        dlg.querySelector('.tk-modal-close').addEventListener('click', () => dlg.close());
+        dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });  // click outside the box
+        actions.appendChild(help);
+      }
+      toggleBtn.classList.add('tk-iconbtn');
+      toggleBtn.dataset.tip = 'Light or dark';
+      actions.appendChild(toggleBtn);
     }
     return { select, deselect };
   }
