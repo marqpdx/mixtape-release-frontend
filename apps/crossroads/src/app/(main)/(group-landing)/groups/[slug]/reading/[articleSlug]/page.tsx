@@ -15,6 +15,7 @@ import { GroupPublicNav } from "../../sections/GroupPublicNav";
 import { PublicWritingTags } from "../../sections/PublicWritingTags";
 import type { GroupPublicLandingConfig, TypographySetting } from "../../types";
 import { tenantPalettes } from "../../tenantPalettes";
+import { TopologyReadingSurface } from "@mixtape/content/TopologyReadingSurface";
 
 const baseUrl = process.env.NEXT_PUBLIC_ROOT_API_URL ?? "";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3010";
@@ -230,8 +231,7 @@ export default async function PublicPieceReaderPage({
         <PieceIssueBar context={issueContext} groupSlug={piece.sponsor_group.slug} />
       )}
 
-      <article className="gpr-content" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "72px" }}>
-        <header className="gpr-header" style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
+      <TopologyReadingSurface className="gpr-content" style={{ ...colStyles, paddingTop: "32px", paddingBottom: "72px" }} backLink={
           <Link
             href={backHref}
             className="gpr-back"
@@ -246,7 +246,8 @@ export default async function PublicPieceReaderPage({
           >
             {backLabel}
           </Link>
-
+      }>
+        <header className="gpr-header" style={{ borderBottom: "2px solid var(--theme-accent)", paddingBottom: "32px" }}>
           <h1
             style={{
               fontSize: typ.titleSize,
@@ -304,7 +305,7 @@ export default async function PublicPieceReaderPage({
         {issueContext && piece.sponsor_group && (
           <PieceIssueContinue context={issueContext} groupSlug={piece.sponsor_group.slug} />
         )}
-      </article>
+      </TopologyReadingSurface>
 
       <GroupPublicFooter groupTitle={footerTitle} />
     </main>

@@ -27,6 +27,7 @@ import type { AtticContext } from "./AtticControls";
 import { LbAnchor } from "./extensions/LbAnchor";
 import { CommentMark } from "./extensions/CommentMark";
 import { ConversationBlockquote } from "./extensions/ConversationBlockquote";
+import { TopologyImage } from "./extensions/TopologyImage";
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -101,6 +102,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
       return [
         CollabStarterKit,
         ConversationBlockquote,
+        TopologyImage,
         CustomParagraph,
         LbAnchor,
         CommentMark,

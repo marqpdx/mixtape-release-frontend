@@ -13,6 +13,8 @@ import {
 } from '@chakra-ui/react'
 import { useColorModeValue } from '@mixtape/core'
 import { JSX, useRef, useEffect } from 'react'
+import { resolveInteractivePage } from './interactivePages'
+import { TopologyPreview } from './TopologyPreview'
 
 // --- Types (exported for consumers) ---
 
@@ -289,7 +291,9 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
           )
         }
 
-        case 'image':
+        case 'image': {
+          const artifact = resolveInteractivePage(node.attrs)
+          if (artifact) return <TopologyPreview key={index} artifact={artifact} />
           return (
             <Box key={index} mb={4} maxW="100%">
               <Image
@@ -300,6 +304,7 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
               />
             </Box>
           )
+        }
 
         case 'horizontalRule':
           return <Box key={index} as="hr" my={6} borderColor={tableBorderColor} />

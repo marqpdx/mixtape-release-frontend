@@ -33,6 +33,7 @@ import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversationRole } from "./extensions/ConversationBlockquote";
 import { AtticControls, type AtticContext } from "./AtticControls";
+import { InsertInteractivePageControl } from "./InsertTopologyControl";
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -308,6 +309,7 @@ export default function TipTapToolbar({
           size="xs"
         />
         {attic && <AtticControls key={attic.pieceId} editor={editor} {...attic} />}
+        <InsertInteractivePageControl editor={editor} />
         <EditorToolbarButton
           tooltip="Bullet list"
           icon={<IconList size={16} />}
@@ -469,6 +471,7 @@ export default function TipTapToolbar({
           <Text fontSize="xs" mb={2}>Heading shortcuts toggle the format of the current paragraph or selected blocks. ⌘⌥0 (Ctrl+Alt+0) returns to a paragraph.</Text>
           <Text fontSize="xs" mb={2}>At the beginning of a paragraph, type ## followed by Space for Heading 2 (or #, ###, #### for Heading 1, 3, 4).</Text>
           <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option.</Text>
+          <Text fontSize="xs" mb={3}>Interactive pages: use Insert interactive page, choose a preset or enter a published /artifacts/ HTML URL, preview image URL, and title. The matching PNG URL is suggested, not generated. In public articles and Read Issue, clicking the preview dissolves the reading area into the page. Return, Escape, or browser Back restores your place. The standalone link opens the page in a new tab.</Text>
           <Text fontSize="xs" color="fg.muted" whiteSpace="pre-wrap">
             {`Spelling helpers
 Manual popup: Cmd/Ctrl + double-click a word.

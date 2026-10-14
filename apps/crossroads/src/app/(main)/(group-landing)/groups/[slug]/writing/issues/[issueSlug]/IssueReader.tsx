@@ -5,6 +5,7 @@ import { presentIssue } from "../../issuePresentation";
 import { heading, body, mono } from "../../issueFonts";
 import styles from "./IssueReader.module.css";
 import { PublicWritingTags } from "../../../sections/PublicWritingTags";
+import { TopologyReadingSurface } from "@mixtape/content/TopologyReadingSurface";
 
 function PieceDate({ publishedAt }: { publishedAt: string | null }) {
   if (!publishedAt) return null;
@@ -30,9 +31,8 @@ export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
   const { label, date, byline, pieces, readingTime } = presentIssue(issue, writing);
   const total = String(pieces.length).padStart(2, "0");
   return (
-    <article className={`gwir-issue ${styles.scope} ${heading.variable} ${body.variable} ${mono.variable}`}>
+    <TopologyReadingSurface className={`gwir-issue ${styles.scope} ${heading.variable} ${body.variable} ${mono.variable}`} returnLabel="Return to Issue" backLink={<Link className={styles.back} href={`/groups/${groupSlug}/writing`}>← Writing</Link>}>
       <header className={`gwir-title-page ${styles.titlePage}`}>
-        <Link className={styles.back} href={`/groups/${groupSlug}/writing`}>← Writing</Link>
         <p className={`${styles.eyebrow} ${styles.accent}`}>{groupTitle} · {label}{date && ` · ${date}`}</p>
         <h1 className={styles.title}>{issue.title || label}</h1>
         {issue.description && (
@@ -84,6 +84,6 @@ export function IssueReader({ issue, groupSlug, groupTitle, writing = [] }: {
           );
         })}
       </div>
-    </article>
+    </TopologyReadingSurface>
   );
 }

@@ -18,7 +18,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import ListItem from "@tiptap/extension-list-item";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
-import Image from "@tiptap/extension-image";
+import { TopologyImage } from "./extensions/TopologyImage";
 
 import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
@@ -387,8 +387,8 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     OutlineMarker,
     LbAnchor,
     BlockRouting.configure(routingOpts),
-    // Inline images — only when an uploader is wired in
-    ...(imageUpload ? [Image.configure({ inline: false, HTMLAttributes: { class: "editor-image" } })] : []),
+    // Always preserve image/preview nodes, including editors without an uploader.
+    TopologyImage,
     // PocketTools: Mini-tools for writers (conditionally enabled based on user preferences)
     ...(autoCapitalizeEnabled ? [AutoCapitalize.configure({ enabled: true })] : []),
     ...(spellCorrectionEnabled ? [SpellCorrection.configure(spellCorrectionConfig)] : []),
@@ -414,7 +414,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
         suggestion: { render: gristCommandsRender },
       }),
     ] : []),
-  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, gristMode, imageUpload, handleBoundaryDelete, handleSegmentsChange]);
+  ], [routingOpts, spellCorrectionConfig, autoCapitalizeEnabled, spellCorrectionEnabled, streamMode, gristMode, handleBoundaryDelete, handleSegmentsChange]);
 
   // Add toolbar extensions to both modes - memoized to prevent editor recreation
   const toolbarExtensions = useMemo(() => [
