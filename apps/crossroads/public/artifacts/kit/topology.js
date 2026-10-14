@@ -9,7 +9,10 @@
     layers: { key: { name, full, hue, desc } },  // hue is a kit hue: teal violet orange blue gold slate rose grey green brick
     layerOrder: ['key', ...],            // order of the layer cards
     bands: [{ layer, x, y, w, h }],      // coloured layer backgrounds
-    nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs }],
+    nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
+              hue, h, solid, vertical, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
+                                                                 // vertical label (rails), governance distillation
+    decor: [{ d, hue }],                 // optional decorative paths (e.g. rail ticks), drawn under edges
     edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
                                          //       | 'sv' (out of the side facing the target, then down into its top)
     status: { source, labels: { built: 'Built', ... }, untracked } | null,
@@ -95,11 +98,14 @@
       r.addEventListener('focus', () => selectLayer(b.layer));
       r.addEventListener('click', e => { e.stopPropagation(); if (selected !== 'layer:' + b.layer) selectLayer(b.layer); });
     }
+    const gDecor = el('g', {}, svg);
+    for (const d of cfg.decor || []) el('path', { class: 'decor', d: d.d, stroke: `var(--${d.hue}-s)`, 'stroke-width': 1.6, 'stroke-dasharray': '3 4', opacity: 0.7 }, gDecor);
     const gLabels = el('g', { class: 'band-tag' }, svg);
     const gEdges = el('g', {}, svg);
 
     // Resolve each edge's sides, then spread ports along each side so lines don't pile up.
-    const cx = n => n.x + n.w / 2, cy = n => n.y + H / 2;
+    const NH = n => n.h || H;
+    const cx = n => n.x + n.w / 2, cy = n => n.y + NH(n) / 2;
     const routed = EDGES.map(e => {
       const a = byId[e.f], b = byId[e.t];
       if (!a || !b) throw new Error(`TopologyKit: edge ${e.f} → ${e.t} names an unknown node`);
@@ -107,7 +113,7 @@
       if (e.mode === 'arc') { sa = 'top'; sb = 'top'; }
       else if (e.mode === 'sv') { sa = cx(b) < cx(a) ? 'left' : 'right'; sb = 'top'; }
       else if (e.mode === 'h') { const r = cx(b) > cx(a); sa = r ? 'right' : 'left'; sb = r ? 'left' : 'right'; }
-      else if (b.y >= a.y + H) { sa = 'bottom'; sb = 'top'; }
+      else if (b.y >= a.y + NH(a)) { sa = 'bottom'; sb = 'top'; }
       else { sa = 'top'; sb = 'bottom'; }
       return { ...e, a, b, sa, sb };
     });
@@ -122,8 +128,8 @@
       list.forEach((p, i) => {
         const t = (i + 1) / (list.length + 1);
         portPos[p.key] = horiz
-          ? { x: node.x + 18 + t * (node.w - 36), y: side === 'top' ? node.y : node.y + H }
-          : { x: side === 'left' ? node.x : node.x + node.w, y: node.y + 10 + t * (H - 20) };
+          ? { x: node.x + 18 + t * (node.w - 36), y: side === 'top' ? node.y : node.y + NH(node) }
+          : { x: side === 'left' ? node.x : node.x + node.w, y: node.y + 10 + t * (NH(node) - 20) };
       });
     }
     const pathFor = (r, i) => {
@@ -144,14 +150,22 @@
     const nodeEls = {};
     let selected = null;
     for (const n of NODES) {
-      const h = hue(n.layer);
-      const g = el('g', { class: 'node' + (n.status === 'planned' ? ' planned' : ''), tabindex: 0, role: 'button', 'aria-label': `${n.label}, ${LAYERS[n.layer].full}` }, gNodes);
-      el('rect', { class: 'box', x: n.x, y: n.y, width: n.w, height: H, rx: 8, fill: `var(--${h}-n)`, stroke: `var(--${h}-s)`, 'stroke-width': 1.6 }, g);
-      el('rect', { x: n.x, y: n.y + 8, width: 4, height: H - 16, rx: 2, fill: `var(--${h}-s)` }, g);
-      el('text', { x: n.x + 14, y: n.y + 20, fill: `var(--${h}-t)` }, g).textContent = n.label;
-      if (n.sub) el('text', { x: n.x + 14, y: n.y + 37, fill: `var(--${h}-t)`, class: 'sub' }, g).textContent = n.sub;
+      const h = n.hue || hue(n.layer), nh = NH(n);
+      // Solid nodes use the public register (bold fill); others the backend register.
+      const fill = n.solid ? `var(--${h}-p)` : `var(--${h}-n)`, ink = n.solid ? `var(--${h}-pt)` : `var(--${h}-t)`;
+      const cls = 'node' + (n.status === 'planned' ? ' planned' : '') + (n.solid ? ' solid' : '') + (n.vertical ? ' vertical' : '');
+      const g = el('g', { class: cls, tabindex: 0, role: 'button', 'aria-label': `${n.label}, ${LAYERS[n.layer].full}` }, gNodes);
+      el('rect', { class: 'box', x: n.x, y: n.y, width: n.w, height: nh, rx: 8, fill, stroke: n.solid ? `var(--${h}-p)` : `var(--${h}-s)`, 'stroke-width': 1.8 }, g);
+      if (n.vertical) {
+        const tx = n.x + n.w / 2 + 4, ty = n.y + nh / 2;
+        el('text', { x: tx, y: ty, fill: ink, 'text-anchor': 'middle', transform: `rotate(-90 ${tx} ${ty})` }, g).textContent = n.label;
+      } else {
+        el('rect', { x: n.x, y: n.y + 8, width: 5, height: nh - 16, rx: 2, fill: n.solid ? ink : `var(--${h}-s)`, opacity: n.solid ? 0.55 : 1 }, g);
+        el('text', { x: n.x + 14, y: n.y + 20, fill: ink }, g).textContent = n.label;
+        if (n.sub) el('text', { x: n.x + 14, y: n.y + 37, fill: ink, class: 'sub' }, g).textContent = n.sub;
+      }
       if (status) {
-        const badge = el('circle', { class: 'badge', cx: n.x + n.w - 12, cy: n.y + 12, r: 6 }, g);
+        const badge = el('circle', { class: 'badge', cx: n.x + n.w - 12, cy: n.y + (n.vertical ? nh - 12 : 12), r: 6 }, g);
         if (n.status) badge.setAttribute('fill', `var(--st-${n.status})`);
         else { badge.setAttribute('fill', 'none'); badge.setAttribute('stroke', 'var(--fg-faint)'); badge.setAttribute('stroke-dasharray', '2 2'); badge.setAttribute('stroke-width', 1.5); }
       }
@@ -194,8 +208,12 @@
     }
     const emptyPanel = panel.innerHTML;
     const names = ids => [...new Set(ids)].map(i => esc(byId[i].label)).join(', ') || '—';
-    function panelHTML(id) {
+    // Governance view (experiment): a node may carry a short distillation of what governs it.
+    // The chip swaps the description for it; the choice sticks as you move between nodes.
+    let govView = false;
+    function panelHTML(id, gov = govView) {
       const n = byId[id], L = LAYERS[n.layer];
+      const showGov = gov && n.governance;
       const ins = EDGES.filter(e => e.t === id).map(e => e.f);
       const outs = EDGES.filter(e => e.f === id).map(e => e.t);
       let st = '';
@@ -209,10 +227,14 @@
       }
       const refs = n.refs && n.refs.length ? `<div class="p-refs"><b>Sources:</b> ${n.refs.map(r => `<code>${esc(r)}</code>`).join(' ')}</div>` : '';
       return `
-        <div class="p-head"><h2>${esc(n.label)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</span></div>
-        <p>${n.desc}</p>
+        <div class="p-head"><h2>${esc(n.label)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</span>${n.governance
+          ? `<button type="button" class="p-chip" data-gov aria-pressed="${showGov ? 'true' : 'false'}">Show governance</button>` : ''}</div>
+        ${showGov
+          ? `<p class="p-gov">${n.governance.text}</p>
+        <div class="p-links"><b>Governed by:</b> ${(n.governance.docs || []).map(d => `<code>${esc(d)}</code>`).join(' ')}</div>`
+          : `<p>${n.desc}</p>
         <div class="p-links"><b>From:</b> ${names(ins)}<span class="sep">·</span><b>To:</b> ${names(outs)}</div>
-        ${refs}${st ? '<div class="p-fill"></div>' + st : ''}`;
+        ${refs}`}${st ? '<div class="p-fill"></div>' + st : ''}`;
     }
     function select(id) {
       selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
@@ -248,7 +270,8 @@
       const current = panel.innerHTML;
       panel.style.minHeight = '';
       let tallest = 0;
-      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id)), ...Object.keys(bandEls).map(layerHTML)]) {
+      const govPanels = NODES.filter(n => n.governance).map(n => panelHTML(n.id, true));
+      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id, false)), ...govPanels, ...Object.keys(bandEls).map(layerHTML)]) {
         panel.innerHTML = html;
         tallest = Math.max(tallest, panel.offsetHeight);
       }
@@ -261,8 +284,20 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => { if (panel.clientWidth !== lastWidth) { lastWidth = panel.clientWidth; reservePanelHeight(); } }, 120);
     });
+    panel.addEventListener('click', e => {
+      if (!e.target.closest('[data-gov]') || !byId[selected]) return;
+      govView = !govView;
+      panel.innerHTML = panelHTML(selected);
+    });
     function deselect() { selected = null; clear(); panel.innerHTML = emptyPanel; }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { deselect(); document.activeElement?.blur?.(); } });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      deselect();
+      document.activeElement?.blur?.();
+      // Keyboard events stay inside an iframe. Send only a close signal;
+      // the article modal validates this frame's window and origin.
+      if (window.parent !== window) window.parent.postMessage({ type: 'crossroads:topology:escape' }, '*');
+    });
     diagram.addEventListener('click', () => { if (selected) deselect(); });
 
     // Filter: with every chip on, all badges show; with some on, the rest of the nodes fade;

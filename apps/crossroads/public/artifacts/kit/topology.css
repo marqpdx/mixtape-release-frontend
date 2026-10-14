@@ -31,6 +31,17 @@
   --brick-s: #b4532a;  --brick-b: #f8e6dc;  --brick-n: #fdf5f0;  --brick-t: #66290f;
 
   --st-built: #2f8f4e; --st-partial: #c98a0b; --st-pending: #b8b6ae; --st-planned: #b8b6ae;
+
+  /* Concept hues, shared with the public-register platform map. -p / -pt are the public register (solid fill / text on it). */
+  --thatch-s: #5c6420; --thatch-b: #ecedd9; --thatch-n: #f7f7ee; --thatch-t: #2f3310; --thatch-p: #4F551C; --thatch-pt: #F1F2E4;
+  --coral-s: #c2502f;  --coral-b: #fbe6de;  --coral-n: #fff5f1;  --coral-t: #6b2614;  --coral-p: #D2603F;  --coral-pt: #FFFBF1;
+  --chartreuse-s: #6f8a1c; --chartreuse-b: #eef5d8; --chartreuse-n: #f8fbee; --chartreuse-t: #39470c; --chartreuse-p: #A2C03F; --chartreuse-pt: #1f2408;
+  --slateteal-s: #3f6a7e; --slateteal-b: #e2edf2; --slateteal-n: #f4f8fa; --slateteal-t: #1f3b48; --slateteal-p: #466D80; --slateteal-pt: #F3F8FA;
+  --mulberry-s: #8b3f62; --mulberry-b: #f5e3eb; --mulberry-n: #fcf4f7; --mulberry-t: #4d1f34; --mulberry-p: #8B3F62; --mulberry-pt: #FBF0F5;
+  --plum-s: #70527f;   --plum-b: #eee6f2;   --plum-n: #f8f4fa;   --plum-t: #3d2b47;   --plum-p: #70527F;   --plum-pt: #F6EFF9;
+  --khaki-s: #7d7650;  --khaki-b: #f0eee2;  --khaki-n: #f9f8f1;  --khaki-t: #403c26;  --khaki-p: #AAA37D;  --khaki-pt: #24210F;
+  --gold-p: #DBA532; --gold-pt: #2E2005;
+  --grey-p: #7a828c; --grey-pt: #FFFFFF;   /* placeholder public hue (Tapestry, until chosen) */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -48,6 +59,13 @@
     --green-s: #6fcf8f;  --green-b: #12301c;  --green-n: #0d2415;  --green-t: #bff0cf;
     --brick-s: #f0956a;  --brick-b: #36190c;  --brick-n: #2a1309;  --brick-t: #ffd4bf;
     --st-built: #58c27d; --st-partial: #f0b93a; --st-pending: #5f5d57; --st-planned: #5f5d57;
+    --thatch-s: #b5bf6a; --thatch-b: #23260f; --thatch-n: #1a1c0b; --thatch-t: #e3e8bf;
+    --coral-s: #f08a69;  --coral-b: #3a1a10;  --coral-n: #2c140c;  --coral-t: #ffd6c7;
+    --chartreuse-s: #b9d65a; --chartreuse-b: #26300c; --chartreuse-n: #1c2409; --chartreuse-t: #e6f4b8;
+    --slateteal-s: #88b8cc; --slateteal-b: #142630; --slateteal-n: #0f1d25; --slateteal-t: #cfe6f0;
+    --mulberry-s: #e08cb2; --mulberry-b: #33151f; --mulberry-n: #271018; --mulberry-t: #fbd3e5;
+    --plum-s: #c3a3d4;   --plum-b: #261b2d;   --plum-n: #1d1522;   --plum-t: #eadcf2;
+    --khaki-s: #cfc79a;  --khaki-b: #26241a;  --khaki-n: #1d1b13;  --khaki-t: #ece7c8;
   }
 }
 :root[data-theme="dark"] {
@@ -65,6 +83,13 @@
   --green-s: #6fcf8f;  --green-b: #12301c;  --green-n: #0d2415;  --green-t: #bff0cf;
   --brick-s: #f0956a;  --brick-b: #36190c;  --brick-n: #2a1309;  --brick-t: #ffd4bf;
   --st-built: #58c27d; --st-partial: #f0b93a; --st-pending: #5f5d57; --st-planned: #5f5d57;
+  --thatch-s: #b5bf6a; --thatch-b: #23260f; --thatch-n: #1a1c0b; --thatch-t: #e3e8bf;
+  --coral-s: #f08a69;  --coral-b: #3a1a10;  --coral-n: #2c140c;  --coral-t: #ffd6c7;
+  --chartreuse-s: #b9d65a; --chartreuse-b: #26300c; --chartreuse-n: #1c2409; --chartreuse-t: #e6f4b8;
+  --slateteal-s: #88b8cc; --slateteal-b: #142630; --slateteal-n: #0f1d25; --slateteal-t: #cfe6f0;
+  --mulberry-s: #e08cb2; --mulberry-b: #33151f; --mulberry-n: #271018; --mulberry-t: #fbd3e5;
+  --plum-s: #c3a3d4;   --plum-b: #261b2d;   --plum-n: #1d1522;   --plum-t: #eadcf2;
+  --khaki-s: #cfc79a;  --khaki-b: #26241a;  --khaki-n: #1d1b13;  --khaki-t: #ece7c8;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -128,8 +153,11 @@ h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
 .node:focus { outline: none; }
 .node:focus-visible rect.box, .node.selected rect.box { stroke-width: 3; }
 .node.planned rect.box { stroke-dasharray: 5 4; }
+.node.solid .badge { stroke: var(--surface); stroke-width: 1.5; }
+.node.vertical text { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.decor { fill: none; pointer-events: none; }
 .node.filtered-out:not(.selected) { opacity: 0.18; }
-.band { cursor: pointer; stroke-opacity: 0.35; transition: stroke-opacity .15s, stroke-width .15s; }
+.band { cursor: pointer; stroke-opacity: 0.55; transition: stroke-opacity .15s, stroke-width .15s; }
 .band:focus { outline: none; }
 .band.selected, .band:focus-visible { stroke-opacity: 1; stroke-width: 2.2; }
 .edge { fill: none; stroke: var(--edge); stroke-width: 1.4; transition: opacity .15s, stroke .15s; }
@@ -144,6 +172,10 @@ svg.show-status .badge { display: inline; }
             padding: 0.7rem 1rem; display: flex; flex-direction: column; }
 .tk-panel .p-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; margin-bottom: 0.3rem; }
 .tk-panel .p-head h2 { margin: 0; }
+.tk-panel .p-chip { margin-left: auto; background: none; border: 1px solid var(--border); border-radius: 100px; color: var(--fg-muted);
+                    font: inherit; font-size: 0.72rem; padding: 0.05rem 0.6rem; cursor: pointer; }
+.tk-panel .p-chip[aria-pressed="true"] { color: var(--thatch-s); border-color: var(--thatch-s); font-weight: 600; }
+.tk-panel .p-gov { border-left: 3px solid var(--thatch-s); padding-left: 0.6rem; }
 .tk-panel .p-layer { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .tk-panel h2 { font-size: 0.98rem; opacity: 0.88; margin: 0.1rem 0 0.3rem; letter-spacing: -0.01em; }
 .tk-panel p { font-size: 0.85rem; color: var(--fg); line-height: 1.45; }
