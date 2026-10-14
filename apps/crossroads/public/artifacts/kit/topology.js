@@ -8,7 +8,7 @@
     viewBox: [1040, 790], minWidth: 820, // SVG coordinate space; below minWidth the diagram scrolls
     layers: { key: { name, full, hue, desc } },  // hue is a kit hue: teal violet orange blue gold slate rose grey green brick
     layerOrder: ['key', ...],            // order of the layer cards
-    bands: [{ layer, x, y, w, h }],      // coloured layer backgrounds
+    bands: [{ layer, x, y, w, h, label, solid, opacity }], // coloured layer backgrounds; solid = public-register fill
     nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
               hue, h, solid, vertical, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
                                                                  // vertical label (rails), governance distillation
@@ -92,7 +92,9 @@
     const bandEls = {};
     for (const b of BANDS) {
       const h = hue(b.layer);
-      const r = el('rect', { class: 'band', x: b.x, y: b.y, width: b.w, height: b.h, rx: 12, fill: `var(--${h}-b)`, stroke: `var(--${h}-s)`,
+      // A solid band (e.g. the Canon and Guidance rail) uses the public-register fill, softened by b.opacity.
+      const r = el('rect', { class: 'band' + (b.solid ? ' solid' : ''), x: b.x, y: b.y, width: b.w, height: b.h, rx: 12,
+        fill: b.solid ? `var(--${h}-p)` : `var(--${h}-b)`, 'fill-opacity': b.solid ? (b.opacity ?? 1) : 1, stroke: `var(--${h}-s)`,
         tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, layer` }, gBands);
       (bandEls[b.layer] ||= []).push(r);
       r.addEventListener('focus', () => selectLayer(b.layer));
@@ -183,9 +185,9 @@
     // Label tags need text measurement, so they are drawn once the SVG is in the document.
     for (const b of BANDS) {
       const h = hue(b.layer);
-      const t = el('text', { x: b.x + 14, y: b.y + 21, class: 'band-label', fill: `var(--${h}-s)` }, gLabels);
+      const t = el('text', { x: b.x + 14, y: b.y + 21, class: 'band-label', fill: b.solid ? `var(--${h}-pt)` : `var(--${h}-s)` }, gLabels);
       t.textContent = b.label || LAYERS[b.layer].full;
-      const bg = el('rect', { x: b.x + 8, y: b.y + 8, width: t.getComputedTextLength() + 12, height: 19, rx: 5, fill: `var(--${h}-b)` });
+      const bg = el('rect', { x: b.x + 8, y: b.y + 8, width: t.getComputedTextLength() + 12, height: 19, rx: 5, fill: b.solid ? 'none' : `var(--${h}-b)` });
       gLabels.insertBefore(bg, t);
     }
 

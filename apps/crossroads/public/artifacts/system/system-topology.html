@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.5)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.6)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,8 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
-    <span class="pill">Topology library · System · v2.0.5</span>
+    <span class="pill">Topology library · System · v2.0.6</span>
+    <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform concept map</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
 </header>
@@ -33,10 +34,11 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.5 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.6 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
+    <li><strong>Colours</strong> are shared with the <a href="../platform/platform-topology.html">platform concept map</a>: the same thing wears the same hue on every map. There it is drawn bold, for newcomers; here it is drawn quieter, for engineers. The Canon and Guidance rail is solid because it is not a component: it runs alongside all of them.</li>
     <li><strong>Loom</strong> is the governed-intelligence architecture across Switchboard, Inkwell and Stackroom: <a href="../loom/loom-topology-enhanced.html">Loom map</a>.</li>
   </ul>
   <h3 style="margin-top:1rem">Deployments</h3>
@@ -52,7 +54,7 @@
 <script>
 (() => {
   const LAYERS = {
-    pillars:  { name: 'Pillars',    full: 'Pillars — the ways in',              hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: peer pillars, the ways people enter and use Mixtape. None sits inside another.' },
+    pillars:  { name: 'Pillars',    full: 'Pillars — the ways in',              hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: peer pillars, the ways people enter and use Mixtape. None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
     frontend: { name: 'Frontend',   full: 'Frontend — mixtape-release-frontend', hue: 'teal',   desc: 'A Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every tool call.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery and RabbitMQ. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
@@ -61,7 +63,7 @@
     realtime: { name: 'Realtime',   full: 'Realtime — Livewire',                 hue: 'rose',   desc: 'The Socket.IO server for Conversations and live Dispatch editing. Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
-    gov:      { name: 'Governance', full: 'Governance — Puddlejump and its tools', hue: 'thatch', desc: 'Puddlejump runs alongside every layer, not in the call path: the canon every feature is decided, built and recorded through. Its tools: Ariadne (concept discovery), Argus (audits), Meridian (code intelligence).' },
+    gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'Four apps that run alongside every layer, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
   };
 
   const BANDS = [
@@ -73,7 +75,7 @@
     { layer: 'realtime', x: 760, y: 410, w: 260,  h: 120, label: 'Realtime' },
     { layer: 'memory',   x: 20,  y: 556, w: 480,  h: 120 },
     { layer: 'research', x: 520, y: 556, w: 500,  h: 120 },
-    { layer: 'gov',      x: 1092, y: 20, w: 148, h: 656, label: 'Its tools' },
+    { layer: 'gov',      x: 1040, y: 20, w: 200, h: 656, solid: true, opacity: 0.8 },
   ];
 
   const H = 48;
@@ -126,16 +128,16 @@
       desc: 'A standalone library UI over the Daedalus corpus, one instance per project: search, browse, review, assignments.',
       status: 'planned', evidence: 'ADR ratified; HL-1 to HL-9 pending.' },
 
-    { id: 'PJ', layer: 'gov', x: 1040, y: 20, w: 40, h: 656, vertical: true, solid: true, hue: 'thatch', label: 'Puddlejump · canon and governance',
+    { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, label: 'Puddlejump', sub: 'the canon',
       desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through. Runs alongside every layer, not in the call path. Synced into Mixtape by puddlejump-sync and imported into Stackroom.',
-      status: 'built', evidence: 'Canon bundle, frontmatter checks, status docs and build log in use. The in-app Puddlejump Surface is mostly unbuilt.', refs: ['puddlejump/ (this repo)', 'reference/knowledge-architecture/system-topology.md'] },
-    { id: 'AR', layer: 'gov', x: 1102, y: 190, w: 128, label: 'Ariadne', sub: 'concept discovery',
+      status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['puddlejump/ (this repo)', 'reference/knowledge-architecture/system-topology.md'] },
+    { id: 'AR', layer: 'gov', x: 1056, y: 190, w: 168, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Concept discovery over the Puddlejump corpus (the Idea Matrix): Discovery Runs through versioned Lenses, proposed concepts for human curation. Hand-touch glossary entries seed its Concepts. Lives in core; its vectors are in Qdrant.',
-      status: 'partial', evidence: 'P0 to P5 built; first real Run 2026-10-12. Curation workbench (P6) and Keeper passes (P7) pending.' },
-    { id: 'AG', layer: 'gov', x: 1102, y: 320, w: 128, label: 'Argus', sub: 'audit blocks',
+      status: 'built', evidence: 'Built and ongoing: P0 to P5 in core, first real Run 2026-10-12; curation workbench (P6) and Keeper passes (P7) are next.' },
+    { id: 'AG', layer: 'gov', x: 1056, y: 320, w: 168, label: 'Argus', sub: 'audit blocks',
       desc: 'Audits: help fidelity, memory fidelity, implementation and architecture checks, run as audit blocks over the whole system.',
-      status: 'partial', evidence: 'Audit blocks in use; the Argus UI is mostly unbuilt.' },
-    { id: 'MR', layer: 'gov', x: 1102, y: 450, w: 128, label: 'Meridian', sub: 'code intelligence',
+      status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the Argus UI is still to come.' },
+    { id: 'MR', layer: 'gov', x: 1056, y: 450, w: 168, label: 'Meridian', sub: 'code intelligence',
       desc: 'A continuously refreshed, queryable index of the codebase, exposed to agents as tools through Switchboard, so discovery is a lookup rather than a crawl (ADR-0051).',
       status: 'planned', evidence: 'Agent instructions in place (AGENTS.md blocks); the index itself (M-1 to M-5) is not built.', refs: ['decisions/meridian-adr/meridian-adr.md'] },
   ];
@@ -149,7 +151,7 @@
     ['CO','SR','sv'], ['CO','IW'], ['CO','LW'], ['LW','CO'],
     ['SW','IW','h'], ['SW','SR'],
     ['SR','QD','h'], ['DA','SR','h'], ['HG','DA','h', { dashed: true }],
-    ['PJ','AR','h'], ['PJ','AG','h'], ['PJ','MR','h'],
+    ['PJ','AR'],
   ];
 
   // Rail ticks: each layer row reaches the Puddlejump rail.
