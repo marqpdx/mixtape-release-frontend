@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.3)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.4)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
-    <span class="pill">Topology library · System · 2026-10-14</span>
+    <span class="pill">Topology library · System · v2.0.4</span>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
 </header>
@@ -33,7 +33,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.3 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.4 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
@@ -81,9 +81,9 @@
     { id: 'CR', layer: 'pillars', x: 80, y: 60, w: 240, label: 'Crossroads', sub: 'people and groups',
       desc: 'The people-and-groups layer of Mixtape: identity, membership, groups and Circles, roles, relationships and shared contexts. Collaboration first, not social. Subsystems include Threadworks (Discussions), Livewire (Conversations), Almanac, EarthLab, Bazaar, Hub, Commons and Storyline.',
       status: 'built', evidence: 'Live as Crossroads Place (<code>crossroads.place</code>).', refs: ['reference/glossary/hand-touch/crossroads.md'] },
-    { id: 'CA', layer: 'pillars', x: 400, y: 60, w: 240, label: 'Catalyst', sub: 'knowledge, Codex, canon',
-      desc: 'The knowledge practice: an organization\'s Codex, canon, stewardship, review and human-confirmed understanding. The UI verb is Accept. Catalyst Reach runs extraction through a per-tenant Claude runtime.',
-      status: 'built', evidence: 'Pilots. Reach runtime phases 1, 2 and 4 built; 3 and 5 partial (<code>catalyst-reach-runtime-status.md</code>).', refs: ['mixtape-release-catalyst (Codex template)', 'core: catalyst, catalyst_codex, tenant_runtime'] },
+    { id: 'CA', layer: 'pillars', x: 400, y: 60, w: 240, label: 'Catalyst', sub: 'knowledge practice · Codex',
+      desc: 'The knowledge practice of Mixtape and its pillar for durable knowledge. Its object is the Catalyst Codex, a typed knowledge asset library per organization, tended by Find, Add and Amend; only people Accept what belongs in it. Foundation needs no external AI; Reach opts into the user\'s own Claude or ChatGPT account.',
+      status: 'built', evidence: 'Pilots. Reach on Claude built (runtime phases 1, 2, 4; 3 and 5 partial); Reach on ChatGPT not yet wired for Catalyst.', refs: ['reference/glossary/hand-touch/catalyst.md', 'mixtape-release-catalyst (Codex template)'] },
     { id: 'TA', layer: 'pillars', x: 720, y: 60, w: 240, label: 'Tapestry', sub: 'situated knowledge',
       desc: 'Mixtape\'s substrate for situated knowledge: a geographic commons for tellings whose meaning is bound up with place. A peer pillar, not part of Crossroads. Discovery between organizations is a subordinate capability.',
       status: 'planned', evidence: 'Only the <code>tapestry.Place</code> stub exists. TP-4, the full build plan, is not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
