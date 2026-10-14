@@ -27,10 +27,10 @@ const products = [
     icon: IconBook2,
   },
   {
-    name: "Mixtape",
+    name: "Crossroads",
     eyebrow: "Collaborative work area",
     title: "For groups that need a calmer place to write, decide, and keep moving.",
-    body: "Mixtape gives a group a working home for drafts, dispatches, shared lists, and the small rituals that keep collaboration from disappearing into chat history.",
+    body: "Crossroads gives a group a working home for drafts, dispatches, shared lists, and the small rituals that keep collaboration from disappearing into chat history.",
     expects: ["Group workspace", "Draft and dispatch flow", "Member-facing pages", "Shared writing and review", "Optional Catalyst pairing"],
     imagePosition: "right" as const,
     icon: IconUsers,
@@ -71,10 +71,10 @@ export default function ProductsPage() {
               lineHeight="1.08"
               letterSpacing="0"
             >
-              Three ways Crossroads becomes useful.
+              Three ways into Mixtape.
             </Heading>
             <Text color="#5C6880" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
-              A client can begin with a private knowledge Codex, a collaborative group home, or the opt-in relational map. Many will eventually need more than one.
+              A client can begin with a private knowledge Codex, a collaborative group home, or a shared map of place. Many will eventually need more than one.
             </Text>
           </VStack>
         </Container>
@@ -90,7 +90,7 @@ export default function ProductsPage() {
               minH={{ base: "320px", md: "420px", lg: "58vh" }}
               bgImage={`linear-gradient(180deg, rgba(26, 33, 56, 0.08), rgba(26, 33, 56, 0.22)), url(${image})`}
               bgSize="cover"
-              backgroundPosition={product.name === "Mixtape" ? "center right" : "center"}
+              backgroundPosition={product.name === "Crossroads" ? "center right" : "center"}
               borderRight={{ base: "0", lg: product.imagePosition === "left" ? "1px solid #DDE1ED" : "0" }}
               borderLeft={{ base: "0", lg: product.imagePosition === "right" ? "1px solid #DDE1ED" : "0" }}
             />
