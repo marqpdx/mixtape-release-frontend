@@ -1,0 +1,162 @@
+<!--
+  topology-kit map
+  kit: ../kit/topology.css, ../kit/topology.js
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.3)
+  build_state_from: the same document (checked against code and status docs 2026-10-14)
+  library: puddlejump/reference/topology/topology-library.md
+  generated: 2026-10-14
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="carried-from" content="puddlejump/reference/knowledge-architecture/system-topology.md">
+<title>Mixtape System Map</title>
+<link rel="stylesheet" href="../kit/topology.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Mixtape — System Topology</h1>
+    <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
+    <span class="pill">Topology library · System · 2026-10-14</span>
+  </div>
+  <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
+</header>
+
+<div id="map"></div>
+
+<section class="notes">
+  <h3>About this map</h3>
+  <ul>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.3 (canon). Change that document first, then this map.</li>
+    <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
+    <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
+    <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
+    <li><strong>Loom</strong> is the governed-intelligence architecture across Switchboard, Inkwell and Stackroom: <a href="../loom/loom-topology-enhanced.html">Loom map</a>.</li>
+  </ul>
+  <h3 style="margin-top:1rem">Deployments</h3>
+  <table>
+    <tr><th>Deployment</th><th>What it is</th><th>State</th></tr>
+    <tr><td>Crossroads Place</td><td>The reference community and live Mixtape instance at <code>crossroads.place</code></td><td>Live</td></tr>
+    <tr><td>Catalyst Codex per client</td><td>A Codex for each Catalyst client, with the Reach runtime where it applies</td><td>Pilots</td></tr>
+    <tr><td>The Law</td><td>A Crossroads instance for a law firm: own Stackroom namespace, own Hildegard, local models only</td><td>Planned</td></tr>
+  </table>
+</section>
+
+<script src="../kit/topology.js"></script>
+<script>
+(() => {
+  const LAYERS = {
+    pillars:  { name: 'Pillars',    full: 'Pillars — the ways in',              hue: 'green',  desc: 'Catalyst, Crossroads and Tapestry: peer pillars, the ways people enter and use Mixtape. None sits inside another.' },
+    frontend: { name: 'Frontend',   full: 'Frontend — mixtape-release-frontend', hue: 'teal',   desc: 'A Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
+    core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every tool call.' },
+    async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery and RabbitMQ. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
+    dispatch: { name: 'Dispatch',   full: 'Dispatch — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
+    exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Local model execution over llama.cpp. Receives a well-formed task, returns results. Stateless.' },
+    realtime: { name: 'Realtime',   full: 'Realtime — Livewire',                 hue: 'rose',   desc: 'The Socket.IO server for Conversations and live Dispatch editing. Core owns the data, keys and authorization.' },
+    memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
+    research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
+    gov:      { name: 'Governance', full: 'Governance — alongside, not in the call path', hue: 'slate', desc: 'Puddlejump canon and the work that keeps documents and code faithful: Ariadne concept discovery, Argus audits.' },
+  };
+
+  const BANDS = [
+    { layer: 'pillars',  x: 20,  y: 20,  w: 1000, h: 104 },
+    { layer: 'frontend', x: 20,  y: 150, w: 1000, h: 104, label: 'Frontend' },
+    { layer: 'core',     x: 20,  y: 280, w: 1000, h: 104, label: 'Platform core' },
+    { layer: 'dispatch', x: 20,  y: 410, w: 300,  h: 120, label: 'Dispatch' },
+    { layer: 'exec',     x: 460, y: 410, w: 280,  h: 120 },
+    { layer: 'realtime', x: 760, y: 410, w: 260,  h: 120, label: 'Realtime' },
+    { layer: 'memory',   x: 20,  y: 556, w: 480,  h: 120 },
+    { layer: 'research', x: 520, y: 556, w: 500,  h: 120 },
+    { layer: 'gov',      x: 20,  y: 702, w: 1000, h: 120 },
+  ];
+
+  const H = 48;
+  const NODES = [
+    { id: 'CR', layer: 'pillars', x: 80, y: 60, w: 240, label: 'Crossroads', sub: 'people and groups',
+      desc: 'The people-and-groups layer of Mixtape: identity, membership, groups and Circles, roles, relationships and shared contexts. Collaboration first, not social. Subsystems include Threadworks (Discussions), Livewire (Conversations), Almanac, EarthLab, Bazaar, Hub, Commons and Storyline.',
+      status: 'built', evidence: 'Live as Crossroads Place (<code>crossroads.place</code>).', refs: ['reference/glossary/hand-touch/crossroads.md'] },
+    { id: 'CA', layer: 'pillars', x: 400, y: 60, w: 240, label: 'Catalyst', sub: 'knowledge, Codex, canon',
+      desc: 'The knowledge practice: an organization\'s Codex, canon, stewardship, review and human-confirmed understanding. The UI verb is Accept. Catalyst Reach runs extraction through a per-tenant Claude runtime.',
+      status: 'built', evidence: 'Pilots. Reach runtime phases 1, 2 and 4 built; 3 and 5 partial (<code>catalyst-reach-runtime-status.md</code>).', refs: ['mixtape-release-catalyst (Codex template)', 'core: catalyst, catalyst_codex, tenant_runtime'] },
+    { id: 'TA', layer: 'pillars', x: 720, y: 60, w: 240, label: 'Tapestry', sub: 'situated knowledge',
+      desc: 'Mixtape\'s substrate for situated knowledge: a geographic commons for tellings whose meaning is bound up with place. A peer pillar, not part of Crossroads. Discovery between organizations is a subordinate capability.',
+      status: 'planned', evidence: 'Only the <code>tapestry.Place</code> stub exists. TP-4, the full build plan, is not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
+
+    { id: 'FC', layer: 'frontend', x: 80, y: 190, w: 240, label: 'apps/crossroads', sub: 'public site · crossroads.place',
+      desc: 'The public Crossroads Place site, Group public pages at <code>{slug}.go.crossroads.place</code>, and published artifacts such as these maps.', status: 'built', evidence: 'Live.' },
+    { id: 'FB', layer: 'frontend', x: 400, y: 190, w: 240, label: 'apps/mobile', sub: 'mobile app',
+      desc: 'The mobile app: capture, Groups, initiatives, Folio notes and more, over the same API.', status: 'built', evidence: 'Built (<code>mobile-ux-status.md</code>).' },
+    { id: 'FM', layer: 'frontend', x: 720, y: 190, w: 240, label: 'apps/mixtape', sub: 'signed-in application',
+      desc: 'The signed-in application where Crossroads, Catalyst and the platform surfaces (Writing, Initiatives and Atrium, Folio, Clio) are used.', status: 'built', evidence: 'Live.' },
+
+    { id: 'RQ', layer: 'async', x: 60, y: 320, w: 240, label: 'Celery + RabbitMQ', sub: 'switchboard queue · workers',
+      desc: 'Core hands slow work to Switchboard as Celery tasks on the <code>switchboard</code> queue, and runs its own background jobs on its own workers.', status: 'built', evidence: 'SW-7 async path complete (2026-04-20).' },
+    { id: 'CO', layer: 'core', x: 440, y: 320, w: 400, label: 'mixtape-release-core', sub: 'Django · permission and truth · ActionRun',
+      desc: 'The system of record: authentication, authorization, workflow state, approvals, audit, and the ActionRun record of every tool call. Calls Inkwell and Stackroom directly over REST for some work; hands slower work to Switchboard.', status: 'built', evidence: 'Live. About 70 Django apps.' },
+
+    { id: 'SW', layer: 'dispatch', x: 40, y: 450, w: 240, label: 'Switchboard', sub: 'mixtape-release-switchboard',
+      desc: 'FastAPI service with a Celery worker. Checks tenant and permission with core, consults its tool registry and configuration, calls Inkwell and Stackroom, and records an ActionRun in core for every call. Loom\'s Dispatch layer.',
+      status: 'built', evidence: 'SW-1 to SW-9 complete (SW-9 on the enforcement side only); SW-10 verification not started. The Loom privacy filter is not built.', refs: ['decisions/switchboard-mcp-adr/switchboard-status.md'] },
+    { id: 'IW', layer: 'exec', x: 480, y: 450, w: 240, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
+      desc: 'Local model execution: generation, summarization, classification, OCR shaping and typed capability endpoints. Loom\'s Execution layer.',
+      status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).' },
+    { id: 'LW', layer: 'realtime', x: 780, y: 450, w: 220, label: 'Livewire realtime', sub: 'Socket.IO · chat.crossroads.place',
+      desc: 'The realtime server for Conversations and live Dispatch editing. Authorizes sockets against core with signed tokens; core notifies it of events.',
+      status: 'built', evidence: 'Livewire ADR phases A to D complete, including end-to-end encryption and key rotation.' },
+
+    { id: 'QD', layer: 'memory', x: 40, y: 596, w: 200, label: 'Qdrant', sub: 'vectors only',
+      desc: 'Vector storage for Stackroom and Ariadne. Holds no canonical content.', status: 'built', evidence: 'Own container (<code>mixtape-release-qdrant</code>).' },
+    { id: 'SR', layer: 'memory', x: 270, y: 596, w: 210, label: 'Stackroom', sub: 'mixtape-release-stackroom',
+      desc: 'Ingestion, chunking, embedding, libraries, collections, retrieval, canon governance endpoints, and Puddlejump import and export. Not configurable per client. Loom\'s Memory layer.',
+      status: 'built', evidence: 'Standalone since April 2026 (extraction steps 1–5). MCP in front of it (step 7) not started.', refs: ['decisions/stackroom-extraction-adr/stackroom-extraction-status.md'] },
+    { id: 'DA', layer: 'research', x: 560, y: 596, w: 200, label: 'Daedalus', sub: 'research engine · REST',
+      desc: 'Accepts research assignments, fetches from source adapters, classifies provenance tier and deposits the corpus in Stackroom. Headless.',
+      status: 'built', evidence: 'Verified end to end with Stackroom (CP6, 2026-07-10). MCP surface not started.' },
+    { id: 'HG', layer: 'research', x: 790, y: 596, w: 210, label: 'Hildegard', sub: 'research library UI',
+      desc: 'A standalone library UI over the Daedalus corpus, one instance per project: search, browse, review, assignments.',
+      status: 'planned', evidence: 'ADR ratified; HL-1 to HL-9 pending.' },
+
+    { id: 'AR', layer: 'gov', x: 40, y: 742, w: 200, label: 'Ariadne', sub: 'concept discovery',
+      desc: 'Concept discovery over the Puddlejump corpus (the Idea Matrix): Discovery Runs through versioned Lenses, proposed concepts for human curation. Hand-touch glossary entries seed its Concepts. Lives in core.',
+      status: 'partial', evidence: 'P0 to P5 built; first real Run 2026-10-12. Curation workbench (P6) and Keeper passes (P7) pending.' },
+    { id: 'PJ', layer: 'gov', x: 270, y: 742, w: 210, label: 'Puddlejump', sub: 'canon on disk',
+      desc: 'The canon repository and the discipline that keeps documents and code faithful to each other. Not a service. Synced into Mixtape by puddlejump-sync and imported into Stackroom.',
+      status: 'built', evidence: 'Canon bundle, frontmatter checks and status docs in use. The in-app Puddlejump Surface is mostly unbuilt.' },
+    { id: 'AG', layer: 'gov', x: 560, y: 742, w: 200, label: 'Argus', sub: 'audit blocks',
+      desc: 'Audits: help fidelity, memory fidelity, implementation and architecture checks, run as audit blocks over the whole system.',
+      status: 'partial', evidence: 'Audit blocks in use; the Argus UI is mostly unbuilt.' },
+  ];
+
+  // [from, to, mode, opts] — arrows read "calls" or "is served through"
+  const EDGES = [
+    ['CR','FC'], ['CR','FB'], ['CR','FM'], ['CA','FM'], ['TA','FM', undefined, { dashed: true }],
+    ['FC','CO'], ['FB','CO'], ['FM','CO'],
+    ['FM','LW'],
+    ['CO','RQ','h'], ['RQ','SW'], ['SW','CO'],
+    ['CO','SR','sv'], ['CO','IW'], ['CO','LW'], ['LW','CO'],
+    ['SW','IW','h'], ['SW','SR'],
+    ['SR','QD','h'], ['DA','SR','h'], ['HG','DA','h', { dashed: true }],
+    ['AR','QD'], ['PJ','SR'], ['PJ','AR','h'],
+  ];
+
+  TopologyKit.render({
+    mount: '#map',
+    viewBox: [1040, 842], minWidth: 820,
+    layers: LAYERS,
+    layerOrder: ['pillars', 'frontend', 'core', 'async', 'dispatch', 'exec', 'realtime', 'memory', 'research', 'gov'],
+    bands: BANDS, nodes: NODES, edges: EDGES, nodeHeight: H,
+    ariaLabel: 'Mixtape system topology diagram',
+    emptyText: 'Select a node to see its role, its connections, how much is built and where that is recorded. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.',
+    status: {
+      source: '<code>system-topology.md</code>',
+      labels: { built: 'Built', partial: 'Partial', planned: 'Planned' },
+    },
+  });
+})();
+</script>
+</body>
+</html>
