@@ -838,7 +838,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           },
           // Reduce margin on first and last children - using :first-of-type for SSR safety
           "& > *:first-of-type": {
-            marginTop: "0.5em !important",
+            marginTop: "0.65em !important",
           },
           "& > *:last-of-type": {
             marginBottom: "0.5em !important",

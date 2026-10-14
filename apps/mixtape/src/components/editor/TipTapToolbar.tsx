@@ -206,7 +206,7 @@ export default function TipTapToolbar({
 
   return (
     <>
-    <HStack className="ttb-toolbar" px={2} py={2} flexShrink={0} gap={1} justify="space-between" align="center" wrap="wrap">
+    <HStack className="ttb-toolbar" px={1} py={1} flexShrink={0} gap={1} justify="space-between" align="center" wrap="wrap">
       <HStack className="ttb-format-tools" gap={0.5} flexWrap="wrap">
         <EditorToolbarButton
           tooltip="Heading 1"
