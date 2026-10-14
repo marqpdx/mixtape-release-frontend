@@ -14,6 +14,7 @@
                                          //       | 'sv' (out of the side facing the target, then down into its top)
     status: { source, labels: { built: 'Built', ... }, untracked } | null,
     ariaLabel, emptyText, nodeHeight: 48,
+    intro: 'body > header',              // element moved beside the panel, in one row; null to leave it in place
   });
   status values are keys of status.labels; each needs a --st-<key> colour in topology.css.
   A node whose status is 'planned' is drawn with a dashed border. null means "not tracked".
@@ -38,24 +39,30 @@
     const hue = l => LAYERS[l].hue;
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
 
-    // Scaffold: controls, panel above a full-width diagram, layer cards.
+    // Scaffold: intro and detail panel share the top row, then controls, the full-width diagram, layer cards.
     const keyItems = status
       ? Object.entries(status.labels).map(([k, label]) => `<span><i class="sdot" style="background:var(--st-${k})"></i>${esc(label)}</span>`).join('')
         + (status.untracked ? `<span><i class="sdot untracked"></i>${esc(status.untracked)}</span>` : '')
       : '';
     mount.innerHTML = `
+      <div class="tk-top">
+        <div class="tk-intro"></div>
+        <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
+          'Select a node to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
+      </div>
       ${status ? `<div class="controls">
         <label><input type="checkbox" data-tk="showStatus" checked> Show build state</label>
         <span class="status-key">${keyItems}</span>
       </div>` : ''}
       <div class="stage">
-        <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
-          'Select a node to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
         <div class="tk-diagram" role="img" aria-label="${esc(cfg.ariaLabel || 'Topology diagram')}"></div>
       </div>
       <section class="layers"><h3>Layer reference</h3><div class="layer-grid"></div></section>`;
     const panel = mount.querySelector('.tk-panel');
     const diagram = mount.querySelector('.tk-diagram');
+    const introEl = cfg.intro === null ? null : document.querySelector(cfg.intro || 'body > header');
+    if (introEl) mount.querySelector('.tk-intro').appendChild(introEl);
+    else mount.querySelector('.tk-top').classList.add('no-intro');
 
     const svg = el('svg', { viewBox: `0 0 ${VW} ${VH}`, xmlns: NS });
     svg.style.minWidth = (cfg.minWidth || 820) + 'px';
@@ -166,8 +173,7 @@
     }
     const emptyPanel = panel.innerHTML;
     const names = ids => [...new Set(ids)].map(i => esc(byId[i].label)).join(', ') || '—';
-    function select(id) {
-      selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
+    function panelHTML(id) {
       const n = byId[id], L = LAYERS[n.layer];
       const ins = EDGES.filter(e => e.t === id).map(e => e.f);
       const outs = EDGES.filter(e => e.f === id).map(e => e.t);
@@ -178,13 +184,36 @@
           : `<div class="p-status"><strong>Not tracked</strong> in ${status.source}. No build claim is made here.</div>`;
       }
       const refs = n.refs && n.refs.length ? `<div class="p-refs"><b>Sources:</b> ${n.refs.map(r => `<code>${esc(r)}</code>`).join(' ')}</div>` : '';
-      panel.innerHTML = `
+      return `
         <div class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</div>
         <h2>${esc(n.label)}</h2>
         <p>${n.desc}</p>
         <div class="p-links"><b>From:</b> ${names(ins)}<br><b>To:</b> ${names(outs)}</div>
         ${refs}${st}`;
     }
+    function select(id) {
+      selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
+      panel.innerHTML = panelHTML(id);
+    }
+    // Reserve the tallest panel's height so selecting a node never moves the diagram.
+    // Measured at the panel's real width, and again whenever the width changes.
+    function reservePanelHeight() {
+      const current = panel.innerHTML;
+      panel.style.minHeight = '';
+      let tallest = 0;
+      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id))]) {
+        panel.innerHTML = html;
+        tallest = Math.max(tallest, panel.offsetHeight);
+      }
+      panel.innerHTML = current;
+      panel.style.minHeight = tallest + 'px';
+    }
+    reservePanelHeight();
+    let lastWidth = panel.clientWidth, resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (panel.clientWidth !== lastWidth) { lastWidth = panel.clientWidth; reservePanelHeight(); } }, 120);
+    });
     function deselect() { selected = null; clear(); panel.innerHTML = emptyPanel; }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { deselect(); document.activeElement?.blur?.(); } });
     diagram.addEventListener('click', () => { if (selected) deselect(); });
