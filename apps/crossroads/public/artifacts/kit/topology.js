@@ -142,7 +142,9 @@
       g.addEventListener('mouseenter', () => { if (!selected) focus(n.id); });
       g.addEventListener('mouseleave', () => { if (!selected) clear(); });
       g.addEventListener('focus', () => select(n.id));
-      g.addEventListener('click', e => { e.stopPropagation(); selected === n.id ? deselect() : select(n.id); });
+      // A click focuses the node first (which selects it), so the click only selects, never toggles off.
+      // One click moves from any node to any other; Esc or a click on the background clears.
+      g.addEventListener('click', e => { e.stopPropagation(); if (selected !== n.id) select(n.id); });
     }
 
     diagram.appendChild(svg);
