@@ -195,11 +195,10 @@
       }
       const refs = n.refs && n.refs.length ? `<div class="p-refs"><b>Sources:</b> ${n.refs.map(r => `<code>${esc(r)}</code>`).join(' ')}</div>` : '';
       return `
-        <div class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</div>
-        <h2>${esc(n.label)}</h2>
+        <div class="p-head"><h2>${esc(n.label)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</span></div>
         <p>${n.desc}</p>
         <div class="p-links"><b>From:</b> ${names(ins)}<span class="sep">·</span><b>To:</b> ${names(outs)}</div>
-        ${refs}${st}`;
+        ${refs}${st ? '<div class="p-fill"></div>' + st : ''}`;
     }
     function select(id) {
       selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
