@@ -147,7 +147,7 @@ svg.show-status .badge { display: inline; }
 .tk-panel h2 { font-size: 0.98rem; opacity: 0.88; margin: 0.1rem 0 0.3rem; letter-spacing: -0.01em; }
 .tk-panel p { font-size: 0.85rem; color: var(--fg); line-height: 1.45; }
 .tk-panel .p-fill { flex: 1 0 0.5rem; } /* pushes the build line to the panel's bottom edge */
-.tk-panel .p-status { padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--fg-muted); }
+.tk-panel .p-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--fg-muted); }
 .tk-panel .p-status strong { color: var(--fg); }
 .tk-panel .p-links { margin-top: 0.45rem; font-size: 0.8rem; color: var(--fg-muted); }
 .tk-panel .p-links .sep { margin: 0 0.5rem; }

@@ -200,9 +200,12 @@
       const outs = EDGES.filter(e => e.f === id).map(e => e.t);
       let st = '';
       if (status) {
-        st = n.status
-          ? `<div class="p-status"><strong style="color:var(--st-${n.status})">● ${esc(status.labels[n.status] || n.status)}</strong>${n.evidence ? ' — ' + n.evidence : ''}</div>`
-          : `<div class="p-status"><strong>Not tracked</strong> in ${status.source}. No build claim is made here.</div>`;
+        // One line only: the panel clips the evidence with an ellipsis; the full text is in the tooltip.
+        const line = n.status
+          ? `<strong style="color:var(--st-${n.status})">● ${esc(status.labels[n.status] || n.status)}</strong>${n.evidence ? ' — ' + n.evidence : ''}`
+          : `<strong>Not tracked</strong> in ${status.source}. No build claim is made here.`;
+        const plain = line.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+        st = `<div class="p-status" title="${esc(plain)}">${line}</div>`;
       }
       const refs = n.refs && n.refs.length ? `<div class="p-refs"><b>Sources:</b> ${n.refs.map(r => `<code>${esc(r)}</code>`).join(' ')}</div>` : '';
       return `
