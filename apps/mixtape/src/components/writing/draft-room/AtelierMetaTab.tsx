@@ -13,7 +13,7 @@ import { useMemo } from "react";
 import { useColorModeValue } from "@components/ui/color-mode";
 
 const AUDIENCE_OPTIONS = [
-  { label: "Crossroads community", value: "crossroads" },
+  { label: "Everyone on Crossroads Place", value: "crossroads" },
   { label: "Public", value: "public" },
   { label: "Myself", value: "self" },
 ];

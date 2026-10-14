@@ -538,7 +538,7 @@ export default function DocumentImportWorkArea({
                           style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #E2E8F0", fontSize: "14px" }}
                         >
                           <option value="public">Public</option>
-                          <option value="crossroads">Crossroads</option>
+                          <option value="crossroads">Everyone on Crossroads Place</option>
                           <option value="self">Self</option>
                         </select>
                       </HStack>

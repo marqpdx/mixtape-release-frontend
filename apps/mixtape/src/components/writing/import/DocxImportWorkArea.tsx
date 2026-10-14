@@ -372,7 +372,7 @@ export default function DocxImportWorkArea({
                       }}
                     >
                       <option value="public">Public</option>
-                      <option value="crossroads">Crossroads</option>
+                      <option value="crossroads">Everyone on Crossroads Place</option>
                       <option value="self">Self</option>
                     </select>
                   </Box>

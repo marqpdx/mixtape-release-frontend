@@ -67,7 +67,7 @@ type MetadataSnapshot = {
 const audienceCollection = createListCollection({
   items: [
     { label: "Public", value: "public" },
-    { label: "Crossroads community", value: "crossroads" },
+    { label: "Everyone on Crossroads Place", value: "crossroads" },
     { label: "Myself", value: "self" },
   ],
 });

@@ -1,6 +1,6 @@
 // Subdomain routing middleware for Crossroads.
 //
-// Rewrites {slug}.apps.crossroads.place → /groups/{slug} internally so that
+// Rewrites {slug}.go.crossroads.place → /groups/{slug} internally so that
 // the Next.js app serves the correct page without a redirect. The browser URL
 // stays as the subdomain — this is a server-side rewrite only.
 //
@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
 
     if (slug) {
       const url = req.nextUrl.clone();
-      // Preserve sub-paths: mindful-brilliance.apps.crossroads.place/writing
+      // Preserve sub-paths: mindful-brilliance.go.crossroads.place/writing
       //   → /groups/mindful-brilliance/writing
       const existingPath = url.pathname === "/" ? "" : url.pathname;
       url.pathname = `/groups/${slug}${existingPath}`;
