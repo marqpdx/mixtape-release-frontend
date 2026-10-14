@@ -85,22 +85,29 @@ h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
 .controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; align-items: center; padding-bottom: 0.6rem;
             font-size: 0.85rem; color: var(--fg-muted); }
 .controls label { display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
-.status-key { display: inline-flex; gap: 0.9rem; flex-wrap: wrap; }
-.status-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .sdot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .tk-zoom { margin-left: auto; display: inline-flex; align-items: center; gap: 0.3rem; }
 .tk-zoom button { background: var(--surface); border: 1px solid var(--border); color: var(--fg-muted); border-radius: 6px;
                   padding: 0.15rem 0.55rem; font: inherit; font-size: 0.8rem; cursor: pointer; }
 .tk-zoom button:hover { color: var(--fg); }
 .tk-zoom-label { min-width: 3.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.tk-filter { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.35rem; }
+.tk-filter-label { margin-right: 0.2rem; }
+.tk-filter button { background: none; border: 0; font: inherit; color: var(--fg-muted); cursor: pointer;
+                    padding: 0.1rem 0.3rem; display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 6px; }
+.tk-filter button:hover { background: var(--border); }
+.tk-filter button[aria-pressed="true"] { color: var(--fg); font-weight: 700; }
+/* Reserve the bold width so a chip never changes size when toggled. */
+.tk-chip-text { display: inline-flex; flex-direction: column; }
+.tk-chip-text::after { content: attr(data-text); font-weight: 700; height: 0; visibility: hidden; overflow: hidden; user-select: none; pointer-events: none; }
 .sdot.untracked { background: transparent; border: 1.5px dashed var(--fg-faint); }
 
-/* Top row: intro (left ~32%) beside the detail panel (right ~68%); stacks on narrow screens. */
+/* Top row: intro (left ~35%) beside the detail panel (right ~65%); stacks on narrow screens. */
 /* Pinned strip: intro, detail panel and controls stay put while the map scrolls underneath. */
 .tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.75rem; margin-top: -0.75rem;
              box-shadow: 0 1px 0 var(--border); margin-bottom: 0.75rem; }
 @media (max-width: 860px), (max-height: 620px) { .tk-sticky { position: static; box-shadow: none; } }
-.tk-top { display: grid; grid-template-columns: minmax(0, 32fr) minmax(0, 68fr); gap: 1.25rem; align-items: start; margin-bottom: 0.6rem; }
+.tk-top { display: grid; grid-template-columns: minmax(0, 35fr) minmax(0, 65fr); gap: 1.25rem; align-items: start; margin-bottom: 0.6rem; }
 .tk-top.no-intro { grid-template-columns: minmax(0, 1fr); }
 .tk-intro header { margin-bottom: 0; }
 .tk-intro .subtitle { max-width: none; }
@@ -120,6 +127,10 @@ h1 { font-size: 1.6rem; font-weight: 650; letter-spacing: -0.02em; }
 .node:focus { outline: none; }
 .node:focus-visible rect.box, .node.selected rect.box { stroke-width: 3; }
 .node.planned rect.box { stroke-dasharray: 5 4; }
+.node.filtered-out:not(.selected) { opacity: 0.18; }
+.band { cursor: pointer; stroke-opacity: 0.35; transition: stroke-opacity .15s, stroke-width .15s; }
+.band:focus { outline: none; }
+.band.selected, .band:focus-visible { stroke-opacity: 1; stroke-width: 2.2; }
 .edge { fill: none; stroke: var(--edge); stroke-width: 1.4; transition: opacity .15s, stroke .15s; }
 .edge.dashed { stroke-dasharray: 5 4; }
 .edge.hot { stroke: var(--edge-hot); stroke-width: 2.2; }
@@ -133,7 +144,7 @@ svg.show-status .badge { display: inline; }
 .tk-panel .p-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; margin-bottom: 0.3rem; }
 .tk-panel .p-head h2 { margin: 0; }
 .tk-panel .p-layer { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.tk-panel h2 { font-size: 1.05rem; margin: 0.1rem 0 0.3rem; letter-spacing: -0.01em; }
+.tk-panel h2 { font-size: 0.98rem; opacity: 0.88; margin: 0.1rem 0 0.3rem; letter-spacing: -0.01em; }
 .tk-panel p { font-size: 0.85rem; color: var(--fg); line-height: 1.45; }
 .tk-panel .p-fill { flex: 1 0 0.5rem; } /* pushes the build line to the panel's bottom edge */
 .tk-panel .p-status { padding-top: 0.45rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--fg-muted); }

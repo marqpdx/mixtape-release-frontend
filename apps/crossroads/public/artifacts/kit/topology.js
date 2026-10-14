@@ -40,20 +40,24 @@
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
 
     // Scaffold: a pinned strip (intro beside the detail panel, then controls), the zoomable diagram, layer cards.
-    const keyItems = status
-      ? Object.entries(status.labels).map(([k, label]) => `<span><i class="sdot" style="background:var(--st-${k})"></i>${esc(label)}</span>`).join('')
-        + (status.untracked ? `<span><i class="sdot untracked"></i>${esc(status.untracked)}</span>` : '')
+    // Build-state filter: chips that toggle like checkboxes; the active ones are bold.
+    // Each label reserves its bold width (CSS ::after), so toggling never shifts the row.
+    const chip = (key, label, dot) => `<button type="button" data-f="${key}" aria-pressed="true">${dot || ''}<span class="tk-chip-text" data-text="${esc(label)}">${esc(label)}</span></button>`;
+    const filterKeys = status ? [...Object.keys(status.labels), ...(status.untracked ? ['untracked'] : [])] : [];
+    const filterChips = status
+      ? chip('all', 'All')
+        + Object.entries(status.labels).map(([k, label]) => chip(k, label, `<i class="sdot" style="background:var(--st-${k})"></i>`)).join('')
+        + (status.untracked ? chip('untracked', status.untracked, '<i class="sdot untracked"></i>') : '')
       : '';
     mount.innerHTML = `
       <div class="tk-sticky">
         <div class="tk-top">
           <div class="tk-intro"></div>
           <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
-            'Select a node to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
+            'Select a node, or a coloured layer band, to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
         </div>
         <div class="controls">
-          ${status ? `<label><input type="checkbox" data-tk="showStatus" checked> Show build state</label>
-          <span class="status-key">${keyItems}</span>` : ''}
+          ${status ? `<span class="tk-filter" role="group" aria-label="Filter by build state"><span class="tk-filter-label">Filter by build state:</span>${filterChips}</span>` : ''}
           <span class="tk-zoom" role="group" aria-label="Map size">
             <button type="button" data-zoom="out" aria-label="Smaller">−</button>
             <span class="tk-zoom-label" aria-live="polite"></span>
@@ -82,9 +86,14 @@
 
     // Bands, then label tags, then edges (so arrowheads sit above the tags), then nodes.
     const gBands = el('g', {}, svg);
+    const bandEls = {};
     for (const b of BANDS) {
       const h = hue(b.layer);
-      el('rect', { x: b.x, y: b.y, width: b.w, height: b.h, rx: 12, fill: `var(--${h}-b)`, stroke: `var(--${h}-s)`, 'stroke-opacity': 0.35 }, gBands);
+      const r = el('rect', { class: 'band', x: b.x, y: b.y, width: b.w, height: b.h, rx: 12, fill: `var(--${h}-b)`, stroke: `var(--${h}-s)`,
+        tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, layer` }, gBands);
+      (bandEls[b.layer] ||= []).push(r);
+      r.addEventListener('focus', () => selectLayer(b.layer));
+      r.addEventListener('click', e => { e.stopPropagation(); if (selected !== 'layer:' + b.layer) selectLayer(b.layer); });
     }
     const gLabels = el('g', { class: 'band-tag' }, svg);
     const gEdges = el('g', {}, svg);
@@ -147,6 +156,7 @@
         else { badge.setAttribute('fill', 'none'); badge.setAttribute('stroke', 'var(--fg-faint)'); badge.setAttribute('stroke-dasharray', '2 2'); badge.setAttribute('stroke-width', 1.5); }
       }
       nodeEls[n.id] = g;
+      g.dataset.st = n.status || 'untracked';
       g.addEventListener('mouseenter', () => { if (!selected) focus(n.id); });
       g.addEventListener('mouseleave', () => { if (!selected) clear(); });
       g.addEventListener('focus', () => select(n.id));
@@ -180,6 +190,7 @@
       svg.classList.remove('focusing');
       edgeEls.forEach(p => { p.classList.remove('hot'); p.setAttribute('marker-end', 'url(#tkArrow)'); });
       Object.values(nodeEls).forEach(g => g.classList.remove('lit', 'selected'));
+      Object.values(bandEls).flat().forEach(r => r.classList.remove('selected'));
     }
     const emptyPanel = panel.innerHTML;
     const names = ids => [...new Set(ids)].map(i => esc(byId[i].label)).join(', ') || '—';
@@ -204,13 +215,37 @@
       selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
       panel.innerHTML = panelHTML(id);
     }
+    // A layer's panel: what the layer is, what it holds, and how much of it is built.
+    function layerHTML(key) {
+      const L = LAYERS[key], members = NODES.filter(n => n.layer === key);
+      let st = '';
+      if (status) {
+        const counts = {};
+        for (const n of members) { const k = n.status || 'untracked'; counts[k] = (counts[k] || 0) + 1; }
+        st = '<div class="p-status">' + Object.entries(counts).map(([k, c]) => k === 'untracked'
+          ? `<strong>${c} not tracked</strong>`
+          : `<strong style="color:var(--st-${k})">● ${c} ${esc(status.labels[k] || k)}</strong>`).join(' · ') + '</div>';
+      }
+      return `
+        <div class="p-head"><h2>${esc(L.full)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">Layer</span></div>
+        <p>${L.desc}</p>
+        <div class="p-links"><b>Holds:</b> ${names(members.map(n => n.id))}</div>
+        ${st ? '<div class="p-fill"></div>' + st : ''}`;
+    }
+    function selectLayer(key) {
+      selected = 'layer:' + key; clear();
+      svg.classList.add('focusing');
+      for (const n of NODES) if (n.layer === key) nodeEls[n.id].classList.add('lit');
+      (bandEls[key] || []).forEach(r => r.classList.add('selected'));
+      panel.innerHTML = layerHTML(key);
+    }
     // Reserve the tallest panel's height so selecting a node never moves the diagram.
     // Measured at the panel's real width, and again whenever the width changes.
     function reservePanelHeight() {
       const current = panel.innerHTML;
       panel.style.minHeight = '';
       let tallest = 0;
-      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id))]) {
+      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id)), ...Object.keys(bandEls).map(layerHTML)]) {
         panel.innerHTML = html;
         tallest = Math.max(tallest, panel.offsetHeight);
       }
@@ -227,11 +262,23 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { deselect(); document.activeElement?.blur?.(); } });
     diagram.addEventListener('click', () => { if (selected) deselect(); });
 
-    const showStatus = mount.querySelector('[data-tk="showStatus"]');
-    if (showStatus) {
-      const sync = () => svg.classList.toggle('show-status', showStatus.checked);
-      showStatus.addEventListener('change', sync); sync();
+    // Filter: with every chip on, all badges show; with some on, the rest of the nodes fade;
+    // with none on, badges hide and nothing fades. All turns every chip on, or off if they already are.
+    const active = new Set(filterKeys);
+    const chips = [...mount.querySelectorAll('[data-f]')];
+    function applyFilter() {
+      svg.classList.toggle('show-status', active.size > 0);
+      const partialFilter = active.size > 0 && active.size < filterKeys.length;
+      for (const g of Object.values(nodeEls)) g.classList.toggle('filtered-out', partialFilter && !active.has(g.dataset.st));
+      for (const c of chips) c.setAttribute('aria-pressed', String(c.dataset.f === 'all' ? active.size === filterKeys.length : active.has(c.dataset.f)));
     }
+    chips.forEach(c => c.addEventListener('click', () => {
+      const k = c.dataset.f;
+      if (k === 'all') { const all = active.size === filterKeys.length; active.clear(); if (!all) filterKeys.forEach(f => active.add(f)); }
+      else active.has(k) ? active.delete(k) : active.add(k);
+      applyFilter();
+    }));
+    applyFilter();
 
     // Theme toggle: any element with data-theme-toggle.
     document.querySelectorAll('[data-theme-toggle]').forEach(btn => btn.addEventListener('click', () => {
@@ -266,7 +313,12 @@
     window.addEventListener('resize', () => { if (zoomMode !== 'manual') applyZoom(); });
 
     // Deep link: #ID selects that node.
-    const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)); if (byId[id]) select(id); };
+    // Deep link: #layer-<key> selects a layer.
+    const fromHash = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (byId[id]) select(id);
+      else if (id.startsWith('layer-') && bandEls[id.slice(6)]) selectLayer(id.slice(6));
+    };
     window.addEventListener('hashchange', fromHash); fromHash();
 
     const grid = mount.querySelector('.layer-grid');
