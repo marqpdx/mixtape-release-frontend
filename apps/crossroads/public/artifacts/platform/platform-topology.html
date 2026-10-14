@@ -1,0 +1,216 @@
+<!--
+  topology library map — public register (its own design; not on the kit)
+  carried_from: puddlejump/reference/topology/platform-concept-map.md
+  carried_from_uuid: 391dd09c-7667-47f1-a99f-27cb0b163a86
+  designed: 2026-09-29 (09f410a); moved into the library 2026-10-14
+  library: puddlejump/reference/topology/topology-library.md
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A newcomer-facing map of how work, knowledge, and memory move through Mixtape.">
+  <title>Mixtape — Newcomer Topology</title>
+  <meta name="carried-from" content="puddlejump/reference/topology/platform-concept-map.md">
+  <meta name="carried-from-uuid" content="391dd09c-7667-47f1-a99f-27cb0b163a86">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#1f1d17;--paper:#F6F1E4;--cream:#FFFBF1;--field:#EFE7D2;--muted:#6b6555;--body:#4a463b;--under:#2A241B;--mulberry:#8B3F62;--coral:#D2603F;--thatch:#4F551C}
+    *,*::before,*::after{box-sizing:border-box}*{margin:0}html{scroll-behavior:smooth}
+    body{min-width:320px;background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button,a{font:inherit}button{color:inherit}button:focus-visible,a:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+    a{color:var(--mulberry);text-decoration:none}a:hover{text-decoration:underline}
+    .shell{max-width:1336px;margin:auto;padding:40px clamp(16px,4vw,48px) 80px}
+    .eyebrow{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px}
+    .intro{display:grid;gap:14px;max-width:760px}.pills{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{border:1.5px solid var(--ink);border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
+    .pill.primary{background:var(--ink);color:var(--paper)}
+    h1{max-width:720px;font:800 clamp(34px,5vw,60px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
+    .lede{max-width:60ch;color:var(--body);font-size:18px;line-height:1.5}
+    .depth-wrap{display:grid;gap:8px}.depths{display:flex;overflow:hidden;background:var(--cream);border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
+    .depth{min-width:110px;padding:10px 16px;border:0;background:transparent;cursor:pointer;display:grid;gap:2px;text-align:left}
+    .depth+.depth{border-left:1.5px solid rgba(31,29,23,.18)}.depth[aria-checked=true]{background:var(--ink);color:var(--cream)}
+    .depth strong{font:800 18px/1 'Bricolage Grotesque',sans-serif}.depth span{font-size:12px;font-weight:600}
+    .map{display:grid;grid-template-columns:minmax(0,1fr) 96px;overflow:hidden;background:var(--field);border:2.5px solid var(--ink);border-radius:32px;box-shadow:8px 8px 0 var(--ink)}
+    .map-main{min-width:0}.landscape{padding:clamp(24px,4vw,44px);background-color:var(--field);background-image:radial-gradient(rgba(31,29,23,.09) 1px,transparent 1.2px);background-size:18px 18px}
+    .arrival{display:flex;flex-direction:column;align-items:center}.login{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 16px;background:var(--cream);border:2px solid var(--ink);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600}
+    .login:hover{background:#fff}.login-mark{width:10px;height:10px;background:var(--ink);border-radius:2px}.login small{color:var(--muted);font:600 10px/1 'JetBrains Mono',monospace}
+    .arrival-line{width:4px;height:34px;background:repeating-linear-gradient(var(--ink) 0 6px,transparent 6px 11px)}
+    .reception{width:100%;max-width:780px;padding:clamp(22px,3.5vw,36px);background:var(--cream);border:3px solid var(--ink);border-radius:44px;box-shadow:0 0 0 8px var(--field),0 0 0 11px var(--ink),8px 14px 0 11px var(--ink);display:grid;gap:18px}
+    .reception-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.reception-title{display:grid;gap:4px}.reception-title .eyebrow{color:var(--mulberry)}
+    .reception h2{font:800 clamp(26px,3.4vw,40px)/1.02 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+    .badge{width:24px;height:24px;flex:none;border:2px solid var(--mulberry);border-radius:50%;background:var(--cream);color:var(--mulberry);cursor:pointer;font-size:11px;font-weight:800}
+    .story-copy{max-width:56ch;color:var(--body);font-size:16px;line-height:1.5}.feed{display:grid;gap:6px}.feed-label{color:var(--muted);font-size:12px;font-weight:600}
+    .feed-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:10px 14px;background:var(--paper);border:1.5px solid rgba(31,29,23,.18);border-radius:12px;cursor:pointer;text-align:left}
+    .feed-row:hover{background:#fff;border-color:var(--ink)}.feed-row>span:first-child{font-size:15px;font-weight:500;line-height:1.35}.destination{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:700}
+    .dot{width:10px;height:10px;border:1.5px solid var(--ink);border-radius:50%;background:var(--dot)}
+    .surfaces{display:grid;gap:14px;margin-top:52px}.surfaces-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}.surfaces-title{display:grid;gap:4px}
+    .surfaces h3,.underground h3{font:700 24px/1.12 'Bricolage Grotesque',sans-serif}.materials{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.materials>span{font-size:12px;font-weight:700}
+    .material{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--cream);border:2px solid var(--ink);border-radius:99px;cursor:pointer;font-size:13px;font-weight:600}.material[aria-pressed=true]{background:var(--ink);color:var(--cream)}
+    .promenade{height:12px;background:var(--cream) repeating-linear-gradient(90deg,transparent 0 14px,rgba(31,29,23,.35) 14px 22px);border:2px solid var(--ink);border-radius:99px}
+    .lands{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:44px 22px;padding-top:26px}
+    .land{position:relative;min-height:150px;padding:20px 20px 18px;background:var(--color);color:var(--fg);border:2.5px solid var(--ink);border-radius:var(--radius);box-shadow:5px 5px 0 var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:10px;text-align:left;transition:transform .15s ease}
+    .land:hover{transform:translate(-3px,-3px)}.land::before{content:'';position:absolute;top:-30px;left:50%;width:4px;height:26px;margin-left:-2px;background:repeating-linear-gradient(var(--ink) 0 6px,transparent 6px 10px)}
+    .land.followed::after{content:'';position:absolute;inset:-10px;border:3px dashed var(--ink);border-radius:var(--radius);pointer-events:none}
+    .land-head{display:flex;justify-content:space-between;gap:8px}.verb{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.badges{display:flex;gap:4px}
+    .mini-badge{width:22px;height:22px;border:1.5px solid var(--ink);border-radius:50%;background:var(--cream);color:var(--mulberry);display:grid;place-items:center;font-size:10px;font-weight:800}.mini-badge.tech{background:var(--ink);color:var(--cream);font-family:'JetBrains Mono',monospace}
+    .land h4{font:800 28px/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}.land-desc{font-size:14px;line-height:1.45;text-wrap:pretty}
+    .ticket{display:none;margin-top:auto;padding:8px 10px;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:10px}.land.followed .ticket{display:grid;gap:2px}
+    .ticket-meta{display:flex;justify-content:space-between;color:var(--muted);font:600 10px/1.4 'JetBrains Mono',monospace}.ticket-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+    .caption{margin-top:14px;color:var(--body);font-size:15px;font-weight:600;text-align:center}
+    .humans{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;width:100%;padding:18px clamp(24px,4vw,44px);background:var(--ink);color:var(--paper);border:0;cursor:pointer;text-align:left}
+    .humans strong{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}.humans span{max-width:70ch;color:#d9d2bf;font-size:15px;line-height:1.45}
+    .underground{padding:clamp(24px,4vw,44px);background-color:var(--under);background-image:radial-gradient(rgba(239,231,210,.06) 1px,transparent 1.4px);background-size:14px 14px;color:var(--field);display:grid;gap:22px}
+    .under-intro{display:grid;gap:4px}.underground .eyebrow{color:#b3a98f}.underground h3{color:var(--cream);font-size:26px}.under-intro p{max-width:64ch;color:#cfc6ae;font-size:15px;line-height:1.5}
+    .strands{display:grid;gap:6px}.strand{display:grid;grid-template-columns:minmax(180px,auto) minmax(0,1fr);align-items:center;gap:6px 22px;padding:10px 0;background:transparent;color:inherit;border:0;cursor:pointer;text-align:left}.strand:hover{opacity:.85}
+    .strand-name{display:flex;align-items:baseline;gap:10px}.strand-name strong{color:var(--strand);font:800 20px/1 'Bricolage Grotesque',sans-serif}.strand-name span{color:#b3a98f;font-size:12px;font-weight:600}
+    .strand-body{min-width:0;display:grid;gap:6px}.strand-line{height:5px;border-radius:99px;background:var(--line)}.strand-narr{color:#e6dec8;font-size:14px;line-height:1.4}.strand-tech{color:#a89f86;font:400 12px/1.55 'JetBrains Mono',monospace}
+    .memory{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin-top:6px;padding-top:20px;border-top:2px solid #4a4030}.memory-head{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.memory-head strong{color:#f0c065;font:800 20px/1 'Bricolage Grotesque',sans-serif}.memory-head span{color:#cfc6ae;font-size:14px}
+    .memory-card{padding:16px 18px;background:#DBA532;color:#2e2005;border:2.5px solid #120f0a;border-radius:18px 18px 28px 12px;box-shadow:5px 5px 0 #120f0a;cursor:pointer;display:grid;gap:6px;text-align:left}.memory-card strong{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}.memory-card span{font-size:14px;line-height:1.45}.memory-card .memory-tech{color:#4a3208;font:400 12px/1.5 'JetBrains Mono',monospace}
+    .spine-wrap{display:flex;height:100%}
+    .spine{flex:0 0 67%;padding:20px 0;background:var(--thatch);color:#F1F2E4;border:0;border-left:2.5px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}.spine:hover{background:#5c6322}.spine span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+    .minor-col{flex:0 0 33%;display:flex;flex-direction:column;justify-content:flex-end}
+    .minor-row{display:flex;height:100%}
+    .minor-spine{flex:0 0 50%;min-width:0;padding:1px;background:var(--minor);color:#F3F1E8;border:0;border-left:1.5px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .minor-spine:hover{filter:brightness(1.1)}
+    .minor-spine span{writing-mode:vertical-rl;transform:rotate(180deg);line-height:1;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+    .closing{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:32px;align-items:start;padding-top:48px}.statement{font:700 clamp(26px,3vw,36px)/1.1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;text-wrap:balance}
+    .principles{display:grid;gap:16px}.principle-list{display:flex;flex-wrap:wrap;gap:8px}.principle{padding:7px 14px;background:var(--cream);border:2px solid var(--ink);border-radius:99px;font-size:14px;font-weight:600}.principle.primary{background:var(--coral);color:#FFF4EE;font-weight:700}.principles p{color:var(--body);font-size:15px}
+    .lifecycle{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--body);font-size:13px;font-weight:600}.life{padding:4px 10px;background:var(--field);border:1.5px solid rgba(31,29,23,.25);border-radius:8px}.arrow{color:#a39a82}.footer{margin-top:32px;color:var(--muted);font-size:13px;line-height:1.6}
+    .scrim{position:fixed;inset:0;z-index:40;background:transparent}.panel{position:fixed;right:20px;bottom:20px;z-index:50;width:min(420px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow:auto;background:var(--cream);border:2.5px solid var(--ink);border-radius:22px;box-shadow:7px 7px 0 var(--ink)}
+    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 14px;background:var(--panel);color:var(--panel-fg);border-bottom:2px solid var(--ink);border-radius:19px 19px 0 0}.panel-titles{display:grid;gap:4px}.panel-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.panel-title{font:800 26px/1 'Bricolage Grotesque',sans-serif}
+    .close{width:32px;height:32px;flex:none;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:50%;cursor:pointer;font-size:18px;font-weight:700}.panel-body{padding:18px 20px;display:grid;gap:16px}.panel-section{display:grid;gap:6px}.panel-label{display:flex;align-items:center;gap:8px;color:var(--mulberry);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.panel-label b{width:20px;height:20px;display:grid;place-items:center;border:1.5px solid;border-radius:50%;font-size:10px}.panel-narr{font-size:15px;line-height:1.55}.panel-tech{padding:14px 16px;background:var(--ink);color:#e6dec8;border-radius:14px}.panel-tech .panel-label{color:var(--cream)}.panel-tech p{font:400 12.5px/1.6 'JetBrains Mono',monospace}
+    [hidden]{display:none!important}body[data-depth=story] .places,body:not([data-depth=machinery]) .machinery{display:none!important}body:not([data-depth=story]) .story{display:none!important}
+    @media(max-width:760px){.shell{padding-top:24px}.header{align-items:stretch}.depth-wrap{width:100%}.depths{width:100%}.depth{min-width:0;flex:1;padding:9px 10px}.map{grid-template-columns:minmax(0,1fr) 64px;border-radius:22px}.reception{border-radius:28px}.feed-row{grid-template-columns:1fr}.destination{white-space:normal}.lands{grid-template-columns:1fr}.strand{grid-template-columns:1fr}.spine span{font-size:10px}.minor-spine span{font-size:7px}}
+    @media(max-width:460px){.depth strong{font-size:15px}.depth span{font-size:10px}.login small{display:none}.landscape,.underground{padding-inline:18px}.panel{right:12px;bottom:12px;width:calc(100vw - 24px);max-height:calc(100vh - 24px)}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.land{transition:none}}
+  </style>
+</head>
+<body data-depth="story">
+  <main class="shell">
+    <header class="header">
+      <div class="intro">
+        <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span></div>
+        <h1>What happens when you bring what matters into Mixtape?</h1>
+        <p class="lede">You arrive at Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
+      </div>
+      <div class="depth-wrap">
+        <span class="eyebrow" id="depth-label">How deep do you want to go?</span>
+        <div class="depths" role="radiogroup" aria-labelledby="depth-label">
+          <button class="depth" type="button" role="radio" aria-checked="true" data-depth="story"><strong>20 sec</strong><span>The story</span></button>
+          <button class="depth" type="button" role="radio" aria-checked="false" data-depth="places"><strong>2 min</strong><span>The places</span></button>
+          <button class="depth" type="button" role="radio" aria-checked="false" data-depth="machinery"><strong>20 min</strong><span>The machinery</span></button>
+        </div>
+      </div>
+    </header>
+    <section class="map" aria-label="Mixtape newcomer topology">
+      <div class="map-main">
+        <div class="landscape">
+          <section class="arrival" aria-labelledby="arrival-title">
+            <span class="eyebrow" id="arrival-title">01 · Arrive</span>
+            <button class="login" type="button" data-node="login"><span class="login-mark"></span>Log in <small>the front door</small></button>
+            <div class="arrival-line"></div>
+            <div class="reception">
+              <div class="reception-head"><div class="reception-title"><span class="eyebrow">Reception · the hinge</span><h2>Where was I? What's happening? What matters now?</h2></div><button class="badge" type="button" data-node="reception" aria-label="Learn about Reception">N</button></div>
+              <p class="story-copy story">Reception picks up where you left off — the things underway, what's changed, and what deserves your attention — before you head anywhere else.</p>
+              <div class="feed places"><span class="feed-label">Since you were last here</span>
+                <button class="feed-row" type="button" data-node="atrium"><span>Return to last night's ideation</span><span class="destination"><span class="dot" style="--dot:#466D80"></span>Atrium</span></button>
+                <button class="feed-row" type="button" data-follow="m2"><span>Tuesday morning's weekly order is due</span><span class="destination"><span class="dot" style="--dot:#70527F"></span>Storyline</span></button>
+                <button class="feed-row" type="button" data-node="catalyst"><span>An agent finished comparing suppliers — ready for your review</span><span class="destination"><span class="dot" style="--dot:#A2C03F"></span>Catalyst</span></button>
+                <button class="feed-row" type="button" data-follow="m3"><span>Captured earlier on your phone: a voice memo</span><span class="destination"><span class="dot" style="--dot:#DBA532"></span>Folio</span></button>
+                <button class="feed-row" type="button" data-follow="m1"><span>Pick up the spring appeal letter</span><span class="destination"><span class="dot" style="--dot:#8B3F62"></span>Editor's Table</span></button>
+              </div>
+            </div>
+          </section>
+          <section class="surfaces" aria-labelledby="surface-title">
+            <div class="surfaces-head"><div class="surfaces-title"><span class="eyebrow">02 · Go where the work needs you</span><h3 id="surface-title">Surfaces — different places for different kinds of work</h3></div><div class="materials places" id="materials"></div></div>
+            <div class="promenade"></div><div class="lands" id="lands"></div><p class="caption places" id="caption"></p>
+          </section>
+        </div>
+        <button class="humans" type="button" data-node="humans"><strong>Humans decide.</strong><span>Intelligent systems can help notice what might matter and help tend what does matter. They don't get to decide what matters to you.</span></button>
+        <section class="underground" aria-labelledby="under-title">
+          <div class="under-intro"><span class="eyebrow">03 · Beneath the surface</span><h3 id="under-title">Your work remembers.</h3><p class="places">Moving between Surfaces never means starting over. Connective systems run through everything — not places you visit, but the sinew that keeps work continuous, provable and trustworthy.</p></div>
+          <div class="strands" id="strands"></div>
+          <div class="memory"><div class="memory-head"><strong>Memory</strong><span>The appreciating asset — the longer it runs, the better it understands your organization.</span></div>
+            <button class="memory-card" type="button" data-node="stackroom"><strong>Stackroom</strong><span class="places">Retrieval and memory that grows more useful the longer you work.</span><span class="memory-tech machinery">IR backbone + Qdrant vectors</span></button>
+            <button class="memory-card" type="button" data-node="codex"><strong>Catalyst Codex</strong><span class="places">The curated compendium of what your organization knows.</span><span class="memory-tech machinery">CORE · CONTENT · Fixture</span></button>
+          </div>
+        </section>
+      </div>
+      <div class="spine-wrap">
+        <button class="spine" type="button" data-node="puddlejump"><span>Puddlejump · Canon — the source of truth everything is held against</span></button>
+        <div class="minor-col">
+          <div class="minor-row">
+            <button class="minor-spine" type="button" data-node="shapelib" style="--minor:#5B4A8F"><span>Shape Library</span></button>
+            <button class="minor-spine" type="button" data-node="patternlib" style="--minor:#3E4E7A"><span>Pattern Library</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="closing"><p class="statement">The Surfaces change. The Material persists. You remain the steward. The systems underneath make that possible.</p><div class="principles"><span class="eyebrow">Principles this map is built on</span><div class="principle-list"><span class="principle primary">What Matters</span><span class="principle">Attention is precious</span><span class="principle">Knowledge takes stewardship</span><span class="principle">Humans decide</span><span class="principle">Your work should remember</span><span class="principle">Enoughness</span></div><p>If you tell us something matters, we take that seriously.</p><div class="lifecycle machinery" id="lifecycle"></div></div></section>
+    <footer class="footer">Conceptual view, not a service diagram — for routing and service boundaries see the system map. <a href="../system/system-topology.html">System map →</a> · <a href="../loom/loom-topology-enhanced.html">Loom internals →</a></footer>
+  </main>
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden><div class="panel-head" id="panel-head"><div class="panel-titles"><span class="panel-kicker" id="panel-kicker"></span><h2 class="panel-title" id="panel-title"></h2></div><button class="close" id="close" type="button" aria-label="Close detail panel">×</button></div><div class="panel-body"><section class="panel-section"><span class="panel-label"><b>N</b>In plain language</span><p class="panel-narr" id="panel-narr"></p></section><section class="panel-section panel-tech" id="panel-tech-wrap"><span class="panel-label"><b>T</b>How it's built</span><p id="panel-tech"></p></section></div></aside>
+  <script>
+    const LANDS=[
+      {id:'atrium',name:'Atrium',verb:'Think it through',color:'#466D80',fg:'#F3F7F8',radius:'34px 64px 38px 56px',desc:'Room to think out loud, gather fragments, and see what is taking shape before it has a name.'},
+      {id:'catalyst',name:'Catalyst',verb:'Find · amend · add',color:'#A2C03F',fg:'#22290a',radius:'60px 30px 56px 36px',desc:"Your organization's knowledge, kept current. Every accepted change passes a human curator."},
+      {id:'folio',name:'Folio',verb:'Organize Material',color:'#DBA532',fg:'#2e2005',radius:'40px 40px 70px 28px',desc:'Gather, group and put things in order — without losing where each piece came from.'},
+      {id:'editors',name:"Editor's Table",verb:'Write · edit · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Pieces laid out for shaping. Draft, revise, and decide what is ready to go out.'},
+      {id:'storyline',name:'Storyline',verb:'Tend an Initiative',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Follow an Initiative over time — what happened, what's next, and what it's for."},
+      {id:'crossroads',name:'Crossroads',verb:'Work with people',color:'#D2603F',fg:'#FFF4EE',radius:'36px 56px 64px 30px',desc:'Groups, Circles, dispatches and collaborative writing — where a community makes things together.'},
+      {id:'clio',name:'Clio',verb:'Hold the thread',color:'#AAA37D',fg:'#26241a',radius:'50px 30px 36px 64px',desc:"The one relationship that follows you from room to room — tracks what's delegated, routed, and still waiting, wherever it lands."}
+    ];
+    const MATERIALS={
+      m1:{title:'Spring appeal letter',kind:'WritingPiece',code:'MT-0412',dot:'#D2603F',places:['editors','crossroads']},
+      m2:{title:'Tuesday supplier order',kind:'Initiative',code:'MT-0388',dot:'#466D80',places:['storyline','catalyst','crossroads','clio']},
+      m3:{title:'Voice memo from your phone',kind:'Seed',code:'MT-0451',dot:'#DBA532',places:['atrium','folio']}
+    };
+    const STRANDS=[
+      {id:'loom',name:'Loom',role:'Governed intelligence',color:'#c9b0d6',line:'linear-gradient(90deg,#70527F,#c9b0d6 30%,#c9b0d6 70%,#70527F)',narr:'Helpers that find, summarize, transcribe, draft and notice. They suggest; you decide.',tech:'Aperture (intent) → Switchboard (dispatch, policy, privacy, approval) → Inkwell and governed model runtimes.'},
+      {id:'warp',name:'Warp',role:'Provenance · workflow',color:'#e39bbd',line:'linear-gradient(90deg,#8B3F62,#e39bbd 30%,#e39bbd 70%,#8B3F62)',narr:'Makes every change provable rather than merely claimed.',tech:'Provisioning, manifests, signatures, append-only mirrors, and review-and-confirm cycles.'},
+      {id:'meridian',name:'Meridian',role:'Code intelligence',color:'#9fc3d1',line:'linear-gradient(90deg,#466D80,#9fc3d1 30%,#9fc3d1 70%,#466D80)',narr:'Keeps the codebase legible from one working session to the next.',tech:'Structural and semantic code indexing, exposed as tools through Switchboard, with canon ingestion and drift detection.'},
+      {id:'argus',name:'Argus',role:'Fidelity audits',color:'#dcd6b2',line:'linear-gradient(90deg,#AAA37D,#dcd6b2 30%,#dcd6b2 70%,#AAA37D)',narr:'Checks that the code still does what canon says it should.',tech:'Drift checks, structural audits, snapshots, and vision critique. Meridian detects; Argus enforces.'},
+      {id:'livewire',name:'Livewire',role:'Personal messaging',color:'#eec3d3',line:'linear-gradient(90deg,#C2547A,#eec3d3 30%,#eec3d3 70%,#C2547A)',narr:'Conversations between members, built on intentional trust — you and the people you message choose the balance of privacy, continuity, and institutional memory.',tech:'ADR-0046. Signal-inspired security hardening in four phases; retained and hardened rather than replaced by Signal. Conversations (Livewire) and Discussions (Threadworks) are governed separately.'},
+      {id:'daedalus',name:'Daedalus',role:'Research engine',color:'#b9cddc',line:'linear-gradient(90deg,#4A6B8A,#b9cddc 30%,#b9cddc 70%,#4A6B8A)',narr:'A headless research engine — fetches, classifies, and deposits source material into Stackroom so nothing has to be found and pasted by hand.',tech:"FastAPI service, no UI of its own. Assignments arrive via REST (MCP tools in Phase 2); results land in Stackroom under a per-project namespace, surfaced through Hildegard or Mixtape's inline research panel."}
+    ];
+    const NODES={
+      login:{k:'The front door',t:'Log in',c:'#1f1d17',f:'#FFFBF1',n:'Login is built around a solid member and profile presence — a long-lived base from which to share writing, images, invitations and more. It asks for almost none of your attention.',x:'JWT authentication uses short-lived access tokens and a refresh flow. Identity is split across the authentication record and member-facing profile.'},
+      reception:{k:'The hinge',t:'Reception',c:'#FFFBF1',f:'#1f1d17',n:'The meaningful arrival. Reception establishes continuity between visits: where you were, what has happened since, what an agent has finished, and what deserves your attention now. Then you head outward.'},
+      humans:{k:'Architectural invariant',t:'Humans decide',c:'#1f1d17',f:'#FFFBF1',n:'AI always suggests; humans decide. Accepted changes pass human curation, and cloud operations require explicit approval. This is architecture, not a UX preference.',x:'Switchboard enforces approval and policy gates; architectural intent is held against Puddlejump canon.'},
+      atrium:{k:'Surface · Think it through',t:'Atrium',c:'#466D80',f:'#F3F7F8',n:'A place to think something through before it has a settled form.'},
+      catalyst:{k:'Surface · Find · amend · add',t:'Catalyst',c:'#A2C03F',f:'#22290a',n:'Three verbs: Find, Amend, Add. The knowledge an organization relies on, kept current — every accepted change goes through a human curator.',x:'CORE defines engine behavior; CONTENT holds knowledge; Fixture files are editable, divergence-tracked starter material.'},
+      folio:{k:'Surface · Organize Material',t:'Folio',c:'#DBA532',f:'#2e2005',n:'Where Material gets gathered and organized, staying connected to its origins.'},
+      editors:{k:'Surface · Write · edit · publish',t:"Editor's Table",c:'#8B3F62',f:'#FBEFF4',n:'A table for shaping pieces of writing — drafting, revising, and deciding what is ready.'},
+      storyline:{k:'Surface · Tend an Initiative',t:'Storyline',c:'#70527F',f:'#F5EFF8',n:'The ongoing life of an Initiative, told as it unfolds.'},
+      crossroads:{k:'Surface · Work with people',t:'Crossroads',c:'#D2603F',f:'#FFF4EE',n:'Groups, Circles, collaborative writing and dispatches. The wall between Catalyst and Crossroads is deliberately low.',x:"Mixtape's community and communication surface. Governed intelligence is delivered through Loom; Crossroads also hosts authentication."},
+      clio:{k:'Surface · Hold the thread',t:'Clio',c:'#AAA37D',f:'#26241a',n:"The one relationship that survives crossing a surface boundary — reachable from anywhere, always current, holding the thread of what's in motion so you don't have to carry it in your head between rooms.",x:'Draft, unbuilt: a campus-wide layer spanning Reception, Home Workshop, Atrium, and Catalyst, plus registry/relay duty for background Keeper agents — decisions/clio/clio-campus-adr.md, pending CTO ratification. A much narrower ratified v1 (a Personal Studio nudge card) already ships under this name; this map means the fuller, pending sense.'},
+      stackroom:{k:'Memory',t:'Stackroom',c:'#DBA532',f:'#2e2005',n:'Every operation enriches Stackroom — the longer the system runs, the better it understands this organization.',x:'The retrieval backbone handles ingestion, chunking, embedding, indexing, and retrieval.'},
+      codex:{k:'Memory',t:'Catalyst Codex',c:'#DBA532',f:'#2e2005',n:'The client knowledge compendium — the deliverable. What your organization knows, in a form it owns.',x:'Portable human-readable files distinguish governed engine behavior, client knowledge, and editable starter material.'},
+      puddlejump:{k:'Canon governance',t:'Puddlejump',c:'#4F551C',f:'#F1F2E4',n:'The source of truth everything else is held against. What Puddlejump governs is load-bearing; what it does not is advisory.',x:'ADRs, field notes, design briefs, build plans, status files, and policy documents maintain architectural memory.'},
+      patternlib:{k:'Underneath everything · inchoate',t:'Pattern Library',c:'#3E4E7A',f:'#EAF0FA',n:'Named patterns that constrain how every system on this map is allowed to behave. Not a system you visit — the grammar the systems already follow.',x:'reference/patterns/ — Authority Boundary, Full Traceability, and others. No ADR, no status file yet. Real, but still being formalized.'},
+      shapelib:{k:'Underneath everything · inchoate',t:'Shape Library',c:'#5B4A8F',f:'#EDEAF7',n:'A design-system layer referenced in conversation but not yet formally written down anywhere in canon.',x:"Placeholder. No file, no ADR, no fixed definition yet — included here because it's real enough to plan around, not because it's finished."}
+    };
+    STRANDS.forEach(s=>NODES[s.id]={k:'Connective system · '+s.role,t:s.name,c:'#2A241B',f:s.color,n:s.narr,x:s.tech});
+    const landsEl=document.getElementById('lands');
+    landsEl.innerHTML=LANDS.map(l=>`<button class="land" type="button" data-node="${l.id}" data-place="${l.id}" style="--color:${l.color};--fg:${l.fg};--radius:${l.radius}"><span class="land-head"><span class="verb">${l.verb}</span><span class="badges"><span class="mini-badge">N</span>${NODES[l.id].x?'<span class="mini-badge tech machinery">T</span>':''}</span></span><h4>${l.name}</h4><span class="land-desc places">${l.desc}</span><span class="ticket"></span></button>`).join('');
+    document.getElementById('materials').innerHTML='<span>Follow one piece of Material:</span>'+Object.entries(MATERIALS).map(([id,m])=>`<button class="material" type="button" data-material="${id}" aria-pressed="${id==='m1'}"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</button>`).join('');
+    document.getElementById('strands').innerHTML=STRANDS.map(s=>`<button class="strand" type="button" data-node="${s.id}" style="--strand:${s.color};--line:${s.line}"><span class="strand-name"><strong>${s.name}</strong><span>${s.role}</span></span><span class="strand-body"><span class="strand-line"></span><span class="strand-narr places">${s.narr}</span><span class="strand-tech machinery">${s.tech}</span></span></button>`).join('');
+    const life=['Something matters','becomes Material','is tended','informs understanding','reaches enoughness','becomes immaterial','returns to soil'];
+    document.getElementById('lifecycle').innerHTML=life.map((s,i)=>`<span class="life">${s}</span>${i<life.length-1?'<span class="arrow">→</span>':''}`).join('');
+    const valid=['story','places','machinery'];let followed='m1',trigger=null;
+    function depth(d){if(!valid.includes(d))return;document.body.dataset.depth=d;document.querySelectorAll('.depth').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.depth===d)));const u=new URL(location.href);d==='story'?u.searchParams.delete('depth'):u.searchParams.set('depth',d);history.replaceState({},'',u)}
+    function follow(id,toggle=true){followed=toggle&&followed===id?null:id;document.querySelectorAll('.material').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.material===followed)));document.querySelectorAll('.land').forEach(card=>{const m=followed&&MATERIALS[followed],on=!!(m&&m.places.includes(card.dataset.place));card.classList.toggle('followed',on);card.querySelector('.ticket').innerHTML=on?`<span class="ticket-meta"><span>${m.kind}</span><span>${m.code}</span></span><span class="ticket-title"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</span>`:''});const m=followed&&MATERIALS[followed];document.getElementById('caption').textContent=m?`${m.title} (${m.code}) is the same thing in ${m.places.length} places. The thing is not its interface.`:'Pick a piece of Material to see where it lives.'}
+    function openPanel(id,el){const n=NODES[id];if(!n)return;trigger=el||document.activeElement;document.getElementById('panel-kicker').textContent=n.k;document.getElementById('panel-title').textContent=n.t;document.getElementById('panel-narr').textContent=n.n;document.getElementById('panel-tech').textContent=n.x||'';document.getElementById('panel-tech-wrap').hidden=!n.x;const h=document.getElementById('panel-head');h.style.setProperty('--panel',n.c);h.style.setProperty('--panel-fg',n.f);document.getElementById('scrim').hidden=false;document.getElementById('panel').hidden=false;document.getElementById('close').focus()}
+    function closePanel(){document.getElementById('scrim').hidden=true;document.getElementById('panel').hidden=true;if(trigger&&document.contains(trigger))trigger.focus();trigger=null}
+    document.addEventListener('click',e=>{const d=e.target.closest('.depth');if(d)depth(d.dataset.depth);const m=e.target.closest('.material');if(m)follow(m.dataset.material);const f=e.target.closest('[data-follow]');if(f)follow(f.dataset.follow,false);const n=e.target.closest('[data-node]');if(n)openPanel(n.dataset.node,n)});
+    document.getElementById('close').addEventListener('click',closePanel);document.getElementById('scrim').addEventListener('click',closePanel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('panel').hidden)closePanel()});
+    const q=new URLSearchParams(location.search).get('depth');depth(valid.includes(q)?q:'story');follow('m1',false);
+  </script>
+</body>
+</html>
