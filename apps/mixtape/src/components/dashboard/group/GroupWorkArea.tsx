@@ -46,6 +46,7 @@ import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 import { EditorsDeskWorkArea } from "@/components/writing/editors-desk/EditorsDeskWorkArea";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
+import WritingDissolveSurfaceWorkArea from "@/components/writing/dissolve-surface/WritingDissolveSurfaceWorkArea";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GroupMembership } from "@mixtape/core/types/groupTypes";
 
@@ -442,6 +443,19 @@ export default function GroupWorkArea({
           }}
           setActiveSection={setActiveSection}
           canManagePosts={isAdmin || hasDecorator('can__ManageWriting')}
+        />
+      </WorkAreaWrapper>
+    );
+  }
+
+  if (section === "writing-dissolve-surface") {
+    return (
+      <WorkAreaWrapper>
+        <WritingDissolveSurfaceWorkArea
+          group={group}
+          isSuperuser={!!identity?.is_superuser}
+          canManagePosts={isAdmin || hasDecorator('can__ManageWriting')}
+          setActiveSection={setActiveSection}
         />
       </WorkAreaWrapper>
     );

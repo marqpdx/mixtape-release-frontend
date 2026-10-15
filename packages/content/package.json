@@ -6,6 +6,7 @@
   "types": "src/index.ts",
   "license": "MIT",
   "dependencies": {
+    "@mixtape/ui": "*",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "rehype-slug": "^6.0.0",

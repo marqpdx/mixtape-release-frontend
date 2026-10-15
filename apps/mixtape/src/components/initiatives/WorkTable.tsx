@@ -31,6 +31,7 @@ import {
   type ApertureTypeaheadItem,
 } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { useColorModeValue } from "@components/ui/color-mode";
+import { useDissolve } from "@mixtape/ui";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -528,8 +529,8 @@ export default function WorkTable() {
   // Group context — set via /context {slug}, cleared via /me
   const [activeGroupSlug, setActiveGroupSlug] = useState<string | null>(null);
 
-  // Dissolve animation state
-  const [dissolving, setDissolving] = useState(false);
+  // Dissolve animation state — shared primitive (decisions/dissolve-outer-rim-adr)
+  const { dissolving, transitionDuration, dissolveTo } = useDissolve({ regionKey: "worktable" });
 
   const [input, setInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -562,17 +563,18 @@ export default function WorkTable() {
   // Dissolve navigation
   // ---------------------------------------------------------------------------
 
-  const dissolveToInitiative = useCallback((ctx: ApertureContext) => {
-    setDissolving(true);
-    setTimeout(() => {
-      setActiveInitiative(ctx);
-      setLogLoading(true);
-      setDissolving(false);
-      fetchApertureLog(ctx.id)
-        .then(setLog)
-        .finally(() => setLogLoading(false));
-    }, 150);
-  }, []);
+  const dissolveToInitiative = useCallback(
+    (ctx: ApertureContext) => {
+      dissolveTo(() => {
+        setActiveInitiative(ctx);
+        setLogLoading(true);
+        fetchApertureLog(ctx.id)
+          .then(setLog)
+          .finally(() => setLogLoading(false));
+      });
+    },
+    [dissolveTo]
+  );
 
   const returnToPersonal = useCallback(() => {
     if (personalInitiative) dissolveToInitiative(personalInitiative);
@@ -742,7 +744,7 @@ export default function WorkTable() {
           flexDirection="column"
           minH="0"
           opacity={dissolving ? 0 : 1}
-          transition="opacity 0.15s ease"
+          transition={`opacity ${transitionDuration} ease`}
         >
           {/* Log stream or orientation */}
           <Box flex="1" overflowY="auto" px={4} py={3}>

@@ -72,6 +72,10 @@ export const SECTION_PERMISSIONS: Record<string, SectionPermissionRequirement> =
     requiredDecorator: 'can__ManageWriting',
     description: 'Create or edit writing pieces',
   },
+  'writing-dissolve-surface': {
+    requiredDecorator: 'can__ManageWriting',
+    description: 'Outer Rim + Dissolve pilot surface for the Writing tool set (decisions/dissolve-outer-rim-adr, DOR-9)',
+  },
   'draft-room': {
     requiredDecorator: 'can__ManageWriting',
     description: 'Review group writing drafts and metadata',

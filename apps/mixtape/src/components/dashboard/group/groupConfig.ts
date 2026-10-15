@@ -80,6 +80,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "📝",
     subItems: [
       { key: "writing", label: "Writing", hidden: false },
+      { key: "writing-dissolve-surface", label: "✦ Writing Dissolve Surface (pilot)", hidden: false },
       // { key: "create-writing", label: "Write", hidden: false },
       // { key: "threadworks-landing", label: "Threadworks", hidden: false },
       { key: "write", label: "Write", hidden: true },

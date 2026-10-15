@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useDissolve, DISSOLVE_DURATION_MS } from '@mixtape/ui/dissolve'
 import { interactivePageForReadingUrl, type InteractivePage } from './interactivePages'
 
 type OpenTopology = (artifact: InteractivePage, trigger: HTMLElement) => void
@@ -16,7 +17,6 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
   returnLabel?: string
 }) {
   const [artifact, setArtifact] = useState<InteractivePage | null>(null)
-  const [fading, setFading] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [frameVersion, setFrameVersion] = useState(0)
   const [frameHeight, setFrameHeight] = useState(600)
@@ -28,21 +28,20 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
   const scroll = useRef({ x: 0, y: 0 })
   const owner = useRef('')
   const returning = useRef(false)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const restoreFrame = useRef<number | null>(null)
 
+  // Shared Dissolve primitive (decisions/dissolve-outer-rim-adr) — reconciled
+  // from this component's prior bespoke 120ms/matchMedia timer to the
+  // canonical 150ms, with prefers-reduced-motion handling moved into the hook.
+  const { dissolving: fading, dissolveTo } = useDissolve({ regionKey: 'topology-reading-surface' })
+
   const transition = useCallback((next: InteractivePage | null) => {
-    if (timer.current) clearTimeout(timer.current)
     if (restoreFrame.current !== null) cancelAnimationFrame(restoreFrame.current)
     requested.current = next
     returning.current = false
-    setFading(true)
-    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120
-    timer.current = setTimeout(() => {
-      timer.current = null
+    dissolveTo(() => {
       setLoaded(false)
       setArtifact(next)
-      setFading(false)
       // Wait for React to expose the destination before focusing or restoring scroll.
       restoreFrame.current = requestAnimationFrame(() => {
         restoreFrame.current = requestAnimationFrame(() => {
@@ -57,8 +56,8 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
           }
         })
       })
-    }, delay)
-  }, [])
+    })
+  }, [dissolveTo])
 
   const openTopology = useCallback<OpenTopology>((next, source) => {
     if (!requested.current) scroll.current = { x: window.scrollX, y: window.scrollY }
@@ -99,7 +98,6 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
     window.addEventListener('popstate', sync)
     return () => {
       window.removeEventListener('popstate', sync)
-      if (timer.current) clearTimeout(timer.current)
       if (restoreFrame.current !== null) cancelAnimationFrame(restoreFrame.current)
     }
   }, [transition])
@@ -148,7 +146,7 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
           .trs-return { font:inherit; font-size:.875rem; font-weight:500; padding:0; border:0; background:transparent; color:var(--theme-text-muted, var(--chakra-colors-theme-text-muted)); text-decoration:underline; text-decoration-color:var(--theme-accent, var(--chakra-colors-theme-accent)); text-underline-offset:3px; cursor:pointer; min-height:44px; }
           .trs-return:focus-visible { outline:2px solid var(--theme-accent, var(--chakra-colors-theme-accent)); outline-offset:3px; }
           .trs-standalone { font-size:.875rem; color:inherit; text-underline-offset:3px; }
-          .trs-dissolve { transition:opacity 120ms ease; }
+          .trs-dissolve { transition:opacity ${DISSOLVE_DURATION_MS}ms ease; }
           .trs-dissolve[data-fading] { opacity:0; pointer-events:none; }
           .trs-map { padding-top:12px; }
           .trs-frame { display:block; width:100%; border:0; background:var(--theme-bg, var(--chakra-colors-theme-bg)); }
