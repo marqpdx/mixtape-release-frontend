@@ -134,19 +134,17 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .tk-chip-text::after { content: attr(data-text); font-weight: 700; height: 0; visibility: hidden; overflow: hidden; user-select: none; pointer-events: none; }
 .sdot.untracked { background: transparent; border: 1.5px dashed var(--fg-faint); }
 
-/* Top row: intro (left ~35%) beside the detail panel (right ~65%); stacks on narrow screens. */
-/* Pinned strip: intro, detail panel and controls stay put while the map scrolls underneath. */
-.tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.75rem; margin-top: -0.75rem;
+/* Top: the intro and a one-line hint scroll away; only the controls row stays pinned,
+   so the map has nearly the whole screen. Details open in a popover beside the node (CTO, 2026-10-15). */
+.tk-top { margin-bottom: 0.4rem; }
+.tk-intro header { margin-bottom: 0; }
+.tk-hint { margin-top: 0.6rem; font-size: 0.82rem; color: var(--fg-muted); }
+.tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.55rem;
              box-shadow: 0 1px 0 var(--border); margin-bottom: 0.75rem; }
 @media (max-width: 860px), (max-height: 620px) { .tk-sticky { position: static; box-shadow: none; } }
-.tk-top { display: grid; grid-template-columns: minmax(0, 35fr) minmax(0, 65fr); gap: 1.25rem; align-items: start; margin-bottom: 0.6rem; }
-.tk-top.no-intro { grid-template-columns: minmax(0, 1fr); }
-.tk-intro header { margin-bottom: 0; }
-.tk-intro .subtitle { max-width: none; }
-@media (max-width: 860px) { .tk-top { grid-template-columns: minmax(0, 1fr); } }
 .stage { display: flex; flex-direction: column; gap: 0.75rem; }
 .stage > * { min-width: 0; }
-.tk-diagram { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+.tk-diagram { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
               overflow-x: auto; padding: 0.5rem; }
 .tk-diagram svg { display: block; height: auto; margin: 0 auto; }
 
@@ -268,7 +266,8 @@ a { color: var(--accent); }
 .tk-full-svg { display: block; width: 100%; height: 100%; }
 /* Popover: the detail panel's content, beside the node. */
 .tk-pop { position: absolute; z-index: 5; width: min(400px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow: auto;
-          box-shadow: 0 8px 28px rgba(0,0,0,0.22); padding-right: 2.2rem; }
+          box-shadow: 0 8px 28px rgba(0,0,0,0.22); padding-right: 2.2rem; text-align: left; }
+.tk-diagram .tk-pop { max-height: min(70vh, calc(100% - 16px)); }
 .tk-pop .p-status { white-space: normal; }
 .tk-pop-close { position: absolute; top: 0.45rem; right: 0.45rem; background: none; border: 1px solid var(--border); border-radius: 6px;
                 color: var(--fg-muted); font-size: 0.95rem; line-height: 1; padding: 0.15rem 0.45rem; cursor: pointer; }

@@ -53,12 +53,12 @@
         + (status.untracked ? chip('untracked', status.untracked, '<i class="sdot untracked"></i>') : '')
       : '';
     mount.innerHTML = `
+      <div class="tk-top">
+        <div class="tk-intro"></div>
+        <p class="tk-hint">${cfg.emptyText ||
+          'Select a node, or a coloured layer band, to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p>
+      </div>
       <div class="tk-sticky">
-        <div class="tk-top">
-          <div class="tk-intro"></div>
-          <aside class="tk-panel" aria-live="polite"><p class="empty">${cfg.emptyText ||
-            'Select a node, or a coloured layer band, to see its role and connections. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.'}</p></aside>
-        </div>
         <div class="controls">
           ${status ? `<span class="tk-filter" role="group" aria-label="Filter by build state"><span class="tk-filter-label">Filter by build state:</span>${filterChips}</span>` : ''}
           <span class="tk-zoom" role="group" aria-label="Map size">
@@ -75,11 +75,44 @@
         <div class="tk-diagram" role="img" aria-label="${esc(cfg.ariaLabel || 'Topology diagram')}"></div>
       </div>
       <section class="layers"><h3>Layer reference</h3><p class="layers-hint">Top to bottom, as on the map. Select a layer to read it in full.</p><div class="layer-list"></div></section>`;
-    const panel = mount.querySelector('.tk-panel');
     const diagram = mount.querySelector('.tk-diagram');
     const introEl = cfg.intro === null ? null : document.querySelector(cfg.intro || 'body > header');
     if (introEl) mount.querySelector('.tk-intro').appendChild(introEl);
     else mount.querySelector('.tk-top').classList.add('no-intro');
+
+    // Popover: a node's or layer's detail, beside it. One factory serves the page and the full view.
+    // host is the positioned element the popover lives in; it may scroll sideways (the page diagram).
+    function makePop(host) {
+      const pop = document.createElement('div');
+      pop.className = 'tk-pop tk-panel';
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Details');
+      pop.hidden = true;
+      host.appendChild(pop);
+      let anchor = null;
+      function place() {
+        if (pop.hidden || !anchor) return;
+        const r = typeof anchor === 'function' ? anchor() : anchor;
+        const hb = host.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 12;
+        const left = hb.left - host.scrollLeft, top = hb.top - host.scrollTop;
+        let x = r.right + gap - left;
+        if (x + pw > host.scrollLeft + host.clientWidth - 8) x = r.left - gap - pw - left;
+        x = Math.max(host.scrollLeft + 8, Math.min(x, host.scrollLeft + host.clientWidth - pw - 8));
+        let y = r.top - top;
+        y = Math.max(8, Math.min(y, Math.max(host.scrollHeight, host.clientHeight) - ph - 8));
+        pop.style.left = x + 'px'; pop.style.top = y + 'px';
+      }
+      return {
+        el: pop,
+        get open() { return !pop.hidden; },
+        show(html, a) {
+          pop.innerHTML = '<button type="button" class="tk-pop-close" aria-label="Close details">×</button>' + html;
+          pop.hidden = false; anchor = a; place();
+        },
+        hide() { pop.hidden = true; anchor = null; },
+        place,
+      };
+    }
 
     const svg = el('svg', { viewBox: `0 0 ${VW} ${VH}`, xmlns: NS });
     const defs = el('defs', {}, svg);
@@ -99,9 +132,10 @@
         tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, layer` }, gBands);
       r.dataset.layer = b.layer;
       (bandEls[b.layer] ||= []).push(r);
-      r.addEventListener('focus', () => selectLayer(b.layer));
-      r.addEventListener('click', e => { e.stopPropagation(); if (selected !== 'layer:' + b.layer) selectLayer(b.layer); });
+      r.addEventListener('focus', () => { if (selected !== 'layer:' + b.layer) selectLayer(b.layer, bandAnchor(r)); });
+      r.addEventListener('click', e => { e.stopPropagation(); selectLayer(b.layer, { left: e.clientX, right: e.clientX, top: e.clientY }); });
     }
+    function bandAnchor(r) { const b = r.getBoundingClientRect(); return { left: b.left + 24, right: b.left + 24, top: b.top + 24 }; }
     const gDecor = el('g', {}, svg);
     for (const d of cfg.decor || []) el('path', { class: 'decor', d: d.d, stroke: `var(--${d.hue}-s)`, 'stroke-width': 1.6, 'stroke-dasharray': '3 4', opacity: 0.7 }, gDecor);
     const gLabels = el('g', { class: 'band-tag' }, svg);
@@ -221,7 +255,6 @@
       Object.values(nodeEls).forEach(g => g.classList.remove('lit', 'selected'));
       Object.values(bandEls).flat().forEach(r => r.classList.remove('selected'));
     }
-    const emptyPanel = panel.innerHTML;
     const names = ids => [...new Set(ids)].map(i => esc(byId[i].label)).join(', ') || '—';
     // Governance view (experiment): a node may carry a short distillation of what governs it.
     // The chip swaps the description for it; the choice sticks as you move between nodes.
@@ -253,7 +286,7 @@
     }
     function select(id) {
       selected = id; clear(); focus(id); nodeEls[id].classList.add('selected');
-      panel.innerHTML = panelHTML(id);
+      pagePop.show(panelHTML(id), () => nodeEls[id].getBoundingClientRect());
     }
     // A layer's panel: what the layer is, what it holds, and how much of it is built.
     function layerHTML(key) {
@@ -272,49 +305,32 @@
         <div class="p-links"><b>Holds:</b> ${names(members.map(n => n.id))}</div>
         ${st ? '<div class="p-fill"></div>' + st : ''}`;
     }
-    function selectLayer(key) {
+    function selectLayer(key, anchor) {
       selected = 'layer:' + key; clear();
       svg.classList.add('focusing');
       for (const n of NODES) if (n.layer === key) nodeEls[n.id].classList.add('lit');
       (bandEls[key] || []).forEach(r => r.classList.add('selected'));
-      panel.innerHTML = layerHTML(key);
+      pagePop.show(layerHTML(key), anchor || bandAnchor(bandEls[key][0]));
     }
-    // Reserve the tallest panel's height so selecting a node never moves the diagram.
-    // Measured at the panel's real width, and again whenever the width changes.
-    function reservePanelHeight() {
-      const current = panel.innerHTML;
-      panel.style.minHeight = '';
-      let tallest = 0;
-      const govPanels = NODES.filter(n => n.governance).map(n => panelHTML(n.id, true));
-      for (const html of [emptyPanel, ...NODES.map(n => panelHTML(n.id, false)), ...govPanels, ...Object.keys(bandEls).map(layerHTML)]) {
-        panel.innerHTML = html;
-        tallest = Math.max(tallest, panel.offsetHeight);
-      }
-      panel.innerHTML = current;
-      panel.style.minHeight = tallest + 'px';
-    }
-    reservePanelHeight();
-    let lastWidth = panel.clientWidth, resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { if (panel.clientWidth !== lastWidth) { lastWidth = panel.clientWidth; reservePanelHeight(); } }, 120);
+    const pagePop = makePop(diagram);
+    pagePop.el.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.target.closest('.tk-pop-close')) { deselect(); return; }
+      if (e.target.closest('[data-gov]') && byId[selected]) { govView = !govView; select(selected); }
     });
-    panel.addEventListener('click', e => {
-      if (!e.target.closest('[data-gov]') || !byId[selected]) return;
-      govView = !govView;
-      panel.innerHTML = panelHTML(selected);
-    });
-    function deselect() { selected = null; clear(); panel.innerHTML = emptyPanel; }
+    window.addEventListener('resize', () => pagePop.place());
+    diagram.addEventListener('scroll', () => pagePop.place());
+    function deselect() { selected = null; clear(); pagePop.hide(); }
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape') return;
       if (fullDlg.open) return;  // the full view handles its own Escape: popover first, then the view
-      deselect();
+      if (selected) { deselect(); document.activeElement?.blur?.(); return; }  // first Esc closes the popover
       document.activeElement?.blur?.();
       // Keyboard events stay inside an iframe. Send only a close signal;
       // the article modal validates this frame's window and origin.
       if (window.parent !== window) window.parent.postMessage({ type: 'crossroads:topology:escape' }, '*');
     });
-    diagram.addEventListener('click', () => { if (selected) deselect(); });
+    diagram.addEventListener('click', e => { if (selected && !e.target.closest('.tk-pop')) deselect(); });
 
     // Filter: with every chip on, all badges show; with some on, the rest of the nodes fade;
     // with none on, badges hide and nothing fades. All turns every chip on, or off if they already are.
@@ -370,7 +386,7 @@
     // Deep link: #layer-<key> selects a layer.
     const fromHash = () => {
       const id = decodeURIComponent(location.hash.slice(1));
-      if (byId[id]) select(id);
+      if (byId[id]) { nodeEls[id].scrollIntoView({ block: 'center' }); select(id); }
       else if (id.startsWith('layer-') && bandEls[id.slice(6)]) selectLayer(id.slice(6));
     };
     window.addEventListener('hashchange', fromHash); fromHash();
@@ -425,10 +441,10 @@
     fullDlg.setAttribute('aria-label', (cfg.ariaLabel || 'Topology diagram') + ', full view');
     fullDlg.innerHTML = `<div class="tk-full-head"><span class="tk-full-title">${esc(document.querySelector('h1')?.textContent || 'Map')}</span>
       <button type="button" class="tk-iconbtn tk-modal-close" aria-label="Close full view" data-tip="Close">×</button></div>
-      <div class="tk-full-body"><div class="tk-pop tk-panel" role="dialog" aria-label="Details" hidden></div></div>`;
+      <div class="tk-full-body"></div>`;
     document.body.appendChild(fullDlg);
     const fullBody = fullDlg.querySelector('.tk-full-body');
-    const pop = fullDlg.querySelector('.tk-pop');
+    const fullPop = makePop(fullBody);
     let fsvg = null, popFor = null;
     const fNodes = () => Object.fromEntries([...fsvg.querySelectorAll('g.node')].map(g => [g.dataset.id, g]));
     const fEdges = () => [...fsvg.querySelectorAll('path.edge')];
@@ -450,32 +466,20 @@
         if (hot) { ns[p.dataset.from].classList.add('lit'); ns[p.dataset.to].classList.add('lit'); }
       }
     }
-    function placePop(anchor) {
-      // Beside the anchor, flipping to the side with room; clamped inside the view.
-      const body = fullBody.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 12;
-      let x = anchor.right + gap - body.left;
-      if (x + pw > body.width - 8) x = anchor.left - gap - pw - body.left;
-      x = Math.max(8, Math.min(x, body.width - pw - 8));
-      let y = anchor.top - body.top;
-      y = Math.max(8, Math.min(y, body.height - ph - 8));
-      pop.style.left = x + 'px'; pop.style.top = y + 'px';
-    }
     function openPop(kind, key, anchor) {
       popFor = { kind, key, anchor };
       fClear();
-      if (kind === 'node') { fFocus(key); fNodes()[key].classList.add('selected'); pop.innerHTML = panelHTML(key); }
+      if (kind === 'node') { fFocus(key); fNodes()[key].classList.add('selected'); fullPop.show(panelHTML(key), () => fNodes()[key].getBoundingClientRect()); }
       else {
         fsvg.classList.add('focusing');
         for (const n of NODES) if (n.layer === key) fNodes()[n.id].classList.add('lit');
         fsvg.querySelectorAll(`rect.band[data-layer="${key}"]`).forEach(r => r.classList.add('selected'));
-        pop.innerHTML = layerHTML(key);
+        fullPop.show(layerHTML(key), anchor);
       }
-      pop.insertAdjacentHTML('afterbegin', '<button type="button" class="tk-pop-close" aria-label="Close details">×</button>');
-      pop.hidden = false;
-      placePop(anchor);
     }
-    function closePop() { pop.hidden = true; popFor = null; fClear(); }
+    function closePop() { fullPop.hide(); popFor = null; fClear(); }
     function openFull() {
+      if (selected) deselect();  // one popover at a time: the page's closes when the view opens
       fsvg?.remove();
       fsvg = svg.cloneNode(true);
       fsvg.removeAttribute('style');
@@ -483,8 +487,8 @@
       fsvg.querySelectorAll('g.node').forEach(g => {
         const t = document.createElementNS(NS, 'title'); t.textContent = byId[g.dataset.id].label; g.prepend(t);
       });
-      fullBody.insertBefore(fsvg, pop);
-      fClear(); pop.hidden = true; popFor = null;
+      fullBody.insertBefore(fsvg, fullPop.el);
+      fClear(); fullPop.hide(); popFor = null;
       fsvg.querySelectorAll('g.node').forEach(g => {
         const id = g.dataset.id;
         g.addEventListener('mouseenter', () => { if (!popFor) fFocus(id); });
@@ -494,6 +498,7 @@
       });
       fsvg.querySelectorAll('rect.band').forEach(r => r.addEventListener('click', e => {
         e.stopPropagation();
+        fsvg.querySelectorAll('g.node').forEach(g => g.blur?.());
         openPop('layer', r.dataset.layer, { left: e.clientX, right: e.clientX, top: e.clientY });
       }));
       sizeFull();
@@ -505,7 +510,7 @@
       const w = Math.min(window.innerWidth * 0.96, (window.innerHeight * 0.96 - headH - pad) * VW / VH + pad);
       fullDlg.style.width = Math.round(w) + 'px';
     }
-    window.addEventListener('resize', () => { if (fullDlg.open) { sizeFull(); if (popFor && popFor.kind === 'node') placePop(fNodes()[popFor.key].getBoundingClientRect()); } });
+    window.addEventListener('resize', () => { if (fullDlg.open) { sizeFull(); fullPop.place(); } });
     mount.querySelector('.tk-full-btn').addEventListener('click', openFull);
     fullDlg.querySelector('.tk-modal-close').addEventListener('click', () => fullDlg.close());
     fullDlg.addEventListener('cancel', e => { if (popFor) { e.preventDefault(); closePop(); } });  // Esc: popover first
