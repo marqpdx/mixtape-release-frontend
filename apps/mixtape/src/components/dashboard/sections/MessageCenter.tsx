@@ -136,7 +136,7 @@ export default function MessageCenter() {
               <Flex align="center" gap={2}>
                 <IconMessageCircle size={20} />
                 <Text fontSize="lg" fontWeight="bold" color="text.primary">
-                  Private Chats
+                  Conversations
                 </Text>
                 <HelpTip helpKey="chat-overview" />
               </Flex>
@@ -217,7 +217,7 @@ export default function MessageCenter() {
         <Flex align="center" gap={2}>
           <IconMessageCircle size={20} />
           <Text fontSize="xl" fontWeight="bold" color="text.primary">
-            Private Chats
+            Conversations
           </Text>
           <HelpTip helpKey="chat-overview" />
         </Flex>

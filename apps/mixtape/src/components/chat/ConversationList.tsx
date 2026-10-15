@@ -80,7 +80,7 @@ export const ConversationList = ({ onSelect, selectedSlug }: ConversationListPro
         color="text.primary"
         px={[2, 0]}
       >
-        Private Chats
+        Conversations
       </Text>
 
       {/* Conversations List */}

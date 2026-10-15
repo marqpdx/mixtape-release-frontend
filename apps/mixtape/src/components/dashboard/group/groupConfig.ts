@@ -34,7 +34,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Threadworks",
     icon: "💬",
     subItems: [
-      { key: "threadworks-landing", label: "Conversations" },
+      { key: "threadworks-landing", label: "Discussions" },
     ]
   },
   {

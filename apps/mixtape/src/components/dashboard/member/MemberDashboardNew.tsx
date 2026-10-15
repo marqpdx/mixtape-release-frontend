@@ -116,7 +116,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
       label: "CONNECT",
       items: [
         { key: "my-groups", label: "My Groups", icon: IconUsers },
-        { key: "messages", label: "Private Chats", icon: IconMessageCircle },
+        { key: "messages", label: "Conversations", icon: IconMessageCircle },
       ],
     },
     {
@@ -644,7 +644,7 @@ function WhatsHereCard({ onNavigate }: { onNavigate: (key: SectionKey) => void }
   const tiles: { key: SectionKey; icon: React.ReactNode; title: string; desc: string }[] = [
     { key: "writing", icon: <IconPencil size={16} />, title: "Writing", desc: "Pieces, drafts, and new work" },
     { key: "my-groups", icon: <IconUsers size={16} />, title: "Groups", desc: "Communities you belong to" },
-    { key: "messages", icon: <IconMessageCircle size={16} />, title: "Private Chats", desc: "Direct messages" },
+    { key: "messages", icon: <IconMessageCircle size={16} />, title: "Conversations", desc: "Direct messages" },
     { key: "preferences", icon: <IconAdjustments size={16} />, title: "Preferences", desc: "Notifications and settings" },
   ];
 

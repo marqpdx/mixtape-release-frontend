@@ -51,7 +51,7 @@ The left side of your dashboard is a navigation panel divided into four sections
 
 **Connect**
 - **My Groups** — All the groups you're a member of
-- **Private Chats** — Direct messages with other members
+- **Conversations** — Private messages with other members (Livewire)
 
 **Account**
 - **Preferences** — Notification settings, display options, and other personal settings
