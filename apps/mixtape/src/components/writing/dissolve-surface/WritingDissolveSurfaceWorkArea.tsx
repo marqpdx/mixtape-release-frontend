@@ -9,7 +9,15 @@
 // components the classic sections already render.
 
 import { useState } from "react";
-import { Box, Heading, Text } from "@chakra-ui/react";
+import { Box, HStack, Heading, Text } from "@chakra-ui/react";
+import {
+  IconArmchair2,
+  IconArrowsRightLeft,
+  IconBooks,
+  IconClipboardCheck,
+  IconFileImport,
+  IconPencil,
+} from "@tabler/icons-react";
 import { OuterRim, useDissolve, type RimPositionItem } from "@mixtape/ui/dissolve";
 import type { Group } from "@mixtape/core/types/groupTypes";
 
@@ -45,6 +53,20 @@ const RIM_LABELS: Record<RimKey, string> = {
   "draft-room": "Draft Room",
 };
 
+// Area Icons — decisions/dissolve-outer-rim-adr §3a. One fixed Tabler glyph
+// per Rim Position, distinct from the Context Icons each active surface
+// owns internally (e.g. Editor's Desk's own toolbar).
+const RIM_ICONS: Record<RimKey, typeof IconPencil> = {
+  writing: IconPencil,
+  "import-document": IconFileImport,
+  "series-writing": IconBooks,
+  "dual-panel-editor": IconArrowsRightLeft,
+  "editors-desk": IconClipboardCheck,
+  "draft-room": IconArmchair2,
+};
+
+const ACCENT_COLOR = "amber";
+
 export function WritingDissolveSurfaceWorkArea({
   group,
   isSuperuser,
@@ -64,20 +86,35 @@ export function WritingDissolveSurfaceWorkArea({
     ...(isSuperuser ? (["editors-desk", "draft-room"] as RimKey[]) : []),
   ];
 
-  const items: RimPositionItem[] = visibleKeys.map((key) => ({
-    id: key,
-    active: key === activeRim,
-    content: (
-      <Text fontWeight={key === activeRim ? "semibold" : "normal"}>{RIM_LABELS[key]}</Text>
-    ),
-    onSelect: () => dissolveTo(() => setActiveRim(key)),
-  }));
+  const items: RimPositionItem[] = visibleKeys.map((key) => {
+    const Icon = RIM_ICONS[key];
+    return {
+      id: key,
+      active: key === activeRim,
+      content: (
+        <HStack gap={2} py={1.5}>
+          <Icon size={18} color={key === activeRim ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
+          <Text fontWeight={key === activeRim ? "semibold" : "normal"}>{RIM_LABELS[key]}</Text>
+        </HStack>
+      ),
+      onSelect: () => dissolveTo(() => setActiveRim(key)),
+    };
+  });
 
   return (
     <Box display="flex" gap={4} h="100%" minH="0">
-      <OuterRim items={items} placement="left" boxProps={{ minW: "180px", borderRight: "1px solid", borderColor: "border.muted", pr: 4 }} />
-      <Box flex="1" minH="0" opacity={dissolving ? 0 : 1} transition={`opacity ${transitionDuration} ease`}>
-        <Heading size="sm" mb={3} color="fg.muted">
+      <OuterRim
+        items={items}
+        placement="left"
+        accentColor={ACCENT_COLOR}
+        boxProps={{ minW: "180px", borderRight: "1px solid", borderColor: "border.muted", pr: 2 }}
+      />
+      {/* Centered independently of this component — DashboardLayout's sidebar
+          (50px collapsed / 230px only while temporarily expanded) is left
+          out of the calc on purpose; centering here keeps the work area
+          stable rather than re-centering around a transient width. */}
+      <Box flex="1" minH="0" maxW="1200px" mx="auto" opacity={dissolving ? 0 : 1} transition={`opacity ${transitionDuration} ease`}>
+        <Heading size="sm" mb={3} color="fg.muted" borderLeft="3px solid" borderColor={`${ACCENT_COLOR}.500`} pl={2}>
           Writing Dissolve Surface — pilot (decisions/dissolve-outer-rim-adr)
         </Heading>
         {activeRim === "writing" && (

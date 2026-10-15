@@ -78,6 +78,7 @@ export const GROUP_ADMIN_MENU_ITEMS: MenuItem[] = [
     key: "content",
     label: "Content",
     icon: "📝",
+    accentColor: "amber",
     subItems: [
       { key: "writing", label: "Writing", hidden: false },
       { key: "writing-dissolve-surface", label: "✦ Writing Dissolve Surface (pilot)", hidden: false },

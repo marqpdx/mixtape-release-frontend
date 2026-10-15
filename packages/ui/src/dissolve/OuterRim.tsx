@@ -20,6 +20,8 @@ export interface OuterRimProps {
   items: RimPositionItem[];
   /** Where the rim sits relative to the paired Dissolve region. */
   placement?: "top" | "left" | "right" | "bottom";
+  /** Chakra color token identifying the Major Work Area this Rim belongs to (e.g. "amber" for Content). Drawn as a border accent on the active position. Optional — omit to stay unstyled. decisions/dissolve-outer-rim-adr §3a. */
+  accentColor?: string;
   className?: string;
   boxProps?: BoxProps;
 }
@@ -30,8 +32,10 @@ export interface OuterRimProps {
  * this same construct's "Surface Frame" profile; see
  * reference/design-patterns/surface-frame.md.
  */
-export function OuterRim({ items, placement = "left", className, boxProps }: OuterRimProps) {
+export function OuterRim({ items, placement = "left", accentColor, className, boxProps }: OuterRimProps) {
   const isHorizontal = placement === "top" || placement === "bottom";
+  const edge = placement === "right" ? "borderRightWidth" : "borderLeftWidth";
+  const edgeColor = placement === "right" ? "borderRightColor" : "borderLeftColor";
 
   return (
     <Box
@@ -59,6 +63,11 @@ export function OuterRim({ items, placement = "left", className, boxProps }: Out
               : undefined
           }
           data-active={item.active ? "" : undefined}
+          {...(item.active && accentColor && !isHorizontal
+            ? { [edge]: "3px", [edgeColor]: `${accentColor}.500`, pl: 2 }
+            : !isHorizontal
+              ? { [edge]: "3px", borderLeftColor: "transparent", borderRightColor: "transparent", pl: 2 }
+              : {})}
         >
           {item.content}
         </Box>

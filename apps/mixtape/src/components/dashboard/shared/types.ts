@@ -4,6 +4,8 @@ export interface MenuItem {
   key: string;
   label: string;
   icon?: string;
+  /** Chakra color token for this section's identity (e.g. "amber"). Optional — sections without one keep the default "green" active-state highlight. decisions/dissolve-outer-rim-adr §3a. */
+  accentColor?: string;
   minRole?: string;
   hidden?: boolean;
   adminOnly?: boolean;

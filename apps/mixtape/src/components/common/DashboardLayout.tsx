@@ -553,7 +553,7 @@ export default function DashboardLayout({
                             <Button
                               key={sub.key}
                               variant={activeSection === sub.key ? "solid" : "ghost"}
-                              colorScheme={activeSection === sub.key ? "green" : undefined}
+                              colorScheme={activeSection === sub.key ? (menuItem.accentColor ?? "green") : undefined}
                               justifyContent="flex-start"
                               w="100%"
                               size="sm"
