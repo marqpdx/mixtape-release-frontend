@@ -10,7 +10,7 @@
     layerOrder: ['key', ...],            // order of the layer cards
     bands: [{ layer, x, y, w, h, label, solid, opacity, labelBelow }], // coloured layer backgrounds; solid = public-register fill; labelBelow = label centred under the band
     nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
-              hue, h, solid, vertical, small, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
+              hue, h, solid, vertical, small, tiny, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
                                                                  // vertical label (rails), governance distillation
     decor: [{ d, hue }],                 // optional decorative paths (e.g. rail ticks), drawn under edges
     edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
@@ -155,7 +155,7 @@
       const h = n.hue || hue(n.layer), nh = NH(n);
       // Solid nodes use the public register (bold fill); others the backend register.
       const fill = n.solid ? `var(--${h}-p)` : `var(--${h}-n)`, ink = n.solid ? `var(--${h}-pt)` : `var(--${h}-t)`;
-      const cls = 'node' + (n.status === 'planned' ? ' planned' : '') + (n.solid ? ' solid' : '') + (n.vertical ? ' vertical' : '') + (n.small ? ' small' : '');
+      const cls = 'node' + (n.status === 'planned' ? ' planned' : '') + (n.solid ? ' solid' : '') + (n.vertical ? ' vertical' : '') + (n.small ? ' small' : '') + (n.tiny ? ' tiny' : '');
       const g = el('g', { class: cls, tabindex: 0, role: 'button', 'aria-label': `${n.label}, ${LAYERS[n.layer].full}` }, gNodes);
       el('rect', { class: 'box', x: n.x, y: n.y, width: n.w, height: nh, rx: 8, fill, stroke: n.solid ? `var(--${h}-p)` : `var(--${h}-s)`, 'stroke-width': 1.8 }, g);
       if (n.vertical) {
@@ -163,12 +163,16 @@
         el('text', { x: tx, y: ty, fill: ink, 'text-anchor': 'middle', transform: `rotate(-90 ${tx} ${ty})` }, g).textContent = n.label;
       } else {
         el('rect', { x: n.x, y: n.y + 8, width: 5, height: nh - 16, rx: 2, fill: n.solid ? ink : `var(--${h}-s)`, opacity: n.solid ? 0.55 : 1 }, g);
-        // Small nodes (e.g. a supporting row) set their text about 12% smaller, so the baselines move up to match.
-        el('text', { x: n.x + 14, y: n.y + (n.small ? 18 : 20), fill: ink }, g).textContent = n.label;
-        if (n.sub) el('text', { x: n.x + 14, y: n.y + (n.small ? 33 : 37), fill: ink, class: 'sub' }, g).textContent = n.sub;
+        // Small nodes (for example, a supporting row) set their text about 12% smaller, so the baselines move up to match.
+        // Tiny nodes are button-sized: one centred line, no sub-line; their detail is in the panel when selected.
+        if (n.tiny) el('text', { x: n.x + 14, y: n.y + nh / 2 + 3.5, fill: ink }, g).textContent = n.label;
+        else {
+          el('text', { x: n.x + 14, y: n.y + (n.small ? 18 : 20), fill: ink }, g).textContent = n.label;
+          if (n.sub) el('text', { x: n.x + 14, y: n.y + (n.small ? 33 : 37), fill: ink, class: 'sub' }, g).textContent = n.sub;
+        }
       }
       if (status) {
-        const badge = el('circle', { class: 'badge', cx: n.x + n.w - 12, cy: n.y + (n.vertical ? nh - 12 : 12), r: 6 }, g);
+        const badge = el('circle', { class: 'badge', cx: n.x + n.w - (n.tiny ? 10 : 12), cy: n.tiny ? n.y + nh / 2 : n.y + (n.vertical ? nh - 12 : 12), r: n.tiny ? 4.5 : 6 }, g);
         if (n.status) badge.setAttribute('fill', `var(--st-${n.status})`);
         else { badge.setAttribute('fill', 'none'); badge.setAttribute('stroke', 'var(--fg-faint)'); badge.setAttribute('stroke-dasharray', '2 2'); badge.setAttribute('stroke-width', 1.5); }
       }

@@ -159,6 +159,7 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .node .sub { font-size: 10.5px; font-weight: 450; opacity: 0.8; }
 .node.small text { font-size: 11.5px; }
 .node.small .sub { font-size: 9.25px; }
+.node.tiny text { font-size: 10.5px; }
 .node:focus { outline: none; }
 .node:focus-visible rect.box, .node.selected rect.box { stroke-width: 3; }
 .node.planned rect.box { stroke-dasharray: 5 4; }
