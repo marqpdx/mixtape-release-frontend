@@ -1,11 +1,11 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.12)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.14)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14
+  generated: 2026-10-14; amended 2026-10-15
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -22,8 +22,8 @@
 <header>
   <div>
     <h1>Mixtape — System Topology</h1>
-    <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
-    <span class="pill">Topology library · System · v2.0.12</span>
+    <p class="subtitle">The whole ecology: the three Main Gateways, the platform core, the services behind it, and the governance that runs alongside, on the infrastructure beneath. Select any node to trace its connections and read what it does and how much is built.</p>
+    <span class="pill">Topology library · System · v2.0.14</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform concept map</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,8 +34,8 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.12 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
-    <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.14 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
     <li><strong>Colours</strong> are shared with the <a href="../platform/platform-topology.html">platform concept map</a>: the same thing wears the same hue on every map. There it is drawn bold, for newcomers; here it is drawn quieter, for engineers. The Canon and Guidance rail is solid because it is not a component: it runs alongside all of them.</li>
@@ -54,7 +54,7 @@
 <script>
 (() => {
   const LAYERS = {
-    pillars:  { name: 'Pillars',    full: 'Pillars — the ways in',              hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: peer pillars, the ways people enter and use Mixtape. None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
+    pillars:  { name: 'Main Gateways', full: 'Main Gateways — the ways in',     hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: the Main Gateways, peers, where people cross into Mixtape (after <em>A Pattern Language</em>, 53). None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
     frontend: { name: 'Frontend',   full: 'Frontend — mixtape-release-frontend', hue: 'teal',   desc: 'A Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every tool call.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery and RabbitMQ. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
@@ -64,6 +64,7 @@
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
     gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'Four apps that run alongside every layer, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
+    infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Qdrant and RabbitMQ are drawn above, where they work; the Celery workers sit with core.' },
     loom:     { name: 'Loom', full: 'Loom — ambient intelligence', hue: 'plum', desc: 'Mixtape\'s ambient intelligence layer: maintained by people and agents, an always-on background layer of knowledge about the whole of Mixtape, so help is ready when needed and grounded in what people have already accepted. An umbrella across Switchboard, Inkwell and Stackroom, not a service; Clio is its face. Drawn here as its own box for now. See the <a href="../loom/loom-topology-enhanced.html">Loom map</a>.' },
   };
 
@@ -78,6 +79,7 @@
     { layer: 'research', x: 520, y: 556, w: 500,  h: 120 },
     { layer: 'gov',      x: 1040, y: 20, w: 200, h: 495, solid: true, opacity: 0.75 },
     { layer: 'loom',     x: 1040, y: 527, w: 200, h: 149, solid: true, opacity: 0.75, label: 'Loom' },
+    { layer: 'infra',    x: 20,  y: 700, w: 1220, h: 84, label: 'Supporting infrastructure' },
   ];
 
   const H = 48;
@@ -86,11 +88,11 @@
       desc: 'The people-and-groups layer of Mixtape: identity, membership, groups and Circles, roles, relationships and shared contexts. Collaboration first, not social. Subsystems include Threadworks (Discussions), Livewire (Conversations), Almanac, EarthLab, Bazaar, Hub, Commons and Storyline.',
       status: 'built', evidence: 'Live as Crossroads Place (<code>crossroads.place</code>).', refs: ['reference/glossary/hand-touch/crossroads.md', 'reference/glossary/hand-touch/livewire.md'] },
     { id: 'CA', layer: 'pillars', x: 400, y: 60, w: 240, hue: 'chartreuse', label: 'Catalyst', sub: 'knowledge practice · Codex',
-      desc: 'The knowledge practice of Mixtape and its pillar for durable knowledge. Its object is the Catalyst Codex, a typed knowledge asset library per organization, tended by Find, Add and Amend; only people Accept what belongs in it. Foundation needs no external AI; Reach opts into the user\'s own Claude or ChatGPT account.',
+      desc: 'The knowledge practice of Mixtape and its Main Gateway for durable knowledge. Its object is the Catalyst Codex, a typed knowledge asset library per organization, tended by Find, Add and Amend; only people Accept what belongs in it. Foundation needs no external AI; Reach opts into the user\'s own Claude or ChatGPT account.',
       status: 'built', evidence: 'Pilots. Reach on Claude built (runtime phases 1, 2, 4; 3 and 5 partial); Reach on ChatGPT not yet wired for Catalyst.', refs: ['reference/glossary/hand-touch/catalyst.md', 'mixtape-release-catalyst (Codex template)'] ,
       governance: { text: 'Only people Accept what enters the Codex. Delivery is guided managed import, not self-service. Reach is client-owned and service-managed: the client’s own AI account, run per tenant on the server.', docs: ['reference/glossary/hand-touch/catalyst.md', 'decisions/catalyst/catalyst-delivery-model.md', 'decisions/catalyst-reach-runtime-adr/'] } },
     { id: 'TA', layer: 'pillars', x: 720, y: 60, w: 240, hue: 'pine', label: 'Tapestry', sub: 'situated knowledge',
-      desc: 'Mixtape\'s substrate for situated knowledge: a geographic commons for tellings whose meaning is bound up with place. A peer pillar, not part of Crossroads. Discovery between organizations is a subordinate capability.',
+      desc: 'Mixtape\'s substrate for situated knowledge: a geographic commons for tellings whose meaning is bound up with place. A peer Main Gateway, not part of Crossroads. Discovery between organizations is a subordinate capability.',
       status: 'partial', evidence: 'Somewhat beyond planning: ADR ratified, <code>tapestry.Place</code> in code, TP-9 and TP-10 closed; TP-4, the full build plan, not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
 
     { id: 'FC', layer: 'frontend', x: 80, y: 190, w: 240, label: 'apps/crossroads', sub: 'public site · crossroads.place',
@@ -131,7 +133,7 @@
       status: 'planned', evidence: 'ADR ratified; HL-1 to HL-9 pending.' },
 
     { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, label: 'Puddlejump', sub: 'the canon',
-      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a pillar and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
+      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a Main Gateway and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
       status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['reference/glossary/hand-touch/puddlejump.md', 'puddlejump/ (this repo)'] },
     { id: 'AR', layer: 'gov', x: 1056, y: 190, w: 168, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Mixtape\'s concept index with memory: a source-grounded, incrementally enriched index over the Puddlejump canon that makes ideas navigable as ideas. Ranks candidate concepts through Lenses, records each investigation as a reproducible Run, and keeps every claim one click from the words that support it. Reads the canon, never owns or amends it. Governed by its ratified build spec.',
@@ -145,6 +147,19 @@
     { id: 'LO', layer: 'loom', x: 1056, y: 567, w: 168, label: 'Loom', sub: 'ambient intelligence',
       desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (dispatch), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
       status: 'partial', evidence: 'An umbrella: routing, ActionRun, Inkwell dispatch and GroupContext built; privacy filter and Aperture events pending (loom-status.md).', refs: ['reference/glossary/hand-touch/loom.md', 'decisions/loom-adr/loom-status.md'] },
+
+    { id: 'PG', layer: 'infra', x: 60, y: 726, w: 170, h: 44, label: 'PostgreSQL', sub: 'system of record',
+      desc: 'Core\'s system of record; Ariadne keeps its own schema in it.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/postgres (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'RD', layer: 'infra', x: 250, y: 726, w: 170, h: 44, label: 'Redis', sub: 'in-memory store',
+      desc: 'In-memory store used by core.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/redis (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'SF', layer: 'infra', x: 440, y: 726, w: 170, h: 44, label: 'SeaweedFS', sub: 'object store · Stash',
+      desc: 'S3-compatible object store for files and images.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/stash (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'LK', layer: 'infra', x: 630, y: 726, w: 170, h: 44, label: 'LiveKit', sub: 'audio and video',
+      desc: 'Live audio and video rooms for Bridge.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/livekit (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'LM', layer: 'infra', x: 820, y: 726, w: 170, h: 44, label: 'Listmonk', sub: 'mail · Lanternmail',
+      desc: 'The mailing engine behind Lanternmail.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/lanternmail (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'UM', layer: 'infra', x: 1010, y: 726, w: 170, h: 44, label: 'Umami', sub: 'web analytics',
+      desc: 'Self-hosted, privacy-respecting web analytics.', status: 'built', evidence: 'In use (<code>mixtape-release-umami</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
   ];
 
   // [from, to, mode, opts] — arrows read "calls" or "is served through"
@@ -164,9 +179,9 @@
 
   TopologyKit.render({
     mount: '#map',
-    viewBox: [1260, 696], minWidth: 900, decor: DECOR,
+    viewBox: [1260, 804], minWidth: 900, decor: DECOR,
     layers: LAYERS,
-    layerOrder: ['pillars', 'frontend', 'core', 'async', 'dispatch', 'exec', 'realtime', 'memory', 'research', 'gov', 'loom'],
+    layerOrder: ['pillars', 'frontend', 'core', 'async', 'dispatch', 'exec', 'realtime', 'memory', 'research', 'gov', 'loom', 'infra'],
     bands: BANDS, nodes: NODES, edges: EDGES, nodeHeight: H,
     ariaLabel: 'Mixtape system topology diagram',
     emptyText: 'Select a node, or a coloured layer band, to see its role, its connections, how much is built and where that is recorded. Hover to trace its edges. <kbd>Tab</kbd> moves between nodes; <kbd>Esc</kbd> clears.',
