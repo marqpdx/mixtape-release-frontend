@@ -8,9 +8,9 @@
     viewBox: [1040, 790], minWidth: 820, // SVG coordinate space; below minWidth the diagram scrolls
     layers: { key: { name, full, hue, desc } },  // hue is a kit hue: teal violet orange blue gold slate rose grey green brick
     layerOrder: ['key', ...],            // order of the layer cards
-    bands: [{ layer, x, y, w, h, label, solid, opacity }], // coloured layer backgrounds; solid = public-register fill
+    bands: [{ layer, x, y, w, h, label, solid, opacity, labelBelow }], // coloured layer backgrounds; solid = public-register fill; labelBelow = label centred under the band
     nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
-              hue, h, solid, vertical, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
+              hue, h, solid, vertical, small, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
                                                                  // vertical label (rails), governance distillation
     decor: [{ d, hue }],                 // optional decorative paths (e.g. rail ticks), drawn under edges
     edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
@@ -155,7 +155,7 @@
       const h = n.hue || hue(n.layer), nh = NH(n);
       // Solid nodes use the public register (bold fill); others the backend register.
       const fill = n.solid ? `var(--${h}-p)` : `var(--${h}-n)`, ink = n.solid ? `var(--${h}-pt)` : `var(--${h}-t)`;
-      const cls = 'node' + (n.status === 'planned' ? ' planned' : '') + (n.solid ? ' solid' : '') + (n.vertical ? ' vertical' : '');
+      const cls = 'node' + (n.status === 'planned' ? ' planned' : '') + (n.solid ? ' solid' : '') + (n.vertical ? ' vertical' : '') + (n.small ? ' small' : '');
       const g = el('g', { class: cls, tabindex: 0, role: 'button', 'aria-label': `${n.label}, ${LAYERS[n.layer].full}` }, gNodes);
       el('rect', { class: 'box', x: n.x, y: n.y, width: n.w, height: nh, rx: 8, fill, stroke: n.solid ? `var(--${h}-p)` : `var(--${h}-s)`, 'stroke-width': 1.8 }, g);
       if (n.vertical) {
@@ -163,8 +163,9 @@
         el('text', { x: tx, y: ty, fill: ink, 'text-anchor': 'middle', transform: `rotate(-90 ${tx} ${ty})` }, g).textContent = n.label;
       } else {
         el('rect', { x: n.x, y: n.y + 8, width: 5, height: nh - 16, rx: 2, fill: n.solid ? ink : `var(--${h}-s)`, opacity: n.solid ? 0.55 : 1 }, g);
-        el('text', { x: n.x + 14, y: n.y + 20, fill: ink }, g).textContent = n.label;
-        if (n.sub) el('text', { x: n.x + 14, y: n.y + 37, fill: ink, class: 'sub' }, g).textContent = n.sub;
+        // Small nodes (e.g. a supporting row) set their text about 12% smaller, so the baselines move up to match.
+        el('text', { x: n.x + 14, y: n.y + (n.small ? 18 : 20), fill: ink }, g).textContent = n.label;
+        if (n.sub) el('text', { x: n.x + 14, y: n.y + (n.small ? 33 : 37), fill: ink, class: 'sub' }, g).textContent = n.sub;
       }
       if (status) {
         const badge = el('circle', { class: 'badge', cx: n.x + n.w - 12, cy: n.y + (n.vertical ? nh - 12 : 12), r: 6 }, g);
@@ -185,6 +186,11 @@
     // Label tags need text measurement, so they are drawn once the SVG is in the document.
     for (const b of BANDS) {
       const h = hue(b.layer);
+      // labelBelow: the label sits outside the band, centred underneath it, with no tag behind it.
+      if (b.labelBelow) {
+        el('text', { x: b.x + b.w / 2, y: b.y + b.h + 17, 'text-anchor': 'middle', class: 'band-label below', fill: `var(--${h}-s)` }, gLabels).textContent = b.label || LAYERS[b.layer].full;
+        continue;
+      }
       const t = el('text', { x: b.x + 14, y: b.y + 21, class: 'band-label', fill: b.solid ? `var(--${h}-pt)` : `var(--${h}-s)` }, gLabels);
       t.textContent = b.label || LAYERS[b.layer].full;
       const bg = el('rect', { x: b.x + 8, y: b.y + 8, width: t.getComputedTextLength() + 12, height: 19, rx: 5, fill: b.solid ? 'none' : `var(--${h}-b)` });

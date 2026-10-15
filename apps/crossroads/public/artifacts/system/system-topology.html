@@ -79,7 +79,7 @@
     { layer: 'research', x: 520, y: 556, w: 500,  h: 120 },
     { layer: 'gov',      x: 1040, y: 20, w: 200, h: 495, solid: true, opacity: 0.75 },
     { layer: 'loom',     x: 1040, y: 527, w: 200, h: 149, solid: true, opacity: 0.75, label: 'Loom' },
-    { layer: 'infra',    x: 20,  y: 700, w: 1220, h: 84, label: 'Supporting infrastructure' },
+    { layer: 'infra',    x: 20,  y: 700, w: 1220, h: 64, label: 'Supporting infrastructure', labelBelow: true },
   ];
 
   const H = 48;
@@ -148,17 +148,17 @@
       desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (dispatch), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
       status: 'partial', evidence: 'An umbrella: routing, ActionRun, Inkwell dispatch and GroupContext built; privacy filter and Aperture events pending (loom-status.md).', refs: ['reference/glossary/hand-touch/loom.md', 'decisions/loom-adr/loom-status.md'] },
 
-    { id: 'PG', layer: 'infra', x: 60, y: 726, w: 170, h: 44, label: 'PostgreSQL', sub: 'system of record',
+    { id: 'PG', layer: 'infra', x: 70, y: 712, w: 170, h: 40, small: true, label: 'PostgreSQL', sub: 'system of record',
       desc: 'Core\'s system of record; Ariadne keeps its own schema in it.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/postgres (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'RD', layer: 'infra', x: 250, y: 726, w: 170, h: 44, label: 'Redis', sub: 'in-memory store',
+    { id: 'RD', layer: 'infra', x: 260, y: 712, w: 170, h: 40, small: true, label: 'Redis', sub: 'in-memory store',
       desc: 'In-memory store used by core.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/redis (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'SF', layer: 'infra', x: 440, y: 726, w: 170, h: 44, label: 'SeaweedFS', sub: 'object store · Stash',
+    { id: 'SF', layer: 'infra', x: 450, y: 712, w: 170, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
       desc: 'S3-compatible object store for files and images.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/stash (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LK', layer: 'infra', x: 630, y: 726, w: 170, h: 44, label: 'LiveKit', sub: 'audio and video',
+    { id: 'LK', layer: 'infra', x: 640, y: 712, w: 170, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
       desc: 'Live audio and video rooms for Bridge.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/livekit (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LM', layer: 'infra', x: 820, y: 726, w: 170, h: 44, label: 'Listmonk', sub: 'mail · Lanternmail',
+    { id: 'LM', layer: 'infra', x: 830, y: 712, w: 170, h: 40, small: true, label: 'Listmonk', sub: 'mail · Lanternmail',
       desc: 'The mailing engine behind Lanternmail.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/lanternmail (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'UM', layer: 'infra', x: 1010, y: 726, w: 170, h: 44, label: 'Umami', sub: 'web analytics',
+    { id: 'UM', layer: 'infra', x: 1020, y: 712, w: 170, h: 40, small: true, label: 'Umami', sub: 'web analytics',
       desc: 'Self-hosted, privacy-respecting web analytics.', status: 'built', evidence: 'In use (<code>mixtape-release-umami</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
   ];
 
@@ -179,7 +179,7 @@
 
   TopologyKit.render({
     mount: '#map',
-    viewBox: [1260, 804], minWidth: 900, decor: DECOR,
+    viewBox: [1260, 796], minWidth: 900, decor: DECOR,
     layers: LAYERS,
     layerOrder: ['pillars', 'frontend', 'core', 'async', 'dispatch', 'exec', 'realtime', 'memory', 'research', 'gov', 'loom', 'infra'],
     bands: BANDS, nodes: NODES, edges: EDGES, nodeHeight: H,
