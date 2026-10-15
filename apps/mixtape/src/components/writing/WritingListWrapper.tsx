@@ -95,6 +95,33 @@ type Collaborator = {
 
 type GroupingMode = "by-list" | "by-tag" | "by-where" | "by-series" | "by-category" | "by-issue";
 
+// Extract text from ProseMirror JSON. Exported (with the excerpt helper
+// below) for reuse by WritingReception (decisions/writing-surface-adr) —
+// reuse-don't-fork rather than a second copy.
+export function extractTextFromProseMirror(bodyJson: ProseMirrorDoc | null): string {
+  if (!bodyJson?.content) return "";
+
+  const extractText = (node: ProseMirrorNode): string => {
+    if (node.type === "text") {
+      return node.text || "";
+    }
+
+    if (node.content && Array.isArray(node.content)) {
+      return node.content.map(extractText).join(" ");
+    }
+
+    return "";
+  };
+
+  return bodyJson.content.map(extractText).join(" ").trim();
+}
+
+// Truncated display excerpt, built on the extractor above.
+export function extractDisplayTextFromProseMirror(bodyJson: ProseMirrorDoc | null): string {
+  const fullText = extractTextFromProseMirror(bodyJson);
+  return fullText.length > 150 ? fullText.substring(0, 150) + "..." : fullText;
+}
+
 // Exported for reuse by WritingReception (decisions/writing-surface-adr) —
 // reuse-don't-fork rather than a second copy of this grouping logic.
 export function groupItemsByIssue<T>(items: T[], issues: IssueGrouping[], pieceId: (item: T) => string) {
@@ -365,32 +392,6 @@ export default function WritingListWrapper({
   const handleStartWriting = useCallback(() => {
     onNavigateToEditor();
   }, [onNavigateToEditor]);
-
-  // Helper function to extract text from ProseMirror JSON
-  const extractTextFromProseMirror = (bodyJson: ProseMirrorDoc | null): string => {
-    if (!bodyJson?.content) return "";
-
-    const extractText = (node: ProseMirrorNode): string => {
-      if (node.type === "text") {
-        return node.text || "";
-      }
-
-      if (node.content && Array.isArray(node.content)) {
-        return node.content.map(extractText).join(" ");
-      }
-
-      return "";
-    };
-
-    const fullText = bodyJson.content.map(extractText).join(" ").trim();
-    return fullText;
-  };
-
-  // Helper function for displaying excerpts (truncated)
-  const extractDisplayTextFromProseMirror = (bodyJson: ProseMirrorDoc | null): string => {
-    const fullText = extractTextFromProseMirror(bodyJson);
-    return fullText.length > 150 ? fullText.substring(0, 150) + "..." : fullText;
-  };
 
   // Enhanced search function for drafts
   const searchInDraft = (draft: WorkingDocument, searchTerm: string): boolean => {

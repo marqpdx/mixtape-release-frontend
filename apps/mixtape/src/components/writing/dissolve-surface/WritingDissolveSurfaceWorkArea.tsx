@@ -138,6 +138,7 @@ export function WritingDissolveSurfaceWorkArea({
         {activeRim === null && (
           <WritingReception
             sponsor={sponsor}
+            canCreatePost={canManagePosts}
             showOpenIssues={isSuperuser}
             onOpenPiece={(pieceId) => (pieceId ? setActiveSection("write", { piece: pieceId }) : setActiveSection("write"))}
             onGoToIssues={() => dissolveTo(() => setActiveRim("editors-desk"))}
