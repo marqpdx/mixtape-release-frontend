@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.11)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.12)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: the three ways in, the platform core, the services behind it, and the governance that runs alongside. Select any node to trace its connections and read what it does and how much is built.</p>
-    <span class="pill">Topology library · System · v2.0.11</span>
+    <span class="pill">Topology library · System · v2.0.12</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform concept map</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.11 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.12 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
@@ -60,7 +60,7 @@
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery and RabbitMQ. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Dispatch',   full: 'Dispatch — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
     exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Local model execution over llama.cpp. Receives a well-formed task, returns results. Stateless.' },
-    realtime: { name: 'Realtime',   full: 'Realtime — Livewire',                 hue: 'rose',   desc: 'The Socket.IO server for Conversations and live Dispatch editing. Core owns the data, keys and authorization.' },
+    realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
     gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'Four apps that run alongside every layer, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
@@ -84,7 +84,7 @@
   const NODES = [
     { id: 'CR', layer: 'pillars', x: 80, y: 60, w: 240, hue: 'coral', label: 'Crossroads', sub: 'people and groups',
       desc: 'The people-and-groups layer of Mixtape: identity, membership, groups and Circles, roles, relationships and shared contexts. Collaboration first, not social. Subsystems include Threadworks (Discussions), Livewire (Conversations), Almanac, EarthLab, Bazaar, Hub, Commons and Storyline.',
-      status: 'built', evidence: 'Live as Crossroads Place (<code>crossroads.place</code>).', refs: ['reference/glossary/hand-touch/crossroads.md'] },
+      status: 'built', evidence: 'Live as Crossroads Place (<code>crossroads.place</code>).', refs: ['reference/glossary/hand-touch/crossroads.md', 'reference/glossary/hand-touch/livewire.md'] },
     { id: 'CA', layer: 'pillars', x: 400, y: 60, w: 240, hue: 'chartreuse', label: 'Catalyst', sub: 'knowledge practice · Codex',
       desc: 'The knowledge practice of Mixtape and its pillar for durable knowledge. Its object is the Catalyst Codex, a typed knowledge asset library per organization, tended by Find, Add and Amend; only people Accept what belongs in it. Foundation needs no external AI; Reach opts into the user\'s own Claude or ChatGPT account.',
       status: 'built', evidence: 'Pilots. Reach on Claude built (runtime phases 1, 2, 4; 3 and 5 partial); Reach on ChatGPT not yet wired for Catalyst.', refs: ['reference/glossary/hand-touch/catalyst.md', 'mixtape-release-catalyst (Codex template)'] ,
@@ -112,10 +112,10 @@
     { id: 'IW', layer: 'exec', x: 480, y: 450, w: 240, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
       desc: 'Local model execution: generation, summarization, classification, OCR shaping and typed capability endpoints. Loom\'s Execution layer.',
       status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).' },
-    { id: 'LW', layer: 'realtime', x: 780, y: 450, w: 220, label: 'Livewire realtime', sub: 'Socket.IO · chat.crossroads.place',
-      desc: 'The realtime server for Conversations and live Dispatch editing. Authorizes sockets against core with signed tokens; core notifies it of events.',
+    { id: 'LW', layer: 'realtime', x: 780, y: 450, w: 220, label: 'Realtime server', sub: 'mixtape-release-livewire',
+      desc: 'The realtime server, with two halves: chat/ for Livewire Conversations (personal, private, outside the knowledge layer) and dispatch/ for live collaborative Dispatch editing. A Socket.IO service at chat.crossroads.place; authorizes sockets against core with signed tokens, and core notifies it of events. The repo keeps its historical name.',
       status: 'built', evidence: 'Livewire ADR phases A to D complete, including end-to-end encryption and key rotation.' ,
-      governance: { text: 'A Conversation’s trust profile (Standard, Private, Ephemeral) is fixed at creation. Private conversations are end-to-end encrypted and not server-indexed; new participants see no history from before they joined. Key rotation passed an external cryptography review before reaching production.', docs: ['decisions/livewire-adr/', 'livewire-adr-status.md'] } },
+      governance: { text: 'For Livewire Conversations: a Conversation’s trust profile (Standard, Private, Ephemeral) is fixed at creation. Private conversations are end-to-end encrypted and not server-indexed; new participants see no history from before they joined. Key rotation passed an external cryptography review before reaching production.', docs: ['decisions/livewire-adr/', 'livewire-adr-status.md'] } },
 
     { id: 'QD', layer: 'memory', x: 40, y: 596, w: 200, label: 'Qdrant', sub: 'vectors only',
       desc: 'Vector storage for Stackroom and Ariadne. Holds no canonical content.', status: 'built', evidence: 'Own container (<code>mixtape-release-qdrant</code>).' },
