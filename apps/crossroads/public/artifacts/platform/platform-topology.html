@@ -134,7 +134,7 @@
                 <button class="feed-row" type="button" data-follow="m2"><span>Tuesday morning's weekly order is due</span><span class="destination"><span class="dot" style="--dot:#70527F"></span>Storyline</span></button>
                 <button class="feed-row" type="button" data-node="catalyst"><span>An agent finished comparing suppliers — ready for your review</span><span class="destination"><span class="dot" style="--dot:#A2C03F"></span>Catalyst</span></button>
                 <button class="feed-row" type="button" data-follow="m3"><span>Captured earlier on your phone: a voice memo</span><span class="destination"><span class="dot" style="--dot:#DBA532"></span>Folio</span></button>
-                <button class="feed-row" type="button" data-follow="m1"><span>Pick up the spring appeal letter</span><span class="destination"><span class="dot" style="--dot:#8B3F62"></span>Editor's Desk</span></button>
+                <button class="feed-row" type="button" data-follow="m1"><span>Pick up the spring appeal letter</span><span class="destination"><span class="dot" style="--dot:#8B3F62"></span>Writing</span></button>
               </div>
             </div>
           </section>
@@ -173,16 +173,16 @@
       {id:'atrium',serves:['know'],name:'Atrium',verb:'Think it through',color:'#466D80',fg:'#F3F7F8',radius:'34px 64px 38px 56px',desc:'Room to think out loud, gather fragments, and see what is taking shape before it has a name.'},
       {id:'catalyst',serves:['know'],name:'Catalyst',verb:'Find · amend · add',color:'#A2C03F',fg:'#22290a',radius:'60px 30px 56px 36px',desc:"Your organization's knowledge, kept current. Every accepted change passes a human curator."},
       {id:'folio',serves:['know'],name:'Folio',verb:'Organize Material',color:'#DBA532',fg:'#2e2005',radius:'40px 40px 70px 28px',desc:'Gather, group and put things in order — without losing where each piece came from.'},
-      {id:'editors',serves:['expr'],name:"Editor's Desk",verb:'Write · edit · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Pieces laid out for shaping. Draft, revise, and decide what is ready to go out.'},
-      {id:'storyline',serves:['collab', 'know'],name:'Storyline',verb:'Tend an Initiative',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Follow an Initiative over time — what happened, what's next, and what it's for."},
+      {id:'writing',serves:['collab','expr'],name:'Writing',verb:'Write · shape · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Draft, shape and publish, alone or together — from a first line to a finished piece, or an Issue of several.'},
+      {id:'storyline',serves:['collab','expr'],name:'Storyline',verb:'Tend an Initiative',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Follow an Initiative over time — what happened, what's next, and what it's for."},
       {id:'crossroads',serves:['collab'],name:'Crossroads',verb:'Work with people',color:'#D2603F',fg:'#FFF4EE',radius:'36px 56px 64px 30px',desc:'Groups, Circles, dispatches and collaborative writing — where a community makes things together.'},
-      {id:'tapestry',serves:['expr', 'know'],name:'Tapestry',verb:'Tell it in place',color:'#2F6B4F',fg:'#EEF6F0',radius:'30px 62px 34px 58px',desc:'Where place matters — stories, observations and relationships whose meaning is bound up with a place.'},
-      {id:'clio',serves:['collab', 'expr', 'know'],name:'Clio',verb:'Hold the thread',color:'#AAA37D',fg:'#26241a',radius:'50px 30px 36px 64px',desc:"The one relationship that follows you from room to room — tracks what's delegated, routed, and still waiting, wherever it lands."}
+      {id:'tapestry',serves:['expr','know'],name:'Tapestry',verb:'Tell it in place',color:'#2F6B4F',fg:'#EEF6F0',radius:'30px 62px 34px 58px',desc:'Where place matters — stories, observations and relationships whose meaning is bound up with a place.'},
+      {id:'clio',serves:['collab','know'],name:'Clio',verb:'Hold the thread',color:'#AAA37D',fg:'#26241a',radius:'50px 30px 36px 64px',desc:"The one relationship that follows you from room to room — tracks what's delegated, routed, and still waiting, wherever it lands."}
     ];
-    // What each Surface mainly serves, of the trio (CTO, 2026-10-15). Clio holds the thread across all three.
+    // What each Surface serves directly, of the trio (CTO, 2026-10-15). Everything builds knowledge in the end; only direct service is marked.
     const TRIO={collab:'Collaboration',expr:'Self-expression',know:'Knowledge building'};
     const MATERIALS={
-      m1:{title:'Spring appeal letter',kind:'WritingPiece',code:'MT-0412',dot:'#D2603F',places:['editors','crossroads']},
+      m1:{title:'Spring appeal letter',kind:'WritingPiece',code:'MT-0412',dot:'#D2603F',places:['writing','crossroads']},
       m2:{title:'Tuesday supplier order',kind:'Initiative',code:'MT-0388',dot:'#466D80',places:['storyline','catalyst','crossroads','clio']},
       m3:{title:'Voice memo from your phone',kind:'Seed',code:'MT-0451',dot:'#DBA532',places:['atrium','folio']}
     };
@@ -201,7 +201,7 @@
       atrium:{k:'Surface · Think it through',t:'Atrium',c:'#466D80',f:'#F3F7F8',n:'A place to think something through before it has a settled form.'},
       catalyst:{k:'Surface · Find · amend · add',t:'Catalyst',c:'#A2C03F',f:'#22290a',n:'Three verbs: Find, Amend, Add. The knowledge an organization relies on, kept current — every accepted change goes through a human curator.',x:'CORE defines engine behavior; CONTENT holds knowledge; Fixture files are editable, divergence-tracked starter material.'},
       folio:{k:'Surface · Organize Material',t:'Folio',c:'#DBA532',f:'#2e2005',n:'Where Material gets gathered and organized, staying connected to its origins.'},
-      editors:{k:'Surface · Write · edit · publish',t:"Editor's Desk",c:'#8B3F62',f:'#FBEFF4',n:'A table for shaping pieces of writing — drafting, revising, and deciding what is ready.'},
+      writing:{k:'Surface · Write · shape · publish',t:'Writing',c:'#8B3F62',f:'#FBEFF4',n:'Where writing happens, alone or together: a first draft, a piece shaped for its readers, a series, or an Issue gathered for publication. Writing is a working name; the toolset will be named later.',x:'Today, in a Group\'s Content area: Writing, Import Documents, Series Writing, Draft ↔ Dispatch, the Editor\'s Desk (Issues) and Draft Room. These are becoming one Writing surface, with Writing Reception as its landing (Writing Surface ADR, ratified 2026-10-15).'},
       storyline:{k:'Surface · Tend an Initiative',t:'Storyline',c:'#70527F',f:'#F5EFF8',n:'The ongoing life of an Initiative, told as it unfolds.'},
       crossroads:{k:'Surface · Work with people',t:'Crossroads',c:'#D2603F',f:'#FFF4EE',n:'Groups, Circles, collaborative writing and dispatches. The wall between Catalyst and Crossroads is deliberately low.',x:"Mixtape's community and communication surface. Governed intelligence is delivered through Loom; Crossroads also hosts authentication."},
       tapestry:{k:'Surface · Tell it in place',t:'Tapestry',c:'#2F6B4F',f:'#EEF6F0',n:"Where place matters. People share stories, observations, relationships and other pieces of knowing whose meaning is bound up with a place. The test: does place help make the meaning, or is it only scenery? Organizations finding one another follows from that.",x:'Partial: core holds one model, Place (app/tapestry); the full build is not yet scoped. A peer Main Gateway beside Crossroads and Catalyst, not part of Crossroads — decisions/tapestry-adr/tapestry-adr.md.'},
