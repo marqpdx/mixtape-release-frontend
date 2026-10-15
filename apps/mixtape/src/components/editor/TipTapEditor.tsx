@@ -18,7 +18,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import ListItem from "@tiptap/extension-list-item";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
-import { TopologyImage } from "./extensions/TopologyImage";
+import { TopologyImage, interactivePageEditorCss } from "./extensions/TopologyImage";
 
 import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
@@ -747,6 +747,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       css={{
         // Custom styles for the editor
         "& .ProseMirror": {
+          ...interactivePageEditorCss,
           paddingX: "1.4em",
           paddingY: "1em",
           color: textColor,

@@ -406,6 +406,10 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
   }
 
   const rendered = content.content.map((node, index) => renderNode(node, index))
+  const hasWrappedPreview = (nodes?: TipTapNode[]): boolean => !!nodes?.some(node => {
+    const preview = node.type === 'image' ? resolveInteractivePage(node.attrs) : undefined
+    return (preview?.alignment === 'left' || preview?.alignment === 'right') || hasWrappedPreview(node.content)
+  })
 
   // Deduplicate issues for the summary banner
   const unknownNodeTypes = [...new Set(
@@ -419,7 +423,7 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
   const hasIssues = issuesRef.current.length > 0
 
   return (
-    <Box className="tiptap-content">
+    <Box className="tiptap-content" display={hasWrappedPreview(content.content) ? 'flow-root' : undefined}>
       {rendered}
       {showNodeWarnings && hasIssues && (
         <Box

@@ -1,7 +1,12 @@
 import { getTopologyArtifact, topologyArtifacts } from './topologyArtifacts'
 
 const publicOrigin = 'https://www.crossroads.place'
-export interface InteractivePage { title: string; htmlUrl: string; imageUrl: string }
+export type InteractivePageAlignment = 'left' | 'center' | 'right'
+export interface InteractivePage { title: string; htmlUrl: string; imageUrl: string; alignment?: InteractivePageAlignment }
+
+export function normaliseInteractivePageAlignment(value: unknown): InteractivePageAlignment {
+  return value === 'left' || value === 'right' ? value : 'center'
+}
 
 /** Only our published artifact HTML may run inside a reader. Not arbitrary websites. */
 export function normaliseInteractiveHtmlUrl(value: unknown): string | undefined {
@@ -38,10 +43,11 @@ export function resolveInteractivePage(attrs?: Record<string, unknown>): Interac
     const imageUrl = normalisePreviewImageUrl(attrs.src)
     if (!htmlUrl || !imageUrl) return undefined
     const title = typeof attrs.interactivePageTitle === 'string' ? attrs.interactivePageTitle.trim() : ''
-    return { htmlUrl, imageUrl, title: title.slice(0, 160) || (typeof attrs.alt === 'string' ? attrs.alt : 'Interactive page') }
+    return { htmlUrl, imageUrl, title: title.slice(0, 160) || (typeof attrs.alt === 'string' ? attrs.alt : 'Interactive page'), alignment: normaliseInteractivePageAlignment(attrs.interactivePageAlignment) }
   }
   // Preserve previews created with the original topology-specific control.
-  return getTopologyArtifact(attrs?.topologyId)
+  const preset = getTopologyArtifact(attrs?.topologyId)
+  return preset ? { ...preset, alignment: normaliseInteractivePageAlignment(attrs?.interactivePageAlignment) } : undefined
 }
 
 /** Restore shared reading URLs even when a preview is outside the visible manuscript. */

@@ -27,7 +27,7 @@ import type { AtticContext } from "./AtticControls";
 import { LbAnchor } from "./extensions/LbAnchor";
 import { CommentMark } from "./extensions/CommentMark";
 import { ConversationBlockquote } from "./extensions/ConversationBlockquote";
-import { TopologyImage } from "./extensions/TopologyImage";
+import { TopologyImage, interactivePageEditorCss } from "./extensions/TopologyImage";
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -291,6 +291,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
               css={{
                 "& > *": { marginBlock: 0, height: "100%", minHeight: 0 },
                 "& .ProseMirror": {
+                  ...interactivePageEditorCss,
                   paddingX: "1.4em",
                   paddingY: "1em",
                   color: textColor,

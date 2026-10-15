@@ -7,8 +7,13 @@ Use **Insert interactive page** in the TipTap toolbar. Choose System/Loom as a p
 - A published HTML URL under `https://www.crossroads.place/artifacts/` (a relative `/artifacts/...html` path works too).
 - Its public HTTPS PNG preview URL. The matching sibling `.png` URL is suggested automatically; it can be edited.
 - A descriptive page title.
+- Preview placement: centered (no wrapping), left (text on the right), or right (text on the left). Side previews stay 60% wide on desktop; small screens use full width and stack the text below.
+
+To change an existing preview, select its image in the editor and choose **Edit interactive page** from the same toolbar control. Its current fields and placement are restored; **Save changes** updates the selected node rather than inserting a duplicate.
 
 Insertion occurs at the end of a selection, preserving selected manuscript text. Normal editor autosave persists an ordinary `image` node with `src`, `alt`, `interactivePageUrl`, and `interactivePageTitle`. Existing `topologyId` previews remain supported. The solo and collaborative image extension preserves these attributes through JSON and HTML. Other readers/exports retain the image fallback. Ordinary images stay ordinary images.
+
+Placement is saved in `interactivePageAlignment` and round-trips through `data-interactive-page-alignment`. Missing/invalid values default to centered. Floated reader previews are contained inside their rendered document so they cannot spill into the next Issue piece. The solo and collaborative editor styles also stack them on narrow screens.
 
 Only published artifact HTML can become a frame source; arbitrary third-party websites, local `file:` URLs, and private app routes are rejected. This is a general writing tool, not a map-specific renderer. No backend models, migrations, uploads, or runtime screenshot service.
 
@@ -42,6 +47,7 @@ The sibling PNG is generated once as a reviewed publishing asset; it is not gene
 - Browser fixtures import actual authoring controls, image extension, shared reader/Dissolve components, and the actual continuous Issue reader. Static artifact requests are fulfilled locally, not fetched from Live.
 - `/tmp/gp10-issue-check/dissolve-check.cjs`: passed retaining chrome; hiding without unmounting; readable frame width/height; iframe Escape and Return; exact URL/scroll/focus restoration; Back/Forward; direct links; ignored unrelated close messages; mobile/reduced-motion Issue reading; no runtime errors.
 - `/tmp/gp10-issue-check/interactive-page-check.cjs`: passed a custom non-topology HTML lesson with its own styles and interaction; suggested PNG/title authoring; JSON/HTML round trip; CSS isolation; Escape without kit JS; reading-position restoration; invalid URLs rejected; custom deep link return; no runtime errors.
+- Placement update: `/tmp/gp10-issue-check/preview-placement-check.cjs` passed actual left/right text-line geometry, flush alignment, centered/no-wrap behavior, float containment, editing without duplication, HTML round trip, mobile stacking in editor/reader, and Dissolve scroll/focus restoration. Mixtape/Crossroads TypeScript and scoped lint passed. No browser runtime errors. Temporary fixture server stopped after verification.
 - Earlier topology checks also covered preset insertion, selected text preservation, ordinary-image fallback, image widths, and map interaction. The floating modal has since been replaced by Dissolve.
 - `puddlejump/zz/html-to-png.sh`: shell syntax and full System topology capture passed after the tall-map fix.
 - These fixtures do not verify authenticated autosave, Yjs synchronization, or production headers. No backend test suite was needed.
