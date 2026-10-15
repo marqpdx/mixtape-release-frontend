@@ -60,11 +60,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self'",
+              "script-src 'self' https://analytics.crossroads.place",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              "connect-src 'self'",
+              "connect-src 'self' https://analytics.crossroads.place",
               "frame-ancestors 'none'",
               "object-src 'none'",
               "base-uri 'self'",
