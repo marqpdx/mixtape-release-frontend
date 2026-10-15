@@ -32,7 +32,15 @@
     h1{max-width:720px;font:800 clamp(34px,5vw,60px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
     .lede{max-width:60ch;color:var(--body);font-size:18px;line-height:1.5}
     .trio{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:700 clamp(18px,2vw,22px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
-    .trio span+span::before{content:'';display:inline-block;width:7px;height:7px;margin:0 14px 3px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
+    .trio button{all:unset;cursor:pointer;border-radius:6px;padding:0 4px;margin:0 -4px}
+    .trio button:hover{background:rgba(31,29,23,.08)}
+    .trio button:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+    .trio button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+    .trio-hint{font-size:12px;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:500;letter-spacing:0}
+    .serves{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+    .lands.trio-active .land:not(.trio-on){opacity:.32}
+    .lands.trio-active .land.trio-on{transform:translate(-3px,-3px)}
+    .trio button+button::before{content:'';display:inline-block;width:7px;height:7px;margin:0 14px 3px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
     .footer .built{display:block;margin-bottom:6px}
     .depth-wrap{display:grid;gap:8px}.depths{display:flex;overflow:hidden;background:var(--cream);border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
     .depth{min-width:110px;padding:10px 16px;border:0;background:transparent;cursor:pointer;display:grid;gap:2px;text-align:left}
@@ -99,7 +107,7 @@
       <div class="intro">
         <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span></div>
         <h1>What happens when you bring what matters into Mixtape?</h1>
-        <p class="trio" aria-label="What Mixtape is for"><span>Collaboration</span><span>Self-expression</span><span>Knowledge building</span></p>
+        <p class="trio" role="group" aria-label="What Mixtape is for: select one to see which Surfaces serve it"><button type="button" data-trio="collab" aria-pressed="false">Collaboration</button><button type="button" data-trio="expr" aria-pressed="false">Self-expression</button><button type="button" data-trio="know" aria-pressed="false">Knowledge building</button><span class="trio-hint">select one to see where it lives</span></p>
         <p class="lede">Mixtape is a suite of tools for collaboration, self-expression and knowledge building. You arrive at Main Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
       </div>
       <div class="depth-wrap">
@@ -162,15 +170,17 @@
   <aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden><div class="panel-head" id="panel-head"><div class="panel-titles"><span class="panel-kicker" id="panel-kicker"></span><h2 class="panel-title" id="panel-title"></h2></div><button class="close" id="close" type="button" aria-label="Close detail panel">×</button></div><div class="panel-body"><section class="panel-section"><span class="panel-label"><b>N</b>In plain language</span><p class="panel-narr" id="panel-narr"></p></section><section class="panel-section panel-tech" id="panel-tech-wrap"><span class="panel-label"><b>T</b>How it's built</span><p id="panel-tech"></p></section></div></aside>
   <script>
     const LANDS=[
-      {id:'atrium',name:'Atrium',verb:'Think it through',color:'#466D80',fg:'#F3F7F8',radius:'34px 64px 38px 56px',desc:'Room to think out loud, gather fragments, and see what is taking shape before it has a name.'},
-      {id:'catalyst',name:'Catalyst',verb:'Find · amend · add',color:'#A2C03F',fg:'#22290a',radius:'60px 30px 56px 36px',desc:"Your organization's knowledge, kept current. Every accepted change passes a human curator."},
-      {id:'folio',name:'Folio',verb:'Organize Material',color:'#DBA532',fg:'#2e2005',radius:'40px 40px 70px 28px',desc:'Gather, group and put things in order — without losing where each piece came from.'},
-      {id:'editors',name:"Editor's Desk",verb:'Write · edit · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Pieces laid out for shaping. Draft, revise, and decide what is ready to go out.'},
-      {id:'storyline',name:'Storyline',verb:'Tend an Initiative',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Follow an Initiative over time — what happened, what's next, and what it's for."},
-      {id:'crossroads',name:'Crossroads',verb:'Work with people',color:'#D2603F',fg:'#FFF4EE',radius:'36px 56px 64px 30px',desc:'Groups, Circles, dispatches and collaborative writing — where a community makes things together.'},
-      {id:'tapestry',name:'Tapestry',verb:'Tell it in place',color:'#2F6B4F',fg:'#EEF6F0',radius:'30px 62px 34px 58px',desc:'Where place matters — stories, observations and relationships whose meaning is bound up with a place.'},
-      {id:'clio',name:'Clio',verb:'Hold the thread',color:'#AAA37D',fg:'#26241a',radius:'50px 30px 36px 64px',desc:"The one relationship that follows you from room to room — tracks what's delegated, routed, and still waiting, wherever it lands."}
+      {id:'atrium',serves:['know'],name:'Atrium',verb:'Think it through',color:'#466D80',fg:'#F3F7F8',radius:'34px 64px 38px 56px',desc:'Room to think out loud, gather fragments, and see what is taking shape before it has a name.'},
+      {id:'catalyst',serves:['know'],name:'Catalyst',verb:'Find · amend · add',color:'#A2C03F',fg:'#22290a',radius:'60px 30px 56px 36px',desc:"Your organization's knowledge, kept current. Every accepted change passes a human curator."},
+      {id:'folio',serves:['know'],name:'Folio',verb:'Organize Material',color:'#DBA532',fg:'#2e2005',radius:'40px 40px 70px 28px',desc:'Gather, group and put things in order — without losing where each piece came from.'},
+      {id:'editors',serves:['expr'],name:"Editor's Desk",verb:'Write · edit · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Pieces laid out for shaping. Draft, revise, and decide what is ready to go out.'},
+      {id:'storyline',serves:['collab', 'know'],name:'Storyline',verb:'Tend an Initiative',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Follow an Initiative over time — what happened, what's next, and what it's for."},
+      {id:'crossroads',serves:['collab'],name:'Crossroads',verb:'Work with people',color:'#D2603F',fg:'#FFF4EE',radius:'36px 56px 64px 30px',desc:'Groups, Circles, dispatches and collaborative writing — where a community makes things together.'},
+      {id:'tapestry',serves:['expr', 'know'],name:'Tapestry',verb:'Tell it in place',color:'#2F6B4F',fg:'#EEF6F0',radius:'30px 62px 34px 58px',desc:'Where place matters — stories, observations and relationships whose meaning is bound up with a place.'},
+      {id:'clio',serves:['collab', 'expr', 'know'],name:'Clio',verb:'Hold the thread',color:'#AAA37D',fg:'#26241a',radius:'50px 30px 36px 64px',desc:"The one relationship that follows you from room to room — tracks what's delegated, routed, and still waiting, wherever it lands."}
     ];
+    // What each Surface mainly serves, of the trio (CTO, 2026-10-15). Clio holds the thread across all three.
+    const TRIO={collab:'Collaboration',expr:'Self-expression',know:'Knowledge building'};
     const MATERIALS={
       m1:{title:'Spring appeal letter',kind:'WritingPiece',code:'MT-0412',dot:'#D2603F',places:['editors','crossroads']},
       m2:{title:'Tuesday supplier order',kind:'Initiative',code:'MT-0388',dot:'#466D80',places:['storyline','catalyst','crossroads','clio']},
@@ -204,11 +214,14 @@
     };
     STRANDS.forEach(s=>NODES[s.id]={k:'Connective system · '+s.role,t:s.name,c:'#2A241B',f:s.color,n:s.narr,x:s.tech});
     const landsEl=document.getElementById('lands');
-    landsEl.innerHTML=LANDS.map(l=>`<button class="land" type="button" data-node="${l.id}" data-place="${l.id}" style="--color:${l.color};--fg:${l.fg};--radius:${l.radius}"><span class="land-head"><span class="verb">${l.verb}</span><span class="badges"><span class="mini-badge">N</span>${NODES[l.id].x?'<span class="mini-badge tech machinery">T</span>':''}</span></span><h4>${l.name}</h4><span class="land-desc places">${l.desc}</span><span class="ticket"></span></button>`).join('');
+    landsEl.innerHTML=LANDS.map(l=>`<button class="land" type="button" data-node="${l.id}" data-place="${l.id}" style="--color:${l.color};--fg:${l.fg};--radius:${l.radius}"><span class="land-head"><span class="verb">${l.verb}</span><span class="badges"><span class="mini-badge">N</span>${NODES[l.id].x?'<span class="mini-badge tech machinery">T</span>':''}</span></span><h4>${l.name}</h4><span class="land-desc places">${l.desc}</span><span class="serves places">${l.serves.map(t=>TRIO[t]).join(' · ')}</span><span class="ticket"></span></button>`).join('');
     document.getElementById('materials').innerHTML='<span>Follow one piece of Material:</span>'+Object.entries(MATERIALS).map(([id,m])=>`<button class="material" type="button" data-material="${id}" aria-pressed="${id==='m1'}"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</button>`).join('');
     document.getElementById('strands').innerHTML=STRANDS.map(s=>`<button class="strand" type="button" data-node="${s.id}" style="--strand:${s.color};--line:${s.line}"><span class="strand-name"><strong>${s.name}</strong><span>${s.role}</span></span><span class="strand-body"><span class="strand-line"></span><span class="strand-narr places">${s.narr}</span><span class="strand-tech machinery">${s.tech}</span></span></button>`).join('');
     const life=['Something matters','becomes Material','is tended','informs understanding','reaches enoughness','becomes immaterial','returns to soil'];
     document.getElementById('lifecycle').innerHTML=life.map((s,i)=>`<span class="life">${s}</span>${i<life.length-1?'<span class="arrow">→</span>':''}`).join('');
+    let trioOn=null;
+    function trio(k){trioOn=trioOn===k?null:k;document.querySelectorAll('[data-trio]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.trio===trioOn)));landsEl.classList.toggle('trio-active',!!trioOn);document.querySelectorAll('.land').forEach(card=>card.classList.toggle('trio-on',!!trioOn&&LANDS.find(l=>l.id===card.dataset.place).serves.includes(trioOn)))}
+    document.querySelectorAll('[data-trio]').forEach(b=>b.addEventListener('click',()=>{trio(b.dataset.trio);const r=landsEl.getBoundingClientRect();if(trioOn&&(r.top>innerHeight*0.6||r.bottom<0))landsEl.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}));
     const valid=['story','places','machinery'];let followed='m1',trigger=null;
     function depth(d){if(!valid.includes(d))return;document.body.dataset.depth=d;document.querySelectorAll('.depth').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.depth===d)));const u=new URL(location.href);d==='story'?u.searchParams.delete('depth'):u.searchParams.set('depth',d);history.replaceState({},'',u)}
     function follow(id,toggle=true){followed=toggle&&followed===id?null:id;document.querySelectorAll('.material').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.material===followed)));document.querySelectorAll('.land').forEach(card=>{const m=followed&&MATERIALS[followed],on=!!(m&&m.places.includes(card.dataset.place));card.classList.toggle('followed',on);card.querySelector('.ticket').innerHTML=on?`<span class="ticket-meta"><span>${m.kind}</span><span>${m.code}</span></span><span class="ticket-title"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</span>`:''});const m=followed&&MATERIALS[followed];document.getElementById('caption').textContent=m?`${m.title} (${m.code}) is the same thing in ${m.places.length} places. The thing is not its interface.`:'Pick a piece of Material to see where it lives.'}
