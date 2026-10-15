@@ -95,7 +95,9 @@ type Collaborator = {
 
 type GroupingMode = "by-list" | "by-tag" | "by-where" | "by-series" | "by-category" | "by-issue";
 
-function groupItemsByIssue<T>(items: T[], issues: IssueGrouping[], pieceId: (item: T) => string) {
+// Exported for reuse by WritingReception (decisions/writing-surface-adr) —
+// reuse-don't-fork rather than a second copy of this grouping logic.
+export function groupItemsByIssue<T>(items: T[], issues: IssueGrouping[], pieceId: (item: T) => string) {
   const byPiece = new Map<string, T[]>();
   for (const item of items) {
     const id = pieceId(item);

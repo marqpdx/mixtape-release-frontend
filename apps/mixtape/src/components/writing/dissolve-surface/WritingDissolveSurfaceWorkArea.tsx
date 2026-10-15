@@ -9,7 +9,7 @@
 // components the classic sections already render.
 
 import { useState } from "react";
-import { Box, HStack, Heading, Text } from "@chakra-ui/react";
+import { Box, Heading } from "@chakra-ui/react";
 import {
   IconArmchair2,
   IconArrowsRightLeft,
@@ -22,6 +22,7 @@ import {
 import { OuterRim, useDissolve, type RimPositionItem } from "@mixtape/ui/dissolve";
 import type { Group } from "@mixtape/core/types/groupTypes";
 
+import { Tooltip } from "@components/ui/tooltip";
 import { WritingReception } from "@/components/writing/dissolve-surface/WritingReception";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import DocumentImportWorkArea from "@/components/writing/import/DocumentImportWorkArea";
@@ -93,12 +94,11 @@ export function WritingDissolveSurfaceWorkArea({
     id: "reception",
     active: activeRim === null,
     content: (
-      <HStack gap={2} py={1}>
-        <IconHome2 size={15} color={activeRim === null ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
-        <Text fontSize="sm" color="fg.muted" fontWeight={activeRim === null ? "semibold" : "normal"}>
-          Reception
-        </Text>
-      </HStack>
+      <Tooltip content="Reception" positioning={{ placement: "right" }}>
+        <Box py={2} display="flex" justifyContent="center">
+          <IconHome2 size={18} color={activeRim === null ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
+        </Box>
+      </Tooltip>
     ),
     onSelect: () => dissolveTo(() => setActiveRim(null)),
   };
@@ -111,10 +111,11 @@ export function WritingDissolveSurfaceWorkArea({
         id: key,
         active: key === activeRim,
         content: (
-          <HStack gap={2} py={1.5}>
-            <Icon size={18} color={key === activeRim ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
-            <Text fontWeight={key === activeRim ? "semibold" : "normal"}>{RIM_LABELS[key]}</Text>
-          </HStack>
+          <Tooltip content={RIM_LABELS[key]} positioning={{ placement: "right" }}>
+            <Box py={2.5} display="flex" justifyContent="center">
+              <Icon size={20} color={key === activeRim ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
+            </Box>
+          </Tooltip>
         ),
         onSelect: () => dissolveTo(() => setActiveRim(key)),
       };
@@ -127,7 +128,7 @@ export function WritingDissolveSurfaceWorkArea({
         items={items}
         placement="left"
         accentColor={ACCENT_COLOR}
-        boxProps={{ minW: "180px", borderRight: "1px solid", borderColor: "border.muted", pr: 2 }}
+        boxProps={{ minW: "52px", borderRight: "1px solid", borderColor: "border.muted", pr: 2 }}
       />
       {/* Centered independently of this component — DashboardLayout's sidebar
           (50px collapsed / 230px only while temporarily expanded) is left
