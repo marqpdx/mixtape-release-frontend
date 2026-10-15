@@ -106,14 +106,16 @@ function ReceptionRow({
   meta,
   onClick,
   cardBg,
+  hoverBg,
 }: {
   title: string;
   meta?: React.ReactNode;
   onClick: () => void;
   cardBg: string;
+  hoverBg: string;
 }) {
   return (
-    <HStack justify="space-between" px={2} py={1.5} borderRadius="md" bg={cardBg} cursor="pointer" _hover={{ borderColor: `${ACCENT_COLOR}.400` }} borderWidth="1px" borderColor="border.muted" onClick={onClick}>
+    <HStack justify="space-between" px={2} py={1.5} borderRadius="md" bg={cardBg} cursor="pointer" _hover={{ bg: hoverBg }} borderWidth="1px" borderColor="border.muted" onClick={onClick}>
       <Text fontSize="sm" lineClamp={1}>
         {title}
       </Text>
@@ -134,11 +136,13 @@ function RecentCard({
   issueTitle,
   onClick,
   cardBg,
+  hoverBg,
 }: {
   draft: WorkingDocument;
   issueTitle: string | null;
   onClick: () => void;
   cardBg: string;
+  hoverBg: string;
 }) {
   const excerpt = draftExcerpt(draft);
   const lastSaved = new Date(draft.last_saved_at || draft.piece.updated_at || draft.piece.created_at);
@@ -150,7 +154,7 @@ function RecentCard({
       borderRadius="md"
       p={3}
       cursor="pointer"
-      _hover={{ borderColor: `${ACCENT_COLOR}.400` }}
+      _hover={{ bg: hoverBg, borderColor: `${ACCENT_COLOR}.400` }}
       onClick={onClick}
     >
       <HStack gap={2} mb={1} wrap="wrap">
@@ -179,15 +183,17 @@ function RecentTitleRow({
   issueTitle,
   onClick,
   cardBg,
+  hoverBg,
 }: {
   draft: WorkingDocument;
   issueTitle: string | null;
   onClick: () => void;
   cardBg: string;
+  hoverBg: string;
 }) {
   const lastSaved = new Date(draft.last_saved_at || draft.piece.updated_at || draft.piece.created_at);
   return (
-    <HStack justify="space-between" px={2} py={1.5} bg={cardBg} cursor="pointer" _hover={{ bg: "bg.muted" }} onClick={onClick}>
+    <HStack justify="space-between" px={2} py={1.5} bg={cardBg} cursor="pointer" _hover={{ bg: hoverBg }} onClick={onClick}>
       <HStack gap={2} minW={0}>
         <Text fontSize="sm" lineClamp={1}>
           {draft.piece.title || "Untitled Draft"}
@@ -207,6 +213,8 @@ function RecentTitleRow({
 
 export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpenPiece, onGoToIssues }: WritingReceptionProps) {
   const cardBg = useColorModeValue("white", "gray.800");
+  // Same hover token WritingListWrapper's rows / UniversalDataTable's bgHover use.
+  const hoverBg = useColorModeValue("gray.50", "gray.700");
   const { drafts, placements, showSolo, showCollab, setShowSolo, setShowCollab } = useWriting(sponsor.type, sponsor.slug);
   const { issues } = useIssues({ type: sponsor.type, slug: sponsor.slug });
 
@@ -255,9 +263,17 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
 
   return (
     <Box className="wrcp-root">
-      <HStack justify="space-between" mb={3}>
+      <HStack justify="space-between" mb={2}>
         <Heading size="md">Writing Reception</Heading>
-        <ReceptionLink href={`/groups/${sponsor.slug}/reception`} />
+        <HStack gap={3}>
+          <Button size="xs" variant="outline" onClick={() => setSortField((f) => (f === "recent" ? "created" : "recent"))}>
+            {sortField === "recent" ? "Sort: Recent activity" : "Sort: Creation date"}
+          </Button>
+          <Button size="xs" variant="outline" onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}>
+            {sortOrder === "desc" ? "Newest first" : "Oldest first"}
+          </Button>
+          <ReceptionLink href={`/groups/${sponsor.slug}/reception`} />
+        </HStack>
       </HStack>
 
       <Box
@@ -265,7 +281,6 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
         display="grid"
         gridTemplateColumns={{ base: "1fr", md: "minmax(0, 40%) minmax(0, 60%)" }}
         columnGap={6}
-        rowGap={3}
         alignItems="center"
       >
         <HStack>
@@ -276,6 +291,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
             onChange={(e) => setSearch(e.target.value)}
             variant="subtle"
             size="sm"
+            bg="bg.muted"
           />
         </HStack>
 
@@ -291,12 +307,6 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
             showSoloCollab
             showAllButton={false}
           />
-          <Button size="xs" variant="outline" onClick={() => setSortField((f) => (f === "recent" ? "created" : "recent"))}>
-            {sortField === "recent" ? "Sort: Recent activity" : "Sort: Creation date"}
-          </Button>
-          <Button size="xs" variant="outline" onClick={() => setSortOrder((o) => (o === "desc" ? "asc" : "desc"))}>
-            {sortOrder === "desc" ? "Newest first" : "Oldest first"}
-          </Button>
         </HStack>
       </Box>
 
@@ -315,6 +325,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
                   issueTitle={issueTitleByPieceId.get(d.piece.id) ?? null}
                   onClick={() => onOpenPiece(String(d.piece.id))}
                   cardBg={cardBg}
+                  hoverBg={hoverBg}
                 />
               ))}
               {recentDrafts.length > RECENT_RICH_COUNT && (
@@ -326,6 +337,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
                       issueTitle={issueTitleByPieceId.get(d.piece.id) ?? null}
                       onClick={() => onOpenPiece(String(d.piece.id))}
                       cardBg={cardBg}
+                      hoverBg={hoverBg}
                     />
                   ))}
                 </VStack>
@@ -342,6 +354,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
               meta={p.published_at ? formatDistanceToNow(new Date(p.published_at), { addSuffix: true }) : undefined}
               onClick={() => onOpenPiece(String(p.piece_id))}
               cardBg={cardBg}
+              hoverBg={hoverBg}
             />
           ))}
         </ReceptionSection>
@@ -368,6 +381,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
               }
               onClick={onGoToIssues}
               cardBg={cardBg}
+              hoverBg={hoverBg}
             />
           ))}
         </ReceptionSection>
