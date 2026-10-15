@@ -67,6 +67,7 @@
             <button type="button" data-zoom="in" aria-label="Larger">+</button>
             <button type="button" data-zoom="width">Fit width</button>
             <button type="button" data-zoom="all">Fit all</button>
+            <button type="button" class="tk-full-btn" title="Open the map in a full-window view">Full view</button>
           </span>
         </div>
       </div>
@@ -96,6 +97,7 @@
       const r = el('rect', { class: 'band' + (b.solid ? ' solid' : ''), x: b.x, y: b.y, width: b.w, height: b.h, rx: 12,
         fill: b.solid ? `var(--${h}-p)` : `var(--${h}-b)`, 'fill-opacity': b.solid ? (b.opacity ?? 1) : 1, stroke: `var(--${h}-s)`,
         tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, layer` }, gBands);
+      r.dataset.layer = b.layer;
       (bandEls[b.layer] ||= []).push(r);
       r.addEventListener('focus', () => selectLayer(b.layer));
       r.addEventListener('click', e => { e.stopPropagation(); if (selected !== 'layer:' + b.layer) selectLayer(b.layer); });
@@ -178,6 +180,7 @@
       }
       nodeEls[n.id] = g;
       g.dataset.st = n.status || 'untracked';
+      g.dataset.id = n.id;
       g.addEventListener('mouseenter', () => { if (!selected) focus(n.id); });
       g.addEventListener('mouseleave', () => { if (!selected) clear(); });
       g.addEventListener('focus', () => select(n.id));
@@ -304,6 +307,7 @@
     function deselect() { selected = null; clear(); panel.innerHTML = emptyPanel; }
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape') return;
+      if (fullDlg.open) return;  // the full view handles its own Escape: popover first, then the view
       deselect();
       document.activeElement?.blur?.();
       // Keyboard events stay inside an iframe. Send only a close signal;
@@ -412,6 +416,109 @@
       toggleBtn.dataset.tip = 'Light or dark';
       actions.appendChild(toggleBtn);
     }
+    // Full view: the same map in a modal filling 96vh and as much width as the map's shape uses.
+    // Hover traces a node's edges; a click (or keyboard focus) opens a popover with the panel's content.
+    // The popover closes with Esc, its × or a click on the map background; a second Esc, the view's ×,
+    // or a click outside the view closes the view. One click on another node moves the popover there.
+    const fullDlg = document.createElement('dialog');
+    fullDlg.className = 'tk-full';
+    fullDlg.setAttribute('aria-label', (cfg.ariaLabel || 'Topology diagram') + ', full view');
+    fullDlg.innerHTML = `<div class="tk-full-head"><span class="tk-full-title">${esc(document.querySelector('h1')?.textContent || 'Map')}</span>
+      <button type="button" class="tk-iconbtn tk-modal-close" aria-label="Close full view" data-tip="Close">×</button></div>
+      <div class="tk-full-body"><div class="tk-pop tk-panel" role="dialog" aria-label="Details" hidden></div></div>`;
+    document.body.appendChild(fullDlg);
+    const fullBody = fullDlg.querySelector('.tk-full-body');
+    const pop = fullDlg.querySelector('.tk-pop');
+    let fsvg = null, popFor = null;
+    const fNodes = () => Object.fromEntries([...fsvg.querySelectorAll('g.node')].map(g => [g.dataset.id, g]));
+    const fEdges = () => [...fsvg.querySelectorAll('path.edge')];
+    function fClear() {
+      if (!fsvg) return;
+      fsvg.classList.remove('focusing');
+      fEdges().forEach(p => { p.classList.remove('hot'); p.setAttribute('marker-end', 'url(#tkArrow)'); });
+      fsvg.querySelectorAll('.lit, .selected').forEach(x => x.classList.remove('lit', 'selected'));
+    }
+    function fFocus(id) {
+      const ns = fNodes();
+      fsvg.classList.add('focusing');
+      Object.values(ns).forEach(g => g.classList.remove('lit'));
+      ns[id].classList.add('lit');
+      for (const p of fEdges()) {
+        const hot = p.dataset.from === id || p.dataset.to === id;
+        p.classList.toggle('hot', hot);
+        p.setAttribute('marker-end', hot ? 'url(#tkArrowHot)' : 'url(#tkArrow)');
+        if (hot) { ns[p.dataset.from].classList.add('lit'); ns[p.dataset.to].classList.add('lit'); }
+      }
+    }
+    function placePop(anchor) {
+      // Beside the anchor, flipping to the side with room; clamped inside the view.
+      const body = fullBody.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 12;
+      let x = anchor.right + gap - body.left;
+      if (x + pw > body.width - 8) x = anchor.left - gap - pw - body.left;
+      x = Math.max(8, Math.min(x, body.width - pw - 8));
+      let y = anchor.top - body.top;
+      y = Math.max(8, Math.min(y, body.height - ph - 8));
+      pop.style.left = x + 'px'; pop.style.top = y + 'px';
+    }
+    function openPop(kind, key, anchor) {
+      popFor = { kind, key, anchor };
+      fClear();
+      if (kind === 'node') { fFocus(key); fNodes()[key].classList.add('selected'); pop.innerHTML = panelHTML(key); }
+      else {
+        fsvg.classList.add('focusing');
+        for (const n of NODES) if (n.layer === key) fNodes()[n.id].classList.add('lit');
+        fsvg.querySelectorAll(`rect.band[data-layer="${key}"]`).forEach(r => r.classList.add('selected'));
+        pop.innerHTML = layerHTML(key);
+      }
+      pop.insertAdjacentHTML('afterbegin', '<button type="button" class="tk-pop-close" aria-label="Close details">×</button>');
+      pop.hidden = false;
+      placePop(anchor);
+    }
+    function closePop() { pop.hidden = true; popFor = null; fClear(); }
+    function openFull() {
+      fsvg?.remove();
+      fsvg = svg.cloneNode(true);
+      fsvg.removeAttribute('style');
+      fsvg.classList.add('tk-full-svg');
+      fsvg.querySelectorAll('g.node').forEach(g => {
+        const t = document.createElementNS(NS, 'title'); t.textContent = byId[g.dataset.id].label; g.prepend(t);
+      });
+      fullBody.insertBefore(fsvg, pop);
+      fClear(); pop.hidden = true; popFor = null;
+      fsvg.querySelectorAll('g.node').forEach(g => {
+        const id = g.dataset.id;
+        g.addEventListener('mouseenter', () => { if (!popFor) fFocus(id); });
+        g.addEventListener('mouseleave', () => { if (!popFor) fClear(); });
+        g.addEventListener('focus', () => { if (popFor?.key !== id) openPop('node', id, g.getBoundingClientRect()); });
+        g.addEventListener('click', e => { e.stopPropagation(); if (popFor?.key !== id) openPop('node', id, g.getBoundingClientRect()); });
+      });
+      fsvg.querySelectorAll('rect.band').forEach(r => r.addEventListener('click', e => {
+        e.stopPropagation();
+        openPop('layer', r.dataset.layer, { left: e.clientX, right: e.clientX, top: e.clientY });
+      }));
+      sizeFull();
+      fullDlg.showModal();
+    }
+    function sizeFull() {
+      // As wide as the map's shape can use at 96vh, never wider than 96vw.
+      const headH = 44, pad = 24;
+      const w = Math.min(window.innerWidth * 0.96, (window.innerHeight * 0.96 - headH - pad) * VW / VH + pad);
+      fullDlg.style.width = Math.round(w) + 'px';
+    }
+    window.addEventListener('resize', () => { if (fullDlg.open) { sizeFull(); if (popFor && popFor.kind === 'node') placePop(fNodes()[popFor.key].getBoundingClientRect()); } });
+    mount.querySelector('.tk-full-btn').addEventListener('click', openFull);
+    fullDlg.querySelector('.tk-modal-close').addEventListener('click', () => fullDlg.close());
+    fullDlg.addEventListener('cancel', e => { if (popFor) { e.preventDefault(); closePop(); } });  // Esc: popover first
+    fullDlg.addEventListener('close', () => { closePop(); });
+    fullDlg.addEventListener('click', e => {
+      if (e.target === fullDlg) { fullDlg.close(); return; }                  // outside the view
+      if (e.target.closest('.tk-pop-close')) { closePop(); return; }
+      if (e.target.closest('[data-gov]') && popFor?.kind === 'node') {        // governance chip, as in the panel
+        govView = !govView; const a = popFor.anchor; openPop('node', popFor.key, a); return;
+      }
+      if (popFor && !e.target.closest('.tk-pop')) closePop();                 // the map's background
+    });
+
     return { select, deselect };
   }
 
