@@ -6,7 +6,8 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./dissolve": "./src/dissolve/index.ts"
+    "./dissolve": "./src/dissolve/index.ts",
+    "./reception": "./src/reception/index.ts"
   },
   "license": "MIT",
   "dependencies": {

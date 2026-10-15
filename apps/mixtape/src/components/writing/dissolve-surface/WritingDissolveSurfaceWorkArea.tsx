@@ -16,11 +16,13 @@ import {
   IconBooks,
   IconClipboardCheck,
   IconFileImport,
+  IconHome2,
   IconPencil,
 } from "@tabler/icons-react";
 import { OuterRim, useDissolve, type RimPositionItem } from "@mixtape/ui/dissolve";
 import type { Group } from "@mixtape/core/types/groupTypes";
 
+import { WritingReception } from "@/components/writing/dissolve-surface/WritingReception";
 import SponsorWritingWrapper from "@/components/writing/SponsorWritingWrapper";
 import DocumentImportWorkArea from "@/components/writing/import/DocumentImportWorkArea";
 import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
@@ -73,7 +75,8 @@ export function WritingDissolveSurfaceWorkArea({
   canManagePosts,
   setActiveSection,
 }: WritingDissolveSurfaceWorkAreaProps) {
-  const [activeRim, setActiveRim] = useState<RimKey>("writing");
+  // null = Writing Reception, the landing (decisions/writing-surface-adr, WR-4).
+  const [activeRim, setActiveRim] = useState<RimKey | null>(null);
   const { dissolving, transitionDuration, dissolveTo } = useDissolve({ regionKey: "writing-dissolve-surface" });
 
   const sponsor = { type: "group" as const, id: group.id, slug: group.slug, displayName: group.title };
@@ -86,20 +89,37 @@ export function WritingDissolveSurfaceWorkArea({
     ...(isSuperuser ? (["editors-desk", "draft-room"] as RimKey[]) : []),
   ];
 
-  const items: RimPositionItem[] = visibleKeys.map((key) => {
-    const Icon = RIM_ICONS[key];
-    return {
-      id: key,
-      active: key === activeRim,
-      content: (
-        <HStack gap={2} py={1.5}>
-          <Icon size={18} color={key === activeRim ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
-          <Text fontWeight={key === activeRim ? "semibold" : "normal"}>{RIM_LABELS[key]}</Text>
-        </HStack>
-      ),
-      onSelect: () => dissolveTo(() => setActiveRim(key)),
-    };
-  });
+  const receptionItem: RimPositionItem = {
+    id: "reception",
+    active: activeRim === null,
+    content: (
+      <HStack gap={2} py={1}>
+        <IconHome2 size={15} color={activeRim === null ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
+        <Text fontSize="sm" color="fg.muted" fontWeight={activeRim === null ? "semibold" : "normal"}>
+          Reception
+        </Text>
+      </HStack>
+    ),
+    onSelect: () => dissolveTo(() => setActiveRim(null)),
+  };
+
+  const items: RimPositionItem[] = [
+    receptionItem,
+    ...visibleKeys.map((key) => {
+      const Icon = RIM_ICONS[key];
+      return {
+        id: key,
+        active: key === activeRim,
+        content: (
+          <HStack gap={2} py={1.5}>
+            <Icon size={18} color={key === activeRim ? `var(--chakra-colors-${ACCENT_COLOR}-600)` : undefined} />
+            <Text fontWeight={key === activeRim ? "semibold" : "normal"}>{RIM_LABELS[key]}</Text>
+          </HStack>
+        ),
+        onSelect: () => dissolveTo(() => setActiveRim(key)),
+      };
+    }),
+  ];
 
   return (
     <Box display="flex" gap={4} h="100%" minH="0">
@@ -114,9 +134,19 @@ export function WritingDissolveSurfaceWorkArea({
           out of the calc on purpose; centering here keeps the work area
           stable rather than re-centering around a transient width. */}
       <Box flex="1" minH="0" maxW="1200px" mx="auto" opacity={dissolving ? 0 : 1} transition={`opacity ${transitionDuration} ease`}>
-        <Heading size="sm" mb={3} color="fg.muted" borderLeft="3px solid" borderColor={`${ACCENT_COLOR}.500`} pl={2}>
-          Writing Dissolve Surface — pilot (decisions/dissolve-outer-rim-adr)
-        </Heading>
+        {activeRim === null && (
+          <WritingReception
+            sponsor={sponsor}
+            showOpenIssues={isSuperuser}
+            onOpenPiece={(pieceId) => (pieceId ? setActiveSection("write", { piece: pieceId }) : setActiveSection("write"))}
+            onGoToIssues={() => dissolveTo(() => setActiveRim("editors-desk"))}
+          />
+        )}
+        {activeRim !== null && (
+          <Heading size="sm" mb={3} color="fg.muted" borderLeft="3px solid" borderColor={`${ACCENT_COLOR}.500`} pl={2}>
+            {RIM_LABELS[activeRim]}
+          </Heading>
+        )}
         {activeRim === "writing" && (
           <SponsorWritingWrapper sponsor={sponsor} setActiveSection={setActiveSection} canManagePosts={canManagePosts} />
         )}
