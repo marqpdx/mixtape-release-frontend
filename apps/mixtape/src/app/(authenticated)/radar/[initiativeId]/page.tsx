@@ -402,7 +402,7 @@ function ArtifactsZone({ initiativeId }: { initiativeId: string }) {
               autoFocus
             />
             <Input
-              placeholder="Doc path (e.g. pilots/weave-pilot.md)"
+              placeholder="Doc path (e.g. pilots/loom-pilot.md)"
               value={docPath}
               onChange={(e) => setDocPath(e.target.value)}
               size="sm"
