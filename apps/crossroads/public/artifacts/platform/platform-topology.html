@@ -31,6 +31,9 @@
     .pill.primary{background:var(--ink);color:var(--paper)}
     h1{max-width:720px;font:800 clamp(34px,5vw,60px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
     .lede{max-width:60ch;color:var(--body);font-size:18px;line-height:1.5}
+    .trio{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:700 clamp(18px,2vw,22px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
+    .trio span+span::before{content:'';display:inline-block;width:7px;height:7px;margin:0 14px 3px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
+    .footer .built{display:block;margin-bottom:6px}
     .depth-wrap{display:grid;gap:8px}.depths{display:flex;overflow:hidden;background:var(--cream);border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
     .depth{min-width:110px;padding:10px 16px;border:0;background:transparent;cursor:pointer;display:grid;gap:2px;text-align:left}
     .depth+.depth{border-left:1.5px solid rgba(31,29,23,.18)}.depth[aria-checked=true]{background:var(--ink);color:var(--cream)}
@@ -96,7 +99,8 @@
       <div class="intro">
         <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span></div>
         <h1>What happens when you bring what matters into Mixtape?</h1>
-        <p class="lede">You arrive at Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
+        <p class="trio" aria-label="What Mixtape is for"><span>Collaboration</span><span>Self-expression</span><span>Knowledge building</span></p>
+        <p class="lede">Mixtape is a suite of tools for collaboration, self-expression and knowledge building. You arrive at Main Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
       </div>
       <div class="depth-wrap">
         <span class="eyebrow" id="depth-label">How deep do you want to go?</span>
@@ -115,8 +119,8 @@
             <button class="login" type="button" data-node="login"><span class="login-mark"></span>Log in <small>the front door</small></button>
             <div class="arrival-line"></div>
             <div class="reception">
-              <div class="reception-head"><div class="reception-title"><span class="eyebrow">Reception · the hinge</span><h2>Where was I? What's happening? What matters now?</h2></div><button class="badge" type="button" data-node="reception" aria-label="Learn about Reception">N</button></div>
-              <p class="story-copy story">Reception picks up where you left off — the things underway, what's changed, and what deserves your attention — before you head anywhere else.</p>
+              <div class="reception-head"><div class="reception-title"><span class="eyebrow">Main Reception · the hinge</span><h2>Where was I? What's happening? What matters now?</h2></div><button class="badge" type="button" data-node="reception" aria-label="Learn about Reception">N</button></div>
+              <p class="story-copy story">Main Reception picks up where you left off — the things underway, what's changed, and what deserves your attention — before you head anywhere else.</p>
               <div class="feed places"><span class="feed-label">Since you were last here</span>
                 <button class="feed-row" type="button" data-node="atrium"><span>Return to last night's ideation</span><span class="destination"><span class="dot" style="--dot:#466D80"></span>Atrium</span></button>
                 <button class="feed-row" type="button" data-follow="m2"><span>Tuesday morning's weekly order is due</span><span class="destination"><span class="dot" style="--dot:#70527F"></span>Storyline</span></button>
@@ -152,7 +156,7 @@
       </div>
     </section>
     <section class="closing"><p class="statement">The Surfaces change. The Material persists. You remain the steward. The systems underneath make that possible.</p><div class="principles"><span class="eyebrow">Principles this map is built on</span><div class="principle-list"><span class="principle primary">What Matters</span><span class="principle">Attention is precious</span><span class="principle">Knowledge takes stewardship</span><span class="principle">Humans decide</span><span class="principle">Your work should remember</span><span class="principle">Enoughness</span></div><p>If you tell us something matters, we take that seriously.</p><div class="lifecycle machinery" id="lifecycle"></div></div></section>
-    <footer class="footer">Conceptual view, not a service diagram — for routing and service boundaries see the system map. <a href="../system/system-topology.html">System map →</a> · <a href="../loom/loom-topology-enhanced.html">Loom internals →</a></footer>
+    <footer class="footer"><span class="built">Mixtape is built, and still being built, through natural language software development, part of a wider practice of natural language knowledge building.</span>Conceptual view, not a service diagram — for routing and service boundaries see the system map. <a href="../system/system-topology.html">System map →</a> · <a href="../loom/loom-topology-enhanced.html">Loom internals →</a></footer>
   </main>
   <div class="scrim" id="scrim" hidden></div>
   <aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden><div class="panel-head" id="panel-head"><div class="panel-titles"><span class="panel-kicker" id="panel-kicker"></span><h2 class="panel-title" id="panel-title"></h2></div><button class="close" id="close" type="button" aria-label="Close detail panel">×</button></div><div class="panel-body"><section class="panel-section"><span class="panel-label"><b>N</b>In plain language</span><p class="panel-narr" id="panel-narr"></p></section><section class="panel-section panel-tech" id="panel-tech-wrap"><span class="panel-label"><b>T</b>How it's built</span><p id="panel-tech"></p></section></div></aside>
@@ -182,7 +186,7 @@
     ];
     const NODES={
       login:{k:'The front door',t:'Log in',c:'#1f1d17',f:'#FFFBF1',n:'Login is built around a solid member and profile presence — a long-lived base from which to share writing, images, invitations and more. It asks for almost none of your attention.',x:'JWT authentication uses short-lived access tokens and a refresh flow. Identity is split across the authentication record and member-facing profile.'},
-      reception:{k:'The hinge',t:'Reception',c:'#FFFBF1',f:'#1f1d17',n:'The meaningful arrival. Reception establishes continuity between visits: where you were, what has happened since, what an agent has finished, and what deserves your attention now. Then you head outward.'},
+      reception:{k:'The hinge',t:'Main Reception',c:'#FFFBF1',f:'#1f1d17',n:'The meaningful arrival. Main Reception establishes continuity between visits: where you were, what has happened since, what an agent has finished, and what deserves your attention now. Then you head outward. It is the hub: each Surface has its own smaller Reception, and each links back here.'},
       humans:{k:'Architectural invariant',t:'Humans decide',c:'#1f1d17',f:'#FFFBF1',n:'AI always suggests; humans decide. Accepted changes pass human curation, and cloud operations require explicit approval. This is architecture, not a UX preference.',x:'Switchboard enforces approval and policy gates; architectural intent is held against Puddlejump canon.'},
       atrium:{k:'Surface · Think it through',t:'Atrium',c:'#466D80',f:'#F3F7F8',n:'A place to think something through before it has a settled form.'},
       catalyst:{k:'Surface · Find · amend · add',t:'Catalyst',c:'#A2C03F',f:'#22290a',n:'Three verbs: Find, Amend, Add. The knowledge an organization relies on, kept current — every accepted change goes through a human curator.',x:'CORE defines engine behavior; CONTENT holds knowledge; Fixture files are editable, divergence-tracked starter material.'},
