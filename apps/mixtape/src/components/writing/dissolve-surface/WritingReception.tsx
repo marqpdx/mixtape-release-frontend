@@ -26,6 +26,7 @@ import { listIssueGrouping } from "@mixtape/api/clients/writing/issueBoardApi";
 import type { IssueGrouping, WorkingDocument } from "@mixtape/core/types/writingTypes";
 import { extractDisplayTextFromProseMirror } from "@/components/writing/WritingListWrapper";
 import { DraftFilterToolbar } from "@/components/writing/DraftFilterToolbar";
+import { useColorModeValue } from "@components/ui/color-mode";
 
 const ACCENT_COLOR = "amber";
 const RECENT_RICH_COUNT = 2;
@@ -100,9 +101,19 @@ function ReceptionSection({
   );
 }
 
-function ReceptionRow({ title, meta, onClick }: { title: string; meta?: React.ReactNode; onClick: () => void }) {
+function ReceptionRow({
+  title,
+  meta,
+  onClick,
+  cardBg,
+}: {
+  title: string;
+  meta?: React.ReactNode;
+  onClick: () => void;
+  cardBg: string;
+}) {
   return (
-    <HStack justify="space-between" px={2} py={1.5} borderRadius="md" cursor="pointer" _hover={{ bg: "theme.surface" }} onClick={onClick}>
+    <HStack justify="space-between" px={2} py={1.5} borderRadius="md" bg={cardBg} cursor="pointer" _hover={{ borderColor: `${ACCENT_COLOR}.400` }} borderWidth="1px" borderColor="border.muted" onClick={onClick}>
       <Text fontSize="sm" lineClamp={1}>
         {title}
       </Text>
@@ -118,11 +129,22 @@ function ReceptionRow({ title, meta, onClick }: { title: string; meta?: React.Re
 }
 
 /** One of the 2 richest recent-work rows: title + Draft badge + Issue pill, excerpt, last-saved. */
-function RecentCard({ draft, issueTitle, onClick }: { draft: WorkingDocument; issueTitle: string | null; onClick: () => void }) {
+function RecentCard({
+  draft,
+  issueTitle,
+  onClick,
+  cardBg,
+}: {
+  draft: WorkingDocument;
+  issueTitle: string | null;
+  onClick: () => void;
+  cardBg: string;
+}) {
   const excerpt = draftExcerpt(draft);
   const lastSaved = new Date(draft.last_saved_at || draft.piece.updated_at || draft.piece.created_at);
   return (
     <Box
+      bg={cardBg}
       borderWidth="1px"
       borderColor="border.muted"
       borderRadius="md"
@@ -152,10 +174,20 @@ function RecentCard({ draft, issueTitle, onClick }: { draft: WorkingDocument; is
 }
 
 /** The next 3 recent-work rows: a single line naming the piece — no content. */
-function RecentTitleRow({ draft, issueTitle, onClick }: { draft: WorkingDocument; issueTitle: string | null; onClick: () => void }) {
+function RecentTitleRow({
+  draft,
+  issueTitle,
+  onClick,
+  cardBg,
+}: {
+  draft: WorkingDocument;
+  issueTitle: string | null;
+  onClick: () => void;
+  cardBg: string;
+}) {
   const lastSaved = new Date(draft.last_saved_at || draft.piece.updated_at || draft.piece.created_at);
   return (
-    <HStack justify="space-between" px={2} py={1.5} borderRadius="md" cursor="pointer" _hover={{ bg: "theme.surface" }} onClick={onClick}>
+    <HStack justify="space-between" px={2} py={1.5} bg={cardBg} cursor="pointer" _hover={{ bg: "bg.muted" }} onClick={onClick}>
       <HStack gap={2} minW={0}>
         <Text fontSize="sm" lineClamp={1}>
           {draft.piece.title || "Untitled Draft"}
@@ -174,6 +206,7 @@ function RecentTitleRow({ draft, issueTitle, onClick }: { draft: WorkingDocument
 }
 
 export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpenPiece, onGoToIssues }: WritingReceptionProps) {
+  const cardBg = useColorModeValue("white", "gray.800");
   const { drafts, placements, showSolo, showCollab, setShowSolo, setShowCollab } = useWriting(sponsor.type, sponsor.slug);
   const { issues } = useIssues({ type: sponsor.type, slug: sponsor.slug });
 
@@ -267,11 +300,8 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
         </HStack>
       </Box>
 
-      <VStack align="stretch" gap={6}>
+      <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "7fr 3fr" }} gap={6} mb={6} alignItems="start">
         <Box>
-          <Text fontSize="sm" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wide" mb={2}>
-            Recent work
-          </Text>
           {recentDrafts.length === 0 ? (
             <Text fontSize="sm" color="fg.muted">
               {search ? "No drafts match your search." : "No drafts yet."}
@@ -284,6 +314,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
                   draft={d}
                   issueTitle={issueTitleByPieceId.get(d.piece.id) ?? null}
                   onClick={() => onOpenPiece(String(d.piece.id))}
+                  cardBg={cardBg}
                 />
               ))}
               {recentDrafts.length > RECENT_RICH_COUNT && (
@@ -294,6 +325,7 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
                       draft={d}
                       issueTitle={issueTitleByPieceId.get(d.piece.id) ?? null}
                       onClick={() => onOpenPiece(String(d.piece.id))}
+                      cardBg={cardBg}
                     />
                   ))}
                 </VStack>
@@ -309,35 +341,37 @@ export function WritingReception({ sponsor, canCreatePost, showOpenIssues, onOpe
               title={p.piece_title || "Untitled"}
               meta={p.published_at ? formatDistanceToNow(new Date(p.published_at), { addSuffix: true }) : undefined}
               onClick={() => onOpenPiece(String(p.piece_id))}
+              cardBg={cardBg}
             />
           ))}
         </ReceptionSection>
+      </Box>
 
-        {showOpenIssues && (
-          <ReceptionSection
-            title="Open Issues"
-            emptyLabel="No open Issues."
-            action={
-              <Button size="xs" variant="ghost" onClick={onGoToIssues}>
-                Editor's Desk →
-              </Button>
-            }
-          >
-            {openIssues.map((i) => (
-              <ReceptionRow
-                key={i.id}
-                title={i.title}
-                meta={
-                  <Badge size="sm" colorScheme="yellow">
-                    draft
-                  </Badge>
-                }
-                onClick={onGoToIssues}
-              />
-            ))}
-          </ReceptionSection>
-        )}
-      </VStack>
+      {showOpenIssues && (
+        <ReceptionSection
+          title="Open Issues"
+          emptyLabel="No open Issues."
+          action={
+            <Button size="xs" variant="ghost" onClick={onGoToIssues}>
+              Editor's Desk →
+            </Button>
+          }
+        >
+          {openIssues.map((i) => (
+            <ReceptionRow
+              key={i.id}
+              title={i.title}
+              meta={
+                <Badge size="sm" colorScheme="yellow">
+                  draft
+                </Badge>
+              }
+              onClick={onGoToIssues}
+              cardBg={cardBg}
+            />
+          ))}
+        </ReceptionSection>
+      )}
     </Box>
   );
 }
