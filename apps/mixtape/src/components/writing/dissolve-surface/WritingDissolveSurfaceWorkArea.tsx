@@ -17,6 +17,7 @@ import {
   IconClipboardCheck,
   IconFileImport,
   IconHome2,
+  IconLayoutBoardSplit,
   IconPencil,
 } from "@tabler/icons-react";
 import { OuterRim, useDissolve, type RimPositionItem } from "@mixtape/ui/dissolve";
@@ -31,6 +32,7 @@ import SeriesWritingWorkArea from "@/components/writing/SeriesWritingWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 import { EditorsDeskWorkArea } from "@/components/writing/editors-desk/EditorsDeskWorkArea";
 import DraftRoomWorkArea from "@/components/writing/draft-room/DraftRoomWorkArea";
+import { EditorsDeskMergedWorkArea } from "@/components/writing/editors-desk-merged/EditorsDeskMergedWorkArea";
 
 type RimKey =
   | "writing"
@@ -38,7 +40,8 @@ type RimKey =
   | "series-writing"
   | "dual-panel-editor"
   | "editors-desk"
-  | "draft-room";
+  | "draft-room"
+  | "editors-desk-merged";
 
 interface WritingDissolveSurfaceWorkAreaProps {
   group: Group;
@@ -55,6 +58,7 @@ const RIM_LABELS: Record<RimKey, string> = {
   "dual-panel-editor": "Draft ↔ Dispatch",
   "editors-desk": "Editor's Desk",
   "draft-room": "Draft Room",
+  "editors-desk-merged": "Editor's Desk (merged, experimental)",
 };
 
 // Area Icons — decisions/dissolve-outer-rim-adr §3a. One fixed Tabler glyph
@@ -67,6 +71,7 @@ const RIM_ICONS: Record<RimKey, typeof IconPencil> = {
   "dual-panel-editor": IconArrowsRightLeft,
   "editors-desk": IconClipboardCheck,
   "draft-room": IconArmchair2,
+  "editors-desk-merged": IconLayoutBoardSplit,
 };
 
 const ACCENT_COLOR = "amber";
@@ -94,9 +99,13 @@ export function WritingDissolveSurfaceWorkArea({
   // so Writing, Import Documents, Series Writing and Draft <-> Dispatch are
   // hidden from the rim for now — their code and the classic groupConfig.ts
   // sub-items are untouched, so this is reversible. Draft Room and Editor's
-  // Desk stay as the two the CTO named as next most important; a merge
-  // between them is a separate, open question (not built here).
-  const visibleKeys: RimKey[] = [...(isSuperuser ? (["editors-desk", "draft-room"] as RimKey[]) : [])];
+  // Desk stay as the two the CTO named as next most important. A greenfield
+  // merge of the two (CTO, 2026-10-15: "they are like 1.5 things") sits
+  // alongside them as its own rim position, not a replacement — compare
+  // directly, nothing at risk.
+  const visibleKeys: RimKey[] = [
+    ...(isSuperuser ? (["editors-desk", "draft-room", "editors-desk-merged"] as RimKey[]) : []),
+  ];
 
   // No rim position reads as "active" while editing a piece — the editor
   // isn't any one of them, and a stale highlight would be misleading.
@@ -206,6 +215,7 @@ export function WritingDissolveSurfaceWorkArea({
               />
             )}
             {activeRim === "draft-room" && <DraftRoomWorkArea sponsor={sponsor} setActiveSection={setActiveSection} />}
+            {activeRim === "editors-desk-merged" && <EditorsDeskMergedWorkArea sponsor={sponsor} />}
           </>
         )}
       </Box>
