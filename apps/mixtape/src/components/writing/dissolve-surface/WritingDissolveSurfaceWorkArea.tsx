@@ -89,13 +89,14 @@ export function WritingDissolveSurfaceWorkArea({
 
   const sponsor = { type: "group" as const, id: group.id, slug: group.slug, displayName: group.title };
 
-  const visibleKeys: RimKey[] = [
-    "writing",
-    "import-document",
-    "series-writing",
-    "dual-panel-editor",
-    ...(isSuperuser ? (["editors-desk", "draft-room"] as RimKey[]) : []),
-  ];
+  // Trimmed to the rim per the CTO's "fewer surfaces" direction (2026-10-15):
+  // Reception now covers what Writing's own list did (recent/published/new),
+  // so Writing, Import Documents, Series Writing and Draft <-> Dispatch are
+  // hidden from the rim for now — their code and the classic groupConfig.ts
+  // sub-items are untouched, so this is reversible. Draft Room and Editor's
+  // Desk stay as the two the CTO named as next most important; a merge
+  // between them is a separate, open question (not built here).
+  const visibleKeys: RimKey[] = [...(isSuperuser ? (["editors-desk", "draft-room"] as RimKey[]) : [])];
 
   // No rim position reads as "active" while editing a piece — the editor
   // isn't any one of them, and a stale highlight would be misleading.
