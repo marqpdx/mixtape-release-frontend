@@ -9,11 +9,19 @@
 // Reuse, don't fork: the craft layer (DraftRoomBodyEditor, AtelierShapeTab,
 // AtelierMetaTab, CraftReadinessDots) is the same components Draft Room
 // itself uses, imported directly. The assembly layer (issues, placements,
-// reorder, lead piece, sign-off, spellcheck, publish) reuses the same
-// useIssues/useIssue hooks Editor's Desk uses. What's new here is only the
+// reorder, lead piece, sign-off, spellcheck, publish, and the read-model
+// that carries per-piece excerpts) reuses the same useIssues/useIssue/
+// useIssueRead hooks Editor's Desk uses. What's new here is only the
 // orchestration gluing craft and assembly into one surface — Editor's
 // Desk's own row/card/panel JSX is private to that file and unexported, so
 // that presentation layer is necessarily rebuilt, not copied.
+//
+// Revised 2026-10-15 (CTO: "too mere... needs to be me-friendly... I want
+// to see first sentences... Recency matters a lot"): titles were being
+// clamped to a sliver by a too-narrow column; now full-width, two-line
+// titles with a real excerpt per row (from useIssueRead's per-piece
+// excerpt field), recency-sorted Issues, and an auto-selected most-recent
+// piece so the craft pane is never a wall of empty space by default.
 //
 // Scope, deliberately: drag-and-drop reorder and add-to-issue (dnd-kit,
 // in EditorsDeskWorkArea) are replaced here with up/down buttons and a
@@ -39,9 +47,11 @@ import {
   Portal,
 } from "@chakra-ui/react";
 import type { JSONContent } from "@tiptap/react";
+import { formatDistanceToNow } from "date-fns";
 import {
   IconChevronDown,
   IconChevronUp,
+  IconFilePlus,
   IconLock,
   IconPlus,
   IconStar,
@@ -53,7 +63,8 @@ import {
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { toaster } from "@components/ui/toaster";
 import { Tooltip } from "@components/ui/tooltip";
-import { useIssues, useIssue } from "@mixtape/api/hooks/useIssueBoard";
+import { useColorModeValue } from "@components/ui/color-mode";
+import { useIssues, useIssue, useIssueRead } from "@mixtape/api/hooks/useIssueBoard";
 import { useWriting } from "@hooks/useWriting";
 import type { IssuePlacement } from "@mixtape/core/types/writingTypes";
 import DraftRoomBodyEditor from "@/components/writing/draft-room/DraftRoomBodyEditor";
@@ -83,49 +94,67 @@ function toIdList(ids: Array<number | string>): number[] {
 function IssueRailCard({
   title,
   status,
+  pieceCount,
+  updatedAt,
   focused,
+  cardBg,
+  hoverBg,
   onClick,
   onDelete,
 }: {
   title: string;
   status: string;
+  pieceCount: number;
+  updatedAt: string;
   focused: boolean;
+  cardBg: string;
+  hoverBg: string;
   onClick: () => void;
   onDelete: () => void;
 }) {
   return (
-    <HStack
-      justify="space-between"
+    <Box
       px={3}
       py={2}
-      borderRadius="md"
+      borderRadius="lg"
       borderWidth="1px"
       borderColor={focused ? `${ACCENT_COLOR}.400` : "border.muted"}
-      bg={focused ? `${ACCENT_COLOR}.50` : "transparent"}
+      bg={focused ? `${ACCENT_COLOR}.50` : cardBg}
       _dark={focused ? { bg: "whiteAlpha.100" } : undefined}
+      _hover={focused ? undefined : { bg: hoverBg }}
       cursor="pointer"
       onClick={onClick}
     >
-      <VStack align="stretch" gap={0} minW={0}>
-        <Text fontSize="sm" fontWeight="semibold" lineClamp={1}>
-          {title}
-        </Text>
-        <Badge size="xs" variant="subtle" alignSelf="flex-start">
-          {status}
-        </Badge>
-      </VStack>
-      <IconButton
-        aria-label="Delete Issue"
-        size="2xs"
-        variant="ghost"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-      >
-        <IconX size={12} />
-      </IconButton>
-    </HStack>
+      <HStack justify="space-between" align="flex-start">
+        <VStack align="stretch" gap={1} minW={0}>
+          <Text fontSize="sm" fontWeight="bold" lineClamp={2}>
+            {title}
+          </Text>
+          <HStack gap={2}>
+            <Badge size="xs" variant="subtle">
+              {status}
+            </Badge>
+            <Text fontSize="xs" color="fg.muted">
+              {pieceCount} {pieceCount === 1 ? "piece" : "pieces"}
+            </Text>
+          </HStack>
+          <Text fontSize="xs" color="fg.muted">
+            Updated {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
+          </Text>
+        </VStack>
+        <IconButton
+          aria-label="Delete Issue"
+          size="2xs"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <IconX size={12} />
+        </IconButton>
+      </HStack>
+    </Box>
   );
 }
 
@@ -135,7 +164,7 @@ function CreateIssueInline({ onCreate }: { onCreate: (title: string) => void }) 
 
   if (!active) {
     return (
-      <Button size="xs" variant="outline" onClick={() => setActive(true)}>
+      <Button size="sm" variant="outline" colorScheme={ACCENT_COLOR} onClick={() => setActive(true)}>
         <IconPlus size={14} /> New Issue
       </Button>
     );
@@ -172,12 +201,18 @@ function CreateIssueInline({ onCreate }: { onCreate: (title: string) => void }) 
   );
 }
 
-function PlacementRow({
+/** A real card per piece: full title, an actual first-sentence excerpt, and
+ * when it was last touched — not a sliver of truncated text in a thin row. */
+function PlacementCard({
   placement,
+  excerpt,
+  lastActivity,
   index,
   total,
   selected,
   readiness,
+  cardBg,
+  hoverBg,
   onSelect,
   onMoveUp,
   onMoveDown,
@@ -185,10 +220,14 @@ function PlacementRow({
   onRemove,
 }: {
   placement: IssuePlacement;
+  excerpt: string;
+  lastActivity: string | null;
   index: number;
   total: number;
   selected: boolean;
   readiness?: CraftReadiness;
+  cardBg: string;
+  hoverBg: string;
   onSelect: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -196,62 +235,117 @@ function PlacementRow({
   onRemove: () => void;
 }) {
   return (
-    <HStack
-      justify="space-between"
-      px={2}
-      py={1.5}
-      borderRadius="md"
+    <Box
+      borderRadius="lg"
       borderWidth="1px"
       borderColor={selected ? `${ACCENT_COLOR}.400` : "border.muted"}
-      bg={selected ? `${ACCENT_COLOR}.50` : "transparent"}
+      bg={selected ? `${ACCENT_COLOR}.50` : cardBg}
       _dark={selected ? { bg: "whiteAlpha.100" } : undefined}
+      _hover={selected ? undefined : { bg: hoverBg }}
       cursor="pointer"
+      p={3}
       onClick={onSelect}
     >
-      <HStack gap={2} minW={0}>
-        <Tooltip content={placement.is_lead ? "Unmark lead piece" : "Mark as lead piece"}>
-          <IconButton
-            aria-label="Toggle lead"
-            size="2xs"
-            variant="ghost"
-            colorPalette={placement.is_lead ? "yellow" : "gray"}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSetLead();
-            }}
-          >
-            {placement.is_lead ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+      <HStack justify="space-between" align="flex-start" mb={1}>
+        <HStack gap={2} minW={0} align="flex-start">
+          <Tooltip content={placement.is_lead ? "Unmark lead piece" : "Mark as lead piece"}>
+            <IconButton
+              aria-label="Toggle lead"
+              size="2xs"
+              variant="ghost"
+              colorPalette={placement.is_lead ? "yellow" : "gray"}
+              flexShrink={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetLead();
+              }}
+            >
+              {placement.is_lead ? <IconStarFilled size={14} /> : <IconStar size={14} />}
+            </IconButton>
+          </Tooltip>
+          <Text fontSize="sm" fontWeight="semibold" lineClamp={2}>
+            {placement.piece_title || "Untitled"}
+          </Text>
+        </HStack>
+        <HStack gap={0} flexShrink={0}>
+          <IconButton aria-label="Move up" size="2xs" variant="ghost" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveUp(); }}>
+            <IconChevronUp size={12} />
           </IconButton>
-        </Tooltip>
-        <Text fontSize="sm" lineClamp={1}>
-          {placement.piece_title || "Untitled"}
-        </Text>
-        {placement.spellcheck_clean && <IconTextSpellcheck size={13} color="var(--chakra-colors-green-600)" />}
-        {placement.signed_off && <IconCheck size={13} color="var(--chakra-colors-green-600)" />}
+          <IconButton aria-label="Move down" size="2xs" variant="ghost" disabled={index === total - 1} onClick={(e) => { e.stopPropagation(); onMoveDown(); }}>
+            <IconChevronDown size={12} />
+          </IconButton>
+          <IconButton aria-label="Remove from Issue" size="2xs" variant="ghost" onClick={(e) => { e.stopPropagation(); onRemove(); }}>
+            <IconX size={12} />
+          </IconButton>
+        </HStack>
+      </HStack>
+
+      <Text fontSize="sm" color="fg.muted" lineClamp={2} mb={2} fontStyle={excerpt ? "normal" : "italic"}>
+        {excerpt || "No content yet..."}
+      </Text>
+
+      <HStack gap={3} fontSize="xs" color="fg.muted" wrap="wrap">
+        {lastActivity && <Text>Edited {formatDistanceToNow(new Date(lastActivity), { addSuffix: true })}</Text>}
+        {placement.spellcheck_clean && (
+          <HStack gap={1} color="green.600">
+            <IconTextSpellcheck size={13} />
+            <Text>Spelling reviewed</Text>
+          </HStack>
+        )}
+        {placement.signed_off && (
+          <HStack gap={1} color="green.600">
+            <IconCheck size={13} />
+            <Text>Signed off</Text>
+          </HStack>
+        )}
         <CraftReadinessDots readiness={readiness} />
       </HStack>
-      <HStack gap={0} flexShrink={0}>
-        <IconButton aria-label="Move up" size="2xs" variant="ghost" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveUp(); }}>
-          <IconChevronUp size={12} />
-        </IconButton>
-        <IconButton aria-label="Move down" size="2xs" variant="ghost" disabled={index === total - 1} onClick={(e) => { e.stopPropagation(); onMoveDown(); }}>
-          <IconChevronDown size={12} />
-        </IconButton>
-        <IconButton aria-label="Remove from Issue" size="2xs" variant="ghost" onClick={(e) => { e.stopPropagation(); onRemove(); }}>
-          <IconX size={12} />
-        </IconButton>
-      </HStack>
-    </HStack>
+    </Box>
   );
 }
 
 export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkAreaProps) {
+  const cardBg = useColorModeValue("white", "gray.800");
+  const hoverBg = useColorModeValue("gray.50", "gray.700");
+
   const { issues, createIssue, deleteIssue, addToIssue, removeFromIssue } = useIssues({ type: sponsor.type, slug: sponsor.slug });
   const [focusedIssueId, setFocusedIssueId] = useState<string | null>(null);
   const { issue, setPlacementLead, reorderPlacements, signOffPiece, reviewSpelling, publishIssue } = useIssue(focusedIssueId);
-  const { drafts } = useWriting(sponsor.type, sponsor.slug);
+  const { data: issueRead } = useIssueRead(focusedIssueId);
+  const { drafts, placements: publishedPlacements } = useWriting(sponsor.type, sponsor.slug);
+
+  // Recency matters: the Issues rail leads with whatever was touched most
+  // recently, and on first load (or whenever nothing is focused yet) we
+  // jump straight into it rather than showing an empty "pick one" state.
+  const issuesByRecency = useMemo(() => issues.slice().sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()), [issues]);
+
+  useEffect(() => {
+    if (focusedIssueId === null && issuesByRecency.length > 0) {
+      setFocusedIssueId(issuesByRecency[0].id);
+    }
+  }, [focusedIssueId, issuesByRecency]);
 
   const placements = useMemo(() => issue?.placements ?? [], [issue]);
+  const excerptByPieceId = useMemo(() => {
+    const map: Record<string, string> = {};
+    (issueRead?.placements ?? []).forEach((p) => {
+      map[p.id] = p.excerpt || "";
+    });
+    return map;
+  }, [issueRead]);
+
+  // Real recency per piece — the same two sources Reception reads, cross-
+  // referenced here instead of the publish-order index.
+  const lastActivityByPieceId = useMemo(() => {
+    const map: Record<string, string> = {};
+    drafts.forEach((d) => {
+      map[d.piece.id] = d.last_saved_at || d.piece.updated_at || d.piece.created_at;
+    });
+    publishedPlacements.forEach((p) => {
+      if (!map[p.piece_id]) map[p.piece_id] = p.updated_at || p.published_at || p.created_at;
+    });
+    return map;
+  }, [drafts, publishedPlacements]);
 
   const assignedPieceIds = useMemo(() => {
     const ids = new Set<string>();
@@ -268,6 +362,24 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
   // DraftRoomWorkArea keeps for its one selected piece.
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const selectedPlacement = placements.find((p) => p.piece_id === selectedPieceId) ?? null;
+
+  // Auto-select the most recently active piece whenever the focused Issue's
+  // placements change and nothing valid is currently selected — this is
+  // what keeps the craft pane from defaulting to a wall of empty space.
+  useEffect(() => {
+    if (placements.length === 0) {
+      setSelectedPieceId(null);
+      return;
+    }
+    if (placements.some((p) => p.piece_id === selectedPieceId)) return;
+    const mostRecent = placements.slice().sort((a, b) => {
+      const ta = lastActivityByPieceId[a.piece_id] ? new Date(lastActivityByPieceId[a.piece_id]).getTime() : 0;
+      const tb = lastActivityByPieceId[b.piece_id] ? new Date(lastActivityByPieceId[b.piece_id]).getTime() : 0;
+      return tb - ta;
+    })[0];
+    setSelectedPieceId(mostRecent.piece_id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placements]);
 
   const [title, setTitle] = useState("");
   const [addressedTo, setAddressedTo] = useState("public");
@@ -286,7 +398,7 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
     if (!selectedPlacement) return;
     setTitle(selectedPlacement.piece_title || "");
     setAddressedTo("public");
-    setExcerpt("");
+    setExcerpt(excerptByPieceId[selectedPlacement.piece_id] || "");
     setRevision(null);
     setDirty(false);
     let active = true;
@@ -371,23 +483,30 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
     reorderPlacements.mutate(pieceIds, { onError: () => toaster.create({ title: "Failed to reorder", type: "error" }) });
   };
 
+  const focusedIssueSummary = issue
+    ? `${placements.length} ${placements.length === 1 ? "piece" : "pieces"}${
+        placements.filter((p) => p.signed_off).length ? ` — ${placements.filter((p) => p.signed_off).length} signed off` : ""
+      }`
+    : "";
+
   return (
-    <Box display="flex" gap={4} h="100%" minH="0">
-      {/* Issue rail */}
-      <VStack align="stretch" gap={2} minW="220px" maxW="220px" borderRight="1px solid" borderColor="border.muted" pr={3} overflowY="auto">
+    <Box display="flex" gap={4} h="100%" minH="0" maxW="1400px">
+      {/* Issue rail — recency-sorted */}
+      <VStack align="stretch" gap={2} minW="240px" maxW="240px" borderRight="1px solid" borderColor="border.muted" pr={3} overflowY="auto">
         <Heading size="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
           Issues
         </Heading>
-        {issues.map((i) => (
+        {issuesByRecency.map((i) => (
           <IssueRailCard
             key={i.id}
             title={i.title}
             status={i.status}
+            pieceCount={i.piece_ids.length}
+            updatedAt={i.updated_at}
             focused={i.id === focusedIssueId}
-            onClick={() => {
-              setFocusedIssueId(i.id);
-              setSelectedPieceId(null);
-            }}
+            cardBg={cardBg}
+            hoverBg={hoverBg}
+            onClick={() => setFocusedIssueId(i.id)}
             onDelete={() => {
               deleteIssue.mutate(i.id, { onSuccess: () => { if (focusedIssueId === i.id) setFocusedIssueId(null); } });
             }}
@@ -398,18 +517,26 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
 
       {!issue ? (
         <Box flex="1" display="flex" alignItems="center" justifyContent="center">
-          <Text color="fg.muted" fontSize="sm">
-            Select or create an Issue to begin.
-          </Text>
+          <VStack gap={2}>
+            <IconFilePlus size={28} color="var(--chakra-colors-fg-muted)" />
+            <Text color="fg.muted" fontSize="sm">
+              Create an Issue to start crafting.
+            </Text>
+          </VStack>
         </Box>
       ) : (
         <>
-          {/* Placement list */}
-          <VStack align="stretch" gap={2} minW="280px" maxW="280px" borderRight="1px solid" borderColor="border.muted" pr={3} overflowY="auto">
-            <HStack justify="space-between">
-              <Heading size="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wide">
-                {issue.title}
-              </Heading>
+          {/* Placement cards */}
+          <VStack align="stretch" gap={2} minW="340px" maxW="340px" borderRight="1px solid" borderColor="border.muted" pr={3} overflowY="auto">
+            <HStack justify="space-between" align="flex-start">
+              <VStack align="stretch" gap={0}>
+                <Heading size="sm" lineClamp={1}>
+                  {issue.title}
+                </Heading>
+                <Text fontSize="xs" color="fg.muted">
+                  {focusedIssueSummary}
+                </Text>
+              </VStack>
               <Tooltip content={issue.is_publishable ? "Publish Issue" : "Every piece must be signed off first"}>
                 <Button
                   size="2xs"
@@ -428,13 +555,17 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
             </HStack>
 
             {placements.map((p, index) => (
-              <PlacementRow
+              <PlacementCard
                 key={p.id}
                 placement={p}
+                excerpt={excerptByPieceId[p.piece_id] || ""}
+                lastActivity={lastActivityByPieceId[p.piece_id] ?? null}
                 index={index}
                 total={placements.length}
                 selected={p.piece_id === selectedPieceId}
                 readiness={readinessByPiece[p.piece_id]}
+                cardBg={cardBg}
+                hoverBg={hoverBg}
                 onSelect={() => setSelectedPieceId(p.piece_id)}
                 onMoveUp={() => {
                   const ids = placements.map((pl) => pl.piece_id);
@@ -458,6 +589,12 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
                 }}
               />
             ))}
+
+            {placements.length === 0 && (
+              <Text fontSize="sm" color="fg.muted" fontStyle="italic">
+                No pieces yet — add one below.
+              </Text>
+            )}
 
             {unassignedDrafts.length > 0 && (
               <Select.Root
@@ -492,9 +629,12 @@ export function EditorsDeskMergedWorkArea({ sponsor }: EditorsDeskMergedWorkArea
           <Box flex="1" minH="0" overflowY="auto">
             {!selectedPlacement ? (
               <Box display="flex" alignItems="center" justifyContent="center" h="100%">
-                <Text color="fg.muted" fontSize="sm">
-                  Select a piece to craft it.
-                </Text>
+                <VStack gap={2}>
+                  <IconFilePlus size={28} color="var(--chakra-colors-fg-muted)" />
+                  <Text color="fg.muted" fontSize="sm">
+                    Add a piece to this Issue to start crafting it.
+                  </Text>
+                </VStack>
               </Box>
             ) : (
               <VStack align="stretch" gap={4}>
