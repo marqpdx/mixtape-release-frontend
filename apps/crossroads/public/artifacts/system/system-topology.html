@@ -1,11 +1,11 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.16)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.17)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: the three Main Gateways, the platform core, the services behind it, and the governance that runs alongside, on the infrastructure beneath.</p>
-    <span class="pill">Topology library · System · v2.0.16</span>
+    <span class="pill">Topology library · System · v2.0.17</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform concept map</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,8 +34,9 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.16 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.17 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
+    <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance and Loom, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built.</li>
     <li><strong>Contracts today</strong> are REST, plus Celery over RabbitMQ into Switchboard. MCP is still the target external contract; no service exposes it yet.</li>
     <li><strong>Colours</strong> are shared with the <a href="../platform/platform-topology.html">platform concept map</a>: the same thing wears the same hue on every map. There it is drawn bold, for newcomers; here it is drawn quieter, for engineers. The Canon and Guidance rail is solid because it is not a component: it runs alongside all of them.</li>
@@ -63,9 +64,9 @@
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
-    gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'Four apps that run alongside every layer, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
+    gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: four apps that run alongside everything, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
     infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Two sizes: the servers much of the platform leans on, then smaller ones with a single job. Qdrant is drawn with Stackroom, and the Celery workers with core.' },
-    loom:     { name: 'Loom', full: 'Loom — ambient intelligence', hue: 'plum', desc: 'Mixtape\'s ambient intelligence layer: maintained by people and agents, an always-on background layer of knowledge about the whole of Mixtape, so help is ready when needed and grounded in what people have already accepted. An umbrella across Switchboard, Inkwell and Stackroom, not a service; Clio is its face. Drawn here as its own box for now. See the <a href="../loom/loom-topology-enhanced.html">Loom map</a>.' },
+    loom:     { name: 'Loom', full: 'Loom — ambient intelligence', hue: 'plum', desc: 'A Layer: Mixtape\'s ambient intelligence, maintained by people and agents, an always-on background layer of knowledge about the whole of Mixtape, so help is ready when needed and grounded in what people have already accepted. An umbrella across Switchboard, Inkwell and Stackroom, not a service; Clio is its face. Drawn here as its own box for now. See the <a href="../loom/loom-topology-enhanced.html">Loom map</a>.' },
   };
 
   const BANDS = [
