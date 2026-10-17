@@ -28,9 +28,9 @@ const products = [
   },
   {
     name: "Crossroads",
-    eyebrow: "Collaborative work area",
+    eyebrow: "Working in common",
     title: "For groups that need a calmer place to write, decide, and keep moving.",
-    body: "Crossroads gives a group a working home for drafts, dispatches, shared lists, and the small rituals that keep collaboration from disappearing into chat history.",
+    body: "Crossroads gives a group a working home for drafts, dispatches, shared lists, and the small rituals that keep the work held in common from disappearing into chat history.",
     expects: ["Group workspace", "Draft and dispatch flow", "Member-facing pages", "Shared writing and review", "Optional Catalyst pairing"],
     imagePosition: "right" as const,
     icon: IconUsers,
@@ -74,7 +74,7 @@ export default function ProductsPage() {
               Three ways into Mixtape.
             </Heading>
             <Text color="#5C6880" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
-              A client can begin with a private knowledge Codex, a collaborative group home, or a shared map of place. Many will eventually need more than one.
+              A client can begin with a private knowledge Codex, a group home for working in common, or a shared map of place. Many will eventually need more than one.
             </Text>
           </VStack>
         </Container>

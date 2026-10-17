@@ -35,7 +35,7 @@ const needs = [
   },
   {
     label: "For groups that need more than a channel",
-    body: "Most collaboration tools are built for volume and velocity. Some groups need a space that rewards depth, continuity, and care — where the important things don't get buried.",
+    body: "Most collaboration tools are built for volume and velocity. Crossroads is for working in common. Some groups need a space that rewards depth, continuity, and care — where the important things don't get buried.",
     icon: IconUsers,
   },
   {
@@ -51,8 +51,8 @@ const productSignals = [
     text: "A private knowledge practice for organizations whose understanding has outgrown memory and folders.",
   },
   {
-    name: "Mixtape",
-    text: "A collaborative work home for groups who need depth, continuity, and care in one place.",
+    name: "Crossroads",
+    text: "A home for working in common, for groups who need depth, continuity, and care in one place.",
   },
   {
     name: "Tapestry",
@@ -247,7 +247,7 @@ export default function CrossroadsHomepage() {
                 Begin with what you know.
               </Heading>
               <Text color="#5C6880" lineHeight="1.7" maxW="65ch">
-                Catalyst, Mixtape, and Tapestry are not competing doors. They are different forms Crossroads can take as the work and the people doing it become clearer.
+                Catalyst, Crossroads, and Tapestry are not competing doors. They are different ways into Mixtape as the work and the people doing it become clearer.
               </Text>
             </Box>
 
@@ -262,7 +262,7 @@ export default function CrossroadsHomepage() {
                   borderBottom="1px solid"
                   borderColor="#DDE1ED"
                 >
-                  <Text color="#1E4BD2" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="112px">
+                  <Text color="#1E4BD2" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="112px" flexShrink={0} whiteSpace="nowrap">
                     {signal.name}
                   </Text>
                   <Text color="#5C6880" lineHeight="1.65">
