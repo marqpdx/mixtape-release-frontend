@@ -550,10 +550,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       if (isUpdatingContentRef.current) return; // Skip if we're programmatically updating
 
       // In collaborative mode, Yjs handles all content sync - don't trigger callbacks
-      if (collabConfig) {
-        console.log("🤝 Collaborative mode: Skipping onContentChange/autoSave (Yjs handles sync)");
-        return;
-      }
+      if (collabConfig) return;
 
       const json = editor.getJSON();
       latestContentRef.current = json;
@@ -674,25 +671,6 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [applyMention, closeMention, mentionIndex, mentionState, mentionSuggestions]);
 
-  // Add this in the TipTapEditor component after creating the editor
-  useEffect(() => {
-    if (editor && collabConfig?.ydoc) {
-      const handleUpdate = (update: Uint8Array, origin: unknown) => {
-        console.log("🔄 Y.js document update detected:", {
-          updateSize: update.length,
-          origin: origin,
-          clientID: collabConfig.ydoc.clientID
-        });
-      };
-
-      collabConfig.ydoc.on('update', handleUpdate);
-
-      return () => {
-        collabConfig.ydoc.off('update', handleUpdate);
-      };
-    }
-  }, [editor, collabConfig]);
-
   // REMOVED: Don't initialize content in collaborative mode
   // The Y.Doc is already populated by useYjsSocketProvider before the editor is created
   // Calling setContent() breaks the Yjs binding between Y.Doc and ProseMirror
@@ -707,8 +685,6 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
     // Simple comparison - you might want to use a deep comparison library like lodash
     if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
-      console.log("Updating editor content with:", newContent);
-
       // Set flag to prevent triggering onContentChange during programmatic update
       isUpdatingContentRef.current = true;
 

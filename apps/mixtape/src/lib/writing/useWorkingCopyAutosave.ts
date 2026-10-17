@@ -50,7 +50,6 @@ export function useWorkingCopyAutosave(
   options: UseWorkingCopyAutosaveOptions = {}
 ) {
   const { onExcerptSuggested, onRevisionSaved } = options;
-  console.log(`🪝  useWorkingCopyAutosave called with pieceId: ${pieceId}`);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
@@ -90,7 +89,6 @@ export function useWorkingCopyAutosave(
   }, [clearResetStatusTimer]);
 
   const saveNow = useCallback(async (data: WorkingCopyData) => {
-    console.log(`💾  saveNow called with:`, data);
     if (!pieceId) {
       console.warn('⚠️ No pieceId provided to saveNow');
       return;
@@ -100,7 +98,6 @@ export function useWorkingCopyAutosave(
 
     if (savingRef.current) {
       pendingAfterCurrentRef.current = true;
-      console.log('💾 Save already in flight, queueing latest payload');
       return;
     }
 
@@ -116,7 +113,6 @@ export function useWorkingCopyAutosave(
       try {
         clearResetStatusTimer();
         setSaveStatus('saving');
-        console.log('💾 Saving working copy now for piece:', pieceId);
 
         const response = await axiosInstance.put(`/api/writing/pieces/${pieceId}/working-copy`, {
           title: payload.title,
@@ -144,7 +140,6 @@ export function useWorkingCopyAutosave(
         }
 
         setSaveStatus('saved');
-        console.log('✅ Working copy saved successfully');
         scheduleStatusReset('saved', 2000);
       } catch (e: unknown) {
         const isSuperseded = attemptId < latestAttemptRef.current || pendingAfterCurrentRef.current;
@@ -171,7 +166,6 @@ export function useWorkingCopyAutosave(
   }, [pieceId, clearResetStatusTimer, scheduleStatusReset, onExcerptSuggested, onRevisionSaved]);
 
   const schedule = useCallback((data: WorkingCopyData) => {
-    console.log(`⏰  schedule called with:`, data);
     if (!pieceId) {
       console.warn('⚠️ No pieceId provided to schedule');
       return;
@@ -181,8 +175,6 @@ export function useWorkingCopyAutosave(
     if (saveTimer.current) {
       clearTimeout(saveTimer.current);
     }
-
-    console.log(`⏰ Scheduling autosave in ${debounceMs}ms for piece:`, pieceId);
 
     pendingDataRef.current = data;
 
