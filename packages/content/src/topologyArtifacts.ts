@@ -7,6 +7,12 @@ export const topologyArtifacts = [
     htmlUrl: 'https://www.crossroads.place/artifacts/system/system-topology.html',
   },
   {
+    id: 'platform',
+    title: 'Mixtape — Platform Topology',
+    imageUrl: 'https://www.crossroads.place/artifacts/platform/platform-topology.png',
+    htmlUrl: 'https://www.crossroads.place/artifacts/platform/platform-topology.html',
+  },
+  {
     id: 'loom',
     title: 'Loom — Internal Architecture',
     imageUrl: 'https://www.crossroads.place/artifacts/loom/loom-topology-enhanced.png',
