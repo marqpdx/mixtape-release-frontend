@@ -138,7 +138,9 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
    so the map has nearly the whole screen. Details open in a popover beside the node (CTO, 2026-10-15). */
 .tk-top { margin-bottom: 0.4rem; }
 .tk-intro header { margin-bottom: 0; }
-.tk-hint { margin-top: 0.6rem; font-size: 0.82rem; color: var(--fg-muted); }
+.tk-hint { margin-top: 0.9rem; width: fit-content; max-width: 100%; padding: 0.45rem 0.75rem; border-left: 3px solid var(--border);
+            background: var(--surface); border-radius: 0 6px 6px 0; font-size: 0.82rem; color: var(--fg-muted); }
+.tk-hint strong { color: var(--fg); font-weight: 600; }
 .tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.55rem;
              box-shadow: 0 1px 0 var(--border); margin-bottom: 0.75rem; }
 @media (max-width: 860px), (max-height: 620px) { .tk-sticky { position: static; box-shadow: none; } }
@@ -166,9 +168,18 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .decor { fill: none; pointer-events: none; }
 /* Links between related maps, in the intro. */
 .tk-maps { margin-top: 0.55rem; font-size: 0.8rem; color: var(--fg-muted); }
-.tk-maps a { text-decoration: none; }
-.tk-maps a:hover { text-decoration: underline; }
+.tk-maps a { color: var(--fg); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
+.tk-maps a:hover { text-decoration-color: currentColor; }
 .tk-maps .here { color: var(--fg); font-weight: 600; }
+.tk-maps .soon { color: var(--fg-muted); opacity: 0.55; cursor: default; }
+/* The maps mini-nav sits at one height on every map page (desktop), so moving
+   between maps never makes it jump. The platform map matches it in its own CSS:
+   keep --tk-maps-block and the platform map's .intro-top in step. */
+@media (min-width: 768px) {
+  .tk-intro header > div { display: flex; flex-direction: column; align-items: flex-start;
+                           min-height: var(--tk-maps-block, 172px); }
+  .tk-intro header > div > .tk-maps { margin-top: auto; padding-top: 0.55rem; }
+}
 .node.filtered-out:not(.selected) { opacity: 0.18; }
 .band { cursor: pointer; stroke-opacity: 0.55; transition: stroke-opacity .15s, stroke-width .15s; }
 .band:focus { outline: none; }
