@@ -25,7 +25,7 @@
     <h1>Loom — Internal Architecture</h1>
     <p class="subtitle">How a request enters Loom as intent and leaves as a provenance-logged result. Eight layers.</p>
     <span class="pill">Topology library · Loom · 2026-10-13</span>
-    <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="soon" aria-disabled="true" title="Coming soon">Platform</span> · <span class="here" aria-current="page">Loom</span></nav>
+    <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="here" aria-current="page">Loom</span> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
 </header>
@@ -169,7 +169,7 @@
     layerOrder: ['intent', 'policy', 'ent', 'dispatch', 'exec', 'memory', 'prov', 'async'],
     bands: BANDS, nodes: NODES, edges: EDGES, nodeHeight: H,
     ariaLabel: 'Loom layered architecture diagram',
-    emptyText: 'Select a node, or a coloured layer band, to open its details. Hover to trace its edges.<br><strong>Tab</strong> moves between nodes; <strong>Esc</strong> closes the details. <strong>Full view</strong> shows the whole map at once.',
+    emptyText: '<span class="tk-hint-lead">Select a node, or a coloured layer band, to open its details. Hover to trace its edges.</span><strong>Tab</strong> moves between nodes; <strong>Esc</strong> closes the details.<br><strong>Full view</strong> shows the whole map at once.',
     status: {
       source: '<code>loom-status.md</code>',
       labels: { built: 'Built', partial: 'Partial', pending: 'Pending' },

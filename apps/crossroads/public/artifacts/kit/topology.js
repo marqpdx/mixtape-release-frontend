@@ -78,6 +78,16 @@
     const diagram = mount.querySelector('.tk-diagram');
     const introEl = cfg.intro === null ? null : document.querySelector(cfg.intro || 'body > header');
     if (introEl) mount.querySelector('.tk-intro').appendChild(introEl);
+    // Title panel: h1 and subtitle together, on the surface colour; the mini-nav stays outside it.
+    const titleH1 = introEl && introEl.querySelector('header > div:first-child > h1');
+    if (titleH1) {
+      const panel = document.createElement('div');
+      panel.className = 'tk-title-panel';
+      const sub = titleH1.parentElement.querySelector(':scope > .subtitle');
+      titleH1.replaceWith(panel);
+      panel.append(titleH1);
+      if (sub) panel.append(sub);
+    }
     else mount.querySelector('.tk-top').classList.add('no-intro');
 
     // Popover: a node's or layer's detail, beside it. One factory serves the page and the full view.
@@ -402,6 +412,28 @@
       list.appendChild(d);
     }
 
+    // Upper right (CTO, 2026-10-18): the map's pill and the header buttons on one row, then the
+    // page hint, in one column, so the left keeps title, subtitle and the maps mini-nav, and the map sits higher.
+    // Runs after the buttons are built (below); see placeAside().
+    function placeAside() {
+      const header = mount.querySelector('.tk-intro header');
+      const actions = header && header.querySelector('.tk-head-actions');
+      if (!header || !actions) return;
+      const aside = document.createElement('aside');
+      aside.className = 'tk-aside';
+      const row = document.createElement('div');
+      row.className = 'tk-aside-row';
+      const body = document.createElement('div');
+      body.className = 'tk-aside-body';
+      const pill = header.querySelector('.pill');
+      const hint = mount.querySelector('.tk-hint');
+      actions.replaceWith(aside);
+      if (pill) row.appendChild(pill);
+      row.appendChild(actions);
+      if (hint) body.appendChild(hint);
+      aside.append(row, body);
+    }
+
     // Header buttons: the theme toggle plus, when the page has notes, an "About this map" modal.
     const toggleBtn = document.querySelector('[data-theme-toggle]');
     const notes = document.querySelector('section.notes');
@@ -432,6 +464,7 @@
       toggleBtn.dataset.tip = 'Light or dark';
       actions.appendChild(toggleBtn);
     }
+    placeAside();
     // Full view: the same map in a modal filling 96vh and as much width as the map's shape uses.
     // Hover traces a node's edges; a click (or keyboard focus) opens a popover with the panel's content.
     // The popover closes with Esc, its × or a click on the map background; a second Esc, the view's ×,

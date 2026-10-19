@@ -31,12 +31,13 @@
     .pill.primary{background:var(--ink);color:var(--paper)}
     h1{max-width:760px;font:800 clamp(30px,3.6vw,44px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
     /* The maps mini-nav sits where it sits on the kit maps (system, Loom): same frame, same height. Keep .intro-top's min-height in step with --tk-maps-block in kit/topology.css. */
-    .intro-top{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:172px}
+    .intro-top{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:165px}
     .tk-maps{margin-top:auto;padding-top:.55rem;font:400 .8rem/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#5b5a54}
     .tk-maps a{color:#1c1b18;text-decoration:underline;text-decoration-color:#d9d4c5;text-underline-offset:2px}
     .tk-maps a:hover{text-decoration-color:currentColor}
     .tk-maps .here{color:#1c1b18;font-weight:600}
     .tk-maps .soon{color:#5b5a54;opacity:.55;cursor:default}
+    .trio{margin-top:-4px}
     @media(max-width:767px){.intro-top{min-height:0}}
     .lede{max-width:60ch;color:var(--body);font-size:18px;line-height:1.5}
     .trio{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:700 clamp(18px,2vw,22px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
@@ -116,7 +117,7 @@
         <div class="intro-top">
           <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span></div>
           <h1>What happens when you bring what matters into Mixtape?</h1>
-          <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="here" aria-current="page">Platform</span> · <span class="soon" aria-disabled="true" title="Coming soon">Loom</span></nav>
+          <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <span class="here" aria-current="page">Platform</span></nav>
         </div>
         <p class="trio" role="group" aria-label="What Mixtape is for: select one to see which parts serve it"><button type="button" data-trio="collab" aria-pressed="false">Working in common</button><button type="button" data-trio="expr" aria-pressed="false">Self-expression</button><button type="button" data-trio="know" aria-pressed="false">Knowledge building</button><span class="trio-hint">select one to see where it lives</span></p>
         <p class="lede">Mixtape is a suite of tools for working in common, expressing oneself well, and building knowledge. You arrive at Main Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>

@@ -138,9 +138,10 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
    so the map has nearly the whole screen. Details open in a popover beside the node (CTO, 2026-10-15). */
 .tk-top { margin-bottom: 0.4rem; }
 .tk-intro header { margin-bottom: 0; }
-.tk-hint { margin-top: 0.9rem; width: fit-content; max-width: 100%; padding: 0.45rem 0.75rem; border-left: 3px solid var(--border);
-            background: var(--surface); border-radius: 0 6px 6px 0; font-size: 0.82rem; color: var(--fg-muted); }
+.tk-hint { margin-top: 0.9rem; width: fit-content; max-width: 100%; padding: 0.15rem 0.75rem; border-left: 3px solid var(--border);
+            font-size: 0.82rem; color: var(--fg-muted); }
 .tk-hint strong { color: var(--fg); font-weight: 600; }
+.tk-hint-lead { display: block; margin-bottom: 0.4rem; }
 .tk-sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding-top: 0.55rem;
              box-shadow: 0 1px 0 var(--border); margin-bottom: 0.75rem; }
 @media (max-width: 860px), (max-height: 620px) { .tk-sticky { position: static; box-shadow: none; } }
@@ -175,10 +176,33 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 /* The maps mini-nav sits at one height on every map page (desktop), so moving
    between maps never makes it jump. The platform map matches it in its own CSS:
    keep --tk-maps-block and the platform map's .intro-top in step. */
+/* The title panel (kit wraps h1 and subtitle in .tk-title-panel): the main area, on the surface
+   colour. Its padding is cancelled by an equal negative margin (top and sides), so the text stays
+   exactly where it was; the mini-nav sits below it, on the page. */
+.tk-title-panel { background: var(--surface); border-radius: 10px;
+  padding: var(--tk-title-py, 10px) var(--tk-title-px, 14px); margin: calc(-1 * var(--tk-title-py, 10px)) calc(-1 * var(--tk-title-px, 14px)) 0; }
 @media (min-width: 768px) {
-  .tk-intro header > div { display: flex; flex-direction: column; align-items: flex-start;
-                           min-height: var(--tk-maps-block, 172px); }
-  .tk-intro header > div > .tk-maps { margin-top: auto; padding-top: 0.55rem; }
+  .tk-intro header > div:first-child { display: flex; flex-direction: column; align-items: flex-start;
+                           min-height: var(--tk-maps-block, 165px); }
+  .tk-intro header > div:first-child > .tk-maps { margin-top: auto; padding-top: 0.55rem; }
+}
+/* Upper right: the map's pill and the buttons on one row, then the page hint (kit placeAside()). */
+.tk-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 1.1rem; flex: 0 1 34rem; min-width: 0; }
+.tk-aside-body { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; max-width: 100%; }
+.tk-aside-row { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; flex-wrap: wrap; }
+.tk-aside .pill { margin-top: 0; }
+.tk-aside .tk-hint { margin-top: 0; max-width: 75%; }
+@media (max-width: 860px) {
+  .tk-intro header { flex-wrap: wrap; }
+  /* Phone: title and buttons on the first line, then the pill, then the hint. */
+  .tk-intro header > div:first-child { flex: 1 1 calc(100% - 6rem); order: 0; }
+  .tk-aside .tk-head-actions { order: 1; }
+  .tk-aside .pill { order: 2; }
+  .tk-aside-body { order: 3; }
+  .tk-aside { display: contents; }
+  .tk-aside-row { display: contents; }
+  .tk-aside-body { flex-basis: 100%; align-items: flex-start; }
+  .tk-aside .tk-hint { max-width: 100%; }
 }
 .node.filtered-out:not(.selected) { opacity: 0.18; }
 .band { cursor: pointer; stroke-opacity: 0.55; transition: stroke-opacity .15s, stroke-width .15s; }
