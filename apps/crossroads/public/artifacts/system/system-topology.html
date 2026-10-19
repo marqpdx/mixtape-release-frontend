@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.27)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.28)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.27</span>
+    <span class="pill">Topology library · System · v2.0.28</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.27 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.28 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -60,7 +60,7 @@
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every governed action.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery workers, with RabbitMQ (drawn in the supporting row) as the broker. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Routing',    full: 'Routing — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
-    exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Local model execution over llama.cpp. Receives a well-formed task, returns results. Stateless.' },
+    exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Where the work runs: language models run locally over llama.cpp, plus embeddings, reading text from images and small deterministic text work. Receives a well-formed task, returns results. Keeps no records of its own.' },
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
@@ -116,8 +116,8 @@
       status: 'built', evidence: 'SW-1 to SW-9 complete (SW-9 on the enforcement side only); SW-10 verification not started. The Loom privacy filter is not built.', refs: ['decisions/switchboard-mcp-adr/switchboard-status.md'] ,
       governance: { text: 'Switchboard routes; core decides (the Decision Boundary Rule). Every call through Switchboard records an ActionRun in core, with no unrecorded calls. Any cloud call needs explicit, recorded approval first, and per-tenant configuration can turn cloud off entirely.', docs: ['decisions/switchboard-mcp-adr/', 'switchboard-status.md', 'system-topology.md'] } },
     { id: 'IW', layer: 'exec', x: 480, y: 450, w: 240, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
-      desc: 'Local model execution: generation, summarization, classification, OCR shaping and typed capability endpoints. Loom\'s Execution layer.',
-      status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).' },
+      desc: 'Mixtape\'s execution service: where the work actually runs. It runs language models locally (llama.cpp), makes embeddings, reads text from images, and does small deterministic text work, then returns the result. It keeps no records of its own; Switchboard and core do. Local first: work leaves the machine only through a route approved for the cloud, with that approval recorded. Known exceptions, under review: one route calls Claude directly, and tag suggestions read Qdrant directly. Loom\'s Execution layer.',
+      status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).', refs: ['reference/glossary/hand-touch/inkwell.md', 'zz/spike-direct-calls.md'] },
     { id: 'LW', layer: 'realtime', x: 780, y: 450, w: 220, label: 'Realtime server', sub: 'mixtape-release-livewire',
       desc: 'The realtime server, with two halves: chat/ for Livewire Conversations (personal, private, outside the knowledge layer) and dispatch/ for live collaborative Dispatch editing. A Socket.IO service at chat.crossroads.place; authorizes sockets against core with signed tokens, and core notifies it of events. The repo keeps its historical name.',
       status: 'built', evidence: 'Livewire ADR phases A to D complete, including end-to-end encryption and key rotation.' ,
