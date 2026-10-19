@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.24)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.25)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.24</span>
+    <span class="pill">Topology library · System · v2.0.25</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.24 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.25 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -57,7 +57,7 @@
   const LAYERS = {
     pillars:  { name: 'Main Gateways', full: 'Main Gateways — the ways in',     hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: the Main Gateways, peers, where people cross into Mixtape (after <em>A Pattern Language</em>, 53). None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
     frontend: { name: 'Frontend',   full: 'Frontend — the client apps',          hue: 'teal',   desc: 'The apps people use. <code>mixtape-release-frontend</code> is a Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
-    core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every tool call.' },
+    core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every governed action.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery workers, with RabbitMQ (drawn in the supporting row) as the broker. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Dispatch',   full: 'Dispatch — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
     exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Local model execution over llama.cpp. Receives a well-formed task, returns results. Stateless.' },
@@ -109,12 +109,12 @@
     { id: 'RQ', layer: 'async', x: 60, y: 320, w: 240, label: 'Celery workers', sub: 'core background jobs · beat',
       desc: 'Core\'s own Celery workers (default, polling, push, transcription, commons) and beat, the scheduler. Core hands slow work to Switchboard as Celery tasks on the <code>switchboard</code> queue, carried by RabbitMQ (in the supporting row).', status: 'built', evidence: 'SW-7 async path complete (2026-04-20).' },
     { id: 'CO', layer: 'core', x: 440, y: 320, w: 400, label: 'mixtape-release-core', sub: 'Django · permission and truth · ActionRun',
-      desc: 'The system of record: authentication, authorization, workflow state, approvals, audit, and the ActionRun record of every tool call. Calls Inkwell and Stackroom directly over REST for some work; hands slower work to Switchboard.', status: 'built', evidence: 'Live. About 70 Django apps.' },
+      desc: 'The system of record: authentication, authorization, workflow state, approvals, audit, and the ActionRun record of every governed action. Calls Inkwell and Stackroom directly over REST for some work; hands slower work to Switchboard.', status: 'built', evidence: 'Live. About 70 Django apps.' },
 
     { id: 'SW', layer: 'dispatch', x: 40, y: 450, w: 240, label: 'Switchboard', sub: 'mixtape-release-switchboard',
       desc: 'FastAPI service with a Celery worker. Checks tenant and permission with core, consults its tool registry and configuration, calls Inkwell and Stackroom, and records an ActionRun in core for every call. Loom\'s Dispatch layer.',
       status: 'built', evidence: 'SW-1 to SW-9 complete (SW-9 on the enforcement side only); SW-10 verification not started. The Loom privacy filter is not built.', refs: ['decisions/switchboard-mcp-adr/switchboard-status.md'] ,
-      governance: { text: 'Switchboard routes; core decides (the Decision Boundary Rule). Every tool call records an ActionRun in core, with no unrecorded calls. Any cloud call needs explicit, recorded approval first, and per-tenant configuration can turn cloud off entirely.', docs: ['decisions/switchboard-mcp-adr/', 'switchboard-status.md', 'system-topology.md'] } },
+      governance: { text: 'Switchboard routes; core decides (the Decision Boundary Rule). Every call through Switchboard records an ActionRun in core, with no unrecorded calls. Any cloud call needs explicit, recorded approval first, and per-tenant configuration can turn cloud off entirely.', docs: ['decisions/switchboard-mcp-adr/', 'switchboard-status.md', 'system-topology.md'] } },
     { id: 'IW', layer: 'exec', x: 480, y: 450, w: 240, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
       desc: 'Local model execution: generation, summarization, classification, OCR shaping and typed capability endpoints. Loom\'s Execution layer.',
       status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).' },
@@ -149,7 +149,7 @@
       desc: 'A continuously refreshed, queryable index of the codebase, exposed to agents as tools through Switchboard, so discovery is a lookup rather than a crawl (ADR-0051).',
       status: 'planned', evidence: 'Agent instructions in place (AGENTS.md blocks); the index itself (M-1 to M-5) is not built.', refs: ['decisions/meridian-adr/meridian-adr.md'] },
     { id: 'LO', layer: 'loom', x: 1056, y: 472, w: 168, label: 'Loom', sub: 'ambient intelligence',
-      desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (dispatch), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
+      desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (dispatch), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every governed operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
       status: 'partial', evidence: 'An umbrella: routing, ActionRun, Inkwell dispatch and GroupContext built; privacy filter and Aperture events pending (loom-status.md).', refs: ['reference/glossary/hand-touch/loom.md', 'decisions/loom-adr/loom-status.md'] },
     { id: 'WA', layer: 'warp', x: 1056, y: 584, w: 168, label: 'Warp', sub: 'provisioning · provenance',
       desc: 'The fixed, load-bearing structure the work is woven across: setting up a Codex or a Group, proving where its contents came from, its starter material and safety templates, and the review-and-confirm workflow. Not a server. The wider reach, across both entry paths, is the aim.',
