@@ -13,8 +13,9 @@
     bands: [{ layer, x, y, w, h, label, solid, opacity, labelBelow, labelStack }], // coloured layer backgrounds; solid = public-register fill; labelBelow = label centred under the band;
                                          // labelStack = label inside at the left, one word per line, centred top to bottom
     nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
-              hue, h, solid, vertical, small, tiny, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
-                                                                 // vertical label (rails), governance distillation
+              hue, h, solid, vertical, small, tiny, kind, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
+                                                                 // vertical label (rails), kind (what the node is when it differs
+                                                                 // from its band, shown on its popup), governance distillation
     decor: [{ d, hue, layer, cls, dashed, width, opacity }], // optional decorative paths (e.g. rail ticks), drawn under edges;
                                          // dashed defaults to true; a path with a layer lights up when that layer, or one of its nodes, is in focus
     edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
@@ -307,7 +308,7 @@
       }
       const refs = n.refs && n.refs.length ? `<div class="p-refs"><b>Sources:</b> ${n.refs.map(r => `<code>${esc(r)}</code>`).join(' ')}</div>` : '';
       return `
-        <div class="p-head"><h2>${esc(n.label)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${esc(L.full)}</span>${n.governance
+        <div class="p-head"><h2>${esc(n.label)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${n.kind ? esc(L.name) + ' · ' + esc(n.kind) : esc(L.full)}</span>${n.governance
           ? `<button type="button" class="p-chip" data-gov aria-pressed="${showGov ? 'true' : 'false'}">Show governance</button>` : ''}</div>
         ${showGov
           ? `<p class="p-gov">${n.governance.text}</p>
