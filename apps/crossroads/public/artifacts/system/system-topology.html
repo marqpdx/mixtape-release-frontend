@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.28)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.29)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.28</span>
+    <span class="pill">Topology library · System · v2.0.29</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.28 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.29 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -62,7 +62,7 @@
     dispatch: { name: 'Routing',    full: 'Routing — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
     exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Where the work runs: language models run locally over llama.cpp, plus embeddings, reading text from images and small deterministic text work. Receives a well-formed task, returns results. Keeps no records of its own.' },
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
-    memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'Semantic memory and intermediate representation, with vectors in Qdrant. Not configurable per client.' },
+    memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'What the platform can find again, every result traced with provenance to its exact source. A map of the library (the intermediate representation, IR), not the library itself; vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
     gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: four apps that run alongside everything, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
     warp:     { name: 'Warp', full: 'Warp — what Loom weaves across', hue: 'rose', desc: 'A Layer: the fixed, load-bearing structure the work is woven across. Provisioning, provenance and workflow scaffolding that every server and every Suggestion depends on, without being a server itself. Loom is the weaving; Warp is what it runs across. The reasons behind things are Puddlejump\'s; Warp carries the pointers.' },
@@ -124,9 +124,9 @@
       governance: { text: 'For Livewire Conversations: a Conversation’s trust profile (Standard, Private, Ephemeral) is fixed at creation. Private conversations are end-to-end encrypted and not server-indexed; new participants see no history from before they joined. Key rotation passed an external cryptography review before reaching production.', docs: ['decisions/livewire-adr/', 'livewire-adr-status.md'] } },
 
     { id: 'QD', layer: 'memory', x: 40, y: 580, w: 200, label: 'Qdrant', sub: 'vectors only',
-      desc: 'Vector storage for Stackroom and Ariadne. Holds no canonical content.', status: 'built', evidence: 'Own container (<code>mixtape-release-qdrant</code>).' },
+      desc: 'The off-the-shelf vector database beneath Stackroom, and Ariadne\'s own collection. Holds no canonical content. Inkwell also reads it directly for tag suggestions (under review).', status: 'built', evidence: 'Own container (<code>mixtape-release-qdrant</code>).' },
     { id: 'SR', layer: 'memory', x: 270, y: 580, w: 210, label: 'Stackroom', sub: 'mixtape-release-stackroom',
-      desc: 'Ingestion, chunking, embedding, libraries, collections, retrieval, canon governance endpoints, and Puddlejump import and export. Not configurable per client. Loom\'s Memory layer.',
+      desc: 'Mixtape\'s memory service: what the platform can find again. It takes in documents, extracts their text and structure, breaks them into chunks, embeds them and keeps the vectors in Qdrant, then serves retrieval, every result traced with provenance to its exact source. It keeps a map of the library (IR), not the library itself: not the source of truth and not a model\'s memory. Also holds libraries, collections, proposals, and Puddlejump import and export. Not configurable per client. Loom\'s Memory layer.',
       status: 'built', evidence: 'Standalone since April 2026 (extraction steps 1–5). MCP in front of it (step 7) not started.', refs: ['decisions/stackroom-extraction-adr/stackroom-extraction-status.md'] ,
       governance: { text: 'A standalone service that no client can configure: callers shape what they put in and ask for, never how it works. Core reaches it over REST; MCP in front of it is the next step (extraction step 7). Ingest is asynchronous under the universal ingest contract.', docs: ['decisions/stackroom-extraction-adr/', 'decisions/stackroom-universal-ingest/', 'stackroom-extraction-status.md'] } },
     { id: 'DA', layer: 'research', x: 560, y: 580, w: 200, label: 'Daedalus', sub: 'research engine · REST',
