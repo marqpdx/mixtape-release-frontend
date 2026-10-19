@@ -1,14 +1,18 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { useDissolve, DISSOLVE_DURATION_MS } from '@mixtape/ui/dissolve'
 import { interactivePageForReadingUrl, type InteractivePage } from './interactivePages'
 
 type OpenTopology = (artifact: InteractivePage, trigger: HTMLElement) => void
 const TopologyReadingContext = createContext<OpenTopology | null>(null)
 export const useTopologyReadingSurface = () => useContext(TopologyReadingContext)
 
-/** Retains the server-rendered manuscript while its reading area dissolves to a map. */
+/**
+ * Opens an interactive page over the article in a modal, 98% of the viewport high (CTO, 2026-10-19).
+ * The article stays where it was underneath. × and Escape close it; "Open standalone page" opens a new tab.
+ * Replaces the earlier in-place Dissolve (DOR-8), which read as leaving the article.
+ * The `?interactivePage=` reading URL still opens the modal directly, and Back closes it.
+ */
 export function TopologyReadingSurface({ children, backLink, className = '', style, returnLabel = 'Return to article' }: {
   children: ReactNode
   backLink: ReactNode
@@ -19,48 +23,22 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
   const [artifact, setArtifact] = useState<InteractivePage | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [frameVersion, setFrameVersion] = useState(0)
-  const [frameHeight, setFrameHeight] = useState(600)
   const requested = useRef<InteractivePage | null>(null)
   const trigger = useRef<HTMLElement | null>(null)
-  const returnButton = useRef<HTMLButtonElement>(null)
-  const backRow = useRef<HTMLDivElement>(null)
+  const dialog = useRef<HTMLDialogElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
-  const scroll = useRef({ x: 0, y: 0 })
   const owner = useRef('')
   const returning = useRef(false)
-  const restoreFrame = useRef<number | null>(null)
 
-  // Shared Dissolve primitive (decisions/dissolve-outer-rim-adr) — reconciled
-  // from this component's prior bespoke 120ms/matchMedia timer to the
-  // canonical 150ms, with prefers-reduced-motion handling moved into the hook.
-  const { dissolving: fading, dissolveTo } = useDissolve({ regionKey: 'topology-reading-surface' })
-
-  const transition = useCallback((next: InteractivePage | null) => {
-    if (restoreFrame.current !== null) cancelAnimationFrame(restoreFrame.current)
+  const show = useCallback((next: InteractivePage | null) => {
     requested.current = next
     returning.current = false
-    dissolveTo(() => {
-      setLoaded(false)
-      setArtifact(next)
-      // Wait for React to expose the destination before focusing or restoring scroll.
-      restoreFrame.current = requestAnimationFrame(() => {
-        restoreFrame.current = requestAnimationFrame(() => {
-          restoreFrame.current = null
-          if (next) {
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-            returnButton.current?.focus({ preventScroll: true })
-          } else {
-            const target = trigger.current?.isConnected ? trigger.current : backRow.current?.querySelector<HTMLElement>('a, button')
-            target?.focus({ preventScroll: true })
-            window.scrollTo({ left: scroll.current.x, top: scroll.current.y, behavior: 'instant' })
-          }
-        })
-      })
-    })
-  }, [dissolveTo])
+    setLoaded(false)
+    setArtifact(next)
+  }, [])
 
   const openTopology = useCallback<OpenTopology>((next, source) => {
-    if (!requested.current) scroll.current = { x: window.scrollX, y: window.scrollY }
     trigger.current = source
     if (!owner.current) owner.current = crypto.randomUUID()
     const url = new URL(window.location.href)
@@ -68,8 +46,8 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
     url.searchParams.set('interactivePage', pageUrl.pathname + pageUrl.search + pageUrl.hash)
     url.searchParams.delete('topology')
     window.history.pushState({ ...window.history.state, readingTopologyOwner: owner.current }, '', url)
-    transition(next)
-  }, [transition])
+    show(next)
+  }, [show])
 
   const returnToReading = useCallback(() => {
     if (returning.current || !requested.current) return
@@ -84,30 +62,40 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
       const state = { ...window.history.state }
       delete state.readingTopologyOwner
       window.history.replaceState(state, '', url)
-      transition(null)
+      show(null)
     }
-  }, [transition])
+  }, [show])
 
   useEffect(() => {
     const sync = () => {
       const query = new URL(window.location.href).searchParams
       const next = interactivePageForReadingUrl(query.get('interactivePage'), query.get('topology')) ?? null
-      if (next?.htmlUrl !== requested.current?.htmlUrl) transition(next)
+      if (next?.htmlUrl !== requested.current?.htmlUrl) show(next)
     }
     sync()
     window.addEventListener('popstate', sync)
-    return () => {
-      window.removeEventListener('popstate', sync)
-      if (restoreFrame.current !== null) cancelAnimationFrame(restoreFrame.current)
-    }
-  }, [transition])
+    return () => window.removeEventListener('popstate', sync)
+  }, [show])
 
+  // Keep the dialog in step with the state; hold the article still underneath while it is open.
+  useEffect(() => {
+    const d = dialog.current
+    if (!d) return
+    if (artifact) {
+      if (!d.open) d.showModal()
+      closeButton.current?.focus({ preventScroll: true })
+      const root = document.documentElement, previous = root.style.overflow
+      root.style.overflow = 'hidden'
+      return () => { root.style.overflow = previous }
+    }
+    if (d.open) d.close()
+    if (trigger.current?.isConnected) trigger.current.focus({ preventScroll: true })
+  }, [artifact])
+
+  // Escape inside the page. Topology maps post a close signal themselves, after their own
+  // popover has had the first Escape; any other static page gets a plain listener.
   useEffect(() => {
     if (!artifact) return
-    const resize = () => {
-      const top = (frame.current?.getBoundingClientRect().top ?? 0) + window.scrollY
-      setFrameHeight(Math.max(320, window.innerHeight - top - 20))
-    }
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); returnToReading() }
     }
@@ -116,20 +104,14 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
         && event.origin === window.location.origin
         && event.data?.type === 'crossroads:topology:escape') returnToReading()
     }
-    // Public artifacts are served by this same Crossroads app. Listening in
-    // the frame makes Escape work for any static HTML, without a special script.
-    let embeddedWindow: Window | null = null
+    let embeddedWindow: (Window & { TopologyKit?: unknown }) | null = null
     try {
       embeddedWindow = frame.current?.contentWindow ?? null
+      if (embeddedWindow?.TopologyKit) embeddedWindow = null
       embeddedWindow?.addEventListener('keydown', onKey, true)
-    } catch { /* A page followed an external link; the Return button still works. */ }
-    resize()
-    window.addEventListener('resize', resize)
-    window.addEventListener('keydown', onKey)
+    } catch { /* A page followed an external link; × still works. */ }
     window.addEventListener('message', onMessage)
     return () => {
-      window.removeEventListener('resize', resize)
-      window.removeEventListener('keydown', onKey)
       window.removeEventListener('message', onMessage)
       try { embeddedWindow?.removeEventListener('keydown', onKey, true) } catch { /* Frame navigated away. */ }
     }
@@ -138,37 +120,41 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
   const context = useMemo(() => openTopology, [openTopology])
   return (
     <TopologyReadingContext.Provider value={context}>
-      <article className={`trs-surface ${className}`} data-topology-open={artifact ? '' : undefined} style={{ '--trs-measure': style?.maxWidth ?? '48rem', ...style } as CSSProperties}>
+      <article className={`trs-surface ${className}`} style={style}>
         <style>{`
-          .trs-surface[data-topology-open] { max-width: min(1440px, 100%) !important; }
           .trs-back-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; min-height:32px; }
-          .trs-surface[data-topology-open] > .trs-back-row { width:100%; max-width:calc(var(--trs-measure) - 32px); margin-inline:auto; }
-          .trs-return { font:inherit; font-size:.875rem; font-weight:500; padding:0; border:0; background:transparent; color:var(--theme-text-muted, var(--chakra-colors-theme-text-muted)); text-decoration:underline; text-decoration-color:var(--theme-accent, var(--chakra-colors-theme-accent)); text-underline-offset:3px; cursor:pointer; min-height:44px; }
-          .trs-return:focus-visible { outline:2px solid var(--theme-accent, var(--chakra-colors-theme-accent)); outline-offset:3px; }
-          .trs-standalone { font-size:.875rem; color:inherit; text-underline-offset:3px; }
-          .trs-dissolve { transition:opacity ${DISSOLVE_DURATION_MS}ms ease; }
-          .trs-dissolve[data-fading] { opacity:0; pointer-events:none; }
-          .trs-map { padding-top:12px; }
-          .trs-frame { display:block; width:100%; border:0; background:var(--theme-bg, var(--chakra-colors-theme-bg)); }
-          .trs-loading { font-size:.875rem; color:var(--theme-text-muted, var(--chakra-colors-theme-text-muted)); }
-          @media(prefers-reduced-motion:reduce) { .trs-dissolve { transition:none; } }
+          .trs-modal { width:min(1600px, 98vw); max-width:98vw; height:98vh; max-height:98vh; margin:auto; padding:0; overflow:hidden;
+            border:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.12))); border-radius:12px;
+            background:var(--theme-bg, var(--chakra-colors-theme-bg)); color:inherit; }
+          .trs-modal[open] { display:flex; flex-direction:column; }
+          .trs-modal::backdrop { background:rgba(20,18,14,.55); }
+          .trs-modal-head { display:flex; align-items:center; gap:16px; padding:6px 10px 6px 16px; border-bottom:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.12))); }
+          .trs-modal-title { flex:1; min-width:0; font-size:.875rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+          .trs-standalone { font-size:.875rem; color:inherit; text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
+          .trs-close { width:36px; height:36px; flex:none; display:grid; place-items:center; padding:0; border:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.18)));
+            border-radius:50%; background:transparent; color:inherit; font:inherit; font-size:1.3rem; line-height:1; cursor:pointer; }
+          .trs-close:hover { background:rgba(0,0,0,.06); }
+          .trs-close:focus-visible, .trs-standalone:focus-visible { outline:2px solid var(--theme-accent, var(--chakra-colors-theme-accent)); outline-offset:3px; }
+          .trs-loading { margin:0; padding:12px 16px; font-size:.875rem; color:var(--theme-text-muted, var(--chakra-colors-theme-text-muted)); }
+          .trs-frame { display:block; flex:1; min-height:0; width:100%; border:0; background:var(--theme-bg, var(--chakra-colors-theme-bg)); }
         `}</style>
-        <div className="trs-back-row" ref={backRow}>
-          {artifact ? <>
-            <button ref={returnButton} className="trs-return" type="button" onClick={returnToReading}>← {returnLabel}</button>
-            <a className="trs-standalone" href={artifact.htmlUrl} target="_blank" rel="noopener noreferrer">Open standalone page ↗</a>
-          </> : backLink}
-        </div>
-        <div className="trs-dissolve" data-fading={fading ? '' : undefined}>
-          <div className="trs-manuscript" hidden={!!artifact} inert={!!artifact}>{children}</div>
-          {artifact && <section className="trs-map" aria-label={artifact.title}>
+        <div className="trs-back-row">{backLink}</div>
+        <div className="trs-manuscript">{children}</div>
+        <dialog ref={dialog} className="trs-modal" aria-label={artifact?.title ?? 'Interactive page'}
+          onCancel={event => { event.preventDefault(); returnToReading() }}>
+          {artifact && <>
+            <div className="trs-modal-head">
+              <span className="trs-modal-title">{artifact.title}</span>
+              <a className="trs-standalone" href={artifact.htmlUrl} target="_blank" rel="noopener noreferrer">Open standalone page ↗</a>
+              <button ref={closeButton} className="trs-close" type="button" onClick={returnToReading} aria-label={returnLabel} title={returnLabel}>×</button>
+            </div>
             {!loaded && <p className="trs-loading" role="status">Loading interactive page…</p>}
             <iframe ref={frame} className="trs-frame" src={(() => {
               const url = new URL(artifact.htmlUrl)
               return url.pathname + url.search + url.hash
-            })()} title={artifact.title} onLoad={() => { setLoaded(true); setFrameVersion(version => version + 1) }} style={{ height: frameHeight }} />
-          </section>}
-        </div>
+            })()} title={artifact.title} onLoad={() => { setLoaded(true); setFrameVersion(version => version + 1) }} />
+          </>}
+        </dialog>
       </article>
     </TopologyReadingContext.Provider>
   )
