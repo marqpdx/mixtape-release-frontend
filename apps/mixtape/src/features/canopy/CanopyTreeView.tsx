@@ -9,7 +9,7 @@ import {
   IconLayoutBoard,
 } from '@tabler/icons-react';
 
-// ─── Shared Codex visual language (mirrors reference/loom/codex.md) ───────────
+// ─── Shared Loom Grammar visual language (mirrors reference/loom/loom-grammar.md) ───────────
 
 type VerbFamily   = 'outcome' | 'process' | 'governance' | 'inquiry' | 'substrate';
 type PulseProfile = 'steady' | 'considered' | 'rapid' | 'ambient' | 'stalled';

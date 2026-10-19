@@ -10,7 +10,7 @@ import {
 } from '@tabler/icons-react';
 
 // ─── Codex ───────────────────────────────────────────────────────────────────
-// Derived from reference/loom/codex.md — single source of truth for all visual/behavioral props
+// Derived from reference/loom/loom-grammar.md (the Loom Grammar) — single source of truth for all visual/behavioral props
 
 type VerbFamily    = 'outcome' | 'process' | 'governance' | 'inquiry' | 'substrate';
 type Morphology    = 'round' | 'elongated' | 'faceted' | 'diffuse';
