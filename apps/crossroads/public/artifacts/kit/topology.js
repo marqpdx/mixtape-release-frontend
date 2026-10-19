@@ -8,11 +8,15 @@
     viewBox: [1040, 790], minWidth: 820, // SVG coordinate space; below minWidth the diagram scrolls
     layers: { key: { name, full, hue, desc } },  // hue is a kit hue: teal violet orange blue gold slate rose grey green brick
     layerOrder: ['key', ...],            // order of the layer cards
-    bands: [{ layer, x, y, w, h, label, solid, opacity, labelBelow }], // coloured layer backgrounds; solid = public-register fill; labelBelow = label centred under the band
+    layerGroups: [{ name, member, note, layers: ['key', ...] }], // optional: the Map key under group headings, in this order (replaces layerOrder);
+                                         // member names what each band is (for example 'Server'), shown on its popup in place of 'Layer'
+    bands: [{ layer, x, y, w, h, label, solid, opacity, labelBelow, labelStack }], // coloured layer backgrounds; solid = public-register fill; labelBelow = label centred under the band;
+                                         // labelStack = label inside at the left, one word per line, centred top to bottom
     nodes: [{ id, layer, x, y, w, label, sub, desc, status, evidence, refs,
               hue, h, solid, vertical, small, tiny, governance: { text, docs } }],  // optional: own hue, height, public-register fill,
                                                                  // vertical label (rails), governance distillation
-    decor: [{ d, hue }],                 // optional decorative paths (e.g. rail ticks), drawn under edges
+    decor: [{ d, hue, layer, cls, dashed, width, opacity }], // optional decorative paths (e.g. rail ticks), drawn under edges;
+                                         // dashed defaults to true; a path with a layer lights up when that layer, or one of its nodes, is in focus
     edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
                                          //       | 'sv' (out of the side facing the target, then down into its top)
     status: { source, labels: { built: 'Built', ... }, untracked } | null,
@@ -41,6 +45,9 @@
     const status = cfg.status || null;
     const hue = l => LAYERS[l].hue;
     const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+    // What each band is: its group's member name when the map groups its key (the five groupings, CTO 2026-10-19), else 'Layer'.
+    const memberOf = Object.fromEntries((cfg.layerGroups || []).flatMap(g => g.member ? g.layers.map(k => [k, g.member]) : []));
+    const kind = key => memberOf[key] || 'Layer';
 
     // Scaffold: a pinned strip (intro beside the detail panel, then controls), the zoomable diagram, layer cards.
     // Build-state filter: chips that toggle like checkboxes; the active ones are bold.
@@ -74,7 +81,7 @@
       <div class="stage">
         <div class="tk-diagram" role="img" aria-label="${esc(cfg.ariaLabel || 'Topology diagram')}"></div>
       </div>
-      <section class="layers"><h3>Layer reference</h3><p class="layers-hint">Top to bottom, as on the map. Select a layer to read it in full.</p><div class="layer-list"></div></section>`;
+      <section class="layers"><h3>Map key</h3><p class="layers-hint">Top to bottom, as on the map. Select one to read it in full.</p><div class="layer-list"></div></section>`;
     const diagram = mount.querySelector('.tk-diagram');
     const introEl = cfg.intro === null ? null : document.querySelector(cfg.intro || 'body > header');
     if (introEl) mount.querySelector('.tk-intro').appendChild(introEl);
@@ -139,7 +146,7 @@
       // A solid band (e.g. the Canon and Guidance rail) uses the public-register fill, softened by b.opacity.
       const r = el('rect', { class: 'band' + (b.solid ? ' solid' : ''), x: b.x, y: b.y, width: b.w, height: b.h, rx: 12,
         fill: b.solid ? `var(--${h}-p)` : `var(--${h}-b)`, 'fill-opacity': b.solid ? (b.opacity ?? 1) : 1, stroke: `var(--${h}-s)`,
-        tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, layer` }, gBands);
+        tabindex: 0, role: 'button', 'aria-label': `${LAYERS[b.layer].full}, ${kind(b.layer).toLowerCase()}` }, gBands);
       r.dataset.layer = b.layer;
       (bandEls[b.layer] ||= []).push(r);
       r.addEventListener('focus', () => { if (selected !== 'layer:' + b.layer) selectLayer(b.layer, bandAnchor(r)); });
@@ -147,7 +154,13 @@
     }
     function bandAnchor(r) { const b = r.getBoundingClientRect(); return { left: b.left + 24, right: b.left + 24, top: b.top + 24 }; }
     const gDecor = el('g', {}, svg);
-    for (const d of cfg.decor || []) el('path', { class: 'decor', d: d.d, stroke: `var(--${d.hue}-s)`, 'stroke-width': 1.6, 'stroke-dasharray': '3 4', opacity: 0.7 }, gDecor);
+    for (const d of cfg.decor || []) {
+      const p = el('path', { class: 'decor' + (d.cls ? ' ' + d.cls : ''), d: d.d, stroke: `var(--${d.hue}-s)`, 'stroke-width': d.width ?? 1.6, opacity: d.opacity ?? 0.7 }, gDecor);
+      if (d.dashed !== false) p.setAttribute('stroke-dasharray', '3 4');
+      if (d.layer) p.dataset.layer = d.layer;
+    }
+    // Decor that belongs to a layer (for example Loom's and Warp's cables) lights with that layer.
+    const lightDecor = (root, layer) => root.querySelectorAll('.decor[data-layer]').forEach(p => p.classList.toggle('lit', p.dataset.layer === layer));
     const gLabels = el('g', { class: 'band-tag' }, svg);
     const gEdges = el('g', {}, svg);
 
@@ -238,13 +251,20 @@
     for (const b of BANDS) {
       const h = hue(b.layer);
       // labelBelow: the label sits outside the band, centred underneath it, with no tag behind it.
+      if (b.labelStack) {
+        const words = (b.label || LAYERS[b.layer].full).split(' '), lh = 15;
+        const y0 = b.y + b.h / 2 - (words.length - 1) * lh / 2 + 4;
+        const t = el('text', { x: b.x + 14, y: y0, class: 'band-label', fill: `var(--${h}-s)` }, gLabels);
+        words.forEach((w, i) => { el('tspan', { x: b.x + 14, y: y0 + i * lh }, t).textContent = w; });
+        continue;
+      }
       if (b.labelBelow) {
         el('text', { x: b.x + b.w / 2, y: b.y + b.h + 17, 'text-anchor': 'middle', class: 'band-label below', fill: `var(--${h}-s)` }, gLabels).textContent = b.label || LAYERS[b.layer].full;
         continue;
       }
       const t = el('text', { x: b.x + 14, y: b.y + 21, class: 'band-label', fill: b.solid ? `var(--${h}-pt)` : `var(--${h}-s)` }, gLabels);
       t.textContent = b.label || LAYERS[b.layer].full;
-      const bg = el('rect', { x: b.x + 8, y: b.y + 8, width: t.getComputedTextLength() + 12, height: 19, rx: 5, fill: b.solid ? 'none' : `var(--${h}-b)` });
+      const bg = el('rect', { x: b.x + 8, y: b.y + 7.5, width: t.getComputedTextLength() + 12, height: 20, rx: 5, fill: b.solid ? 'none' : `var(--${h}-b)` });
       gLabels.insertBefore(bg, t);
     }
 
@@ -252,6 +272,7 @@
       svg.classList.add('focusing');
       Object.values(nodeEls).forEach(g => g.classList.remove('lit'));
       nodeEls[id].classList.add('lit');
+      lightDecor(svg, byId[id].layer);
       for (const p of edgeEls) {
         const hot = p.dataset.from === id || p.dataset.to === id;
         p.classList.toggle('hot', hot);
@@ -264,6 +285,7 @@
       edgeEls.forEach(p => { p.classList.remove('hot'); p.setAttribute('marker-end', 'url(#tkArrow)'); });
       Object.values(nodeEls).forEach(g => g.classList.remove('lit', 'selected'));
       Object.values(bandEls).flat().forEach(r => r.classList.remove('selected'));
+      lightDecor(svg, null);
     }
     const names = ids => [...new Set(ids)].map(i => esc(byId[i].label)).join(', ') || '—';
     // Governance view (experiment): a node may carry a short distillation of what governs it.
@@ -310,7 +332,7 @@
           : `<strong style="color:var(--st-${k})">● ${c} ${esc(status.labels[k] || k)}</strong>`).join(' · ') + '</div>';
       }
       return `
-        <div class="p-head"><h2>${esc(L.full)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">Layer</span></div>
+        <div class="p-head"><h2>${esc(L.full)}</h2><span class="p-layer" style="color:var(--${L.hue}-s)">${esc(kind(key))}</span></div>
         <p>${L.desc}</p>
         <div class="p-links"><b>Holds:</b> ${names(members.map(n => n.id))}</div>
         ${st ? '<div class="p-fill"></div>' + st : ''}`;
@@ -320,6 +342,7 @@
       svg.classList.add('focusing');
       for (const n of NODES) if (n.layer === key) nodeEls[n.id].classList.add('lit');
       (bandEls[key] || []).forEach(r => r.classList.add('selected'));
+      lightDecor(svg, key);
       pagePop.show(layerHTML(key), anchor || bandAnchor(bandEls[key][0]));
     }
     const pagePop = makePop(diagram);
@@ -401,15 +424,24 @@
     };
     window.addEventListener('hashchange', fromHash); fromHash();
 
-    // Layer reference: a top-down list; each layer shows its first line and expands in place.
+    // Map key: a top-down list; each band shows its first line and expands in place.
     const list = mount.querySelector('.layer-list');
-    for (const k of cfg.layerOrder || Object.keys(LAYERS)) {
-      const L = LAYERS[k];
-      const d = document.createElement('details');
-      d.className = 'layer-item';
-      d.style.setProperty('--li', `var(--${L.hue}-s)`);
-      d.innerHTML = `<summary><span class="li-name">${esc(L.full)}</span><span class="li-first">${L.desc.replace(/<[^>]+>/g, '')}</span></summary><div class="li-body">${L.desc}</div>`;
-      list.appendChild(d);
+    const groups = cfg.layerGroups || [{ layers: cfg.layerOrder || Object.keys(LAYERS) }];
+    for (const grp of groups) {
+      if (grp.name) {
+        const h = document.createElement('div');
+        h.className = 'layer-group';
+        h.innerHTML = esc(grp.name) + (grp.note ? `<span>${esc(grp.note)}</span>` : '');
+        list.appendChild(h);
+      }
+      for (const k of grp.layers) {
+        const L = LAYERS[k];
+        const d = document.createElement('details');
+        d.className = 'layer-item';
+        d.style.setProperty('--li', `var(--${L.hue}-s)`);
+        d.innerHTML = `<summary><span class="li-name">${esc(L.full)}</span><span class="li-first">${L.desc.replace(/<[^>]+>/g, '')}</span></summary><div class="li-body">${L.desc}</div>`;
+        list.appendChild(d);
+      }
     }
 
     // Upper right (CTO, 2026-10-18): the map's pill and the header buttons on one row, then the
@@ -486,12 +518,14 @@
       fsvg.classList.remove('focusing');
       fEdges().forEach(p => { p.classList.remove('hot'); p.setAttribute('marker-end', 'url(#tkArrow)'); });
       fsvg.querySelectorAll('.lit, .selected').forEach(x => x.classList.remove('lit', 'selected'));
+      lightDecor(fsvg, null);
     }
     function fFocus(id) {
       const ns = fNodes();
       fsvg.classList.add('focusing');
       Object.values(ns).forEach(g => g.classList.remove('lit'));
       ns[id].classList.add('lit');
+      lightDecor(fsvg, byId[id].layer);
       for (const p of fEdges()) {
         const hot = p.dataset.from === id || p.dataset.to === id;
         p.classList.toggle('hot', hot);
@@ -507,6 +541,7 @@
         fsvg.classList.add('focusing');
         for (const n of NODES) if (n.layer === key) fNodes()[n.id].classList.add('lit');
         fsvg.querySelectorAll(`rect.band[data-layer="${key}"]`).forEach(r => r.classList.add('selected'));
+        lightDecor(fsvg, key);
         fullPop.show(layerHTML(key), anchor);
       }
     }
