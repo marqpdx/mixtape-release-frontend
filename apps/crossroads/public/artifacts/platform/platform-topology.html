@@ -25,11 +25,11 @@
     a{color:var(--mulberry);text-decoration:none}a:hover{text-decoration:underline}
     .shell{max-width:1180px;margin:auto;padding:32px 16px 80px}
     .eyebrow{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-    .header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px}
-    .intro{display:grid;gap:14px;max-width:760px}.pills{display:flex;flex-wrap:wrap;gap:8px}
+    .header{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px 8px;margin-bottom:32px}
+    .intro{display:grid;gap:14px;max-width:800px}.pills{display:flex;flex-wrap:wrap;gap:8px}
     .pill{border:1.5px solid var(--ink);border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
     .pill.primary{background:var(--ink);color:var(--paper)}
-    h1{max-width:760px;font:800 clamp(30px,3.6vw,44px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
+    h1{max-width:800px;font:800 clamp(30px,3.6vw,44px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
     /* The maps mini-nav sits where it sits on the kit maps (system, Loom): same frame, same height. Keep .intro-top's min-height in step with --tk-maps-block in kit/topology.css. */
     .intro-top{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:165px}
     .tk-maps{margin-top:auto;padding-top:.55rem;font:400 .8rem/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#5b5a54}
@@ -37,19 +37,15 @@
     .tk-maps a:hover{text-decoration-color:currentColor}
     .tk-maps .here{color:#1c1b18;font-weight:600}
     .tk-maps .soon{color:#5b5a54;opacity:.55;cursor:default}
-    .trio{margin-top:-4px}
     @media(max-width:767px){.intro-top{min-height:0}}
-    .lede{max-width:60ch;color:var(--body);font-size:18px;line-height:1.5}
-    .trio{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:700 clamp(18px,2vw,22px)/1.2 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
-    .trio button{all:unset;cursor:pointer;border-radius:6px;padding:0 4px;margin:0 -4px}
-    .trio button:hover{background:rgba(31,29,23,.08)}
-    .trio button:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
-    .trio button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
-    .trio-hint{font-size:12px;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:500;letter-spacing:0}
+    .lede{max-width:70ch;color:var(--body);font-size:18px;line-height:1.5}
+    /* The trio: what Mixtape is for. Same row, type and weight as the pills; far right on wide screens, under the pills on narrow ones. */
+    .trio{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
+    .trio span+span::before{content:'';display:inline-block;width:5px;height:5px;margin:0 10px 2px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
+    @media(min-width:900px){.trio{position:absolute;top:0;right:0;height:24px}}
+    @media(max-width:899px){.trio{flex-basis:100%;margin-top:4px}}
+    @media(max-width:460px){.trio{flex-direction:column;align-items:flex-start;gap:6px}.trio span+span::before{display:none}}
     .serves{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
-    .lands.trio-active .land:not(.trio-on){opacity:.32}
-    .lands.trio-active .land.trio-on{transform:translate(-3px,-3px)}
-    .trio button+button::before{content:'';display:inline-block;width:7px;height:7px;margin:0 14px 3px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
     .footer .built{display:block;margin-bottom:6px}
     .depth-wrap{display:grid;gap:8px}.depths{display:flex;overflow:hidden;background:var(--cream);border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
     .depth{min-width:110px;padding:10px 16px;border:0;background:transparent;cursor:pointer;display:grid;gap:2px;text-align:left}
@@ -115,12 +111,11 @@
     <header class="header">
       <div class="intro">
         <div class="intro-top">
-          <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span></div>
+          <div class="pills"><span class="pill primary">Mixtape · Concept map</span><span class="pill">Pre-canon</span><p class="trio" aria-label="What Mixtape is for"><span>Working in common</span><span>Self-expression</span><span>Knowledge building</span></p></div>
           <h1>What happens when you bring what matters into Mixtape?</h1>
           <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <span class="here" aria-current="page">Platform</span></nav>
         </div>
-        <p class="trio" role="group" aria-label="What Mixtape is for: select one to see which parts serve it"><button type="button" data-trio="collab" aria-pressed="false">Working in common</button><button type="button" data-trio="expr" aria-pressed="false">Self-expression</button><button type="button" data-trio="know" aria-pressed="false">Knowledge building</button><span class="trio-hint">select one to see where it lives</span></p>
-        <p class="lede">Mixtape is a suite of tools for working in common, expressing oneself well, and building knowledge. You arrive at Main Reception and get your bearings. From there you go wherever the work needs you. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
+        <p class="lede">Mixtape is a suite of tools for working in common, expressing oneself well, and building knowledge. You can stop by Main Reception and get your bearings on recent and upcoming. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
       </div>
       <div class="depth-wrap">
         <span class="eyebrow" id="depth-label">How deep do you want to go?</span>
@@ -231,9 +226,6 @@
     document.getElementById('strands').innerHTML=STRANDS.map(s=>`<button class="strand" type="button" data-node="${s.id}" style="--strand:${s.color};--line:${s.line}"><span class="strand-name"><strong>${s.name}</strong><span>${s.role}</span></span><span class="strand-body"><span class="strand-line"></span><span class="strand-narr places">${s.narr}</span><span class="strand-tech machinery">${s.tech}</span></span></button>`).join('');
     const life=['Something matters','becomes Material','is tended','informs understanding','reaches enoughness','becomes immaterial','returns to soil'];
     document.getElementById('lifecycle').innerHTML=life.map((s,i)=>`<span class="life">${s}</span>${i<life.length-1?'<span class="arrow">→</span>':''}`).join('');
-    let trioOn=null;
-    function trio(k){trioOn=trioOn===k?null:k;document.querySelectorAll('[data-trio]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.trio===trioOn)));landsEl.classList.toggle('trio-active',!!trioOn);document.querySelectorAll('.land').forEach(card=>card.classList.toggle('trio-on',!!trioOn&&LANDS.find(l=>l.id===card.dataset.place).serves.includes(trioOn)))}
-    document.querySelectorAll('[data-trio]').forEach(b=>b.addEventListener('click',()=>{trio(b.dataset.trio);const r=landsEl.getBoundingClientRect();if(trioOn&&(r.top>innerHeight*0.6||r.bottom<0))landsEl.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}));
     const valid=['story','places','machinery'];let followed='m1',trigger=null;
     function depth(d){if(!valid.includes(d))return;document.body.dataset.depth=d;document.querySelectorAll('.depth').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.depth===d)));const u=new URL(location.href);d==='story'?u.searchParams.delete('depth'):u.searchParams.set('depth',d);history.replaceState({},'',u)}
     function follow(id,toggle=true){followed=toggle&&followed===id?null:id;document.querySelectorAll('.material').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.material===followed)));document.querySelectorAll('.land').forEach(card=>{const m=followed&&MATERIALS[followed],on=!!(m&&m.places.includes(card.dataset.place));card.classList.toggle('followed',on);card.querySelector('.ticket').innerHTML=on?`<span class="ticket-meta"><span>${m.kind}</span><span>${m.code}</span></span><span class="ticket-title"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</span>`:''});const m=followed&&MATERIALS[followed];document.getElementById('caption').textContent=m?`${m.title} (${m.code}) is the same thing in ${m.places.length} places. The thing is not its interface.`:'Pick a piece of Material to see where it lives.'}
