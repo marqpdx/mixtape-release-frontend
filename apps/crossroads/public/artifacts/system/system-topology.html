@@ -1,11 +1,11 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.23)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.24)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15, 2026-10-17
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.23</span>
+    <span class="pill">Topology library · System · v2.0.24</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.23 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.24 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -56,7 +56,7 @@
 (() => {
   const LAYERS = {
     pillars:  { name: 'Main Gateways', full: 'Main Gateways — the ways in',     hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: the Main Gateways, peers, where people cross into Mixtape (after <em>A Pattern Language</em>, 53). None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
-    frontend: { name: 'Frontend',   full: 'Frontend — the client apps',          hue: 'teal',   desc: 'The apps people use. <code>mixtape-release-frontend</code> is a Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients. Puddlejump Sync is a separate desktop app (<code>mixtape-release-puddlejump-sync</code>).' },
+    frontend: { name: 'Frontend',   full: 'Frontend — the client apps',          hue: 'teal',   desc: 'The apps people use. <code>mixtape-release-frontend</code> is a Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every tool call.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery workers, with RabbitMQ (drawn in the supporting row) as the broker. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Dispatch',   full: 'Dispatch — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
@@ -66,7 +66,7 @@
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'The headless research engine and, planned, the Hildegard library UI over its corpus.' },
     gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: four apps that run alongside everything, not in the call path: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs.' },
     warp:     { name: 'Warp', full: 'Warp — what Loom weaves across', hue: 'rose', desc: 'A Layer: the fixed, load-bearing structure the work is woven across. Provisioning, provenance and workflow scaffolding that every server and every Suggestion depends on, without being a server itself. Loom is the weaving; Warp is what it runs across. The reasons behind things are Puddlejump\'s; Warp carries the pointers.' },
-    infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Two sizes: the servers much of the platform leans on, then smaller ones with a single job. Qdrant is drawn with Stackroom, and the Celery workers with core.' },
+    infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Two sizes: the servers much of the platform leans on, then smaller ones with a single job. At the right end, one small tool of Mixtape\'s own: Puddlejump Sync. Qdrant is drawn with Stackroom, and the Celery workers with core.' },
     loom:     { name: 'Loom', full: 'Loom — ambient intelligence', hue: 'plum', desc: 'A Layer: Mixtape\'s ambient intelligence, maintained by people and agents, an always-on background layer of knowledge about the whole of Mixtape, so help is ready when needed and grounded in what people have already accepted. An umbrella across Switchboard, Inkwell and Stackroom, not a service; Clio is its face. Drawn here as its own box for now. See the <a href="../loom/loom-topology-enhanced.html">Loom map</a>.' },
   };
 
@@ -105,9 +105,6 @@
     { id: 'FM', layer: 'frontend', x: 550, y: 190, w: 220, label: 'apps/mixtape', sub: 'signed-in application',
       desc: 'The signed-in application where Crossroads, Catalyst and the platform surfaces (Writing, Initiatives and Atrium, Folio, Clio) are used.', status: 'built', evidence: 'Live.' },
 
-    { id: 'PS', layer: 'frontend', x: 810, y: 200, w: 190, h: 28, tiny: true, label: 'Puddlejump Sync',
-      desc: 'A desktop app (Rust and Tauri, in the menu bar) that keeps a local Puddlejump canon folder in step with Puddlejump on Mixtape, through the <code>/api/puddlejump/</code> endpoints. Local Puddlejump remains the sole canon authority. A client, not a server.',
-      status: 'partial', evidence: 'Initial build (<code>mixtape-release-puddlejump-sync</code>, 2026-05-19); its auth surface not yet audited (Argus 1.8).', refs: ['reference/knowledge-architecture/system-topology.md (Puddlejump)'] },
 
     { id: 'RQ', layer: 'async', x: 60, y: 320, w: 240, label: 'Celery workers', sub: 'core background jobs · beat',
       desc: 'Core\'s own Celery workers (default, polling, push, transcription, commons) and beat, the scheduler. Core hands slow work to Switchboard as Celery tasks on the <code>switchboard</code> queue, carried by RabbitMQ (in the supporting row).', status: 'built', evidence: 'SW-7 async path complete (2026-04-20).' },
@@ -158,26 +155,29 @@
       desc: 'The fixed, load-bearing structure the work is woven across: setting up a Codex or a Group, proving where its contents came from, its starter material and safety templates, and the review-and-confirm workflow. Not a server. The wider reach, across both entry paths, is the aim.',
       status: 'partial', evidence: 'Catalyst Codex activation built (app/catalyst/services/activation.py: CORE and FIXTURE copied, manifest hashes stamped, index seeded; Convergence Pilot Phase 3). The warranty (signing, verification, append-only mirror) is planned.', refs: ['reference/glossary/hand-touch/warp.md', 'decisions/warp-adr/warp-definition.md', 'planning/warp/warranty-build-plan.md'] },
 
-    { id: 'PG', layer: 'infra', x: 172, y: 680, w: 150, h: 40, small: true, label: 'PostgreSQL', sub: 'system of record',
+    { id: 'PG', layer: 'infra', x: 172, y: 680, w: 140, h: 40, small: true, label: 'PostgreSQL', sub: 'system of record',
       desc: 'Core\'s system of record; Ariadne keeps its own schema in it.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/postgres (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'RD', layer: 'infra', x: 338, y: 680, w: 150, h: 40, small: true, label: 'Redis', sub: 'in-memory store',
+    { id: 'RD', layer: 'infra', x: 326, y: 680, w: 140, h: 40, small: true, label: 'Redis', sub: 'in-memory store',
       desc: 'In-memory store used by core.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/redis (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'RB', layer: 'infra', x: 504, y: 680, w: 150, h: 40, small: true, label: 'RabbitMQ', sub: 'message broker',
+    { id: 'RB', layer: 'infra', x: 480, y: 680, w: 140, h: 40, small: true, label: 'RabbitMQ', sub: 'message broker',
       desc: 'The message broker for Celery, including Switchboard\'s <code>switchboard</code> queue.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/rabbitmq (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'SF', layer: 'infra', x: 670, y: 680, w: 150, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
+    { id: 'SF', layer: 'infra', x: 634, y: 680, w: 140, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
       desc: 'S3-compatible object store for files and images.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/stash (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LK', layer: 'infra', x: 836, y: 680, w: 150, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
+    { id: 'LK', layer: 'infra', x: 788, y: 680, w: 140, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
       desc: 'Live audio and video rooms for Bridge.', status: 'partial', evidence: 'Partial (CTO, 2026-10-17): runs in dev (<code>mixtape-dev-infra/livekit</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LM', layer: 'infra', x: 1002, y: 686, w: 100, h: 28, tiny: true, label: 'Listmonk',
+    { id: 'LM', layer: 'infra', x: 942, y: 686, w: 86, h: 28, tiny: true, label: 'Listmonk',
       desc: 'The mailing engine behind Lanternmail.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/lanternmail (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'UM', layer: 'infra', x: 1118, y: 686, w: 100, h: 28, tiny: true, label: 'Umami',
+    { id: 'UM', layer: 'infra', x: 1040, y: 686, w: 86, h: 28, tiny: true, label: 'Umami',
       desc: 'Self-hosted, privacy-respecting web analytics.', status: 'built', evidence: 'In use (<code>mixtape-release-umami</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'PS', layer: 'infra', x: 1138, y: 686, w: 86, h: 28, tiny: true, label: 'Pdl Sync',
+      desc: '<strong>Puddlejump Sync.</strong> A Rust tool that keeps a local machine and a canonical library in sync, in real time, in the background.',
+      status: 'partial', evidence: 'Works (<code>mixtape-release-puddlejump-sync</code>); its auth surface is not yet audited (Argus 1.8).', refs: ['reference/knowledge-architecture/system-topology.md (Supporting Infrastructure)'] },
   ];
 
   // [from, to, mode, opts] — arrows read "calls" or "is served through"
   const EDGES = [
     ['CR','FC'], ['CR','FB'], ['CR','FM'], ['CA','FM'], ['TA','FM', undefined, { dashed: true }],
-    ['FC','CO'], ['FB','CO'], ['FM','CO'], ['PS','CO'],
+    ['FC','CO'], ['FB','CO'], ['FM','CO'],
     ['FM','LW'],
     ['CO','RQ','h'], ['RQ','SW'], ['SW','CO'],
     ['CO','SR','sv'], ['CO','IW'], ['CO','LW'], ['LW','CO'],
