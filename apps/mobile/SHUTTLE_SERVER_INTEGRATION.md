@@ -9,7 +9,11 @@ The earlier investigation missed the existing Switchboard → Core Claude path
 for LinkedIn copy, `ActionRun.parent_action`, the no-fallback behavior in
 `CodexExecAdapter`, and the applicability of Contour Sightings. Those corrections
 are incorporated below. The [build sub-plan](SHUTTLE_BUILD_PLAN.md) records all
-five CTO decisions as pending; this review is not integration authorization.
+five CTO decisions and their later approval as recommended in ADR v0.1.3.
+The amended sequence is authorized within those decisions. The concrete findings
+contract was subsequently approved in this session (recorded 2026-10-20), before
+capability registration. Runtime readiness and cloud-approval recording still
+gate the first live run.
 
 ## Architectural direction
 
@@ -101,7 +105,7 @@ Switchboard source:
 - `app/services/cognition.py`: capability call to the Inkwell client.
 
 The generic capability path is currently Inkwell-backed. Extend its backend seam
-using the existing LinkedIn-style Core runner for cloud work, subject to CTO
+using the existing LinkedIn-style Core runner for cloud work, as approved in CTO
 decision 3. Do not build a third Claude path. The process receives only approved
 task input; interpreter authority must not include publication writes.
 
@@ -122,7 +126,10 @@ separable responsibilities; they need not each require a separate model call.
 Puddlejump recommends representing findings as **Contour Sightings** under
 Shuttle's Shapes, produced by a versioned Strategy, with `shape_id`,
 `shape_version`, confidence, source location, and uncertainty preservation.
-This is pending CTO decision 4 and OQ4 (where the Shapes live). Unconfirmed
+Decision 4 and OQ4 are resolved: Shapes/Strategy live on a Contour shelf;
+Recognition Vocabulary lives in the separate Request-Shape Library. The
+capability name is approved as `shuttle_weave_interpret`; concrete findings
+fields are in [the approved contract](SHUTTLE_FINDINGS_CONTRACT_DRAFT.md). Unconfirmed
 Sightings evaporate; Core's original source remains the voice Seed. Do not
 invent a separate findings ontology or make Inkwell keep source records.
 

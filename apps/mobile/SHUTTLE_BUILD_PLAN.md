@@ -95,14 +95,16 @@ a correction, and an unrelated item before treating it as reliable.
 
 ## Sub-plan for Puddlejump review: interpretation and correction through shared capabilities
 
-**Status: Puddlejump review returned 2026-10-19 — compatible with amendments;
-CTO decisions 1–5 pending.** The unit breakdown is agreed as the base. The
-returned review is incorporated below; its recommendations are not decisions
-or authorization to implement. Service placement, contracts, and the sequence
-remain gated on the CTO's answers.
+**Status: CTO decisions 1–5 returned and approved as recommended, 2026-10-19.**
+Recorded in Shuttle ADR v0.1.3 (Headnote of 2026-10-19) and its status document.
+The CTO has also approved the [findings contract](SHUTTLE_FINDINGS_CONTRACT_DRAFT.md)
+in this session (recorded 2026-10-20). Implementation may proceed within those
+decisions and that contract. Runtime/mode readiness and recorded cloud approval
+remain gates before the first live run.
 Supporting source reconnaissance: [server integration findings](SHUTTLE_SERVER_INTEGRATION.md).
-No server connection, deployment, or backend change is authorized by this
-document alone.
+No server connection or deployment has yet been performed in this mobile
+session. The decisions authorize the amended implementation sequence, not
+registration of an unapproved contract or an ungated live run.
 
 ### Motivation and outcome
 
@@ -149,7 +151,7 @@ such as “all three.” Evaluate and route the units independently as the evide
 justifies it. Corrections should invalidate affected results and their
 dependencies rather than rerun unrelated work.
 
-### Returned Puddlejump review and five pending CTO decisions
+### Returned Puddlejump review and five approved CTO decisions
 
 Review authority: CTO-carried Puddlejump session, 2026-10-19. Disposition:
 **compatible with amendments**, with no identified duplication/conflict with
@@ -166,25 +168,26 @@ ratified canon. The review corrected four omissions in the first reconnaissance:
   runtime from the session sponsor and reports missing/not-ready instead of
   falling back. Use that behavior as precedent, not Atrium's Claude adapter.
 - **C — ActionRun hierarchy exists.** `initiatives.ActionRun.parent_action`
-  supports child execution records. Whether the envelope starts at initial
-  interpretation is decision 1 below, to coordinate with SH-7b in orchestration.
+  supports child execution records. Decision 1 now settles the parent at initial
+  interpretation; use SH-7b's built shared `start_weave` function.
 - **D — Findings reuse Contour.** The reviewed recommendation is Contour
   Sightings, not an independent findings ontology. A Sighting carries Shape id,
   version, confidence, and source location; uncertainty belongs in the Shape's
   `uncertain` field. A Strategy takes source material in and returns Sightings.
-  Unconfirmed Sightings evaporate. Applying this to Shuttle is decision 4.
+  Unconfirmed Sightings evaporate. Decision 4 now approves this for Shuttle;
+  the concrete Sighting fields were subsequently approved in this session.
 
 Local source inspection confirms A's dispatch/task checks and fallback, B's
 runtime failure handling, C's model field, and D's Shape Library definitions.
 It does not verify the server's live configuration.
 
-| CTO decision | Recommendation returned by Puddlejump — **PENDING CTO** |
+| CTO decision | Approved by CTO, 2026-10-19 |
 |---|---|
-| **1. Envelope and child accounting** | Create the weave's envelope ActionRun when interpretation starts; attach executions through `parent_action`. SH-7b owns that envelope lifecycle; coordinate before implementation. |
-| **2. Person → runtime identity** | Use the generic `TenantClaudeRuntime` tenant relation for the person, without a schema change. Adapt Group assumptions in management/runner lookup; missing/not-ready is visible and never falls back. Confirm the concrete person identity model. |
-| **3. Execution placement** | Core asks; Switchboard routes and gates; Inkwell executes local work; permitted cloud work runs in a Core worker under the person's runtime, generalizing the LinkedIn path without fallback. No routing in mobile or Inkwell. |
-| **4. Findings/Shapes** | Use Contour Sightings under Shuttle's Shapes (weave, place, thing, Idea, adjacency, story), with a versioned Strategy. Resolve OQ4 with the CTO: Request-Shape Library or a Contour shelf; do not choose silently. Capability name also requires CTO approval before registration. |
-| **5. Policy authority** | SW-9 is the single cloud enforcement point, with most-restrictive policy winning under SW-3's non-upward rule. Runtime privacy, Group policy, and Switchboard policy are not joined today; record the effective restriction for the pilot without claiming that full policy unification is built. |
+| **1. Envelope and child accounting** | Call shared `shuttle.services.start_weave(weave_in=..., author=...)` first; create child execution ActionRuns via `parent_action`. Later attach the packet with `hold_packet` to the same envelope. This shared entry point is built in Core `bbfffc4d`. |
+| **2. Person → runtime identity** | Resolve `TenantClaudeRuntime` for tenant `users.CustomUser` (UUID pk), no schema change. Missing/not-ready is a visible error with no fallback. The envelope's `tenant_id` remains the platform default; person-as-tenant applies to runtime resolution only. |
+| **3. Execution placement** | Core asks; Switchboard routes and gates; Inkwell executes local work; permitted cloud work runs in a Core worker under the person's runtime, generalizing the LinkedIn path without its fallback. No routing in mobile or Inkwell; no third Claude path. |
+| **4. Findings/Shapes** | Contour Sightings. Shuttle Shapes and the weave-to-packet Strategy live on a Contour shelf. Recognition Vocabulary lives in the separate Request-Shape Library. OQ4 and capability name `shuttle_weave_interpret` are approved. Sighting fields were returned and approved before registration. |
+| **5. Policy authority** | SW-9 is the single cloud enforcement point; most-restrictive applicable policy wins. Joining runtime privacy and Group dispatch policy into SW-9 is later work, not a gate for the CTO's first trial. |
 
 Review distinguishes document authority: ADR-0058 and Switchboard ADR are
 ratified; SW-9 is enforcement only and SW-10 is not started. Governed Verb
@@ -192,9 +195,10 @@ Envelope and capability-routing coherence note are drafts; the Field is
 proposed; Scaffold is draft. Contour is settled in its ratified hand-touch
 glossary (2026-10-19). Do not elevate the drafts/proposals through this plan.
 
-**Essential gates, before server integration/live execution:**
+**Approval checkpoint and remaining live-execution gates:**
 
-1. CTO answers decisions 1–5, including OQ4 and the capability-name approval.
+1. **Decisions and contract approved.** All five decisions, OQ4, capability
+   name, and findings fields are settled; implementation artifacts come next.
 2. Server admin confirms the CTO runtime is READY and its `allowed_ai_modes`
    permits this work; the phone does not configure the runtime.
 3. Close SW-9's upstream approval-recording item: Core records the person's
@@ -214,10 +218,10 @@ cloud execution must return explicit unavailable with nothing sent.
 | Identity and runtime selection | Core `TenantClaudeRuntime` metadata and existing onboarding | Establish authenticated person → authorized tenant/runtime → Linux account; current management API is Group-scoped |
 | Capability dispatch | Switchboard typed registry and `switchboard.capability_async`, demonstrated by Folio tending | Confirm this is the right extension point and overlaps with other planned capability work |
 | Local cognition | Inkwell and existing schema-constrained capability execution | Agree unit contracts and eligible local backends; avoid duplicate routing rules |
-| First cloud backend | Existing Switchboard → Core LinkedIn task → shared runner, explicit `run_as_user` | Generalize behind the capability seam; remove account fallback; placement pending decision 3 |
+| First cloud backend | Existing Switchboard → Core LinkedIn task → shared runner, explicit `run_as_user` | Generalize behind the capability seam; remove account fallback; placement approved in decision 3 |
 | Response and corrections | Existing authenticated API, async status and/or Atrium exchange transport patterns | Choose a narrow findings/correction API; do not inherit Atrium's implicit process account or broad session context |
-| Audit and lifecycle | Existing ActionRun recording, `parent_action`, and SH-7b envelope | Parent at interpretation start and child execution accounting pending decision 1 |
-| Findings contract | Contour Shapes, Sightings, and Strategy contracts | Shuttle application and OQ4 placement pending decision 4; no separate findings ontology |
+| Audit and lifecycle | Existing ActionRun recording, `parent_action`, and SH-7b envelope | Use `start_weave`, keep parent pending, account for each execution as a child |
+| Findings contract | Contour Shapes, Sightings, and Strategy contracts | Contour shelf and concrete fields approved; no separate findings ontology |
 | Client integration | Shared `packages/api` types/client, mobile findings view | Keep provider details out of UI; shared client must also be usable by web |
 
 Local source shows Atrium's Claude adapter does not currently pass
@@ -240,15 +244,18 @@ workload is ready. Implementing that adapter is outside the first slice.
 
 ### Proposed implementation sequence, after review
 
-**Amended by the returned review; not authorized until decisions 1–5 return.**
-After the essential gates above:
+**Amended sequence authorized within the five returned decisions.**
+Implementation may proceed now; the live-execution gates apply before dispatch
+to a real model:
 
-1. Approve the Contour Sighting/Strategy contract, OQ4 placement, and capability
-   name; preserve SH-7a unchanged. Use Stackroom retrieval for Idea candidates,
+1. Implement the approved Contour Sighting/Strategy fields; placement and capability name
+   are also approved. Preserve SH-7a unchanged. Use Stackroom retrieval for Idea candidates,
    never Inkwell's direct Qdrant access: the review identifies differing
    embedding models (`zz/spike-direct-calls.md`).
-2. Core implements interpret/correct endpoints and the approved parent/child
-   ActionRun lifecycle, coordinated with SH-7b's owner in orchestration.
+2. Core implements interpret/correct endpoints using the built `start_weave`
+   function, with execution children via `parent_action`. Use the same author
+   for subsequent `hold_packet`/`get_held_packet` initiator checks. Never create
+   a second envelope or resolve runtime identity from the platform tenant id.
 3. Switchboard registers one capability over `capability_async`, with a backend
    seam behind SW-9. Source preparation remains deterministic; Inkwell returns
    derived hash/spans without keeping records, while Core retains the source.
@@ -269,7 +276,7 @@ work. Local transcription pinning is still required before serving a local-only
 privacy client; it is not waived by being later than the CTO's test.
 
 The detailed deliverable descriptions below explain the sequence above; they
-do not override the returned review or pending decisions:
+do not override the approved decisions, approved contract, or remaining live-run gates:
 
 1. **Resolve placement and dependencies.** Return the review decisions listed
    below. Verify the test account and deployed prerequisites before a live run.
@@ -355,10 +362,10 @@ Return the following for the CTO to carry back to this session:
    put to the CTO, acceptance cases, and the revised sub-plan text. Do not
    label an unresolved proposal as settled architecture.
 
-**Review boundary:** Puddlejump's verification has returned. Decisions 1–5 are
-still recommendations until the CTO answers. Record those answers explicitly,
-then confirm the essential runtime and approval-recording gates before beginning
-the integration. No server build or live run has been authorized by the review.
+**Review boundary:** Puddlejump verification and the five CTO decisions have
+returned. The findings contract was also approved in this session. Implement its
+artifacts and register the capability within that scope, then satisfy runtime/mode
+readiness and upstream cloud-approval recording before any live interpretation execution.
 
 ## Preserve the packet work
 
@@ -425,14 +432,16 @@ For the Puddlejump session to fold into Shuttle status/Appendix A:
 > SH-7a contract is unchanged.
 
 This is a mobile working plan and a relay note, not an update to Puddlejump
-canon. The mobile pilot and pending-decision plan are being checkpointed before
-the CTO's five answers are recorded. The commit handoff is supplied to the CTO
-for logging; this session does not write a Puddlejump build-log entry.
+canon. The mobile pilot and pending-decision plan were checkpointed in
+`d27bfc09` before the CTO's five answers returned. The commit handoff was supplied
+to the CTO for logging; this session does not write a Puddlejump build-log entry.
 
-Canonical-doc check before that checkpoint (2026-10-19): the Shuttle ADR and
+Historical canonical-doc check before that checkpoint (2026-10-19): the Shuttle ADR and
 status document have saved but uncommitted edits in the Puddlejump checkout.
 OQ4 remains open there, and the proposed parent/child accounting refinement is
 not yet recorded. `zz/spike-direct-calls.md` has no working-tree diff and is
 committed through `4c3b4ac`; Claude-call placement remains an open spike question.
-These are the on-disk states observed, not the CTO answers, which have not yet
-been returned to this mobile session. Do not fill them in from recommendations.
+Those observations preceded the decision return. The later handoff and current
+local ADR v0.1.3/status now record all five decisions, OQ4 resolution and the
+shared `start_weave` function (`bbfffc4d`). Findings fields were explicitly approved
+subsequently in this session; this approval was recorded on 2026-10-20.
