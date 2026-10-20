@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.34)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.35)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.34</span>
+    <span class="pill">Topology library · System · v2.0.35</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.34 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.35 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -79,10 +79,10 @@
     { layer: 'realtime', x: 760, y: 410, w: 260,  h: 104, label: 'Realtime' },
     { layer: 'memory',   x: 20,  y: 540, w: 480,  h: 104 },
     { layer: 'research', x: 520, y: 540, w: 500,  h: 104 },
-    { layer: 'gov',      x: 1040, y: 20, w: 200, h: 400, solid: true, opacity: 0.75 },
-    { layer: 'loom',     x: 1040, y: 432, w: 200, h: 100, solid: true, opacity: 0.75, label: 'Loom' },
-    { layer: 'warp',     x: 1040, y: 544, w: 200, h: 100, solid: true, opacity: 0.75, label: 'Warp' },
-    { layer: 'infra',    x: 20,  y: 668, w: 1220, h: 64, label: 'Supporting infrastructure', labelStack: true },
+    { layer: 'gov',      x: 1040, y: 20, w: 200, h: 440, solid: true, opacity: 0.75 },
+    { layer: 'loom',     x: 1040, y: 480, w: 200, h: 168, solid: true, opacity: 0.75, label: 'Loom' },
+    { layer: 'warp',     x: 1040, y: 668, w: 200, h: 100, solid: true, opacity: 0.75, label: 'Warp' },
+    { layer: 'infra',    x: 20,  y: 668, w: 1000, h: 100, label: 'Supporting infrastructure' },
   ];
 
   const H = 48;
@@ -139,43 +139,46 @@
     { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, h: 44, label: 'Puddlejump', sub: 'the canon · working ground',
       desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a Main Gateway and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
       status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['reference/glossary/hand-touch/puddlejump.md', 'puddlejump/ (this repo)'] },
-    { id: 'AR', layer: 'gov', x: 1056, y: 120, w: 168, h: 44, label: 'Ariadne', sub: 'concept discovery',
+    { id: 'AR', layer: 'gov', x: 1056, y: 128, w: 168, h: 44, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Mixtape\'s concept index with memory: a source-grounded, incrementally enriched index over the Puddlejump canon that makes ideas navigable as ideas. Ranks candidate concepts through Lenses, records each investigation as a reproducible Run, and keeps every claim one click from the words that support it. Reads the canon, never owns or amends it. Governed by its ratified build spec.',
       status: 'partial', evidence: 'P0 to P5 built in core, first real Run 2026-10-12; curation workbench (P6) and Keeper passes (P7) are next.', refs: ['reference/glossary/hand-touch/ariadne.md', 'decisions/ariadne/ariadne-build-spec.md'] },
-    { id: 'AG', layer: 'gov', x: 1056, y: 180, w: 168, h: 44, label: 'Argus', sub: 'audit practice', kind: 'Practice',
+    { id: 'AG', layer: 'gov', x: 1056, y: 196, w: 168, h: 44, label: 'Argus', sub: 'audit practice', kind: 'Practice',
       desc: 'Mixtape\'s audit practice, a vigilant keeper of fidelity: it checks what the system claims against what is built. Code against its security and architecture rules, help text against the product, working memory and documents against the canon. Named, versioned audit blocks run by an agent; every finding passes a person before it is filed. Security comes first.',
       status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the dashboard is planned.', refs: ['reference/glossary/hand-touch/argus.md', 'decisions/argus/'] },
-    { id: 'MR', layer: 'gov', x: 1056, y: 240, w: 168, h: 44, label: 'Meridian', sub: 'code intelligence',
+    { id: 'MR', layer: 'gov', x: 1056, y: 264, w: 168, h: 44, label: 'Meridian', sub: 'code intelligence',
       desc: 'Mixtape\'s code intelligence: a continuously refreshed map of the codebase that agents can query, so finding where something lives, and what governs it, is a lookup rather than a crawl. Meridian/Index maps symbols, calls, routes, models and tests; Meridian/Wiki explains files and modules. Ariadne\'s companion: Meridian maps the code, Ariadne the ideas in the canon.',
       status: 'planned', evidence: 'ADR-0051 ratified and amended (2026-10-20); nothing installed yet (M-1 to M-11).', refs: ['reference/glossary/hand-touch/meridian.md', 'decisions/meridian-adr/meridian-adr.md'] },
-    { id: 'CT', layer: 'gov', x: 1056, y: 300, w: 168, h: 44, label: 'Contour', sub: 'Shapes · read at ingest',
+    { id: 'CT', layer: 'gov', x: 1056, y: 332, w: 168, h: 44, label: 'Contour', sub: 'Shapes · read at ingest',
       desc: 'Mixtape\'s primary Shape Library: cultivated, versioned knowledge of what a kind of thing usually looks like (a recipe, a menu, a supplier). A Shape narrows interpretation without replacing evidence or doing any work, and lets provisional data build coherence without committing messy data to long-term storage. Lives in the canon, tended through Puddlejump; the one part of the canon the platform reads while it runs (Catalyst ingest).',
       status: 'built', evidence: 'Built and ongoing: Catalyst ingest reads its strategies today; one Shape (recipe) is complete, more are being cultivated (SL-5 to SL-11).', refs: ['reference/glossary/hand-touch/contour.md', 'decisions/shape-library-adr/shape-library-adr.md', 'reference/contour/'] },
-    { id: 'AX', layer: 'gov', x: 1056, y: 360, w: 168, h: 44, label: 'Alex', sub: 'Pattern Library',
+    { id: 'AX', layer: 'gov', x: 1056, y: 400, w: 168, h: 44, label: 'Alex', sub: 'Pattern Library',
       desc: 'Mixtape\'s Pattern Library: the named ways its systems and the people working in them are expected to behave, each with its reason. At the centre, Fidelity Preservation: information is never lost, authorship is never obscured, transformation is always visible. Part of the canon people follow; nothing reads it at runtime.',
       status: 'partial', evidence: 'ADR-0059 ratified 2026-10-20; the library (reference/patterns/) holds the cardinal pattern and 21 stubbed patterns; formalizing (AL-2 to AL-5).', refs: ['reference/glossary/hand-touch/alex.md', 'decisions/alex-adr/alex-adr.md'] },
-    { id: 'LO', layer: 'loom', x: 1056, y: 472, w: 168, label: 'Loom', sub: 'ambient intelligence',
+    { id: 'LO', layer: 'loom', x: 1056, y: 520, w: 168, h: 44, label: 'Loom', sub: 'ambient intelligence',
       desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (routing), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every governed operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
       status: 'partial', evidence: 'An umbrella: routing, ActionRun, Inkwell dispatch and GroupContext built; privacy filter and Aperture events pending (loom-status.md).', refs: ['reference/glossary/hand-touch/loom.md', 'decisions/loom-adr/loom-status.md'] },
-    { id: 'WA', layer: 'warp', x: 1056, y: 584, w: 168, label: 'Warp', sub: 'provisioning · provenance',
+    { id: 'KP', layer: 'loom', x: 1056, y: 588, w: 168, h: 44, label: 'Keepers', sub: 'background watchers',
+      desc: 'Background watchers: each observes one narrow source, forms a light judgment, and makes it available through Clio, without acting on its own or demanding attention. Every Keeper declares what it watches, what it can be asked, how often it reports, and how it registers. Clio is their registry and relay.',
+      status: 'built', evidence: 'Keeper ADR K-0 to K-8 complete (2026-09-16): the Clio registry, routing and findings, and four Keepers (Continuous, Recency, CountNag, Inbox). The roster is the Keeper library.', refs: ['decisions/keeper-adr/keeper-adr.md', 'decisions/keeper-adr/keeper-library.md'] },
+    { id: 'WA', layer: 'warp', x: 1056, y: 708, w: 168, h: 44, label: 'Warp', sub: 'provisioning · provenance',
       desc: 'The fixed, load-bearing structure the work is woven across: setting up a Codex or a Group, proving where its contents came from, its starter material and safety templates, and the review-and-confirm workflow. Not a server. The wider reach, across both entry paths, is the aim.',
       status: 'partial', evidence: 'Catalyst Codex activation built (app/catalyst/services/activation.py: CORE and FIXTURE copied, manifest hashes stamped, index seeded; Convergence Pilot Phase 3). The warranty (signing, verification, append-only mirror) is planned.', refs: ['reference/glossary/hand-touch/warp.md', 'decisions/warp-adr/warp-definition.md', 'planning/warp/warranty-build-plan.md'] },
 
-    { id: 'PG', layer: 'infra', x: 172, y: 680, w: 140, h: 40, small: true, label: 'PostgreSQL', sub: 'system of record',
+    { id: 'PG', layer: 'infra', x: 36, y: 712, w: 128, h: 40, small: true, label: 'PostgreSQL', sub: 'system of record',
       desc: 'Core\'s system of record; Ariadne keeps its own schema in it.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/postgres (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'RD', layer: 'infra', x: 326, y: 680, w: 140, h: 40, small: true, label: 'Redis', sub: 'in-memory store',
+    { id: 'RD', layer: 'infra', x: 176, y: 712, w: 128, h: 40, small: true, label: 'Redis', sub: 'in-memory store',
       desc: 'In-memory store used by core.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/redis (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'RB', layer: 'infra', x: 480, y: 680, w: 140, h: 40, small: true, label: 'RabbitMQ', sub: 'message broker',
+    { id: 'RB', layer: 'infra', x: 316, y: 712, w: 128, h: 40, small: true, label: 'RabbitMQ', sub: 'message broker',
       desc: 'The message broker for Celery, including Switchboard\'s <code>switchboard</code> queue.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/rabbitmq (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'SF', layer: 'infra', x: 634, y: 680, w: 140, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
+    { id: 'SF', layer: 'infra', x: 456, y: 712, w: 128, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
       desc: 'S3-compatible object store for files and images.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/stash (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LK', layer: 'infra', x: 788, y: 680, w: 140, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
+    { id: 'LK', layer: 'infra', x: 596, y: 712, w: 128, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
       desc: 'Live audio and video rooms for Bridge.', status: 'partial', evidence: 'Partial (CTO, 2026-10-17): runs in dev (<code>mixtape-dev-infra/livekit</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LM', layer: 'infra', x: 942, y: 686, w: 86, h: 28, tiny: true, label: 'Listmonk',
+    { id: 'LM', layer: 'infra', x: 736, y: 718, w: 80, h: 28, tiny: true, label: 'Listmonk',
       desc: 'The mailing engine behind Lanternmail.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/lanternmail (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'UM', layer: 'infra', x: 1040, y: 686, w: 86, h: 28, tiny: true, label: 'Umami',
+    { id: 'UM', layer: 'infra', x: 828, y: 718, w: 80, h: 28, tiny: true, label: 'Umami',
       desc: 'Self-hosted, privacy-respecting web analytics.', status: 'built', evidence: 'In use (<code>mixtape-release-umami</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'PS', layer: 'infra', x: 1138, y: 686, w: 86, h: 28, tiny: true, label: 'Pdl Sync',
+    { id: 'PS', layer: 'infra', x: 920, y: 718, w: 80, h: 28, tiny: true, label: 'Pdl Sync',
       desc: '<strong>Puddlejump Sync.</strong> A Rust tool that keeps a local machine and a canonical library in sync, in real time, in the background.',
       status: 'partial', evidence: 'Works (<code>mixtape-release-puddlejump-sync</code>); its auth surface is not yet audited (Argus 1.8).', refs: ['reference/knowledge-architecture/system-topology.md (Supporting Infrastructure)'] },
   ];
@@ -197,15 +200,15 @@
   // Warp is the outer ring, the frame; Loom runs just inside it. Warp's exit passes through a gap in Loom's
   // lower cable. Both light up with their layer.
   const ring = (off, y0, gap) => {
-    const L = off, T = off, R = 1260 - off, B = 752 - off, r = 10, mid = 376, half = 6;
+    const L = off, T = off, R = 1260 - off, B = 788 - off, r = 10, mid = 394, half = 6;
     const up = `M1240,${y0} H${R} V${T + r} A${r},${r} 0 0 0 ${R - r},${T} H${L + r} A${r},${r} 0 0 0 ${L},${T + r} V${mid - half}`;
     const downTail = `V${B - r} A${r},${r} 0 0 1 ${R - r},${B} H${L + r} A${r},${r} 0 0 1 ${L},${B - r} V${mid + half}`;
     const down = gap ? `M${R},${y0} V${gap[0]} M${R},${gap[1]} ${downTail}` : `M${R},${y0} ${downTail}`;
     return [up, down];
   };
   const CABLES = [
-    ...ring(10, 482, [589, 599]).map(d => ({ d, hue: 'plum', layer: 'loom', cls: 'cable', dashed: false, width: 1.2, opacity: 0.35 })),
-    ...ring(5, 594).map(d => ({ d, hue: 'rose', layer: 'warp', cls: 'cable', dashed: false, width: 1.2, opacity: 0.35 })),
+    ...ring(10, 530, [713, 723]).map(d => ({ d, hue: 'plum', layer: 'loom', cls: 'cable', dashed: false, width: 1.2, opacity: 0.35 })),
+    ...ring(5, 718).map(d => ({ d, hue: 'rose', layer: 'warp', cls: 'cable', dashed: false, width: 1.2, opacity: 0.35 })),
   ];
 
   // Every layer row reaches Puddlejump: a tick from each row joins one trunk in the gutter,
@@ -218,7 +221,7 @@
 
   TopologyKit.render({
     mount: '#map',
-    viewBox: [1260, 752], minWidth: 900, decor: DECOR,
+    viewBox: [1260, 788], minWidth: 900, decor: DECOR,
     layers: LAYERS,
     layerGroups: [
       { name: 'Main Gateways', member: 'Main Gateways', note: 'the ways in', layers: ['pillars'] },
