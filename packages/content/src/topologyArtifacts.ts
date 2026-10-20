@@ -8,7 +8,7 @@ export const topologyArtifacts = [
   },
   {
     id: 'platform',
-    title: 'Mixtape — Platform Topology',
+    title: 'Mixtape — Platform Map',
     imageUrl: 'https://www.crossroads.place/artifacts/platform/platform-topology.png',
     htmlUrl: 'https://www.crossroads.place/artifacts/platform/platform-topology.html',
   },
