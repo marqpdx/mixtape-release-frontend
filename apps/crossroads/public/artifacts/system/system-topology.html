@@ -1,7 +1,7 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.33)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.34)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.33</span>
+    <span class="pill">Topology library · System · v2.0.34</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.33 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.34 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -64,7 +64,7 @@
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'What the platform can find again, every result traced with provenance to its exact source. A map of the library (the intermediate representation, IR), not the library itself; vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'Daedalus, the research engine that goes out and gathers sources, and, planned, Hildegard, the research library where people work with what it gathered. Hildegard is a Surface; it sits here beside Daedalus because the pair reads best together.' },
-    gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs. They run alongside everything, not in the call path, with one exception: Contour, the one part of the canon the platform reads while it runs.' },
+    gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs. They run alongside everything, not in the call path, with one exception: Contour, the one part of the canon the platform reads while it runs. Alex, the Pattern Library, is the canon people follow.' },
     warp:     { name: 'Warp', full: 'Warp — what Loom weaves across', hue: 'rose', desc: 'A Layer: the fixed, load-bearing structure the work is woven across. Provisioning, provenance and workflow scaffolding that every server and every Suggestion depends on, without being a server itself. Loom is the weaving; Warp is what it runs across. The reasons behind things are Puddlejump\'s; Warp carries the pointers.' },
     infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Two sizes: the servers much of the platform leans on, then smaller ones with a single job. At the right end, one small tool of Mixtape\'s own: Puddlejump Sync. Qdrant is drawn with Stackroom, and the Celery workers with core.' },
     loom:     { name: 'Loom', full: 'Loom — ambient intelligence', hue: 'plum', desc: 'A Layer: Mixtape\'s ambient intelligence, maintained by people and agents, an always-on background layer of knowledge about the whole of Mixtape, so help is ready when needed and grounded in what people have already accepted. An umbrella across Switchboard, Inkwell and Stackroom, not a service; Clio is its face. Drawn here as its own box for now. See the <a href="../loom/loom-topology-enhanced.html">Loom map</a>.' },
@@ -136,21 +136,24 @@
       desc: 'The research library: where people search, browse and review a corpus Daedalus has gathered, and later ask for new research. Reads come straight from Stackroom; everything else goes through core. One instance per project; The Law runs its own.',
       status: 'planned', evidence: 'ADR-0057 ratified; HL-1 to HL-9 pending.', refs: ['reference/glossary/hand-touch/hildegard.md', 'decisions/hildegard-adr/hildegard-adr.md'] },
 
-    { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, label: 'Puddlejump', sub: 'the canon · working ground',
+    { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, h: 44, label: 'Puddlejump', sub: 'the canon · working ground',
       desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a Main Gateway and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
       status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['reference/glossary/hand-touch/puddlejump.md', 'puddlejump/ (this repo)'] },
-    { id: 'AR', layer: 'gov', x: 1056, y: 134, w: 168, label: 'Ariadne', sub: 'concept discovery',
+    { id: 'AR', layer: 'gov', x: 1056, y: 120, w: 168, h: 44, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Mixtape\'s concept index with memory: a source-grounded, incrementally enriched index over the Puddlejump canon that makes ideas navigable as ideas. Ranks candidate concepts through Lenses, records each investigation as a reproducible Run, and keeps every claim one click from the words that support it. Reads the canon, never owns or amends it. Governed by its ratified build spec.',
       status: 'partial', evidence: 'P0 to P5 built in core, first real Run 2026-10-12; curation workbench (P6) and Keeper passes (P7) are next.', refs: ['reference/glossary/hand-touch/ariadne.md', 'decisions/ariadne/ariadne-build-spec.md'] },
-    { id: 'AG', layer: 'gov', x: 1056, y: 208, w: 168, label: 'Argus', sub: 'audit practice', kind: 'Practice',
+    { id: 'AG', layer: 'gov', x: 1056, y: 180, w: 168, h: 44, label: 'Argus', sub: 'audit practice', kind: 'Practice',
       desc: 'Mixtape\'s audit practice, a vigilant keeper of fidelity: it checks what the system claims against what is built. Code against its security and architecture rules, help text against the product, working memory and documents against the canon. Named, versioned audit blocks run by an agent; every finding passes a person before it is filed. Security comes first.',
       status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the dashboard is planned.', refs: ['reference/glossary/hand-touch/argus.md', 'decisions/argus/'] },
-    { id: 'MR', layer: 'gov', x: 1056, y: 282, w: 168, label: 'Meridian', sub: 'code intelligence',
+    { id: 'MR', layer: 'gov', x: 1056, y: 240, w: 168, h: 44, label: 'Meridian', sub: 'code intelligence',
       desc: 'Mixtape\'s code intelligence: a continuously refreshed map of the codebase that agents can query, so finding where something lives, and what governs it, is a lookup rather than a crawl. Meridian/Index maps symbols, calls, routes, models and tests; Meridian/Wiki explains files and modules. Ariadne\'s companion: Meridian maps the code, Ariadne the ideas in the canon.',
       status: 'planned', evidence: 'ADR-0051 ratified and amended (2026-10-20); nothing installed yet (M-1 to M-11).', refs: ['reference/glossary/hand-touch/meridian.md', 'decisions/meridian-adr/meridian-adr.md'] },
-    { id: 'CT', layer: 'gov', x: 1056, y: 356, w: 168, label: 'Contour', sub: 'Shapes · read at ingest',
+    { id: 'CT', layer: 'gov', x: 1056, y: 300, w: 168, h: 44, label: 'Contour', sub: 'Shapes · read at ingest',
       desc: 'Mixtape\'s primary Shape Library: cultivated, versioned knowledge of what a kind of thing usually looks like (a recipe, a menu, a supplier). A Shape narrows interpretation without replacing evidence or doing any work, and lets provisional data build coherence without committing messy data to long-term storage. Lives in the canon, tended through Puddlejump; the one part of the canon the platform reads while it runs (Catalyst ingest).',
       status: 'built', evidence: 'Built and ongoing: Catalyst ingest reads its strategies today; one Shape (recipe) is complete, more are being cultivated (SL-5 to SL-11).', refs: ['reference/glossary/hand-touch/contour.md', 'decisions/shape-library-adr/shape-library-adr.md', 'reference/contour/'] },
+    { id: 'AX', layer: 'gov', x: 1056, y: 360, w: 168, h: 44, label: 'Alex', sub: 'Pattern Library',
+      desc: 'Mixtape\'s Pattern Library: the named ways its systems and the people working in them are expected to behave, each with its reason. At the centre, Fidelity Preservation: information is never lost, authorship is never obscured, transformation is always visible. Part of the canon people follow; nothing reads it at runtime.',
+      status: 'partial', evidence: 'ADR-0059 ratified 2026-10-20; the library (reference/patterns/) holds the cardinal pattern and 21 stubbed patterns; formalizing (AL-2 to AL-5).', refs: ['reference/glossary/hand-touch/alex.md', 'decisions/alex-adr/alex-adr.md'] },
     { id: 'LO', layer: 'loom', x: 1056, y: 472, w: 168, label: 'Loom', sub: 'ambient intelligence',
       desc: 'Mixtape\'s ambient intelligence layer: an always-on background layer of knowledge, kept by people and agents, woven from documents and decisions people have already accepted. Spans Switchboard (routing), Inkwell (execution) and Stackroom, Qdrant and Puddlejump (memory); every governed operation leaves an ActionRun. AI suggests; people decide. Clio is its face.',
       status: 'partial', evidence: 'An umbrella: routing, ActionRun, Inkwell dispatch and GroupContext built; privacy filter and Aperture events pending (loom-status.md).', refs: ['reference/glossary/hand-touch/loom.md', 'decisions/loom-adr/loom-status.md'] },
@@ -209,7 +212,7 @@
   // which turns into Puddlejump's left side (CTO, 2026-10-19; the ticks were left over from the full-height rail).
   const DECOR = [
     ...[72, 202, 332, 462, 592].map(y => ({ d: `M1020,${y} H1030`, hue: 'thatch' })),
-    { d: 'M1030,592 V72 M1030,84 H1056', hue: 'thatch' },
+    { d: 'M1030,592 V72 M1030,82 H1056', hue: 'thatch' },
     ...CABLES,
   ];
 
