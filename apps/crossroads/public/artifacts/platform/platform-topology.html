@@ -80,7 +80,7 @@
     .caption{margin-top:14px;color:var(--body);font-size:15px;font-weight:600;text-align:center}
     .humans{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;width:100%;padding:18px clamp(24px,4vw,44px);background:var(--ink);color:var(--paper);border:0;cursor:pointer;text-align:left}
     .humans strong{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}.humans span{max-width:70ch;color:#d9d2bf;font-size:15px;line-height:1.45}
-    .underground{padding:clamp(24px,4vw,44px);background-color:var(--under);background-image:radial-gradient(rgba(239,231,210,.06) 1px,transparent 1.4px);background-size:14px 14px;color:var(--field);display:grid;gap:22px}
+    .underground{margin-top:36px;padding:clamp(24px,4vw,44px);border:2.5px solid var(--ink);border-radius:32px;box-shadow:8px 8px 0 var(--ink);background-color:var(--under);background-image:radial-gradient(rgba(239,231,210,.06) 1px,transparent 1.4px);background-size:14px 14px;color:var(--field);display:grid;gap:22px}
     .under-intro{display:grid;gap:4px}.underground .eyebrow{color:#b3a98f}.underground h3{color:var(--cream);font-size:26px}.under-intro p{max-width:64ch;color:#cfc6ae;font-size:15px;line-height:1.5}
     .strands{display:grid;grid-template-columns:minmax(180px,max-content) minmax(0,1fr);gap:6px 22px}.strand{display:grid;grid-column:1/-1;grid-template-columns:subgrid;align-items:center;gap:6px 22px;padding:10px 0;background:transparent;color:inherit;border:0;cursor:pointer;text-align:left}.strand:hover{opacity:.85}
     .strand-name{display:flex;align-items:baseline;gap:10px}.strand-name strong{color:var(--strand);font:800 20px/1 'Bricolage Grotesque',sans-serif}.strand-name span{color:#b3a98f;font-size:12px;font-weight:600}
@@ -101,7 +101,7 @@
     .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 14px;background:var(--panel);color:var(--panel-fg);border-bottom:2px solid var(--ink);border-radius:19px 19px 0 0}.panel-titles{display:grid;gap:4px}.panel-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.panel-title{font:800 26px/1 'Bricolage Grotesque',sans-serif}
     .close{width:32px;height:32px;flex:none;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:50%;cursor:pointer;font-size:18px;font-weight:700}.panel-body{padding:18px 20px;display:grid;gap:16px}.panel-section{display:grid;gap:6px}.panel-label{display:flex;align-items:center;gap:8px;color:var(--mulberry);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.panel-label b{width:20px;height:20px;display:grid;place-items:center;border:1.5px solid;border-radius:50%;font-size:10px}.panel-narr{font-size:15px;line-height:1.55}.panel-tech{padding:14px 16px;background:var(--ink);color:#e6dec8;border-radius:14px}.panel-tech .panel-label{color:var(--cream)}.panel-tech p{font:400 12.5px/1.6 'JetBrains Mono',monospace}
     [hidden]{display:none!important}body[data-depth=story] .places,body:not([data-depth=machinery]) .machinery{display:none!important}body:not([data-depth=story]) .story{display:none!important}
-    @media(max-width:760px){.shell{padding-top:24px}.header{align-items:stretch}.depth-wrap{width:100%}.depths{width:100%}.depth{min-width:0;flex:1;padding:9px 10px}.map{grid-template-columns:minmax(0,1fr) 64px;border-radius:22px}.reception{border-radius:28px}.feed-row{grid-template-columns:1fr}.destination{white-space:normal}.lands{grid-template-columns:1fr}.strands{grid-template-columns:minmax(0,1fr)}.spine span{font-size:10px}.minor-spine span{font-size:7px}}
+    @media(max-width:760px){.shell{padding-top:24px}.header{align-items:stretch}.depth-wrap{width:100%}.depths{width:100%}.depth{min-width:0;flex:1;padding:9px 10px}.map{grid-template-columns:minmax(0,1fr) 64px;border-radius:22px}.underground{border-radius:22px}.reception{border-radius:28px}.feed-row{grid-template-columns:1fr}.destination{white-space:normal}.lands{grid-template-columns:1fr}.strands{grid-template-columns:minmax(0,1fr)}.spine span{font-size:10px}.minor-spine span{font-size:7px}}
     @media(max-width:460px){.depth strong{font-size:15px}.depth span{font-size:10px}.login small{display:none}.landscape,.underground{padding-inline:18px}.panel{right:12px;bottom:12px;width:calc(100vw - 24px);max-height:calc(100vh - 24px)}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.land{transition:none}}
   </style>
@@ -151,14 +151,6 @@
           </section>
         </div>
         <button class="humans" type="button" data-node="humans"><strong>Humans decide.</strong><span>Intelligent systems can help notice what might matter and help tend what does matter. They don't get to decide what matters to you.</span></button>
-        <section class="underground" aria-labelledby="under-title">
-          <div class="under-intro"><span class="eyebrow">03 · Beneath the surface</span><h3 id="under-title">Your work remembers.</h3><p class="places">Moving between Surfaces never means starting over. The systems underneath run through everything — not places you visit, but the sinew that keeps work continuous, provable and trustworthy.</p></div>
-          <div class="strands" id="strands"></div>
-          <div class="memory"><div class="memory-head"><strong>Memory</strong><span>The appreciating asset — the longer it runs, the better it understands your organization.</span></div>
-            <button class="memory-card" type="button" data-node="stackroom"><strong>Stackroom</strong><span class="places">What Mixtape can find again, every result traced to its exact source.</span><span class="memory-tech machinery">IR backbone + Qdrant vectors</span></button>
-            <button class="memory-card" type="button" data-node="codex"><strong>Catalyst Codex</strong><span class="places">The curated compendium of what your organization knows.</span><span class="memory-tech machinery">CORE · CONTENT · Fixture</span></button>
-          </div>
-        </section>
       </div>
       <div class="spine-wrap">
         <button class="spine" type="button" data-node="puddlejump"><span>Puddlejump · Canon — the source of truth everything is held against</span></button>
@@ -168,6 +160,14 @@
             <button class="minor-spine" type="button" data-node="patternlib" style="--minor:#3E4E7A"><span>Alex</span></button>
           </div>
         </div>
+      </div>
+    </section>
+    <section class="underground" aria-labelledby="under-title">
+      <div class="under-intro"><span class="eyebrow">03 · Beneath the surface</span><h3 id="under-title">Your work remembers.</h3><p class="places">Moving between Surfaces never means starting over. The systems underneath run through everything — not places you visit, but the sinew that keeps work continuous, provable and trustworthy.</p></div>
+      <div class="strands" id="strands"></div>
+      <div class="memory"><div class="memory-head"><strong>Memory</strong><span>The appreciating asset — the longer it runs, the better it understands your organization.</span></div>
+        <button class="memory-card" type="button" data-node="stackroom"><strong>Stackroom</strong><span class="places">What Mixtape can find again, every result traced to its exact source.</span><span class="memory-tech machinery">IR backbone + Qdrant vectors</span></button>
+        <button class="memory-card" type="button" data-node="codex"><strong>Catalyst Codex</strong><span class="places">The curated compendium of what your organization knows.</span><span class="memory-tech machinery">CORE · CONTENT · Fixture</span></button>
       </div>
     </section>
     <section class="closing"><p class="statement">The Surfaces change. The Material persists. You remain the steward. The systems underneath make that possible.</p><div class="principles"><span class="eyebrow">Principles this map is built on</span><div class="principle-list"><span class="principle primary">What Matters</span><span class="principle">Attention is precious</span><span class="principle">Knowledge takes stewardship</span><span class="principle">Humans decide</span><span class="principle">Your work should remember</span><span class="principle">Enoughness</span></div><p>If you tell us something matters, we take that seriously.</p><div class="lifecycle machinery" id="lifecycle"></div></div></section>
