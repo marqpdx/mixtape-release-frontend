@@ -19,6 +19,7 @@ import ListsScreen from '../screens/ListsScreen';
 import BuildScreen from '../screens/BuildScreen';
 import OpsScreen from '../screens/OpsScreen';
 import FolioNotesScreen from '../screens/FolioNotesScreen';
+import ShuttleScreen from '../screens/ShuttleScreen';
 import ConsoleScreen from '../screens/ConsoleScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import GroupConversationsScreen from '../screens/GroupConversationsScreen';
@@ -41,6 +42,7 @@ export type MainTabParamList = {
   Lists: undefined;
   Build: undefined;
   Folio: undefined;
+  Shuttle: undefined;
 };
 
 export type RootStackParamList = {
@@ -67,7 +69,7 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // ADR-0048 D2: the app remembers the last visited primary tab.
 const LAST_TAB_KEY = 'mixtape.mobile.lastTab';
-const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Build', 'Folio'] as const;
+const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Shuttle'] as const;
 type TabName = (typeof TAB_NAMES)[number];
 
 function isTabName(value: string | null): value is TabName {
@@ -121,6 +123,7 @@ function MainTabs() {
             Lists: ['list', 'list-outline'],
             Build: ['hammer', 'hammer-outline'],
             Folio: ['library', 'library-outline'],
+            Shuttle: ['paper-plane', 'paper-plane-outline'],
           };
           const [activeIcon, inactiveIcon] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
           const iconName = (focused ? activeIcon : inactiveIcon) as keyof typeof Ionicons.glyphMap;
@@ -155,13 +158,18 @@ function MainTabs() {
       <Tab.Screen
         name="Build"
         component={BuildScreen}
-        listeners={{ focus: () => persistLastTab('Build') }}
+        options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
       />
       {/* Folio Notes PoC — sixth tab, deliberately separate from Notebook */}
       <Tab.Screen
         name="Folio"
         component={FolioNotesScreen}
-        listeners={{ focus: () => persistLastTab('Folio') }}
+        options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
+      />
+      <Tab.Screen
+        name="Shuttle"
+        component={ShuttleScreen}
+        listeners={{ focus: () => persistLastTab('Shuttle') }}
       />
     </Tab.Navigator>
   );

@@ -26,13 +26,12 @@ import {
 } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { useAuthStore } from '../../stores/authStore';
-import { pollWithBackoff } from '../../services/polling/pollWithBackoff';
+import { useSeedTranscription } from '../../hooks/useSeedTranscription';
 import { CaptureDock } from '../shared/CaptureDock';
 import type { CaptureDockHandle } from '../shared/CaptureDock';
 import type { RecordedClip } from '../../hooks/useNativeVoiceRecorder';
 import { parseDispatchText, useDispatchCommand } from '../../hooks/useDispatchCommand';
 import { MentionSuggestionList } from './MentionSuggestionList';
-import { socketService } from '../../services/socket/socketService';
 
 interface SeedNotebookProps {
   keyboardVerticalOffset?: number;
@@ -104,42 +103,7 @@ export function SeedNotebook({
     ? `${CAPTURE_DRAFT_KEY_PREFIX}.${currentUser.username}`
     : CAPTURE_DRAFT_KEY_PREFIX;
 
-  const hasProcessingVoiceSeed = useMemo(
-    () => visibleSeeds.some((seed) => seed.kind === 'voice' && seed.status === 'processing'),
-    [visibleSeeds]
-  );
-
-  useEffect(() => {
-    if (!hasProcessingVoiceSeed) return;
-
-    let cancelled = false;
-    void pollWithBackoff(
-      async () => {
-        const result = await recentSeedsQuery.refetch();
-        const stillProcessing = (result.data ?? []).some(
-          (seed) => seed.kind === 'voice' && seed.status === 'processing'
-        );
-        return { done: !stillProcessing };
-      },
-      { isCancelled: () => cancelled, timeoutMs: Number.POSITIVE_INFINITY }
-    );
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasProcessingVoiceSeed, recentSeedsQuery]);
-
-  // Push path: Livewire emits seed:transcribed as soon as Celery finishes.
-  // Calling refetch here makes hasProcessingVoiceSeed go false on the next render,
-  // which cancels the polling loop above. Polling remains the fallback when the
-  // socket is unavailable (background, offline, connection race at mount).
-  useEffect(() => {
-    const socket = socketService.getRawSocket();
-    if (!socket) return;
-    const handler = () => { void recentSeedsQuery.refetch(); };
-    socket.on('seed:transcribed', handler);
-    return () => { socket.off('seed:transcribed', handler); };
-  }, [recentSeedsQuery]);
+  useSeedTranscription(recentSeedsQuery);
 
   const handleCapture = async (bodyText: string) => {
     const seed = await createSeed.mutateAsync({

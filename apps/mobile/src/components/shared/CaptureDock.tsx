@@ -31,7 +31,8 @@ export interface CaptureDockProps {
   kickerLabel?: string;
   kickerSub?: string;
   submitLabel?: string;
-  onSubmitText: (text: string) => Promise<void>;
+  /** Return false to retain the draft after a handled submission failure. */
+  onSubmitText: (text: string) => Promise<void | false>;
   onSubmitVoice: (clip: RecordedClip) => Promise<void>;
   /** Called immediately after the recording is finalized, before upload begins.
    *  Use this to persist the clip URI for resilience (OP-4). */
@@ -149,7 +150,10 @@ export const CaptureDock = forwardRef<CaptureDockHandle, CaptureDockProps>(funct
     if (!text || isSubmittingText) return;
 
     retainFocusRef.current = true;
-    await onSubmitText(text);
+    if (await onSubmitText(text) === false) {
+      retainFocusRef.current = false;
+      return;
+    }
     setCaptureText('');
     setDraftStatus('idle');
     void AsyncStorage.removeItem(draftStorageKey);

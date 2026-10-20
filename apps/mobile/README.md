@@ -9,6 +9,17 @@ This app imports shared code from:
 - `@mixtape/api` - API clients and React Query hooks
 - `@mixtape/auth` - Authentication logic
 
+## Shuttle pilot
+
+Shuttle is capture with intent to publish to Commons; Notebook is private
+capture. Both use the same capture component and transcription service.
+The current pilot starts with a real spoken weave and a verbatim transcript
+to interpret together before packet approval. Sample packet review remains
+available through **Open sample packet**. Capturing a weave does not publish it.
+
+See [SH-11 mobile working plan](SHUTTLE_BUILD_PLAN.md) for the interpretation
+trial, current limitations, integration dependencies, and Note 20 checks.
+
 ## Setup
 
 ### Install Dependencies
