@@ -1,0 +1,33 @@
+id: shuttle.weave_to_packet
+version: 0.1.0
+status: draft
+domain: shuttle
+source_shapes:
+- shuttle.weave
+primary_target: shuttle.weave
+secondary_targets:
+- shuttle.thing
+- shuttle.place
+- shuttle.idea
+- shuttle.adjacency
+- shuttle.story
+operator_intent: Interpret the person's intended connection into provisional, source-bound
+  Sightings for correction before packet approval.
+sectioning: whole_document
+extraction_grain: whole_entry
+token_posture: bounded_telling_and_corrections
+validation:
+- exact_source_spans
+- typed_sighting_references
+- verbatim_story_passage
+- one_weave_cluster
+- at_most_three_questions
+failure_modes:
+- invented_database_matches
+- similarity_mistaken_for_intent
+- rewritten_story
+- fixture_knowledge_leak
+- stale_revision_replaces_correction
+notes: The source Shape names the kind of weave; raw input is the immutable Seed transcript,
+  not an already interpreted reading. Strategy yields Sightings first; Core assembles
+  an SH-7a packet later.

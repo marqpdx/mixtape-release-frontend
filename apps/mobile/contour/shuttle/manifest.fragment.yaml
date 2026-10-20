@@ -1,0 +1,53 @@
+verticals:
+- id: shuttle
+  name: Shuttle
+  status: draft
+  shapes:
+  - id: shuttle.weave
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/weave.shape.yaml
+    schema_file: shuttle/weave.schema.json
+    markdown_template: shuttle/weave.template.md
+    extraction_guidance: shuttle/weave.extraction.md
+    validation_guidance: shuttle/weave.validation.md
+  - id: shuttle.thing
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/thing.shape.yaml
+    schema_file: shuttle/thing.schema.json
+    markdown_template: shuttle/thing.template.md
+    extraction_guidance: shuttle/thing.extraction.md
+    validation_guidance: shuttle/thing.validation.md
+  - id: shuttle.place
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/place.shape.yaml
+    schema_file: shuttle/place.schema.json
+    markdown_template: shuttle/place.template.md
+    extraction_guidance: shuttle/place.extraction.md
+    validation_guidance: shuttle/place.validation.md
+  - id: shuttle.idea
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/idea.shape.yaml
+    schema_file: shuttle/idea.schema.json
+    markdown_template: shuttle/idea.template.md
+    extraction_guidance: shuttle/idea.extraction.md
+    validation_guidance: shuttle/idea.validation.md
+  - id: shuttle.adjacency
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/adjacency.shape.yaml
+    schema_file: shuttle/adjacency.schema.json
+    markdown_template: shuttle/adjacency.template.md
+    extraction_guidance: shuttle/adjacency.extraction.md
+    validation_guidance: shuttle/adjacency.validation.md
+  - id: shuttle.story
+    version: 0.1.0
+    status: draft
+    shape_file: shuttle/story.shape.yaml
+    schema_file: shuttle/story.schema.json
+    markdown_template: shuttle/story.template.md
+    extraction_guidance: shuttle/story.extraction.md
+    validation_guidance: shuttle/story.validation.md

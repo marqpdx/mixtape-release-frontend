@@ -1,5 +1,10 @@
 # Shuttle interpretation — integration findings and proposed next slice
 
+**Implementation follow-up, 2026-10-20:** see the
+[local implementation checkpoint](SHUTTLE_INTERPRETATION_IMPLEMENTATION.md).
+The investigation below is historical; coordinated code changes now exist
+locally, while deployed runtime and policy checks remain outstanding.
+
 2026-10-19. Read-only inspection of local Core, Frontend, Switchboard, Inkwell,
 and Puddlejump checkouts. This does not verify the deployed server, its active
 runtime accounts, queue health, or model availability. No backend code changed.

@@ -1,0 +1,94 @@
+id: shuttle.adjacency
+name: Adjacency
+version: 0.1.0
+status: draft
+domain: shuttle
+implementation_approval: CTO approved SH-11 findings contract; recorded 2026-10-20
+description: Provisional adjacency Sighting for a Shuttle weave; no publication authority.
+required_fields:
+- sighting_id
+- shape_version
+- strategy_id
+- strategy_version
+- confidence
+- source_locator
+- uncertain
+- shape_id
+- ends
+- reason
+- intent_basis
+- intent_evidence
+optional_fields: []
+field_definitions:
+  sighting_id: &id001
+    type: string
+    minLength: 1
+  shape_version:
+    const: 0.1.0
+  strategy_id:
+    const: shuttle.weave_to_packet
+  strategy_version:
+    const: 0.1.0
+  confidence:
+    enum:
+    - high
+    - medium
+    - low
+  source_locator: &id002
+    type: array
+    items:
+      type: object
+      properties:
+        source_ref: *id001
+        source_revision:
+          type: integer
+          minimum: 0
+        start:
+          type: integer
+          minimum: 0
+        end:
+          type: integer
+          minimum: 1
+        quote: *id001
+      required:
+      - source_ref
+      - source_revision
+      - start
+      - end
+      - quote
+      additionalProperties: false
+    minItems: 1
+    maxItems: 20
+  uncertain:
+    type: array
+    maxItems: 20
+    items:
+      type: object
+      properties:
+        field: *id001
+        reason: *id001
+        source_locator: *id002
+      required:
+      - field
+      - reason
+      additionalProperties: false
+  shape_id:
+    const: shuttle.adjacency
+  ends:
+    type: array
+    items: *id001
+    uniqueItems: true
+    maxItems: 2
+    minItems: 2
+  reason: *id001
+  intent_basis:
+    enum:
+    - expressed
+    - inferred_from_intent
+  intent_evidence: *id002
+companion_files:
+  shape: adjacency.shape.yaml
+  schema: adjacency.schema.json
+  template: adjacency.template.md
+  extraction: adjacency.extraction.md
+  validation: adjacency.validation.md

@@ -19,6 +19,9 @@ available through **Open sample packet**. Capturing a weave does not publish it.
 
 See [SH-11 mobile working plan](SHUTTLE_BUILD_PLAN.md) for the interpretation
 trial, current limitations, integration dependencies, and Note 20 checks.
+The approved automated interpretation/correction slice is implemented locally;
+see the [implementation checkpoint](SHUTTLE_INTERPRETATION_IMPLEMENTATION.md)
+for verification and the remaining live-server gates.
 
 ## Setup
 

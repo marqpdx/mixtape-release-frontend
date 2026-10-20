@@ -17,6 +17,7 @@ import {
 import type { ShuttleReview } from '../services/shuttle/review';
 import type { ShuttleConfirmIn } from '@mixtape/api/clients/shuttle/contract';
 import { buildInterpretationRequest, getWeaveText } from '../services/shuttle/interpretation';
+import { ShuttleInterpretationPanel } from '../components/shuttle/ShuttleInterpretationPanel';
 
 function CheckRow({ label, checked, onPress }: {
   label: string; checked: boolean; onPress: () => void;
@@ -137,25 +138,26 @@ export default function ShuttleScreen() {
             ) : weaveText ? (
               <Text selectable style={styles.body}>{weaveText}</Text>
             ) : <Text style={styles.body}>No transcript text yet. Your capture is saved in Notebook.</Text>}
+            {weaveText && <ShuttleInterpretationPanel key={latestCapture.id} seedId={latestCapture.id} username={currentUser?.username ?? 'anonymous'} />}
             {weaveText && (
               <>
-                <Text style={styles.hint}>Let's hear what is here before shaping a packet: things, Places, Ideas, connections, stories, and anything uncertain.</Text>
+                <Text style={styles.hint}>You can also copy this telling to interpret it in our working conversation.</Text>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  style={styles.publish}
+                  style={styles.secondary}
                   onPress={() => {
                     Clipboard.setString(buildInterpretationRequest(weaveText));
                     setCopiedWeave(`${latestCapture.id}:${weaveText}`);
                   }}
                 >
-                  <Text style={styles.publishText}>Copy for interpretation</Text>
+                  <Text style={styles.link}>Copy for interpretation</Text>
                 </TouchableOpacity>
                 {copiedWeave === `${latestCapture.id}:${weaveText}` ? (
                   <Text accessibilityLiveRegion="polite" style={styles.hint}>Copied. Paste into our working conversation so we can read it together. Nothing has been sent automatically.</Text>
                 ) : <Text style={styles.hint}>Copies your exact telling with a request to interpret it. Paste into our working conversation; we can tune what it means together.</Text>}
               </>
             )}
-            <Text style={styles.hint}>Saved privately. Automatic packet shaping and Commons publishing are coming next.</Text>
+            <Text style={styles.hint}>Saved privately. Packet approval and Commons publishing are coming next.</Text>
           </View>
         )}
         <View style={styles.card}>

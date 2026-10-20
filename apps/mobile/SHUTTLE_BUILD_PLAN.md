@@ -1,5 +1,12 @@
 # Shuttle mobile working plan — SH-11
 
+**Implementation checkpoint, 2026-10-20:** the approved interpretation and
+correction slice is now implemented and saved as a coordinated local commit set.
+See the [commit handoff](SHUTTLE_COMMIT_HANDOFF_2026-10-20.md) and
+[implementation checkpoint](SHUTTLE_INTERPRETATION_IMPLEMENTATION.md) for tested
+behavior, unresolved matching, and deployment gates. The manual capture trial
+below records the pilot that informed this slice.
+
 Updated: 2026-10-19. Governing decision: ADR-0058, especially the First Use Case
 and D1–D3. The packet contract remains the SH-7a contract in
 `packages/api/src/clients/shuttle/contract.ts`.
