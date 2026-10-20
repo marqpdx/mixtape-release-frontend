@@ -23,8 +23,8 @@
 <header>
   <div>
     <h1>Loom — Internal Architecture</h1>
-    <p class="subtitle">How a request enters Loom as intent and leaves as a provenance-logged result. Eight layers.</p>
-    <span class="pill">Topology library · Loom · 2026-10-13</span>
+    <p class="subtitle">How a request enters Loom as intent and leaves as a provenance-logged result. Eight parts.</p>
+    <span class="pill">Topology library · Loom · 2026-10-20</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="here" aria-current="page">Loom</span> · <a href="../platform/platform-topology.html">Platform</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -48,14 +48,14 @@
 <script>
 (() => {
   const LAYERS = {
-    intent:   { name: 'Intent',     full: 'Intent Layer',                 hue: 'teal',   desc: 'Where human will enters Loom: Grist commands, natural language, the Aperture console, agent triggers. Packages intent as a typed operation request. No routing decisions here.' },
-    policy:   { name: 'Policy',     full: 'Policy Layer',                 hue: 'violet',   desc: 'The governance membrane. Tool registry, routing policies, operator config. Consulted at routing time; it does not execute. Changes are review-gated.' },
-    ent:      { name: 'Enterprise', full: 'Enterprise Layer',             hue: 'rose',      desc: 'The identity and voice of the organization: Group, GroupContext (built progressively, never a form wall) and Personas. What makes outputs feel like them.' },
-    dispatch: { name: 'Dispatch',   full: 'Dispatch Layer — Switchboard', hue: 'orange', desc: 'The routing brain, a standalone service. Takes typed intent, consults policy, picks tool and tier, filters private data, and enforces human approval for cloud-bound work.' },
-    exec:     { name: 'Execution',  full: 'Execution Layer — Inkwell',    hue: 'blue',     desc: 'Local model execution: LLMs and SLMs, embeddings, NLP libraries, specialized pipelines. Determinism first; generative models only where shape or language quality needs them.' },
-    memory:   { name: 'Memory',     full: 'Memory Layer',                 hue: 'gold',   desc: 'The appreciating asset: Stackroom IR, Qdrant vectors, Puddlejump canon. Enrichments enrich; no generative model mutates canonical content directly.' },
-    prov:     { name: 'Provenance', full: 'Provenance Layer',             hue: 'slate',     desc: 'Every operation leaves a deterministically assembled audit record: verb, tool, hashes, persona, approval state, source chunks. Surfaces as Aperture activity.' },
-    async:    { name: 'Async',      full: 'Async Layer',                  hue: 'grey',    desc: 'Celery and RabbitMQ keep the Intent Layer responsive while slow work (transcription, summarization, pattern detection) runs in the background.' },
+    intent:   { name: 'Intent',     full: 'Intent',                 hue: 'teal',   desc: 'Where human will enters Loom: Grist commands, natural language, the Aperture console, agent triggers. Packages intent as a typed operation request. No routing decisions here.' },
+    policy:   { name: 'Policy',     full: 'Policy',                 hue: 'violet',   desc: 'The governance membrane. Tool registry, routing policies, operator config. Consulted at routing time; it does not execute. Changes are review-gated.' },
+    ent:      { name: 'Enterprise', full: 'Enterprise',             hue: 'rose',      desc: 'The identity and voice of the organization: Group, GroupContext (built progressively, never a form wall) and Personas. What makes outputs feel like them.' },
+    dispatch: { name: 'Routing',    full: 'Routing — Switchboard', hue: 'orange', desc: 'The routing brain, a standalone service. Takes typed intent, consults policy, picks tool and tier, filters private data, and enforces human approval for cloud-bound work.' },
+    exec:     { name: 'Execution',  full: 'Execution — Inkwell',    hue: 'blue',     desc: 'Local model execution: LLMs and SLMs, embeddings, NLP libraries, specialized pipelines. Determinism first; generative models only where shape or language quality needs them.' },
+    memory:   { name: 'Memory',     full: 'Memory',                 hue: 'gold',   desc: 'The appreciating asset: Stackroom IR, Qdrant vectors, Puddlejump canon. Enrichments enrich; no generative model mutates canonical content directly.' },
+    prov:     { name: 'Provenance', full: 'Provenance',             hue: 'slate',     desc: 'Every operation leaves a deterministically assembled audit record: verb, tool, hashes, persona, approval state, source chunks. Surfaces as Aperture activity.' },
+    async:    { name: 'Async',      full: 'Async',                  hue: 'grey',    desc: 'Celery and RabbitMQ keep Intent responsive while slow work (transcription, summarization, pattern detection) runs in the background.' },
   };
 
   // Bands: x, y, w, h. Policy and Enterprise flank the Dispatch column; Async sits between Memory and Provenance.
@@ -92,9 +92,6 @@
     { id: 'OC',  layer: 'policy', x: 36, y: 310, w: 258, label: 'Operator config', sub: 'per-deployment overrides',
       desc: 'Per-deployment overrides, for example a deployment that sets cloud_allowed: false so everything runs locally.', status: 'built',
       evidence: 'ConfigLoader per-tenant overrides (0482995). The group dispatch_policy evaluator exists but is not wired in (local-llm-status LL-4).' },
-    { id: 'PJ',  layer: 'policy', x: 36, y: 370, w: 258, label: 'Puddlejump — canon anchor', sub: 'human-governed policy',
-      desc: 'The human-governed anchor Loom may treat as authoritative for registry and routing policy.', status: null },
-
     { id: 'GRP', layer: 'ent', x: 746, y: 190, w: 258, label: 'Group', sub: 'top-level sponsor',
       desc: 'The organization (enterprise, community or household). Top-level sponsor for every Loom operation. In glossary terms, part of Crossroads, Mixtape’s people-and-groups layer.', status: 'built',
       evidence: 'Group predates Loom; Loom Phase C is complete.' },
@@ -130,7 +127,7 @@
     { id: 'QD',  layer: 'memory', x: 224, y: 634, w: 170, label: 'Qdrant', sub: 'vectors only',
       desc: 'Vector geometry only: similarity and nearest-neighbour retrieval. Holds no canonical content.', status: null },
     { id: 'PJM', layer: 'memory', x: 130, y: 706, w: 170, label: 'Puddlejump canon', sub: 'ratified docs',
-      desc: 'The human-governed canonical library. Authority flows: Puddlejump ratifies → Stackroom reflects → Loom operates over.', status: null },
+      desc: 'The canon: the human-governed library Loom reads and may treat as authoritative, for registry and routing policy too, and never changes. Authority flows: Puddlejump ratifies → Stackroom reflects → Loom operates over.', status: null },
 
     { id: 'EL',  layer: 'prov', x: 668, y: 670, w: 170, label: 'ToolExecutionLog', sub: 'built as ActionRun',
       desc: 'The audit trail, assembled deterministically: verb, tool, input/output hashes, persona, approval record, source chunks, latency, actor.', status: 'built',
@@ -166,10 +163,10 @@
     mount: '#map',
     viewBox: [1040, 790], minWidth: 820,
     layers: LAYERS,
-    layerOrder: ['intent', 'policy', 'ent', 'dispatch', 'exec', 'memory', 'prov', 'async'],
+    layerGroups: [{ name: 'Loom\'s eight parts', member: 'Part', layers: ['intent', 'policy', 'ent', 'dispatch', 'exec', 'memory', 'prov', 'async'] }],
     bands: BANDS, nodes: NODES, edges: EDGES, nodeHeight: H,
-    ariaLabel: 'Loom layered architecture diagram',
-    emptyText: '<span class="tk-hint-lead">Select a node, or a coloured layer band, to open its details. Hover to trace its edges.</span><strong>Tab</strong> moves between nodes; <strong>Esc</strong> closes the details.<br><strong>Full view</strong> shows the whole map at once.',
+    ariaLabel: 'Loom architecture diagram, eight parts',
+    emptyText: '<span class="tk-hint-lead">Select a node, or a coloured band, to open its details. Hover to trace its edges.</span><strong>Tab</strong> moves between nodes; <strong>Esc</strong> closes the details.<br><strong>Full view</strong> shows the whole map at once.',
     status: {
       source: '<code>loom-status.md</code>',
       labels: { built: 'Built', partial: 'Partial', pending: 'Pending' },
