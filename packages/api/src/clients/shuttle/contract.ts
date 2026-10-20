@@ -58,9 +58,17 @@ export interface ShuttleAdjacency {
   reason: string
 }
 
+export interface ShuttleKnownStory {
+  /** Verbatim, already given by the person (e.g. an SH-11 interpretation Sighting). */
+  text: string
+  music_link?: string
+}
+
 export interface ShuttleStoryPrompt {
   item_id: string
   prompt: string
+  /** Present when the person already told this story — confirm it, don't re-ask (CTO, 2026-10-20). */
+  known_story?: ShuttleKnownStory
 }
 
 export interface ShuttleStoriesNotYetTold {
