@@ -1,5 +1,12 @@
 # Shuttle interpretation implementation checkpoint
 
+**Current reconciliation:** [integration plan and Mobile/Blue ownership](SHUTTLE_RECONCILIATION.md).
+Blue has since built deterministic placement and the real packet/confirm APIs;
+Mobile still needs to connect publication review. The CTO reports repos pushed
+and servers restarted. Personal runtime provisioning remains blocked, and live
+acceptance has not run. Distinguish this current state from the original commit
+checkpoint below.
+
 2026-10-20. Governed by ADR-0058 v0.1.3 and the approved
 [findings contract](SHUTTLE_FINDINGS_CONTRACT_DRAFT.md). The approved plan and
 contract were committed in `299b2e03`. This coordinated implementation is recorded
@@ -38,8 +45,8 @@ remains available as a manual fallback.
   the existing `claude.service.run_blocking` runner.
 - Switchboard: `shuttle_weave_interpret` payload/response registration and a
   backend seam in the existing asynchronous capability path, behind SW-9.
-- Inkwell: a stateless local handler using the existing loaded model and JSON
-  grammar. It stores no sources and makes no routing decisions.
+- Inkwell: a local handler using the existing loaded model and JSON grammar.
+  Inkwell keeps no records and makes no routing decisions.
 - Shared API: `clients/shuttle/findings.ts`, schema, and actual spoken-choirs
   fixture. Schema and fixture match Core byte for byte. SH-7a is unchanged.
 - Mobile: `ShuttleInterpretationPanel.tsx` and its use in `ShuttleScreen.tsx`.
@@ -57,9 +64,11 @@ Core's `SHUTTLE_INTERPRET_CLOUD` setting defaults to true; false requests local
 execution through Switchboard. No deployed configuration was changed. The phone
 cannot select a runtime or bypass policy.
 
-The [Contour bundle](contour/shuttle/README.md) contains the six Shapes, Strategy,
-and manifest fragment for CTO relay. It has not been written into Puddlejump or
-published as canonical library content.
+The [Contour bundle](contour/shuttle/README.md) is the original relay artifact.
+Puddlejump took in the six Shapes and Strategy in `4eff4d5`, moved the Strategy
+to `reference/contour/shuttle/strategies/weave-to-packet.*`, and added its manifest
+entry. Canonical entries remain draft until live acceptance; use the canonical
+layout for future library changes. Keep Core/API/Contour schema copies in step.
 
 ## Verification and remaining gates
 
@@ -87,8 +96,10 @@ Before the first live replay:
 5. Build/install the phone app with the existing release script and replay the
    real telling, a correction, and the contrast cases in the approved plan.
 
-Resolution currently reports **unresolved**, with no invented candidates.
-SH-1/Stackroom retrieval remains follow-up work; do not use Inkwell's direct
-Qdrant read. Packet assembly, publication, and map placement remain later phases.
+Interpretation initially reports **unresolved**, with no invented candidates.
+Blue's later placement resolves Sightings and holds a packet when explicitly
+requested. Real mobile packet review/publication and map verification remain
+integration work, assigned in the reconciliation plan. Do not use Inkwell's
+direct Qdrant read.
 Local rollout, transcription privacy pinning, policy-source joins, and Codex are
 also later work. This checkpoint does not mark all of SH-11 complete.

@@ -1,5 +1,71 @@
 # Shuttle mobile working plan — SH-11
 
+**Governing update, 2026-10-20:** aligned with ADR-0058 v0.1.5's whole-weave
+amendment (Puddlejump `f3cf69f`) and the aligned practice documents (`16df403`:
+Good Faith Publishing, agent guidelines, Recognition Vocabulary, and Contour
+Strategy review). The confirmed principle below supersedes earlier partial
+publication/per-item-rest recommendations in the
+[Mobile/Blue reconciliation](SHUTTLE_RECONCILIATION.md). Historical implementation
+and pilot notes below describe what is built, not a competing publication rule.
+
+## Current direction: finish one whole weave
+
+Notebook is raw capture that may wait. Shuttle is a commitment of attention to
+finish one coherent publication now. The person's final, reviewed weave goes
+live together in one transaction on an explicit Publish, or nothing from that
+attempt is written publicly. Whole does not mean accepting every model
+suggestion: corrections of meaning, matches, and scope remain visible and valid.
+
+Keep in Notebook is the explicit exit, preserving the raw material as a Seed
+without creating a Shuttle curation backlog. No timer, no lock, no forced
+publication. Cloud-processing consent, review, and publication permission remain
+separate. Keep the existing shared Notebook capture/transcription implementation.
+The principle is settled; exact exit/recovery and review behavior are not.
+
+### Open decisions and ownership
+
+| Canon question | Still open | Preparation owner |
+| --- | --- | --- |
+| OQ8 | Review/checkmark semantics for finishing the intended whole | Mobile |
+| OQ9 | Place/story completeness, including Portland | Blue's fixture proposal |
+| OQ10 | Terminal ActionRun and source retention on Keep in Notebook | Blue, with Mobile |
+| OQ11 | Recovery of one active session without a draft queue | Mobile + Blue |
+| OQ12 | Proto-Shuttle intent on a Seed | Mobile + Blue |
+| OQ13 | Whether per-item rest remains legitimate after deliberate scope correction | Mobile + Blue, with OQ8 |
+| OQ14 | Optional Stories Not Yet Told offers without expanding required approval | Blue + Mobile |
+| OQ15 | Honest map display for imprecise locations | Blue + Commons/map owner, with Mobile |
+
+All eight are CTO decisions. These assignments prepare concrete proposals; they
+do not delegate decision authority or authorize new behavior by assumption.
+
+### Coordinated next steps
+
+Relay the [Blue Agent handoff](BLUE_AGENT_HANDOFF_2026-10-20.md) for the current
+proposal request, superseded recommendation, and contract/lifecycle boundaries.
+
+1. **Blue proposes exact fixture changes for CTO review:** explicit approval of
+   the whole three-choir packet, Low Bar included, with no implicit promotion of
+   unticked endpoints. Address the Portland Place/story implications under OQ9.
+   The earlier recommendation to publish two choirs and rest Low Bar is
+   superseded as the intended example outcome. Mobile mirrors approved fixture
+   changes and review behavior after the decision.
+2. **Blue/server admin and CTO set up the personal runtime:** personal Claude
+   login, READY/mode verification, and live SW-9 gates; no Crossroads sponsorship
+   or account fallback. Mobile coordinates the independent live interpretation
+   and correction check. Runtime setup can proceed alongside fixture/design work.
+3. **Mobile designs and wires real review:** explicit build-packet and confirm
+   calls on the same weave envelope, with Publish and Keep in Notebook clear.
+   Resolve OQ8/OQ10–14 at their build boundaries before relying on unsettled
+   semantics. Blue owns needed backend contracts, guards, and lifecycle changes.
+4. **Blue coordinates map readiness with Commons; Mobile verifies phone entry:**
+   resolve OQ15 without invented addresses or placements. Live interpretation,
+   live publication, and visible map acceptance remain separate checkpoints.
+
+Blue's real packet/confirm endpoints exist; mobile publication review remains
+fixture-only. The canonical decision/status documents govern when newer
+decisions supersede this checkpoint. Use the reconciliation document for the
+implementation inventory and the responsibilities that remain applicable.
+
 **Implementation checkpoint, 2026-10-20:** the approved interpretation and
 correction slice is now implemented and saved as a coordinated local commit set.
 See the [commit handoff](SHUTTLE_COMMIT_HANDOFF_2026-10-20.md) and
@@ -7,8 +73,8 @@ See the [commit handoff](SHUTTLE_COMMIT_HANDOFF_2026-10-20.md) and
 behavior, unresolved matching, and deployment gates. The manual capture trial
 below records the pilot that informed this slice.
 
-Updated: 2026-10-19. Governing decision: ADR-0058, especially the First Use Case
-and D1–D3. The packet contract remains the SH-7a contract in
+Updated: 2026-10-20. Governing decision: ADR-0058 v0.1.5, including the dated
+whole-weave amendment and open questions OQ8–15. The packet contract remains the SH-7a contract in
 `packages/api/src/clients/shuttle/contract.ts`.
 
 ## Capture has an intended audience

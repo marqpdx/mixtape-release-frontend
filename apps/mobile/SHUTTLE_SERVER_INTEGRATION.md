@@ -1,5 +1,10 @@
 # Shuttle interpretation — integration findings and proposed next slice
 
+**Current join and ownership:** [Mobile/Blue reconciliation](SHUTTLE_RECONCILIATION.md).
+Blue's real build-packet/confirm endpoints now exist; mobile publication review
+still uses fixtures. Personal runtime provisioning and the CTO's open fixture
+decision are recorded separately from deployed-service status and live acceptance.
+
 **Implementation follow-up, 2026-10-20:** see the
 [local implementation checkpoint](SHUTTLE_INTERPRETATION_IMPLEMENTATION.md).
 The investigation below is historical; coordinated code changes now exist
