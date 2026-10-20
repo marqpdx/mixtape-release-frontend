@@ -165,7 +165,7 @@
         <div class="minor-col">
           <div class="minor-row">
             <button class="minor-spine" type="button" data-node="shapelib" style="--minor:#5B4A8F"><span>Contour</span></button>
-            <button class="minor-spine" type="button" data-node="patternlib" style="--minor:#3E4E7A"><span>Pattern Library</span></button>
+            <button class="minor-spine" type="button" data-node="patternlib" style="--minor:#3E4E7A"><span>Alex</span></button>
           </div>
         </div>
       </div>
@@ -217,7 +217,7 @@
       stackroom:{k:'Memory',t:'Stackroom',c:'#DBA532',f:'#2e2005',n:'What Mixtape can find again, every result traced with provenance to its exact source. Every operation enriches it: the longer the system runs, the better it understands this organization.',x:'Ingestion, chunking, embedding, indexing and retrieval. It keeps a map of the library (the IR), not the library itself; vectors live in Qdrant, which holds no canonical content.'},
       codex:{k:'Memory',t:'Catalyst Codex',c:'#DBA532',f:'#2e2005',n:'The client knowledge compendium — the deliverable. What your organization knows, in a form it owns.',x:'Portable human-readable files distinguish governed engine behavior, client knowledge, and editable starter material.'},
       puddlejump:{k:'Canon governance',t:'Puddlejump',c:'#4F551C',f:'#F1F2E4',n:'The source of truth everything else is held against. What Puddlejump governs is load-bearing; what it does not is advisory.',x:'ADRs, field notes, design briefs, build plans, status files, and policy documents maintain architectural memory.'},
-      patternlib:{k:'Underneath everything · inchoate',t:'Pattern Library',c:'#3E4E7A',f:'#EAF0FA',n:'Named patterns that constrain how every system on this map is allowed to behave. Not a system you visit — the grammar the systems already follow.',x:'reference/patterns/ — Authority Boundary, Full Traceability, and others. No ADR, no status file yet. Real, but still being formalized.'},
+      patternlib:{k:'Underneath everything · Pattern Library',t:'Alex',c:'#3E4E7A',f:'#EAF0FA',n:'Mixtape\'s Pattern Library: the named ways its systems and the people working in them are expected to behave, each with its reason. At the centre, Fidelity Preservation: information is never lost, authorship is never obscured, transformation is always visible. Not a system you visit; the grammar the systems already follow.',x:'Partial. ADR-0059 (ratified 2026-10-20); the library lives at reference/patterns/. Three shelves around the centre: Construction Integrity (Authority Boundary, Full Traceability…), Human Flow (Bounded Freedom, Signal in Imperfection…) and Narrative Patterning (seeding). Each pattern is a seed, a stub or adopted. Named for the Library of Alexandria and Christopher Alexander.'},
       shapelib:{k:'Underneath everything',t:'Contour',c:'#5B4A8F',f:'#EDEAF7',n:'Mixtape\'s primary Shape Library: what a kind of thing usually looks like (a recipe, a menu, a place), so provisional data can build coherence without committing messy data to long-term storage. The code is obliged to honour its Shapes.',x:'Formerly the Shape Library (ratified ADR, decisions/shape-library-adr/). Lives in the canon at reference/contour/, with Strategies that say how to get from source material to each Shape; read by Catalyst at ingest. Shuttle\'s Shapes joined in 2026-10. Built and ongoing.'}
     };
     STRANDS.forEach(s=>NODES[s.id]={k:s.kind+' · '+s.role,t:s.name,c:'#2A241B',f:s.color,n:s.narr,x:s.tech});
