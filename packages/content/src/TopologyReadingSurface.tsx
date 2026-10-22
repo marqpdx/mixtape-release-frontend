@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { interactivePageForReadingUrl, type InteractivePage } from './interactivePages'
+import { ReadingMediaDialog } from './ReadingMediaDialog'
 
 type OpenTopology = (artifact: InteractivePage, trigger: HTMLElement) => void
 const TopologyReadingContext = createContext<OpenTopology | null>(null)
@@ -25,8 +26,6 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
   const [frameVersion, setFrameVersion] = useState(0)
   const requested = useRef<InteractivePage | null>(null)
   const trigger = useRef<HTMLElement | null>(null)
-  const dialog = useRef<HTMLDialogElement>(null)
-  const closeButton = useRef<HTMLButtonElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
   const owner = useRef('')
   const returning = useRef(false)
@@ -77,21 +76,6 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
     return () => window.removeEventListener('popstate', sync)
   }, [show])
 
-  // Keep the dialog in step with the state; hold the article still underneath while it is open.
-  useEffect(() => {
-    const d = dialog.current
-    if (!d) return
-    if (artifact) {
-      if (!d.open) d.showModal()
-      closeButton.current?.focus({ preventScroll: true })
-      const root = document.documentElement, previous = root.style.overflow
-      root.style.overflow = 'hidden'
-      return () => { root.style.overflow = previous }
-    }
-    if (d.open) d.close()
-    if (trigger.current?.isConnected) trigger.current.focus({ preventScroll: true })
-  }, [artifact])
-
   // Escape inside the page. Topology maps post a close signal themselves, after their own
   // popover has had the first Escape; any other static page gets a plain listener.
   useEffect(() => {
@@ -123,38 +107,21 @@ export function TopologyReadingSurface({ children, backLink, className = '', sty
       <article className={`trs-surface ${className}`} style={style}>
         <style>{`
           .trs-back-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; min-height:32px; }
-          .trs-modal { width:min(1600px, 98vw); max-width:98vw; height:98vh; max-height:98vh; margin:auto; padding:0; overflow:hidden;
-            border:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.12))); border-radius:12px;
-            background:var(--theme-bg, var(--chakra-colors-theme-bg)); color:inherit; }
-          .trs-modal[open] { display:flex; flex-direction:column; }
-          .trs-modal::backdrop { background:rgba(20,18,14,.55); }
-          .trs-modal-head { display:flex; align-items:center; gap:16px; padding:6px 10px 6px 16px; border-bottom:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.12))); }
-          .trs-modal-title { flex:1; min-width:0; font-size:.875rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .trs-standalone { font-size:.875rem; color:inherit; text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
-          .trs-close { width:36px; height:36px; flex:none; display:grid; place-items:center; padding:0; border:1px solid var(--theme-border, var(--chakra-colors-theme-border, rgba(0,0,0,.18)));
-            border-radius:50%; background:transparent; color:inherit; font:inherit; font-size:1.3rem; line-height:1; cursor:pointer; }
-          .trs-close:hover { background:rgba(0,0,0,.06); }
-          .trs-close:focus-visible, .trs-standalone:focus-visible { outline:2px solid var(--theme-accent, var(--chakra-colors-theme-accent)); outline-offset:3px; }
           .trs-loading { margin:0; padding:12px 16px; font-size:.875rem; color:var(--theme-text-muted, var(--chakra-colors-theme-text-muted)); }
           .trs-frame { display:block; flex:1; min-height:0; width:100%; border:0; background:var(--theme-bg, var(--chakra-colors-theme-bg)); }
         `}</style>
         <div className="trs-back-row">{backLink}</div>
         <div className="trs-manuscript">{children}</div>
-        <dialog ref={dialog} className="trs-modal" aria-label={artifact?.title ?? 'Interactive page'}
-          onCancel={event => { event.preventDefault(); returnToReading() }}>
+        <ReadingMediaDialog open={!!artifact} title={artifact?.title ?? 'Interactive page'} href={artifact?.htmlUrl ?? ''}
+          standaloneLabel="Open standalone page" returnLabel={returnLabel} onClose={returnToReading} returnFocusTo={trigger.current}>
           {artifact && <>
-            <div className="trs-modal-head">
-              <span className="trs-modal-title">{artifact.title}</span>
-              <a className="trs-standalone" href={artifact.htmlUrl} target="_blank" rel="noopener noreferrer">Open standalone page ↗</a>
-              <button ref={closeButton} className="trs-close" type="button" onClick={returnToReading} aria-label={returnLabel} title={returnLabel}>×</button>
-            </div>
             {!loaded && <p className="trs-loading" role="status">Loading interactive page…</p>}
             <iframe ref={frame} className="trs-frame" src={(() => {
               const url = new URL(artifact.htmlUrl)
               return url.pathname + url.search + url.hash
             })()} title={artifact.title} onLoad={() => { setLoaded(true); setFrameVersion(version => version + 1) }} />
           </>}
-        </dialog>
+        </ReadingMediaDialog>
       </article>
     </TopologyReadingContext.Provider>
   )

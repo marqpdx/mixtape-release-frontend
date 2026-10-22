@@ -1,11 +1,15 @@
 import Image from '@tiptap/extension-image'
+import { mergeAttributes, type Attributes } from '@tiptap/core'
+import { ReactNodeViewRenderer } from '@tiptap/react'
 import { getTopologyArtifact } from '@mixtape/content/topologyArtifacts'
 import { normaliseInteractiveHtmlUrl, normaliseInteractivePageAlignment } from '@mixtape/content/interactivePages'
+import { mediaPlacementStyle, normaliseMediaAlignment } from '@mixtape/content/mediaLayout'
+import { MediaImageView } from './MediaImageView'
 
 export const interactivePageEditorCss = {
   display: 'flow-root',
   '@media (max-width: 47.999rem)': {
-    '& img[data-interactive-page-url], & img[data-topology-id]': {
+    '& img[data-interactive-page-url], & img[data-topology-id], & figure[data-image-figure]': {
       width: '100% !important', float: 'none !important', marginInline: '0 !important', marginBlock: '1rem !important',
     },
   },
@@ -13,9 +17,45 @@ export const interactivePageEditorCss = {
 
 // Keep the ordinary image node as a useful fallback for exports and other readers.
 export const TopologyImage = Image.extend({
+  parseHTML() {
+    return [
+      { tag: 'figure[data-image-figure]', getAttrs: element => {
+        const image = element.querySelector('img')
+        return image?.getAttribute('src') ? {
+          src: image.getAttribute('src'), alt: image.getAttribute('alt'), title: image.getAttribute('title'),
+        } : false
+      } },
+      ...(this.parent?.() ?? []),
+    ]
+  },
+  renderHTML({ node, HTMLAttributes }) {
+    const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)
+    if (node.attrs.interactivePageUrl || node.attrs.topologyId) return ['img', attrs]
+    return ['figure', { 'data-image-figure': '', style: mediaPlacementStyle(node.attrs.imageAlignment) },
+      ['img', { ...attrs, style: 'width:100%;height:auto;display:block;margin:0' }],
+      ...(node.attrs.caption ? [['figcaption', { style: 'text-align:center;margin-top:0.5rem;font-size:0.875rem;white-space:pre-wrap' }, node.attrs.caption]] : []),
+    ]
+  },
+  addNodeView() { return ReactNodeViewRenderer(MediaImageView) },
   addAttributes() {
+    const inherited: Attributes = this.parent?.() ?? {}
+    // Figure parsing must read the nested image, including the base Image attributes.
+    const imageAttributes = Object.fromEntries(Object.entries(inherited).map(([name, attribute]) => [name, {
+      ...attribute,
+      parseHTML: (element: HTMLElement) => (element.matches('img') ? element : element.querySelector('img'))?.getAttribute(name) ?? null,
+    }]))
     return {
-      ...this.parent?.(),
+      ...imageAttributes,
+      imageAlignment: {
+        default: 'center',
+        parseHTML: (element: HTMLElement) => normaliseMediaAlignment((element.matches('img') ? element : element.querySelector('img'))?.getAttribute('data-image-alignment')),
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-image-alignment': normaliseMediaAlignment(attributes.imageAlignment) }),
+      },
+      caption: {
+        default: '',
+        parseHTML: (element: HTMLElement) => (element.matches('img') ? element : element.querySelector('img'))?.getAttribute('data-image-caption') ?? '',
+        renderHTML: (attributes: Record<string, unknown>) => attributes.caption ? { 'data-image-caption': attributes.caption } : {},
+      },
       topologyId: {
         default: null,
         parseHTML: (element: HTMLElement) => getTopologyArtifact(element.getAttribute('data-topology-id'))?.id ?? null,
@@ -44,9 +84,7 @@ export const TopologyImage = Image.extend({
         renderHTML: (attributes: Record<string, unknown>) => {
           if (!normaliseInteractiveHtmlUrl(attributes.interactivePageUrl) && !getTopologyArtifact(attributes.topologyId)) return {}
           const alignment = normaliseInteractivePageAlignment(attributes.interactivePageAlignment)
-          const placement = alignment === 'center' ? 'float:none;margin:1em auto'
-            : alignment === 'left' ? 'float:left;margin:0 1.5em 1em 0' : 'float:right;margin:0 0 1em 1.5em'
-          return { 'data-interactive-page-alignment': alignment, style: `width:60%;height:auto;display:block;${placement}` }
+          return { 'data-interactive-page-alignment': alignment, style: mediaPlacementStyle(alignment) }
         },
       },
     }

@@ -20,7 +20,6 @@ import {
   IconH4,
   IconHelpCircle,
   IconScissors,
-  IconPhoto,
   IconTextSpellcheck,
   IconBlockquote,
   IconMessageQuestion,
@@ -30,10 +29,11 @@ import {
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ConversationRole } from "./extensions/ConversationBlockquote";
 import { AtticControls, type AtticContext } from "./AtticControls";
 import { InsertInteractivePageControl } from "./InsertTopologyControl";
+import { InsertImageControl, type ImagePick } from './InsertImageControl';
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -63,11 +63,10 @@ export default function TipTapToolbar({
 }: {
   editor: Editor | null
   gristMode?: boolean
-  onImagePick?: (file: File) => void
+  onImagePick?: ImagePick
   onSpellScan?: () => void
   attic?: AtticContext
 }) {
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [fontMode, setFontMode] = useState<"serif" | "sans">("sans");
   const [showHelp, setShowHelp] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -335,29 +334,7 @@ export default function TipTapToolbar({
           tabIndex={-1}
           size="xs"
         />
-        {onImagePick && (
-          <>
-            <EditorToolbarButton
-              tooltip="Insert image"
-              icon={<IconPhoto size={16} />}
-              onClick={() => imageInputRef.current?.click()}
-              isActive={false}
-              tabIndex={-1}
-              size="xs"
-            />
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) onImagePick(file);
-                e.target.value = "";
-              }}
-            />
-          </>
-        )}
+        <InsertImageControl editor={editor} onImagePick={onImagePick} />
         {gristMode && (
           <>
             <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
@@ -471,7 +448,8 @@ export default function TipTapToolbar({
           <Text fontSize="xs" mb={2}>Heading shortcuts toggle the format of the current paragraph or selected blocks. ⌘⌥0 (Ctrl+Alt+0) returns to a paragraph.</Text>
           <Text fontSize="xs" mb={2}>At the beginning of a paragraph, type ## followed by Space for Heading 2 (or #, ###, #### for Heading 1, 3, 4).</Text>
           <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option.</Text>
-          <Text fontSize="xs" mb={3}>Interactive pages: use Insert interactive page, choose a preset or enter a published /artifacts/ HTML URL, preview image URL, and title. Choose centered placement, or left/right with text wrapping beside the preview. Select an existing preview image and use Edit interactive page to change it. Small screens show a full-width preview. The matching PNG URL is suggested, not generated. In public articles and Read Issue, clicking the preview dissolves the reading area into the page. Return, Escape, or browser Back restores your place. The standalone link opens the page in a new tab.</Text>
+          <Text fontSize="xs" mb={3}>Images: use Insert image to upload a file or enter an image URL, add alt text and an optional caption, and choose the same centered or left/right wrapping placement as interactive pages. Select an image and choose Edit image to change it. Readers click an image to open the full image in a modal; ×, Escape, or browser Back restores their place.</Text>
+          <Text fontSize="xs" mb={3}>Interactive pages: use Insert interactive page, choose a preset or enter a published /artifacts/ HTML URL, preview image URL, and title. Choose centered placement, or left/right with text wrapping beside the preview. Select an existing preview image and use Edit interactive page to change it. Small screens show a full-width preview. The matching PNG URL is suggested, not generated. In public articles and Read Issue, clicking the preview opens the page in a modal. ×, Escape, or browser Back restores your place. The standalone link opens the page in a new tab.</Text>
           <Text fontSize="xs" color="fg.muted" whiteSpace="pre-wrap">
             {`Spelling helpers
 Manual popup: Cmd/Ctrl + double-click a word.

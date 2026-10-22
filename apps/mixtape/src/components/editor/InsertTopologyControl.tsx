@@ -10,6 +10,7 @@ import { getTopologyArtifact, topologyArtifacts } from '@mixtape/content/topolog
 import { normaliseInteractiveHtmlUrl, normalisePreviewImageUrl, normaliseInteractivePageAlignment, resolveInteractivePage, suggestedPreviewUrl, type InteractivePageAlignment } from '@mixtape/content/interactivePages'
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogCloseTrigger } from '@components/ui/dialog'
 import EditorToolbarButton from './EditorToolbarButton'
+import { MediaPlacementField } from './MediaPlacementField'
 
 /** General authoring control; topology maps are just convenient presets. */
 export function InsertInteractivePageControl({ editor }: { editor: Editor }) {
@@ -95,11 +96,7 @@ export function InsertInteractivePageControl({ editor }: { editor: Editor }) {
             }} /></Field.Root>
             <Field.Root><Field.Label>Preview image URL</Field.Label><Input aria-label="Preview image URL" value={imageUrl} placeholder="/artifacts/my-page/index.png" onChange={event => { setImageUrl(event.target.value); setError('') }} /></Field.Root>
             <Field.Root><Field.Label>Page title</Field.Label><Input aria-label="Page title" value={title} maxLength={160} onChange={event => { setTitle(event.target.value); setError('') }} /></Field.Root>
-            <Field.Root><Field.Label>Preview placement</Field.Label><NativeSelect.Root><NativeSelect.Field aria-label="Preview placement" value={alignment} onChange={event => setAlignment(normaliseInteractivePageAlignment(event.target.value))}>
-              <option value="center">Centered — no text wrapping</option>
-              <option value="left">Left — text wraps on the right</option>
-              <option value="right">Right — text wraps on the left</option>
-            </NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root></Field.Root>
+            <MediaPlacementField label="Preview placement" value={alignment} onChange={setAlignment} />
           </VStack>
           <Text fontSize="sm" mt={3}>Use a published HTML page and its PNG preview. The matching PNG URL is suggested automatically; it is not generated or uploaded here.</Text>
           <Text fontSize="sm" mt={2}>The preview is 60% wide. Left or right placement lets the following text wrap beside it; on small screens it becomes full width. Readers click it to dissolve into the page; Return or Escape brings them back.</Text>

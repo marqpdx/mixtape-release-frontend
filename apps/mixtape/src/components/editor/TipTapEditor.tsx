@@ -19,6 +19,7 @@ import ListItem from "@tiptap/extension-list-item";
 import Strike from "@tiptap/extension-strike";
 import OrderedList from "@tiptap/extension-ordered-list";
 import { TopologyImage, interactivePageEditorCss } from "./extensions/TopologyImage";
+import type { ImageFields } from "./InsertImageControl";
 
 import { Box, Button, Spinner, Text, VStack } from "@chakra-ui/react";
 import { BlockRouting, RouteMeta } from "./extensions/BlockRouting"
@@ -191,19 +192,19 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
 
   // Upload an image file and insert it into the editor. When `pos` is given
   // (drop), insert at that position; otherwise insert at the current selection.
-  const uploadAndInsertImage = useCallback(async (file: File, pos?: number) => {
+  const uploadAndInsertImage = useCallback(async (file: File, pos?: number, attrs?: ImageFields): Promise<boolean> => {
     const upload = imageUploadRef.current;
     const ed = editorRef.current;
-    if (!upload || !ed) return;
+    if (!upload || !ed) return false;
+    const documentBeforeUpload = ed.state.doc;
+    const insertionPosition = pos ?? ed.state.selection.to;
     try {
       const url = await upload(file);
-      if (pos != null) {
-        ed.chain().focus().insertContentAt(pos, { type: "image", attrs: { src: url } }).run();
-      } else {
-        ed.chain().focus().setImage({ src: url }).run();
-      }
+      if (ed.isDestroyed || !ed.isEditable || (attrs && !documentBeforeUpload.eq(ed.state.doc))) return false;
+      return ed.chain().focus().insertContentAt(attrs ? insertionPosition : pos ?? ed.state.selection.to, { type: "image", attrs: { src: url, ...attrs } }).run();
     } catch (err) {
       console.error("[TipTapEditor] image upload failed", err);
+      return false;
     }
   }, []);
 
@@ -844,7 +845,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
             attic={attic}
             editor={editor}
             gristMode={!!gristMode}
-            onImagePick={imageUpload ? (file) => void uploadAndInsertImage(file) : undefined}
+            onImagePick={imageUpload ? (file, attrs, position) => uploadAndInsertImage(file, position, attrs) : undefined}
             onSpellScan={() => setSpellScanOpen(true)}
           />
         )}

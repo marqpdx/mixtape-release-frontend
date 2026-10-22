@@ -1,11 +1,13 @@
 import { getTopologyArtifact, topologyArtifacts } from './topologyArtifacts'
 
+import { normaliseMediaAlignment, type MediaAlignment } from './mediaLayout'
+
 const publicOrigin = 'https://www.crossroads.place'
-export type InteractivePageAlignment = 'left' | 'center' | 'right'
+export type InteractivePageAlignment = MediaAlignment
 export interface InteractivePage { title: string; htmlUrl: string; imageUrl: string; alignment?: InteractivePageAlignment }
 
 export function normaliseInteractivePageAlignment(value: unknown): InteractivePageAlignment {
-  return value === 'left' || value === 'right' ? value : 'center'
+  return normaliseMediaAlignment(value)
 }
 
 /** Only our published artifact HTML may run inside a reader. Not arbitrary websites. */

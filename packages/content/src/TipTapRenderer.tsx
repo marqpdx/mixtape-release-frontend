@@ -7,7 +7,6 @@ import {
   Text,
   Heading,
   Code,
-  Image,
   Blockquote,
   HStack,
 } from '@chakra-ui/react'
@@ -15,6 +14,8 @@ import { useColorModeValue } from '@mixtape/core'
 import { JSX, useRef, useEffect } from 'react'
 import { resolveInteractivePage } from './interactivePages'
 import { TopologyPreview } from './TopologyPreview'
+import { ImagePreview } from './ImagePreview'
+import { normaliseMediaAlignment } from './mediaLayout'
 
 // --- Types (exported for consumers) ---
 
@@ -294,16 +295,7 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
         case 'image': {
           const artifact = resolveInteractivePage(node.attrs)
           if (artifact) return <TopologyPreview key={index} artifact={artifact} />
-          return (
-            <Box key={index} mb={4} maxW="100%">
-              <Image
-                src={node.attrs?.src as string}
-                alt={(node.attrs?.alt as string) || ''}
-                maxW="100%"
-                borderRadius="md"
-              />
-            </Box>
-          )
+          return <ImagePreview key={index} attrs={node.attrs} />
         }
 
         case 'horizontalRule':
@@ -408,7 +400,8 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
   const rendered = content.content.map((node, index) => renderNode(node, index))
   const hasWrappedPreview = (nodes?: TipTapNode[]): boolean => !!nodes?.some(node => {
     const preview = node.type === 'image' ? resolveInteractivePage(node.attrs) : undefined
-    return (preview?.alignment === 'left' || preview?.alignment === 'right') || hasWrappedPreview(node.content)
+    const alignment = preview?.alignment ?? (node.type === 'image' ? normaliseMediaAlignment(node.attrs?.imageAlignment) : undefined)
+    return alignment === 'left' || alignment === 'right' || hasWrappedPreview(node.content)
   })
 
   // Deduplicate issues for the summary banner
