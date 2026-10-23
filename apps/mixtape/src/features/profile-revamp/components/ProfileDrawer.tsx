@@ -58,7 +58,7 @@ function DrawerContent({ username }: { username: string }) {
 
       <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--rule)' }}>
         <Link
-          href={`/member/handle/${username}`}
+          href={`/members/${username}`}
           style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}
         >
           Open full profile →

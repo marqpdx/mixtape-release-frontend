@@ -63,7 +63,7 @@ export function GroupMemberProfilePanel({
   backFrom,
   backLabel,
 }: GroupMemberProfilePanelProps) {
-  const profileHref = `/member/handle/${username}${
+  const profileHref = `/members/${username}${
     backFrom
       ? `?from=${encodeURIComponent(backFrom)}&fromLabel=${encodeURIComponent(backLabel ?? '')}`
       : ''

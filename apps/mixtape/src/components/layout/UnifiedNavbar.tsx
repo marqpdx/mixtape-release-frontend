@@ -421,7 +421,7 @@ export default function UnifiedNavbar({
                   <MenuContent>
                     {identity?.username && (
                       <MenuItem value="my-profile" asChild>
-                        <Link as={NextLink} href={`/member/handle/${identity.username}`} display="flex" gap={2}>
+                        <Link as={NextLink} href={`/members/${identity.username}`} display="flex" gap={2}>
                           <IconUser size={16} />
                           My profile
                         </Link>

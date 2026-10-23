@@ -1,4 +1,4 @@
-// OG image for /member/handle/{username}
+// OG image for /app/members/{username}
 // Rendered at 1200×630 via next/og. Fetches profile data server-side.
 
 import { ImageResponse } from 'next/og';

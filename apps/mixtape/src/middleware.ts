@@ -95,9 +95,14 @@ export function middleware(request: NextRequest) {
     ? pathname.slice(basePath.length) || "/"
     : pathname;
 
-  // TEMP (surfaces pass 2026-10-22): bare /member/<user> and /members/<user>
-  // render the old member landing page with no redirect, for CTO review.
-  // Restore the bare redirect to the public profile afterwards.
+  // The signed-in member profile is /members/{username} (CTO, 2026-10-22).
+  // /member/handle/{username} was its old address; a bare /member/{username} is gone.
+  const handleMatch = normalizedPath.match(/^\/member\/handle\/([^/]+)\/?$/);
+  if (handleMatch) {
+    const redirectUrl = new URL(`${basePath}/members/${handleMatch[1]}`, request.url);
+    redirectUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(redirectUrl, 308);
+  }
 
   const publicMemberMatch = normalizedPath.match(
     /^\/member\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+))$/
@@ -110,7 +115,7 @@ export function middleware(request: NextRequest) {
   }
 
   const pluralMemberMatch = normalizedPath.match(
-    /^\/members\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+)?)?$/
+    /^\/members\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+))$/
   );
   if (pluralMemberMatch) {
     const username = pluralMemberMatch[1];

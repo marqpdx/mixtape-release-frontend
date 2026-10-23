@@ -1,4 +1,4 @@
-// Public profile — /member/handle/{username}
+// Member profile (signed in) — /app/members/{username}; the public profile is /members/{username} on the Crossroads app
 // RSC: fetch profile server-side, render shell. Zero client JS except <NowPlaying>.
 
 import type { Metadata } from 'next';
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       openGraph: {
         title: profile.displayName,
         description: profile.bio?.slice(0, 160) || undefined,
-        url: `${SITE_URL}/member/handle/${username}`,
+        url: `${SITE_URL}/app/members/${username}`,
         type: 'profile',
         ...(profile.avatarUrl ? { images: [{ url: profile.avatarUrl }] } : {}),
       },
