@@ -3,7 +3,8 @@ import { mergeAttributes, type Attributes } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
 import { getTopologyArtifact } from '@mixtape/content/topologyArtifacts'
 import { normaliseInteractiveHtmlUrl, normaliseInteractivePageAlignment } from '@mixtape/content/interactivePages'
-import { mediaPlacementStyle, normaliseMediaAlignment } from '@mixtape/content/mediaLayout'
+import { mediaPlacementStyle, normaliseMediaAlignment, normaliseMediaWidth } from '@mixtape/content/mediaLayout'
+import { createImageCaptionElement } from '@mixtape/content/captionHtml'
 import { MediaImageView } from './MediaImageView'
 
 export const interactivePageEditorCss = {
@@ -31,9 +32,11 @@ export const TopologyImage = Image.extend({
   renderHTML({ node, HTMLAttributes }) {
     const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)
     if (node.attrs.interactivePageUrl || node.attrs.topologyId) return ['img', attrs]
-    return ['figure', { 'data-image-figure': '', style: mediaPlacementStyle(node.attrs.imageAlignment) },
+    const caption = node.attrs.caption ? createImageCaptionElement(String(node.attrs.caption)) : null
+    if (caption) caption.setAttribute('style', 'text-align:center;margin-top:0.5rem;font-size:0.875rem;white-space:pre-wrap')
+    return ['figure', { 'data-image-figure': '', style: mediaPlacementStyle(node.attrs.imageAlignment, node.attrs.imageWidthPercent) },
       ['img', { ...attrs, style: 'width:100%;height:auto;display:block;margin:0' }],
-      ...(node.attrs.caption ? [['figcaption', { style: 'text-align:center;margin-top:0.5rem;font-size:0.875rem;white-space:pre-wrap' }, node.attrs.caption]] : []),
+      ...(caption ? [caption] : []),
     ]
   },
   addNodeView() { return ReactNodeViewRenderer(MediaImageView) },
@@ -50,6 +53,11 @@ export const TopologyImage = Image.extend({
         default: 'center',
         parseHTML: (element: HTMLElement) => normaliseMediaAlignment((element.matches('img') ? element : element.querySelector('img'))?.getAttribute('data-image-alignment')),
         renderHTML: (attributes: Record<string, unknown>) => ({ 'data-image-alignment': normaliseMediaAlignment(attributes.imageAlignment) }),
+      },
+      imageWidthPercent: {
+        default: 60,
+        parseHTML: (element: HTMLElement) => normaliseMediaWidth((element.matches('img') ? element : element.querySelector('img'))?.getAttribute('data-image-width-percent')),
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-image-width-percent': normaliseMediaWidth(attributes.imageWidthPercent) }),
       },
       caption: {
         default: '',
