@@ -3,27 +3,32 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, HStack, Button, VStack } from '@chakra-ui/react';
+import NextLink from 'next/link';
+import { Box, HStack, Button, VStack, Heading, Text, Link } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
+import MemberPreferencesWorkArea from '@/components/dashboard/member/MemberPreferencesWorkArea';
 import { WritingSettings } from './WritingSettings';
 
-type SettingsSection = 'writing' | 'notifications' | 'account';
+// The one Settings place: Dashboard → Settings (CTO, 2026-10-23;
+// zz/profile-settings-consolidation-build-plan.md, PS-1).
+type SettingsSection = 'general' | 'writing' | 'notifications';
 
-export function MemberSettings() {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('writing');
+export function MemberSettings({ initialSection = 'general' }: { initialSection?: SettingsSection } = {}) {
+  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
   const activeBg = useColorModeValue('blue.50', 'blue.900');
   const activeColor = useColorModeValue('blue.700', 'blue.200');
   const inactiveColor = useColorModeValue('gray.600', 'gray.400');
 
   const sections: { key: SettingsSection; label: string; enabled: boolean }[] = [
+    { key: 'general', label: 'General', enabled: true },
     { key: 'writing', label: 'Writing', enabled: true },
-    { key: 'notifications', label: 'Notifications', enabled: false },
-    { key: 'account', label: 'Account', enabled: false },
+    { key: 'notifications', label: 'Notifications', enabled: true },
   ];
 
   return (
     <VStack align="stretch" gap={6}>
+      <Heading size="md">Settings</Heading>
       {/* Section Tabs */}
       <HStack gap={1} borderBottom="1px" borderColor="gray.200" pb={2}>
         {sections.map((section) => (
@@ -45,12 +50,15 @@ export function MemberSettings() {
 
       {/* Section Content */}
       <Box>
+        {activeSection === 'general' && <MemberPreferencesWorkArea hideHeading />}
         {activeSection === 'writing' && <WritingSettings />}
         {activeSection === 'notifications' && (
-          <Box p={4} color="gray.500" textAlign="center">Coming soon</Box>
-        )}
-        {activeSection === 'account' && (
-          <Box p={4} color="gray.500" textAlign="center">Coming soon</Box>
+          <Box p={4}>
+            <Text mb={2}>Notification preferences live with your notifications for now.</Text>
+            <Link asChild color="blue.500">
+              <NextLink href="/notifications">Open notification preferences →</NextLink>
+            </Link>
+          </Box>
         )}
       </Box>
     </VStack>

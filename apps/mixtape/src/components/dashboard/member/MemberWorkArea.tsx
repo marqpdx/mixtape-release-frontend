@@ -30,7 +30,6 @@ import { formatPrice, getOrderStatusLabel, getOrderStatusColor, Order } from "@m
 import PersonalOverview from "../sections/PersonalOverview";
 import { MemberSettings } from "@/components/member/settings/MemberSettings";
 import WorkTable from "@components/initiatives/WorkTable";
-import MemberPreferencesWorkArea from "./MemberPreferencesWorkArea";
 import { DualPanelEditorWorkArea } from "@/components/writing/dual-panel/DualPanelEditorWorkArea";
 import { EditorsDeskWorkArea } from "@/components/writing/editors-desk/EditorsDeskWorkArea";
 
@@ -107,10 +106,11 @@ export default function MemberWorkArea({
   }
 
   // Preferences section
-  if (section === "preferences") {
+  // Preferences and member-settings are one Settings (General, Writing, Notifications).
+  if (section === "preferences" || section === "member-settings") {
     return (
       <WorkAreaWrapper>
-        <MemberPreferencesWorkArea />
+        <MemberSettings />
       </WorkAreaWrapper>
     );
   }
@@ -128,13 +128,6 @@ export default function MemberWorkArea({
     );
   }
 
-  if (section === "member-settings") {
-    return (
-      <WorkAreaWrapper>
-        <MemberSettings />
-      </WorkAreaWrapper>
-    );
-  }
 
   if (section === "edit-profile") {
     return (

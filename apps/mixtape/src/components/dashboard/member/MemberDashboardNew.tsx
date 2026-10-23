@@ -96,7 +96,7 @@ function buildNav(isSuperuser: boolean): NavSection[] {
   if (isSuperuser) {
     accountItems.push({ key: "create-group", label: "Create Group", icon: IconUsersPlus });
   }
-  accountItems.push({ key: "preferences", label: "Preferences", icon: IconAdjustments });
+  accountItems.push({ key: "preferences", label: "Settings", icon: IconAdjustments });
 
   return [
     {

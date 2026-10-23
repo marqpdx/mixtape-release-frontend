@@ -5,7 +5,7 @@
 import { Box, Heading, Text, VStack, HStack, Spinner, Switch } from "@chakra-ui/react";
 import { useUserPreferences } from "@mixtape/api/hooks/useUserPreferences";
 
-export default function MemberPreferencesWorkArea() {
+export default function MemberPreferencesWorkArea({ hideHeading = false }: { hideHeading?: boolean } = {}) {
   const { preferences, isLoading, updatePreference } = useUserPreferences();
 
   if (isLoading) {
@@ -18,7 +18,7 @@ export default function MemberPreferencesWorkArea() {
 
   return (
     <VStack align="stretch" gap={6}>
-      <Heading size="md">Preferences</Heading>
+      {!hideHeading && <Heading size="md">Preferences</Heading>}
 
       <Box
         border="1px solid"

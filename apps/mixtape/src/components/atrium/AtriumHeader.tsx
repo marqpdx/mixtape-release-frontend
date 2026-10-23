@@ -26,7 +26,7 @@ export function AtriumHeader() {
       </Text>
 
       {/* Right — user avatar linking to profile */}
-      <NextLink href={identity?.username ? `/member/${identity.username}` : "/settings"}>
+      <NextLink href={identity?.username ? `/members/${identity.username}` : "/dashboard?section=preferences"}>
         <Avatar.Root size="sm" cursor="pointer">
           <Avatar.Image src={avatarUrl} alt={identity?.username || "avatar"} />
           <Avatar.Fallback>{initials}</Avatar.Fallback>
