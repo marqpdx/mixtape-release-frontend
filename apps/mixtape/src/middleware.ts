@@ -104,8 +104,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 308);
   }
 
+  // /member/{username}/library (your file library) and its shelves render in
+  // place; only a writing piece still moves to the /members/ address.
   const publicMemberMatch = normalizedPath.match(
-    /^\/member\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+))$/
+    /^\/member\/([^/]+)(\/writing\/[^/]+)$/
   );
   if (publicMemberMatch) {
     const username = publicMemberMatch[1];
