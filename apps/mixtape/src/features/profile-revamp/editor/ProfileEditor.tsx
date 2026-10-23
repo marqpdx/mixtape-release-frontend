@@ -10,7 +10,13 @@ import EditorSidebar from './EditorSidebar';
 import type { ProfileDTO, SectionEntry } from '../api/types';
 import { computeAccentInk } from '../lib/contrast';
 
-export default function ProfileEditor() {
+/**
+ * The Profile Revamp editor (style, layout, content, live preview).
+ * `embedded` fits it inside the Dashboard's Edit Profile, its one home
+ * (CTO, 2026-10-23; zz/profile-settings-consolidation-build-plan.md, PS-2).
+ */
+export default function ProfileEditor({ embedded = false }: { embedded?: boolean } = {}) {
+  const frameHeight = embedded ? 'min(80vh, 900px)' : '100vh';
   const { data: profile, isLoading, error } = useMyProfile();
   const patchMutation = useProfilePatch();
   const reorderMutation = useSectionReorder();
@@ -26,7 +32,7 @@ export default function ProfileEditor() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--ink-soft)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: embedded ? 240 : '100vh', color: 'var(--ink-soft)' }}>
         Loading…
       </div>
     );
@@ -34,7 +40,7 @@ export default function ProfileEditor() {
 
   if (error || !profile) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--ink-soft)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: embedded ? 240 : '100vh', color: 'var(--ink-soft)' }}>
         Could not load profile.
       </div>
     );
@@ -57,7 +63,9 @@ export default function ProfileEditor() {
       data-density={profile.density}
       style={{
         display: 'flex',
-        minHeight: '100vh',
+        ...((embedded
+          ? { height: frameHeight, overflow: 'hidden', border: '1px solid var(--rule)', borderRadius: 12 }
+          : { minHeight: frameHeight }) as React.CSSProperties),
         '--profile-accent': profile.accent,
         '--profile-accent-ink': accentInk,
       } as React.CSSProperties}
@@ -68,6 +76,7 @@ export default function ProfileEditor() {
         onLayoutChange={handleLayoutChange}
         onPublish={() => publishMutation.mutate()}
         isSaving={patchMutation.isPending || reorderMutation.isPending || publishMutation.isPending}
+        embedded={embedded}
       />
       <main style={{ flex: 1, overflowY: 'auto' }}>
         <Profile profile={profile} isEditor onPatch={handlePatch} />

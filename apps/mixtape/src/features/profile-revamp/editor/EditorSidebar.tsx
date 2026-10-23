@@ -13,9 +13,11 @@ interface Props {
   onLayoutChange: (layout: SectionEntry[]) => void;
   onPublish: () => void;
   isSaving?: boolean;
+  /** Inside the Dashboard's Edit Profile: fill the editor frame instead of the viewport. */
+  embedded?: boolean;
 }
 
-export default function EditorSidebar({ profile, onPatch, onLayoutChange, onPublish, isSaving }: Props) {
+export default function EditorSidebar({ profile, onPatch, onLayoutChange, onPublish, isSaving, embedded = false }: Props) {
   const [tab, setTab] = useState<PanelTab>('style');
 
   const tabs: { key: PanelTab; label: string }[] = [
@@ -28,11 +30,11 @@ export default function EditorSidebar({ profile, onPatch, onLayoutChange, onPubl
     <aside
       style={{
         width: 280, flexShrink: 0,
-        height: '100vh', overflowY: 'auto',
+        height: embedded ? '100%' : '100vh', overflowY: 'auto',
         background: 'var(--surface)',
         borderRight: '1px solid var(--rule)',
         display: 'flex', flexDirection: 'column',
-        position: 'sticky', top: 0,
+        position: embedded ? 'static' : 'sticky', top: 0,
       }}
     >
       <div style={{ padding: '16px 16px 0', borderBottom: '1px solid var(--rule)', display: 'flex', gap: 4 }}>
