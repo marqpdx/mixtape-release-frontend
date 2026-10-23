@@ -38,3 +38,16 @@ Folio is where a new body of work begins — before it has a title, a shape, or 
 ## What this build does not do yet
 
 This is an early, intentionally minimal build. It does not yet show you a shaped interpretation of your inception, suggest structure, or create Folio content on your behalf — it only proves your raw entry is captured and preserved. Treat anything beyond the preserved text on this page as not yet available, not as missing or broken.
+
+## Mobile notes and tending
+
+The mobile **Folio** tab saves text and voice notes into a Folio. Voice notes
+transcribe after upload; you can review the notes in the web **Folio Workbench**.
+Saving and transcription are separate from tending, the background reading that
+suggests a Shape and mentions.
+
+**Automatic tending is paused for now.** Capture and transcription continue, but
+a completed transcript has not necessarily been interpreted. **Unplaced** means
+a note's role remains open. **Tending failed** means a requested reading did not
+finish; your saved note and recording remain available, and you can still choose
+a Shape yourself. The Workbench's Provenance shows the reported error.

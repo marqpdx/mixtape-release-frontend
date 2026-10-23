@@ -30,9 +30,13 @@ The Workbench is where you look over the notes you've captured for a Folio and g
 
 ## Key concepts
 
-**Shape** — A broad role a note plays: Character, Scene, Plot, Setting, World, or Meta. Mixtape suggests one after you capture a note (shown with ▾); when you choose one yourself it's marked ✓ and the suggestion is kept only for the record. Selecting your choice again returns the note to the suggestion.
+**Shape** — A broad role a note plays: Character, Scene, Plot, Setting, World, or Meta. When tending is available, Mixtape can suggest one after capture (shown with ▾); when you choose one yourself it's marked ✓ and the suggestion is kept only for the record. Selecting your choice again returns the note to the suggestion.
 
 **Unplaced** — A note whose role is still open. That's a normal, healthy place for a thought to be — not a list of things to fix.
+
+**Tending failed** — The background reading did not finish. Your note and any recording or completed transcript are kept. This is different from Unplaced: it reports a failed reading, not an open creative role. You can still choose a Shape yourself; your confirmed choice stays visible. The Workbench shows the reported error under Provenance.
+
+**Automatic tending is paused for now.** New notes are still saved and voice notes still transcribe, but no automatic reading is requested. A saved transcript does not mean that it has been interpreted. Existing suggestions and linked Entities remain available; the new Fiction orientation and multi-Shape reading are not available yet.
 
 **Mentions and Entities** — Mixtape points out names and things a note mentions, but never links them on its own. When you link a mention to an Entity — an existing one, or a new one you name — that Entity is the same one Storyboard uses for participants, and Mixtape will recognize the same wording in future notes.
 
