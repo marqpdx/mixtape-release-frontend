@@ -113,7 +113,7 @@ export default function MemberHubPage() {
 
   // Non-owners who land here go to the public profile
   if (member && !isOwner) {
-    router.replace(`/member/${member.username}`);
+    router.replace(`/members/${member.username}`);
     return null;
   }
 
