@@ -11,6 +11,9 @@ import type { ShuttleInterpretation, ShuttleSighting } from '@mixtape/api/client
 import { useCreateVoiceSeed, useRecentSeeds } from '@mixtape/api/hooks/useSeed';
 import type { Seed } from '@mixtape/api/clients/writing/seedApi';
 import { CaptureDock } from '../shared/CaptureDock';
+import type { ShuttleSession } from '../../services/shuttle/session';
+import { saveShuttleSession } from '../../services/shuttle/session';
+import { ShuttlePublicationPanel } from './ShuttlePublicationPanel';
 import { getWeaveText } from '../../services/shuttle/interpretation';
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -43,13 +46,17 @@ function label(sighting: ShuttleSighting): string {
   return sighting.sighting_id;
 }
 
-export function ShuttleInterpretationPanel({ seedId, username }: { seedId: string; username: string }) {
+export function ShuttleInterpretationPanel({ seedId, username, session, onSession, onFinish }: {
+  seedId: string; username: string; session: ShuttleSession;
+  onSession: (next: ShuttleSession) => void; onFinish: () => Promise<void>;
+}) {
   const queryClient = useQueryClient();
-  const [weaveId, setWeaveId] = useState<string | null>(null);
+  const [weaveId, setWeaveId] = useState<string | null>(session.weaveId ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [voiceSeed, setVoiceSeed] = useState<Seed | null>(null);
-  const startRequest = useRef(uuid.v4());
+  const startRequest = useRef(session.requestId);
+  const [publicationLocked, setPublicationLocked] = useState(false);
   const executionRequest = useRef<{ digest: string; id: string } | null>(null);
   const correctionRequest = useRef<{ text: string; id: string } | null>(null);
   const submitting = useRef(false);
@@ -66,7 +73,10 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
     },
     retry: false,
   });
-  const accept = (next: ShuttleInterpretation) => {
+  const accept = async (next: ShuttleInterpretation) => {
+    const saved = { ...session, weaveId: next.weave_action_run_id };
+    await saveShuttleSession(username, saved);
+    onSession(saved);
     queryClient.setQueryData(['shuttleInterpretation', next.weave_action_run_id], next);
     setWeaveId(next.weave_action_run_id);
     setError('');
@@ -85,7 +95,7 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
       if (!executionRequest.current || executionRequest.current.digest !== current.source_digest || current.status === 'failed') {
         executionRequest.current = { digest: current.source_digest, id: uuid.v4() };
       }
-      accept(await executeShuttleInterpretation(current, executionRequest.current.id, current.cloud_requested));
+      await accept(await executeShuttleInterpretation(current, executionRequest.current.id, current.cloud_requested));
     });
     if (current.cloud_requested) {
       Alert.alert('Send this telling to Claude?',
@@ -101,7 +111,7 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
       request_id: correctionRequest.current.id,
       ...(correctionSeedId ? { correction_seed_id: correctionSeedId } : { correction_text: text }),
     });
-    accept(next);
+    await accept(next);
     setVoiceSeed(null);
     // Sending the next revision is a separate, explicit cloud approval below.
   });
@@ -116,10 +126,12 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
     <View style={styles.root}>
       <Text style={styles.heading}>Hear it back</Text>
       {pollError ? <Text accessibilityRole="alert" style={styles.error}>{explain(pollError)}</Text> : null}
-      {!data ? (
+      {!data ? weaveId ? (
+        <Text>Restoring this weave. Use Refresh reading if the connection was interrupted.</Text>
+      ) : (
         <>
           <Text style={styles.body}>See the things, Places, stories, and connections Shuttle hears, then tell it what to change.</Text>
-          <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.button}
+          <TouchableOpacity accessibilityRole="button" disabled={busy || publicationLocked} style={styles.button}
             onPress={() => void perform(async () => accept(await startShuttleInterpretation({ request_id: startRequest.current, seed_id: seedId, client: 'phone' })))}>
             <Text style={styles.buttonText}>Read my weave</Text>
           </TouchableOpacity>
@@ -135,7 +147,7 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
             <Text style={styles.body}>{data.cloud_requested ? 'Ready to send this telling to your Claude account for interpretation.' : 'Ready to interpret this telling locally.'}</Text>
           ) : null}
           {(data.status === 'awaiting_cloud_approval' || (data.status === 'pending' && !data.execution_action_run_id) || data.status === 'failed') && (
-            <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => execute(data)}>
+            <TouchableOpacity accessibilityRole="button" disabled={busy || publicationLocked} style={styles.button} onPress={() => execute(data)}>
               <Text style={styles.buttonText}>{data.cloud_requested ? 'Review with Claude' : 'Interpret locally'}</Text>
             </TouchableOpacity>
           )}
@@ -159,7 +171,7 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
           ))}
           {findings?.questions.map((q) => <Text key={q.question_id} style={styles.body}>{q.text}</Text>)}
           {findings && <Text style={styles.hint}>A proposed reading, ready for your corrections. Nothing has been published.</Text>}
-          {(findings || data.status === 'failed') && <CaptureDock
+          {!publicationLocked && (findings || data.status === 'failed') && <CaptureDock
             draftStorageKey={`mixtape.mobile.shuttleCorrection.${username}.${data.weave_action_run_id}`}
             kickerLabel="Tell Shuttle what to change"
             placeholder="Yes, and… / Actually, I meant…"
@@ -175,11 +187,13 @@ export function ShuttleInterpretationPanel({ seedId, username }: { seedId: strin
           />}
           {voiceSeed && <>
             <Text selectable style={styles.body}>{voiceText ?? (latestVoice?.status === 'failed' ? 'Transcription did not finish. The recording is in Notebook.' : 'Transcribing your correction…')}</Text>
-            {voiceText && <TouchableOpacity accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => void submitCorrection(voiceText, voiceSeed.id)}><Text style={styles.buttonText}>Use this correction</Text></TouchableOpacity>}
+            {voiceText && <TouchableOpacity accessibilityRole="button" disabled={busy || publicationLocked} style={styles.button} onPress={() => void submitCorrection(voiceText, voiceSeed.id)}><Text style={styles.buttonText}>Use this correction</Text></TouchableOpacity>}
           </>}
-          <TouchableOpacity accessibilityRole="button" style={styles.secondary} onPress={() => void refetch()}><Text style={styles.link}>Refresh reading</Text></TouchableOpacity>
+          <ShuttlePublicationPanel blocked={busy} current={data} session={session} username={username} onSession={onSession} onLocked={setPublicationLocked} onFinish={onFinish} />
+          <TouchableOpacity accessibilityRole="button" disabled={publicationLocked} style={styles.secondary} onPress={() => void refetch()}><Text style={styles.link}>Refresh reading</Text></TouchableOpacity>
         </>
       )}
+      {!data && weaveId && <TouchableOpacity accessibilityRole="button" onPress={() => void refetch()}><Text style={styles.link}>Refresh reading</Text></TouchableOpacity>}
       {busy && <ActivityIndicator color="#0E5AA7" />}
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     </View>

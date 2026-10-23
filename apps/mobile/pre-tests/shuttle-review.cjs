@@ -73,3 +73,20 @@ const request = buildInterpretationRequest(verbatim);
 assert.equal(request.slice(request.indexOf('Verbatim weave:\n') + 'Verbatim weave:\n'.length), verbatim,
   'The interpretation handoff must preserve the complete telling');
 console.log('Shuttle interpretation checks passed: verbatim handoff and ready/processing/failed/missing transcript states.');
+
+// Live review must keep supplied stories and reject incomplete/contradictory scope.
+const { reviewProblems } = exportsObject;
+const known = { ...samplePacket, story_prompts: samplePacket.story_prompts.map((prompt) => ({
+  ...prompt, known_story: { text: verbatim, music_link: 'https://example.org/song' },
+})) };
+const liveReview = createReview(known);
+assert.equal(liveReview.stories['place-toronto'], verbatim);
+assert.equal(liveReview.musicLinks['place-toronto'], 'https://example.org/song');
+assert.ok(reviewProblems(known, liveReview).some((message) => message.includes('merge')));
+liveReview.mergeDecisions['thing-pub-choir'] = 'keep_separate';
+assert.deepEqual(plain(reviewProblems(known, liveReview)), []);
+liveReview.tickedIds = liveReview.tickedIds.filter((id) => id !== 'thing-low-bar-chorale');
+assert.ok(reviewProblems(known, liveReview).some((message) => message.includes('connection')));
+liveReview.stories['place-portland'] = '  ';
+assert.ok(reviewProblems(known, liveReview).some((message) => message.includes('Portland')));
+console.log('Live review checks passed: known stories, missing stories, merge decisions and endpoint integrity.');

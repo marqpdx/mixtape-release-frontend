@@ -32,8 +32,10 @@ export function createReview(packet: ShuttlePacketOut): ShuttleReview {
       ...packet.ideas.map((idea) => idea.idea_id),
       ...packet.adjacencies.map((adjacency) => adjacency.adjacency_id),
     ],
-    stories: {},
-    musicLinks: {},
+    stories: Object.fromEntries(packet.story_prompts.flatMap((prompt) =>
+      prompt.known_story ? [[prompt.item_id, prompt.known_story.text]] : [])),
+    musicLinks: Object.fromEntries(packet.story_prompts.flatMap((prompt) =>
+      prompt.known_story?.music_link ? [[prompt.item_id, prompt.known_story.music_link]] : [])),
     mergeDecisions: {},
     ideaWordings: Object.fromEntries(packet.ideas.map((idea) => [idea.idea_id, idea.wording])),
     keepOffers: false,
@@ -89,4 +91,26 @@ export function buildConfirmation(packet: ShuttlePacketOut, review: ShuttleRevie
         ? [{ idea_id: idea.idea_id, wording }] : [];
     }),
   };
+}
+
+/** Validate the explicit publication scope before sending a non-replayable confirm. */
+export function reviewProblems(packet: ShuttlePacketOut, review: ShuttleReview): string[] {
+  const errors: string[] = [];
+  const selected = new Set(review.tickedIds);
+  if (!selected.size) errors.push('Choose what belongs in this weave, or Keep in Notebook.');
+  const merges = unansweredMerges(packet, review);
+  if (merges.length) errors.push(`Choose merge or keep separate for ${merges.join(', ')}.`);
+  for (const item of packet.items) {
+    if (selected.has(item.item_id) && item.kind === 'place' && !review.stories[item.item_id]?.trim())
+      errors.push(`Tell the first story for ${item.name}, or explicitly leave it out of this weave.`);
+  }
+  for (const edge of packet.adjacencies) {
+    if (selected.has(edge.adjacency_id) && edge.ends.some((id) => !selected.has(id)))
+      errors.push('A checked connection needs both of its things included.');
+  }
+  for (const idea of packet.ideas) {
+    if (selected.has(idea.idea_id) && !review.ideaWordings[idea.idea_id]?.trim())
+      errors.push('Give each included Idea a wording.');
+  }
+  return errors;
 }

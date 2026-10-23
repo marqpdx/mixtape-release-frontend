@@ -1,3 +1,9 @@
+**Live review implementation, 2026-10-23:** real build-packet, confirm and
+Keep in Notebook calls are wired. See [the checkpoint](SHUTTLE_LIVE_REVIEW_2026-10-23.md)
+for review semantics, recovery limits and verification. Earlier fixture-only
+checkpoints below are historical. Live acceptance has not run; terminal-result
+recovery awaits Blue's lookup contract.
+
 # Shuttle mobile working plan — SH-11
 
 **Governing update, 2026-10-20:** aligned with ADR-0058 v0.1.5's whole-weave

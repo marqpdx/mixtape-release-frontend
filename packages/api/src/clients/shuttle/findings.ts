@@ -36,7 +36,7 @@ export interface ShuttleFindings {
 export interface ShuttleInterpretation {
   contract_version: string; weave_action_run_id: string; execution_action_run_id: string | null;
   revision: number; source_digest: string; sources: ShuttleSource[];
-  status: 'awaiting_cloud_approval' | 'pending' | 'running' | 'succeeded' | 'failed';
+  status: 'awaiting_cloud_approval' | 'pending' | 'running' | 'succeeded' | 'failed' | 'abandoned';
   error: string | null; findings: ShuttleFindings | null; cloud_requested: boolean;
 }
 export async function startShuttleInterpretation(data: { request_id: string; seed_id: string; client: 'phone' | 'desktop' }) {

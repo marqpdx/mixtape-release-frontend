@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, TextInput,
   TouchableOpacity, View,
 } from 'react-native';
 import { CrossroadsHeader } from '../components/CrossroadsHeader';
+import { uuid } from 'expo-modules-core';
+import { clearShuttleSession, readShuttleSession, saveShuttleSession } from '../services/shuttle/session';
+import type { ShuttleSession } from '../services/shuttle/session';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { CaptureDock } from '../components/shared/CaptureDock';
 import { useCreateSeed, useCreateVoiceSeed, useRecentSeeds } from '@mixtape/api/hooks/useSeed';
@@ -38,13 +41,33 @@ function CheckRow({ label, checked, onPress }: {
 
 export default function ShuttleScreen() {
   const currentUser = useAuthStore((state) => state.user);
+  const username = currentUser?.username ?? 'anonymous';
+  const [session, setSession] = useState<ShuttleSession | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [storageError, setStorageError] = useState('');
+  useEffect(() => {
+    let live = true;
+    setSessionReady(false); setSession(null); setCapturedSeed(null); setStorageError('');
+    readShuttleSession(username).then((saved) => { if (live) { setSession(saved); setSessionReady(true); } })
+      .catch(() => { if (live) setStorageError('Could not restore this Shuttle session. Restart the app before starting another weave.'); });
+    return () => { live = false; };
+  }, [username]);
+  const retainCapture = async (seed: Seed) => {
+    const saved = { seedId: seed.id, requestId: uuid.v4() };
+    await saveShuttleSession(username, saved);
+    setSession(saved); setCapturedSeed(seed);
+  };
+  const finish = async () => {
+    await clearShuttleSession(username);
+    setSession(null); setCapturedSeed(null);
+  };
   const recentSeeds = useRecentSeeds(20);
   const createSeed = useCreateSeed();
   const createVoiceSeed = useCreateVoiceSeed();
   useSeedTranscription(recentSeeds);
   const [capturedSeed, setCapturedSeed] = useState<Seed | null>(null);
   const [captureError, setCaptureError] = useState('');
-  const latestCapture = recentSeeds.data?.find((seed) => seed.id === capturedSeed?.id) ?? capturedSeed;
+  const latestCapture = recentSeeds.data?.find((seed) => seed.id === (session?.seedId ?? capturedSeed?.id)) ?? capturedSeed;
   const weaveText = getWeaveText(latestCapture);
   const [copiedWeave, setCopiedWeave] = useState<string | null>(null);
   const [showSample, setShowSample] = useState(false);
@@ -97,7 +120,7 @@ export default function ShuttleScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Shuttle</Text>
         <Text style={styles.notice}>Tell what you found. We'll shape it for Commons together, then you decide what to publish.</Text>
-        <CaptureDock
+        {sessionReady && !session && <CaptureDock
           draftStorageKey={`mixtape.mobile.shuttleDraft.${currentUser?.username ?? 'anonymous'}`}
           kickerLabel="Shuttle"
           kickerSub="Tell what you found"
@@ -108,7 +131,7 @@ export default function ShuttleScreen() {
           onSubmitText={async (text) => {
             setCaptureError('');
             try {
-              setCapturedSeed(await createSeed.mutateAsync({ body_text: text, kind: 'text', source: 'mobile' }));
+              await retainCapture(await createSeed.mutateAsync({ body_text: text, kind: 'text', source: 'mobile' }));
             } catch {
               // CaptureDock clears text only when submission succeeds.
               setCaptureError('Could not save your weave. Your text is still here; try again.');
@@ -118,7 +141,7 @@ export default function ShuttleScreen() {
           onSubmitVoice={async (clip) => {
             setCaptureError('');
             try {
-              setCapturedSeed(await createVoiceSeed.mutateAsync({
+              await retainCapture(await createVoiceSeed.mutateAsync({
                 uri: clip.uri, mimeType: clip.mimeType, fileName: clip.fileName, source: 'mobile',
               }));
             } catch {
@@ -126,7 +149,9 @@ export default function ShuttleScreen() {
             }
           }}
           belowInputContent={<Text style={styles.hint}>For now, sending keeps a private copy in Notebook. Nothing goes public from capture.</Text>}
-        />
+        />}
+        {storageError ? <Text accessibilityRole="alert" style={styles.error}>{storageError}</Text> : null}
+        {!sessionReady && !storageError ? <Text>Restoring Shuttle…</Text> : null}
         {captureError ? <Text accessibilityRole="alert" style={styles.error}>{captureError}</Text> : null}
         {latestCapture && (
           <View style={styles.card}>
@@ -138,7 +163,7 @@ export default function ShuttleScreen() {
             ) : weaveText ? (
               <Text selectable style={styles.body}>{weaveText}</Text>
             ) : <Text style={styles.body}>No transcript text yet. Your capture is saved in Notebook.</Text>}
-            {weaveText && <ShuttleInterpretationPanel key={latestCapture.id} seedId={latestCapture.id} username={currentUser?.username ?? 'anonymous'} />}
+
             {weaveText && (
               <>
                 <Text style={styles.hint}>You can also copy this telling to interpret it in our working conversation.</Text>
@@ -157,9 +182,23 @@ export default function ShuttleScreen() {
                 ) : <Text style={styles.hint}>Copies your exact telling with a request to interpret it. Paste into our working conversation; we can tune what it means together.</Text>}
               </>
             )}
-            <Text style={styles.hint}>Saved privately. Packet approval and Commons publishing are coming next.</Text>
+            <Text style={styles.hint}>Capture is private. Review and Publish below are separate actions.</Text>
           </View>
         )}
+        {session && <View style={styles.card}>
+          {session.publishAttempted ? <>
+            <Text style={styles.heading}>{session.result ? 'Published to Commons' : 'Publication outcome not confirmed'}</Text>
+            {session.result ? <>
+              <Text>{session.result.written.length} written records confirmed by the server. Map visibility is a separate checkpoint.</Text>
+              {session.result.rested_as_seed.length > 0 && <Text>{session.result.rested_as_seed.length} entries remained private as Seeds.</Text>}
+              <TouchableOpacity accessibilityRole="button" onPress={() => void finish().catch(() => setStorageError('Could not clear the completed session. Try again.'))}><Text style={styles.link}>Finish this weave</Text></TouchableOpacity>
+            </> : <>
+              <Text accessibilityRole="alert">Publish was attempted and may have completed. Do not publish again. Keep this session while server result recovery is pending.</Text>
+              <Text selectable>Weave: {session.weaveId}</Text>
+            </>}
+          </> : <ShuttleInterpretationPanel key={session.seedId} seedId={session.seedId} username={username}
+            session={session} onSession={setSession} onFinish={finish} />}
+        </View>}
         <View style={styles.card}>
           <Text style={styles.heading}>Packet review example</Text>
           <Text style={styles.hint}>Explore the three-choirs example when you want. Your telling above stays separate.</Text>
@@ -177,7 +216,7 @@ export default function ShuttleScreen() {
           <View style={styles.card}>
             <Text style={styles.heading}>Confirmation prepared</Text>
             <Text style={styles.body}>These sample choices are ready locally. This confirmation has not published anything or created Seeds.</Text>
-            <Text style={styles.body}>In the live flow, unchecked items and places without a story rest quietly as Seeds.</Text>
+            <Text style={styles.body}>This is a historical sample. In live review, finish the stories or explicitly change scope before Publish.</Text>
             <TouchableOpacity style={styles.secondary} onPress={() => setConfirmation(null)}>
               <Text style={styles.link}>Back to review</Text>
             </TouchableOpacity>
@@ -306,11 +345,11 @@ export default function ShuttleScreen() {
         )}
         <View style={styles.card}>
           <Text style={styles.heading}>Try the handoff example</Text>
-          <Text style={styles.hint}>Loads the supplied stories and choices: Toronto and Brisbane approved; Portland and Low Bar Chorale left unticked.</Text>
+          <Text style={styles.hint}>Loads the supplied whole-weave choices and stories for all three choirs.</Text>
           <TouchableOpacity style={styles.secondary} onPress={() => reset(true)}><Text style={styles.link}>Load sample choices & stories</Text></TouchableOpacity>
           <TouchableOpacity style={styles.secondary} onPress={() => reset(false)}><Text style={styles.link}>Start sample over</Text></TouchableOpacity>
           <TouchableOpacity style={styles.secondary} onPress={() => setShowReference((value) => !value)}><Text style={styles.link}>{showReference ? 'Hide' : 'Show'} reference outcome</Text></TouchableOpacity>
-          {showReference && <Text style={styles.body}>Reference fixture only: Toronto and Brisbane are written with their stories. Portland and Low Bar Chorale rest as Seeds ({sampleResult.rested_as_seed.map(itemName).join(', ')}). This is a fixed example, independent of your choices above.</Text>}
+          {showReference && <Text style={styles.body}>Reference fixture only: all three choirs are approved with their stories. Entries left private as Seeds ({sampleResult.rested_as_seed.map(itemName).join(', ')}). This is a fixed example, independent of your choices above.</Text>}
         </View>
         </>}
       </ScrollView>
