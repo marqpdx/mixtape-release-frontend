@@ -198,6 +198,8 @@ export interface FolioNote {
     confirmed_kind?: string;
   }[];
   tended_at: string | null;
+  /** Absent on older servers; distinct from transcription errors and Shape. */
+  tending_error?: string;
   tending_model: string;
   tending_prompt_version: string;
   source: string;

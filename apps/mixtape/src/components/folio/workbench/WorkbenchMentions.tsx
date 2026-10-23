@@ -97,7 +97,7 @@ export default function WorkbenchMentions({ note, entities, onConfirm, onUnlink,
   if (!note.mentions.length) {
     return (
       <Text fontSize="sm" color={mutedColor}>
-        {note.tended_at ? "No mentions found." : "Not tended yet."}
+        {note.tending_error ? "Tending failed. Existing mentions are kept." : note.tended_at ? "No mentions found." : "Not tended yet."}
       </Text>
     );
   }

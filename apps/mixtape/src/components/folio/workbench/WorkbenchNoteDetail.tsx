@@ -68,6 +68,12 @@ export default function WorkbenchNoteDetail({
         )}
       </Box>
 
+      {note.tending_error && (
+        <Box className="fwb-tending-error" role="alert">
+          <Text fontSize="sm">Tending failed. Your note is saved; you can still choose a Shape.</Text>
+        </Box>
+      )}
+
       <Section title="Shape">
         <HStack gap={1} wrap="wrap">
           {SHAPE_ORDER.map((shape) => {
@@ -92,7 +98,9 @@ export default function WorkbenchNoteDetail({
             ? "Your choice. Select it again to return to the suggestion."
             : note.suggested_shape
               ? "Suggested. Choose a Shape to confirm or change it."
-              : "Unplaced — its role can stay open."}
+              : note.tending_error
+                ? "Tending failed — no new suggestion is available."
+                : "Unplaced — its role can stay open."}
         </Text>
       </Section>
 
@@ -172,6 +180,7 @@ export default function WorkbenchNoteDetail({
             <Text>writer&apos;s Shape: {note.confirmed_shape || "—"}</Text>
             <Text>model: {note.tending_model || "—"}</Text>
             <Text>prompt: {note.tending_prompt_version || "—"}</Text>
+            {note.tending_error && <Text>tending error: {note.tending_error}</Text>}
             <Text>tended: {note.tended_at ? new Date(note.tended_at).toLocaleString() : "not yet"}</Text>
           </VStack>
         </Collapsible.Content>

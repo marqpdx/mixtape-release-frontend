@@ -9,6 +9,18 @@ This app imports shared code from:
 - `@mixtape/api` - API clients and React Query hooks
 - `@mixtape/auth` - Authentication logic
 
+## Folio interpretation build artifacts
+
+The four Folio artifact bundles were moved to
+[Puddlejump's pending intake bundle](../../../puddlejump/zz/folio-orientation-cloud-local/README.md)
+for UUID/classification and processing. Start with the
+[master build map](../../../puddlejump/zz/folio-orientation-cloud-local/MASTER_BUILD_MAP.md);
+the [session handoff](../../../puddlejump/zz/folio-orientation-cloud-local/SESSION_HANDOFF.md)
+preserves the current state for compaction and delegation. The artifacts cover
+Fiction/title confirmation, synonyms and multiple provisional Shapes, staged
+Claude execution, the NER evaluation track and a disposable Vultr recipe.
+They do not yet change the deployed Folio UI, model or tending backend.
+
 ## Shuttle pilot
 
 Shuttle is capture with intent to publish to Commons; Notebook is private

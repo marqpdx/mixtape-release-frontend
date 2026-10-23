@@ -102,7 +102,9 @@ export default function WorkbenchNoteList({
               </Text>
               <HStack gap={2} mt={1} fontSize="xs" color={mutedColor}>
                 <Text>
-                  {SHAPE_LABELS[note.shape]}
+                  {note.tending_error && note.shape === "unplaced" && !note.confirmed_shape
+                    ? "Tending failed"
+                    : SHAPE_LABELS[note.shape]}
                   {note.confirmed_shape ? " ✓" : ""}
                 </Text>
                 <Text>·</Text>

@@ -320,7 +320,9 @@ export default function FolioNotesScreen() {
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Text style={[styles.noteShape, item.shape === 'unplaced' && styles.noteShapeUnplaced]}>
-                    {SHAPE_LABELS[item.shape] ?? item.shape}
+                    {item.tending_error && item.shape === 'unplaced' && !item.confirmed_shape
+                      ? 'Tending failed'
+                      : SHAPE_LABELS[item.shape] ?? item.shape}
                     {item.confirmed_shape ? ' ✓' : ' ▾'}
                   </Text>
                 </TouchableOpacity>
@@ -339,6 +341,11 @@ export default function FolioNotesScreen() {
                 />
               ) : null}
               <NoteBody note={item} />
+              {item.tending_error ? (
+                <Text style={[styles.noteBody, styles.noteBodyMuted]} accessibilityRole="alert">
+                  Tending failed. Your note is saved; you can still choose a Shape.
+                </Text>
+              ) : null}
               {item.mentions?.length ? (
                 <View style={styles.mentionRow}>
                   {item.mentions.map((mention) => (
