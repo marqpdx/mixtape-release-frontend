@@ -1,5 +1,12 @@
-import { redirect } from "next/navigation";
+// apps/mixtape/src/app/(authenticated)/aperture/page.tsx
+
+import { Box } from "@chakra-ui/react";
+import WorkTable from "@components/initiatives/WorkTable";
 
 export default function AperturePage() {
-  redirect("/console");
+  return (
+    <Box h="100%" display="flex" flexDirection="column" minH="0">
+      <WorkTable />
+    </Box>
+  );
 }
