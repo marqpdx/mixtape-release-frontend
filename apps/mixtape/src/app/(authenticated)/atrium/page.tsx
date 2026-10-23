@@ -8,9 +8,9 @@ import { AtriumResumeCard } from "@/components/atrium/AtriumResumeCard";
 import { AtriumOrientationPanel } from "@/components/atrium/AtriumOrientationPanel";
 import { AtriumInitiationCard } from "@/components/atrium/AtriumInitiationCard";
 import { AtriumCommunityPulse } from "@/components/atrium/AtriumCommunityPulse";
-import { AtriumDialogSurface } from "@/components/atrium/AtriumDialogSurface";
+import { AtriumSidebarWrapper } from "@/components/atrium/AtriumSidebarWrapper";
 import { GristCommandBar } from "@/components/grist/GristCommandBar";
-import { ClioPresence as BerylPresence } from "@/components/atrium/ClioPresence"; // TEMP: Beryl was renamed Clio
+import { ClioPresence } from "@/components/atrium/ClioPresence";
 import { RadarOverlay } from "@/components/radar/RadarOverlay";
 
 export default function AtriumPage() {
@@ -28,9 +28,9 @@ export default function AtriumPage() {
         {/* Zone A — AtriumHeader */}
         <AtriumHeader />
 
-        {/* Zone B — Dialog surface: session list + compose + thread (AT-D2/D3) */}
+        {/* Zone B — Dialog surface + context sidebar */}
         <Box mt={6}>
-          <AtriumDialogSurface />
+          <AtriumSidebarWrapper />
         </Box>
 
         {/* Zone C — AtriumResumeCard */}
@@ -43,9 +43,9 @@ export default function AtriumPage() {
           <AtriumOrientationPanel />
         </Box>
 
-        {/* Beryl cross-zone slot — between C and D+E */}
+        {/* Clio cross-zone slot — between C and D+E */}
         <Box mt={5}>
-          <BerylPresence />
+          <ClioPresence />
         </Box>
 
         {/* Zones D + E — two-column lower zone */}

@@ -95,6 +95,14 @@ export function middleware(request: NextRequest) {
     ? pathname.slice(basePath.length) || "/"
     : pathname;
 
+  // A bare member profile lives on the public site (/members/{username}),
+  // outside the /app basePath.
+  const bareMemberMatch = normalizedPath.match(/^\/members?\/([^/]+)\/?$/);
+  if (bareMemberMatch) {
+    const publicSiteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
+    return NextResponse.redirect(new URL(`/members/${bareMemberMatch[1]}`, publicSiteBase), 308);
+  }
+
   const publicMemberMatch = normalizedPath.match(
     /^\/member\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+)?)?$/
   );

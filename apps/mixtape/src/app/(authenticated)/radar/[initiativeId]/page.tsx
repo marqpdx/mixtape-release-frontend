@@ -18,7 +18,6 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useAuth } from "@/lib/auth/AuthContext";
 import {
   useRadarInitiative,
   useUpdateRadarInitiative,
@@ -548,8 +547,7 @@ export default function RadarWorkspacePage({
 }) {
   const { initiativeId } = use(params);
   const { data: initiative, isLoading, error } = useRadarInitiative(initiativeId);
-  const { user } = useAuth();
-  const atriumHref = user?.username ? `/${user.username}/atrium` : "/atrium";
+  const atriumHref = "/atrium";
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
