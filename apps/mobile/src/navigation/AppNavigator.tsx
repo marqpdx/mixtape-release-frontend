@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { PlatformPressable } from '@react-navigation/elements';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -69,7 +70,8 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // ADR-0048 D2: the app remembers the last visited primary tab.
 const LAST_TAB_KEY = 'mixtape.mobile.lastTab';
-const TAB_NAMES = ['Notebook', 'Storyline', 'Connect', 'Lists', 'Shuttle'] as const;
+// Only these destinations are enabled during the current capture trials.
+const TAB_NAMES = ['Notebook', 'Folio', 'Shuttle'] as const;
 type TabName = (typeof TAB_NAMES)[number];
 
 function isTabName(value: string | null): value is TabName {
@@ -98,8 +100,21 @@ function MainTabs() {
   return (
     <Tab.Navigator
       initialRouteName={initialRouteName}
+      screenListeners={({ route }) => ({
+        tabPress: (event) => {
+          if (!isTabName(route.name)) event.preventDefault();
+        },
+      })}
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarItemStyle: { opacity: isTabName(route.name) ? 1 : 0.4 },
+        tabBarButton: isTabName(route.name) ? undefined : (props) => (
+          <PlatformPressable
+            {...props}
+            disabled
+            accessibilityState={{ ...props.accessibilityState, disabled: true }}
+          />
+        ),
         tabBarActiveTintColor: '#0E5AA7',
         tabBarInactiveTintColor: '#6B8499',
         tabBarLabelStyle: {
@@ -139,7 +154,6 @@ function MainTabs() {
       <Tab.Screen
         name="Storyline"
         component={StudioScreen}
-        listeners={{ focus: () => persistLastTab('Storyline') }}
       />
       <Tab.Screen
         name="Connect"
@@ -148,23 +162,21 @@ function MainTabs() {
           tabBarBadge: totalUnread > 0 ? '' : undefined,
           tabBarBadgeStyle: { minWidth: 10, height: 10, borderRadius: 5, paddingHorizontal: 0 },
         }}
-        listeners={{ focus: () => persistLastTab('Connect') }}
       />
       <Tab.Screen
         name="Lists"
         component={ListsScreen}
-        listeners={{ focus: () => persistLastTab('Lists') }}
       />
       <Tab.Screen
         name="Build"
         component={BuildScreen}
         options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
       />
-      {/* Folio Notes PoC — sixth tab, deliberately separate from Notebook */}
+      {/* Folio is fifth in the visible bar, immediately before Shuttle. */}
       <Tab.Screen
         name="Folio"
         component={FolioNotesScreen}
-        options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }}
+        listeners={{ focus: () => persistLastTab('Folio') }}
       />
       <Tab.Screen
         name="Shuttle"
