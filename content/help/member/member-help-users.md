@@ -5,12 +5,8 @@ area: overview
 excerpt: "Your Dashboard is your personal workspace on Mixtape — writing, groups, profile, and account settings all in one place."
 routes:
   - /dashboard
-  - /member/*/hub
-  - /member/*/profile
+  - /members/*
   - /member/*/library
-  - /member/*/settings
-  - /settings/*
-  - /settings/*/*
 workAreas: []
 tags:
   - member
@@ -41,7 +37,7 @@ Your Dashboard is your personal home on Mixtape. From here you reach your writin
 The left side of your dashboard is a navigation panel divided into four sections:
 
 **Home**
-- **Start Here** — A snapshot of recent activity, your groups, and quick shortcuts
+- **Start Here** — A snapshot of recent activity, your groups and quick shortcuts; further down, **People in My Sphere** (people you share groups with) and your **Lists**
 - **Activity** — A live feed of what's happening across your groups and connections
 
 **Writing**
@@ -54,7 +50,7 @@ The left side of your dashboard is a navigation panel divided into four sections
 - **Conversations** — Private messages with other members (Livewire)
 
 **Account**
-- **Preferences** — Notification settings, display options, and other personal settings
+- **Settings** — **General** (dashboard options), **Writing** (writing preferences, shortcuts, spell dictionary) and **Notifications** (a link to your notification preferences)
 - **Create Group** — Available to system administrators only
 
 ---
@@ -63,7 +59,7 @@ The left side of your dashboard is a navigation panel divided into four sections
 
 Your member profile is the public-facing view of who you are on Mixtape. Other members can see it when they browse your name in a group or view your writing.
 
-To view your profile as it looks to others, click **Full Profile** from within your dashboard profile panel.
+Your full profile lives at `/members/[username]`. Open it from the avatar menu in the top bar, or click **Full Profile** from your dashboard profile panel.
 
 ### What appears on your profile
 
@@ -80,7 +76,10 @@ Skills, work areas, and extended bio are visible on some profile views but are n
 
 ## Editing your profile
 
-Click **Edit Profile** anywhere you see it — in the group header, in your profile panel on the dashboard, or on your hub page — to open the profile editor.
+Click **Edit Profile** anywhere you see it — in the group header or in your profile panel on the dashboard. Editing happens in one place, the Dashboard's **Edit Profile**, which has two parts:
+
+- **Details** — the fields below
+- **Look & layout** — your profile's theme, font, accent colour and the order and visibility of its sections, with a live preview
 
 ### Fields you can edit now
 
@@ -111,19 +110,11 @@ You can replace or remove your voice intro at any time from the same field.
 
 ---
 
-## Your hub page
-
-Your hub is a separate public-ish page at `/member/[username]/hub`. It includes a **Dashboard** tab (a quick overview) and an **Admin** tab (your writing, groups, and account tools).
-
-Non-members who navigate to your hub are redirected to your public profile page. The hub is primarily for your own use.
-
----
-
 ## Current limitations
 
 - **Skills, Work Areas, and Bio** are displayed on some profile views but cannot be edited yet. These fields will return in a future update.
 - **Storyline** and **Writing** tabs on the full profile page are in development and cannot be accessed yet.
-- Some member utilities still live on separate pages rather than inside one coherent personal workspace.
+- Your file library still lives on its own page (`/member/[username]/library`).
 
 ---
 
