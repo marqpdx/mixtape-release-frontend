@@ -39,6 +39,8 @@ import { useNotificationsPage } from "@mixtape/api/hooks/activity/useActivity";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { getGroupVisitTimes } from "@mixtape/core/lib/groupVisitTracker";
 import MemberWorkArea from "./MemberWorkArea";
+import PeopleInSphereCard from "./cards/PeopleInSphereCard";
+import { ListsTab } from "@/components/workbench/ListsTab";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -73,7 +75,9 @@ type SectionKey =
   | "messages"
   | "create-group"
   | "preferences"
-  | "edit-profile";
+  | "edit-profile"
+  | "mill"
+  | "import-document";
 
 interface NavItem {
   key: SectionKey;
@@ -911,13 +915,16 @@ function ProfileCompletenessCard({
 const VALID_SECTIONS = new Set<string>([
   "overview", "activity", "writing", "my-drafts", "write", "editors-desk", "draft-room-v2",
   "my-groups", "messages", "create-group", "preferences", "edit-profile",
+  // Reachable by link only (no nav item); carried over from the retired Member Hub.
+  "mill", "import-document",
 ]);
 
 interface MemberDashboardNewProps {
   initialSection?: string;
+  initialParams?: Record<string, string>;
 }
 
-export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) {
+export function MemberDashboardNew({ initialSection, initialParams }: MemberDashboardNewProps) {
   const safeInitial: SectionKey =
     initialSection && VALID_SECTIONS.has(initialSection)
       ? (initialSection as SectionKey)
@@ -926,7 +933,7 @@ export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) 
   const { groups } = useUserGroups();
 
   const [activeSection, setActiveSection] = useState<SectionKey>(safeInitial);
-  const [sectionParams, setSectionParams] = useState<Record<string, string> | undefined>(undefined);
+  const [sectionParams, setSectionParams] = useState<Record<string, string> | undefined>(initialParams);
 
   const handleSetActiveSection = (s: string, params?: Record<string, string>) => {
     setActiveSection(s as SectionKey);
@@ -990,6 +997,18 @@ export function MemberDashboardNew({ initialSection }: MemberDashboardNewProps) 
                 />
                 <ActivityFeedCard onViewAll={() => setActiveSection("activity")} />
                 <WhatsHereCard onNavigate={setActiveSection} />
+                {/* Moved from the retired Member Hub (CTO, 2026-10-23); order to be revisited. */}
+                <PeopleInSphereCard identity={identity} />
+                <Box
+                  className="mdn-lists"
+                  bg="theme.surface"
+                  borderRadius="16px"
+                  overflow="hidden"
+                  p={{ base: "16px", md: "20px" }}
+                  boxShadow="0 1px 2px rgba(20,30,45,.05), 0 1px 3px rgba(20,30,45,.05)"
+                >
+                  <ListsTab />
+                </Box>
               </VStack>
             ) : (
               <Box

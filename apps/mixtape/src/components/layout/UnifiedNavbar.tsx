@@ -350,7 +350,7 @@ export default function UnifiedNavbar({
                 aria-label="Messages"
                 asChild
               >
-                <NextLink href={`/member/${identity.username}/hub?section=messages`}>
+                <NextLink href="/dashboard?section=messages">
                   <IconMessageCircle size={18} />
                   {messageUnreadCount > 0 && (
                     <Badge
@@ -434,14 +434,6 @@ export default function UnifiedNavbar({
                         Dashboard
                       </Link>
                     </MenuItem>
-                    {identity?.is_superuser && (
-                      <MenuItem value="hub" asChild>
-                        <Link as={NextLink} href={resolveHref('/member/{username}/hub')} display="flex" gap={2}>
-                          <IconLayoutDashboard size={16} />
-                          Hub
-                        </Link>
-                      </MenuItem>
-                    )}
                     {identity?.is_superuser && (
                       <MenuItem value="settings" asChild>
                         <Link as={NextLink} href="/dashboard" display="flex" gap={2}>

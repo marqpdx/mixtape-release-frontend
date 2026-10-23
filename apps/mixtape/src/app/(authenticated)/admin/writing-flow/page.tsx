@@ -31,29 +31,29 @@ const STAGE_LINKS: Record<
 > = {
   capture: [
     { label: 'Seed Capture', href: '/seed' },
-    { label: 'Member Workbench', href: '/member/admin/workbench' },
+    { label: 'Lists (Dashboard, Start Here)', href: '/dashboard' },
     {
       label: 'Member Landing',
       href: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.crossroads.place'}/members/admin`,
     },
   ],
   triage: [
-    { label: 'My Writing (Pieces)', href: '/member/admin/hub?section=writing' },
-    { label: 'Write Editor', href: '/member/admin/hub?section=write' },
+    { label: 'My Writing (Pieces)', href: '/dashboard?section=writing' },
+    { label: 'Write Editor', href: '/dashboard?section=write' },
     { label: 'Seed Capture', href: '/seed' },
   ],
   drafting: [
-    { label: 'Write Editor', href: '/member/admin/hub?section=write' },
-    { label: 'My Writing (Pieces)', href: '/member/admin/hub?section=writing' },
-    { label: 'Import DOCX', href: '/member/admin/hub?section=import-document' },
+    { label: 'Write Editor', href: '/dashboard?section=write' },
+    { label: 'My Writing (Pieces)', href: '/dashboard?section=writing' },
+    { label: 'Import DOCX', href: '/dashboard?section=import-document' },
   ],
   publish: [
-    { label: 'My Writing (Pieces)', href: '/member/admin/hub?section=writing' },
+    { label: 'My Writing (Pieces)', href: '/dashboard?section=writing' },
     { label: 'Public Library', href: '/member/admin/library/writing' },
     { label: 'Member Writing Piece', href: '/member/admin/writing' },
   ],
   canon: [
-    { label: 'Grist / Mill', href: '/member/admin/hub?section=mill' },
+    { label: 'Grist / Mill', href: '/dashboard?section=mill' },
     { label: 'Puddlejump', href: '/puddlejump' },
     { label: 'Feedback Checklist', href: '/feedback/checklist' },
   ],

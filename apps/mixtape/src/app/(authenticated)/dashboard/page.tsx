@@ -12,6 +12,7 @@ export default function MemberDashboard() {
   const { user: identity, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get("section") ?? undefined;
+  const pieceParam = searchParams.get("piece");
 
   useEffect(() => {
     if (identity) {
@@ -22,5 +23,10 @@ export default function MemberDashboard() {
   if (isLoading) return <Text>Loading your dashboard…</Text>;
   if (!identity) return <Text>Authentication required…</Text>;
 
-  return <MemberDashboardNew initialSection={sectionParam} />;
+  return (
+    <MemberDashboardNew
+      initialSection={sectionParam}
+      initialParams={pieceParam ? { piece: pieceParam } : undefined}
+    />
+  );
 }

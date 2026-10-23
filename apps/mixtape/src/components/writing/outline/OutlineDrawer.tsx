@@ -641,7 +641,7 @@ export function OutlineDrawer({
     const href = sponsor.type === 'group'
       ? `/groups/${sponsor.slug}/writing/${slug}`
       : pieceId
-        ? `/member/${sponsor.slug}/hub?section=write&piece=${pieceId}`
+        ? `/app/dashboard?section=write&piece=${pieceId}` // window.location needs the /app basePath
         : null;
     if (!href) return;
     window.location.href = href;
