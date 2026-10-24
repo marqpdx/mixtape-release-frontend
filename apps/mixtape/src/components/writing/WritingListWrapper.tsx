@@ -1034,11 +1034,6 @@ export default function WritingListWrapper({
             {/* {sponsor.displayName && <Text color={textSecondary}>{sponsor.displayName}</Text>} */}
           </Box>
           <HStack gap={2}>
-            {sponsor.type === "member" && (
-              <Button asChild size="sm" variant="outline">
-                <NextLink href={`/members/${sponsor.slug}/library`}>View Public Library</NextLink>
-              </Button>
-            )}
             {canRecord && sponsor.type === "group" && (
               <ScreencastCaptureButton groupSlug={sponsor.slug} />
             )}

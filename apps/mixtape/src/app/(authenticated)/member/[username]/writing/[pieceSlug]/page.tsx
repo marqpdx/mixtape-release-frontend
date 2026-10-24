@@ -65,7 +65,7 @@ export default function MemberWritingPiecePage() {
   const headerSubtitle = member?.username ? `@${member.username}` : undefined
   const isLoading = identityLoading || memberLoading || pieceLoading
 
-  const libraryUrl = `/members/${usernameParam}/library`
+  const libraryUrl = `/members/${usernameParam}?tab=writing`
 
   useEffect(() => {
     if (!pieceSlug) return

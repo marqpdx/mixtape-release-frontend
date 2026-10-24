@@ -55,18 +55,16 @@ function WritingTab({ username }: { username: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {shelves.map(shelf => (
-        <a
+        // Shelf pages were retired in the surfaces pass (2026-10-23); titles only until the rebuild.
+        <div
           key={shelf.id}
-          href={`/member/${username}/library/${shelf.slug}`}
           style={{
             display: 'block',
             padding: '14px 18px',
             borderRadius: 8,
             border: '1px solid var(--rule)',
             background: 'var(--surface)',
-            textDecoration: 'none',
             color: 'inherit',
-            transition: 'border-color 0.15s',
           }}
         >
           <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{shelf.title}</div>
@@ -75,7 +73,7 @@ function WritingTab({ username }: { username: string }) {
               {shelf.summary}
             </div>
           )}
-        </a>
+        </div>
       ))}
     </div>
   );

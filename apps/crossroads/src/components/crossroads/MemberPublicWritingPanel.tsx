@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Badge,
   Box,
-  Button,
   Heading,
   HStack,
   Link as ChakraLink,
@@ -151,11 +150,6 @@ export default function MemberPublicWritingPanel({
                     )}
                   </VStack>
 
-                  <Button asChild size="sm" colorPalette="blue" variant="outline">
-                    <NextLink href={`/members/${username}/library/${primaryShelf.slug === "my-writing" ? "writing" : primaryShelf.slug}`}>
-                      Open shelf
-                    </NextLink>
-                  </Button>
                 </HStack>
               </Box>
             ) : null}
@@ -167,11 +161,9 @@ export default function MemberPublicWritingPanel({
                 </Text>
                 <HStack gap={2} flexWrap="wrap">
                   {shelves.map((shelf) => (
-                    <Button key={shelf.id} asChild size="xs" variant="outline">
-                      <NextLink href={`/members/${username}/library/${shelf.slug === "my-writing" ? "writing" : shelf.slug}`}>
-                        {shelf.title}
-                      </NextLink>
-                    </Button>
+                    <Text key={shelf.id} fontSize="xs" px={2} py={1} borderWidth="1px" borderRadius="md">
+                      {shelf.title}
+                    </Text>
                   ))}
                 </HStack>
               </VStack>
@@ -404,11 +396,7 @@ function ShelfCard({
     >
       <HStack justify="space-between" mb="3">
         <Heading size="md">
-          <ChakraLink asChild _hover={{ textDecoration: "underline" }}>
-            <NextLink href={`/members/${username}/library/${shelf.slug === "my-writing" ? "writing" : shelf.slug}`}>
-              {shelf.title}
-            </NextLink>
-          </ChakraLink>
+          {shelf.title}
         </Heading>
         <Text fontSize="xs" color={mutedColor}>
           {shelf.item_count} {shelf.item_count === 1 ? "piece" : "pieces"}
@@ -455,16 +443,9 @@ function SinglePieceCard({
       border="1px solid"
       borderColor={borderColor}
     >
-      <ChakraLink
-        asChild
-        fontWeight="semibold"
-        fontSize="lg"
-        _hover={{ textDecoration: "underline" }}
-      >
-        <NextLink href={`/members/${username}/writing/${item.slug}`}>
-          {item.title}
-        </NextLink>
-      </ChakraLink>
+      <Text fontWeight="semibold" fontSize="lg">
+        {item.title}
+      </Text>
       {item.excerpt && (
         <Text fontSize="sm" color={mutedColor} mt="2">
           {item.excerpt}
@@ -491,15 +472,7 @@ function WritingItemRow({
 }) {
   return (
     <Box>
-      <ChakraLink
-        asChild
-        fontWeight="medium"
-        _hover={{ textDecoration: "underline" }}
-      >
-        <NextLink href={`/members/${username}/writing/${item.slug}`}>
-          {item.title}
-        </NextLink>
-      </ChakraLink>
+      <Text fontWeight="medium">{item.title}</Text>
       <HStack mt="1" gap="3" fontSize="xs" color={mutedColor}>
         {item.published_at && (
           <Text>{new Date(item.published_at).toLocaleDateString()}</Text>
