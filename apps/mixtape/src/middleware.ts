@@ -104,17 +104,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl, 308);
   }
 
-  // /member/{username}/library (your file library) and its shelves render in
-  // place; only a writing piece still moves to the /members/ address.
-  const publicMemberMatch = normalizedPath.match(
-    /^\/member\/([^/]+)(\/writing\/[^/]+)$/
-  );
-  if (publicMemberMatch) {
-    const username = publicMemberMatch[1];
-    const rest = publicMemberMatch[2] || "";
-    const redirectUrl = new URL(`${basePath}/members/${username}${rest}`, request.url);
-    return NextResponse.redirect(redirectUrl, 308);
-  }
+  // /member/{username}/library, its shelves and writing pieces render in place
+  // (surfaces pass, 2026-10-23); the old round trip through /members/ is gone.
 
   const pluralMemberMatch = normalizedPath.match(
     /^\/members\/([^/]+)(\/(?:library(?:\/.*)?|writing\/[^/]+))$/
