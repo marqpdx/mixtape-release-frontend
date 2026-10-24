@@ -31,7 +31,7 @@ export default function FolioIndexPage() {
         <Button
           loading={isPending}
           disabled={!title.trim()}
-          onClick={() => create(title.trim(), { onSuccess: (folio) => router.push(`/folio/${folio.id}/notes`) })}
+          onClick={() => create(title.trim(), { onSuccess: (folio) => router.push(`/folio/${folio.slug || folio.id}/notes`) })}
         >
           Create
         </Button>
@@ -51,7 +51,7 @@ export default function FolioIndexPage() {
               p={3}
               _hover={{ borderColor: "theme.accent" }}
             >
-              <NextLink href={`/folio/${folio.id}/notes`}>
+              <NextLink href={`/folio/${folio.slug || folio.id}/notes`}>
                 <Text fontWeight="600">{folio.title || "Untitled Folio"}</Text>
               </NextLink>
             </Box>

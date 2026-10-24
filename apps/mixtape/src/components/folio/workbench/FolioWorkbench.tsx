@@ -134,7 +134,10 @@ export default function FolioWorkbench({ folioId }: { folioId: string }) {
             <NativeSelect.Field
               aria-label="Switch Folio"
               value={folioId}
-              onChange={(event) => router.push(`/folio/${event.currentTarget.value}/notes`)}
+              onChange={(event) => {
+                const next = folios.find((item) => item.id === event.currentTarget.value);
+                if (next) router.push(`/folio/${next.slug || next.id}/notes`);
+              }}
             >
               {folios.map((item) => (
                 <option key={item.id} value={item.id}>

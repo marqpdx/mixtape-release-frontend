@@ -11,6 +11,8 @@ export type CandidateStatus = "proposed" | "confirmed" | "rejected" | "amended";
 
 export interface Folio {
   id: string;
+  /** Stable web identifier; absent on servers deployed before the slug migration. */
+  slug?: string;
   title: string;
   created_at: string;
   updated_at: string;
