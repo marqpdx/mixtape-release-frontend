@@ -1,3 +1,9 @@
+> Update, 2026-10-23: the CTO decisions are now recorded in ADR-0060 and
+> Heddle ADR-0061. The Writing shelf exists; Setting synonyms include both
+> **locale and location**. This comparison remains reconnaissance history,
+> not the service contract. Current client design:
+> [Folio first slice](FOLIO_FIRST_SLICE_CLIENT_DESIGN.md).
+
 # IP-0: Folio comparison and mobile handoff to Blue
 
 2026-10-23. Working reconnaissance for the CTO-approved crossover plan,
@@ -13,7 +19,7 @@ This is Mobile's contribution to IP-0, not a settled shared contract or a second
 | Runtime and approval | `lifecycle.person_runtime`, `execute`; cloud worker rechecks person/runtime and bound approval | Same person runtime, visible missing/not-ready states, consent before each permitted execution | Shared runtime/approval/execution lifecycle; Switchboard/SW-9 routes and gates |
 | Revision and correction | `begin`, `correct`, `execute`, `apply_interpretation`: expected revision, digest, latest child, stale rejection | Corrections and confirmed context can invalidate previous findings | Shared revision/result-application guards; context version must participate in execution identity |
 | Orientation | Shuttle weave reading is part of its model findings | First turn proposes Fiction/title; only writer confirmation makes them authoritative | Folio-specific orientation unit and confirmation API on shared infrastructure |
-| Cue and mention recognition | Shuttle `mention_extraction` and typed thing/place Sightings | Character, Setting, Scene; locale is a Setting cue in Fiction; preserve ambiguous ordinary usage | Consumer-specific Shape bundle and unit contract; later swap a measured local adapter |
+| Cue and mention recognition | Shuttle `mention_extraction` and typed thing/place Sightings | Character, Setting, Scene; locale and location are Setting cues in Fiction; preserve ambiguous ordinary usage | Consumer-specific Shape bundle and unit contract; later swap a measured local adapter |
 | Story and scene | Shuttle exact story passage plus firsthand/heard/remembered basis | Scene is mostly verbatim narrative with sourced references; Character/Setting usually name-centred | Reuse span/provenance checks; consumer-specific schema and semantic checks |
 | Resolution | Findings initially unresolved; `placement.resolve_findings` and matcher supply candidates | Reuse confirmed Storyboard Entities and aliases; do not create Entities automatically | Resolution adapter seam; domain-specific repositories and explicit confirmation |
 | Connections and reconciliation | Shuttle adjacency intention/evidence, typed references and weave coverage | Reconcile mentions with confirmed Folio context/Entities, preserving uncertainty | Shared reference validation primitives; consumer-specific interpretation rules |
