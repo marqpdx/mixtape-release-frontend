@@ -144,7 +144,9 @@ export async function fetchSponsorCategories(
 export async function fetchDrafts(
   sponsorType: 'group' | 'member',
   sponsorSlug: string,
-  filter?: 'all' | 'solo' | 'collab'
+  filter?: 'all' | 'solo' | 'collab',
+  search = '',
+  signal?: AbortSignal
 ): Promise<WorkingDocument[]> {
   // Backend expects: my | shared | all
   const backendFilter =
@@ -157,7 +159,9 @@ export async function fetchDrafts(
       sponsor_type: sponsorType,
       sponsor_slug: sponsorSlug,
       filter: backendFilter,
+      ...(search ? { search } : {}),
     },
+    signal,
   });
   return unwrapListResponse<WorkingDocument>(response.data);
 }

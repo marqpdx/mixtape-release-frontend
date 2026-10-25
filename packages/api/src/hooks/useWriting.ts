@@ -21,6 +21,7 @@ interface UseWritingReturn {
   isLoading: boolean;
   placementsLoading: boolean;
   draftsLoading: boolean;
+  draftsError: Error | null;
   error: Error | null;
   refetch: () => void;
   setShowSolo: (show: boolean) => void;
@@ -44,7 +45,8 @@ interface UseWritingReturn {
  */
 export function useWriting(
   sponsorType: 'group' | 'member',
-  sponsorSlug: string
+  sponsorSlug: string,
+  draftSearch = ''
 ): UseWritingReturn {
   // Get initial state from localStorage, default to showing all (both true)
   const getInitialShowState = (key: string): boolean => {
@@ -118,8 +120,8 @@ export function useWriting(
     error: draftsError,
     refetch: refetchDrafts,
   } = useQuery<WorkingDocument[]>({
-    queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter],
-    queryFn: () => writingApi.fetchDrafts(sponsorType, sponsorSlug, draftFilter),
+    queryKey: ['writing', 'drafts', sponsorType, sponsorSlug, draftFilter, ...(draftSearch ? [draftSearch] : [])],
+    queryFn: ({ signal }) => writingApi.fetchDrafts(sponsorType, sponsorSlug, draftFilter, draftSearch, signal),
     enabled: !!sponsorSlug,
     refetchOnMount: "always",
   });
@@ -185,10 +187,10 @@ export function useWriting(
   const refetchPublishedOrPlacements =
     sponsorType === 'member' ? refetchPublished : refetchPlacements;
 
-  const refetch = () => {
+  const refetch = React.useCallback(() => {
     refetchPublishedOrPlacements();
     refetchDrafts();
-  };
+  }, [refetchPublishedOrPlacements, refetchDrafts]);
 
   return {
     placements: placementsData,
@@ -196,6 +198,7 @@ export function useWriting(
     isLoading: isPlacementsLoading || draftsLoading,
     placementsLoading: isPlacementsLoading,
     draftsLoading,
+    draftsError: draftsError as Error | null,
     error: (placementsErr || draftsError) as Error | null,
     refetch,
     setShowSolo,

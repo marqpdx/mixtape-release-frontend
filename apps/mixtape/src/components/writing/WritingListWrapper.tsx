@@ -188,6 +188,11 @@ export default function WritingListWrapper({
   onNavigateToDetail,
 }: WritingListWrapperProps) {
   const [searchFilter, setSearchFilter] = useState("");
+  const [draftSearch, setDraftSearch] = useState("");
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDraftSearch(searchFilter.trim()), 250);
+    return () => window.clearTimeout(timeout);
+  }, [searchFilter]);
   const [activeTab, setActiveTab] = useState("published");
   const [groupingMode, setGroupingMode] = useState<GroupingMode>("by-list");
   const [categorySortMode, setCategorySortMode] = useState<"updated" | "alpha">("updated");
@@ -207,6 +212,20 @@ export default function WritingListWrapper({
   const [pubWhereAcc, setPubWhereAcc] = useState<string[] | null>(null);
   const [draftTagAcc, setDraftTagAcc] = useState<string[] | null>(null);
   const [draftWhereAcc, setDraftWhereAcc] = useState<string[] | null>(null);
+  const [pubIssueAcc, setPubIssueAcc] = useState<string[] | null>(null);
+  const [draftIssueAcc, setDraftIssueAcc] = useState<string[] | null>(null);
+  const issueAccStorageKey = `writing_acc_issue:${sponsor.type}:${sponsor.slug}`;
+  useEffect(() => {
+    const loadIssues = (tab: "published" | "drafts") => {
+      try {
+        const saved = window.localStorage.getItem(`${issueAccStorageKey}:${tab}`);
+        const value: unknown = saved === null ? null : JSON.parse(saved);
+        return Array.isArray(value) && value.every(item => typeof item === "string") ? value : null;
+      } catch { return null; }
+    };
+    setPubIssueAcc(loadIssues("published"));
+    setDraftIssueAcc(loadIssues("drafts"));
+  }, [issueAccStorageKey]);
   // Phase A: left-rail series filter (undefined=all, null=unassigned, string=seriesId)
   const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null | undefined>(undefined);
   const { user } = useAuth();
@@ -338,14 +357,16 @@ export default function WritingListWrapper({
     placements,
     drafts,
     isLoading: placementsLoading,
-    draftsLoading,
+    draftsLoading: draftQueryLoading,
+    draftsError,
     error: placementsError,
     showSolo,
     showCollab,
     setShowSolo,
     setShowCollab,
     refetch,
-  } = useWriting(sponsor.type, sponsor.slug);
+  } = useWriting(sponsor.type, sponsor.slug, activeTab === "drafts" ? draftSearch : "");
+  const draftsLoading = draftQueryLoading || (activeTab === "drafts" && draftSearch !== searchFilter.trim());
   const { deleteDraft } = useWritingMutations(sponsor.type, sponsor.slug);
   const { groups: userGroups = [] } = useUserGroups();
   const groupSlugForWelcomePin = sponsor.type === "group" ? sponsor.slug : null;
@@ -392,24 +413,6 @@ export default function WritingListWrapper({
   const handleStartWriting = useCallback(() => {
     onNavigateToEditor();
   }, [onNavigateToEditor]);
-
-  // Enhanced search function for drafts
-  const searchInDraft = (draft: WorkingDocument, searchTerm: string): boolean => {
-    if (!searchTerm) return true;
-
-    const term = searchTerm.toLowerCase();
-
-    if (draft.title?.toLowerCase().includes(term)) return true;
-    if (draft.excerpt?.toLowerCase().includes(term)) return true;
-
-    if (draft.body_json?.content) {
-      const bodyText = extractTextFromProseMirror(draft.body_json as ProseMirrorDoc);
-      if (bodyText.toLowerCase().includes(term)) return true;
-    }
-
-    return false;
-  };
-
 
   // Adjust types as needed
   const getCollaboratorDisplayName = (collab: Collaborator) => {
@@ -576,8 +579,8 @@ export default function WritingListWrapper({
       if (showSolo && !showCollab && isCollab) return false;
       if (!showSolo && showCollab && !isCollab) return false;
 
-      // Otherwise, apply search filter
-      return searchInDraft(draft, searchFilter);
+      // Text matching is performed by the server against the complete draft.
+      return true;
     })
     .sort((a: WorkingDocument, b: WorkingDocument) => {
       return new Date(b.last_saved_at).getTime() - new Date(a.last_saved_at).getTime();
@@ -1156,7 +1159,9 @@ export default function WritingListWrapper({
             issuesError ? <Text color="red.500">Could not load Issue grouping.</Text> :
             issuesLoading ? <Text color={textSecondary}>Loading Issues...</Text> :
             publishedIssueSections.length === 0 ? <Text color={textSecondary}>No published content found.</Text> : (
-              <Accordion.Root className="wlw-published-issues" collapsible multiple defaultValue={[publishedIssueSections[0].key]}>
+              <Accordion.Root className="wlw-published-issues" collapsible multiple
+                value={pubIssueAcc ?? [publishedIssueSections[0].key]}
+                onValueChange={(e) => { setPubIssueAcc(e.value); saveAcc(`${issueAccStorageKey}:published`, e.value); }}>
                 {publishedIssueSections.map((section) => (
                   <Accordion.Item className="wlw-published-issue" key={section.key} value={section.key}>
                     <Accordion.ItemTrigger>
@@ -1496,7 +1501,12 @@ export default function WritingListWrapper({
           ) : null}
         </Tabs.Content>
 
-        <Tabs.Content value="drafts">
+        <Tabs.Content value="drafts" className="wrl-drafts-content">
+          {draftsError && (
+            <Text role="alert" color="red.500" mb={3}>
+              Failed to load drafts. Please try again.
+            </Text>
+          )}
           {groupingMode === "by-list" ? (
             <UniversalDataTable<WorkingDocument>
               data={listDrafts}
@@ -1546,7 +1556,9 @@ export default function WritingListWrapper({
             issuesError ? <Text color="red.500">Could not load Issue grouping.</Text> :
             issuesLoading ? <Text color={textSecondary}>Loading Issues...</Text> :
             draftIssueSections.length === 0 ? <Text color={textSecondary}>No drafts found.</Text> : (
-              <Accordion.Root className="wlw-draft-issues" collapsible multiple defaultValue={[draftIssueSections[0].key]}>
+              <Accordion.Root className="wlw-draft-issues" collapsible multiple
+                value={draftIssueAcc ?? [draftIssueSections[0].key]}
+                onValueChange={(e) => { setDraftIssueAcc(e.value); saveAcc(`${issueAccStorageKey}:drafts`, e.value); }}>
                 {draftIssueSections.map((section) => (
                   <Accordion.Item className="wlw-draft-issue" key={section.key} value={section.key}>
                     <Accordion.ItemTrigger>

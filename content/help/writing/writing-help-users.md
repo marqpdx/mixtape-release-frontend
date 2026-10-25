@@ -72,6 +72,24 @@ Mixtape's writing system is designed to let you move from a quick capture to a f
 
 ---
 
+## How to find a draft and return to your Issue groups
+
+Use **Search drafts…** to search saved titles, excerpts, and the complete saved draft text, including text beyond the preview. A search only returns drafts you can already access.
+
+When you group the writing list by **Issue**, your browser remembers which Issues you opened or closed, including when you close all of them. Drafts and Published keep separate choices for each member or group writing area.
+
+---
+
+## How to move an image beside an earlier paragraph
+
+1. In the editor, use the up/down handle at the top of the image or interactive-page preview.
+2. Drag vertically until the insertion line sits before the paragraph you want beside it, then release.
+3. The image keeps its placement, percentage width, and caption. With right placement, that paragraph flows to its left; with left placement, it flows to its right.
+
+The handle also accepts the Up and Down arrow keys to move one block at a time. Moving the image is an ordinary document edit: autosave keeps it and Undo restores its previous position. On small screens, images continue to use the full text width.
+
+---
+
 ## How to publish a piece
 
 1. Open the draft you want to publish.
