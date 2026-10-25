@@ -13,6 +13,8 @@ export interface Folio {
   id: string;
   /** Stable web identifier; absent on servers deployed before the slug migration. */
   slug?: string;
+  /** Previous placeholder/custom slugs, for authenticated redirects. */
+  slug_history?: string[];
   title: string;
   created_at: string;
   updated_at: string;
@@ -338,4 +340,14 @@ export async function unlinkFolioNoteMention(folioId: string, noteId: string, in
 export async function moveFolioNote(folioId: string, noteId: string, targetFolioId: string): Promise<FolioNote> {
   const res = await axiosInstance.patch(`/api/folio/folios/${folioId}/notes/${noteId}`, { folio: targetFolioId });
   return res.data;
+}
+
+/** Resolve only inside the caller's already-authorized sponsor scope. */
+export function resolveFolioRoute(folios: Folio[], identifier: string): Folio | undefined {
+  const current = folios.find((folio) => folio.id === identifier)
+    ?? folios.find((folio) => folio.slug === identifier);
+  if (current) return current;
+  const historical = folios.filter((folio) => folio.slug_history?.includes(identifier));
+  // Never guess between conflicting histories; a current slug takes priority.
+  return historical.length === 1 ? historical[0] : undefined;
 }

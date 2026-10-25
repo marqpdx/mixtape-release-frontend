@@ -51,6 +51,15 @@ The Workbench is where you look over the notes you've captured for a Folio and g
 5. Under **Mentions**, choose an existing Entity or **New entity…**, adjust the name if you like, and select **Link**. Select **Unlink** to undo it.
 6. To send a note to another Folio, use **Move to Folio**.
 
+## Folio links
+
+Folio links use a title-based address within the owner's space; different owners
+can use the same title. An untitled Folio starts with a temporary address. Giving
+it its first title replaces that address once, and the previous address redirects
+to the current one. Later title edits leave the address stable. Older UUID
+bookmarks also redirect after you sign in. The Workbench currently lists your
+personal Folios; group selection is not available here yet.
+
 ## What this build does not do yet
 
 - You can't capture or edit notes here — capture happens in the mobile app, and a note's words are kept exactly as captured.

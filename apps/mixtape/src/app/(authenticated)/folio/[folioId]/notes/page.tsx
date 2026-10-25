@@ -3,17 +3,18 @@
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Text } from "@chakra-ui/react";
+import { resolveFolioRoute } from "@mixtape/api/clients/folio/folioApi";
 import { useFolios } from "@mixtape/api/hooks/folio";
 import FolioWorkbench from "@/components/folio/workbench/FolioWorkbench";
 
-// The route segment accepts a stable slug. Legacy UUID bookmarks are replaced
+// The route segment accepts a stable slug. Legacy UUID and slug-history bookmarks are replaced
 // with their canonical slug URL after resolving against the writer's own Folios.
 // API operations continue to use the immutable UUID internally.
 export default function FolioWorkbenchPage({ params }: { params: Promise<{ folioId: string }> }) {
   const { folioId: identifier } = use(params);
   const router = useRouter();
   const { data: folios = [], isLoading, isError } = useFolios();
-  const folio = folios.find((item) => item.id === identifier) ?? folios.find((item) => item.slug === identifier);
+  const folio = resolveFolioRoute(folios, identifier);
   useEffect(() => {
     if (folio?.slug && identifier !== folio.slug) router.replace(`/folio/${folio.slug}/notes`);
   }, [folio?.slug, identifier, router]);
