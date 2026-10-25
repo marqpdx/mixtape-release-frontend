@@ -14,6 +14,9 @@
 # production
 /build
 
+# Meridian / CodeGraph — local structural index, regenerated per machine
+.codegraph/
+
 # misc
 .vscode/
 .DS_Store
