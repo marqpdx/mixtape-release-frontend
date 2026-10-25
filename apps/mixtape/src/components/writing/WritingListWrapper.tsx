@@ -59,7 +59,6 @@ import { useGroupWelcomePin, useUserGroups } from "@mixtape/api/hooks/groups/use
 import { FlattenedPlacement, WorkingDocument } from "@mixtape/core/types/writingTypes";
 import { getBestEmblemUrl } from "@mixtape/core/types/emblemTypes";
 import { postsColumns } from "../groups/tabs/columns/postsColumns";
-import NextLink from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
