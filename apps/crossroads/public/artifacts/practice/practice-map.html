@@ -1,0 +1,351 @@
+<!--
+  practice map (its own drawing; the kit's stylesheet for theme, header and notes)
+  kit: ../kit/topology.css
+  carried_from: puddlejump/reference/topology/practice-map.md
+  carried_from_uuid: faeca3d7-d35d-45fb-8e64-4ac9982cff89
+  build_state_from: the hand-touch glossary entries and status documents named in each popup
+  library: puddlejump/reference/topology/topology-library.md
+  generated: 2026-10-26
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="carried-from" content="puddlejump/reference/topology/practice-map.md">
+<meta name="carried-from-uuid" content="faeca3d7-d35d-45fb-8e64-4ac9982cff89">
+<title>Mixtape Practice Map</title>
+<link rel="stylesheet" href="../kit/topology.css">
+<style>
+  .pm-wrap { position: relative; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .pm-wrap svg { display: block; width: 100%; min-width: 720px; height: auto; }
+  .pm-hint { font-size: 0.8rem; color: var(--fg-muted); margin: 0 0 0.6rem; }
+
+  .pm-spiral { fill: none; stroke: var(--fg-faint); stroke-width: 1.4; opacity: 0.55; }
+  .pm-thread { fill: none; stroke: var(--thatch-s); stroke-width: 1; opacity: 0.28; stroke-dasharray: 2 4; transition: opacity .15s; }
+  .pm-thread.hot { opacity: 0.95; stroke-width: 1.6; }
+  .pm-drop { stroke: var(--fg-faint); stroke-width: 1; stroke-dasharray: 1 4; opacity: 0.6; }
+  .pm-drop.hot { opacity: 1; stroke: var(--fg); }
+  .pm-tick { fill: var(--fg-muted); }
+  .pm-axis-label { font-size: 13px; font-weight: 600; fill: var(--fg); }
+  .pm-axis-sub { font-size: 11px; fill: var(--fg-muted); letter-spacing: 0.04em; }
+  .pm-binary { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; fill: var(--fg-faint); opacity: 0.45; }
+  .pm-pair { stroke: var(--green-s); stroke-width: 1.4; stroke-dasharray: 5 4; opacity: 0.7; }
+  .pm-pair-label { font-size: 10.5px; fill: var(--fg-muted); font-style: italic; }
+
+  .pm-node { cursor: pointer; outline: none; }
+  .pm-node rect { stroke-width: 1.5; transition: stroke-width .12s; }
+  .pm-node .n-name { font-size: 14px; font-weight: 650; }
+  .pm-node .n-sub { font-size: 10.5px; opacity: 0.85; }
+  .pm-node:hover rect, .pm-node:focus-visible rect, .pm-node.sel rect { stroke-width: 3; }
+  .pm-node.planned rect { stroke-dasharray: 5 3; }
+  .pm-node.notpractice rect { stroke-dasharray: 2 3; }
+  .pm-dim { opacity: 0.35; transition: opacity .15s; }
+
+  .pm-mark { cursor: pointer; outline: none; }
+  .pm-mark .m-dot { fill: var(--surface); stroke: var(--khaki-s); stroke-width: 1.6; }
+  .pm-mark .m-dia { fill: var(--slate-s); opacity: 0.85; }
+  .pm-mark:hover .m-dot, .pm-mark:focus-visible .m-dot, .pm-mark.sel .m-dot { stroke-width: 3; }
+  .pm-mark:hover .m-dia, .pm-mark:focus-visible .m-dia, .pm-mark.sel .m-dia { opacity: 1; }
+  .pm-mark-label { font-size: 11px; fill: var(--fg-muted); font-style: italic; }
+
+  .pm-pop { position: absolute; z-index: 5; width: min(380px, calc(100% - 16px)); max-height: calc(100% - 16px); overflow: auto;
+            background: var(--surface); color: var(--fg); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.22); padding: 0.9rem 2.2rem 0.9rem 1rem; font-size: 0.88rem; line-height: 1.45; }
+  .pm-pop[hidden] { display: none; }
+  .pm-pop h4 { font-size: 1.05rem; margin: 0 0 0.15rem; }
+  .pm-pop .p-kind { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 0.5rem; }
+  .pm-pop .p-row { margin-top: 0.5rem; }
+  .pm-pop .p-row b { font-weight: 600; }
+  .pm-pop code { font-size: 0.8rem; }
+  .pm-pop-close { position: absolute; top: 0.45rem; right: 0.45rem; background: none; border: 1px solid var(--border); border-radius: 6px;
+                  color: var(--fg-muted); font-size: 0.95rem; line-height: 1; padding: 0.15rem 0.45rem; cursor: pointer; }
+  .pm-pop-close:hover { color: var(--fg); background: var(--border); }
+  @media (max-width: 640px) {
+    .pm-pop { position: fixed; left: 2vw !important; right: 2vw; top: auto !important; bottom: 2vh; width: auto; max-height: 55vh; }
+  }
+
+  .pm-key { list-style: none; padding: 0 !important; }
+  .pm-key li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+  .pm-key .sw { flex: 0 0 auto; width: 0.85rem; height: 0.85rem; border-radius: 3px; border: 1.5px solid; transform: translateY(2px); }
+  .pm-key a { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Mixtape — Practice Map</h1>
+    <p class="subtitle">The Practices sit between hard code and intelligence, between binary and analog. Each opens outward on the spiral from rough shape to intricate web, and sits where its own balance of code and prose falls on the line.</p>
+    <span class="pill">Topology library · Practice · first drawing</span>
+    <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a> · <span class="here" aria-current="page">Practice</span></nav>
+  </div>
+  <button class="theme-toggle" id="pm-theme" aria-label="Toggle light or dark theme">◐</button>
+</header>
+
+<p class="pm-hint">Select a Practice, or a mark, to read about it. Esc closes. The dotted line beneath each Practice drops to its place on the line.</p>
+
+<div class="pm-wrap" id="pm-wrap">
+  <svg id="pm-svg" viewBox="0 0 1000 930" role="group" aria-label="The Practice map: a spiral of six Practices over a line from Python to Markdown, with Puddlejump above and Hildegard beside it"></svg>
+  <div class="pm-pop" id="pm-pop" role="dialog" aria-live="polite" hidden>
+    <button class="pm-pop-close" id="pm-pop-close" aria-label="Close">×</button>
+    <div id="pm-pop-body"></div>
+  </div>
+</div>
+
+<section class="notes" id="about">
+  <h3>Map key</h3>
+  <ul class="pm-key" id="pm-key"></ul>
+
+  <h3 style="margin-top:1rem">About this map</h3>
+  <ul>
+    <li><strong>Source:</strong> <code>puddlejump/reference/topology/practice-map.md</code> (draft), uuid <code>faeca3d7-d35d-45fb-8e64-4ac9982cff89</code>. Change that document first, then this map. Each popup names the glossary entry and status document it is drawn from.</li>
+    <li><strong>The line.</strong> Python (binary) at the left, Markdown (analog) at the right. A Practice is "code, Markdown, guidelines and guardrails, tended by people"; none is pure code or pure prose, which is why the spiral zig-zags across the line.</li>
+    <li><strong>The spiral</strong> opens from the centre in the CTO's order: Contour, Alex, Argus, Meridian, Catalyst, Ariadne. Further out is not better or later; it is wider: from what a kind of thing looks like to how every idea connects.</li>
+    <li><strong>Above the spiral.</strong> Puddlejump is meta to the sum of its named parts, the nervous system that holds everything together; its faint threads reach every Practice. Hildegard, the Maker Engine, sits just below and to its right, "Number One", with Catalyst beside them (CTO, 2026-10-25). Hildegard wears green, for <em>viriditas</em>.</li>
+    <li><strong>Marks.</strong> Open circles on the spiral are Upkeeps, small tending by hand. Diamonds at the binary edge are Keepers, narrow lookouts in code. Clio, at the analog edge, is Loom's face and not a Practice.</li>
+    <li><strong>Borders.</strong> A dashed border is planned, not built (Meridian). A dotted border is on the map but not a Practice (Clio).</li>
+    <li><strong>Colours</strong> follow the other maps where a hue is already a concept's: Puddlejump thatch, Catalyst chartreuse, Clio khaki. The rest use the kit's general hues.</li>
+    <li><strong>Not on this map:</strong> the other knowledge engines (Daedalus, Heddle and others). They belong on the system map, at its next sweep.</li>
+  </ul>
+</section>
+
+<script>
+(() => {
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('pm-svg');
+  const wrap = document.getElementById('pm-wrap');
+  const pop = document.getElementById('pm-pop');
+  const popBody = document.getElementById('pm-pop-body');
+
+  // The spiral: r = A + B·θ, drawn counter-clockwise from the centre.
+  const CX = 500, CY = 470, A = 60, B = 11;
+  const at = (th) => { const r = A + B * th; return [CX + r * Math.cos(th), CY - r * Math.sin(th)]; };
+  const PI = Math.PI;
+  const AXIS_Y = 872;
+
+  // Each Practice's angle puts it where its lean falls on the line (source: practice-map.md, "The drawing").
+  const NODES = [
+    { id: 'contour', name: 'Contour', sub: 'Shapes · Strategies', hue: 'teal', th: PI / 2, kind: 'A Practice · first on the spiral',
+      lean: 'Near the centre: Markdown and JSON that code reads at runtime.',
+      desc: 'Mixtape\'s Shape Library: what a kind of thing usually looks like (a recipe, a menu, a supplier). A Shape narrows interpretation without replacing evidence; a match is a Sighting, which evaporates unless a person confirms it.',
+      built: 'Built and ongoing: the manifest, three verticals and the Shuttle shelf in <code>reference/contour/</code>.',
+      src: 'reference/glossary/hand-touch/contour.md' },
+    { id: 'alex', name: 'Alex', sub: 'Patterns', hue: 'violet', th: 2 * PI - 0.35, kind: 'A Practice · second',
+      lean: 'Toward prose: pure Markdown, read by people.',
+      desc: 'Mixtape\'s Pattern Library: the named, recurring ways systems and people are expected to behave, each with the reason it exists. At its centre is Fidelity Preservation.',
+      built: 'Partial: ADR-0059 ratified 2026-10-20; the library at <code>reference/patterns/</code>.',
+      src: 'reference/glossary/hand-touch/alex.md' },
+    { id: 'argus', name: 'Argus', sub: 'Audit', hue: 'orange', th: 4 * PI + 0.3, kind: 'A Practice · third',
+      lean: 'Toward prose: no code, agent-run audit blocks.',
+      desc: 'Mixtape\'s audit practice, a vigilant keeper of fidelity: it checks what the system claims against what is built, from code against its rules to help text against the product.',
+      built: 'Built and ongoing: the blocks in <code>decisions/argus/audit-blocks/</code>.',
+      src: 'reference/glossary/hand-touch/argus.md' },
+    { id: 'meridian', name: 'Meridian', sub: 'The code map · planned', hue: 'blue', th: 5 * PI, planned: true, kind: 'A Practice · fourth',
+      lean: 'Toward code: code over code.',
+      desc: 'Mixtape\'s code intelligence: a continuously refreshed map of the codebase that agents can query, so finding where something lives, and what governs it, is a lookup rather than a crawl.',
+      built: 'Planned (ADR-0051). Phase 1 tried on a laptop, 2026-10-25 (<code>decisions/meridian-adr/meridian-status.md</code>, M-1 to M-3).',
+      src: 'reference/glossary/hand-touch/meridian.md' },
+    { id: 'catalyst', name: 'Catalyst', sub: 'The knowledge base', hue: 'chartreuse', th: 6.5 * PI, kind: 'A Practice · fifth · beside Hildegard',
+      lean: 'The middle: code over a Markdown Codex.',
+      desc: 'The knowledge practice of Mixtape: what an organization knows, tended in a Catalyst Codex by Finding, Adding and Amending. "Like Data who knows all that is" (CTO, 2026-10-25): the knowledge base beside the engine.',
+      built: 'Built: the Codex template, Reach on Claude, the staff-only surface; delivered guided.',
+      src: 'reference/glossary/hand-touch/catalyst.md' },
+    { id: 'ariadne', name: 'Ariadne', sub: 'Concepts · connections', hue: 'slate', th: 7.5 * PI, kind: 'A Practice · sixth, the outermost',
+      lean: 'The middle: code that indexes Markdown.',
+      desc: 'A concept index with memory: a source-grounded index over the canon that makes ideas navigable as ideas: where they occur, what they relate to, how they developed, and where they contradict.',
+      built: 'Partial: P0 to P5 built in <code>app/ariadne</code>; the curation workbench (P6) and Keeper passes (P7) are next.',
+      src: 'reference/glossary/hand-touch/ariadne.md' },
+  ];
+  const FREE = [
+    { id: 'puddlejump', name: 'Puddlejump', sub: 'The nervous system', hue: 'thatch', solid: true, x: 500, y: 62, w: 230,
+      kind: 'Above the Practices · meta to them all',
+      desc: '"Puddlejump is meta to the sum of its named parts; that\'s it\'s frontier, non-productizable nature" (CTO, 2026-10-25). The canon and governance practice behind Mixtape, and the nervous system that holds everything together. It practises both Catalyst and Hildegard on Mixtape itself. Mindful Brilliance\'s own; not sold.',
+      built: 'Live: this repository and its practice.',
+      src: 'reference/glossary/hand-touch/puddlejump.md' },
+    { id: 'hildegard', name: 'Hildegard', sub: 'The Maker Engine', hue: 'green', x: 735, y: 140, w: 170,
+      kind: 'A Practice and an Engine · "Number One"',
+      lean: 'Across the line: their path is Markdown; what they make can be code.',
+      desc: 'Mixtape\'s Maker Engine: the knowledge engine that directs tangible outcomes. Catalyst tends what you know; Hildegard does things with it. "Just below and to the right; it\'s like Riker to Captain Picard, it\'s \'Number One\', the doer" (CTO). Their border is software. Their path: Intent, Ground, Plan, Seams, Record.',
+      built: 'Practised, not built as a product. ADR-0062 ratified 2026-10-25 (<code>decisions/hildegard/hildegard-status.md</code>).',
+      src: 'reference/glossary/hand-touch/hildegard.md' },
+    { id: 'clio', name: 'Clio', sub: 'Loom\'s face', hue: 'khaki', notPractice: true, x: 925, y: 470, w: 120,
+      kind: 'Not a Practice · at the analog edge',
+      desc: 'Mixtape\'s persistent conversational work companion, the one relationship that carries across surfaces: the voice people reach the work through.',
+      built: 'See the Clio ADRs.',
+      src: 'reference/glossary/hand-touch/popup-terms.md' },
+  ];
+  const MARKS = {
+    upkeep: { name: 'Upkeeps', kind: 'Small tending, by hand · mostly Markdown',
+      desc: '"An Upkeep is a disciplined practice of small tending, assiduously done, and w/ care" (CTO, 2026-10-25). A weekly cost check against supplier prices is an Upkeep; so is vetting a document that has aged. The Markdown counterpart to the Keepers.',
+      src: 'decisions/positions/runbook-ideation-fruition.md' },
+    keeper: { name: 'Keepers', kind: 'Narrow lookouts · mostly code',
+      desc: 'Loom\'s lookouts, like a fire lookout: each keeps an eye on one narrow source, notices when something isn\'t going right, and alerts whoever is responsible, through Clio. They don\'t act on their own.',
+      src: 'reference/glossary/hand-touch/popup-terms.md' },
+  };
+  const UPKEEP_TH = [3 * PI, 4.6 * PI, 5.8 * PI, 7 * PI, 8.1 * PI];
+  const KEEPER_Y = [300, 420, 540, 660];
+
+  const el = (tag, attrs = {}, parent = svg) => {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    parent.appendChild(n); return n;
+  };
+  const text = (s, attrs, parent) => { const t = el('text', attrs, parent); t.textContent = s; return t; };
+
+  // Background: the line's two ends, shading softly across the whole drawing.
+  const defs = el('defs');
+  const grad = el('linearGradient', { id: 'pm-line', x1: '0', x2: '1', y1: '0', y2: '0' }, defs);
+  el('stop', { offset: '0', 'stop-color': 'var(--slate-b)' }, grad);
+  el('stop', { offset: '0.5', 'stop-color': 'var(--surface)' }, grad);
+  el('stop', { offset: '1', 'stop-color': 'var(--khaki-b)' }, grad);
+  el('rect', { x: 0, y: 0, width: 1000, height: 930, fill: 'url(#pm-line)', opacity: 0.9 });
+
+  // A faint column of binary at the code edge.
+  for (let i = 0; i < 26; i++) {
+    let s = ''; for (let j = 0; j < 6; j++) s += ((i * 7 + j * 3) % 5 < 2) ? '1' : '0';
+    text(s, { class: 'pm-binary', x: 8, y: 120 + i * 28 });
+  }
+
+  // The line itself.
+  el('line', { x1: 40, x2: 960, y1: AXIS_Y, y2: AXIS_Y, stroke: 'var(--fg-muted)', 'stroke-width': 1.5 });
+  text('Python', { class: 'pm-axis-label', x: 40, y: AXIS_Y + 24 });
+  text('BINARY · HARD CODE', { class: 'pm-axis-sub', x: 40, y: AXIS_Y + 40 });
+  text('Markdown', { class: 'pm-axis-label', x: 960, y: AXIS_Y + 24, 'text-anchor': 'end' });
+  text('ANALOG · INTELLIGENCE', { class: 'pm-axis-sub', x: 960, y: AXIS_Y + 40, 'text-anchor': 'end' });
+  text('the Practices lie between', { class: 'pm-axis-sub', x: 500, y: AXIS_Y + 32, 'text-anchor': 'middle' });
+
+  // The spiral.
+  let d = '';
+  for (let th = 0; th <= 8.25 * PI; th += 0.04) { const [x, y] = at(th); d += (d ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }
+  el('path', { d, class: 'pm-spiral' });
+
+  const layers = { threads: el('g'), drops: el('g'), pair: el('g'), marks: el('g'), nodes: el('g') };
+  const all = [];
+
+  NODES.forEach(n => { const [x, y] = at(n.th); n.x = x; n.y = y; n.w = 150; });
+  FREE.forEach(n => { if (!n.w) n.w = 150; });
+
+  // Puddlejump's threads to every Practice and to Hildegard.
+  const pj = FREE[0];
+  [...NODES, FREE[1]].forEach(n => {
+    const sx = pj.x, sy = pj.y + 27, ex = n.x, ey = n.y - 23;
+    const c = `M${sx} ${sy} C ${sx} ${(sy + ey) / 2}, ${ex} ${(sy + ey) / 2 - 40}, ${ex} ${ey}`;
+    n.thread = el('path', { d: c, class: 'pm-thread' }, layers.threads);
+  });
+
+  // Each Practice's drop to its place on the line.
+  NODES.forEach(n => {
+    n.drop = el('line', { x1: n.x, x2: n.x, y1: n.y + 23, y2: AXIS_Y, class: 'pm-drop' }, layers.drops);
+    el('circle', { cx: n.x, cy: AXIS_Y, r: 3.5, class: 'pm-tick' }, layers.drops);
+  });
+
+  // Hildegard and Catalyst, side by side.
+  const cat = NODES.find(n => n.id === 'catalyst'), hil = FREE[1];
+  el('line', { x1: cat.x + cat.w / 2, y1: cat.y, x2: hil.x - hil.w / 2, y2: hil.y + 8, class: 'pm-pair' }, layers.pair);
+  text('the knowledge base beside the engine', { class: 'pm-pair-label', x: hil.x, y: hil.y + 42, 'text-anchor': 'middle' }, layers.pair);
+
+  // Nodes.
+  const drawNode = (n) => {
+    const g = el('g', { class: 'pm-node' + (n.planned ? ' planned' : '') + (n.notPractice ? ' notpractice' : ''), tabindex: 0, role: 'button',
+                        'aria-label': n.name + ': ' + n.sub, 'data-id': n.id }, layers.nodes);
+    const h = 46, fill = n.solid ? `var(--${n.hue}-p)` : `var(--${n.hue}-n)`, stroke = n.solid ? `var(--${n.hue}-p)` : `var(--${n.hue}-s)`;
+    const ink = n.solid ? `var(--${n.hue}-pt)` : `var(--${n.hue}-t)`;
+    el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: n.w, height: h, rx: 10, fill, stroke }, g);
+    if (!n.solid) el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: 5, height: h, rx: 2, fill: stroke, stroke: 'none' }, g);
+    text(n.name, { class: 'n-name', x: n.x, y: n.y - 3, 'text-anchor': 'middle', fill: ink }, g);
+    text(n.sub, { class: 'n-sub', x: n.x, y: n.y + 13, 'text-anchor': 'middle', fill: ink }, g);
+    n.g = g; all.push(n);
+  };
+  NODES.forEach(drawNode); FREE.forEach(drawNode);
+
+  // Marks: Upkeeps on the spiral, Keepers at the binary edge.
+  UPKEEP_TH.forEach((th, i) => {
+    const [x, y] = at(th);
+    const g = el('g', { class: 'pm-mark', tabindex: 0, role: 'button', 'aria-label': 'Upkeeps', 'data-mark': 'upkeep' }, layers.marks);
+    el('circle', { cx: x, cy: y, r: 6, class: 'm-dot' }, g);
+    if (i === UPKEEP_TH.length - 1) text('Upkeeps', { class: 'pm-mark-label', x: x + 10, y: y + 18 }, layers.marks);
+  });
+  KEEPER_Y.forEach((y, i) => {
+    const g = el('g', { class: 'pm-mark', tabindex: 0, role: 'button', 'aria-label': 'Keepers', 'data-mark': 'keeper' }, layers.marks);
+    el('rect', { x: 66, y: y - 5, width: 10, height: 10, transform: `rotate(45 71 ${y})`, class: 'm-dia' }, g);
+    if (i === 0) text('Keepers', { class: 'pm-mark-label', x: 84, y: y + 4 }, layers.marks);
+  });
+
+  // Popover.
+  let current = null;
+  const clearSel = () => {
+    document.querySelectorAll('.sel').forEach(n => n.classList.remove('sel'));
+    all.forEach(n => { n.g.classList.remove('pm-dim'); n.thread && n.thread.classList.remove('hot'); n.drop && n.drop.classList.remove('hot'); });
+  };
+  const place = (target) => {
+    const wr = wrap.getBoundingClientRect(), tr = target.getBoundingClientRect();
+    pop.hidden = false;
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let left = tr.right - wr.left + wrap.scrollLeft + 10;
+    if (left + pw > wrap.scrollLeft + wrap.clientWidth - 8) left = tr.left - wr.left + wrap.scrollLeft - pw - 10;
+    left = Math.max(wrap.scrollLeft + 8, left);
+    let top = Math.min(Math.max(8, tr.top - wr.top - 10), Math.max(8, wrap.clientHeight - ph - 8));
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  };
+  const row = (label, html) => html ? `<div class="p-row"><b>${label}</b> ${html}</div>` : '';
+  const open = (item, target, isMark) => {
+    clearSel(); current = target; target.classList.add('sel');
+    if (!isMark) {
+      all.forEach(n => { if (n !== item) n.g.classList.add('pm-dim'); });
+      item.thread && item.thread.classList.add('hot'); item.drop && item.drop.classList.add('hot');
+      if (item.id === 'puddlejump') { all.forEach(n => { n.g.classList.remove('pm-dim'); n.thread && n.thread.classList.add('hot'); }); }
+    }
+    popBody.innerHTML = `<h4>${item.name}</h4><div class="p-kind">${item.kind}</div><div>${item.desc}</div>`
+      + row('On the line:', item.lean) + row('Built:', item.built) + row('Source:', `<code>${item.src}</code>`);
+    place(target);
+    if (!isMark && item.id) history.replaceState(null, '', '#' + item.id);
+  };
+  const close = () => { pop.hidden = true; clearSel(); if (current) current.focus({ preventScroll: true }); current = null; history.replaceState(null, '', location.pathname); };
+
+  all.forEach(n => {
+    const act = () => open(n, n.g, false);
+    n.g.addEventListener('click', e => { e.stopPropagation(); act(); });
+    n.g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+    n.g.addEventListener('mouseenter', () => { n.thread && n.thread.classList.add('hot'); n.drop && n.drop.classList.add('hot'); });
+    n.g.addEventListener('mouseleave', () => { if (!n.g.classList.contains('sel')) { n.thread && n.thread.classList.remove('hot'); n.drop && n.drop.classList.remove('hot'); } });
+  });
+  document.querySelectorAll('.pm-mark').forEach(g => {
+    const act = () => open(MARKS[g.dataset.mark], g, true);
+    g.addEventListener('click', e => { e.stopPropagation(); act(); });
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+  });
+  document.getElementById('pm-pop-close').addEventListener('click', close);
+  pop.addEventListener('click', e => e.stopPropagation());
+  svg.addEventListener('click', () => { if (!pop.hidden) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) close(); });
+
+  // Deep link: #id opens with that node selected.
+  const hash = location.hash.slice(1);
+  const linked = all.find(n => n.id === hash);
+  if (linked) requestAnimationFrame(() => open(linked, linked.g, false));
+
+  // Map key, in map order.
+  const key = document.getElementById('pm-key');
+  const keyItem = (sw, name, line) => { const li = document.createElement('li'); li.innerHTML = `${sw}<span><strong>${name}</strong> — ${line}</span>`; key.appendChild(li); };
+  const swatch = (n) => n.solid ? `<span class="sw" style="background:var(--${n.hue}-p);border-color:var(--${n.hue}-p)"></span>`
+                               : `<span class="sw" style="background:var(--${n.hue}-n);border-color:var(--${n.hue}-s)${n.planned ? ';border-style:dashed' : ''}${n.notPractice ? ';border-style:dotted' : ''}"></span>`;
+  [FREE[0], FREE[1], ...NODES, FREE[2]].forEach(n => keyItem(swatch(n), `<a href="#${n.id}">${n.name}</a>`, n.kind + '. ' + (n.lean || '')));
+  keyItem('<span class="sw" style="border-color:var(--khaki-s);border-radius:50%"></span>', 'Upkeeps', MARKS.upkeep.kind + '.');
+  keyItem('<span class="sw" style="background:var(--slate-s);border-color:var(--slate-s);transform:translateY(2px) rotate(45deg) scale(.8)"></span>', 'Keepers', MARKS.keeper.kind + '.');
+  key.addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return;
+    e.preventDefault(); const n = all.find(x => '#' + x.id === a.getAttribute('href'));
+    if (n) { wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => open(n, n.g, false), 350); }
+  });
+
+  // Theme toggle, as the kit does it.
+  document.getElementById('pm-theme').addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+  });
+})();
+</script>
+</body>
+</html>
