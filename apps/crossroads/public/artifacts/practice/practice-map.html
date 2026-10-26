@@ -19,7 +19,6 @@
 <style>
   .pm-wrap { position: relative; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
   .pm-wrap svg { display: block; width: 100%; min-width: 720px; height: auto; }
-  .pm-hint { font-size: 0.8rem; color: var(--fg-muted); margin: 0 0 0.6rem; }
 
   .pm-spiral { fill: none; stroke: var(--fg-faint); stroke-width: 1.4; opacity: 0.55; }
   .pm-thread { fill: none; stroke: var(--thatch-s); stroke-width: 1; opacity: 0.28; stroke-dasharray: 2 4; transition: opacity .15s; }
@@ -73,17 +72,29 @@
 </head>
 <body>
 
+<div class="tk-top">
+<div class="tk-intro">
 <header>
   <div>
-    <h1>Mixtape — Practice Map</h1>
-    <p class="subtitle">The Practices sit between hard code and intelligence, between binary and analog. Each opens outward on the spiral from rough shape to intricate web, and sits where its own balance of code and prose falls on the line.</p>
-    <span class="pill">Topology library · Practice · first drawing</span>
+    <div class="tk-title-panel">
+      <h1>Mixtape — Practice Map</h1>
+      <p class="subtitle">The Practices sit between hard code and intelligence, between binary and analog. Each opens outward on the spiral from rough shape to intricate web, and sits where its own balance of code and prose falls on the line.</p>
+    </div>
     <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a> · <span class="here" aria-current="page">Practice</span></nav>
   </div>
-  <button class="theme-toggle" id="pm-theme" aria-label="Toggle light or dark theme">◐</button>
+  <aside class="tk-aside">
+    <div class="tk-aside-row">
+      <span class="pill">Topology library · Practice · first drawing</span>
+      <span class="tk-head-actions">
+        <button type="button" class="theme-toggle tk-iconbtn" id="pm-about" aria-label="About this map" data-tip="About this map">?</button>
+        <button type="button" class="theme-toggle tk-iconbtn" id="pm-theme" aria-label="Toggle light or dark theme" data-tip="Light or dark">◐</button>
+      </span>
+    </div>
+    <div class="tk-aside-body"><p class="tk-hint"><span class="tk-hint-lead">Select a Practice, or a mark, to read about it. The dotted line beneath each Practice drops to its place on the line.</span><strong>Tab</strong> moves between them; <strong>Esc</strong> closes the details.</p></div>
+  </aside>
 </header>
-
-<p class="pm-hint">Select a Practice, or a mark, to read about it. Esc closes. The dotted line beneath each Practice drops to its place on the line.</p>
+</div>
+</div>
 
 <div class="pm-wrap" id="pm-wrap">
   <svg id="pm-svg" viewBox="0 0 1000 930" role="group" aria-label="The Practice map: a spiral of six Practices over a line from Python to Markdown, with Puddlejump above and Hildegard beside it"></svg>
@@ -338,6 +349,16 @@
     e.preventDefault(); const n = all.find(x => '#' + x.id === a.getAttribute('href'));
     if (n) { wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => open(n, n.g, false), 350); }
   });
+
+  // About this map: the notes in a modal, as the kit builds it.
+  const notes = document.querySelector('section.notes');
+  const dlg = document.createElement('dialog');
+  dlg.className = 'tk-modal'; dlg.setAttribute('aria-label', 'About this map');
+  dlg.innerHTML = `<div class="tk-modal-head"><h2>About this map</h2><button type="button" class="tk-iconbtn tk-modal-close" aria-label="Close" data-tip="Close">×</button></div><div class="tk-modal-body">${notes.innerHTML}</div>`;
+  document.body.appendChild(dlg);
+  document.getElementById('pm-about').addEventListener('click', () => dlg.showModal());
+  dlg.querySelector('.tk-modal-close').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
   // Theme toggle, as the kit does it.
   document.getElementById('pm-theme').addEventListener('click', () => {

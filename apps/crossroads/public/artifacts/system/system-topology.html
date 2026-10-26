@@ -1,11 +1,11 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.35)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.37)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,8 +23,8 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.35</span>
-    <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a></nav>
+    <span class="pill">Topology library · System · v2.0.37</span>
+    <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a> · <a href="../practice/practice-map.html">Practice</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
 </header>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.35 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.37 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -47,7 +47,7 @@
     <tr><th>Deployment</th><th>What it is</th><th>State</th></tr>
     <tr><td>Crossroads Place</td><td>The reference community and live Mixtape instance at <code>crossroads.place</code></td><td>Live</td></tr>
     <tr><td>Catalyst Codex per client</td><td>A Codex for each Catalyst client, with the Reach runtime where it applies</td><td>Pilots</td></tr>
-    <tr><td>The Law</td><td>A Crossroads instance for a law firm: own Stackroom namespace, own Hildegard, local models only</td><td>Planned</td></tr>
+    <tr><td>The Law</td><td>A Crossroads instance for a law firm: own Stackroom namespace, own Daedalus Library, local models only; Hildegard and a Catalyst Codex on local models</td><td>Planned</td></tr>
   </table>
 </section>
 
@@ -63,7 +63,7 @@
     exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Where the work runs: language models run locally over llama.cpp, plus embeddings, reading text from images and small deterministic text work. Receives a well-formed task, returns results. Keeps no records of its own.' },
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'What the platform can find again, every result traced with provenance to its exact source. A map of the library (the intermediate representation, IR), not the library itself; vectors in Qdrant. Not configurable per client.' },
-    research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'Daedalus, the research engine that goes out and gathers sources, and, planned, Hildegard, the research library where people work with what it gathered. Hildegard is a Surface; it sits here beside Daedalus because the pair reads best together.' },
+    research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'Daedalus, the research engine that goes out and gathers sources, and, planned, the Daedalus Library, the Surface where people work with what it gathered (formerly called Hildegard). Daedalus is both the engine and its library, as Ariadne is both an app and a Surface.' },
     gov:      { name: 'Canon and Guidance', full: 'Canon and Guidance', hue: 'thatch', desc: 'A Layer: Puddlejump, the canon every feature is decided, built and recorded through, and Ariadne, Argus and Meridian, which work on the canon and the code it governs. They run alongside everything, not in the call path, with one exception: Contour, the one part of the canon the platform reads while it runs. Alex, the Pattern Library, is the canon people follow.' },
     warp:     { name: 'Warp', full: 'Warp — what Loom weaves across', hue: 'rose', desc: 'A Layer: the fixed, load-bearing structure the work is woven across. Provisioning, provenance and workflow scaffolding that every server and every Suggestion depends on, without being a server itself. Loom is the weaving; Warp is what it runs across. The reasons behind things are Puddlejump\'s; Warp carries the pointers.' },
     infra:    { name: 'Infrastructure', full: 'Supporting infrastructure', hue: 'soil', desc: 'Off-the-shelf servers the platform runs on; they hold no Mixtape logic and own no policy. Two sizes: the servers much of the platform leans on, then smaller ones with a single job. At the right end, one small tool of Mixtape\'s own: Puddlejump Sync. Qdrant is drawn with Stackroom, and the Celery workers with core.' },
@@ -132,12 +132,12 @@
     { id: 'DA', layer: 'research', x: 560, y: 580, w: 200, label: 'Daedalus', sub: 'research engine · REST',
       desc: 'Mixtape\'s research engine: it goes out and gathers sources. Given a research assignment, it fetches material through its source adapters (named web pages, Semantic Scholar), marks each item\'s provenance tier and how sure it is, and deposits the result in Stackroom, in a library kept separate for each project. No screen, and no searching: finding things again is Stackroom\'s job.',
       status: 'partial', evidence: 'Built and verified end to end with Stackroom (CP6, 2026-07-10), but nothing in the platform calls it yet. MCP surface not started.', refs: ['reference/glossary/hand-touch/daedalus.md', 'decisions/daedalus-adr/daedalus-status.md'] },
-    { id: 'HG', layer: 'research', x: 790, y: 580, w: 210, label: 'Hildegard', sub: 'research library', kind: 'Surface',
+    { id: 'HG', layer: 'research', x: 790, y: 580, w: 210, label: 'Daedalus Library', sub: 'research library', kind: 'Surface',
       desc: 'The research library: where people search, browse and review a corpus Daedalus has gathered, and later ask for new research. Reads come straight from Stackroom; everything else goes through core. One instance per project; The Law runs its own.',
-      status: 'planned', evidence: 'ADR-0057 ratified; HL-1 to HL-9 pending.', refs: ['reference/glossary/hand-touch/hildegard.md', 'decisions/hildegard-adr/hildegard-adr.md'] },
+      status: 'planned', evidence: 'ADR-0057 ratified; HL-1 to HL-9 pending.', refs: ['reference/glossary/hand-touch/daedalus.md', 'decisions/daedalus-library-adr/daedalus-library-adr.md'] },
 
     { id: 'PJ', layer: 'gov', x: 1056, y: 60, w: 168, h: 44, label: 'Puddlejump', sub: 'the canon · working ground',
-      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a Main Gateway and not in the call path. Puddlejump came first: it is Catalyst practised on Mixtape itself.',
+      desc: 'The canon and the governance practice behind Mixtape: the library of decisions, field notes, specs and live status that every feature is decided, built and recorded through, kept faithful to the code by people and agents together. Not a Main Gateway and not in the call path. Puddlejump came first: it practises both on Mixtape itself: Catalyst, which tends what is known, and Hildegard, which makes with it.',
       status: 'built', evidence: 'Built and ongoing: canon bundle, frontmatter checks, status docs and build log in daily use; the in-app Puddlejump Surface is still to come.', refs: ['reference/glossary/hand-touch/puddlejump.md', 'puddlejump/ (this repo)'] },
     { id: 'AR', layer: 'gov', x: 1056, y: 128, w: 168, h: 44, label: 'Ariadne', sub: 'concept discovery',
       desc: 'Mixtape\'s concept index with memory: a source-grounded, incrementally enriched index over the Puddlejump canon that makes ideas navigable as ideas. Ranks candidate concepts through Lenses, records each investigation as a reproducible Run, and keeps every claim one click from the words that support it. Reads the canon, never owns or amends it. Governed by its ratified build spec.',
