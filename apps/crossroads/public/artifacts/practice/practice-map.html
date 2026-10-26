@@ -16,11 +16,20 @@
 <meta name="carried-from-uuid" content="faeca3d7-d35d-45fb-8e64-4ac9982cff89">
 <title>Mixtape Practice Map</title>
 <link rel="stylesheet" href="../kit/topology.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
-  .pm-wrap { position: relative; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  /* Warmer than the kit: the platform map's paper and type (CTO, 2026-10-26). Dark keeps the kit's tokens. */
+  :root:not([data-theme="dark"]) { --bg: #F6F1E4; --surface: #FFFBF1; --border: rgba(60,45,20,0.13); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #151513; --surface: #1d1d1a; --border: rgba(255,255,255,0.10); } }
+  body { font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1 { font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-weight: 700; }
+
+  .pm-wrap { position: relative; overflow-x: auto; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
   .pm-wrap svg { display: block; width: 100%; min-width: 720px; height: auto; }
 
-  .pm-spiral { fill: none; stroke: var(--fg-faint); stroke-width: 1.4; opacity: 0.55; }
+  .pm-spiral { fill: none; stroke: var(--fg-faint); stroke-width: 1.2; opacity: 0.5; }
   .pm-thread { fill: none; stroke: var(--thatch-s); stroke-width: 1; opacity: 0.28; stroke-dasharray: 2 4; transition: opacity .15s; }
   .pm-thread.hot { opacity: 0.95; stroke-width: 1.6; }
   .pm-drop { stroke: var(--fg-faint); stroke-width: 1; stroke-dasharray: 1 4; opacity: 0.6; }
@@ -28,15 +37,14 @@
   .pm-tick { fill: var(--fg-muted); }
   .pm-axis-label { font-size: 13px; font-weight: 600; fill: var(--fg); }
   .pm-axis-sub { font-size: 11px; fill: var(--fg-muted); letter-spacing: 0.04em; }
-  .pm-binary { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; fill: var(--fg-faint); opacity: 0.45; }
   .pm-pair { stroke: var(--green-s); stroke-width: 1.4; stroke-dasharray: 5 4; opacity: 0.7; }
   .pm-pair-label { font-size: 10.5px; fill: var(--fg-muted); font-style: italic; }
 
   .pm-node { cursor: pointer; outline: none; }
-  .pm-node rect { stroke-width: 1.5; transition: stroke-width .12s; }
-  .pm-node .n-name { font-size: 14px; font-weight: 650; }
-  .pm-node .n-sub { font-size: 10.5px; opacity: 0.85; }
-  .pm-node:hover rect, .pm-node:focus-visible rect, .pm-node.sel rect { stroke-width: 3; }
+  .pm-node rect { stroke-width: 1.2; transition: stroke-width .12s; }
+  .pm-node .n-name { font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-size: 14px; font-weight: 700; }
+  .pm-node .n-sub { font-size: 10.5px; font-weight: 500; opacity: 0.85; }
+  .pm-node:hover rect, .pm-node:focus-visible rect, .pm-node.sel rect { stroke-width: 2.4; }
   .pm-node.planned rect { stroke-dasharray: 5 3; }
   .pm-node.notpractice rect { stroke-dasharray: 2 3; }
   .pm-dim { opacity: 0.35; transition: opacity .15s; }
@@ -64,10 +72,10 @@
     .pm-pop { position: fixed; left: 2vw !important; right: 2vw; top: auto !important; bottom: 2vh; width: auto; max-height: 55vh; }
   }
 
-  .pm-key { list-style: none; padding: 0 !important; }
-  .pm-key li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
-  .pm-key .sw { flex: 0 0 auto; width: 0.85rem; height: 0.85rem; border-radius: 3px; border: 1.5px solid; transform: translateY(2px); }
-  .pm-key a { color: var(--fg); }
+  .pm-pop h4 { font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; }
+  .li-name { font-family: 'Bricolage Grotesque', 'Hanken Grotesk', sans-serif; font-weight: 700; }
+  .layer-item.planned { border-left-style: dashed; }
+  .layer-item.notpractice { border-left-style: dotted; }
 </style>
 </head>
 <body>
@@ -96,7 +104,7 @@
 </div>
 </div>
 
-<div class="pm-wrap" id="pm-wrap">
+<div class="pm-wrap tk-diagram" id="pm-wrap">
   <svg id="pm-svg" viewBox="0 0 1000 930" role="group" aria-label="The Practice map: a spiral of six Practices over a line from Python to Markdown, with Puddlejump above and Hildegard beside it"></svg>
   <div class="pm-pop" id="pm-pop" role="dialog" aria-live="polite" hidden>
     <button class="pm-pop-close" id="pm-pop-close" aria-label="Close">×</button>
@@ -104,11 +112,14 @@
   </div>
 </div>
 
-<section class="notes" id="about">
+<section class="layers">
   <h3>Map key</h3>
-  <ul class="pm-key" id="pm-key"></ul>
+  <p class="layers-hint">Top to bottom, as on the map. Select one to read it in full.</p>
+  <div class="layer-list" id="pm-key"></div>
+</section>
 
-  <h3 style="margin-top:1rem">About this map</h3>
+<section class="notes" id="about">
+  <h3>About this map</h3>
   <ul>
     <li><strong>Source:</strong> <code>puddlejump/reference/topology/practice-map.md</code> (draft), uuid <code>faeca3d7-d35d-45fb-8e64-4ac9982cff89</code>. Change that document first, then this map. Each popup names the glossary entry and status document it is drawn from.</li>
     <li><strong>The line.</strong> Python (binary) at the left, Markdown (analog) at the right. A Practice is "code, Markdown, guidelines and guardrails, tended by people"; none is pure code or pure prose, which is why the spiral zig-zags across the line.</li>
@@ -169,7 +180,7 @@
       src: 'reference/glossary/hand-touch/ariadne.md' },
   ];
   const FREE = [
-    { id: 'puddlejump', name: 'Puddlejump', sub: 'The nervous system', hue: 'thatch', solid: true, x: 500, y: 62, w: 230,
+    { id: 'puddlejump', name: 'Puddlejump', sub: 'The nervous system', hue: 'thatch', solid: true, x: 420, y: 62, w: 230,
       kind: 'Above the Practices · meta to them all',
       desc: '"Puddlejump is meta to the sum of its named parts; that\'s it\'s frontier, non-productizable nature" (CTO, 2026-10-25). The canon and governance practice behind Mixtape, and the nervous system that holds everything together. It practises both Catalyst and Hildegard on Mixtape itself. Mindful Brilliance\'s own; not sold.',
       built: 'Live: this repository and its practice.',
@@ -210,13 +221,7 @@
   el('stop', { offset: '0', 'stop-color': 'var(--slate-b)' }, grad);
   el('stop', { offset: '0.5', 'stop-color': 'var(--surface)' }, grad);
   el('stop', { offset: '1', 'stop-color': 'var(--khaki-b)' }, grad);
-  el('rect', { x: 0, y: 0, width: 1000, height: 930, fill: 'url(#pm-line)', opacity: 0.9 });
-
-  // A faint column of binary at the code edge.
-  for (let i = 0; i < 26; i++) {
-    let s = ''; for (let j = 0; j < 6; j++) s += ((i * 7 + j * 3) % 5 < 2) ? '1' : '0';
-    text(s, { class: 'pm-binary', x: 8, y: 120 + i * 28 });
-  }
+  el('rect', { x: 0, y: 0, width: 1000, height: 930, fill: 'url(#pm-line)', opacity: 0.4 });
 
   // The line itself.
   el('line', { x1: 40, x2: 960, y1: AXIS_Y, y2: AXIS_Y, stroke: 'var(--fg-muted)', 'stroke-width': 1.5 });
@@ -262,8 +267,8 @@
                         'aria-label': n.name + ': ' + n.sub, 'data-id': n.id }, layers.nodes);
     const h = 46, fill = n.solid ? `var(--${n.hue}-p)` : `var(--${n.hue}-n)`, stroke = n.solid ? `var(--${n.hue}-p)` : `var(--${n.hue}-s)`;
     const ink = n.solid ? `var(--${n.hue}-pt)` : `var(--${n.hue}-t)`;
-    el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: n.w, height: h, rx: 10, fill, stroke }, g);
-    if (!n.solid) el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: 5, height: h, rx: 2, fill: stroke, stroke: 'none' }, g);
+    el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: n.w, height: h, rx: 7, fill, stroke }, g);
+    if (!n.solid) el('rect', { x: n.x - n.w / 2, y: n.y - h / 2, width: 4, height: h, rx: 2, fill: stroke, stroke: 'none' }, g);
     text(n.name, { class: 'n-name', x: n.x, y: n.y - 3, 'text-anchor': 'middle', fill: ink }, g);
     text(n.sub, { class: 'n-sub', x: n.x, y: n.y + 13, 'text-anchor': 'middle', fill: ink }, g);
     n.g = g; all.push(n);
@@ -336,17 +341,24 @@
   const linked = all.find(n => n.id === hash);
   if (linked) requestAnimationFrame(() => open(linked, linked.g, false));
 
-  // Map key, in map order.
+  // Map key, in map order, as the kit draws it: each row shows its first line and opens in place.
   const key = document.getElementById('pm-key');
-  const keyItem = (sw, name, line) => { const li = document.createElement('li'); li.innerHTML = `${sw}<span><strong>${name}</strong> — ${line}</span>`; key.appendChild(li); };
-  const swatch = (n) => n.solid ? `<span class="sw" style="background:var(--${n.hue}-p);border-color:var(--${n.hue}-p)"></span>`
-                               : `<span class="sw" style="background:var(--${n.hue}-n);border-color:var(--${n.hue}-s)${n.planned ? ';border-style:dashed' : ''}${n.notPractice ? ';border-style:dotted' : ''}"></span>`;
-  [FREE[0], FREE[1], ...NODES, FREE[2]].forEach(n => keyItem(swatch(n), `<a href="#${n.id}">${n.name}</a>`, n.kind + '. ' + (n.lean || '')));
-  keyItem('<span class="sw" style="border-color:var(--khaki-s);border-radius:50%"></span>', 'Upkeeps', MARKS.upkeep.kind + '.');
-  keyItem('<span class="sw" style="background:var(--slate-s);border-color:var(--slate-s);transform:translateY(2px) rotate(45deg) scale(.8)"></span>', 'Keepers', MARKS.keeper.kind + '.');
+  const keyItem = (item, hue, cls) => {
+    const d = document.createElement('details');
+    d.className = 'layer-item' + (cls ? ' ' + cls : '');
+    d.style.setProperty('--li', `var(--${hue}-s)`);
+    const first = item.kind + '. ' + (item.lean || '');
+    const body = `<div>${item.desc}</div>` + row('On the line:', item.lean) + row('Built:', item.built) + row('Source:', `<code>${item.src}</code>`)
+      + (item.id ? `<div class="p-row"><a href="#${item.id}" data-show="${item.id}">Show on the map</a></div>` : '');
+    d.innerHTML = `<summary><span class="li-name">${item.name}</span><span class="li-first">${first.replace(/<[^>]+>/g, '')}</span></summary><div class="li-body">${body}</div>`;
+    key.appendChild(d);
+  };
+  [FREE[0], FREE[1], ...NODES, FREE[2]].forEach(n => keyItem(n, n.hue, n.planned ? 'planned' : n.notPractice ? 'notpractice' : ''));
+  keyItem(MARKS.upkeep, 'khaki');
+  keyItem(MARKS.keeper, 'slate');
   key.addEventListener('click', e => {
-    const a = e.target.closest('a'); if (!a) return;
-    e.preventDefault(); const n = all.find(x => '#' + x.id === a.getAttribute('href'));
+    const a = e.target.closest('a[data-show]'); if (!a) return;
+    e.preventDefault(); const n = all.find(x => x.id === a.dataset.show);
     if (n) { wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => open(n, n.g, false), 350); }
   });
 
