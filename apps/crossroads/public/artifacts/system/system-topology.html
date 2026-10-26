@@ -1,11 +1,11 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.40)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.41)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   build_state_from: the same document (checked against code and status docs 2026-10-14 and 2026-10-26)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (four times)
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (five times)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +23,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.40</span>
+    <span class="pill">Topology library · System · v2.0.41</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <a href="../platform/platform-topology.html">Platform</a> · <a href="../practice/practice-map.html">Practice</a></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -34,7 +34,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.40 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.41 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -56,7 +56,7 @@
 (() => {
   const LAYERS = {
     pillars:  { name: 'Main Gateways', full: 'Main Gateways — the ways in',     hue: 'grey',  desc: 'Catalyst, Crossroads and Tapestry: the Main Gateways, peers, where people cross into Mixtape (after <em>A Pattern Language</em>, 53). None sits inside another. Their colours are the ones they wear on the <a href="../platform/platform-topology.html">platform concept map</a>.' },
-    frontend: { name: 'Frontend',   full: 'Frontend — the client apps',          hue: 'teal',   desc: 'The apps people use. <code>mixtape-release-frontend</code> is a Yarn monorepo: the signed-in app, the public Crossroads Place site and the mobile app, over shared typed API clients.' },
+    frontend: { name: 'Frontend',   full: 'Frontend — the client apps',          hue: 'teal',   desc: 'The apps people use. <code>mixtape-release-frontend</code> is a Yarn monorepo: two Next.js web apps, the signed-in app and the public Crossroads Place site, and the mobile app, built with Expo and React Native, over shared typed API clients.' },
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every governed action.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery workers, with RabbitMQ (drawn in the supporting row) as the broker. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Routing',    full: 'Routing — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
@@ -99,11 +99,11 @@
       status: 'partial', evidence: 'Somewhat beyond planning: ADR ratified, <code>tapestry.Place</code> in code, TP-9 and TP-10 closed; TP-4, the full build plan, not yet scoped.', refs: ['reference/glossary/hand-touch/tapestry.md', 'decisions/tapestry-adr/tapestry-adr.md'] },
 
     { id: 'FC', layer: 'frontend', x: 50, y: 190, w: 220, label: 'apps/crossroads', sub: 'public site · crossroads.place',
-      desc: 'The public Crossroads Place site, Group public pages at <code>{slug}.go.crossroads.place</code>, and published artifacts such as these maps.', status: 'built', evidence: 'Live.' },
+      desc: 'A Next.js app: the public Crossroads Place site, Group public pages at <code>{slug}.go.crossroads.place</code>, and published artifacts such as these maps.', status: 'built', evidence: 'Live.' },
     { id: 'FB', layer: 'frontend', x: 300, y: 190, w: 220, label: 'apps/mobile', sub: 'mobile app',
-      desc: 'The mobile app: capture, Groups, Initiatives, Folio Notes and more, over the same API.', status: 'built', evidence: 'Built (<code>mobile-ux-status.md</code>).' },
+      desc: 'The mobile app, built with Expo and React Native: capture, Groups, Initiatives, Folio Notes and more, over the same API.', status: 'built', evidence: 'Built (<code>mobile-ux-status.md</code>).' },
     { id: 'FM', layer: 'frontend', x: 550, y: 190, w: 220, label: 'apps/mixtape', sub: 'signed-in application',
-      desc: 'The signed-in application where Crossroads and Catalyst are used, with the Surfaces and Toolsets: Atrium and its Initiatives, Writing, Folio and Clio.', status: 'built', evidence: 'Live.' },
+      desc: 'A Next.js app: the signed-in application, where Crossroads and Catalyst are used, with the Surfaces and Toolsets: Atrium and its Initiatives, Writing, Folio and Clio.', status: 'built', evidence: 'Live.' },
 
 
     { id: 'RQ', layer: 'async', x: 60, y: 320, w: 240, label: 'Celery workers', sub: 'core background jobs · beat',
