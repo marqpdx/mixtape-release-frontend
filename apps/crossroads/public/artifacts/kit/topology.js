@@ -18,7 +18,7 @@
                                                                  // from its band, shown on its popup), governance distillation
     decor: [{ d, hue, layer, cls, dashed, width, opacity }], // optional decorative paths (e.g. rail ticks), drawn under edges;
                                          // dashed defaults to true; a path with a layer lights up when that layer, or one of its nodes, is in focus
-    edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top)
+    edges: [[from, to, mode, { dashed }]], // mode: undefined (vertical) | 'h' (side to side) | 'arc' (over the top) | 'under' (beneath)
                                          //       | 'sv' (out of the side facing the target, then down into its top)
     status: { source, labels: { built: 'Built', ... }, untracked } | null,
     ariaLabel, emptyText, nodeHeight: 48,
@@ -173,6 +173,7 @@
       if (!a || !b) throw new Error(`TopologyKit: edge ${e.f} → ${e.t} names an unknown node`);
       let sa, sb;
       if (e.mode === 'arc') { sa = 'top'; sb = 'top'; }
+      else if (e.mode === 'under') { sa = 'bottom'; sb = 'bottom'; }
       else if (e.mode === 'sv') { sa = cx(b) < cx(a) ? 'left' : 'right'; sb = 'top'; }
       else if (e.mode === 'h') { const r = cx(b) > cx(a); sa = r ? 'right' : 'left'; sb = r ? 'left' : 'right'; }
       else if (b.y >= a.y + NH(a)) { sa = 'bottom'; sb = 'top'; }
@@ -197,6 +198,7 @@
     const pathFor = (r, i) => {
       const p = portPos[i + 'a'], q = portPos[i + 'b'];
       if (r.mode === 'arc') { const y = Math.min(p.y, q.y) - 30; return `M${p.x},${p.y} C${p.x},${y} ${q.x},${y} ${q.x},${q.y}`; }
+      if (r.mode === 'under') { const y = Math.max(p.y, q.y) + 26; return `M${p.x},${p.y} C${p.x},${y} ${q.x},${y} ${q.x},${q.y}`; }
       if (r.mode === 'sv') return `M${p.x},${p.y} C${q.x},${p.y} ${q.x},${p.y} ${q.x},${q.y}`;
       if (r.mode === 'h') { const mx = (p.x + q.x) / 2; return `M${p.x},${p.y} C${mx},${p.y} ${mx},${q.y} ${q.x},${q.y}`; }
       const my = (p.y + q.y) / 2;
