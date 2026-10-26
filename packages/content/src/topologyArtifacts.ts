@@ -18,6 +18,12 @@ export const topologyArtifacts = [
     imageUrl: 'https://www.crossroads.place/artifacts/loom/loom-topology-enhanced.png',
     htmlUrl: 'https://www.crossroads.place/artifacts/loom/loom-topology-enhanced.html',
   },
+  {
+    id: 'practice',
+    title: 'Mixtape — Practice Map',
+    imageUrl: 'https://www.crossroads.place/artifacts/practice/practice-map.png',
+    htmlUrl: 'https://www.crossroads.place/artifacts/practice/practice-map.html',
+  },
 ] as const
 
 export type TopologyArtifact = (typeof topologyArtifacts)[number]

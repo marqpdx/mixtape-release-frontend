@@ -9,11 +9,13 @@ import { IconSitemap } from '@tabler/icons-react'
 import { getTopologyArtifact, topologyArtifacts } from '@mixtape/content/topologyArtifacts'
 import { normaliseInteractiveHtmlUrl, normalisePreviewImageUrl, normaliseInteractivePageAlignment, resolveInteractivePage, suggestedPreviewUrl, type InteractivePageAlignment } from '@mixtape/content/interactivePages'
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogCloseTrigger } from '@components/ui/dialog'
+import { useAuth } from '@/lib/auth/AuthContext'
 import EditorToolbarButton from './EditorToolbarButton'
 import { MediaPlacementField } from './MediaPlacementField'
 
 /** General authoring control; topology maps are just convenient presets. */
 export function InsertInteractivePageControl({ editor }: { editor: Editor }) {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [presetId, setPresetId] = useState<string>('system')
   const [htmlUrl, setHtmlUrl] = useState<string>(topologyArtifacts[0].htmlUrl)
@@ -55,6 +57,8 @@ export function InsertInteractivePageControl({ editor }: { editor: Editor }) {
     if (inserted) setOpen(false)
     else setError('Could not insert here. Choose a position in the manuscript and try again.')
   }
+  // Superusers only for now (CTO, 2026-10-26). Readers still open previews already in a piece.
+  if (!user?.is_superuser) return null
   return <>
     <EditorToolbarButton tooltip={selectedPreview ? 'Edit interactive page' : 'Insert interactive page'} icon={<IconSitemap size={16} />} size="xs" disabled={!canInsert} onMouseDown={event => event.preventDefault()} onClick={() => {
       setEditing(!!selectedPreview)
