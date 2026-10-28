@@ -81,15 +81,12 @@ Or, if it came from an AI suggestion:
 
 ### Inserting a split marker manually
 
-Three ways:
+Two ways:
 
-**1. Toolbar button**
-Click the scissors icon (✂) in the editor toolbar. A split marker is inserted at the cursor position.
-
-**2. Slash command popup**
+**1. Slash command popup**
 At the start of a new line, type `/`. A small menu appears. Select `/split`. The marker is inserted.
 
-**3. Fenced command (power user)**
+**2. Fenced command (power user)**
 On its own line, type `/split` or `/split My Second Chapter`, then press Enter. The line is replaced with a split marker. The optional text after `/split` becomes the title label on the marker.
 
 ### What split markers do

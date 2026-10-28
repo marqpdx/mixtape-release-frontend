@@ -90,6 +90,15 @@ The handle also accepts the Up and Down arrow keys to move one block at a time. 
 
 ---
 
+## How to export a piece to Markdown
+
+1. In the editor toolbar, click the Markdown icon (**Export to Markdown**), just after Insert image.
+2. Choose **Copy as Markdown** to put the whole piece on your clipboard, or **Download .md file** to save it. The file is named after the piece's first heading.
+
+Headings, bold, italic, strikethrough, inline code, links, lists, quotes, and code blocks come through as standard Markdown. Underlined text becomes `<u>…</u>`, since Markdown has no underline. Dialogue quotes start with **Me:** or **Chat:**. Images keep their alt text, with any caption in italics below; interactive pages export as their preview image plus a link to the page. Split markers and other editor-only markers are left out. The export happens in your browser and doesn't change the piece.
+
+---
+
 ## How to publish a piece
 
 1. Open the draft you want to publish.

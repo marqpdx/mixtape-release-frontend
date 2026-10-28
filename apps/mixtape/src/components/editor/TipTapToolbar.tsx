@@ -19,7 +19,6 @@ import {
   IconH3,
   IconH4,
   IconHelpCircle,
-  IconScissors,
   IconTextSpellcheck,
   IconBlockquote,
   IconMessageQuestion,
@@ -34,6 +33,7 @@ import type { ConversationRole } from "./extensions/ConversationBlockquote";
 import { AtticControls, type AtticContext } from "./AtticControls";
 import { InsertInteractivePageControl } from "./InsertTopologyControl";
 import { InsertImageControl, type ImagePick } from './InsertImageControl';
+import { ExportMarkdownControl } from './ExportMarkdownControl';
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -56,13 +56,11 @@ function normalizeLinkHref(value: string): string | null {
 
 export default function TipTapToolbar({
   editor,
-  gristMode = false,
   onImagePick,
   onSpellScan,
   attic,
 }: {
   editor: Editor | null
-  gristMode?: boolean
   onImagePick?: ImagePick
   onSpellScan?: () => void
   attic?: AtticContext
@@ -335,25 +333,8 @@ export default function TipTapToolbar({
           size="xs"
         />
         <InsertImageControl editor={editor} onImagePick={onImagePick} />
-        {gristMode && (
-          <>
-            <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
-            <EditorToolbarButton
-              tooltip="Insert split point (/split)"
-              icon={<IconScissors size={16} />}
-              onClick={() =>
-                editor
-                  ?.chain()
-                  .focus()
-                  .insertSplitMarker({ source: 'manual', title: null, rationale: null })
-                  .run()
-              }
-              isActive={false}
-              tabIndex={-1}
-              size="xs"
-            />
-          </>
-        )}
+        <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
+        <ExportMarkdownControl editor={editor} />
       </HStack>
       <HStack gap={0.5}>
         <EditorToolbarButton
@@ -450,6 +431,7 @@ export default function TipTapToolbar({
           <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option.</Text>
           <Text fontSize="xs" mb={3}>Images: use Insert image to upload a file or enter an image URL, add alt text and an optional HTML caption with linked credits, set the image width as a percentage, and choose the same centered or left/right wrapping placement as interactive pages. Select an image and choose Edit image to change it. Readers click an image to open the full image in a modal; ×, Escape, or browser Back restores their place.</Text>
           <Text fontSize="xs" mb={3}>Interactive pages: use Insert interactive page, choose a preset or enter a published /artifacts/ HTML URL, preview image URL, and title. Choose centered placement, or left/right with text wrapping beside the preview. Select an existing preview image and use Edit interactive page to change it. Small screens show a full-width preview. The matching PNG URL is suggested, not generated. In public articles and Read Issue, clicking the preview opens the page in a modal. ×, Escape, or browser Back restores your place. The standalone link opens the page in a new tab.</Text>
+          <Text fontSize="xs" mb={3}>Export to Markdown: use the Markdown icon to copy the whole piece as Markdown or download it as a .md file. Split markers and other editor-only markers are left out.</Text>
           <Text fontSize="xs" color="fg.muted" whiteSpace="pre-wrap">
             {`Spelling helpers
 Manual popup: Cmd/Ctrl + double-click a word.

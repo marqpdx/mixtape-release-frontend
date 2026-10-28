@@ -844,7 +844,6 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           <TipTapToolbar
             attic={attic}
             editor={editor}
-            gristMode={!!gristMode}
             onImagePick={imageUpload ? (file, attrs, position) => uploadAndInsertImage(file, position, attrs) : undefined}
             onSpellScan={() => setSpellScanOpen(true)}
           />
