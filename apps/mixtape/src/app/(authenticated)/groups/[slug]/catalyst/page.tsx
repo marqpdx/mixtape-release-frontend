@@ -4963,6 +4963,10 @@ function mdToHtml(md: string): string {
     .join("\n");
 }
 
+// TODO: consolidate Markdown converters. This regex pass over editor.getHTML() is one
+// of two TipTap -> Markdown converters; the other is tiptapToMarkdown
+// (src/components/editor/markdown/tiptapToMarkdown.ts), which walks editor.getJSON()
+// and backs the toolbar's Export to Markdown. Prefer moving this caller onto that one.
 function htmlToMd(html: string): string {
   return html
     .replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n")

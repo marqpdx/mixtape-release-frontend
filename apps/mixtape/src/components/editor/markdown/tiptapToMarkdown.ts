@@ -6,6 +6,10 @@
 // outline markers, LB anchors, comment highlights) are left out.
 //
 // Kept free of runtime imports so it can be tested on its own.
+//
+// TODO: consolidate Markdown converters. Catalyst has a second one, htmlToMd in
+// src/app/(authenticated)/groups/[slug]/catalyst/page.tsx (a regex pass over
+// editor.getHTML()). Move it onto this one and delete it.
 
 import type { TipTapNode, TipTapMark } from '@mixtape/content/TipTapRenderer'
 

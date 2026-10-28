@@ -97,6 +97,8 @@ The handle also accepts the Up and Down arrow keys to move one block at a time. 
 
 Headings, bold, italic, strikethrough, inline code, links, lists, quotes, and code blocks come through as standard Markdown. Underlined text becomes `<u>…</u>`, since Markdown has no underline. Dialogue quotes start with **Me:** or **Agent:**. Images keep their alt text, with any caption in italics below; interactive pages export as their preview image plus a link to the page. Split markers and other editor-only markers are left out. The export happens in your browser and doesn't change the piece.
 
+To see the piece's markup, choose **View source…** from the same menu. It shows three read-only tabs, each with a Copy button: **Markdown** (what the export produces), **HTML** (what the editor renders, including attributes such as `data-chat-role`), and **JSON** (the structure Mixtape actually saves for the piece). It's a snapshot taken when you open it, so close and reopen it to see later edits.
+
 ---
 
 ## How to publish a piece
