@@ -290,7 +290,7 @@ export default function TipTapToolbar({
           size="xs"
         />
         <EditorToolbarButton
-          tooltip="Dialogue: Chat"
+          tooltip="Dialogue: Agent"
           icon={<IconMessageReply size={16} />}
           onClick={() => toggleConversationRole("respondent")}
           isActive={editor.isActive("blockquote", { role: "respondent" })}

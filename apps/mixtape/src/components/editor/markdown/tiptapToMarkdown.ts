@@ -12,7 +12,7 @@ import type { TipTapNode, TipTapMark } from '@mixtape/content/TipTapRenderer'
 type Node = TipTapNode
 
 const OMITTED_NODES = new Set(['splitMarker', 'segmentBoundary', 'outlineMarker', 'lbAnchor'])
-const DIALOGUE_LABELS: Record<string, string> = { querent: 'Me', respondent: 'Chat' }
+const DIALOGUE_LABELS: Record<string, string> = { querent: 'Me', respondent: 'Agent' }
 
 export function tiptapToMarkdown(doc: Node | null | undefined): string {
   if (!doc) return ''
