@@ -1185,7 +1185,7 @@ export default function WriteComposer({
           pieceSlug={initialPieceSlug}
           linkedinCopy={linkedinCopy}
           linkedinCopyExtended={linkedinCopyExtended}
-          onLinkedInCopyGenerated={(copy, extended) => {
+          onLinkedInCopyChange={(copy, extended) => {
             setLinkedinCopy(copy);
             setLinkedinCopyExtended(extended);
           }}

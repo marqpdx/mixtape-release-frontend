@@ -36,6 +36,14 @@ The target is yours. Set it, change it, or leave it blank. It has no effect on p
 
 ---
 
+## LinkedIn Introduction
+
+In the **LinkedIn introduction** panel, click **Generate introduction** to have the AI draft post copy for sharing the piece on LinkedIn. **Show variants** reveals a short synopsis, a one-line takeaway, and an alternative hook, along with why the AI chose that angle.
+
+Every piece of text the AI wrote can be edited. Click the pencil icon beside it, change the text, and click **Save** (or press ⌘/Ctrl+Enter). Escape cancels. A character count shows below the text while you edit. Your edits are saved to the piece and appear in Atelier too. Regenerating replaces them with a fresh AI draft.
+
+---
+
 ## Split Suggestion
 
 If you set a word count target and turn on **Suggest splitting**, the system will watch your progress. When your piece grows significantly beyond the target (about 15% over), it will quietly ask if the piece might work better as two separate pieces.

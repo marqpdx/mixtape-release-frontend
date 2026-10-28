@@ -9,15 +9,17 @@ import {
   Box,
   Badge,
   IconButton,
+  Textarea,
 } from '@chakra-ui/react';
 import {
   IconBrandLinkedin,
   IconCopy,
   IconRefresh,
   IconCheck,
+  IconPencil,
 } from '@tabler/icons-react';
 import { AgentContainer, AgentState } from '../shared/AgentContainer';
-import { LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
+import { LinkedInCopyExtended, updatePieceSynopsis } from '@mixtape/api/clients/writing/writingApi';
 import { useSynopsisLinkedIn } from '@mixtape/api/hooks/switchboard';
 import { toaster } from '@mixtape/core/lib/toaster';
 
@@ -25,14 +27,45 @@ export interface LinkedInCopyAgentProps {
   pieceId: string | undefined;
   linkedinCopy: string;
   linkedinCopyExtended: LinkedInCopyExtended | null;
-  onGenerated: (copy: string, extended: LinkedInCopyExtended) => void;
+  onChange: (copy: string, extended: LinkedInCopyExtended | null) => void;
   documentWordCount: number;
 }
 
 const MIN_WORDS = 75;
 
-function CopyRow({ label, text }: { label: string; text: string }) {
+type EditableVariant = 'short_synopsis' | 'one_line_takeaway' | 'alt_hook';
+
+function CopyRow({
+  label,
+  text,
+  onSave,
+}: {
+  label: string;
+  text: string;
+  onSave?: (text: string) => Promise<boolean>;
+}) {
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(text);
+  const [saving, setSaving] = useState(false);
+
+  const startEditing = () => {
+    setDraft(text);
+    setEditing(true);
+  };
+
+  const save = async () => {
+    if (!onSave) return;
+    const next = draft.trim();
+    if (!next || next === text) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    const saved = await onSave(next);
+    setSaving(false);
+    if (saved) setEditing(false);
+  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
@@ -44,27 +77,69 @@ function CopyRow({ label, text }: { label: string; text: string }) {
     <Box>
       <HStack justify="space-between" mb={1}>
         <Text fontSize="xs" color="gray.500" fontWeight="medium">{label}</Text>
-        <IconButton
-          size="xs"
-          variant="ghost"
-          onClick={handleCopy}
-          title={`Copy ${label}`}
-        >
-          {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
-        </IconButton>
+        {!editing && (
+          <HStack gap={0}>
+            {onSave && (
+              <IconButton
+                size="xs"
+                variant="ghost"
+                onClick={startEditing}
+                title={`Edit ${label}`}
+              >
+                <IconPencil size={12} />
+              </IconButton>
+            )}
+            <IconButton
+              size="xs"
+              variant="ghost"
+              onClick={handleCopy}
+              title={`Copy ${label}`}
+            >
+              {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+            </IconButton>
+          </HStack>
+        )}
       </HStack>
-      <Box
-        p={2}
-        bg="blue.50"
-        borderRadius="md"
-        borderLeft="3px solid"
-        borderLeftColor="blue.300"
-        fontSize="sm"
-        lineHeight="1.5"
-        color="gray.700"
-      >
-        {text}
-      </Box>
+      {editing ? (
+        <VStack gap={2} align="stretch">
+          <Textarea
+            className="lica-edit"
+            size="sm"
+            autoresize
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setEditing(false);
+              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) void save();
+            }}
+            autoFocus
+          />
+          <HStack justify="space-between">
+            <Text fontSize="xs" color="gray.500">{draft.trim().length} characters</Text>
+            <HStack gap={2}>
+              <Button size="xs" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button size="xs" colorPalette="blue" onClick={save} loading={saving}>
+                Save
+              </Button>
+            </HStack>
+          </HStack>
+        </VStack>
+      ) : (
+        <Box
+          p={2}
+          bg="blue.50"
+          borderRadius="md"
+          borderLeft="3px solid"
+          borderLeftColor="blue.300"
+          fontSize="sm"
+          lineHeight="1.5"
+          color="gray.700"
+        >
+          {text}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -73,7 +148,7 @@ export function LinkedInCopyAgent({
   pieceId,
   linkedinCopy,
   linkedinCopyExtended,
-  onGenerated,
+  onChange,
   documentWordCount,
 }: LinkedInCopyAgentProps) {
   const [showExtended, setShowExtended] = useState(false);
@@ -92,7 +167,7 @@ export function LinkedInCopyAgent({
     appliedActionRunId.current = linkedinAction.actionRunId;
     const result = linkedinAction.result;
     const copy = result.short_synopsis || result.hook;
-    onGenerated(copy, {
+    onChange(copy, {
       hook: result.hook,
       short_synopsis: result.short_synopsis,
       one_line_takeaway: result.one_line_takeaway,
@@ -100,7 +175,7 @@ export function LinkedInCopyAgent({
       source_claim: result.source_claim,
       human_stake: result.human_stake,
     });
-  }, [linkedinAction.actionRunId, linkedinAction.result, onGenerated]);
+  }, [linkedinAction.actionRunId, linkedinAction.result, onChange]);
 
   useEffect(() => {
     if (!linkedinAction.error) return;
@@ -118,6 +193,31 @@ export function LinkedInCopyAgent({
     if (hasContent) return 'Ready';
     return 'On demand';
   };
+
+  // Author edits are saved straight to the piece's WritingSynopsis.
+  const saveEdit = async (
+    data: Parameters<typeof updatePieceSynopsis>[1],
+  ): Promise<boolean> => {
+    if (!pieceId) return false;
+    try {
+      const synopsis = await updatePieceSynopsis(pieceId, {
+        ...data,
+        linkedin_copy_generated_by: 'author',
+      });
+      onChange(synopsis.linkedin_copy || '', synopsis.linkedin_copy_extended || null);
+      return true;
+    } catch {
+      toaster.create({ title: 'Could not save your edit', type: 'error' });
+      return false;
+    }
+  };
+
+  const savePostIntroduction = (text: string) => saveEdit({ linkedin_copy: text });
+
+  const saveVariant = (key: EditableVariant) => (text: string) =>
+    saveEdit({
+      linkedin_copy_extended: { ...(linkedinCopyExtended as LinkedInCopyExtended), [key]: text },
+    });
 
   const handleGenerate = async () => {
     if (!pieceId) return;
@@ -152,7 +252,7 @@ export function LinkedInCopyAgent({
               </IconButton>
             </HStack>
 
-            <CopyRow label="Post introduction" text={linkedinCopy} />
+            <CopyRow label="Post introduction" text={linkedinCopy} onSave={pieceId ? savePostIntroduction : undefined} />
 
             {linkedinCopyExtended && (
               <>
@@ -190,13 +290,13 @@ export function LinkedInCopyAgent({
                       </Box>
                     )}
                     {linkedinCopyExtended.short_synopsis && (
-                      <CopyRow label="Short synopsis" text={linkedinCopyExtended.short_synopsis} />
+                      <CopyRow label="Short synopsis" text={linkedinCopyExtended.short_synopsis} onSave={pieceId ? saveVariant('short_synopsis') : undefined} />
                     )}
                     {linkedinCopyExtended.one_line_takeaway && (
-                      <CopyRow label="One-line takeaway" text={linkedinCopyExtended.one_line_takeaway} />
+                      <CopyRow label="One-line takeaway" text={linkedinCopyExtended.one_line_takeaway} onSave={pieceId ? saveVariant('one_line_takeaway') : undefined} />
                     )}
                     {linkedinCopyExtended.alt_hook && (
-                      <CopyRow label="Alt hook" text={linkedinCopyExtended.alt_hook} />
+                      <CopyRow label="Alt hook" text={linkedinCopyExtended.alt_hook} onSave={pieceId ? saveVariant('alt_hook') : undefined} />
                     )}
                   </VStack>
                 )}

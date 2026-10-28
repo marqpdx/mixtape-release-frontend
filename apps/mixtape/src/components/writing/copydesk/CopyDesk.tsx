@@ -53,7 +53,7 @@ export interface CopyDeskProps {
   pieceId?: string;
   linkedinCopy?: string;
   linkedinCopyExtended?: LinkedInCopyExtended | null;
-  onLinkedInCopyGenerated?: (copy: string, extended: LinkedInCopyExtended) => void;
+  onLinkedInCopyChange?: (copy: string, extended: LinkedInCopyExtended | null) => void;
 
   // Public synopsis
   pieceSlug?: string;
@@ -84,7 +84,7 @@ export function CopyDesk({
   pieceId,
   linkedinCopy = '',
   linkedinCopyExtended = null,
-  onLinkedInCopyGenerated,
+  onLinkedInCopyChange,
   pieceSlug,
 }: CopyDeskProps) {
   // Color mode values
@@ -152,7 +152,7 @@ export function CopyDesk({
               pieceId={pieceId}
               linkedinCopy={linkedinCopy}
               linkedinCopyExtended={linkedinCopyExtended ?? null}
-              onGenerated={onLinkedInCopyGenerated ?? (() => {})}
+              onChange={onLinkedInCopyChange ?? (() => {})}
               documentWordCount={documentWordCount}
             />
 
