@@ -16,7 +16,6 @@ import { WordAgent } from './agents/WordAgent';
 import { AISummaryAgent } from './agents/AISummaryAgent';
 import { LinkedInCopyAgent } from './agents/LinkedInCopyAgent';
 import { PublicSynopsisAgent } from './agents/PublicSynopsisAgent';
-import type { LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
 
 export interface CopyDeskProps {
   isOpen: boolean;
@@ -49,11 +48,8 @@ export interface CopyDeskProps {
   onTargetWordCountChange?: (value: number | null) => void;
   onSuggestSplitsChange?: (value: boolean) => void;
 
-  // LinkedIn copy
+  // LinkedIn introduction + public synopsis load their own text
   pieceId?: string;
-  linkedinCopy?: string;
-  linkedinCopyExtended?: LinkedInCopyExtended | null;
-  onLinkedInCopyChange?: (copy: string, extended: LinkedInCopyExtended | null) => void;
 
   // Public synopsis
   pieceSlug?: string;
@@ -82,9 +78,6 @@ export function CopyDesk({
   onTargetWordCountChange,
   onSuggestSplitsChange,
   pieceId,
-  linkedinCopy = '',
-  linkedinCopyExtended = null,
-  onLinkedInCopyChange,
   pieceSlug,
 }: CopyDeskProps) {
   // Color mode values
@@ -150,9 +143,6 @@ export function CopyDesk({
             {/* LinkedIn Copy Agent */}
             <LinkedInCopyAgent
               pieceId={pieceId}
-              linkedinCopy={linkedinCopy}
-              linkedinCopyExtended={linkedinCopyExtended ?? null}
-              onChange={onLinkedInCopyChange ?? (() => {})}
               documentWordCount={documentWordCount}
             />
 

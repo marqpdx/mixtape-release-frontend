@@ -1,6 +1,6 @@
 // src/components/write/copydesk/agents/LinkedInCopyAgent.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   VStack,
   HStack,
@@ -16,56 +16,29 @@ import {
   IconCopy,
   IconRefresh,
   IconCheck,
-  IconPencil,
 } from '@tabler/icons-react';
 import { AgentContainer, AgentState } from '../shared/AgentContainer';
-import { LinkedInCopyExtended, updatePieceSynopsis } from '@mixtape/api/clients/writing/writingApi';
+import type { LinkedInCopyExtended } from '@mixtape/api/clients/writing/writingApi';
+import { axiosInstance } from '@mixtape/api/lib/axiosInstance';
 import { useSynopsisLinkedIn } from '@mixtape/api/hooks/switchboard';
 import { toaster } from '@mixtape/core/lib/toaster';
 
 export interface LinkedInCopyAgentProps {
   pieceId: string | undefined;
-  linkedinCopy: string;
-  linkedinCopyExtended: LinkedInCopyExtended | null;
-  onChange: (copy: string, extended: LinkedInCopyExtended | null) => void;
   documentWordCount: number;
+}
+
+/** The linkedin_introduction slice of GET/PATCH /api/atelier/<piece>/summaries/ — shared with Draft Room. */
+interface LinkedInIntroduction {
+  text: string;
+  confirmed: boolean;
+  extended: LinkedInCopyExtended | null;
 }
 
 const MIN_WORDS = 75;
 
-type EditableVariant = 'short_synopsis' | 'one_line_takeaway' | 'alt_hook';
-
-function CopyRow({
-  label,
-  text,
-  onSave,
-}: {
-  label: string;
-  text: string;
-  onSave?: (text: string) => Promise<boolean>;
-}) {
+function CopyRow({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(text);
-  const [saving, setSaving] = useState(false);
-
-  const startEditing = () => {
-    setDraft(text);
-    setEditing(true);
-  };
-
-  const save = async () => {
-    if (!onSave) return;
-    const next = draft.trim();
-    if (!next || next === text) {
-      setEditing(false);
-      return;
-    }
-    setSaving(true);
-    const saved = await onSave(next);
-    setSaving(false);
-    if (saved) setEditing(false);
-  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
@@ -77,87 +50,99 @@ function CopyRow({
     <Box>
       <HStack justify="space-between" mb={1}>
         <Text fontSize="xs" color="gray.500" fontWeight="medium">{label}</Text>
-        {!editing && (
-          <HStack gap={0}>
-            {onSave && (
-              <IconButton
-                size="xs"
-                variant="ghost"
-                onClick={startEditing}
-                title={`Edit ${label}`}
-              >
-                <IconPencil size={12} />
-              </IconButton>
-            )}
-            <IconButton
-              size="xs"
-              variant="ghost"
-              onClick={handleCopy}
-              title={`Copy ${label}`}
-            >
-              {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
-            </IconButton>
-          </HStack>
-        )}
-      </HStack>
-      {editing ? (
-        <VStack gap={2} align="stretch">
-          <Textarea
-            className="lica-edit"
-            size="sm"
-            autoresize
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') setEditing(false);
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) void save();
-            }}
-            autoFocus
-          />
-          <HStack justify="space-between">
-            <Text fontSize="xs" color="gray.500">{draft.trim().length} characters</Text>
-            <HStack gap={2}>
-              <Button size="xs" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>
-                Cancel
-              </Button>
-              <Button size="xs" colorPalette="blue" onClick={save} loading={saving}>
-                Save
-              </Button>
-            </HStack>
-          </HStack>
-        </VStack>
-      ) : (
-        <Box
-          p={2}
-          bg="blue.50"
-          borderRadius="md"
-          borderLeft="3px solid"
-          borderLeftColor="blue.300"
-          fontSize="sm"
-          lineHeight="1.5"
-          color="gray.700"
+        <IconButton
+          size="xs"
+          variant="ghost"
+          onClick={handleCopy}
+          title={`Copy ${label}`}
         >
-          {text}
-        </Box>
-      )}
+          {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+        </IconButton>
+      </HStack>
+      <Box
+        p={2}
+        bg="blue.50"
+        borderRadius="md"
+        borderLeft="3px solid"
+        borderLeftColor="blue.300"
+        fontSize="sm"
+        lineHeight="1.5"
+        color="gray.700"
+      >
+        {text}
+      </Box>
     </Box>
   );
 }
 
 export function LinkedInCopyAgent({
   pieceId,
-  linkedinCopy,
-  linkedinCopyExtended,
-  onChange,
   documentWordCount,
 }: LinkedInCopyAgentProps) {
+  const [text, setText] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+  const [extended, setExtended] = useState<LinkedInCopyExtended | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [showExtended, setShowExtended] = useState(false);
+  const savedText = useRef('');
   const appliedActionRunId = useRef<string | null>(null);
   const linkedinAction = useSynopsisLinkedIn();
 
-  const hasContent = !!linkedinCopy;
+  const hasContent = !!text;
   const isGenerating = linkedinAction.isSubmitting || linkedinAction.isPolling;
 
+  const apply = (intro: LinkedInIntroduction | undefined) => {
+    savedText.current = intro?.text || '';
+    setText(intro?.text || '');
+    setConfirmed(!!intro?.confirmed);
+    setExtended(intro?.extended ?? null);
+  };
+
+  // Same endpoint as Draft Room, so edits made there show up here (and vice versa).
+  // Reload when the window regains focus, unless there's an unsaved edit in progress.
+  const load = useCallback(async () => {
+    if (!pieceId) return;
+    try {
+      const res = await axiosInstance.get(`/api/atelier/${pieceId}/summaries/`);
+      apply(res.data?.linkedin_introduction);
+    } catch {
+      // A piece without summaries leaves the agent in its empty state.
+    }
+  }, [pieceId]);
+
+  useEffect(() => {
+    apply(undefined);
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (text === savedText.current) void load();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [load, text]);
+
+  const persist = async (value: string): Promise<boolean> => {
+    if (!pieceId) return false;
+    if (value === savedText.current) return true;
+    setSaving(true);
+    try {
+      const res = await axiosInstance.patch(`/api/atelier/${pieceId}/summaries/`, { linkedin_introduction: value });
+      savedText.current = value;
+      setConfirmed(!!res.data?.linkedin_introduction?.confirmed);
+      return true;
+    } catch {
+      toaster.create({ title: 'Could not save LinkedIn introduction', type: 'error' });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // The backend stores the generated copy when the run succeeds; reload to pick it up.
   useEffect(() => {
     if (
       !linkedinAction.result ||
@@ -165,64 +150,52 @@ export function LinkedInCopyAgent({
       appliedActionRunId.current === linkedinAction.actionRunId
     ) return;
     appliedActionRunId.current = linkedinAction.actionRunId;
-    const result = linkedinAction.result;
-    const copy = result.short_synopsis || result.hook;
-    onChange(copy, {
-      hook: result.hook,
-      short_synopsis: result.short_synopsis,
-      one_line_takeaway: result.one_line_takeaway,
-      alt_hook: result.alt_hook,
-      source_claim: result.source_claim,
-      human_stake: result.human_stake,
-    });
-  }, [linkedinAction.actionRunId, linkedinAction.result, onChange]);
+    void load();
+  }, [linkedinAction.actionRunId, linkedinAction.result, load]);
 
   useEffect(() => {
     if (!linkedinAction.error) return;
     toaster.create({ title: 'LinkedIn introduction generation failed', type: 'error' });
   }, [linkedinAction.error]);
 
+  const handleGenerate = () => {
+    if (!pieceId) return;
+    linkedinAction.reset();
+    linkedinAction.submit({ piece_id: pieceId, surface: 'writing' });
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleConfirm = async () => {
+    if (!pieceId) return;
+    setConfirming(true);
+    try {
+      if (!(await persist(text))) return;
+      await axiosInstance.post(`/api/atelier/${pieceId}/summaries/confirm/`, { types: ['linkedin_introduction'] });
+      setConfirmed(true);
+      toaster.create({ title: 'LinkedIn introduction confirmed', type: 'success' });
+    } catch {
+      toaster.create({ title: 'Could not confirm LinkedIn introduction', type: 'error' });
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   const getAgentState = (): AgentState => {
     if (isGenerating) return 'loading';
-    if (hasContent) return 'ready';
+    if (confirmed) return 'ready';
     return 'idle';
   };
 
   const getStateMessage = (): string => {
     if (isGenerating) return 'Generating...';
-    if (hasContent) return 'Ready';
+    if (confirmed) return 'Confirmed';
+    if (hasContent) return 'Draft';
     return 'On demand';
-  };
-
-  // Author edits are saved straight to the piece's WritingSynopsis.
-  const saveEdit = async (
-    data: Parameters<typeof updatePieceSynopsis>[1],
-  ): Promise<boolean> => {
-    if (!pieceId) return false;
-    try {
-      const synopsis = await updatePieceSynopsis(pieceId, {
-        ...data,
-        linkedin_copy_generated_by: 'author',
-      });
-      onChange(synopsis.linkedin_copy || '', synopsis.linkedin_copy_extended || null);
-      return true;
-    } catch {
-      toaster.create({ title: 'Could not save your edit', type: 'error' });
-      return false;
-    }
-  };
-
-  const savePostIntroduction = (text: string) => saveEdit({ linkedin_copy: text });
-
-  const saveVariant = (key: EditableVariant) => (text: string) =>
-    saveEdit({
-      linkedin_copy_extended: { ...(linkedinCopyExtended as LinkedInCopyExtended), [key]: text },
-    });
-
-  const handleGenerate = async () => {
-    if (!pieceId) return;
-    linkedinAction.reset();
-    linkedinAction.submit({ piece_id: pieceId, surface: 'writing' });
   };
 
   return (
@@ -236,25 +209,60 @@ export function LinkedInCopyAgent({
     >
       <VStack gap={3} align="stretch">
 
-        {/* Ready state */}
+        {/* Draft / confirmed state */}
         {hasContent && !isGenerating && (
           <VStack gap={3} align="stretch">
             <HStack justify="space-between">
-              <Badge colorScheme="blue" size="sm">Ready</Badge>
-              <IconButton
-                size="xs"
-                variant="ghost"
-                onClick={handleGenerate}
-                title="Regenerate"
-                disabled={isGenerating}
-              >
-                <IconRefresh size={14} />
-              </IconButton>
+              <Badge colorScheme={confirmed ? 'green' : 'gray'} size="sm">
+                {confirmed ? 'Confirmed' : 'Draft'}
+              </Badge>
+              <HStack gap={0}>
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  onClick={handleCopy}
+                  title="Copy post introduction"
+                >
+                  {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                </IconButton>
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  onClick={handleGenerate}
+                  title="Regenerate"
+                  disabled={isGenerating}
+                >
+                  <IconRefresh size={14} />
+                </IconButton>
+              </HStack>
             </HStack>
 
-            <CopyRow label="Post introduction" text={linkedinCopy} onSave={pieceId ? savePostIntroduction : undefined} />
+            <Textarea
+              className="lica-introduction"
+              size="sm"
+              autoresize
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+                setConfirmed(false);
+              }}
+              onBlur={() => void persist(text)}
+            />
+            <HStack justify="space-between">
+              <Text fontSize="xs" color="gray.500">{text.trim().length} characters</Text>
+              <Button
+                size="xs"
+                colorPalette={confirmed ? 'green' : 'blue'}
+                variant={confirmed ? 'outline' : 'solid'}
+                onClick={handleConfirm}
+                loading={confirming || saving}
+              >
+                <IconCheck size={12} />
+                {confirmed ? 'Confirmed' : 'Confirm'}
+              </Button>
+            </HStack>
 
-            {linkedinCopyExtended && (
+            {extended && (
               <>
                 <Button
                   size="xs"
@@ -266,7 +274,7 @@ export function LinkedInCopyAgent({
 
                 {showExtended && (
                   <VStack gap={3} align="stretch">
-                    {(linkedinCopyExtended.source_claim || linkedinCopyExtended.human_stake) && (
+                    {(extended.source_claim || extended.human_stake) && (
                       <Box
                         p={2}
                         bg="gray.50"
@@ -277,26 +285,26 @@ export function LinkedInCopyAgent({
                         <Text fontSize="xs" color="gray.500" fontWeight="medium" mb={1}>
                           Why this angle
                         </Text>
-                        {linkedinCopyExtended.source_claim && (
+                        {extended.source_claim && (
                           <Text fontSize="xs" color="gray.600" mb={1}>
-                            <Text as="span" fontWeight="medium">Core claim:</Text> {linkedinCopyExtended.source_claim}
+                            <Text as="span" fontWeight="medium">Core claim:</Text> {extended.source_claim}
                           </Text>
                         )}
-                        {linkedinCopyExtended.human_stake && (
+                        {extended.human_stake && (
                           <Text fontSize="xs" color="gray.600">
-                            <Text as="span" fontWeight="medium">What&apos;s at stake for the reader:</Text> {linkedinCopyExtended.human_stake}
+                            <Text as="span" fontWeight="medium">What&apos;s at stake for the reader:</Text> {extended.human_stake}
                           </Text>
                         )}
                       </Box>
                     )}
-                    {linkedinCopyExtended.short_synopsis && (
-                      <CopyRow label="Short synopsis" text={linkedinCopyExtended.short_synopsis} onSave={pieceId ? saveVariant('short_synopsis') : undefined} />
+                    {extended.short_synopsis && (
+                      <CopyRow label="Short synopsis" text={extended.short_synopsis} />
                     )}
-                    {linkedinCopyExtended.one_line_takeaway && (
-                      <CopyRow label="One-line takeaway" text={linkedinCopyExtended.one_line_takeaway} onSave={pieceId ? saveVariant('one_line_takeaway') : undefined} />
+                    {extended.one_line_takeaway && (
+                      <CopyRow label="One-line takeaway" text={extended.one_line_takeaway} />
                     )}
-                    {linkedinCopyExtended.alt_hook && (
-                      <CopyRow label="Alt hook" text={linkedinCopyExtended.alt_hook} onSave={pieceId ? saveVariant('alt_hook') : undefined} />
+                    {extended.alt_hook && (
+                      <CopyRow label="Alt hook" text={extended.alt_hook} />
                     )}
                   </VStack>
                 )}

@@ -11,7 +11,6 @@ import { IconEye } from "@tabler/icons-react";
 import { TipTapRenderer, type TipTapDocument } from "@mixtape/content/TipTapRenderer";
 import {
   exportPiecePdf,
-  fetchPieceSynopsis,
 } from "@mixtape/api/clients/writing/writingApi";
 
 import { MainEditor } from "@components/writing/composer/MainEditor";
@@ -219,31 +218,6 @@ export default function WriteComposer({
     const branch = branches.find((b: Branch) => b.anchor_node_id === anchorId) ?? null;
     setActiveBranch(branch);
   }, [branches, lbId]);
-
-  // LinkedIn copy state (Copy Desk agent)
-  const [linkedinCopy, setLinkedinCopy] = useState('');
-  const [linkedinCopyExtended, setLinkedinCopyExtended] = useState<import('@mixtape/api/clients/writing/writingApi').LinkedInCopyExtended | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setLinkedinCopy('');
-    setLinkedinCopyExtended(null);
-
-    void fetchPieceSynopsis(pieceId)
-      .then((synopsis) => {
-        if (cancelled) return;
-        setLinkedinCopy(synopsis.linkedin_copy || '');
-        setLinkedinCopyExtended(synopsis.linkedin_copy_extended || null);
-      })
-      .catch(() => {
-        // A piece without a synopsis should leave CopyDesk in its empty state.
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pieceId]);
 
   const {
     isCollaborative,
@@ -1183,12 +1157,6 @@ export default function WriteComposer({
           onSuggestSplitsChange={handleSuggestSplitsChange}
           pieceId={pieceId}
           pieceSlug={initialPieceSlug}
-          linkedinCopy={linkedinCopy}
-          linkedinCopyExtended={linkedinCopyExtended}
-          onLinkedInCopyChange={(copy, extended) => {
-            setLinkedinCopy(copy);
-            setLinkedinCopyExtended(extended);
-          }}
         />
       </HStack>
       <Dialog.Root open={preview !== null} onOpenChange={({ open }) => !open && setPreview(null)}>

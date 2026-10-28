@@ -99,17 +99,6 @@ export interface WritingSynopsisData {
 }
 
 /**
- * Save author edits to a piece's synopsis (e.g. the LinkedIn introduction)
- */
-export async function updatePieceSynopsis(
-  pieceId: string,
-  data: Partial<Pick<WritingSynopsisData, 'linkedin_copy' | 'linkedin_copy_generated_by' | 'linkedin_copy_extended'>>,
-): Promise<WritingSynopsisData> {
-  const res = await axiosInstance.patch(`/api/writing/pieces/${pieceId}/synopsis`, data);
-  return res.data;
-}
-
-/**
  * Unpublish a piece (return to draft)
  */
 export async function unpublishPiece(pieceId: string) {

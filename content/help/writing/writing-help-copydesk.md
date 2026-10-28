@@ -38,9 +38,11 @@ The target is yours. Set it, change it, or leave it blank. It has no effect on p
 
 ## LinkedIn Introduction
 
-In the **LinkedIn introduction** panel, click **Generate introduction** to have the AI draft post copy for sharing the piece on LinkedIn. **Show variants** reveals a short synopsis, a one-line takeaway, and an alternative hook, along with why the AI chose that angle.
+In the **LinkedIn introduction** panel, click **Generate introduction** to have the AI draft post copy for sharing the piece on LinkedIn. The draft appears in an editable box. Change it however you like; it saves when you click away. Click **Confirm** once you're happy with it. Any later edit returns it to **Draft**.
 
-Every piece of text the AI wrote can be edited. Click the pencil icon beside it, change the text, and click **Save** (or press ⌘/Ctrl+Enter). Escape cancels. A character count shows below the text while you edit. Your edits are saved to the piece and appear in Atelier too. Regenerating replaces them with a fresh AI draft.
+This is the same LinkedIn introduction as in Draft Room's Summaries section, so edits made in either place show up in the other. If you edited it in Draft Room in another tab, the Copy Desk picks up the change when you come back to this window.
+
+**Show variants** reveals the AI's short synopsis, one-line takeaway, and alternative hook, along with why it chose that angle. Each has a copy button. Regenerating replaces the introduction with a fresh AI draft.
 
 ---
 
