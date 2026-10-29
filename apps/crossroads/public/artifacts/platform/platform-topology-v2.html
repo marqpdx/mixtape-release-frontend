@@ -1,0 +1,312 @@
+<!--
+  topology library map — public register (its own design; not on the kit)
+  carried_from: puddlejump/reference/topology/platform-concept-map.md
+  carried_from_uuid: 391dd09c-7667-47f1-a99f-27cb0b163a86
+  designed: 2026-09-29 (09f410a); moved into the library 2026-10-14
+  maturity: 0.9.1 (publishing maturity; 1.0 = first full release; set by the CTO 2026-10-28)
+  swept: 2026-10-28 — concurrence with system-topology v2.0.42 and the five groupings; a light welcoming walk (CTO)
+  v2 DRAFT (2026-10-28, CTO): cloned from platform-topology.html, which stays as it is. Main Reception becomes
+  an information desk in the top left, a 240-degree counter whose walkways fan down and right to four
+  concourses: Idea work, Creation and Expression, Collaboration, Research. "Like a 1960s TWA terminal,
+  plus the solid colouring and aura we have now." The info desk doesn't impede anything else.
+  library: puddlejump/reference/topology/topology-library.md
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A newcomer-facing map of how work, knowledge, and memory move through Mixtape.">
+  <title>Mixtape — Platform Map (v2 draft)</title>
+  <meta name="carried-from" content="puddlejump/reference/topology/platform-concept-map.md">
+  <meta name="carried-from-uuid" content="391dd09c-7667-47f1-a99f-27cb0b163a86">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#1f1d17;--paper:#F6F1E4;--cream:#FFFBF1;--field:#EFE7D2;--muted:#6b6555;--body:#4a463b;--under:#2A241B;--mulberry:#8B3F62;--coral:#D2603F;--thatch:#4F551C}
+    *,*::before,*::after{box-sizing:border-box}*{margin:0}html{scroll-behavior:smooth}
+    body{min-width:320px;background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button,a{font:inherit}button{color:inherit}button:focus-visible,a:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+    a{color:var(--mulberry);text-decoration:none}a:hover{text-decoration:underline}
+    .shell{max-width:1180px;margin:auto;padding:32px 16px 80px}
+    .eyebrow{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .header{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px 8px;margin-bottom:32px}
+    .intro{display:grid;gap:14px;max-width:800px}.pills{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{border:1.5px solid var(--ink);border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
+    .pill.primary{background:var(--ink);color:var(--paper)}
+    h1{max-width:800px;font:800 clamp(30px,3.6vw,44px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
+    /* The maps mini-nav sits where it sits on the kit maps (system, Loom): same frame, same height. Keep .intro-top's min-height in step with --tk-maps-block in kit/topology.css. */
+    .intro-top{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:165px}
+    .tk-maps{margin-top:auto;padding-top:.55rem;font:400 .8rem/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#5b5a54}
+    .tk-maps a{color:#1c1b18;text-decoration:underline;text-decoration-color:#d9d4c5;text-underline-offset:2px}
+    .tk-maps a:hover{text-decoration-color:currentColor}
+    .tk-maps .here{color:#1c1b18;font-weight:600}
+    .tk-maps .soon{color:#5b5a54;opacity:.55;cursor:default}
+    @media(max-width:767px){.intro-top{min-height:0}}
+    .lede{max-width:70ch;color:var(--body);font-size:18px;line-height:1.5}
+    /* The welcome walk (2026-10-28): one inviting line, and a quiet "next" at the foot of each part. Light touch. */
+    .walk{max-width:62ch;color:var(--mulberry);font-size:16px;font-weight:600;line-height:1.45}
+    .next{display:block;width:max-content;margin:22px auto 0;color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.04em}
+    .next:hover{color:var(--ink)}.next-dark{color:#b3a98f}.next-dark:hover{color:var(--cream)}
+    .closing-words{display:grid;gap:10px}
+    /* ---- v2: the information desk and four concourses (TWA-terminal sweep, solid colour, aura) ---- */
+    .plaza{position:relative;display:grid;grid-template-columns:minmax(340px,1.15fr) minmax(0,1fr) minmax(0,1fr);grid-template-areas:"desk idea idea" "desk create create" "research common common";gap:56px 48px;align-items:start}
+    .rays{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:0}
+    .desk-wrap{grid-area:desk;position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start}
+    .desk-wrap .arrival-line{margin-left:46px}
+    .desk{position:relative;width:100%;padding:28px 48px 64px 30px;background:var(--cream);border:3px solid var(--ink);border-radius:40px 40px 150px 40px;box-shadow:0 0 0 7px var(--field),0 0 0 10px var(--ink),8px 12px 0 10px var(--ink);display:grid;gap:16px}
+    .desk h2{font:800 clamp(24px,2.4vw,30px)/1.04 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+    .desk .reception-title .eyebrow{color:var(--mulberry)}
+    .desk .feed{padding-right:0}
+    .attendant{display:flex;align-items:center;gap:10px;width:auto;max-width:100%;padding:8px 14px;background:#AAA37D;color:#26241a;border:2px solid var(--ink);border-radius:99px;cursor:pointer;font-size:13px;text-align:left}
+    .attendant:hover{filter:brightness(1.05)}.attendant-dot{width:10px;height:10px;flex:none;border-radius:50%;background:#26241a}
+    .concourses{display:contents}
+    .concourse{position:relative;z-index:1;display:grid;gap:12px;align-content:start}
+    .concourse[data-zone=idea]{grid-area:idea}.concourse[data-zone=create]{grid-area:create}.concourse[data-zone=common]{grid-area:common}.concourse[data-zone=research]{grid-area:research}
+    .gate{display:flex;align-items:center;gap:10px}
+    .flap{display:grid;place-items:center;width:30px;height:34px;background:var(--ink);color:var(--cream);border-radius:6px;font:700 16px/1 'JetBrains Mono',monospace;box-shadow:inset 0 -17px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.12)}
+    .gate-name{font:800 22px/1.05 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
+    .gate-line{color:var(--body);font-size:14px;line-height:1.45;max-width:52ch}
+    .pod{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;padding:16px;border-radius:30px;background:color-mix(in srgb,var(--zone) 10%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--zone) 28%,transparent),0 0 34px 6px color-mix(in srgb,var(--zone) 16%,transparent)}
+    .pod .land{min-height:118px;padding:16px 16px 14px}.pod .land::before{display:none}.pod .land h4{font-size:24px}
+    .land.planned{background:repeating-linear-gradient(135deg,var(--color) 0 14px,color-mix(in srgb,var(--color) 86%,#fff) 14px 28px)}
+    .after-plaza{display:grid;justify-items:center;gap:10px;margin-top:34px}
+    @media(max-width:899px){.plaza{grid-template-columns:minmax(0,1fr);grid-template-areas:"desk" "idea" "create" "common" "research";gap:30px}.rays{display:none}.desk{border-radius:36px 36px 120px 36px}.desk .feed{padding-right:0}.attendant{width:auto}}
+    /* The trio: what Mixtape is for. Same row, type and weight as the pills; far right on wide screens, under the pills on narrow ones. */
+    .trio{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
+    .trio span+span::before{content:'';display:inline-block;width:5px;height:5px;margin:0 10px 2px 0;border-radius:50%;background:var(--ink);vertical-align:middle}
+    @media(min-width:900px){.trio{position:absolute;top:0;right:0;height:24px}}
+    @media(max-width:899px){.trio{flex-basis:100%;margin-top:4px}}
+    @media(max-width:460px){.trio{flex-direction:column;align-items:flex-start;gap:6px}.trio span+span::before{display:none}}
+    .serves{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+    .footer .built{display:block;margin-bottom:6px}
+    .depth-wrap{display:grid;gap:8px}.depths{display:flex;overflow:hidden;background:var(--cream);border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
+    .depth{min-width:110px;padding:10px 16px;border:0;background:transparent;cursor:pointer;display:grid;gap:2px;text-align:left}
+    .depth+.depth{border-left:1.5px solid rgba(31,29,23,.18)}.depth[aria-checked=true]{background:var(--ink);color:var(--cream)}
+    .depth strong{font:800 18px/1 'Bricolage Grotesque',sans-serif}.depth span{font-size:12px;font-weight:600}
+    .map{display:grid;grid-template-columns:minmax(0,1fr) 96px;overflow:hidden;background:var(--field);border:2.5px solid var(--ink);border-radius:32px;box-shadow:8px 8px 0 var(--ink)}
+    .map-main{min-width:0}.landscape{padding:clamp(24px,4vw,44px);background-color:var(--field);background-image:radial-gradient(rgba(31,29,23,.09) 1px,transparent 1.2px);background-size:18px 18px}
+    .arrival{display:flex;flex-direction:column;align-items:center}.login{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 16px;background:var(--cream);border:2px solid var(--ink);border-radius:12px;cursor:pointer;font-size:14px;font-weight:600}
+    .login:hover{background:#fff}.login-mark{width:10px;height:10px;background:var(--ink);border-radius:2px}.login small{color:var(--muted);font:600 10px/1 'JetBrains Mono',monospace}
+    .arrival-line{width:4px;height:34px;background:repeating-linear-gradient(var(--ink) 0 6px,transparent 6px 11px)}
+    .reception{width:100%;max-width:780px;padding:clamp(22px,3.5vw,36px);background:var(--cream);border:3px solid var(--ink);border-radius:44px;box-shadow:0 0 0 8px var(--field),0 0 0 11px var(--ink),8px 14px 0 11px var(--ink);display:grid;gap:18px}
+    .reception-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.reception-title{display:grid;gap:4px}.reception-title .eyebrow{color:var(--mulberry)}
+    .reception h2{font:800 clamp(26px,3.4vw,40px)/1.02 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+    .badge{width:24px;height:24px;flex:none;border:2px solid var(--mulberry);border-radius:50%;background:var(--cream);color:var(--mulberry);cursor:pointer;font-size:11px;font-weight:800}
+    .story-copy{max-width:56ch;color:var(--body);font-size:16px;line-height:1.5}.feed{display:grid;gap:6px}.feed-label{color:var(--muted);font-size:12px;font-weight:600}
+    .feed-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:10px 14px;background:var(--paper);border:1.5px solid rgba(31,29,23,.18);border-radius:12px;cursor:pointer;text-align:left}
+    .feed-row:hover{background:#fff;border-color:var(--ink)}.feed-row>span:first-child{font-size:15px;font-weight:500;line-height:1.35}.destination{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:700}
+    .dot{width:10px;height:10px;border:1.5px solid var(--ink);border-radius:50%;background:var(--dot)}
+    .surfaces{display:grid;gap:14px;margin-top:52px}.surfaces-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}.surfaces-title{display:grid;gap:4px}
+    .surfaces h3,.underground h3{font:700 24px/1.12 'Bricolage Grotesque',sans-serif}.materials{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.materials>span{font-size:12px;font-weight:700}
+    .material{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--cream);border:2px solid var(--ink);border-radius:99px;cursor:pointer;font-size:13px;font-weight:600}.material[aria-pressed=true]{background:var(--ink);color:var(--cream)}
+    .promenade{height:12px;background:var(--cream) repeating-linear-gradient(90deg,transparent 0 14px,rgba(31,29,23,.35) 14px 22px);border:2px solid var(--ink);border-radius:99px}
+    .lands{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:44px 22px;padding-top:26px}
+    .land{position:relative;min-height:150px;padding:20px 20px 18px;background:var(--color);color:var(--fg);border:2.5px solid var(--ink);border-radius:var(--radius);box-shadow:5px 5px 0 var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:10px;text-align:left;transition:transform .15s ease}
+    .land:hover{transform:translate(-3px,-3px)}.land::before{content:'';position:absolute;top:-30px;left:50%;width:4px;height:26px;margin-left:-2px;background:repeating-linear-gradient(var(--ink) 0 6px,transparent 6px 10px)}
+    .land.followed::after{content:'';position:absolute;inset:-10px;border:3px dashed var(--ink);border-radius:var(--radius);pointer-events:none}
+    .land-head{display:flex;justify-content:space-between;gap:8px}.verb{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.badges{display:flex;gap:4px}
+    .mini-badge{width:22px;height:22px;border:1.5px solid var(--ink);border-radius:50%;background:var(--cream);color:var(--mulberry);display:grid;place-items:center;font-size:10px;font-weight:800}.mini-badge.tech{background:var(--ink);color:var(--cream);font-family:'JetBrains Mono',monospace}
+    .land h4{font:800 28px/1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}.land-desc{font-size:14px;line-height:1.45;text-wrap:pretty}
+    .ticket{display:none;margin-top:auto;padding:8px 10px;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:10px}.land.followed .ticket{display:grid;gap:2px}
+    .ticket-meta{display:flex;justify-content:space-between;color:var(--muted);font:600 10px/1.4 'JetBrains Mono',monospace}.ticket-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+    .caption{margin-top:14px;color:var(--body);font-size:15px;font-weight:600;text-align:center}
+    .humans{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;width:100%;padding:18px clamp(24px,4vw,44px);background:var(--ink);color:var(--paper);border:0;cursor:pointer;text-align:left}
+    .humans strong{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}.humans span{max-width:70ch;color:#d9d2bf;font-size:15px;line-height:1.45}
+    .underground{margin-top:36px;padding:clamp(24px,4vw,44px);border:2.5px solid var(--ink);border-radius:32px;box-shadow:8px 8px 0 var(--ink);background-color:var(--under);background-image:radial-gradient(rgba(239,231,210,.06) 1px,transparent 1.4px);background-size:14px 14px;color:var(--field);display:grid;gap:22px}
+    .under-intro{display:grid;gap:4px}.underground .eyebrow{color:#b3a98f}.underground h3{color:var(--cream);font-size:26px}.under-intro p{max-width:64ch;color:#cfc6ae;font-size:15px;line-height:1.5}
+    .strands{display:grid;grid-template-columns:minmax(180px,max-content) minmax(0,1fr);gap:6px 22px}.strand{display:grid;grid-column:1/-1;grid-template-columns:subgrid;align-items:center;gap:6px 22px;padding:10px 0;background:transparent;color:inherit;border:0;cursor:pointer;text-align:left}.strand:hover{opacity:.85}
+    .strand-name{display:flex;align-items:baseline;gap:10px}.strand-name strong{color:var(--strand);font:800 20px/1 'Bricolage Grotesque',sans-serif}.strand-name span{color:#b3a98f;font-size:12px;font-weight:600}
+    .strand-body{min-width:0;display:grid;gap:6px}.strand-line{height:5px;border-radius:99px;background:var(--line)}.strand-narr{color:#e6dec8;font-size:14px;line-height:1.4}.strand-tech{color:#a89f86;font:400 12px/1.55 'JetBrains Mono',monospace}
+    .memory{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin-top:6px;padding-top:20px;border-top:2px solid #4a4030}.memory-head{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.memory-head strong{color:#f0c065;font:800 20px/1 'Bricolage Grotesque',sans-serif}.memory-head span{color:#cfc6ae;font-size:14px}
+    .memory-card{padding:16px 18px;background:#DBA532;color:#2e2005;border:2.5px solid #120f0a;border-radius:18px 18px 28px 12px;box-shadow:5px 5px 0 #120f0a;cursor:pointer;display:grid;gap:6px;text-align:left}.memory-card strong{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}.memory-card span{font-size:14px;line-height:1.45}.memory-card .memory-tech{color:#4a3208;font:400 12px/1.5 'JetBrains Mono',monospace}
+    .spine-wrap{display:flex;height:100%}
+    .spine{flex:0 0 67%;padding:20px 0;background:var(--thatch);color:#F1F2E4;border:0;border-left:2.5px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}.spine:hover{background:#5c6322}.spine span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+    .minor-col{flex:0 0 33%;display:flex;flex-direction:column;justify-content:flex-end}
+    .minor-row{display:flex;height:100%}
+    .minor-spine{flex:0 0 50%;min-width:0;padding:1px;background:var(--minor);color:#F3F1E8;border:0;border-left:1.5px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .minor-spine:hover{filter:brightness(1.1)}
+    .minor-spine span{writing-mode:vertical-rl;transform:rotate(180deg);line-height:1;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+    .closing{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:32px;align-items:start;padding-top:48px}.statement{font:700 clamp(26px,3vw,36px)/1.1 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;text-wrap:balance}
+    .principles{display:grid;gap:16px}.principle-list{display:flex;flex-wrap:wrap;gap:8px}.principle{padding:7px 14px;background:var(--cream);border:2px solid var(--ink);border-radius:99px;font-size:14px;font-weight:600}.principle.primary{background:var(--coral);color:#FFF4EE;font-weight:700}.principles p{color:var(--body);font-size:15px}
+    .lifecycle{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--body);font-size:13px;font-weight:600}.life{padding:4px 10px;background:var(--field);border:1.5px solid rgba(31,29,23,.25);border-radius:8px}.arrow{color:#a39a82}.footer{margin-top:32px;color:var(--muted);font-size:13px;line-height:1.6}
+    .scrim{position:fixed;inset:0;z-index:40;background:transparent}.panel{position:fixed;right:20px;bottom:20px;z-index:50;width:min(420px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow:auto;background:var(--cream);border:2.5px solid var(--ink);border-radius:22px;box-shadow:7px 7px 0 var(--ink)}
+    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 14px;background:var(--panel);color:var(--panel-fg);border-bottom:2px solid var(--ink);border-radius:19px 19px 0 0}.panel-titles{display:grid;gap:4px}.panel-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.panel-title{font:800 26px/1 'Bricolage Grotesque',sans-serif}
+    .close{width:32px;height:32px;flex:none;background:var(--cream);color:var(--ink);border:2px solid var(--ink);border-radius:50%;cursor:pointer;font-size:18px;font-weight:700}.panel-body{padding:18px 20px;display:grid;gap:16px}.panel-section{display:grid;gap:6px}.panel-label{display:flex;align-items:center;gap:8px;color:var(--mulberry);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.panel-label b{width:20px;height:20px;display:grid;place-items:center;border:1.5px solid;border-radius:50%;font-size:10px}.panel-narr{font-size:15px;line-height:1.55}.panel-tech{padding:14px 16px;background:var(--ink);color:#e6dec8;border-radius:14px}.panel-tech .panel-label{color:var(--cream)}.panel-tech p{font:400 12.5px/1.6 'JetBrains Mono',monospace}
+    [hidden]{display:none!important}body[data-depth=story] .places,body:not([data-depth=machinery]) .machinery{display:none!important}body:not([data-depth=story]) .story{display:none!important}
+    @media(max-width:760px){.shell{padding-top:24px}.header{align-items:stretch}.depth-wrap{width:100%}.depths{width:100%}.depth{min-width:0;flex:1;padding:9px 10px}.map{grid-template-columns:minmax(0,1fr) 64px;border-radius:22px}.underground{border-radius:22px}.reception{border-radius:28px}.feed-row{grid-template-columns:1fr}.destination{white-space:normal}.lands{grid-template-columns:1fr}.strands{grid-template-columns:minmax(0,1fr)}.spine span{font-size:10px}.minor-spine span{font-size:7px}}
+    @media(max-width:460px){.depth strong{font-size:15px}.depth span{font-size:10px}.login small{display:none}.landscape,.underground{padding-inline:18px}.panel{right:12px;bottom:12px;width:calc(100vw - 24px);max-height:calc(100vh - 24px)}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.land{transition:none}}
+  </style>
+</head>
+<body data-depth="story">
+  <main class="shell">
+    <header class="header">
+      <div class="intro">
+        <div class="intro-top">
+          <div class="pills"><span class="pill primary">Mixtape · Platform map</span><span class="pill">v2 draft</span><p class="trio" aria-label="What Mixtape is for"><span>Working in common</span><span>Self-expression</span><span>Knowledge building</span></p></div>
+          <h1>What happens when you bring what matters into Mixtape?</h1>
+          <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <span class="here" aria-current="page">Platform</span> · <a href="../practice/practice-map.html">Practice</a></nav>
+        </div>
+        <p class="lede">Mixtape is a suite of tools for working in common, expressing oneself well, and building knowledge, for people, the groups and communities they belong to, and the organizations they run. You can stop by Main Reception and get your bearings on what's recent and upcoming. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
+        <p class="walk">Come in. Stop at the desk to get your bearings, then take whichever concourse your work needs. Open anything that catches your eye; nothing here is a test.</p>
+      </div>
+      <div class="depth-wrap">
+        <span class="eyebrow" id="depth-label">How deep do you want to go?</span>
+        <div class="depths" role="radiogroup" aria-labelledby="depth-label">
+          <button class="depth" type="button" role="radio" aria-checked="true" data-depth="story"><strong>20 sec</strong><span>The story</span></button>
+          <button class="depth" type="button" role="radio" aria-checked="false" data-depth="places"><strong>2 min</strong><span>The places</span></button>
+          <button class="depth" type="button" role="radio" aria-checked="false" data-depth="machinery"><strong>20 min</strong><span>The machinery</span></button>
+        </div>
+      </div>
+    </header>
+    <section class="map" aria-label="Mixtape newcomer topology">
+      <div class="map-main">
+        <div class="landscape">
+          <section class="plaza" id="plaza" aria-labelledby="arrival-title">
+            <svg class="rays" id="rays" aria-hidden="true"></svg>
+            <div class="desk-wrap">
+              <span class="eyebrow" id="arrival-title">01 · Arrive</span>
+              <button class="login" type="button" data-node="login"><span class="login-mark"></span>Log in <small>the front door</small></button>
+              <div class="arrival-line"></div>
+              <div class="desk" id="desk">
+                <div class="reception-head"><div class="reception-title"><span class="eyebrow">Main Reception · the information desk</span><h2>Where was I? What's happening? What matters now?</h2></div><button class="badge" type="button" data-node="reception" aria-label="Learn about Reception">N</button></div>
+                <p class="story-copy story">The desk picks up where you left off, then points you on your way. It never stands in your path.</p>
+                <div class="feed places"><span class="feed-label">Since you were last here</span>
+                  <button class="feed-row" type="button" data-node="atrium"><span>Return to last night's ideation</span><span class="destination"><span class="dot" style="--dot:#466D80"></span>Atrium</span></button>
+                  <button class="feed-row" type="button" data-follow="m2"><span>Tuesday morning's weekly order is due</span><span class="destination"><span class="dot" style="--dot:#466D80"></span>Atrium</span></button>
+                  <button class="feed-row" type="button" data-follow="m3"><span>Captured earlier on your phone: a voice memo</span><span class="destination"><span class="dot" style="--dot:#DBA532"></span>Folio</span></button>
+                  <button class="feed-row" type="button" data-follow="m1"><span>Pick up the spring appeal letter</span><span class="destination"><span class="dot" style="--dot:#8B3F62"></span>Writing</span></button>
+                </div>
+                <button class="attendant" type="button" data-node="clio"><span class="attendant-dot"></span><span><strong>Clio</strong> is at the desk, and walks with you to any concourse.</span></button>
+              </div>
+            </div>
+            <div class="concourses" id="concourses"></div>
+          </section>
+          <div class="after-plaza places"><div class="materials" id="materials"></div><p class="caption" id="caption"></p></div>
+          <a class="next" href="#under-title">Next: what holds it together ↓</a>
+        </div>
+        <button class="humans" type="button" data-node="humans"><strong>Humans decide.</strong><span>Intelligent systems can help notice what might matter and help tend what does matter. They don't get to decide what matters to you.</span></button>
+      </div>
+      <div class="spine-wrap">
+        <button class="spine" type="button" data-node="puddlejump"><span>Puddlejump · Canon — the source of truth everything is held against</span></button>
+        <div class="minor-col">
+          <div class="minor-row">
+            <button class="minor-spine" type="button" data-node="shapelib" style="--minor:#5B4A8F"><span>Contour</span></button>
+            <button class="minor-spine" type="button" data-node="patternlib" style="--minor:#3E4E7A"><span>Alex</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="underground" aria-labelledby="under-title">
+      <div class="under-intro"><span class="eyebrow">03 · Beneath the surface</span><h3 id="under-title">Your work remembers.</h3><p class="places">Moving between Surfaces never means starting over. The systems underneath run through everything — not places you visit, but the sinew that keeps work continuous, provable and trustworthy.</p></div>
+      <div class="strands" id="strands"></div>
+      <div class="memory"><div class="memory-head"><strong>Memory</strong><span>The appreciating asset — the longer it runs, the better it understands your organization.</span></div>
+        <button class="memory-card" type="button" data-node="stackroom"><strong>Stackroom</strong><span class="places">What Mixtape can find again, every result traced to its exact source.</span><span class="memory-tech machinery">IR backbone + Qdrant vectors</span></button>
+        <button class="memory-card" type="button" data-node="codex"><strong>Catalyst Codex</strong><span class="places">The curated compendium of what your organization knows.</span><span class="memory-tech machinery">CORE · CONTENT · Fixture</span></button>
+      </div>
+      <a class="next next-dark" href="#closing-title">Next: what it's all for ↓</a>
+    </section>
+    <section class="closing" aria-labelledby="closing-title"><div class="closing-words"><span class="eyebrow" id="closing-title">04 · Make yourself at home</span><p class="statement">The Surfaces change. The Material persists. You remain the steward. The systems underneath make that possible.</p></div><div class="principles"><span class="eyebrow">Principles this map is built on</span><div class="principle-list"><span class="principle primary">What Matters</span><span class="principle">Attention is precious</span><span class="principle">Knowledge takes stewardship</span><span class="principle">Humans decide</span><span class="principle">Your work should remember</span><span class="principle">Enoughness</span></div><p>If you tell us something matters, we take that seriously.</p><div class="lifecycle machinery" id="lifecycle"></div></div></section>
+    <footer class="footer"><span class="built">Mixtape is built, and still being built, through natural language software development, part of a wider practice of natural language knowledge building.</span>Conceptual view, not a service diagram — for routing and service boundaries see the system map. <a href="../system/system-topology.html">System map →</a> · <a href="../loom/loom-topology-enhanced.html">Loom internals →</a> · <a href="../practice/practice-map.html">Practice map →</a></footer>
+  </main>
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panel-title" hidden><div class="panel-head" id="panel-head"><div class="panel-titles"><span class="panel-kicker" id="panel-kicker"></span><h2 class="panel-title" id="panel-title"></h2></div><button class="close" id="close" type="button" aria-label="Close detail panel">×</button></div><div class="panel-body"><section class="panel-section"><span class="panel-label"><b>N</b>In plain language</span><p class="panel-narr" id="panel-narr"></p></section><section class="panel-section panel-tech" id="panel-tech-wrap"><span class="panel-label"><b>T</b>How it's built</span><p id="panel-tech"></p></section></div></aside>
+  <script>
+    const LANDS=[
+      {id:'atrium',serves:['know'],name:'Atrium',verb:'Think it through',color:'#466D80',fg:'#F3F7F8',radius:'34px 64px 38px 56px',desc:'Talk things through with agents, shape what the system remembers over time, and keep work moving across sessions, including tending an Initiative as it unfolds.'},
+      {id:'catalyst',serves:['know'],name:'Catalyst',verb:'Find · amend · add',color:'#A2C03F',fg:'#22290a',radius:'60px 30px 56px 36px',desc:"Your organization's knowledge, kept current. Every accepted change passes a human curator."},
+      {id:'folio',serves:['know'],name:'Folio',verb:'Develop a body of thought',color:'#DBA532',fg:'#2e2005',radius:'40px 40px 70px 28px',desc:'Work notes and gathered Material into a body of thought, and craft Compositions from it, without losing where each piece came from.'},
+      {id:'writing',serves:['collab','expr'],name:'Writing',verb:'Write · shape · publish',color:'#8B3F62',fg:'#FBEFF4',radius:'28px 58px 30px 62px',desc:'Draft, shape and publish, alone or together — from a first line to a finished piece, or an Issue of several.'},
+      {id:'storyline',serves:['collab','expr'],name:'Storyline',verb:'Show and tell',color:'#70527F',fg:'#F5EFF8',radius:'64px 34px 40px 50px',desc:"Your own tellings in images and words, shared with the people you choose — a photo feed that belongs to you, not to an algorithm."},
+      {id:'crossroads',serves:['collab'],name:'Crossroads',verb:'Work with people',color:'#D2603F',fg:'#FFF4EE',radius:'36px 56px 64px 30px',desc:'Groups, Circles, dispatches and collaborative writing — where a community makes things together.'},
+      {id:'tapestry',serves:['expr','know'],name:'Tapestry',verb:'Tell it in place',color:'#2F6B4F',fg:'#EEF6F0',radius:'30px 62px 34px 58px',desc:'Where story meets locale: stories, observations and relationships whose meaning is bound up with a place.'},
+      {id:'daedaluslib',serves:['know'],name:'Daedalus Library',verb:'Gather and sift',color:'#4A6B8A',fg:'#EEF3F8',radius:'56px 32px 60px 30px',planned:true,desc:'Search, browse and review the sources Daedalus has gathered for a project, and ask for more. Planned.'}
+    ];
+    // v2: four concourses fanning out from the desk (CTO, 2026-10-28). Clio is at the desk, not in a concourse.
+    const ZONES=[
+      {id:'idea',flap:'A',name:'Idea work',hue:'#466D80',line:'Think things through, and keep what you know current.',lands:['atrium','catalyst']},
+      {id:'create',flap:'B',name:'Creation and Expression',hue:'#8B3F62',line:'Make things and share them: words, images, and stories of place.',lands:['writing','storyline','tapestry']},
+      {id:'common',flap:'C',name:'Collaboration',hue:'#D2603F',line:'Work with people: groups, circles, and what you make together.',lands:['crossroads']},
+      {id:'research',flap:'D',name:'Research',hue:'#4A6B8A',line:'Gather sources and grow a body of thought from them.',lands:['folio','daedaluslib']}
+    ];
+    // What each Surface serves directly, of the trio (CTO, 2026-10-15). Everything builds knowledge in the end; only direct service is marked.
+    const TRIO={collab:'Working in common',expr:'Self-expression',know:'Knowledge building'};
+    const MATERIALS={
+      m1:{title:'Spring appeal letter',kind:'WritingPiece',code:'MT-0412',dot:'#D2603F',places:['writing','crossroads']},
+      m2:{title:'Tuesday supplier order',kind:'Initiative',code:'MT-0388',dot:'#466D80',places:['atrium','catalyst','crossroads','clio']},
+      m3:{title:'Voice memo from your phone',kind:'Seed',code:'MT-0451',dot:'#DBA532',places:['atrium','folio']}
+    };
+    const STRANDS=[
+      {id:'loom',kind:'Layer',name:'Loom',role:'Ambient intelligence',color:'#c9b0d6',line:'linear-gradient(90deg,#70527F,#c9b0d6 30%,#c9b0d6 70%,#70527F)',narr:'Helpers that find, summarize, transcribe, draft and notice. They suggest; you decide.',tech:'Eight parts: Intent (Grist commands, Aperture) → Routing (Switchboard: policy, privacy, approval) → Execution (Inkwell, locally first) → Memory (Stackroom, Qdrant, Puddlejump), with Policy, Enterprise, Provenance and Async alongside. Every governed operation leaves an ActionRun. Keepers are lookouts, each on one narrow source: they notice when something isn\'t going right and alert whoever is responsible, through Clio. They don\'t act on their own.'},
+      {id:'warp',kind:'Layer',name:'Warp',role:'Provenance · workflow',color:'#e39bbd',line:'linear-gradient(90deg,#8B3F62,#e39bbd 30%,#e39bbd 70%,#8B3F62)',narr:'Makes every change provable rather than merely claimed.',tech:'Provisioning, manifests, signatures, append-only mirrors, and review-and-confirm cycles. Built: Codex provisioning and manifest hashes. Planned: signatures and the append-only mirror.'},
+      {id:'ariadne',kind:'Practice',name:'Ariadne',role:'Concept discovery',color:'#cfd3a6',line:'linear-gradient(90deg,#4F551C,#cfd3a6 30%,#cfd3a6 70%,#4F551C)',narr:'Makes the ideas in the canon navigable as ideas: where they occur, what they relate to, how they developed, and where they contradict.',tech:'Partial (build spec ratified 2026-10-14): a source-grounded concept index over the Puddlejump canon, in its own isolated stores. Ranks candidates through Lenses, records each investigation as a reproducible Run, keeps every claim one click from its words. Reads the canon, never changes it. Meridian\'s companion, and in time for Catalyst Codexes.'},
+      {id:'meridian',kind:'Practice',name:'Meridian',role:'Code intelligence',color:'#9fc3d1',line:'linear-gradient(90deg,#466D80,#9fc3d1 30%,#9fc3d1 70%,#466D80)',narr:'Keeps the codebase legible from one working session to the next.',tech:'Planned (ADR-0051); its first phase has been tried as a proof of concept and is being set up on Mixtape\'s own server. Meridian/Index maps symbols, calls, routes, models and tests; Meridian/Wiki explains files and modules. It keeps no index of the canon of its own: it reads the canon through the bundle, Stackroom and Ariadne. Ariadne\'s companion: Meridian maps the code, Ariadne the ideas in the canon.'},
+      {id:'argus',kind:'Practice',name:'Argus',role:'Audit practice',color:'#dcd6b2',line:'linear-gradient(90deg,#AAA37D,#dcd6b2 30%,#dcd6b2 70%,#AAA37D)',narr:'A vigilant keeper of fidelity: checks what the system claims against what is built: code, help text, working memory and documents.',tech:'A Practice, not an app. Named, versioned audit blocks run by an agent under stringent instructions; every finding passes a person before it is filed; security comes first. Its dashboard is planned. Meridian detects; Argus enforces.'},
+      {id:'livewire',kind:'Toolset',name:'Livewire',role:'Personal messaging',color:'#eec3d3',line:'linear-gradient(90deg,#C2547A,#eec3d3 30%,#eec3d3 70%,#C2547A)',narr:'Conversations between members, built on intentional trust — you and the people you message choose the balance of privacy, continuity, and institutional memory.',tech:'ADR-0046. Signal-inspired; phases A to D (security hardening passes) complete; findings recorded and stored to Puddlejump for transparency. Retained and hardened rather than replaced by Signal. Conversations (Livewire) and Discussions (Threadworks) are governed separately.'},
+      {id:'daedalus',kind:'Server',name:'Daedalus',role:'Research engine',color:'#b9cddc',line:'linear-gradient(90deg,#4A6B8A,#b9cddc 30%,#b9cddc 70%,#4A6B8A)',narr:'A headless research engine — fetches, classifies, and deposits source material into Stackroom so nothing has to be found and pasted by hand.',tech:"FastAPI service, no UI of its own. Assignments arrive via REST (MCP tools in Phase 2); results land in Stackroom under a per-project namespace, to be surfaced through the Daedalus Library and an inline research panel (both planned). Partial: built and verified, not yet called by the platform."}
+    ];
+    const NODES={
+      login:{k:'The front door',t:'Log in',c:'#1f1d17',f:'#FFFBF1',n:'Login is built around a solid member and profile presence — a long-lived base from which to share writing, images, invitations and more. It asks for almost none of your attention.',x:'JWT authentication uses short-lived access tokens and a refresh flow. Identity is split across the authentication record and member-facing profile.'},
+      reception:{k:'The hinge',t:'Main Reception',c:'#FFFBF1',f:'#1f1d17',n:'The meaningful arrival. Main Reception establishes continuity between visits: where you were, what has happened since, what an agent has finished, and what deserves your attention now. Then you head outward. It is the hub: each Surface has its own smaller Reception, and each links back here.'},
+      humans:{k:'Architectural invariant',t:'Humans decide',c:'#1f1d17',f:'#FFFBF1',n:'AI always suggests; humans decide. Accepted changes pass human curation, and cloud operations require explicit approval. This is architecture, not a UX preference.',x:'Switchboard enforces approval and policy gates; architectural intent is held against Puddlejump canon.'},
+      atrium:{k:'Surface · Think it through',t:'Atrium',c:'#466D80',f:'#F3F7F8',n:'Our primary conversational surface, where agents can be engaged, long-running memory can be shaped, and tasks coordinated across sessions. Initiatives live here too, and are tended here over time: what happened, what is next, and what it is for.',x:'Tending an Initiative is Knowledge Tending, a Discipline: a human craft, more like weeding than a feature, kept between sessions. The system may propose, record and notice; only the person says what it is for, where they left off, how warm it is, and when it closes. Radar is its tool; the Ideastream capability (formerly Initiative Storyline) helps by tracking the flow of ideas through an Initiative conversation.'},
+      catalyst:{k:'Main Gateway and Practice · Find · amend · add',t:'Catalyst',c:'#A2C03F',f:'#22290a',n:'Three verbs: Find, Amend, Add. The knowledge an organization relies on, kept current — every accepted change goes through a human curator.',x:'CORE defines engine behavior; CONTENT holds knowledge; Fixture files are editable, divergence-tracked starter material.'},
+      folio:{k:'Toolset · Develop a body of thought',t:'Folio',c:'#DBA532',f:'#2e2005',n:'A crafting environment for developing a body of thought and producing Compositions from it. Its notes carry Shapes, and every piece stays connected to where it came from.'},
+      writing:{k:'Surface, with Writing Reception · Write · shape · publish',t:'Writing',c:'#8B3F62',f:'#FBEFF4',n:'Where writing happens, alone or together: a first draft, a piece shaped for its readers, a series, or an Issue gathered for publication. Writing is a working name; the toolset will be named later.',x:'Today, in a Group\'s Content area: Writing, Import Documents, Series Writing, Draft ↔ Dispatch, the Editor\'s Desk (Issues) and Draft Room. They are gathering behind Writing Reception, their landing and a Docent for important work, part of Clio\'s network (Writing Surface ADR, ratified 2026-10-15).'},
+      storyline:{k:'Toolset · Show and tell',t:'Storyline',c:'#70527F',f:'#F5EFF8',n:'A person\'s own tellings, in images and words: what you made, saw or noticed, shared with the people you choose. Mixtape\'s answer to the photo feed.',x:'Partial: personal and Group feeds are built in core (Leaf placements; /api/storyline/). Not to be confused with Initiative Ideastream, which was renamed from "Initiative Storyline" in 2026-09 to keep this name free.'},
+      crossroads:{k:'Main Gateway · Work with people',t:'Crossroads',c:'#D2603F',f:'#FFF4EE',n:'Groups, Circles, collaborative writing and dispatches. The wall between Catalyst and Crossroads is deliberately low.',x:"Mixtape's people-and-groups layer, and one of its three Main Gateways. Ambient intelligence is delivered through Loom; Crossroads also hosts authentication."},
+      tapestry:{k:'Main Gateway · Tell it in place',t:'Tapestry',c:'#2F6B4F',f:'#EEF6F0',n:"Where story meets locale. People share stories, observations, relationships and other pieces of knowing whose meaning is bound up with a place. The test: does place help make the meaning, or is it only scenery? Organizations finding one another follows from that.",x:'Partial. A Place is a named locale on a long-lived Location (one address can host many Places over time); stories and adjacencies attach to Places. Shuttle is the first way in (ADR-0058, in build); the Commons map views are pending. A peer Main Gateway beside Crossroads and Catalyst, not part of Crossroads — decisions/tapestry-adr/tapestry-adr.md.'},
+      clio:{k:'Colleague · Hold the thread',t:'Clio',c:'#AAA37D',f:'#26241a',n:"The one relationship that survives crossing a surface boundary — reachable from anywhere, always current, holding the thread of what's in motion so you don't have to carry it in your head between rooms.",x:'Ratified 2026-09-28 (ADR-0055, decisions/clio/clio-campus-adr.md): a campus-wide companion across Reception, Home Workshop, Atrium and Catalyst, and the registry and relay for background Keeper agents. Partial: the Keeper registry and relay are built; its four modes and delegate tracking are pending. A narrower first version (a Personal Studio nudge card) shipped earlier under this name.'},
+      stackroom:{k:'Memory',t:'Stackroom',c:'#DBA532',f:'#2e2005',n:'What Mixtape can find again, every result traced with provenance to its exact source. Every operation enriches it: the longer the system runs, the better it understands this organization.',x:'Ingestion, chunking, embedding, indexing and retrieval. It keeps a map of the library (the IR), not the library itself; vectors live in Qdrant, which holds no canonical content.'},
+      codex:{k:'Memory',t:'Catalyst Codex',c:'#DBA532',f:'#2e2005',n:'The client knowledge compendium — the deliverable. What your organization knows, in a form it owns.',x:'Portable human-readable files distinguish governed engine behavior, client knowledge, and editable starter material.'},
+      puddlejump:{k:'Canon governance',t:'Puddlejump',c:'#4F551C',f:'#F1F2E4',n:'The source of truth everything else is held against. What Puddlejump governs is load-bearing; what it does not is advisory.',x:'ADRs, field notes, design briefs, build plans, status files, and policy documents maintain architectural memory.'},
+      patternlib:{k:'Practice · Pattern Library',t:'Alex',c:'#3E4E7A',f:'#EAF0FA',n:'Mixtape\'s Pattern Library: the named ways its systems and the people working in them are expected to behave, each with its reason. At the centre, Fidelity Preservation: information is never lost, authorship is never obscured, transformation is always visible. Not a system you visit; the grammar the systems already follow.',x:'Partial. ADR-0059 (ratified 2026-10-20); the library lives at reference/patterns/. Three shelves around the centre: Construction Integrity (Authority Boundary, Full Traceability…), Human Flow (Bounded Freedom, Signal in Imperfection…) and Narrative Patterning (seeding). Each pattern is a seed, a stub or adopted. Named for the Library of Alexandria and Christopher Alexander.'},
+      daedaluslib:{k:'Surface (planned) · Gather and sift',t:'Daedalus Library',c:'#4A6B8A',f:'#EEF3F8',n:'Where you work with what Daedalus has gathered: search, browse and review the sources for a project, and later ask for new research. Daedalus itself is the engine underneath that goes out and fetches them.',x:'Planned (ADR-0057, HL-1 to HL-9; formerly named Hildegard). Daedalus, the research engine, is built and verified but not yet called by the platform; it deposits sources in Stackroom, one library per project.'},
+      shapelib:{k:'Practice · Shape Library',t:'Contour',c:'#5B4A8F',f:'#EDEAF7',n:'Mixtape\'s primary Shape Library: what a kind of thing usually looks like (a recipe, a menu, a place), so provisional data can build coherence without committing messy data to long-term storage. The code is obliged to honour its Shapes.',x:'Formerly the Shape Library (ratified ADR, decisions/shape-library-adr/). Lives in the canon at reference/contour/, with Strategies that say how to get from source material to each Shape; read by Catalyst at ingest. Shuttle\'s Shapes joined in 2026-10. Built and ongoing.'}
+    };
+    STRANDS.forEach(s=>NODES[s.id]={k:s.kind+' · '+s.role,t:s.name,c:'#2A241B',f:s.color,n:s.narr,x:s.tech});
+    const landHTML=l=>`<button class="land${l.planned?' planned':''}" type="button" data-node="${l.id}" data-place="${l.id}" style="--color:${l.color};--fg:${l.fg};--radius:${l.radius}"><span class="land-head"><span class="verb">${l.verb}</span><span class="badges"><span class="mini-badge">N</span>${NODES[l.id].x?'<span class="mini-badge tech machinery">T</span>':''}</span></span><h4>${l.name}</h4><span class="land-desc places">${l.desc}</span><span class="serves places">${l.serves.map(t=>TRIO[t]).join(' · ')}</span><span class="ticket"></span></button>`;
+    const byId=Object.fromEntries(LANDS.map(l=>[l.id,l]));
+    document.getElementById('concourses').innerHTML=ZONES.map(z=>`<section class="concourse" data-zone="${z.id}" style="--zone:${z.hue}" aria-label="${z.name}"><div class="gate"><span class="flap">${z.flap}</span><span class="gate-name">${z.name}</span></div><p class="gate-line places">${z.line}</p><div class="pod">${z.lands.map(id=>landHTML(byId[id])).join('')}</div></section>`).join('');
+    // Walkways: from the desk's sweeping front to each concourse, a soft aura under a dashed path. Redrawn on resize and depth change.
+    function drawRays(){
+      const svg=document.getElementById('rays'),plaza=document.getElementById('plaza'),desk=document.getElementById('desk');
+      if(getComputedStyle(svg).display==='none'){svg.innerHTML='';return}
+      const P=plaza.getBoundingClientRect(),D=desk.getBoundingClientRect();
+      const cx=D.left-P.left+D.width*.5,cy=D.top-P.top+D.height*.5,RX=D.width*.5+22,RY=D.height*.5+22;
+      // The counter: a 240-degree sweep around the desk, open toward the wall (up and left).
+      const pt=a=>[cx+RX*Math.cos(a),cy+RY*Math.sin(a)];
+      const a0=-75*Math.PI/180,a1=165*Math.PI/180,[x0,y0]=pt(a0),[x1,y1]=pt(a1);
+      const arc=`M${x0},${y0} A${RX},${RY} 0 1 1 ${x1},${y1}`;
+      let out=`<path d="${arc}" fill="none" stroke="#1f1d17" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round" opacity=".45"/>`;
+      ZONES.forEach(z=>{
+        const el=plaza.querySelector(`.concourse[data-zone=${z.id}] .pod`);if(!el)return;
+        const B=el.getBoundingClientRect(),bx=B.left-P.left,by=B.top-P.top;
+        const tx=Math.max(bx,Math.min(cx,bx+B.width)),ty=Math.max(by,Math.min(cy,by+B.height));
+        const ang=Math.atan2((ty-cy)/RY,(tx-cx)/RX),[sx,sy]=pt(ang);
+        const mx=(sx+tx)/2,my=(sy+ty)/2,len=Math.hypot(tx-sx,ty-sy),bend=len*.18;
+        const qx=mx-Math.sin(ang)*bend,qy=my+Math.cos(ang)*bend;
+        const d=`M${sx},${sy} Q${qx},${qy} ${tx},${ty}`;
+        out+=`<path d="${d}" fill="none" stroke="${z.hue}" stroke-width="16" stroke-linecap="round" opacity=".16"/><path d="${d}" fill="none" stroke="${z.hue}" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round" opacity=".85"/><circle cx="${tx}" cy="${ty}" r="5" fill="${z.hue}" stroke="#1f1d17" stroke-width="1.5"/>`;
+      });
+      svg.innerHTML=out;
+    }
+    window.addEventListener('resize',()=>requestAnimationFrame(drawRays));
+    document.getElementById('materials').innerHTML='<span>Follow one piece of Material:</span>'+Object.entries(MATERIALS).map(([id,m])=>`<button class="material" type="button" data-material="${id}" aria-pressed="${id==='m1'}"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</button>`).join('');
+    document.getElementById('strands').innerHTML=STRANDS.map(s=>`<button class="strand" type="button" data-node="${s.id}" style="--strand:${s.color};--line:${s.line}"><span class="strand-name"><strong>${s.name}</strong><span>${s.role}</span></span><span class="strand-body"><span class="strand-line"></span><span class="strand-narr places">${s.narr}</span><span class="strand-tech machinery">${s.tech}</span></span></button>`).join('');
+    const life=['Something matters','becomes Material','is tended','informs understanding','reaches enoughness','becomes immaterial','returns to soil'];
+    document.getElementById('lifecycle').innerHTML=life.map((s,i)=>`<span class="life">${s}</span>${i<life.length-1?'<span class="arrow">→</span>':''}`).join('');
+    const valid=['story','places','machinery'];let followed='m1',trigger=null;
+    function depth(d){if(!valid.includes(d))return;document.body.dataset.depth=d;requestAnimationFrame(drawRays);document.querySelectorAll('.depth').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.depth===d)));const u=new URL(location.href);d==='story'?u.searchParams.delete('depth'):u.searchParams.set('depth',d);history.replaceState({},'',u)}
+    function follow(id,toggle=true){followed=toggle&&followed===id?null:id;document.querySelectorAll('.material').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.material===followed)));document.querySelectorAll('.land').forEach(card=>{const m=followed&&MATERIALS[followed],on=!!(m&&m.places.includes(card.dataset.place));card.classList.toggle('followed',on);card.querySelector('.ticket').innerHTML=on?`<span class="ticket-meta"><span>${m.kind}</span><span>${m.code}</span></span><span class="ticket-title"><span class="dot" style="--dot:${m.dot}"></span>${m.title}</span>`:''});const m=followed&&MATERIALS[followed];const shown=m?m.places.filter(p=>document.querySelector(`.land[data-place="${p}"]`)).length:0;document.getElementById('caption').textContent=m?`${m.title} (${m.code}) is the same thing in ${shown} places. The thing is not its interface.`:'Pick a piece of Material to see where it lives.';requestAnimationFrame(drawRays)}
+    function openPanel(id,el){const n=NODES[id];if(!n)return;trigger=el||document.activeElement;document.getElementById('panel-kicker').textContent=n.k;document.getElementById('panel-title').textContent=n.t;document.getElementById('panel-narr').textContent=n.n;document.getElementById('panel-tech').textContent=n.x||'';document.getElementById('panel-tech-wrap').hidden=!n.x;const h=document.getElementById('panel-head');h.style.setProperty('--panel',n.c);h.style.setProperty('--panel-fg',n.f);document.getElementById('scrim').hidden=false;document.getElementById('panel').hidden=false;document.getElementById('close').focus()}
+    function closePanel(){document.getElementById('scrim').hidden=true;document.getElementById('panel').hidden=true;if(trigger&&document.contains(trigger))trigger.focus();trigger=null}
+    document.addEventListener('click',e=>{const d=e.target.closest('.depth');if(d)depth(d.dataset.depth);const m=e.target.closest('.material');if(m)follow(m.dataset.material);const f=e.target.closest('[data-follow]');if(f)follow(f.dataset.follow,false);const n=e.target.closest('[data-node]');if(n)openPanel(n.dataset.node,n)});
+    document.getElementById('close').addEventListener('click',closePanel);document.getElementById('scrim').addEventListener('click',closePanel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('panel').hidden)closePanel()});
+    const q=new URLSearchParams(location.search).get('depth');depth(valid.includes(q)?q:'story');follow('m1',false);
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>requestAnimationFrame(drawRays));window.addEventListener('load',()=>requestAnimationFrame(drawRays));
+  </script>
+</body>
+</html>
