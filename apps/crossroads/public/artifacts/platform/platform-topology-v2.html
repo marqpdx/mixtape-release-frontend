@@ -72,7 +72,7 @@
     .concourse{position:relative;z-index:1;display:grid;gap:12px;align-content:start}
     .concourse[data-zone=idea]{grid-area:idea}.concourse[data-zone=create]{grid-area:create}.concourse[data-zone=common]{grid-area:common}.concourse[data-zone=research]{grid-area:research}
     .gate{display:flex;align-items:center;gap:10px;width:max-content;padding:4px 10px 4px 4px;background:transparent;border:0;border-radius:10px;cursor:pointer;text-align:left}.gate:hover{background:color-mix(in srgb,var(--zone) 16%,transparent)}.gate-more{width:20px;height:20px;display:grid;place-items:center;border:1.5px solid var(--mulberry);border-radius:50%;color:var(--mulberry);font-size:10px;font-weight:800}
-    .flap{display:grid;place-items:center;width:30px;height:34px;background:var(--ink);color:var(--cream);border-radius:6px;font:700 16px/1 'JetBrains Mono',monospace;box-shadow:inset 0 -17px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.12)}
+    .flap{display:grid;place-items:center;width:30px;height:34px;background:color-mix(in srgb,var(--ink) 84%,#fff);color:var(--cream);border-radius:6px;font:700 16px/1 'JetBrains Mono',monospace;box-shadow:inset 0 -17px 0 rgba(255,255,255,.06),inset 0 -1px 0 rgba(255,255,255,.12)}
     .gate-name{font:800 22px/1.05 'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
     .gate-line{color:var(--body);font-size:14px;line-height:1.45;max-width:52ch}
     .pod{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;padding:16px;border-radius:30px;background:color-mix(in srgb,var(--zone) 10%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--zone) 28%,transparent),0 0 34px 6px color-mix(in srgb,var(--zone) 16%,transparent)}
@@ -330,8 +330,10 @@
         const ang=Math.atan2((ty-cy)/RY,(tx-cx)/RX),[sx,sy]=pt(ang);
         const mx=(sx+tx)/2,my=(sy+ty)/2,len=Math.hypot(tx-sx,ty-sy),bend=len*.18;
         const qx=mx-Math.sin(ang)*bend,qy=my+Math.cos(ang)*bend;
-        const d=`M${sx},${sy} Q${qx},${qy} ${tx},${ty}`;
-        out+=`<path d="${d}" fill="none" stroke="${z.hue}" stroke-width="16" stroke-linecap="round" opacity=".16"/><path d="${d}" fill="none" stroke="${z.hue}" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round" opacity=".85"/><circle cx="${tx}" cy="${ty}" r="5" fill="${z.hue}" stroke="#1f1d17" stroke-width="1.5"/>`;
+        // Stop short of the gate tile so the arrival dot sits just clear of it: radius 5, half its 1.5 stroke, a 2px gap.
+        const ul=Math.hypot(tx-qx,ty-qy)||1,ex=tx-(tx-qx)/ul*7.75,ey=ty-(ty-qy)/ul*7.75;
+        const d=`M${sx},${sy} Q${qx},${qy} ${ex},${ey}`;
+        out+=`<path d="${d}" fill="none" stroke="${z.hue}" stroke-width="16" stroke-linecap="round" opacity=".16"/><path d="${d}" fill="none" stroke="${z.hue}" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round" opacity=".85"/><circle cx="${ex}" cy="${ey}" r="5" fill="${z.hue}" stroke="#1f1d17" stroke-width="1.5"/>`;
       });
       svg.innerHTML=out;
     }
