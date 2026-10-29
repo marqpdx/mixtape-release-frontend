@@ -176,9 +176,9 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .tk-maps .here { color: var(--fg); font-weight: 600; }
 .tk-maps .soon { position: relative; color: color-mix(in srgb, var(--fg-muted) 60%, transparent); cursor: default; }
 /* Small maturity pill beside the version pill (CTO, 2026-10-29), and hover tips for it and for 'soon' map links. */
-.pill.pill-m { position: relative; padding: 0.12rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.04em; cursor: help; }
+.pill.pill-m { position: relative; cursor: help; }
 .pill-m[data-tip]:hover::after, .pill-m[data-tip]:focus-visible::after, .tk-maps .soon[data-tip]:hover::after, .tk-maps .soon[data-tip]:focus-visible::after {
-  content: attr(data-tip); position: absolute; top: calc(100% + 6px); z-index: 20; background: var(--fg); color: var(--bg); font-size: 0.72rem; font-weight: 500;
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); z-index: 20; background: color-mix(in srgb, var(--fg) 80%, var(--bg)); color: var(--bg); font-size: 0.72rem; font-weight: 500;
   letter-spacing: 0; text-transform: none; line-height: 1.4; padding: 0.3rem 0.55rem; border-radius: 5px; pointer-events: none; }
 .pill-m[data-tip]:hover::after, .pill-m[data-tip]:focus-visible::after { right: 0; width: 15rem; white-space: normal; }
 .tk-maps .soon[data-tip]:hover::after, .tk-maps .soon[data-tip]:focus-visible::after { left: 0; white-space: nowrap; }
@@ -200,6 +200,8 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .tk-aside-body { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; max-width: 100%; }
 .tk-aside-row { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; flex-wrap: wrap; }
 .tk-aside .pill { margin-top: 0; }
+/* Pills in the upper-right row stand as tall as the ? and theme buttons beside them (CTO, 2026-10-29). */
+.tk-aside-row .pill { display: inline-flex; align-items: center; box-sizing: border-box; height: 31px; }
 .tk-aside .tk-hint { margin-top: 0; max-width: 75%; }
 @media (max-width: 860px) {
   .tk-intro header { flex-wrap: wrap; }
