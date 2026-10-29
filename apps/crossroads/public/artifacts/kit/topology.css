@@ -274,7 +274,7 @@ svg.show-status .badge { display: inline; }
 .tk-iconbtn:hover, .tk-iconbtn:focus-visible { background: var(--border); color: var(--fg); }
 .tk-iconbtn[data-tip]:hover::after, .tk-iconbtn[data-tip]:focus-visible::after {
   content: attr(data-tip); position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; white-space: nowrap;
-  background: var(--fg); color: var(--bg); font-size: 0.72rem; font-weight: 500; padding: 0.2rem 0.5rem; border-radius: 5px; pointer-events: none; }
+  background: color-mix(in srgb, var(--fg) 80%, var(--bg)); color: var(--bg); font-size: 0.72rem; font-weight: 500; padding: 0.2rem 0.5rem; border-radius: 5px; pointer-events: none; }
 .theme-toggle { font-weight: 600; }
 
 /* About this map: modal. */
