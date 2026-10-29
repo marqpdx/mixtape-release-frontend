@@ -50,7 +50,11 @@
     .tk-maps a{color:#1c1b18;text-decoration:underline;text-decoration-color:#d9d4c5;text-underline-offset:2px}
     .tk-maps a:hover{text-decoration-color:currentColor}
     .tk-maps .here{color:#1c1b18;font-weight:600}
-    .tk-maps .soon{color:#5b5a54;opacity:.55;cursor:default}
+    .tk-maps .soon{position:relative;color:rgba(91,90,84,.6);cursor:default}
+    .pill.pill-m{position:relative;align-self:center;padding:4px 7px;font-size:9.5px;letter-spacing:.05em;cursor:help}
+    .pill-m:hover::after,.pill-m:focus-visible::after,.tk-maps .soon:hover::after,.tk-maps .soon:focus-visible::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);z-index:20;background:#1c1b18;color:#FFFBF1;font:500 12px/1.4 system-ui,-apple-system,sans-serif;letter-spacing:0;text-transform:none;padding:5px 9px;border-radius:5px;pointer-events:none}
+    .pill-m:hover::after,.pill-m:focus-visible::after{left:0;width:15rem;white-space:normal}
+    .tk-maps .soon:hover::after,.tk-maps .soon:focus-visible::after{left:0;white-space:nowrap}
     @media(max-width:767px){.intro-top{min-height:0}}
     .lede{max-width:70ch;color:var(--body);font-size:18px;line-height:1.5}
     /* The welcome walk (2026-10-28): one inviting line, and a quiet "next" at the foot of each part. Light touch. */
@@ -177,9 +181,9 @@
     <header class="header">
       <div class="intro">
         <div class="intro-top">
-          <div class="pills"><span class="pill primary">Mixtape · Platform map</span><span class="pill" title="Publishing maturity: 1.0 is the first full release">Maturity 0.9.6</span><p class="trio" aria-label="What Mixtape is for"><span>Working in common</span><span>Self-expression</span><span>Knowledge building</span></p></div>
+          <div class="pills"><span class="pill primary">Mixtape · Platform map</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits.">M: 0.9.6</span><p class="trio" aria-label="What Mixtape is for"><span>Working in common</span><span>Self-expression</span><span>Knowledge building</span></p></div>
           <h1>What happens when you bring what matters into Mixtape?</h1>
-          <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <a href="../loom/loom-topology-enhanced.html">Loom</a> · <span class="here" aria-current="page">Platform</span> · <a href="../practice/practice-map.html">Practice</a></nav>
+          <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Loom</span> · <span class="here" aria-current="page">Platform</span> · <span class="soon" tabindex="0" data-tip="Coming soon">Practice</span></nav>
         </div>
         <p class="lede">Mixtape is a suite of tools for working in common, expressing oneself well, and building knowledge, for people, the groups and communities they belong to, and the organizations they run. You can stop by Main Reception and get your bearings on what's recent and upcoming. What you're working on isn't trapped in any one place — the system remembers it. Intelligent tools help throughout, but you decide.</p>
         <p class="walk">Come in. Stop at the desk to get your bearings, then take whichever concourse your work needs. Open anything that catches your eye; nothing here is a test.</p>

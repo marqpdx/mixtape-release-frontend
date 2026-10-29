@@ -460,10 +460,10 @@
       row.className = 'tk-aside-row';
       const body = document.createElement('div');
       body.className = 'tk-aside-body';
-      const pill = header.querySelector('.pill');
+      const pills = header.querySelectorAll('.pill');
       const hint = mount.querySelector('.tk-hint');
       actions.replaceWith(aside);
-      if (pill) row.appendChild(pill);
+      pills.forEach(p => row.appendChild(p));
       row.appendChild(actions);
       if (hint) body.appendChild(hint);
       aside.append(row, body);

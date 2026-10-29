@@ -174,7 +174,14 @@ h1 { font-size: 1.45rem; font-weight: 650; letter-spacing: -0.02em; }
 .tk-maps a { color: var(--fg); text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
 .tk-maps a:hover { text-decoration-color: currentColor; }
 .tk-maps .here { color: var(--fg); font-weight: 600; }
-.tk-maps .soon { color: var(--fg-muted); opacity: 0.55; cursor: default; }
+.tk-maps .soon { position: relative; color: color-mix(in srgb, var(--fg-muted) 60%, transparent); cursor: default; }
+/* Small maturity pill beside the version pill (CTO, 2026-10-29), and hover tips for it and for 'soon' map links. */
+.pill.pill-m { position: relative; padding: 0.12rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.04em; cursor: help; }
+.pill-m[data-tip]:hover::after, .pill-m[data-tip]:focus-visible::after, .tk-maps .soon[data-tip]:hover::after, .tk-maps .soon[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); z-index: 20; background: var(--fg); color: var(--bg); font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0; text-transform: none; line-height: 1.4; padding: 0.3rem 0.55rem; border-radius: 5px; pointer-events: none; }
+.pill-m[data-tip]:hover::after, .pill-m[data-tip]:focus-visible::after { right: 0; width: 15rem; white-space: normal; }
+.tk-maps .soon[data-tip]:hover::after, .tk-maps .soon[data-tip]:focus-visible::after { left: 0; white-space: nowrap; }
 /* The maps mini-nav sits at one height on every map page (desktop), so moving
    between maps never makes it jump. The platform map matches it in its own CSS:
    keep --tk-maps-block and the platform map's .intro-top in step. */
