@@ -50,7 +50,7 @@ The left side of your dashboard is a navigation panel divided into four sections
 - **Conversations** — Private messages with other members (Livewire)
 
 **Account**
-- **Settings** — **General** (dashboard options), **Writing** (writing preferences, shortcuts, spell dictionary) and **Notifications** (a link to your notification preferences)
+- **Settings** — **General** (dashboard options), **Writing** (writing preferences, shortcuts, spell dictionary), **AI accounts** (connect your own Claude account; see *AI accounts*) and **Notifications** (a link to your notification preferences)
 - **Create Group** — Available to system administrators only
 
 ---
