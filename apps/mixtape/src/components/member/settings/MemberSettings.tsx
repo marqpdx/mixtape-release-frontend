@@ -8,10 +8,11 @@ import { Box, HStack, Button, VStack, Heading, Text, Link } from '@chakra-ui/rea
 import { useColorModeValue } from '@components/ui/color-mode';
 import MemberPreferencesWorkArea from '@/components/dashboard/member/MemberPreferencesWorkArea';
 import { WritingSettings } from './WritingSettings';
+import { AIAccountsSettings } from './AIAccountsSettings';
 
 // The one Settings place: Dashboard → Settings (CTO, 2026-10-23;
 // zz/profile-settings-consolidation-build-plan.md, PS-1).
-type SettingsSection = 'general' | 'writing' | 'notifications';
+type SettingsSection = 'general' | 'writing' | 'ai' | 'notifications';
 
 export function MemberSettings({ initialSection = 'general' }: { initialSection?: SettingsSection } = {}) {
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
@@ -23,6 +24,7 @@ export function MemberSettings({ initialSection = 'general' }: { initialSection?
   const sections: { key: SettingsSection; label: string; enabled: boolean }[] = [
     { key: 'general', label: 'General', enabled: true },
     { key: 'writing', label: 'Writing', enabled: true },
+    { key: 'ai', label: 'AI accounts', enabled: true },
     { key: 'notifications', label: 'Notifications', enabled: true },
   ];
 
@@ -52,6 +54,7 @@ export function MemberSettings({ initialSection = 'general' }: { initialSection?
       <Box>
         {activeSection === 'general' && <MemberPreferencesWorkArea hideHeading />}
         {activeSection === 'writing' && <WritingSettings />}
+        {activeSection === 'ai' && <AIAccountsSettings />}
         {activeSection === 'notifications' && (
           <Box p={4}>
             <Text mb={2}>Notification preferences live with your notifications for now.</Text>
