@@ -1,0 +1,359 @@
+<!--
+  topology library map — public register (its own design, on the Platform Map's look; not on the kit)
+  carried_from: puddlejump/zz/storyboard-knowledge-map-v2.md (beside v1, knowledge-map.html, which stays as it is)
+  drafted: 2026-10-30 (CTO, 2026-10-29: "a piece of knowledge move from station to station, along a path of
+           curved-right-angle tracks, like a train" · "we need much more backstory" · "show the journey but tell the story")
+  forks: ten stations (Catalyst at 8); the Tuesday order and Gramma's voice; the family unnamed; Spanish in Contour's
+         regular synonyms; story top left, what happens top right, the picture on the stage. No build state (F4).
+  maturity: not set (draft)
+  library: puddlejump/reference/topology/topology-library.md
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A family's recipes ride the line through Mixtape, from Gramma's voice to a way back in.">
+  <title>Mixtape — Knowledge Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--shadow:rgba(31,29,23,.78);--ink:#1f1d17;--paper:#F6F1E4;--cream:#FFFBF1;--field:#EFE7D2;--muted:#6b6555;--body:#4a463b;--mulberry:#8B3F62;--coral:#D2603F;
+      --slate:#466D80;--violet:#5B4A8F;--gold:#DBA532;--olive:#4F551C;--loom:#70527F;--green:#2F6B4F}
+    *,*::before,*::after{box-sizing:border-box}*{margin:0}
+    body{min-width:320px;background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+    button{font:inherit;color:inherit}button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+    a{color:var(--mulberry);text-decoration:none}a:hover{text-decoration:underline}
+    .shell{max-width:1180px;margin:auto;padding:32px 16px 80px}
+    .eyebrow{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .pills{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{border:1.5px solid var(--ink);border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;line-height:1;text-transform:uppercase}
+    .pill.primary{background:var(--ink);color:var(--paper)}
+    header{display:grid;gap:14px;margin-bottom:22px;max-width:820px}
+    h1{font:800 clamp(30px,3.6vw,44px)/.98 'Hanken Grotesk',sans-serif;letter-spacing:-.03em;text-wrap:balance}
+    .tk-maps{font:400 .8rem/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#5b5a54}
+    .tk-maps a{color:#1c1b18;text-decoration:underline;text-decoration-color:#d9d4c5;text-underline-offset:2px}
+    .tk-maps .here{color:#1c1b18;font-weight:600}
+    .tk-maps .soon{position:relative;color:rgba(91,90,84,.6);cursor:default}
+    [data-tip]{position:relative}
+    [data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:#45423b;color:#FFFBF1;font:500 12px/1.4 system-ui,-apple-system,sans-serif;letter-spacing:0;text-transform:none;white-space:nowrap;padding:5px 9px;border-radius:5px;pointer-events:none}
+
+    .examples{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 18px}
+    .examples>span{font-size:12px;font-weight:700}
+    .example{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:2px solid var(--ink);border-radius:99px;background:var(--cream);font-size:13px;font-weight:700;cursor:pointer}
+    .example[aria-pressed=true]{background:var(--ink);color:var(--cream)}
+    .example[aria-disabled=true]{border-color:#c9c1ad;color:#9a937f;background:transparent;cursor:default}
+
+    /* Top: the story (two fifths) and what happens (three fifths). CTO, 2026-10-29. */
+    .top{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:16px;margin-bottom:16px}
+    .panel{background:var(--cream);border:2.5px solid var(--ink);border-radius:22px 22px 22px 6px;box-shadow:4px 4px 0 var(--shadow);padding:18px 20px;display:grid;align-content:start;gap:8px;min-height:190px}
+    .story .prev{font-size:14px;line-height:1.45;color:var(--muted);opacity:.75}
+    .story .now{font:500 19px/1.45 'Hanken Grotesk',sans-serif;color:var(--ink)}
+    .story .now em,.story .prev em{font-style:italic}
+    .happens .k{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--c)}
+    .happens h2{font:800 clamp(24px,2.6vw,32px)/1.04 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
+    .happens p{color:var(--body);font-size:16.5px;line-height:1.5}
+    .happens .aside{font-size:13.5px;color:var(--muted);border-left:3px solid color-mix(in srgb,var(--c) 45%,transparent);padding-left:10px}
+    .in>*{animation:rise .5s ease both}.in>*:nth-child(2){animation-delay:.08s}.in>*:nth-child(3){animation-delay:.16s}.in>*:nth-child(4){animation-delay:.24s}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    /* The board: a loop of track around the edge; the stage sits over about three quarters of each station box. */
+    .board{position:relative;height:600px;background:var(--field);border:2.5px solid var(--ink);border-radius:32px 32px 32px 8px;box-shadow:6px 6px 0 var(--shadow);overflow:hidden;
+      background-image:radial-gradient(rgba(31,29,23,.09) 1px,transparent 1.2px);background-size:18px 18px}
+    .ring{position:absolute;inset:0}
+    svg.rail{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;overflow:visible}
+    .rail .bed{fill:none;stroke:rgba(31,29,23,.22);stroke-width:9}
+    .rail .ties{fill:none;stroke:var(--field);stroke-width:5;stroke-dasharray:2 10}
+    .rail .lit{fill:none;stroke:var(--olive);stroke-width:4;stroke-linecap:round}
+    .rail .spur{fill:none;stroke:rgba(31,29,23,.38);stroke-width:5;stroke-dasharray:4 5}
+    .rail .bumper{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+    .bx{position:absolute;z-index:1;display:flex;flex-direction:row;align-items:flex-start;gap:8px;padding:9px 12px;border:2px solid var(--ink);border-radius:10px;background:#fff;cursor:pointer;text-align:left;transition:background-color .25s}
+    .bx.bottom{align-items:flex-end}
+    .bx .lab{display:flex;align-items:baseline;gap:7px;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bx .lab b{font:700 11.5px/1 'JetBrains Mono',monospace;color:var(--c)}
+    .bx .part{display:none;flex-shrink:0;white-space:nowrap;line-height:1.5;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .board.whole .bx .part{display:inline}
+    .bx:hover{background:color-mix(in srgb,var(--c) 14%,#fff)}
+    .bx.done{background:color-mix(in srgb,var(--c) 24%,#fff)}
+    .bx.on{background:var(--c);color:var(--cream)}.bx.on .lab b{color:var(--cream)}
+    .bx.siding{border-style:dashed;border-radius:99px;padding:4px 11px;background:rgba(255,255,255,.7);align-items:center}
+    .bx.siding .lab{font-size:12px}.board.whole .bx.siding .part{display:none}
+    .stagebox{position:absolute;z-index:2;display:grid;place-items:center;padding:20px;background:var(--cream);border:2.5px solid var(--ink);border-radius:26px 26px 26px 8px;box-shadow:0 0 0 7px rgba(239,231,210,.85),5px 5px 0 7px rgba(31,29,23,.16);overflow:auto}
+    .chips{display:none}
+
+    /* Pictures on the stage */
+    .pic{display:grid;place-items:center;gap:14px;width:100%}
+    .files{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center}
+    .file{width:118px;height:148px;border:2px solid var(--ink);border-radius:6px 6px 6px 22px;background:#fff;padding:10px;display:grid;align-content:start;gap:6px;font-size:11px;box-shadow:3px 3px 0 var(--shadow)}
+    .file b{font-size:12px}.file i{display:block;height:5px;background:#e6dfcd;border-radius:3px}.file i:nth-child(odd){width:80%}
+    .file.card{height:96px;background:#fffdf4}.file.photo{background:#e9e1cc}.file.photo i{background:#cfc4a8}
+    .file:nth-child(1){transform:rotate(-5deg)}.file:nth-child(3){transform:rotate(4deg)}
+    .splat{display:block;width:18px;height:14px;border-radius:50%;background:rgba(139,63,98,.28);margin-left:auto}
+    .voice{display:grid;gap:6px;justify-items:center}
+    .voice small{font-size:12px;font-weight:700}
+    .cloud{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:520px}
+    .w{padding:6px 11px;border-radius:99px;background:#fff;border:1.5px solid rgba(31,29,23,.35);font-weight:600;font-size:15px}
+    .w.big{font-size:20px}.w.sm{font-size:12px;opacity:.75}.w.es{font-style:italic}
+    .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:470px}
+    .tile{border:2px solid var(--ink);border-radius:8px 8px 22px 8px;background:var(--tc);color:#fff;padding:12px;display:grid;gap:4px;box-shadow:3px 3px 0 var(--shadow)}
+    .tile small{font:600 10.5px/1.25 'JetBrains Mono',monospace;opacity:.85;overflow-wrap:anywhere}.tile strong{font:800 26px/1 'Bricolage Grotesque',sans-serif}.tile span{font-size:12px;font-weight:600}
+    .syn{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    .syn span{padding:5px 10px;border:1.5px dashed var(--violet);border-radius:8px;background:#fff;font-size:13px;font-weight:600}
+    .syn span em{font-style:italic}
+    .q{width:100%;max-width:470px;border:2.5px solid var(--ink);border-radius:16px 16px 16px 6px;background:#fff;padding:16px;display:grid;gap:12px;box-shadow:4px 4px 0 var(--shadow)}
+    .q .ask{font-weight:700;font-size:15.5px;line-height:1.4}
+    .btns{display:flex;flex-wrap:wrap;gap:8px}
+    .b{padding:7px 12px;border:2px solid var(--ink);border-radius:99px;font-size:13px;font-weight:700;background:var(--cream)}
+    .b.go{background:var(--mulberry);color:#fff}
+    .rows{display:grid;gap:6px;font-size:13px}
+    .row{display:flex;justify-content:space-between;gap:10px;padding:6px 9px;border-radius:8px;background:var(--paper)}
+    .row em{font-style:normal;font-weight:700;white-space:nowrap}
+    .row.fade{opacity:.35;text-decoration:line-through}
+    .fix{color:var(--mulberry);font-weight:700}
+    svg.links{width:100%;max-width:480px;height:auto}
+    .tray{display:grid;gap:10px;justify-items:start;width:100%;max-width:440px}
+    .tray .box{width:100%;border:2.5px dashed var(--ink);border-radius:14px;padding:14px;background:rgba(255,255,255,.6)}
+    .drawers{display:grid;gap:8px;width:100%;max-width:440px}
+    .drawer{display:flex;justify-content:space-between;align-items:center;gap:10px;border:2px solid var(--ink);border-radius:8px;background:color-mix(in srgb,var(--gold) 22%,#fff);padding:9px 12px;font-size:13.5px;font-weight:600}
+    .drawer small{font:400 11px/1.2 'JetBrains Mono',monospace;color:var(--muted);text-align:right}
+    .book{width:100%;max-width:440px;border:2.5px solid var(--ink);border-radius:6px 16px 16px 6px;border-left-width:12px;background:#fff;padding:16px;display:grid;gap:8px;box-shadow:4px 4px 0 var(--shadow)}
+    .book h3,.order h3{font:800 19px/1.1 'Bricolage Grotesque',sans-serif}
+    .book .line{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;border-bottom:1px dashed #d9d1bd;padding:5px 0}
+    .stamp{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#3d4d12;border:1.5px solid #6f8a1f;border-radius:5px;padding:2px 6px;background:color-mix(in srgb,#A2C03F 22%,#fff)}
+    .order{width:100%;max-width:440px;border:2.5px solid var(--ink);border-radius:16px 16px 16px 6px;background:#fff;padding:16px;display:grid;gap:8px;box-shadow:4px 4px 0 var(--shadow)}
+    .order .line{display:flex;justify-content:space-between;font-size:13.5px;border-bottom:1px dashed #d9d1bd;padding:4px 0}
+    .order .b{justify-self:start}
+    .storefront{width:100%;max-width:420px;border:2.5px solid var(--ink);border-radius:14px 14px 4px 4px;background:#fff;box-shadow:4px 4px 0 var(--shadow);overflow:hidden}
+    .storefront .awn{height:34px;background:repeating-linear-gradient(90deg,var(--coral) 0 26px,var(--cream) 26px 52px);border-bottom:2.5px solid var(--ink)}
+    .storefront .sign{padding:16px;text-align:center;display:grid;gap:4px}
+    .storefront .sign b{font:800 22px/1.1 'Bricolage Grotesque',sans-serif}
+    .storefront .sign span{font-size:13px;color:var(--muted)}
+    .playcard{display:flex;align-items:center;gap:12px;border:2.5px solid var(--ink);border-radius:99px;background:#fff;padding:8px 18px 8px 8px;box-shadow:3px 3px 0 var(--shadow);font-weight:700;font-size:14px}
+    .playcard i{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--olive);color:#fff;font-style:normal}
+
+    /* The still */
+    .still{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%}
+    .st{border:2px solid var(--ink);border-radius:10px 10px 20px 10px;background:#fff;padding:10px;display:grid;gap:4px;align-content:start}
+    .st .n{font:700 11px/1 'JetBrains Mono',monospace;color:var(--c)}
+    .st b{font-size:13.5px}.st span{font-size:12px;color:var(--body);line-height:1.35}
+    .st .p{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .st.siding{border-style:dashed}
+
+    /* Controls */
+    .controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+    .ctl{display:flex;gap:8px;flex-wrap:wrap}
+    .c{padding:8px 14px;border:2px solid var(--ink);border-radius:12px;background:var(--cream);font-weight:700;font-size:14px;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
+    .c:hover{background:color-mix(in srgb,var(--slate) 14%,var(--cream))}
+    .c.primary{background:var(--ink);color:var(--cream)}
+    .count{font:600 13px/1 'JetBrains Mono',monospace;color:var(--muted)}
+    .foot{margin-top:28px;color:var(--muted);font-size:13.5px;line-height:1.55;max-width:80ch}
+
+    /* Narrow: the ring becomes a row of numbered stops above the stage. */
+    .board.narrow{height:auto;padding:14px;display:grid;gap:14px}
+    .board.narrow .ring{display:none}
+    .board.narrow .stagebox{position:static;min-height:300px;box-shadow:3px 3px 0 var(--shadow)}
+    .board.narrow .chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+    .chip{display:grid;place-items:center;height:36px;border:2px solid var(--ink);border-radius:10px;background:#fff;font:700 12px/1 'JetBrains Mono',monospace;cursor:pointer}
+    .chip.siding{border-style:dashed}
+    .chip.done{background:color-mix(in srgb,var(--c) 24%,#fff)}.chip.on{background:var(--c);color:var(--cream)}
+    @media(max-width:860px){.top{grid-template-columns:1fr}.panel{min-height:0}.still{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:460px){.tiles{grid-template-columns:1fr 1fr}.file{width:92px;height:120px}.still{grid-template-columns:1fr}}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="pills"><span class="pill primary">Mixtape · Knowledge map</span><span class="pill" tabindex="0" data-tip="A draft: not yet published">Draft · v2</span></div>
+      <h1>What happens to what you bring into Mixtape?</h1>
+      <nav class="tk-maps" aria-label="Related maps">Maps: <a href="../system/system-topology.html">System</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Loom</span> · <a href="../platform/platform-topology.html">Platform</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Practice</span> · <span class="here" aria-current="page">Knowledge</span> (<a href="knowledge-map.html">v1</a>)</nav>
+    </header>
+
+    <div class="examples" role="group" aria-label="Choose an example">
+      <span>Follow an example:</span>
+      <button class="example" type="button" aria-pressed="true">Gramma's recipes</button>
+      <span class="example" aria-disabled="true" tabindex="0" data-tip="Coming soon">The Law: a research matter</span>
+      <span class="example" aria-disabled="true" tabindex="0" data-tip="Coming soon">A book in Folio</span>
+    </div>
+
+    <div class="top">
+      <section class="panel story" aria-label="The story" aria-live="polite"><span class="eyebrow">The story</span><div id="story"></div></section>
+      <section class="panel happens" id="happens" aria-label="What happens" aria-live="polite"></section>
+    </div>
+
+    <section class="board" id="board" aria-label="The Knowledge Map">
+      <div class="chips" id="chips"></div>
+      <div class="ring" id="ring">
+        <svg class="rail" id="rail" aria-hidden="true">
+          <path class="bed" id="bed"/><path class="ties" id="ties"/><path class="lit" id="lit"/>
+          <path class="spur" id="spur"/><line class="bumper" id="bumper"/>
+          <g id="carB"><rect x="-13" y="-8" width="26" height="16" rx="4" fill="#9a7a2a" stroke="#1f1d17" stroke-width="2"/></g>
+          <g id="carA"><rect x="-16" y="-9" width="32" height="18" rx="5" fill="#1f1d17" stroke="#1f1d17" stroke-width="2"/><rect id="carAc" x="-11" y="-5" width="22" height="10" rx="3" fill="#D2603F"/></g>
+        </svg>
+      </div>
+      <div class="stagebox" id="stage"></div>
+    </section>
+
+    <div class="controls">
+      <div class="ctl">
+        <button class="c primary" type="button" id="play">Pause</button>
+        <button class="c" type="button" id="prev" aria-label="Previous station">← Back</button>
+        <button class="c" type="button" id="next" aria-label="Next station">Next →</button>
+        <button class="c" type="button" id="whole">The whole line</button>
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+
+    <p class="foot">The Tuesday order here is the same one waiting at the desk on the <a href="../platform/platform-topology.html">Platform Map</a>. This map shows the path knowledge takes, not what's built today; for that, see the <a href="../system/system-topology.html">System Map</a>.</p>
+  </main>
+
+  <script>
+    // Ten stations and a title frame (zz/storyboard-knowledge-map-v2.md). Station 6 is the siding.
+    // row: top (left to right), side (the siding), bottom (right to left). ms: hold time when playing.
+    const WAVE=`<svg width="260" height="56" viewBox="0 0 260 56" aria-hidden="true"><g stroke="#466D80" stroke-width="4" stroke-linecap="round">${Array.from({length:32},(_,j)=>{const h=8+Math.round(Math.abs(Math.sin(j*1.7)*18+Math.sin(j*.6)*14));return `<line x1="${6+j*8}" x2="${6+j*8}" y1="${28-h/2}" y2="${28+h/2}"/>`}).join('')}</g></svg>`;
+    const S=[
+      {n:0,title:true,c:'#D2603F',ms:3200,
+       story:`Forty years ago, Rosa's grandparents came to Portland, Oregon, from Mexico and opened a restaurant. The recipes came with them.`,
+       k:'The Knowledge Map',h:'One family\'s recipes, from first capture to a way back in.',p:'Follow them around the line. Play it, or step through with Next and the arrow keys.',
+       v:`<div class="storefront"><div class="awn"></div><div class="sign"><b>The family restaurant</b><span>Portland, Oregon · since 1986</span></div></div>`},
+      {n:1,row:'top',name:'Raw capture',part:'Quick capture',c:'#466D80',ms:3600,
+       story:`They live everywhere: on index cards, typed pages, photos on Rosa's phone, and in Gramma's head. The cards are too splattered to scan well, so Rosa sits with Gramma and records her talking each dish through.`,
+       k:'01 · It starts as it is',h:'Whatever you had at hand.',p:'Cards, typed pages, photos and a voice recording. Nothing is asked of them yet.',
+       v:`<div class="files"><div class="file card"><b>Mole (card)</b><i></i><i></i><span class="splat"></span></div><div class="file"><b>Arroz rojo (typed)</b><i></i><i></i><i></i><i></i><i></i></div><div class="file photo"><b>Photo, a card</b><i></i><i></i><i></i></div></div><div class="voice">${WAVE}<small>Gramma, talking it through · 42 min</small></div>`},
+      {n:2,row:'top',name:'First reading',part:'Heddle',c:'#70527F',ms:2800,
+       story:`Mixtape listens lightly first. <em>Comino. Chile ancho. Una pizca. Hollis Farm, los martes.</em>`,
+       k:'02 · A light first reading',h:'A word map appears.',p:'A quick, careful pass picks out what it all seems to be about, in either language: the dishes, the ingredients, the people and places.',
+       v:`<div class="cloud"><span class="w big es">mole</span><span class="w es">comino</span><span class="w sm es">una pizca</span><span class="w big">Hollis Farm</span><span class="w es">chile ancho</span><span class="w sm es">los martes</span><span class="w">arroz rojo</span><span class="w sm es">un puño</span><span class="w es">masa</span><span class="w sm es">piloncillo</span><span class="w">pozole</span><span class="w sm es">tamales de Navidad</span></div>`},
+      {n:3,row:'top',name:'Shapes',part:'Contour',c:'#5B4A8F',ms:3400,
+       story:`The words find their Shapes, in Spanish or English: <em>comino</em> is cumin, an ingredient. And Gramma's measures stay as she said them: <em>un puño</em>, a fistful, isn't turned into grams.`,
+       k:'03 · Words find their shapes',h:'Recipe, ingredient, supplier.',p:'Each match to a known kind of thing is a Sighting: provisional, with the exact words it came from. A Shape knows its synonyms, Spanish ones too.',
+       v:`<div class="pic"><div class="tiles"><div class="tile" style="--tc:#5B4A8F"><small>recipe · receta</small><strong>14</strong><span>Sightings</span></div><div class="tile" style="--tc:#466D80"><small>ingredient · ingrediente</small><strong>61</strong><span>Sightings</span></div><div class="tile" style="--tc:#2F6B4F"><small>supplier · proveedor</small><strong>3</strong><span>Sightings</span></div></div><div class="syn"><span><em>comino</em> · cumin</span><span><em>chile ancho</em> · dried poblano</span><span><em>un puño</em> (as said)</span></div></div>`},
+      {n:4,row:'top',name:'You decide',part:'Your call',c:'#8B3F62',ms:4600,
+       story:`Heddle asks Rosa: “I found 14 recipes, 61 ingredients and 3 suppliers. Keep them?” She keeps most, fixes one name, and sets one aside for later.`,
+       k:'04 · You decide',h:'Nothing is kept until you say so.',p:'Keep, Keep for later, or Not now. Anything nobody keeps fades back into the page it came from.',
+       v:`<div class="q"><div class="ask">Heddle found 14 recipes, 61 ingredients and 3 suppliers in your recordings and cards.</div><div class="btns"><span class="b go">✓ Keep</span><span class="b">Keep for later</span><span class="b">Not now</span></div><div class="rows"><div class="row"><span>Supplier: <span class="fix">Hollis Farm</span> (not “Hollis Farms”)</span><em>Keep</em></div><div class="row"><span>“Christmas tamales”: not told yet</span><em>Keep for later</em></div><div class="row fade"><span>Supplier: “los martes”</span><em>Not now</em></div></div></div>`},
+      {n:5,row:'top',name:'Closer reading',part:'Heddle',c:'#70527F',ms:2800,
+       story:`With Rosa's answers, it reads more closely: which mole uses which chiles, and who sells them.`,
+       k:'05 · With your answer',h:'It reads more closely.',p:'It links what you kept: each recipe to its ingredients, each ingredient to the supplier who sells it.',
+       v:`<svg class="links" viewBox="0 0 460 240" role="img" aria-label="Recipes linked to chile ancho, and chile ancho to its suppliers"><g stroke="#1f1d17" stroke-width="2" fill="none" opacity=".55"><path d="M90 50 C170 50 170 120 230 120"/><path d="M90 120 L230 120"/><path d="M90 190 C170 190 170 120 230 120"/><path d="M230 120 C290 120 300 60 370 60"/><path d="M230 120 C290 120 300 180 370 180"/></g><g font-family="Hanken Grotesk" font-weight="700" font-size="13" text-anchor="middle"><rect x="10" y="32" width="120" height="36" rx="8" fill="#5B4A8F" stroke="#1f1d17" stroke-width="2"/><text x="70" y="55" fill="#fff">Mole</text><rect x="10" y="102" width="120" height="36" rx="8" fill="#5B4A8F" stroke="#1f1d17" stroke-width="2"/><text x="70" y="125" fill="#fff">Pozole rojo</text><rect x="10" y="172" width="120" height="36" rx="8" fill="#5B4A8F" stroke="#1f1d17" stroke-width="2"/><text x="70" y="195" fill="#fff">Enchiladas</text><rect x="172" y="102" width="116" height="36" rx="18" fill="#466D80" stroke="#1f1d17" stroke-width="2"/><text x="230" y="125" fill="#fff">chile ancho</text><rect x="330" y="42" width="120" height="36" rx="8" fill="#2F6B4F" stroke="#1f1d17" stroke-width="2"/><text x="390" y="65" fill="#fff">Hollis Farm</text><rect x="330" y="162" width="120" height="36" rx="8" fill="#2F6B4F" stroke="#1f1d17" stroke-width="2"/><text x="390" y="185" fill="#fff">Dale Produce</text></g></svg>`},
+      {n:6,row:'side',name:'Kept for later',part:'Provisional data',c:'#9a7a2a',ms:3200,siding:true,
+       story:`Gramma mentioned her Christmas tamales, but hasn't told that one yet. It waits on the siding, kept and not lost.`,
+       k:'06 · The siding',h:'Kept, not lost.',p:'Some things aren\'t ready for a home yet. They wait on the siding, still traced to where they came from.',
+       aside:'A Sighting matures into provisional data, or it fades away.',
+       v:`<div class="tray"><span class="eyebrow">Kept for later</span><div class="box"><div class="row"><span>“Christmas tamales”: Gramma hasn't told this one yet</span><em>recording, 31:05</em></div></div></div>`},
+      {n:7,row:'bottom',name:'Memory',part:'Stackroom',c:'#b88a17',ms:3000,
+       story:`Every recipe is filed with a thread back to its source: the card, the photo, and the minute in the recording where Gramma said it.`,
+       k:'07 · Filed to be found again',h:'With a thread back to where it came from.',p:'Every piece is traced to its exact source, down to the minute in a recording.',
+       v:`<div class="drawers"><div class="drawer">Mole<small>card 3 · recording 03:12</small></div><div class="drawer">Recipes · 14<small>cards, typed pages, photos, recording</small></div><div class="drawer">Ingredients · 61<small>recipes, recording</small></div><div class="drawer">Suppliers · 3<small>recording 18:40</small></div></div>`},
+      {n:8,row:'bottom',name:"The family's book",part:'Catalyst',c:'#6f8a1f',ms:3000,
+       story:`Rosa and her uncle go through them, and accept each one into the restaurant's own recipe book.`,
+       k:"08 · The family's book",h:'Accepted into your own record.',p:'People accept each recipe, one by one, into the restaurant\'s book: what it knows for sure.',
+       v:`<div class="book"><span class="eyebrow">The restaurant's recipe book</span><h3>Recipes</h3><div class="line"><span>Mole</span><span class="stamp">Accepted</span></div><div class="line"><span>Arroz rojo</span><span class="stamp">Accepted</span></div><div class="line"><span>Pozole rojo</span><span class="stamp">Accepted</span></div><div class="line"><span>Enchiladas</span><span class="b">Accept →</span></div></div>`},
+      {n:9,row:'bottom',name:'Acting on it',part:'Atrium',c:'#466D80',ms:3000,
+       story:`On Tuesday morning, the supplier order drafts itself from this week's menu. Rosa checks it and sends it.`,
+       k:'09 · Put it to work',h:'In Atrium, you and your agents put it to work.',p:'Tuesday\'s supplier order drafts itself from this week\'s menu and what Hollis Farm sells.',
+       v:`<div class="order"><span class="eyebrow">Draft · Tuesday supplier order</span><h3>Hollis Farm</h3><div class="line"><span>Chile ancho</span><span>2 kg</span></div><div class="line"><span>Comino</span><span>500 g</span></div><div class="line"><span>Masa harina</span><span>10 kg</span></div><span class="b go">✓ Send</span></div>`},
+      {n:10,row:'bottom',name:'A way back in',part:'Ariadne',c:'#4F551C',ms:4200,
+       story:`Years from now, a cousin asks what goes in Gramma's mole. Ariadne follows the thread back, all the way to Gramma's voice.`,
+       k:'10 · The thread back',h:'Ariadne gives you the thread back through it all.',p:'Start anywhere (a dish, a chile, a supplier) and follow it back to where it began.',
+       v:`<div class="pic"><svg class="links" viewBox="0 0 460 200" role="img" aria-label="Gramma's mole linked to chile ancho, Hollis Farm, the recipe book and the recording"><g stroke="#4F551C" stroke-width="3" fill="none"><path d="M230 100 L100 45"/><path d="M230 100 L95 160"/><path d="M230 100 L365 45"/><path d="M230 100 L370 160"/></g><g font-family="Hanken Grotesk" font-weight="700" font-size="12" text-anchor="middle"><circle cx="230" cy="100" r="40" fill="#4F551C" stroke="#1f1d17" stroke-width="2"/><text x="230" y="97" fill="#fff">Gramma's</text><text x="230" y="112" fill="#fff">mole</text><circle cx="100" cy="45" r="30" fill="#fff" stroke="#1f1d17" stroke-width="2"/><text x="100" y="49">ancho</text><circle cx="95" cy="160" r="30" fill="#fff" stroke="#1f1d17" stroke-width="2"/><text x="95" y="164">Hollis</text><circle cx="365" cy="45" r="30" fill="#fff" stroke="#1f1d17" stroke-width="2"/><text x="365" y="49">the book</text><circle cx="370" cy="160" r="30" fill="#fff" stroke="#1f1d17" stroke-width="2"/><text x="370" y="164">card 3</text></g></svg><div class="playcard"><i>▶</i>Gramma, on her mole · recording 03:12</div></div>`}
+    ];
+    const WHOLE=S.length;
+    const STILL_STORY=`Forty years ago, Rosa's grandparents opened a restaurant in Portland, Oregon. Their recipes lived on cards, typed pages, photos and in Gramma's head. Rosa recorded Gramma talking them through; Mixtape read them lightly, found their Shapes in Spanish and English, and asked Rosa what to keep. What she kept was filed with a thread back to Gramma's own words, accepted into the restaurant's book, put to work in Tuesday's order, and can always be found again.`;
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let i=reduce?WHOLE:0,playing=!reduce,timer=null;
+    const $=id=>document.getElementById(id);
+    const board=$('board'),ring=$('ring'),stage=$('stage'),chips=$('chips');
+    const stations=S.filter(s=>!s.title);
+
+    // Station boxes and narrow chips
+    ring.insertAdjacentHTML('beforeend',stations.map(s=>`<button class="bx ${s.row}${s.siding?' siding':''}" type="button" data-i="${s.n}" style="--c:${s.c}" aria-label="${s.n}. ${s.name}"><span class="lab"><b>${String(s.n).padStart(2,'0')}</b>${s.name}</span><span class="part">${s.part}</span></button>`).join(''));
+    chips.innerHTML=stations.map(s=>`<button class="chip${s.siding?' siding':''}" type="button" data-i="${s.n}" style="--c:${s.c}" aria-label="${s.n}. ${s.name}">${String(s.n).padStart(2,'0')}</button>`).join('');
+
+    // Geometry: the loop's rounded corners are the "curved right angles" (CTO, 2026-10-29).
+    const G={T:14,r:38,strip:42,bh:170,gap:10};
+    const rail=$('rail'),bed=$('bed'),ties=$('ties'),lit=$('lit'),spur=$('spur'),bumper=$('bumper'),carA=$('carA'),carB=$('carB');
+    let L=[],total=0,spurLen=0,cur=0,spurAt=-1,raf=null,narrow=false;
+    function layout(){
+      narrow=board.clientWidth<760;board.classList.toggle('narrow',narrow);
+      if(narrow){stage.removeAttribute('style');return}
+      const W=board.clientWidth,H=board.clientHeight,{T,r,strip,bh,gap}=G,Yb=H-60;
+      const d=`M${T+r} ${T}H${W-T-r}A${r} ${r} 0 0 1 ${W-T} ${T+r}V${Yb-r}A${r} ${r} 0 0 1 ${W-T-r} ${Yb}H${T+r}A${r} ${r} 0 0 1 ${T} ${Yb-r}V${T+r}A${r} ${r} 0 0 1 ${T+r} ${T}`;
+      [bed,ties,lit].forEach(p=>p.setAttribute('d',d));total=bed.getTotalLength();
+      const top=stations.filter(s=>s.row==='top'),bot=stations.filter(s=>s.row==='bottom');
+      const x0=2*T,inner=W-4*T,tw=(inner-gap*(top.length-1))/top.length,bw=(inner-gap*(bot.length-1))/bot.length;
+      const pts={0:[T+r,T]};
+      top.forEach((s,j)=>{const x=x0+j*(tw+gap);place(s.n,x,2*T,tw,bh);pts[s.n]=[x+tw/2,T]});
+      bot.forEach((s,j)=>{const x=x0+inner-(j+1)*bw-j*gap;place(s.n,x,Yb-T-bh,bw,bh);pts[s.n]=[x+bw/2,Yb]});
+      // The siding leaves the bottom line just past the corner and runs left, below the boxes, to a bumper.
+      const sx=W-T-r-6,sy=Yb+24,se=sx-200;
+      spur.setAttribute('d',`M${sx} ${Yb}C${sx-36} ${Yb} ${sx-36} ${sy} ${sx-72} ${sy}H${se}`);spurLen=spur.getTotalLength();
+      bumper.setAttribute('x1',se-2);bumper.setAttribute('x2',se-2);bumper.setAttribute('y1',sy-9);bumper.setAttribute('y2',sy+9);
+      pts[6]=[sx,Yb];
+      const sb=ring.querySelector('.bx[data-i="6"]');Object.assign(sb.style,{left:(se-186)+'px',top:(sy-13)+'px',width:'176px',height:'26px'});
+      // Stage: over about three quarters of each box; the outer strip shows the line and where you are.
+      Object.assign(stage.style,{left:(2*T+8)+'px',right:(2*T+8)+'px',top:(2*T+strip)+'px',height:(Yb-T-strip-(2*T+strip))+'px'});
+      L=S.map(s=>nearest(pts[s.n]));L[6]=nearest(pts[6]);
+      setPos(target(i),i);
+    }
+    function place(n,x,y,w,h){Object.assign(ring.querySelector(`.bx[data-i="${n}"]`).style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'})}
+    let samples=[];
+    function nearest([x,y]){if(samples.total!==total){samples=[];for(let l=0;l<=total;l+=2){const p=bed.getPointAtLength(l);samples.push([l,p.x,p.y])}samples.total=total}let best=0,bd=1e9;for(const [l,px,py] of samples){const dd=(px-x)**2+(py-y)**2;if(dd<bd){bd=dd;best=l}}return best}
+    function target(k){return k===WHOLE?L[10]:L[k]}
+    function at(path,l){if(path===bed)l=((l%total)+total)%total;else l=Math.max(0,l);const a=path.getPointAtLength(l),b=path.getPointAtLength(l+1);return [a.x,a.y,Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI]}
+    function put(g,[x,y,ang]){g.setAttribute('transform',`translate(${x} ${y}) rotate(${ang})`)}
+    function setPos(l,k){
+      cur=l;put(carA,at(bed,l));
+      $('carAc').setAttribute('fill',(S[Math.min(k,S.length-1)]||S[0]).c);
+      const parked=k>=6;
+      if(parked){if(spurAt<0)spurAt=spurLen-16;put(carB,at(spur,spurAt))}else{spurAt=-1;put(carB,at(bed,l-34))}
+      const full=k===WHOLE||(k===10&&loopClosed);
+      lit.style.strokeDasharray=`${full?total:l} ${total+20}`;
+    }
+    let loopClosed=false;
+    function ease(t){return t<.5?2*t*t:1-(-2*t+2)**2/2}
+    function run(from,to,dur,step,done){cancelAnimationFrame(raf);if(reduce||dur<=0){step(1);done&&done();return}const t0=performance.now();const f=now=>{const t=Math.min(1,(now-t0)/dur);step(ease(t));if(t<1)raf=requestAnimationFrame(f);else done&&done()};raf=requestAnimationFrame(f)}
+    function travel(k,prev){
+      if(narrow)return;
+      const to=target(k),from=cur;
+      const into6=k===6&&prev===5;loopClosed=false;
+      if(into6)spurAt=-1;
+      const dur=Math.min(1200,Math.max(380,Math.abs(to-from)*2.2));
+      run(from,to,dur,e=>{const l=from+(to-from)*e;if(into6){cur=l;put(carA,at(bed,l));put(carB,at(bed,l-34));lit.style.strokeDasharray=`${l} ${total+20}`}else setPos(l,k)},()=>{
+        if(into6){run(0,1,700,e=>{spurAt=(spurLen-16)*e;put(carB,at(spur,spurAt))},()=>setPos(to,6))}
+        else if(k===10){const base=to;run(0,1,900,e=>{lit.style.strokeDasharray=`${base+(total-base)*e} ${total+20}`},()=>{loopClosed=true;setPos(to,10)})}
+        else setPos(to,k);
+      });
+    }
+
+    function show(k){
+      const prev=i;i=k;
+      board.classList.toggle('whole',k===WHOLE);
+      [...document.querySelectorAll('.bx,.chip')].forEach(b=>{const n=+b.dataset.i;b.classList.toggle('on',n===k);b.classList.toggle('done',k===WHOLE||n<k)});
+      const st=$('story');
+      if(k===WHOLE){st.innerHTML=`<p class="now">${STILL_STORY}</p>`}
+      else{st.innerHTML=`${k>0?`<p class="prev">${S[k-1].story}</p>`:''}<p class="now">${S[k].story}</p>`}
+      st.className='';void st.offsetWidth;st.className='in';
+      const hp=$('happens');
+      if(k===WHOLE){hp.style.setProperty('--c','#4F551C');hp.innerHTML=`<span class="k">The whole line</span><h2>From Gramma's voice to a way back in.</h2><p>Ten stations, and a siding for what isn't ready yet. Each part's name is on its station.</p>`}
+      else{const s=S[k];hp.style.setProperty('--c',s.c);hp.innerHTML=`<span class="k">${s.k}</span><h2>${s.h}</h2><p>${s.p}</p>${s.aside?`<p class="aside">${s.aside}</p>`:''}`}
+      hp.classList.remove('in');void hp.offsetWidth;hp.classList.add('in');
+      stage.innerHTML=k===WHOLE?`<div class="still">${stations.map(s=>`<div class="st${s.siding?' siding':''}" style="--c:${s.c}"><span class="n">${String(s.n).padStart(2,'0')}${s.siding?' · the siding':''}</span><b>${s.name}</b><span>${s.h}</span><span class="p">${s.part}</span></div>`).join('')}</div>`:`<div class="pic in">${S[k].v}</div>`;
+      $('count').textContent=k===WHOLE?'The whole line':(k===0?'Start':`${k} of 10`);
+      if(prev===k&&!narrow){setPos(target(k),k)}else travel(k,prev);
+    }
+    function tick(){clearTimeout(timer);if(!playing)return;const ms=i===WHOLE?0:S[i].ms;timer=setTimeout(()=>{if(i<WHOLE){show(i+1);tick()}else setPlaying(false)},ms)}
+    function setPlaying(p){playing=p;$('play').textContent=p?'Pause':(i===WHOLE?'Replay':'Play');if(p){if(i===WHOLE)show(0);tick()}else clearTimeout(timer)}
+    const go=k=>{setPlaying(false);show(k);setPlaying(false)};
+    $('play').addEventListener('click',()=>setPlaying(!playing));
+    $('next').addEventListener('click',()=>go(Math.min(WHOLE,i+1)));
+    $('prev').addEventListener('click',()=>go(Math.max(0,i-1)));
+    $('whole').addEventListener('click',()=>go(WHOLE));
+    board.addEventListener('click',e=>{const b=e.target.closest('.bx,.chip');if(b)go(+b.dataset.i)});
+    document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea'))return;if(e.key==='ArrowRight')$('next').click();else if(e.key==='ArrowLeft')$('prev').click()});
+    new ResizeObserver(()=>layout()).observe(board);
+    layout();show(i);setPlaying(playing);
+  </script>
+</body>
+</html>
