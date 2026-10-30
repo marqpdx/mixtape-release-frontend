@@ -3,8 +3,7 @@ title: AI accounts
 subsystem: member
 area: settings
 excerpt: "Connect your own Claude account, so the cloud AI work you approve runs on your account and no one else's."
-routes:
-  - /dashboard
+routes: []
 workAreas: []
 tags:
   - member

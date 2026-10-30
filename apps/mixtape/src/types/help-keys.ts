@@ -26,6 +26,7 @@ export type HelpKey =
   | "living-books-overview"
   | "member-group-me"
   | "member-overview"
+  | "member-settings"
   | "mobile-overview"
   | "notifications-overview"
   | "opportunities-overview"
