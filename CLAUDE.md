@@ -51,19 +51,20 @@ instead of describing nested structure. A instruction like "add padding to
 ## Commit Handoff
 
 Every unit of work — including ad hoc changes — should produce a named git
-commit in this repo. Commit your work files here first, then draft the inbox
-entry below. Do not commit to the Puddlejump repo — Puddlejump handles its
-own commits. Present the inbox draft to the CTO for approval. Do not write
-to the inbox until approved.
+commit in this repo. Then put its build-log entry (format below) in your
+agent-inbox update: show the update to the CTO, ask "Send to Puddlejump?",
+and on a yes write and commit that one file, `../puddlejump/agent-inbox/YYYY-MM-DD-<agent>-<topic>.md`
+(`../CLAUDE.md`, *Shared Work Between Agents*; format in the agent-inbox README). Puddlejump files the entry in `build-log-inbox/` and
+`build-log.md`; don't write to either yourself, and don't paste updates for
+the CTO to carry. (One writer per shared log, CTO, 2026-10-23; this section
+brought in line with `AGENTS.md`, 2026-11-02.)
 
-File path: `../puddlejump/build-log-inbox/[YYYY-MM-DD]-mixtape-release-frontend-[short-hash].md`
-
-File content:
+File content (inside your agent-inbox update):
 
 ```
 ---
 repo: mixtape-release-frontend
-commit: [short hash] — [one-line commit message]
+commit: "[short hash] — [one-line commit message]"
 date: [YYYY-MM-DD]
 work_effort: [ADR, build plan, or initiative name]
 ---
