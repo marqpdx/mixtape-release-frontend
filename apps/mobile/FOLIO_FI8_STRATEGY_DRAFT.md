@@ -1,6 +1,13 @@
 # FI-8: Fiction note reading Strategy — intake draft
 
-2026-11-02 · Mobile Agent · Draft for CTO/Puddlejump review.
+2026-11-02 · Mobile Agent · Accepted with amendments A1–A3; detailed reference.
+
+CTO/Puddlejump accepted this draft on 2026-11-02. Canonical Strategy:
+`writing.fiction_note_reading` **0.1.0**, draft until FI-10, in Contour's
+`writing/strategies/fiction-note-reading.*`, manifest 0.4.5. There is no source
+Shape (`source_shapes: []`) or primary target (`primary_target: null`); all three
+Writing Shapes are targets. Runtime definition and prompt versions pin to 0.1.0.
+The approved registry addendum supersedes the pending-decision notes below.
 
 Addresses step 1 of the approved `zz/handoff-2026-11-02-mobile-folio-on-heddle-restart.md`.
 This is a proposed Contour Strategy contract and reasoning, not an implemented
@@ -216,12 +223,14 @@ check. R1–R3 in the registry findings are now approved: the bundle is the sche
 lookup's home; retain every schema version still in use; validate strictly at the
 hand-off once the bundle exists. This draft creates no separate registry.
 
-R4 (alternative field labels/synonym proposals) and R5 (provisional Shapes) remain
-pending the CTO's addendum. Use current canonical schema keys, retain words as
-said, and add no label-normalization, synonym-learning or provisional-registry
-mechanism here. Future decisions may add bundle metadata without changing this
-Strategy's three-vocabulary distinction. Coordinate before implementing HD-5's
-generator. Catalyst's separate dependencies are not satisfied by a Writing bundle.
+R4 and R5 are now decided (approved registry addendum, 2026-11-02). Field labels
+are a fourth vocabulary, separate from Shape cues, Entity aliases and project
+markers. Contour may carry `field_labels` for multilingual recognition/display;
+canonical JSON keys stay fixed, and unknown keys fail validation. Fiction needs
+no field labels yet. Unknown cue/label proposal wiring waits for the first real
+case. The lookup uses the bundle first, with room for provisional Shapes later;
+no provisional lookup store is implemented now. Catalyst's separate dependencies
+are not satisfied by a Writing bundle.
 
 ## Acceptance cases before live use
 
