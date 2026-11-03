@@ -9,6 +9,7 @@ import { useColorModeValue } from '@components/ui/color-mode';
 import MemberPreferencesWorkArea from '@/components/dashboard/member/MemberPreferencesWorkArea';
 import { WritingSettings } from './WritingSettings';
 import { AIAccountsSettings } from './AIAccountsSettings';
+import { McpTokensSettings } from './McpTokensSettings';
 
 // The one Settings place: Dashboard → Settings (CTO, 2026-10-23;
 // zz/profile-settings-consolidation-build-plan.md, PS-1).
@@ -54,7 +55,12 @@ export function MemberSettings({ initialSection = 'general' }: { initialSection?
       <Box>
         {activeSection === 'general' && <MemberPreferencesWorkArea hideHeading />}
         {activeSection === 'writing' && <WritingSettings />}
-        {activeSection === 'ai' && <AIAccountsSettings />}
+        {activeSection === 'ai' && (
+          <VStack align="stretch" gap={8}>
+            <AIAccountsSettings />
+            <McpTokensSettings />
+          </VStack>
+        )}
         {activeSection === 'notifications' && (
           <Box p={4}>
             <Text mb={2}>Notification preferences live with your notifications for now.</Text>
