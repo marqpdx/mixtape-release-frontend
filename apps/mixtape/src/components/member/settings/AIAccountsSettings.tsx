@@ -2,7 +2,8 @@
 
 'use client';
 
-import { Badge, Box, Button, HStack, Heading, Link, Spinner, Text, VStack } from '@chakra-ui/react';
+import { useState } from 'react';
+import { Badge, Box, Button, HStack, Heading, Input, Link, Spinner, Text, VStack } from '@chakra-ui/react';
 import { useColorModeValue } from '@components/ui/color-mode';
 import {
   useAIAccounts,
@@ -10,6 +11,7 @@ import {
   useClaudeLogin,
   useConnectClaude,
   useDisconnectClaude,
+  useSendClaudeLoginCode,
 } from '@mixtape/api/hooks/aiAccounts';
 import type { AIAccountState } from '@mixtape/api/clients/aiAccounts';
 import { toaster } from '@mixtape/core/lib/toaster';
@@ -44,9 +46,24 @@ export function AIAccountsSettings() {
   const connect = useConnectClaude();
   const check = useCheckClaude();
   const disconnect = useDisconnectClaude();
+  const sendCode = useSendClaudeLoginCode();
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
 
-  const onConnect = () =>
+  const onConnect = () => {
+    setCode('');
+    setCodeSent(false);
     connect.mutate(undefined, {
+      onError: (err) => toaster.create({ title: errorDetail(err), type: 'error' }),
+    });
+  };
+  const onSendCode = () =>
+    sendCode.mutate(code.trim(), {
+      // The code is single-use; never keep it on the page once it's sent.
+      onSuccess: () => {
+        setCode('');
+        setCodeSent(true);
+      },
       onError: (err) => toaster.create({ title: errorDetail(err), type: 'error' }),
     });
   const onCheck = () =>
@@ -95,13 +112,41 @@ export function AIAccountsSettings() {
 
             {connecting && (
               <Box>
-                {loginUrl ? (
-                  <Text fontSize="sm">
-                    <Link href={loginUrl} target="_blank" rel="noopener noreferrer" color="blue.500">
-                      Open Claude to sign in →
-                    </Link>{' '}
-                    Come back here when you&apos;re done; this page updates by itself.
-                  </Text>
+                {loginUrl && codeSent ? (
+                  <HStack gap={2}>
+                    <Spinner size="xs" />
+                    <Text fontSize="sm" color={mutedColor}>Finishing sign-in…</Text>
+                  </HStack>
+                ) : loginUrl ? (
+                  <VStack align="stretch" gap={2}>
+                    <Text fontSize="sm">
+                      1.{' '}
+                      <Link href={loginUrl} target="_blank" rel="noopener noreferrer" color="blue.500">
+                        Open Claude to sign in →
+                      </Link>
+                    </Text>
+                    <Text fontSize="sm">2. When Claude shows you a code, copy it and paste it here.</Text>
+                    <HStack gap={2}>
+                      <Input
+                        size="sm"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="Paste the code"
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-label="Sign-in code from Claude"
+                      />
+                      <Button
+                        size="sm"
+                        colorPalette="blue"
+                        onClick={onSendCode}
+                        loading={sendCode.isPending}
+                        disabled={!code.trim()}
+                      >
+                        Finish sign-in
+                      </Button>
+                    </HStack>
+                  </VStack>
                 ) : (
                   <HStack gap={2}>
                     <Spinner size="xs" />

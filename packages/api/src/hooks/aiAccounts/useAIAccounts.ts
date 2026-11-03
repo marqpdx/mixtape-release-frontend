@@ -37,3 +37,12 @@ function useAccountMutation<T>(fn: () => Promise<T>) {
 export const useConnectClaude = () => useAccountMutation(() => aiAccountsApi.connectClaude());
 export const useCheckClaude = () => useAccountMutation(() => aiAccountsApi.checkClaude());
 export const useDisconnectClaude = () => useAccountMutation(() => aiAccountsApi.disconnectClaude());
+
+/** Sends the code Claude shows after you approve. */
+export function useSendClaudeLoginCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (code: string) => aiAccountsApi.sendClaudeLoginCode(code),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: aiAccountsKeys.all }),
+  });
+}

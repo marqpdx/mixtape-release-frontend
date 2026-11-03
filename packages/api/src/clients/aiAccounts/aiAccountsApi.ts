@@ -39,6 +39,9 @@ const aiAccountsApi = {
   connectClaude: async (): Promise<AIAccountStatus> =>
     (await axiosInstance.post<AIAccountStatus>(`${BASE}claude/connect/`)).data,
   claudeLogin: async (): Promise<ClaudeLogin> => (await axiosInstance.get<ClaudeLogin>(`${BASE}claude/login/`)).data,
+  /** The code Claude shows after you approve; the server passes it to your waiting sign-in. */
+  sendClaudeLoginCode: async (code: string): Promise<AIAccountStatus> =>
+    (await axiosInstance.post<AIAccountStatus>(`${BASE}claude/login/code/`, { code })).data,
   checkClaude: async (): Promise<AIAccountStatus> =>
     (await axiosInstance.post<AIAccountStatus>(`${BASE}claude/check/`)).data,
   disconnectClaude: async (): Promise<AIAccountStatus> =>
