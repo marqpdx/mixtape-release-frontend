@@ -35,9 +35,10 @@ export interface AriadneRunCandidate {
 
 export interface AriadneEvidencePacket {
   id: string;
-  run_id: string;
+  run_id: string | null;
+  inquiry_run_id?: string | null;
   candidate_key: string;
-  subject_kind: "concept";
+  subject_kind: "concept" | "inquiry_theme";
   packet_version: number;
   summary: string;
   status: string;
@@ -176,4 +177,162 @@ export async function runSavedSearch(lensId: string): Promise<AriadneSearchResul
     `/api/ariadne/lenses/${lensId}/run/`
   );
   return response.data.results;
+}
+
+// P9/P9a (build spec §19.2-19.3): Inquiry Runs and the Review artifact.
+// Frame and Draft are the two steps that can call a model (Inkwell) --
+// every call that does so takes use_model explicitly; there is no silent
+// fallback to a model call. §19.3 (time-ordered development) and the
+// real Accession mechanism are NOT built -- see inquiry.py's module note
+// in mixtape-release-core. standing_review_id is a scoped substitute.
+
+export type InquiryStatus = "framing" | "gathering" | "mapping" | "drafting" | "curating" | "done";
+
+export interface AriadneSubQuestion {
+  text: string;
+  approved: boolean;
+  search_terms: string[];
+}
+
+export interface AriadneInquiry {
+  id: string;
+  question: string;
+  sub_questions: AriadneSubQuestion[];
+  status: InquiryStatus;
+  standing_review_id: string | null;
+  created_at: string;
+}
+
+export interface AriadneInquiryRun {
+  id: string;
+  inquiry_id: string;
+  status: "pending" | "running" | "completed" | "failed";
+  gathered_passage_ids: string[];
+  model_versions: Record<string, string>;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface AriadneInquiryTheme {
+  id: string;
+  run_id: string;
+  label: string;
+  label_source: "deterministic" | "model";
+  passage_ids: string[];
+  passage_count: number;
+  rank: number;
+}
+
+export type InquiryCitationStatus = "proposed" | "accepted" | "struck" | "amended";
+
+export interface AriadneCitation {
+  id: string;
+  text: string;
+  passage_ids: string[];
+  interpretation: boolean;
+  status: InquiryCitationStatus;
+  amended_text: string | null;
+  rejected_passage_ids?: string[];
+}
+
+export interface AriadneInquiryReview {
+  id: string;
+  inquiry_id: string;
+  run_id: string;
+  version: number;
+  body_markdown: string;
+  citations: AriadneCitation[];
+  uncited_claim_count: number;
+  status: "draft" | "curated";
+  created_at: string;
+}
+
+export async function fetchInquiries(): Promise<AriadneInquiry[]> {
+  const response = await axiosInstance.get<AriadneInquiry[]>("/api/ariadne/inquiries/");
+  return response.data;
+}
+
+export async function createInquiry(question: string): Promise<AriadneInquiry> {
+  const response = await axiosInstance.post<AriadneInquiry>("/api/ariadne/inquiries/", { question });
+  return response.data;
+}
+
+export async function fetchInquiry(inquiryId: string): Promise<AriadneInquiry> {
+  const response = await axiosInstance.get<AriadneInquiry>(`/api/ariadne/inquiries/${inquiryId}/`);
+  return response.data;
+}
+
+export async function frameInquiry(
+  inquiryId: string,
+  data: { sub_questions?: AriadneSubQuestion[]; use_model?: boolean }
+): Promise<AriadneInquiry> {
+  const response = await axiosInstance.post<AriadneInquiry>(`/api/ariadne/inquiries/${inquiryId}/frame/`, data);
+  return response.data;
+}
+
+export async function approveSubQuestions(inquiryId: string, approvedTexts: string[]): Promise<AriadneInquiry> {
+  const response = await axiosInstance.post<AriadneInquiry>(
+    `/api/ariadne/inquiries/${inquiryId}/approve-sub-questions/`,
+    { approved_texts: approvedTexts }
+  );
+  return response.data;
+}
+
+export async function gatherInquiry(inquiryId: string): Promise<AriadneInquiryRun> {
+  const response = await axiosInstance.post<AriadneInquiryRun>(`/api/ariadne/inquiries/${inquiryId}/gather/`, {});
+  return response.data;
+}
+
+export async function mapInquiryRun(runId: string): Promise<AriadneInquiryTheme[]> {
+  const response = await axiosInstance.post<AriadneInquiryTheme[]>(`/api/ariadne/inquiry-runs/${runId}/map/`, {});
+  return response.data;
+}
+
+export async function fetchInquiryThemes(runId: string): Promise<AriadneInquiryTheme[]> {
+  const response = await axiosInstance.get<AriadneInquiryTheme[]>(`/api/ariadne/inquiry-runs/${runId}/map/`);
+  return response.data;
+}
+
+export async function labelTheme(themeId: string, useModel: boolean): Promise<AriadneInquiryTheme> {
+  const response = await axiosInstance.post<AriadneInquiryTheme>(`/api/ariadne/inquiry-themes/${themeId}/label/`, {
+    use_model: useModel,
+  });
+  return response.data;
+}
+
+export async function assembleThemePacket(themeId: string): Promise<AriadneEvidencePacket> {
+  const response = await axiosInstance.post<AriadneEvidencePacket>(
+    `/api/ariadne/inquiry-themes/${themeId}/packet/`,
+    {}
+  );
+  return response.data;
+}
+
+export async function draftReview(runId: string, useModel: boolean): Promise<AriadneInquiryReview> {
+  const response = await axiosInstance.post<AriadneInquiryReview>(`/api/ariadne/inquiry-runs/${runId}/draft/`, {
+    use_model: useModel,
+  });
+  return response.data;
+}
+
+export async function fetchReview(reviewId: string): Promise<AriadneInquiryReview> {
+  const response = await axiosInstance.get<AriadneInquiryReview>(`/api/ariadne/inquiry-reviews/${reviewId}/`);
+  return response.data;
+}
+
+export async function curateCitation(
+  reviewId: string,
+  data: { citation_id: string; action: "accept" | "amend" | "strike"; amended_text?: string | null }
+): Promise<AriadneInquiryReview> {
+  const response = await axiosInstance.post<AriadneInquiryReview>(
+    `/api/ariadne/inquiry-reviews/${reviewId}/curate/`,
+    data
+  );
+  return response.data;
+}
+
+export async function accessionReview(reviewId: string): Promise<AriadneInquiry> {
+  const response = await axiosInstance.post<AriadneInquiry>(`/api/ariadne/inquiry-reviews/${reviewId}/accession/`);
+  return response.data;
 }

@@ -7,18 +7,31 @@ import { Badge, Box, Button, Flex, Heading, HStack, Input, Spinner, Text, Textar
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import {
+  accessionReview,
+  approveSubQuestions,
   assemblePacket,
+  createInquiry,
+  curateCitation,
+  draftReview,
+  fetchInquiries,
   fetchLatestRun,
   fetchPacketDetail,
   fetchRunCandidates,
   fetchRunPackets,
   fetchSavedSearches,
+  frameInquiry,
+  gatherInquiry,
+  mapInquiryRun,
   recordDecision,
   runSavedSearch,
   saveSearch,
   searchCorpus,
   type AriadneEvidencePacket,
   type AriadneEvidencePacketDetail,
+  type AriadneInquiry,
+  type AriadneInquiryReview,
+  type AriadneInquiryRun,
+  type AriadneInquiryTheme,
   type AriadneRun,
   type AriadneRunCandidate,
   type AriadneSavedSearch,
@@ -69,6 +82,155 @@ export default function AriadnePage() {
   const [searchResults, setSearchResults] = useState<AriadneSearchResult[] | null>(null);
   const [searchBusy, setSearchBusy] = useState(false);
   const [savedSearches, setSavedSearches] = useState<AriadneSavedSearch[]>([]);
+
+  // P9/P9a (build spec §19.2-19.3): Inquiry Runs and the Review artifact.
+  // Frame and Draft are the two steps that can call a model -- both are
+  // gated behind an explicit checkbox here, never run silently.
+  const [inquiries, setInquiries] = useState<AriadneInquiry[]>([]);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [activeInquiry, setActiveInquiry] = useState<AriadneInquiry | null>(null);
+  const [draftSubQuestions, setDraftSubQuestions] = useState("");
+  const [frameUseModel, setFrameUseModel] = useState(false);
+  const [activeRun, setActiveRun] = useState<AriadneInquiryRun | null>(null);
+  const [themes, setThemes] = useState<AriadneInquiryTheme[]>([]);
+  const [draftUseModel, setDraftUseModel] = useState(false);
+  const [activeReview, setActiveReview] = useState<AriadneInquiryReview | null>(null);
+  const [inquiryBusy, setInquiryBusy] = useState(false);
+
+  const loadInquiries = useCallback(async () => {
+    try {
+      setInquiries(await fetchInquiries());
+    } catch {
+      // Non-fatal -- the create form still works without the list.
+    }
+  }, []);
+
+  const handleCreateInquiry = useCallback(async () => {
+    if (!newQuestion.trim()) return;
+    setInquiryBusy(true);
+    setError(null);
+    try {
+      const inquiry = await createInquiry(newQuestion);
+      setActiveInquiry(inquiry);
+      setActiveRun(null);
+      setThemes([]);
+      setActiveReview(null);
+      setNewQuestion("");
+      await loadInquiries();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Couldn't create that Inquiry.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [newQuestion, loadInquiries]);
+
+  const handleFrame = useCallback(async () => {
+    if (!activeInquiry) return;
+    setInquiryBusy(true);
+    setError(null);
+    try {
+      const subQuestions = draftSubQuestions.trim()
+        ? draftSubQuestions
+            .split("\n")
+            .filter((line) => line.trim())
+            .map((line) => ({ text: line.trim(), approved: false, search_terms: [line.trim()] }))
+        : undefined;
+      const updated = await frameInquiry(activeInquiry.id, { sub_questions: subQuestions, use_model: frameUseModel });
+      setActiveInquiry(updated);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Frame failed -- a model step may need use_model checked.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [activeInquiry, draftSubQuestions, frameUseModel]);
+
+  const handleToggleApprove = useCallback(
+    async (text: string) => {
+      if (!activeInquiry) return;
+      const alreadyApproved = activeInquiry.sub_questions.filter((sq) => sq.approved).map((sq) => sq.text);
+      const next = alreadyApproved.includes(text)
+        ? alreadyApproved.filter((t) => t !== text)
+        : [...alreadyApproved, text];
+      setInquiryBusy(true);
+      try {
+        setActiveInquiry(await approveSubQuestions(activeInquiry.id, next));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Couldn't update approval.");
+      } finally {
+        setInquiryBusy(false);
+      }
+    },
+    [activeInquiry]
+  );
+
+  const handleGather = useCallback(async () => {
+    if (!activeInquiry) return;
+    setInquiryBusy(true);
+    setError(null);
+    try {
+      const run = await gatherInquiry(activeInquiry.id);
+      setActiveRun(run);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Gather failed.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [activeInquiry]);
+
+  const handleMap = useCallback(async () => {
+    if (!activeRun) return;
+    setInquiryBusy(true);
+    setError(null);
+    try {
+      setThemes(await mapInquiryRun(activeRun.id));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Map failed.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [activeRun]);
+
+  const handleDraft = useCallback(async () => {
+    if (!activeRun) return;
+    setInquiryBusy(true);
+    setError(null);
+    try {
+      setActiveReview(await draftReview(activeRun.id, draftUseModel));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Draft needs use_model checked -- it's the one step that must generate prose.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [activeRun, draftUseModel]);
+
+  const handleCurate = useCallback(
+    async (citationId: string, action: "accept" | "amend" | "strike") => {
+      if (!activeReview) return;
+      setInquiryBusy(true);
+      try {
+        setActiveReview(await curateCitation(activeReview.id, { citation_id: citationId, action }));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Curation action failed.");
+      } finally {
+        setInquiryBusy(false);
+      }
+    },
+    [activeReview]
+  );
+
+  const handleAccession = useCallback(async () => {
+    if (!activeReview) return;
+    setInquiryBusy(true);
+    try {
+      const inquiry = await accessionReview(activeReview.id);
+      setActiveInquiry(inquiry);
+      await loadInquiries();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Accession failed.");
+    } finally {
+      setInquiryBusy(false);
+    }
+  }, [activeReview, loadInquiries]);
 
   const loadSavedSearches = useCallback(async () => {
     try {
@@ -144,8 +306,9 @@ export default function AriadnePage() {
       document.title = "Ariadne - Mixtape Crossroads";
       loadRunAndCandidates();
       loadSavedSearches();
+      loadInquiries();
     }
-  }, [identity, isSuperuser, loadRunAndCandidates, loadSavedSearches]);
+  }, [identity, isSuperuser, loadRunAndCandidates, loadSavedSearches, loadInquiries]);
 
   const loadPacketsFor = useCallback(
     async (candidateKey: string) => {
@@ -390,6 +553,172 @@ export default function AriadnePage() {
                   )}
                 </Box>
               ))}
+            </VStack>
+          )}
+        </Box>
+
+        <Box className="ard-inquiry" borderTopWidth="1px" pt={4}>
+          <Heading as="h2" size="sm" mb={2}>Inquiry Runs (P9)</Heading>
+          <HStack mb={2}>
+            <Input
+              size="sm"
+              placeholder="State a question..."
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              maxW="400px"
+            />
+            <Button size="sm" onClick={handleCreateInquiry} loading={inquiryBusy}>New Inquiry</Button>
+          </HStack>
+
+          {inquiries.length > 0 && (
+            <HStack mb={2} wrap="wrap">
+              <Text fontSize="xs" color="theme.textSecondary">Inquiries:</Text>
+              {inquiries.map((inquiry) => (
+                <Badge
+                  key={inquiry.id}
+                  cursor="pointer"
+                  colorPalette={activeInquiry?.id === inquiry.id ? "blue" : "gray"}
+                  onClick={() => {
+                    setActiveInquiry(inquiry);
+                    setActiveRun(null);
+                    setThemes([]);
+                    setActiveReview(null);
+                  }}
+                >
+                  {inquiry.status}: {inquiry.question.slice(0, 40)}
+                </Badge>
+              ))}
+            </HStack>
+          )}
+
+          {activeInquiry && (
+            <VStack align="stretch" gap={3}>
+              <Box p={2} borderWidth="1px" borderRadius="md">
+                <Text fontSize="sm" fontWeight="bold">{activeInquiry.question}</Text>
+                <Text fontSize="xs" color="theme.textSecondary">status: {activeInquiry.status}</Text>
+              </Box>
+
+              {/* Step 1: Frame */}
+              <Box>
+                <Text fontSize="xs" fontWeight="bold" mb={1}>1. Frame -- sub-questions, one per line</Text>
+                <Textarea
+                  size="sm"
+                  placeholder="Enter sub-questions by hand, or check 'propose with model' below"
+                  value={draftSubQuestions}
+                  onChange={(e) => setDraftSubQuestions(e.target.value)}
+                />
+                <HStack mt={1}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={frameUseModel}
+                      onChange={(e) => setFrameUseModel(e.target.checked)}
+                    />{" "}
+                    <Text as="span" fontSize="xs">propose with model (Inkwell, §19.5 consent)</Text>
+                  </label>
+                  <Button size="xs" onClick={handleFrame} loading={inquiryBusy}>Frame</Button>
+                </HStack>
+
+                {activeInquiry.sub_questions.length > 0 && (
+                  <VStack align="stretch" gap={1} mt={2}>
+                    {activeInquiry.sub_questions.map((sq) => (
+                      <HStack key={sq.text} justify="space-between" p={1} borderWidth="1px" borderRadius="md">
+                        <Text fontSize="sm">{sq.text}</Text>
+                        <Button
+                          size="xs"
+                          variant={sq.approved ? "solid" : "outline"}
+                          colorPalette={sq.approved ? "green" : "gray"}
+                          onClick={() => handleToggleApprove(sq.text)}
+                        >
+                          {sq.approved ? "approved" : "approve"}
+                        </Button>
+                      </HStack>
+                    ))}
+                  </VStack>
+                )}
+              </Box>
+
+              {/* Step 2: Gather */}
+              <Box>
+                <Text fontSize="xs" fontWeight="bold" mb={1}>2. Gather</Text>
+                <Button size="xs" onClick={handleGather} loading={inquiryBusy}>Gather</Button>
+                {activeRun && (
+                  <Text fontSize="xs" color="theme.textSecondary" ml={2}>
+                    {activeRun.gathered_passage_ids.length} passages gathered ({activeRun.status})
+                  </Text>
+                )}
+              </Box>
+
+              {/* Step 3: Map */}
+              {activeRun && (
+                <Box>
+                  <Text fontSize="xs" fontWeight="bold" mb={1}>3. Map</Text>
+                  <Button size="xs" onClick={handleMap} loading={inquiryBusy}>Map into themes</Button>
+                  {themes.length > 0 && (
+                    <VStack align="stretch" gap={1} mt={2}>
+                      {themes.map((theme) => (
+                        <Text key={theme.id} fontSize="sm">
+                          {theme.label || `Theme ${theme.rank + 1}`} -- {theme.passage_count} passage(s)
+                        </Text>
+                      ))}
+                    </VStack>
+                  )}
+                </Box>
+              )}
+
+              {/* Step 5: Draft (step 4, Review packets, is assembled per theme via the same packet endpoints as P6) */}
+              {themes.length > 0 && (
+                <Box>
+                  <Text fontSize="xs" fontWeight="bold" mb={1}>5. Draft the Review</Text>
+                  <HStack>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={draftUseModel}
+                        onChange={(e) => setDraftUseModel(e.target.checked)}
+                      />{" "}
+                      <Text as="span" fontSize="xs">generate with model (Inkwell, §19.5 consent -- required)</Text>
+                    </label>
+                    <Button size="xs" onClick={handleDraft} loading={inquiryBusy}>Draft</Button>
+                  </HStack>
+                </Box>
+              )}
+
+              {/* Step 6: Curate */}
+              {activeReview && (
+                <Box>
+                  <Text fontSize="xs" fontWeight="bold" mb={1}>
+                    6. Curate (v{activeReview.version}, {activeReview.uncited_claim_count} uncited claim(s))
+                  </Text>
+                  <VStack align="stretch" gap={1} mb={2}>
+                    {activeReview.citations.map((citation) => (
+                      <HStack key={citation.id} justify="space-between" p={1} borderWidth="1px" borderRadius="md">
+                        <Text fontSize="sm">
+                          {citation.text}{" "}
+                          {citation.interpretation && (
+                            <Badge size="sm" colorPalette="yellow">interpretation</Badge>
+                          )}
+                          <Badge size="sm" ml={1}>{citation.status}</Badge>
+                        </Text>
+                        <HStack>
+                          <Button size="xs" colorPalette="green" onClick={() => handleCurate(citation.id, "accept")}>
+                            Accept
+                          </Button>
+                          <Button size="xs" colorPalette="red" onClick={() => handleCurate(citation.id, "strike")}>
+                            Strike
+                          </Button>
+                        </HStack>
+                      </HStack>
+                    ))}
+                  </VStack>
+                  <Button size="xs" colorPalette="blue" onClick={handleAccession} loading={inquiryBusy}>
+                    Accession as standing review
+                  </Button>
+                  <Box mt={2} p={2} borderWidth="1px" borderRadius="md" whiteSpace="pre-wrap">
+                    <Text fontSize="xs" fontFamily="mono">{activeReview.body_markdown}</Text>
+                  </Box>
+                </Box>
+              )}
             </VStack>
           )}
         </Box>
