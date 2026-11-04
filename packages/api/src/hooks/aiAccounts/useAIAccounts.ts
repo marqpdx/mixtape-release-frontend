@@ -16,11 +16,21 @@ export function useAIAccounts() {
   return useQuery({ queryKey: aiAccountsKeys.all, queryFn: () => aiAccountsApi.get() });
 }
 
-/** Polls while a sign-in is under way, so the link appears and the state turns to ready. */
+/**
+ * Polls while a sign-in is under way, so the link appears and the state turns to ready.
+ * When the sign-in ends (ready, failed…), the accounts query is refreshed, which ends the polling.
+ */
 export function useClaudeLogin(enabled: boolean) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: aiAccountsKeys.claudeLogin(),
-    queryFn: () => aiAccountsApi.claudeLogin(),
+    queryFn: async () => {
+      const login = await aiAccountsApi.claudeLogin();
+      if (login.state !== 'connecting') {
+        queryClient.invalidateQueries({ queryKey: aiAccountsKeys.all, exact: true });
+      }
+      return login;
+    },
     enabled,
     refetchInterval: enabled ? 3000 : false,
   });
