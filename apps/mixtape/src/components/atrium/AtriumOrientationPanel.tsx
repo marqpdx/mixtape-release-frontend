@@ -34,7 +34,7 @@ function InitiativeRow({ initiative }: { initiative: RadarInitiative }) {
       cursor="pointer"
       borderRadius="sm"
       _hover={{ bg: hoverBg }}
-      onClick={() => router.push(`/radar/${initiative.id}`)}
+      onClick={() => router.push(`/atrium?initiative=${initiative.id}`)}
     >
       <Box color="blue.400" flexShrink={0}>
         <IconTarget size={16} />

@@ -19,7 +19,7 @@ export function AtriumInitiationCard() {
     e.preventDefault();
     if (!title.trim()) return;
     const created = await createInitiative({ title: title.trim() });
-    router.push(`/radar/${created.id}`);
+    router.push(`/atrium?initiative=${created.id}`);
   };
 
   return (

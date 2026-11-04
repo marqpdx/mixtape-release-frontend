@@ -47,7 +47,7 @@ export function AtriumResumeCard() {
       py={6}
       px={8}
       cursor="pointer"
-      onClick={() => router.push(`/radar/${initiative.id}`)}
+      onClick={() => router.push(`/atrium?initiative=${initiative.id}`)}
       _hover={{ borderColor: "blue.300" }}
       transition="border-color 0.15s"
     >

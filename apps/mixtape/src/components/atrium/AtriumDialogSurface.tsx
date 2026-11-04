@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Box, Button, Flex, IconButton, Popover, Portal, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconAdjustmentsHorizontal, IconEye, IconGauge, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconChevronDown, IconEye, IconGauge, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useDialogues,
@@ -13,9 +14,11 @@ import {
   useWarmDialogue,
   useCompactDialogue,
   useResetDialogue,
+  useOpenDialogueZero,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd, useTrack } from "@mixtape/api/hooks/switchboard";
-import type { AtriumDialMode, Dialogue } from "@mixtape/core/types/atriumTypes";
+import { DIALOGUE_PROVIDERS } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, Dialogue, DialogueProvider } from "@mixtape/core/types/atriumTypes";
 import { DialogueThread } from "./DialogueThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
 import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
@@ -35,8 +38,22 @@ interface AtriumDialogSurfaceProps {
   onTrackedFetch?: (items: string[]) => void;
 }
 
-export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiativeSessionChange, onTrackedFetch }: AtriumDialogSurfaceProps) {
+// useSearchParams needs a Suspense boundary for the static build.
+export function AtriumDialogSurface(props: AtriumDialogSurfaceProps) {
+  return (
+    <Suspense fallback={null}>
+      <AtriumDialogSurfaceInner {...props} />
+    </Suspense>
+  );
+}
+
+function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativeSessionChange, onTrackedFetch }: AtriumDialogSurfaceProps) {
   const { sessions, isLoading } = useDialogues(groupSlug);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { mutateAsync: openDialogueZero, isPending: opening } = useOpenDialogueZero();
+  const [provider, setProvider] = useState<DialogueProvider>("anthropic-claude-code");
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateDialogue();
   const { mutateAsync: updateSession } = useUpdateDialogue();
@@ -49,32 +66,29 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   const [compactPromptVisible, setCompactPromptVisible] = useState(false);
   const [freshStartNote, setFreshStartNote] = useState(false);
 
-  const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
+  const { entries, streaming, error, activityText, contextStatus, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
-  const { mutate: warmSession, isPending: isWarming } = useWarmDialogue();
+  const { mutate: warmSession } = useWarmDialogue();
   const { mutateAsync: compactSession, isPending: compacting } = useCompactDialogue();
   const { mutateAsync: resetSession, isPending: resetting } = useResetDialogue();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
   const { submitAsync: submitTrack } = useTrack();
 
+  // Keep the open Initiative and Dialogue in the address, on whichever Atrium page we're on.
+  function syncUrl(session: Dialogue | null) {
+    const params = new URLSearchParams();
+    if (session?.initiative_id) params.set("initiative", session.initiative_id);
+    if (session) params.set("dialogue", session.id);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  // Opening an Initiative enters its Dialogue Zero (the first one, made if there is none).
   async function handleSelectInitiative(initiativeId: string) {
-    const existing = sessions.find((s) => s.initiative_id === initiativeId);
-    if (existing) {
-      handleSelectSession(existing);
-    } else {
-      const session = await createSession(
-        groupSlug
-          ? { group_slug: groupSlug, initiative_id: initiativeId }
-          : { initiative_id: initiativeId }
-      );
-      reset();
-      setMemoryOpen(false);
-      setOrientDismissed(false);
-      setReconstructedNote(null);
-      setFreshStartNote(false);
-      setActiveSession(session);
-    }
+    if (activeSession?.initiative_id === initiativeId) return;
+    const session = await openDialogueZero(initiativeId);
+    handleSelectSession(session);
   }
 
   useEffect(() => {
@@ -82,6 +96,23 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     handleSelectInitiative(selectedInitiativeId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInitiativeId]);
+
+  // Arriving at /atrium?dialogue=… or ?initiative=… (links from the Initiative rows, a reload).
+  useEffect(() => {
+    if (isLoading) return;
+    const dialogueId = searchParams.get("dialogue");
+    const initiativeId = searchParams.get("initiative");
+    if (dialogueId && dialogueId === activeSession?.id) return;
+    const named = dialogueId ? sessions.find((s) => s.id === dialogueId) : undefined;
+    if (named) handleSelectSession(named);
+    else if (initiativeId && initiativeId !== activeSession?.initiative_id) handleSelectInitiative(initiativeId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, searchParams]);
+
+  useEffect(() => {
+    if (activeSession) setProvider(activeSession.ai_provider ?? "anthropic-claude-code");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSession?.id]);
 
   useEffect(() => {
     if (!activeSession?.id) return;
@@ -177,7 +208,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
       return;
     }
 
-    send(message);
+    send(message, provider);
   }
 
   const bgColor = useColorModeValue("white", "gray.800");
@@ -226,15 +257,19 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     if (mode !== "very_focused") setOrientDismissed(false);
   }
 
-  async function handleNewSession() {
-    const session = await createSession(groupSlug ? { group_slug: groupSlug } : {});
+  async function handleNewSession(initiativeId?: string) {
+    const session = await createSession({
+      ...(groupSlug ? { group_slug: groupSlug } : {}),
+      ...(initiativeId ? { initiative_id: initiativeId } : {}),
+    });
     reset();
     setMemoryOpen(false);
     setOrientDismissed(false);
     setReconstructedNote(null);
     setFreshStartNote(false);
     setActiveSession(session);
-    onInitiativeSessionChange?.(null);
+    syncUrl(session);
+    onInitiativeSessionChange?.(session.initiative_id ?? null);
   }
 
   function handleSelectSession(session: Dialogue) {
@@ -245,6 +280,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     setReconstructedNote(null);
     setFreshStartNote(false);
     setActiveSession(session);
+    syncUrl(session);
     onInitiativeSessionChange?.(session.initiative_id ?? null);
   }
 
@@ -253,6 +289,12 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
   }
 
   const personalSessions = sessions.filter((s) => !s.initiative_id);
+  const initiativeDialogues = activeSession?.initiative_id
+    ? sessions.filter((s) => s.initiative_id === activeSession.initiative_id)
+    : personalSessions;
+  const initiativeTitle = activeSession?.initiative_title
+    ?? sponsorContext?.initiatives.find((i) => i.id === activeSession?.initiative_id)?.title
+    ?? null;
 
   if (isLoading) {
     return (
@@ -299,6 +341,47 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
         </Flex>
       )}
 
+      {/* Where you are: Initiative › Dialogue, with the Initiative's other Dialogues */}
+      {activeSession && (
+        <Flex px={4} py={1.5} align="center" gap={1.5} borderBottomWidth="1px" borderColor={borderColor} flexShrink={0} minW="0">
+          <Text fontSize="sm" color={subtitleColor} lineClamp={1} flexShrink={1}>
+            {initiativeTitle ?? "Personal"}
+          </Text>
+          <Text fontSize="sm" color={subtitleColor}>›</Text>
+          <Popover.Root positioning={{ placement: "bottom-start" }}>
+            <Popover.Trigger asChild>
+              <Button size="xs" variant="ghost" fontWeight="600" px={1.5} minW="0">
+                <Text lineClamp={1}>{activeSession.title || "Dialogue"}</Text>
+                <IconChevronDown size={12} />
+              </Button>
+            </Popover.Trigger>
+            <Portal>
+              <Popover.Positioner zIndex={200}>
+                <Popover.Content w="260px">
+                  <Box p={3}>
+                    <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>
+                      {initiativeTitle ? `Dialogues in ${initiativeTitle}` : "Personal Dialogues"}
+                    </Text>
+                    <Flex direction="column" gap={1}>
+                      {initiativeDialogues.map((s) => (
+                        <Button key={s.id} size="xs" variant={activeSession.id === s.id ? "solid" : "outline"}
+                          colorPalette="blue" onClick={() => handleSelectSession(s)} w="full" justifyContent="flex-start">
+                          <Text lineClamp={1}>{s.title || "Dialogue"}</Text>
+                        </Button>
+                      ))}
+                      <Button size="xs" variant="ghost" justifyContent="flex-start" loading={creating}
+                        onClick={() => handleNewSession(activeSession.initiative_id ?? undefined)}>
+                        <IconPlus size={12} /> New Dialogue{initiativeTitle ? ` in ${initiativeTitle}` : ""}
+                      </Button>
+                    </Flex>
+                  </Box>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Portal>
+          </Popover.Root>
+        </Flex>
+      )}
+
       {/* Body: thread (left) + controls strip (right) */}
       <Flex flex="1" minH="0">
 
@@ -316,7 +399,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           )}
           {activeSession && freshStartNote && (
             <Flex px={4} py={2} align="center" gap={2} bg={reconstructedBg} borderBottomWidth="1px" borderColor={borderColor} flexShrink={0}>
-              <Text fontSize="xs" color={reconstructedTextColor} flex={1}>↺ Session reset — started fresh.</Text>
+              <Text fontSize="xs" color={reconstructedTextColor} flex={1}>↺ Dialogue reset — started fresh.</Text>
               <IconButton aria-label="Dismiss" size="2xs" variant="ghost" color={reconstructedIconColor} onClick={() => setFreshStartNote(false)}>
                 <IconX size={12} />
               </IconButton>
@@ -342,7 +425,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
             ) : (
               <Box textAlign="center" pt={6}>
                 <Text fontSize="sm" color={subtitleColor}>
-                  Select an initiative or start a personal session.
+                  {opening ? "Opening the Initiative…" : "Choose an Initiative, or start a personal Dialogue."}
                 </Text>
               </Box>
             )}
@@ -356,19 +439,9 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           )}
 
           {/* Status indicators */}
-          {activeSession && isWarming && !streaming && (
-            <Box px={4} pb={1} flexShrink={0}>
-              <Text fontSize="xs" color={subtitleColor} fontStyle="italic">Starting up Claude Code…</Text>
-            </Box>
-          )}
           {activeSession && activityText && streaming && (
             <Box px={4} pb={1} flexShrink={0}>
               <Text fontSize="xs" color={activityColor} fontStyle="italic" lineClamp={1}>⯎ {activityText}</Text>
-            </Box>
-          )}
-          {activeSession && usedFallback && !streaming && (
-            <Box px={4} pb={1} flexShrink={0}>
-              <Text fontSize="xs" color={subtitleColor} fontStyle="italic">(prompt detection timed out — response may be truncated)</Text>
             </Box>
           )}
         </Box>
@@ -389,10 +462,10 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           py={2}
           overflowY="auto"
         >
-          {/* Sessions */}
+          {/* Personal Dialogues */}
           <Popover.Root positioning={{ placement: "left-start" }}>
             <Popover.Trigger asChild>
-              <IconButton aria-label="Sessions" title="Sessions" size="sm" variant="ghost">
+              <IconButton aria-label="Personal Dialogues" title="Personal Dialogues" size="sm" variant="ghost">
                 <IconHistory size={16} />
               </IconButton>
             </Popover.Trigger>
@@ -405,11 +478,11 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
                       {personalSessions.map((s) => (
                         <Button key={s.id} size="xs" variant={activeSession?.id === s.id ? "solid" : "outline"}
                           colorPalette="blue" onClick={() => handleSelectSession(s)} w="full" justifyContent="flex-start">
-                          <Text lineClamp={1}>{s.title || "Session"}</Text>
+                          <Text lineClamp={1}>{s.title || "Dialogue"}</Text>
                         </Button>
                       ))}
-                      <Button size="xs" variant="ghost" onClick={handleNewSession} loading={creating} justifyContent="flex-start">
-                        <IconPlus size={12} /> New session
+                      <Button size="xs" variant="ghost" onClick={() => handleNewSession()} loading={creating} justifyContent="flex-start">
+                        <IconPlus size={12} /> New Dialogue
                       </Button>
                     </Flex>
                   </Box>
@@ -587,6 +660,17 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
         pb={4}
         pt={3}
       >
+        {activeSession && (
+          <Flex gap={1} mb={2} align="center">
+            <Text fontSize="xs" color={subtitleColor} mr={1}>Reply from</Text>
+            {DIALOGUE_PROVIDERS.map((p) => (
+              <Button key={p.value} size="2xs" variant={provider === p.value ? "solid" : "outline"} colorPalette="blue"
+                onClick={() => setProvider(p.value)} disabled={streaming}>
+                {p.label}
+              </Button>
+            ))}
+          </Flex>
+        )}
         <AtriumComposeBar
           onSend={handleCompose}
           disabled={!activeSession}

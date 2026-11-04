@@ -30,6 +30,12 @@ export async function createDialogue(data: {
   return response.data;
 }
 
+/** Open an Initiative in Atrium: its Dialogue Zero (the first Dialogue, created if none). */
+export async function openDialogueZero(initiativeId: string): Promise<Dialogue> {
+  const response = await axiosInstance.post<Dialogue>(`/api/atrium/initiatives/${initiativeId}/dialogue-zero`);
+  return response.data;
+}
+
 export interface InitiativeLogEntryRecord {
   id: string;
   kind: string;
