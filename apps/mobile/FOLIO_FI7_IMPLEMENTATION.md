@@ -54,9 +54,7 @@ build and production target before the trial; the CTO runs server log commands.
 
 ## Still to build
 
-- Note-source preservation and movement integration; full pinned Strategy/bundle
-  identity in context and the Folio Reading adapter.
-- Reading lifecycle and decision endpoints, resolution seam and capability routing.
+- Public reading lifecycle and decision endpoints, resolution seam and capability routing.
 - Coordinated legacy Analyze/client retirement, with candidate removal gated on
   the CTO's production row count and preservation decision if rows exist.
 - Client Fiction chooser, orientation confirmation and multi-Sighting reading.
@@ -74,3 +72,44 @@ The final check uses temporary `fi7_urls` with the actual Folio and Shuttle URL
 modules, leaving the unrelated edits untouched. A passing isolated check does
 not establish that the full project's URL configuration is healthy.
 Final isolated result: 204 tests, OK, four skipped; whitespace checks pass.
+
+## Fiction Strategy and source adapter unit
+
+Core now implements the four Contour-defined steps: source/context preparation,
+deterministic cue recognition, one semantic reading, and deterministic checked
+assembly. The complete Writing shelf is read from Heddle's verified release
+bundle, including the canonical Strategy and Shape companions. Schemas are
+looked up there; no consumer schema was edited independently.
+
+The response contract contains orientation, Sightings and up to three material
+questions. Checked assembly preserves writer-set titles and verbatim Scene
+passages; source spans, supported Shape versions, unique IDs and typed references
+are checked by Heddle plus Folio's validator. Cue recognition records negation and
+ordinary-use ambiguity without treating those rules as semantic interpretation.
+
+Initial limits: 40,000 source characters (including appended corrections),
+80,000 characters for the complete Writing bundle, 150,000 prompt characters,
+100,000 output characters and 60 Sightings. Exceeding a limit fails visibly;
+the bundle is never silently truncated. These are implementation budgets, not
+measured model capacity or accuracy claims.
+
+Context now includes Strategy, bundle and selected-file identities, writer-set
+title evidence and separate empty project-marker/field-label vocabularies. No
+markers or aliases are learned from a reading.
+
+Folio's begin/inspect service adapter accepts an injected Heddle Reading, creates
+or reuses one parent per note/person, and returns `reading_id`/`action_run_id`
+instead of public Shuttle wording. It snapshots exact ready capture without
+dispatch. Capture saves and transcription cannot overwrite source already read;
+corrections use Heddle's append-only history. A moved note invalidates the old
+parent's authoritative context. QuerySet.update bypasses model save guards and
+must not be used to replace captured source.
+
+The Reading factory is deliberately unregistered. This unit chooses no production
+capability name and adds no cloud worker, callback or public reading endpoint.
+Lifecycle/dispatch wiring, API exposure, resolution and live acceptance remain
+subsequent work. It does not yet make Folio's phone reading ready.
+
+Verification: 231 tests, OK, four skipped, using the same isolated Folio/Shuttle
+URL configuration noted above. The new unit adds 18 Strategy tests and nine
+source-adapter tests; no actual model was invoked for these cases.
