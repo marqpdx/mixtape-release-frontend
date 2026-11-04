@@ -3,19 +3,19 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, Input, Stack, Text, Textarea } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useUpdateAtriumSession } from "@mixtape/api/hooks/atrium";
-import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
+import { useUpdateDialogue } from "@mixtape/api/hooks/atrium";
+import type { Dialogue } from "@mixtape/core/types/atriumTypes";
 
 interface AtriumMemorySeedEditorProps {
-  session: AtriumSession;
-  onSaved: (updated: AtriumSession) => void;
+  session: Dialogue;
+  onSaved: (updated: Dialogue) => void;
   onCancel: () => void;
 }
 
 export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMemorySeedEditorProps) {
   const [title, setTitle] = useState(session.title);
   const [context, setContext] = useState(session.session_context);
-  const { mutateAsync: updateSession, isPending } = useUpdateAtriumSession();
+  const { mutateAsync: updateSession, isPending } = useUpdateDialogue();
 
   const bgColor = useColorModeValue("gray.50", "gray.850");
   const borderColor = useColorModeValue("gray.200", "gray.600");

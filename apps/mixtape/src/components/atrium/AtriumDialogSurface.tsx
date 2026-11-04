@@ -5,18 +5,18 @@ import { Box, Button, Flex, IconButton, Popover, Portal, Progress, Skeleton, Sta
 import { IconAdjustmentsHorizontal, IconEye, IconGauge, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
-  useAtriumSessions,
+  useDialogues,
   useAtriumSponsorContext,
-  useCreateAtriumSession,
+  useCreateDialogue,
   useAtriumExchange,
-  useUpdateAtriumSession,
-  useWarmAtriumSession,
-  useCompactAtriumSession,
-  useResetAtriumSession,
+  useUpdateDialogue,
+  useWarmDialogue,
+  useCompactDialogue,
+  useResetDialogue,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd, useTrack } from "@mixtape/api/hooks/switchboard";
-import type { AtriumDialMode, AtriumSession } from "@mixtape/core/types/atriumTypes";
-import { AtriumSessionThread } from "./AtriumSessionThread";
+import type { AtriumDialMode, Dialogue } from "@mixtape/core/types/atriumTypes";
+import { DialogueThread } from "./DialogueThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
 import { AtriumMemorySeedEditor } from "./AtriumMemorySeedEditor";
 import { AtriumContextPreview } from "./AtriumContextPreview";
@@ -36,11 +36,11 @@ interface AtriumDialogSurfaceProps {
 }
 
 export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiativeSessionChange, onTrackedFetch }: AtriumDialogSurfaceProps) {
-  const { sessions, isLoading } = useAtriumSessions(groupSlug);
+  const { sessions, isLoading } = useDialogues(groupSlug);
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
-  const { mutateAsync: createSession, isPending: creating } = useCreateAtriumSession();
-  const { mutateAsync: updateSession } = useUpdateAtriumSession();
-  const [activeSession, setActiveSession] = useState<AtriumSession | null>(null);
+  const { mutateAsync: createSession, isPending: creating } = useCreateDialogue();
+  const { mutateAsync: updateSession } = useUpdateDialogue();
+  const [activeSession, setActiveSession] = useState<Dialogue | null>(null);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [commandPending, setCommandPending] = useState(false);
   const [orientDismissed, setOrientDismissed] = useState(false);
@@ -51,9 +51,9 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
 
   const { entries, streaming, error, activityText, contextStatus, usedFallback, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
-  const { mutate: warmSession, isPending: isWarming } = useWarmAtriumSession();
-  const { mutateAsync: compactSession, isPending: compacting } = useCompactAtriumSession();
-  const { mutateAsync: resetSession, isPending: resetting } = useResetAtriumSession();
+  const { mutate: warmSession, isPending: isWarming } = useWarmDialogue();
+  const { mutateAsync: compactSession, isPending: compacting } = useCompactDialogue();
+  const { mutateAsync: resetSession, isPending: resetting } = useResetDialogue();
   const { submitAsync: submitFind } = useFind();
   const { submitAsync: submitAdd } = useAdd();
   const { submitAsync: submitTrack } = useTrack();
@@ -237,7 +237,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     onInitiativeSessionChange?.(null);
   }
 
-  function handleSelectSession(session: AtriumSession) {
+  function handleSelectSession(session: Dialogue) {
     if (session.id === activeSession?.id) return;
     reset();
     setMemoryOpen(false);
@@ -248,7 +248,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
     onInitiativeSessionChange?.(session.initiative_id ?? null);
   }
 
-  function handleMemorySaved(updated: AtriumSession) {
+  function handleMemorySaved(updated: Dialogue) {
     setActiveSession(updated);
   }
 
@@ -333,7 +333,7 @@ export function AtriumDialogSurface({ groupSlug, selectedInitiativeId, onInitiat
           {/* Thread — grows and scrolls */}
           <Box flex="1" minH="0" display="flex" flexDirection="column" px={4} pt={4} pb="80px">
             {activeSession ? (
-              <AtriumSessionThread
+              <DialogueThread
                 entries={entries}
                 streaming={streaming}
                 error={error}

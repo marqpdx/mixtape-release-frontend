@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Box, Flex, Spinner, Stack, Text } from "@chakra-ui/react";
 import { IconChevronDown, IconChevronRight, IconSparkles } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useAtriumSessionContext } from "@mixtape/api/hooks/atrium";
+import { useDialogueContext } from "@mixtape/api/hooks/atrium";
 
 interface AtriumContextPreviewProps {
   sessionId: string;
@@ -12,7 +12,7 @@ interface AtriumContextPreviewProps {
 
 export function AtriumContextPreview({ sessionId }: AtriumContextPreviewProps) {
   const [open, setOpen] = useState(false);
-  const { context, sources, isLoading } = useAtriumSessionContext(sessionId);
+  const { context, sources, isLoading } = useDialogueContext(sessionId);
 
   const borderColor = useColorModeValue("gray.100", "gray.700");
   const bgColor = useColorModeValue("gray.50", "gray.850");

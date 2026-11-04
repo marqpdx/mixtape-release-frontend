@@ -2,31 +2,31 @@
 
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { unwrapListResponse } from "@mixtape/api/lib/utils";
-import type { AtriumDialMode, AtriumSession, AtriumSessionEntry, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
+import type { AtriumDialMode, Dialogue, DialogueEntry, Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
-export async function fetchAtriumSessions(groupSlug?: string): Promise<AtriumSession[]> {
+export async function fetchDialogues(groupSlug?: string): Promise<Dialogue[]> {
   const params: Record<string, string> = {};
   if (groupSlug) {
     params.group_slug = groupSlug;
   } else {
     params.personal = "true";
   }
-  const response = await axiosInstance.get("/api/atrium/sessions/", { params });
-  return unwrapListResponse<AtriumSession>(response.data);
+  const response = await axiosInstance.get("/api/atrium/dialogues/", { params });
+  return unwrapListResponse<Dialogue>(response.data);
 }
 
-export async function fetchAtriumSessionEntries(sessionId: string): Promise<AtriumSessionEntry[]> {
-  const response = await axiosInstance.get(`/api/atrium/sessions/${sessionId}/entries/`);
-  return unwrapListResponse<AtriumSessionEntry>(response.data);
+export async function fetchDialogueEntries(sessionId: string): Promise<DialogueEntry[]> {
+  const response = await axiosInstance.get(`/api/atrium/dialogues/${sessionId}/entries/`);
+  return unwrapListResponse<DialogueEntry>(response.data);
 }
 
-export async function createAtriumSession(data: {
+export async function createDialogue(data: {
   title?: string;
   session_context?: string;
   group_slug?: string;
   initiative_id?: string;
-}): Promise<AtriumSession> {
-  const response = await axiosInstance.post<AtriumSession>("/api/atrium/sessions/new", data);
+}): Promise<Dialogue> {
+  const response = await axiosInstance.post<Dialogue>("/api/atrium/dialogues/new", data);
   return response.data;
 }
 
@@ -46,25 +46,25 @@ export async function fetchAtriumInitiativeLog(
   sessionId: string
 ): Promise<InitiativeLogEntryRecord[]> {
   const response = await axiosInstance.get<{ results: InitiativeLogEntryRecord[] }>(
-    `/api/atrium/sessions/${sessionId}/initiative-log/`
+    `/api/atrium/dialogues/${sessionId}/initiative-log/`
   );
   return response.data.results;
 }
 
-export async function fetchAtriumSessionContext(
+export async function fetchDialogueContext(
   sessionId: string
 ): Promise<{ context: string; sources: string[] }> {
   const response = await axiosInstance.get<{ context: string; sources: string[] }>(
-    `/api/atrium/sessions/${sessionId}/context/`
+    `/api/atrium/dialogues/${sessionId}/context/`
   );
   return response.data;
 }
 
-export async function updateAtriumSession(
+export async function updateDialogue(
   sessionId: string,
   data: { title?: string; session_context?: string; dial_mode?: AtriumDialMode }
-): Promise<AtriumSession> {
-  const response = await axiosInstance.patch<AtriumSession>(`/api/atrium/sessions/${sessionId}/`, data);
+): Promise<Dialogue> {
+  const response = await axiosInstance.patch<Dialogue>(`/api/atrium/dialogues/${sessionId}/`, data);
   return response.data;
 }
 
@@ -73,12 +73,12 @@ export interface WarmResult {
   provenance?: string;
 }
 
-export async function warmAtriumSession(
+export async function warmDialogue(
   sessionId: string,
   token: string | null
 ): Promise<WarmResult> {
   const { buildApiUrl } = await import("@mixtape/api/lib/axiosInstance");
-  const resp = await fetch(buildApiUrl(`/api/atrium/sessions/${sessionId}/warm`), {
+  const resp = await fetch(buildApiUrl(`/api/atrium/dialogues/${sessionId}/warm`), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -112,27 +112,49 @@ export async function warmAtriumSession(
   return { type: "ready" };
 }
 
-export async function compactAtriumSession(sessionId: string): Promise<{ summary: string | null }> {
-  const response = await axiosInstance.post<{ summary: string | null }>(
-    `/api/atrium/sessions/${sessionId}/compact`
+/** Queues a summary of the Dialogue into its InitiativeLog, written on the owner's own account. */
+export async function compactDialogue(sessionId: string): Promise<{ status: string; summary: string | null }> {
+  const response = await axiosInstance.post<{ status: string; summary: string | null }>(
+    `/api/atrium/dialogues/${sessionId}/compact`
   );
   return response.data;
 }
 
-export async function distillAtriumSession(
+const DISTILL_POLL_MS = 2000;
+const DISTILL_LIMIT_MS = 5 * 60 * 1000;
+
+/**
+ * Distill a Dialogue. The server writes the Distillate on the runtime worker, on the
+ * owner's own account (ST-3 Part B), so this starts it and waits for it to finish.
+ * Throws with the server's reason when it can't run (e.g. the account needs signing in).
+ */
+export async function distillDialogue(
   sessionId: string,
   data: { title: string; document_type: DistillateDocumentType }
 ): Promise<Distillate> {
-  const response = await axiosInstance.post<Distillate>(
-    `/api/atrium/sessions/${sessionId}/distill`,
-    data
-  );
-  return response.data;
+  const started = await axiosInstance
+    .post<Distillate>(`/api/atrium/dialogues/${sessionId}/distill`, data)
+    .catch((err: { response?: { data?: Distillate } }) => {
+      const detail = err.response?.data?.detail;
+      throw new Error(detail || "Distillate generation failed.");
+    });
+  let distillate = started.data;
+  const deadline = Date.now() + DISTILL_LIMIT_MS;
+  while (distillate.status === "pending" && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, DISTILL_POLL_MS));
+    const response = await axiosInstance.get<Distillate>(
+      `/api/atrium/dialogues/${sessionId}/distillates/${distillate.id}`
+    );
+    distillate = response.data;
+  }
+  if (distillate.status === "failed") throw new Error(distillate.detail || "Distillate generation failed.");
+  if (distillate.status === "pending") throw new Error("Still writing — check back in a moment.");
+  return distillate;
 }
 
-export async function resetAtriumSession(sessionId: string): Promise<{ status: string }> {
+export async function resetDialogue(sessionId: string): Promise<{ status: string }> {
   const response = await axiosInstance.post<{ status: string }>(
-    `/api/atrium/sessions/${sessionId}/reset`
+    `/api/atrium/dialogues/${sessionId}/reset`
   );
   return response.data;
 }

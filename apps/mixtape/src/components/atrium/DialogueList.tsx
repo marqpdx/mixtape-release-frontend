@@ -3,8 +3,8 @@
 import { Box, Flex, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { IconMessageCircle } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useAtriumSessions } from "@mixtape/api/hooks/atrium";
-import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
+import { useDialogues } from "@mixtape/api/hooks/atrium";
+import type { Dialogue } from "@mixtape/core/types/atriumTypes";
 
 function relativeTime(iso: string | null): string {
   if (!iso) return "";
@@ -18,7 +18,7 @@ function relativeTime(iso: string | null): string {
   return `${days}d ago`;
 }
 
-function SessionRow({ session }: { session: AtriumSession }) {
+function SessionRow({ session }: { session: Dialogue }) {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
@@ -74,8 +74,8 @@ function EmptyState() {
   );
 }
 
-export function AtriumSessionList() {
-  const { sessions, isLoading } = useAtriumSessions();
+export function DialogueList() {
+  const { sessions, isLoading } = useDialogues();
 
   if (isLoading) {
     return (

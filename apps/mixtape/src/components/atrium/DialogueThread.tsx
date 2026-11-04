@@ -10,8 +10,9 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useCreateMillDraft } from "@mixtape/api/hooks/workbench";
 import { toaster } from "@mixtape/core/lib/toaster";
 import type { ExchangeEntry } from "@mixtape/api/hooks/atrium";
+import { DIALOGUE_PROVIDERS } from "@mixtape/core/types/atriumTypes";
 
-interface AtriumSessionThreadProps {
+interface DialogueThreadProps {
   entries: ExchangeEntry[];
   streaming: boolean;
   error: string | null;
@@ -145,6 +146,15 @@ function AtriumDocCard({ entry, sessionTitle }: { entry: ExchangeEntry; sessionT
   );
 }
 
+// Why a reply stopped, by code (the server sends the same reasons while streaming).
+const REPLY_STOP_TEXT: Record<string, string> = {
+  runtime_missing: "Connect your AI account in Settings → AI accounts to use this agent.",
+  runtime_not_ready: "Your AI account needs signing in again: Settings → AI accounts.",
+  mode_not_allowed: "Atrium isn't turned on for your AI account.",
+  provider_not_supported: "That agent isn't available in Atrium.",
+  failed: "The agent stopped before finishing. Your message is saved; try again.",
+};
+
 function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTitle?: string }) {
   const isUser = entry.role === "user";
   const userBg = "var(--theme-accent-soft)";
@@ -152,6 +162,10 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
   const userText = "var(--theme-text)";
   const assistantText = useColorModeValue("gray.800", "gray.100");
   const actionColor = useColorModeValue("gray.400", "gray.500");
+  const stopColor = useColorModeValue("red.500", "red.400");
+  const speakerLabel = entry.speaker
+    ? DIALOGUE_PROVIDERS.find((p) => p.value === entry.speaker)?.label ?? null
+    : null;
 
   const { user } = useAuth();
   const { mutateAsync: createDraft, isPending } = useCreateMillDraft();
@@ -195,9 +209,19 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
         py={3}
         borderRadius={isUser ? "lg lg sm lg" : "lg lg lg sm"}
       >
+        {!isUser && speakerLabel && (
+          <Text fontSize="xs" fontWeight="semibold" color={actionColor} mb={1}>
+            {speakerLabel}
+          </Text>
+        )}
         <Text fontSize="md" whiteSpace="pre-wrap">
-          {entry.content}
+          {entry.content || (!isUser && (entry.status === "pending" || entry.status === "streaming") ? "…" : "")}
         </Text>
+        {!isUser && entry.status === "failed" && (
+          <Text fontSize="sm" color={stopColor} mt={entry.content ? 2 : 0}>
+            {REPLY_STOP_TEXT[entry.error_code ?? ""] ?? REPLY_STOP_TEXT.failed}
+          </Text>
+        )}
       </Box>
       {!isUser && entry.content && (
         <IconButton
@@ -217,7 +241,7 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
   );
 }
 
-export function AtriumSessionThread({ entries, streaming, error, sessionTitle }: AtriumSessionThreadProps) {
+export function DialogueThread({ entries, streaming, error, sessionTitle }: DialogueThreadProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const errorColor = useColorModeValue("red.500", "red.400");
@@ -263,7 +287,8 @@ export function AtriumSessionThread({ entries, streaming, error, sessionTitle }:
               <EntryBubble key={e.id ?? i} entry={e} sessionTitle={sessionTitle} />
             )
           )}
-          {error && (
+          {/* A stopped reply already says why in its own bubble. */}
+          {error && entries[entries.length - 1]?.status !== "failed" && (
             <Text fontSize="sm" color={errorColor} px={1}>
               {error}
             </Text>

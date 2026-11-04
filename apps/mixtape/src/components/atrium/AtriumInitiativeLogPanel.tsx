@@ -6,10 +6,10 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAtriumInitiativeLog } from "@mixtape/api/hooks/atrium";
-import type { AtriumSession } from "@mixtape/core/types/atriumTypes";
+import type { Dialogue } from "@mixtape/core/types/atriumTypes";
 
 interface AtriumInitiativeLogPanelProps {
-  session: AtriumSession;
+  session: Dialogue;
   defaultExpanded?: boolean;
 }
 

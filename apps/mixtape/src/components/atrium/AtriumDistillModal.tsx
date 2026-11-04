@@ -13,7 +13,7 @@ import {
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogCloseTrigger } from "@components/ui/dialog";
 import { Field } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useDistillAtriumSession } from "@mixtape/api/hooks/atrium";
+import { useDistillDialogue } from "@mixtape/api/hooks/atrium";
 import { DISTILLATE_DOCUMENT_TYPES } from "@mixtape/core/types/atriumTypes";
 import type { Distillate, DistillateDocumentType } from "@mixtape/core/types/atriumTypes";
 
@@ -30,7 +30,7 @@ export function AtriumDistillModal({ sessionId, open, onClose, onDistilled }: At
   const [result, setResult] = useState<Distillate | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { mutateAsync: distill, isPending } = useDistillAtriumSession();
+  const { mutateAsync: distill, isPending } = useDistillDialogue();
 
   const subtitleColor = useColorModeValue("gray.500", "gray.400");
   const resultBg = useColorModeValue("gray.50", "gray.700");
