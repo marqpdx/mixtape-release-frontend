@@ -9,7 +9,7 @@ export type AtriumSSEEventType =
   | "activity"       // tool-call activity line (e.g. "Reading foo.md")
   | "context_status" // context window usage update
   | "ready"          // warm — subprocess was already live, same context
-  | "reconstructed"  // warm — cold spawn; history injected from ApertureLog + DB entries
+  | "reconstructed"  // warm — cold spawn; history injected from InitiativeLog + DB entries
   | "fallback"       // prompt not detected; 3s silence used to end response
   | "compacted"      // /compact completed
   | "done"           // exchange complete

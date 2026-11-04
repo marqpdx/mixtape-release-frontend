@@ -1,5 +1,5 @@
 // apps/mixtape/src/components/initiatives/WorkTable.tsx
-// The Aperture entry surface — renders the Personal Initiative's ApertureLog.
+// The WorkTable entry surface — renders the Personal Initiative's InitiativeLog.
 // // command: initiative nav typeahead. /context {slug}: switch group. /me: return to personal.
 // /handoff, /emph: log entry commands.
 
@@ -19,16 +19,16 @@ import {
 import { IconSend, IconBookmark, IconChevronLeft, IconBriefcase } from "@tabler/icons-react";
 import { useGroupReminders, useGroupTasks, useFixItems, useSupplyRequests } from "@mixtape/api/hooks/business/useBusiness";
 import {
-  fetchApertureOrientation,
-  fetchApertureLog,
-  fetchApertureHandoffs,
-  fetchApertureInitiativeTypeahead,
-  createApertureLogEntry,
-  type ApertureContext,
-  type ApertureLog,
-  type ApertureLogEntry,
-  type ApertureLogEntryKind,
-  type ApertureTypeaheadItem,
+  fetchInitiativeOrientation,
+  fetchInitiativeLog,
+  fetchInitiativeHandoffs,
+  fetchInitiativeTypeahead,
+  createInitiativeLogEntry,
+  type OrientationContext,
+  type InitiativeLog,
+  type InitiativeLogEntry,
+  type InitiativeLogEntryKind,
+  type InitiativeTypeaheadItem,
 } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useDissolve } from "@mixtape/ui";
@@ -61,7 +61,7 @@ function formatRelative(iso: string | null): string {
   return `${days}d ago`;
 }
 
-function parseEntryPayload(input: string): { kind: ApertureLogEntryKind; body: string; emph_note: string } {
+function parseEntryPayload(input: string): { kind: InitiativeLogEntryKind; body: string; emph_note: string } {
   const trimmed = input.trim();
   if (trimmed.startsWith("/handoff ")) {
     return { kind: "handoff", body: trimmed.slice("/handoff ".length).trim(), emph_note: "" };
@@ -99,8 +99,8 @@ function detectInputMode(value: string): InputMode {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function EntryBadge({ kind }: { kind: ApertureLogEntryKind }) {
-  const map: Record<ApertureLogEntryKind, { label: string; color: string }> = {
+function EntryBadge({ kind }: { kind: InitiativeLogEntryKind }) {
+  const map: Record<InitiativeLogEntryKind, { label: string; color: string }> = {
     prose:      { label: "",         color: "gray" },
     handoff:    { label: "handoff",  color: "blue" },
     emph:       { label: "emph",     color: "purple" },
@@ -112,7 +112,7 @@ function EntryBadge({ kind }: { kind: ApertureLogEntryKind }) {
   return <Badge colorPalette={color} size="xs" variant="subtle">{label}</Badge>;
 }
 
-function LogEntry({ entry }: { entry: ApertureLogEntry }) {
+function LogEntry({ entry }: { entry: InitiativeLogEntry }) {
   const systemBg = useColorModeValue("gray.50", "gray.800");
   const isSystem = entry.is_system_generated;
 
@@ -215,12 +215,12 @@ function WorkTableSidebar({
   const personalContextBg = useColorModeValue("gray.100", "gray.800");
 
   // Personal: handoffs
-  const [handoffs, setHandoffs] = useState<ApertureLogEntry[]>([]);
+  const [handoffs, setHandoffs] = useState<InitiativeLogEntry[]>([]);
   const [handoffsLoading, setHandoffsLoading] = useState(true);
   useEffect(() => {
     if (groupSlug) return; // skip when in group context
     setHandoffsLoading(true);
-    fetchApertureHandoffs(initiativeId)
+    fetchInitiativeHandoffs(initiativeId)
       .then(setHandoffs)
       .finally(() => setHandoffsLoading(false));
   }, [initiativeId, groupSlug]);
@@ -328,8 +328,8 @@ function OrientationView({
   contexts,
   onSelect,
 }: {
-  contexts: ApertureContext[];
-  onSelect: (ctx: ApertureContext) => void;
+  contexts: OrientationContext[];
+  onSelect: (ctx: OrientationContext) => void;
 }) {
   const hoverBg = useColorModeValue("gray.50", "gray.800");
 
@@ -380,11 +380,11 @@ function TypeaheadDropdown({
   borderColor,
 }: {
   query: string;
-  onSelect: (item: ApertureTypeaheadItem) => void;
+  onSelect: (item: InitiativeTypeaheadItem) => void;
   onCreateNew: (title: string) => void;
   borderColor: string;
 }) {
-  const [items, setItems] = useState<ApertureTypeaheadItem[]>([]);
+  const [items, setItems] = useState<InitiativeTypeaheadItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const hoverBg = useColorModeValue("gray.50", "gray.800");
@@ -399,7 +399,7 @@ function TypeaheadDropdown({
     if (!query) {
       // No query → fetch all (orientation-style)
       setLoading(true);
-      fetchApertureInitiativeTypeahead("").then((res) => {
+      fetchInitiativeTypeahead("").then((res) => {
         setItems(res.initiatives);
         setLoading(false);
       });
@@ -407,7 +407,7 @@ function TypeaheadDropdown({
     }
     const timer = setTimeout(() => {
       setLoading(true);
-      fetchApertureInitiativeTypeahead(query).then((res) => {
+      fetchInitiativeTypeahead(query).then((res) => {
         setItems(res.initiatives);
         setLoading(false);
       });
@@ -518,12 +518,12 @@ function TypeaheadDropdown({
 // ---------------------------------------------------------------------------
 
 export default function WorkTable() {
-  const [orientation, setOrientation] = useState<ApertureContext[]>([]);
+  const [orientation, setOrientation] = useState<OrientationContext[]>([]);
   const [orientationLoading, setOrientationLoading] = useState(true);
 
-  const [activeInitiative, setActiveInitiative] = useState<ApertureContext | null>(null);
-  const [personalInitiative, setPersonalInitiative] = useState<ApertureContext | null>(null);
-  const [log, setLog] = useState<ApertureLog | null>(null);
+  const [activeInitiative, setActiveInitiative] = useState<OrientationContext | null>(null);
+  const [personalInitiative, setPersonalInitiative] = useState<OrientationContext | null>(null);
+  const [log, setLog] = useState<InitiativeLog | null>(null);
   const [logLoading, setLogLoading] = useState(false);
 
   // Group context — set via /context {slug}, cleared via /me
@@ -547,7 +547,7 @@ export default function WorkTable() {
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    fetchApertureOrientation()
+    fetchInitiativeOrientation()
       .then((res) => {
         setOrientation(res.contexts);
         const personal = res.contexts.find((c) => c.is_personal);
@@ -564,11 +564,11 @@ export default function WorkTable() {
   // ---------------------------------------------------------------------------
 
   const dissolveToInitiative = useCallback(
-    (ctx: ApertureContext) => {
+    (ctx: OrientationContext) => {
       dissolveTo(() => {
         setActiveInitiative(ctx);
         setLogLoading(true);
-        fetchApertureLog(ctx.id)
+        fetchInitiativeLog(ctx.id)
           .then(setLog)
           .finally(() => setLogLoading(false));
       });
@@ -614,8 +614,8 @@ export default function WorkTable() {
     const { kind, body, emph_note } = parseEntryPayload(trimmed);
     setSubmitting(true);
     try {
-      const entry = await createApertureLogEntry(activeInitiative.id, {
-        kind: kind as Exclude<ApertureLogEntryKind, "ledger" | "seed_spawn">,
+      const entry = await createInitiativeLogEntry(activeInitiative.id, {
+        kind: kind as Exclude<InitiativeLogEntryKind, "ledger" | "seed_spawn">,
         body,
         emph_note,
       });
@@ -652,9 +652,9 @@ export default function WorkTable() {
   // ---------------------------------------------------------------------------
 
   const handleTypeaheadSelect = useCallback(
-    (item: ApertureTypeaheadItem) => {
+    (item: InitiativeTypeaheadItem) => {
       setInput("");
-      const asContext: ApertureContext = {
+      const asContext: OrientationContext = {
         type: "initiative",
         id: item.id,
         title: item.title,

@@ -6,7 +6,7 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { axiosInstance } from "@mixtape/api/lib/axiosInstance";
 import { useOrientation } from "@mixtape/api/hooks/console/useConsole";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
-import type { ApertureLogEntry, ApertureLogEntryKind } from "@mixtape/api/clients/initiatives/initiativesApi";
+import type { InitiativeLogEntry, InitiativeLogEntryKind } from "@mixtape/api/clients/initiatives/initiativesApi";
 import type { WorkTableContext } from "./types";
 import { parseNeedMoreItems, parseRemindAt, formatRemindPreview } from "./parseCapture";
 
@@ -25,7 +25,7 @@ const ORIENTATION_ONLY_RE = /^\/\/$/;
 const INITIATIVE_CREATE_RE = /^\/n\s+(.+)/i;
 const Z_GESTURE_RE = /^\/z$/i;
 
-function parseApertureKind(text: string): { kind: Exclude<ApertureLogEntryKind, "ledger" | "seed_spawn">; body: string; emph_note: string } {
+function parseLogKind(text: string): { kind: Exclude<InitiativeLogEntryKind, "ledger" | "seed_spawn">; body: string; emph_note: string } {
   const handoffMatch = HANDOFF_RE.exec(text);
   if (handoffMatch) return { kind: "handoff", body: handoffMatch[1].trim(), emph_note: "" };
   const emphMatch = EMPH_RE.exec(text);
@@ -51,14 +51,14 @@ export function WorkTableCommandField({
   onContextSwitch,
   onContextReturn,
   onCapture,
-  onApertureCapture,
+  onLogCapture,
   onHandover,
 }: {
   context: WorkTableContext;
   onContextSwitch: (ctx: WorkTableContext) => void;
   onContextReturn: () => void;
   onCapture: (entry: StreamEntry) => void;
-  onApertureCapture?: (entry: ApertureLogEntry) => void;
+  onLogCapture?: (entry: InitiativeLogEntry) => void;
   onHandover?: () => void;
 }) {
   const [input, setInput] = useState("");
@@ -204,16 +204,16 @@ export function WorkTableCommandField({
       return;
     }
 
-    // Initiative context — all entries go to the Aperture log
+    // Initiative context — all entries go to the InitiativeLog
     if (context.kind === "initiative") {
       setSubmitting(true);
       try {
-        const { kind, body, emph_note } = parseApertureKind(trimmed);
-        const res = await axiosInstance.post<ApertureLogEntry>(
-          `/api/initiatives/${context.id}/aperture-log/entries`,
+        const { kind, body, emph_note } = parseLogKind(trimmed);
+        const res = await axiosInstance.post<InitiativeLogEntry>(
+          `/api/initiatives/${context.id}/log/entries`,
           { kind, body, emph_note }
         );
-        onApertureCapture?.(res.data);
+        onLogCapture?.(res.data);
         setLastCapture({ kind, body: body || emph_note });
         setInput("");
         setTimeout(() => setLastCapture(null), 3000);
@@ -322,7 +322,7 @@ export function WorkTableCommandField({
     } finally {
       setSubmitting(false);
     }
-  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onApertureCapture, onContextSwitch, onContextReturn, onHandover, logMatch, visibility, needItems, remindAt]);
+  }, [trimmed, submitting, contextTarget, contextQuery, initiativeResults, initiativeCreateTitle, context, onCapture, onLogCapture, onContextSwitch, onContextReturn, onHandover, logMatch, visibility, needItems, remindAt]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {

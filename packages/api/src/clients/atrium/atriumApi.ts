@@ -30,7 +30,7 @@ export async function createAtriumSession(data: {
   return response.data;
 }
 
-export interface ApertureLogEntryRecord {
+export interface InitiativeLogEntryRecord {
   id: string;
   kind: string;
   body: string;
@@ -44,8 +44,8 @@ export interface ApertureLogEntryRecord {
 
 export async function fetchAtriumInitiativeLog(
   sessionId: string
-): Promise<ApertureLogEntryRecord[]> {
-  const response = await axiosInstance.get<{ results: ApertureLogEntryRecord[] }>(
+): Promise<InitiativeLogEntryRecord[]> {
+  const response = await axiosInstance.get<{ results: InitiativeLogEntryRecord[] }>(
     `/api/atrium/sessions/${sessionId}/initiative-log/`
   );
   return response.data.results;

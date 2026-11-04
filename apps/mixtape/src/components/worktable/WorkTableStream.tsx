@@ -6,9 +6,9 @@ import { useColorModeValue } from "@components/ui/color-mode";
 import { useWorktableStream } from "@mixtape/api/hooks/worktable/useWorktable";
 import { archiveStreamEntry, deleteStreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
-import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
+import type { InitiativeLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { StreamBundle, groupIntoBundles } from "./StreamBundle";
-import { ApertureLogStream } from "./ApertureLogStream";
+import { InitiativeLogStream } from "./InitiativeLogStream";
 import type { WorkTableContext } from "./types";
 
 export type { StreamEntry };
@@ -39,11 +39,11 @@ function saveDismissed(scope: string, ids: Set<string>) {
 export function WorkTableStream({
   context,
   appendRef,
-  apertureAppendRef,
+  logAppendRef,
 }: {
   context: WorkTableContext;
   appendRef?: React.MutableRefObject<((entry: StreamEntry) => void) | null>;
-  apertureAppendRef?: React.MutableRefObject<((entry: ApertureLogEntry) => void) | null>;
+  logAppendRef?: React.MutableRefObject<((entry: InitiativeLogEntry) => void) | null>;
 }) {
   const isInitiative = context.kind === "initiative";
   const streamContext: WorkTableContext =
@@ -100,7 +100,7 @@ export function WorkTableStream({
   const bundles = groupIntoBundles(sorted);
 
   if (isInitiative) {
-    return <ApertureLogStream initiativeId={context.id} appendRef={apertureAppendRef} />;
+    return <InitiativeLogStream initiativeId={context.id} appendRef={logAppendRef} />;
   }
 
   if (isLoading) {

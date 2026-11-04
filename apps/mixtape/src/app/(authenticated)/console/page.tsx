@@ -13,10 +13,10 @@ import { WorkTableCommandField } from "@components/worktable/WorkTableCommandFie
 import { ContextSwitcher } from "@components/worktable/ContextSwitcher";
 import { ActionPanel } from "@components/worktable/ActionPanel";
 import { DigestStream } from "@components/worktable/DigestStream";
-import { ApertureLogStream } from "@components/worktable/ApertureLogStream";
+import { InitiativeLogStream } from "@components/worktable/InitiativeLogStream";
 import type { WorkTableContext } from "@components/worktable/types";
 import type { StreamEntry } from "@mixtape/api/clients/worktable/worktableApi";
-import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
+import type { InitiativeLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import type { ActionMode } from "@components/worktable/ActionPanel";
 
 // ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ export default function ConsolePage() {
   const [panelWidth, setPanelWidth] = useState<PanelWidth>("33");
 
   const appendRef = useRef<((entry: StreamEntry) => void) | null>(null);
-  const appendApertureRef = useRef<((entry: ApertureLogEntry) => void) | null>(null);
+  const appendLogRef = useRef<((entry: InitiativeLogEntry) => void) | null>(null);
 
   // Load persisted width after username is available
   useEffect(() => {
@@ -84,8 +84,8 @@ export default function ConsolePage() {
     appendRef.current?.(entry);
   };
 
-  const handleApertureCapture = (entry: ApertureLogEntry) => {
-    appendApertureRef.current?.(entry);
+  const handleLogCapture = (entry: InitiativeLogEntry) => {
+    appendLogRef.current?.(entry);
   };
 
   function handleWidthChange(w: PanelWidth) {
@@ -113,7 +113,7 @@ export default function ConsolePage() {
                 onContextSwitch={setContext}
                 onContextReturn={() => setContext({ kind: "personal" })}
                 onCapture={handleCapture}
-                onApertureCapture={handleApertureCapture}
+                onLogCapture={handleLogCapture}
                 onHandover={() => setActionMode("handover")}
               />
             </Box>
@@ -152,17 +152,17 @@ export default function ConsolePage() {
                   mode={actionMode}
                   context={context}
                   onClear={() => setActionMode("empty")}
-                  onApertureCapture={handleApertureCapture}
+                  onLogCapture={handleLogCapture}
                 />
               </GridItem>
 
               {/* Right — Stream */}
               <GridItem>
                 {context.kind === "initiative" ? (
-                  <ApertureLogStream
+                  <InitiativeLogStream
                     initiativeId={context.id}
                     onAction={setActionMode}
-                    appendRef={appendApertureRef}
+                    appendRef={appendLogRef}
                   />
                 ) : (
                   <DigestStream context={context} onAction={setActionMode} />

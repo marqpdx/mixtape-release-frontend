@@ -158,18 +158,18 @@ export interface ImportConfirmResponse {
 }
 
 // ============================================================================
-// ApertureLog types
+// InitiativeLog types
 // ============================================================================
 
-export type ApertureLogEntryKind = 'prose' | 'ledger' | 'handoff' | 'emph' | 'seed_spawn';
+export type InitiativeLogEntryKind = 'prose' | 'ledger' | 'handoff' | 'emph' | 'seed_spawn';
 export type LedgerEventType =
   | 'session_started' | 'session_ended' | 'document_bound'
   | 'seed_promoted' | 'status_changed' | 'artifact_linked' | 'material_late_bound';
 
-export interface ApertureLogEntry {
+export interface InitiativeLogEntry {
   id: string;
-  aperture_log: string;
-  kind: ApertureLogEntryKind;
+  initiative_log: string;
+  kind: InitiativeLogEntryKind;
   body: string;
   emph_note: string;
   ledger_event_type: LedgerEventType | '';
@@ -185,16 +185,16 @@ export interface ApertureLogEntry {
   updated_at: string;
 }
 
-export interface ApertureLog {
+export interface InitiativeLog {
   id: string;
   initiative: string;
   last_handoff_at: string | null;
   created_at: string;
   updated_at: string;
-  entries: ApertureLogEntry[];
+  entries: InitiativeLogEntry[];
 }
 
-export interface ApertureContext {
+export interface OrientationContext {
   type: 'initiative';
   id: string;
   title: string;
@@ -205,18 +205,18 @@ export interface ApertureContext {
   last_handoff_at: string | null;
 }
 
-export interface ApertureOrientationResponse {
-  contexts: ApertureContext[];
+export interface InitiativeOrientationResponse {
+  contexts: OrientationContext[];
   limit: number;
 }
 
-export interface ApertureLogEntryCreatePayload {
-  kind: Exclude<ApertureLogEntryKind, 'ledger' | 'seed_spawn'>;
+export interface InitiativeLogEntryCreatePayload {
+  kind: Exclude<InitiativeLogEntryKind, 'ledger' | 'seed_spawn'>;
   body?: string;
   emph_note?: string;
 }
 
-export interface ApertureLogEntryPatchPayload {
+export interface InitiativeLogEntryPatchPayload {
   body?: string;
   emph_note?: string;
   emph_accepted_to_summary?: boolean;
@@ -388,36 +388,36 @@ export async function confirmInitiativeImport(
 }
 
 // ============================================================================
-// ApertureLog
+// InitiativeLog
 // ============================================================================
 
-export async function fetchApertureLog(initiativeId: string, page = 1): Promise<ApertureLog> {
-  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/aperture-log?page=${page}`);
+export async function fetchInitiativeLog(initiativeId: string, page = 1): Promise<InitiativeLog> {
+  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/log?page=${page}`);
   return res.data;
 }
 
-export async function createApertureLogEntry(
+export async function createInitiativeLogEntry(
   initiativeId: string,
-  payload: ApertureLogEntryCreatePayload,
-): Promise<ApertureLogEntry> {
-  const res = await axiosInstance.post(`/api/initiatives/${initiativeId}/aperture-log/entries`, payload);
+  payload: InitiativeLogEntryCreatePayload,
+): Promise<InitiativeLogEntry> {
+  const res = await axiosInstance.post(`/api/initiatives/${initiativeId}/log/entries`, payload);
   return res.data;
 }
 
-export async function patchApertureLogEntry(
+export async function patchInitiativeLogEntry(
   initiativeId: string,
   entryId: string,
-  payload: ApertureLogEntryPatchPayload,
-): Promise<ApertureLogEntry> {
+  payload: InitiativeLogEntryPatchPayload,
+): Promise<InitiativeLogEntry> {
   const res = await axiosInstance.patch(
-    `/api/initiatives/${initiativeId}/aperture-log/entries/${entryId}`,
+    `/api/initiatives/${initiativeId}/log/entries/${entryId}`,
     payload,
   );
   return res.data;
 }
 
-export async function fetchApertureHandoffs(initiativeId: string): Promise<ApertureLogEntry[]> {
-  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/aperture-log/handoffs`);
+export async function fetchInitiativeHandoffs(initiativeId: string): Promise<InitiativeLogEntry[]> {
+  const res = await axiosInstance.get(`/api/initiatives/${initiativeId}/log/handoffs`);
   return res.data;
 }
 
@@ -432,13 +432,13 @@ export interface HandoverDraft {
 
 export async function fetchHandoverDraft(initiativeId: string): Promise<HandoverDraft | null> {
   const res = await axiosInstance.get<{ draft: HandoverDraft | null }>(
-    `/api/initiatives/${initiativeId}/aperture-log/handover-draft`,
+    `/api/initiatives/${initiativeId}/log/handover-draft`,
   );
   return res.data.draft;
 }
 
-export async function fetchApertureOrientation(limit = 10): Promise<ApertureOrientationResponse> {
-  const res = await axiosInstance.get(`/api/members/me/aperture/orientation?limit=${limit}`);
+export async function fetchInitiativeOrientation(limit = 10): Promise<InitiativeOrientationResponse> {
+  const res = await axiosInstance.get(`/api/members/me/initiatives/orientation?limit=${limit}`);
   return res.data;
 }
 
@@ -486,7 +486,7 @@ export async function fetchMeSessionArtifacts(sessionId: string): Promise<Artifa
   return res.data;
 }
 
-export interface ApertureTypeaheadItem {
+export interface InitiativeTypeaheadItem {
   id: string;
   title: string;
   status: InitiativeResponse['status'];
@@ -494,13 +494,13 @@ export interface ApertureTypeaheadItem {
   updated_at: string | null;
 }
 
-export interface ApertureTypeaheadResponse {
-  initiatives: ApertureTypeaheadItem[];
+export interface InitiativeTypeaheadResponse {
+  initiatives: InitiativeTypeaheadItem[];
 }
 
-export async function fetchApertureInitiativeTypeahead(q: string, limit = 10): Promise<ApertureTypeaheadResponse> {
+export async function fetchInitiativeTypeahead(q: string, limit = 10): Promise<InitiativeTypeaheadResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (q) params.set("q", q);
-  const res = await axiosInstance.get(`/api/members/me/aperture/initiatives?${params}`);
+  const res = await axiosInstance.get(`/api/members/me/initiatives/search?${params}`);
   return res.data;
 }

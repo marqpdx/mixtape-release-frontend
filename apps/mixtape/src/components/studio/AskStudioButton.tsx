@@ -60,7 +60,7 @@ export function AskStudioButton({ groupId, groupSlug, groupTitle }: AskStudioBut
                 onContextSwitch={() => {}}
                 onContextReturn={() => setOpen(false)}
                 onCapture={() => {}}
-                onApertureCapture={() => {}}
+                onLogCapture={() => {}}
                 onHandover={() => {}}
               />
             </Box>

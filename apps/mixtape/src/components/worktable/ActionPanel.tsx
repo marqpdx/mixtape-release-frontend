@@ -10,7 +10,7 @@ import {
   useStewardship,
 } from "@mixtape/api/hooks/console/useConsole";
 import { useHandoverDraft } from "@mixtape/api/hooks/initiatives";
-import { createApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
+import { createInitiativeLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 import { ContextSummary } from "./ContextSummary";
 import AddPanel from "@components/puddlejump/panels/AddPanel";
 import FindPanel from "@components/puddlejump/panels/FindPanel";
@@ -20,7 +20,7 @@ import SynthesizePanel from "@components/puddlejump/panels/SynthesizePanel";
 import DraftPanel from "@components/puddlejump/panels/DraftPanel";
 import RefinePanel from "@components/puddlejump/panels/RefinePanel";
 import type { WorkTableContext } from "./types";
-import type { ApertureLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
+import type { InitiativeLogEntry } from "@mixtape/api/clients/initiatives/initiativesApi";
 
 export type ActionMode = "empty" | "needs" | "reminders" | "fixes" | "handover" | "draft" | "refine" | "add" | "find" | "research" | "pattern" | "synthesize";
 
@@ -293,11 +293,11 @@ const HANDOVER_COLOR = "#0D7377";
 function HandoverPanel({
   initiativeId,
   onBack,
-  onApertureCapture,
+  onLogCapture,
 }: {
   initiativeId: string;
   onBack: () => void;
-  onApertureCapture?: (entry: ApertureLogEntry) => void;
+  onLogCapture?: (entry: InitiativeLogEntry) => void;
 }) {
   const { draft, isLoading, error, refetch } = useHandoverDraft(initiativeId);
   const [body, setBody] = useState<string | null>(null);
@@ -316,8 +316,8 @@ function HandoverPanel({
     setApproving(true);
     setApproveError(null);
     try {
-      const entry = await createApertureLogEntry(initiativeId, { kind: "handoff", body: editableBody.trim() });
-      onApertureCapture?.(entry);
+      const entry = await createInitiativeLogEntry(initiativeId, { kind: "handoff", body: editableBody.trim() });
+      onLogCapture?.(entry);
       onBack();
     } catch {
       setApproveError("Failed to save. Try again.");
@@ -448,12 +448,12 @@ export function ActionPanel({
   mode,
   context,
   onClear,
-  onApertureCapture,
+  onLogCapture,
 }: {
   mode: ActionMode;
   context: WorkTableContext;
   onClear: () => void;
-  onApertureCapture?: (entry: ApertureLogEntry) => void;
+  onLogCapture?: (entry: InitiativeLogEntry) => void;
 }) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -475,7 +475,7 @@ export function ActionPanel({
         <HandoverPanel
           initiativeId={context.id}
           onBack={onClear}
-          onApertureCapture={onApertureCapture}
+          onLogCapture={onLogCapture}
         />
       )}
       {mode === "handover" && context.kind !== "initiative" && (

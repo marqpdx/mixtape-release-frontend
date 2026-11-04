@@ -5,9 +5,9 @@ import { Badge, Box, HStack, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useHubCaptures, useStewardship } from "@mixtape/api/hooks/console/useConsole";
 import {
-  fetchApertureLog,
-  type ApertureLogEntry,
-  type ApertureLogEntryKind,
+  fetchInitiativeLog,
+  type InitiativeLogEntry,
+  type InitiativeLogEntryKind,
 } from "@mixtape/api/clients/initiatives/initiativesApi";
 import type { ActionMode } from "./ActionPanel";
 
@@ -21,8 +21,8 @@ function formatRelative(iso: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function EntryBadge({ kind }: { kind: ApertureLogEntryKind }) {
-  const map: Record<ApertureLogEntryKind, { label: string; color: string }> = {
+function EntryBadge({ kind }: { kind: InitiativeLogEntryKind }) {
+  const map: Record<InitiativeLogEntryKind, { label: string; color: string }> = {
     prose:      { label: "",        color: "gray"   },
     handoff:    { label: "handoff", color: "blue"   },
     emph:       { label: "emph",    color: "purple" },
@@ -34,7 +34,7 @@ function EntryBadge({ kind }: { kind: ApertureLogEntryKind }) {
   return <Badge colorPalette={color} size="xs" variant="subtle">{label}</Badge>;
 }
 
-function LogEntry({ entry }: { entry: ApertureLogEntry }) {
+function LogEntry({ entry }: { entry: InitiativeLogEntry }) {
   const systemBg = useColorModeValue("gray.50", "gray.800");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const isSystem = entry.is_system_generated;
@@ -109,19 +109,19 @@ function StatusBar({ onAction }: { onAction: (mode: ActionMode) => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// ApertureLogStream
+// InitiativeLogStream
 // ---------------------------------------------------------------------------
 
-export function ApertureLogStream({
+export function InitiativeLogStream({
   initiativeId,
   appendRef,
   onAction,
 }: {
   initiativeId: string;
-  appendRef?: React.MutableRefObject<((entry: ApertureLogEntry) => void) | null>;
+  appendRef?: React.MutableRefObject<((entry: InitiativeLogEntry) => void) | null>;
   onAction?: (mode: ActionMode) => void;
 }) {
-  const [entries, setEntries] = useState<ApertureLogEntry[]>([]);
+  const [entries, setEntries] = useState<InitiativeLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -132,14 +132,14 @@ export function ApertureLogStream({
   const load = useCallback(async (reset = false) => {
     if (reset) setIsLoading(true);
     try {
-      const log = await fetchApertureLog(initiativeId);
+      const log = await fetchInitiativeLog(initiativeId);
       setEntries(log.entries);
     } finally {
       if (reset) setIsLoading(false);
     }
   }, [initiativeId]);
 
-  const appendEntry = useCallback((entry: ApertureLogEntry) => {
+  const appendEntry = useCallback((entry: InitiativeLogEntry) => {
     setEntries((prev) => [...prev, entry]);
   }, []);
 
