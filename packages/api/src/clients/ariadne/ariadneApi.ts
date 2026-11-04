@@ -131,3 +131,49 @@ export async function fetchConceptByName(name: string): Promise<AriadneConcept> 
   const response = await axiosInstance.get<AriadneConcept>("/api/ariadne/concepts/", { params: { name } });
   return response.data;
 }
+
+// P8 (build spec §19.1): hybrid search -- lexical + vector + concept
+// expansion -- and saved searches as Named Lenses.
+
+export interface AriadneSearchResult {
+  passage_id: string;
+  document_title: string;
+  document_uri: string;
+  source_key: string;
+  excerpt: string;
+  found_by: ("lexical" | "vector")[];
+  vector_score: number | null;
+  concept_expansion_terms?: string[];
+}
+
+export interface AriadneSavedSearch {
+  id: string;
+  name: string;
+  query: string;
+  version: number;
+}
+
+export async function searchCorpus(query: string): Promise<AriadneSearchResult[]> {
+  const response = await axiosInstance.get<{ query: string; results: AriadneSearchResult[] }>(
+    "/api/ariadne/search/",
+    { params: { q: query } }
+  );
+  return response.data.results;
+}
+
+export async function fetchSavedSearches(): Promise<AriadneSavedSearch[]> {
+  const response = await axiosInstance.get<AriadneSavedSearch[]>("/api/ariadne/lenses/");
+  return response.data;
+}
+
+export async function saveSearch(name: string, query: string): Promise<AriadneSavedSearch> {
+  const response = await axiosInstance.post<AriadneSavedSearch>("/api/ariadne/lenses/", { name, query });
+  return response.data;
+}
+
+export async function runSavedSearch(lensId: string): Promise<AriadneSearchResult[]> {
+  const response = await axiosInstance.get<{ query: string; results: AriadneSearchResult[] }>(
+    `/api/ariadne/lenses/${lensId}/run/`
+  );
+  return response.data.results;
+}

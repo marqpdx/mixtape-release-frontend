@@ -3,7 +3,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Badge, Box, Button, Flex, Heading, HStack, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
+import { Badge, Box, Button, Flex, Heading, HStack, Input, Spinner, Text, Textarea, VStack } from "@chakra-ui/react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserIdentity } from "@mixtape/core/types/auth";
 import {
@@ -12,11 +12,17 @@ import {
   fetchPacketDetail,
   fetchRunCandidates,
   fetchRunPackets,
+  fetchSavedSearches,
   recordDecision,
+  runSavedSearch,
+  saveSearch,
+  searchCorpus,
   type AriadneEvidencePacket,
   type AriadneEvidencePacketDetail,
   type AriadneRun,
   type AriadneRunCandidate,
+  type AriadneSavedSearch,
+  type AriadneSearchResult,
   type RunDisposition,
 } from "@mixtape/api/clients/ariadne/ariadneApi";
 
@@ -58,6 +64,61 @@ export default function AriadnePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // P8: hybrid search + saved searches as Named Lenses (build spec §19.1).
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<AriadneSearchResult[] | null>(null);
+  const [searchBusy, setSearchBusy] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<AriadneSavedSearch[]>([]);
+
+  const loadSavedSearches = useCallback(async () => {
+    try {
+      setSavedSearches(await fetchSavedSearches());
+    } catch {
+      // Non-fatal -- the search box still works without the saved list.
+    }
+  }, []);
+
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    setSearchBusy(true);
+    setError(null);
+    try {
+      setSearchResults(await searchCorpus(searchQuery));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Search failed.");
+    } finally {
+      setSearchBusy(false);
+    }
+  }, [searchQuery]);
+
+  const handleSaveSearch = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    const name = window.prompt("Name this saved search:", searchQuery);
+    if (!name) return;
+    setSearchBusy(true);
+    try {
+      await saveSearch(name, searchQuery);
+      await loadSavedSearches();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Couldn't save that search.");
+    } finally {
+      setSearchBusy(false);
+    }
+  }, [searchQuery, loadSavedSearches]);
+
+  const handleRunSavedSearch = useCallback(async (lens: AriadneSavedSearch) => {
+    setSearchQuery(lens.query);
+    setSearchBusy(true);
+    setError(null);
+    try {
+      setSearchResults(await runSavedSearch(lens.id));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Couldn't run that saved search.");
+    } finally {
+      setSearchBusy(false);
+    }
+  }, []);
+
   const selectedCandidate = useMemo(
     () => candidates.find((c) => c.concept_or_phrase_key === selectedKey) ?? null,
     [candidates, selectedKey]
@@ -82,8 +143,9 @@ export default function AriadnePage() {
     if (identity && isSuperuser) {
       document.title = "Ariadne - Mixtape Crossroads";
       loadRunAndCandidates();
+      loadSavedSearches();
     }
-  }, [identity, isSuperuser, loadRunAndCandidates]);
+  }, [identity, isSuperuser, loadRunAndCandidates, loadSavedSearches]);
 
   const loadPacketsFor = useCallback(
     async (candidateKey: string) => {
@@ -276,6 +338,61 @@ export default function AriadnePage() {
             )}
           </Box>
         </Flex>
+
+        <Box className="ard-search" borderTopWidth="1px" pt={4}>
+          <Heading as="h2" size="sm" mb={2}>Search (P8)</Heading>
+          <HStack mb={2}>
+            <Input
+              size="sm"
+              placeholder="Search the corpus..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              maxW="400px"
+            />
+            <Button size="sm" onClick={handleSearch} loading={searchBusy}>Search</Button>
+            <Button size="sm" variant="outline" onClick={handleSaveSearch} loading={searchBusy}>
+              Save as Lens
+            </Button>
+          </HStack>
+
+          {savedSearches.length > 0 && (
+            <HStack mb={2} wrap="wrap">
+              <Text fontSize="xs" color="theme.textSecondary">Saved:</Text>
+              {savedSearches.map((lens) => (
+                <Badge key={lens.id} cursor="pointer" onClick={() => handleRunSavedSearch(lens)}>
+                  {lens.name}
+                </Badge>
+              ))}
+            </HStack>
+          )}
+
+          {searchResults && (
+            <VStack align="stretch" gap={2} maxH="40vh" overflowY="auto">
+              {searchResults.length === 0 && <Text fontSize="sm" color="theme.textSecondary">No matches.</Text>}
+              {searchResults.map((result) => (
+                <Box key={result.passage_id} p={2} borderWidth="1px" borderRadius="md">
+                  <HStack justify="space-between">
+                    <Text fontSize="xs" fontWeight="bold">{result.document_title || result.source_key}</Text>
+                    <HStack>
+                      {result.found_by.map((method) => (
+                        <Badge key={method} size="sm" colorPalette={method === "vector" ? "purple" : "blue"}>
+                          {method}
+                        </Badge>
+                      ))}
+                    </HStack>
+                  </HStack>
+                  <Text fontSize="sm" mt={1}>{result.excerpt}</Text>
+                  {result.concept_expansion_terms && result.concept_expansion_terms.length > 0 && (
+                    <Text fontSize="xs" color="theme.textSecondary" mt={1}>
+                      also matched via: {result.concept_expansion_terms.join(", ")}
+                    </Text>
+                  )}
+                </Box>
+              ))}
+            </VStack>
+          )}
+        </Box>
 
         {loading && <Spinner size="sm" />}
       </VStack>
