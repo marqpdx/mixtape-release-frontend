@@ -37,6 +37,19 @@ interface LinkedInIntroduction {
 
 const MIN_WORDS = 75;
 
+// Codes core sets when your own Claude account stopped the work (Service Trust ST-3).
+const ACCOUNT_CODES = new Set(['runtime_missing', 'runtime_not_ready', 'mode_not_allowed']);
+
+/** The reason a run failed, and whether it's about your Claude account. */
+function failureOf(error: unknown): { message: string; account: boolean } {
+  const payload = error as { code?: string; message?: string } | null;
+  const code = typeof payload?.code === 'string' ? payload.code : '';
+  if (ACCOUNT_CODES.has(code) && payload?.message) {
+    return { message: payload.message, account: true };
+  }
+  return { message: 'LinkedIn introduction generation failed', account: false };
+}
+
 function CopyRow({ label, text }: { label: string; text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -153,9 +166,17 @@ export function LinkedInCopyAgent({
     void load();
   }, [linkedinAction.actionRunId, linkedinAction.result, load]);
 
+  const failure = linkedinAction.error ? failureOf(linkedinAction.error) : null;
+
   useEffect(() => {
     if (!linkedinAction.error) return;
-    toaster.create({ title: 'LinkedIn introduction generation failed', type: 'error' });
+    const { message, account } = failureOf(linkedinAction.error);
+    toaster.create({
+      title: account ? 'Your Claude account' : message,
+      description: account ? message : undefined,
+      type: 'error',
+      duration: account ? 10000 : undefined,
+    });
   }, [linkedinAction.error]);
 
   const handleGenerate = () => {
@@ -208,6 +229,13 @@ export function LinkedInCopyAgent({
       iconColor="#0077B5"
     >
       <VStack gap={3} align="stretch">
+
+        {/* Your own Claude account stopped the run: say why, and where to fix it. */}
+        {failure?.account && !isGenerating && (
+          <Text fontSize="sm" color="orange.600">
+            {failure.message} Then try again here.
+          </Text>
+        )}
 
         {/* Draft / confirmed state */}
         {hasContent && !isGenerating && (
