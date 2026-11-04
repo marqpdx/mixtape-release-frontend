@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Box, Flex, IconButton, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, IconButton, Stack, Text, Textarea } from "@chakra-ui/react";
 import { IconArrowDown, IconArrowUp, IconCheck, IconFileText } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useCreateMillDraft } from "@mixtape/api/hooks/workbench";
 import { toaster } from "@mixtape/core/lib/toaster";
-import type { ExchangeEntry } from "@mixtape/api/hooks/atrium";
+import { useUpdateCheckpoint, type ExchangeEntry } from "@mixtape/api/hooks/atrium";
 import { DIALOGUE_PROVIDERS } from "@mixtape/core/types/atriumTypes";
 
 interface DialogueThreadProps {
@@ -17,6 +17,7 @@ interface DialogueThreadProps {
   streaming: boolean;
   error: string | null;
   sessionTitle?: string;
+  dialogueId?: string;
 }
 
 // Shared markdown body styles — used by AtriumDocCard
@@ -155,6 +156,54 @@ const REPLY_STOP_TEXT: Record<string, string> = {
   failed: "The agent stopped before finishing. Your message is saved; try again.",
 };
 
+/** A compact: the Dialogue so far, summarized. Later replies start from it; the person may edit it. */
+function CheckpointCard({ entry, dialogueId }: { entry: ExchangeEntry; dialogueId?: string }) {
+  const borderColor = useColorModeValue("blue.200", "blue.700");
+  const labelColor = useColorModeValue("blue.600", "blue.300");
+  const stopColor = useColorModeValue("red.500", "red.400");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(entry.content);
+  const { mutateAsync: save, isPending } = useUpdateCheckpoint();
+  const writing = entry.status === "pending" || entry.status === "streaming";
+
+  async function handleSave() {
+    if (!dialogueId || !entry.id || !draft.trim()) return;
+    await save({ sessionId: dialogueId, entryId: entry.id, content: draft.trim() });
+    setEditing(false);
+  }
+
+  return (
+    <Box borderWidth="1px" borderStyle="dashed" borderColor={borderColor} borderRadius="md" px={4} py={3}>
+      <Flex align="center" justify="space-between" mb={1}>
+        <Text fontSize="xs" fontWeight="semibold" color={labelColor} textTransform="uppercase" letterSpacing="wider">
+          Checkpoint — replies after this start from here
+        </Text>
+        {entry.status === "done" && !editing && entry.id && dialogueId && (
+          <Button size="2xs" variant="ghost" onClick={() => { setDraft(entry.content); setEditing(true); }}>Edit</Button>
+        )}
+      </Flex>
+      {editing ? (
+        <>
+          <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} fontSize="sm" />
+          <Flex gap={2} mt={2} justify="flex-end">
+            <Button size="xs" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button size="xs" colorPalette="blue" onClick={handleSave} loading={isPending} disabled={!draft.trim()}>Save</Button>
+          </Flex>
+        </>
+      ) : (
+        <Text fontSize="sm" whiteSpace="pre-wrap">
+          {writing ? "Summarizing the Dialogue so far…" : entry.content}
+        </Text>
+      )}
+      {entry.status === "failed" && (
+        <Text fontSize="sm" color={stopColor} mt={1}>
+          {REPLY_STOP_TEXT[entry.error_code ?? ""] ?? "The summary stopped before finishing; try Compact again."}
+        </Text>
+      )}
+    </Box>
+  );
+}
+
 function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTitle?: string }) {
   const isUser = entry.role === "user";
   const userBg = "var(--theme-accent-soft)";
@@ -241,7 +290,7 @@ function EntryBubble({ entry, sessionTitle }: { entry: ExchangeEntry; sessionTit
   );
 }
 
-export function DialogueThread({ entries, streaming, error, sessionTitle }: DialogueThreadProps) {
+export function DialogueThread({ entries, streaming, error, sessionTitle, dialogueId }: DialogueThreadProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const errorColor = useColorModeValue("red.500", "red.400");
@@ -281,7 +330,9 @@ export function DialogueThread({ entries, streaming, error, sessionTitle }: Dial
       <Box ref={containerRef} flex="1" minH="0" overflowY="auto" px={1} pb={2}>
         <Stack gap={3} direction="column">
           {entries.map((e, i) =>
-            e.role === "assistant" && e.entry_type === "document" ? (
+            e.entry_type === "checkpoint" ? (
+              <CheckpointCard key={e.id ?? i} entry={e} dialogueId={dialogueId} />
+            ) : e.role === "assistant" && e.entry_type === "document" ? (
               <AtriumDocCard key={e.id ?? i} entry={e} sessionTitle={sessionTitle} />
             ) : (
               <EntryBubble key={e.id ?? i} entry={e} sessionTitle={sessionTitle} />

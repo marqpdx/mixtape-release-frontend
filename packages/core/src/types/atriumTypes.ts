@@ -23,7 +23,8 @@ export interface AtriumContextStatus {
   pct: number;
 }
 
-export type AtriumEntryType = "message" | "document";
+/** checkpoint = a compact: the Dialogue so far, summarized; later replies start from it. */
+export type AtriumEntryType = "message" | "document" | "checkpoint";
 
 /** The agents that can answer in a Dialogue; the person picks one per message. */
 export type DialogueProvider = "anthropic-claude-code" | "openai-codex";

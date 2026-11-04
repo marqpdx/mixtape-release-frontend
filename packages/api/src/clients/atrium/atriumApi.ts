@@ -118,12 +118,20 @@ export async function warmDialogue(
   return { type: "ready" };
 }
 
-/** Queues a summary of the Dialogue into its InitiativeLog, written on the owner's own account. */
-export async function compactDialogue(sessionId: string): Promise<{ status: string; summary: string | null }> {
-  const response = await axiosInstance.post<{ status: string; summary: string | null }>(
+/**
+ * Compact: the server adds a checkpoint entry (the Dialogue so far, summarized on the
+ * owner's own account); later replies start from it. Follow it like a reply.
+ */
+export async function compactDialogue(sessionId: string): Promise<{ status: string; entry_id: string }> {
+  const response = await axiosInstance.post<{ status: string; entry_id: string }>(
     `/api/atrium/dialogues/${sessionId}/compact`
   );
   return response.data;
+}
+
+/** Edit a finished checkpoint; the next reply starts from the edited text. */
+export async function updateCheckpoint(sessionId: string, entryId: string, content: string): Promise<void> {
+  await axiosInstance.patch(`/api/atrium/dialogues/${sessionId}/compact`, { entry_id: entryId, content });
 }
 
 const DISTILL_POLL_MS = 2000;

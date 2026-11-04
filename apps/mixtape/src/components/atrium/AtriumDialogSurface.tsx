@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Box, Button, Flex, IconButton, Popover, Portal, Progress, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconAdjustmentsHorizontal, IconChevronDown, IconEye, IconGauge, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
+import { Box, Button, Flex, IconButton, Popover, Portal, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { IconAdjustmentsHorizontal, IconArrowsMinimize, IconChevronDown, IconEye, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useDialogues,
@@ -66,7 +66,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
   const [compactPromptVisible, setCompactPromptVisible] = useState(false);
   const [freshStartNote, setFreshStartNote] = useState(false);
 
-  const { entries, streaming, error, activityText, contextStatus, send, reset, appendLocalEntry } =
+  const { entries, streaming, error, activityText, send, reset, appendLocalEntry } =
     useAtriumExchange(activeSession);
   const { mutate: warmSession } = useWarmDialogue();
   const { mutateAsync: compactSession, isPending: compacting } = useCompactDialogue();
@@ -223,11 +223,6 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
   const sponsorGroupColor = useColorModeValue("blue.700", "blue.300");
   const sponsorPersonalColor = useColorModeValue("gray.600", "gray.400");
   const stripBg = useColorModeValue("gray.50", "gray.900");
-
-  const ctxPct = contextStatus?.pct ?? 0;
-  const ctxColorScheme = ctxPct >= 85 ? "red" : ctxPct >= 70 ? "orange" : "blue";
-
-  function handleCompactClick() { setCompactPromptVisible(true); }
 
   async function handleCompactOnly() {
     if (!activeSession) return;
@@ -421,6 +416,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
                 streaming={streaming}
                 error={error}
                 sessionTitle={activeSession.title}
+                dialogueId={activeSession.id}
               />
             ) : (
               <Box textAlign="center" pt={6}>
@@ -594,42 +590,26 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
             </Popover.Root>
           )}
 
-          {/* Context usage */}
-          {activeSession && contextStatus && (
-            <Popover.Root positioning={{ placement: "left-start" }}>
+          {/* Compact: a checkpoint entry; later replies start from it */}
+          {activeSession && (
+            <Popover.Root open={compactPromptVisible} onOpenChange={(e) => setCompactPromptVisible(e.open)} positioning={{ placement: "left-start" }}>
               <Popover.Trigger asChild>
-                <IconButton
-                  aria-label={`Context ${Math.round(contextStatus.pct)}%`}
-                  title={`Context ${Math.round(contextStatus.pct)}%`}
-                  size="sm" variant="ghost"
-                  color={ctxPct >= 85 ? "red.500" : ctxPct >= 70 ? "orange.500" : undefined}
-                >
-                  <IconGauge size={16} />
+                <IconButton aria-label="Compact" title="Compact" size="sm" variant="ghost" disabled={streaming}>
+                  <IconArrowsMinimize size={16} />
                 </IconButton>
               </Popover.Trigger>
               <Portal>
                 <Popover.Positioner zIndex={200}>
-                  <Popover.Content w="220px">
+                  <Popover.Content w="240px">
                     <Box p={3}>
-                      <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Context</Text>
-                      <Flex align="center" gap={2} mb={compactPromptVisible ? 2 : 0}>
-                        <Progress.Root value={contextStatus.pct} max={100} size="xs" colorPalette={ctxColorScheme} flex={1}>
-                          <Progress.Track><Progress.Range /></Progress.Track>
-                        </Progress.Root>
-                        <Text fontSize="xs" color={subtitleColor} flexShrink={0}>{Math.round(contextStatus.pct)}%</Text>
-                        {contextStatus.pct >= 50 && !compactPromptVisible && (
-                          <Button size="2xs" variant="ghost" onClick={handleCompactClick} loading={compacting} flexShrink={0}>Compact</Button>
-                        )}
+                      <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Compact</Text>
+                      <Text fontSize="xs" color={subtitleColor} mb={2}>
+                        Summarize this Dialogue into a checkpoint you can edit. Replies after it start from the checkpoint.
+                      </Text>
+                      <Flex gap={2}>
+                        <Button size="2xs" colorPalette="blue" variant="outline" onClick={handleDistillBeforeCompact}>Distill first →</Button>
+                        <Button size="2xs" colorPalette="blue" onClick={handleCompactOnly} loading={compacting}>Compact</Button>
                       </Flex>
-                      {compactPromptVisible && (
-                        <Flex direction="column" gap={1.5}>
-                          <Text fontSize="xs" color={subtitleColor}>Save a Distillate before compressing?</Text>
-                          <Flex gap={2}>
-                            <Button size="2xs" colorPalette="blue" variant="outline" onClick={handleDistillBeforeCompact}>Distill →</Button>
-                            <Button size="2xs" variant="ghost" onClick={handleCompactOnly} loading={compacting}>Compact only</Button>
-                          </Flex>
-                        </Flex>
-                      )}
                     </Box>
                   </Popover.Content>
                 </Popover.Positioner>

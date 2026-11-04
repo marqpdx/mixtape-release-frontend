@@ -111,8 +111,23 @@ export function useWarmDialogue() {
 }
 
 export function useCompactDialogue() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) => atriumApi.compactDialogue(sessionId),
+    // The checkpoint entry arrives pending; the exchange follows it like a reply.
+    onSuccess: (_result, sessionId) => {
+      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(sessionId) });
+    },
+  });
+}
+
+export function useUpdateCheckpoint() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { sessionId: string; entryId: string; content: string }>({
+    mutationFn: ({ sessionId, entryId, content }) => atriumApi.updateCheckpoint(sessionId, entryId, content),
+    onSuccess: (_result, { sessionId }) => {
+      queryClient.invalidateQueries({ queryKey: atriumQueryKeys.entries(sessionId) });
+    },
   });
 }
 
@@ -261,7 +276,7 @@ export function useAtriumExchange(session: Dialogue | null) {
             const last = next[next.length - 1];
             const placeholder: ExchangeEntry = { id: entryId, role: "assistant", content: "", entry_type: "message", speaker, status: "streaming" };
             if (last && last.role === "assistant" && (last.id === entryId || last.id === undefined)) {
-              next[next.length - 1] = { ...last, ...placeholder, content: last.content };
+              next[next.length - 1] = { ...last, ...placeholder, content: last.content, entry_type: last.entry_type ?? "message" };
             } else {
               next.push(placeholder);
             }
