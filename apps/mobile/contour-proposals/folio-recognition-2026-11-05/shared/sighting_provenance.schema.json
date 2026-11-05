@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:contour:shared.sighting_provenance:0.1.0",
+  "title": "SightingProvenance (draft for Contour intake)",
+  "description": "Core-bound provenance; shape-level confidence is required only for model origin. Formats require explicit validator enforcement.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "model_id",
+        "model_revision",
+        "execution_action_run_id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "model"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "model_revision": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "execution_action_run_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "actor_id",
+        "operation_id",
+        "recorded_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "person"
+        },
+        "actor_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(Z|\\+00:00)$"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "entry_id",
+        "entry_revision"
+      ],
+      "properties": {
+        "kind": {
+          "const": "dictionary"
+        },
+        "entry_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "entry_revision": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  ]
+}

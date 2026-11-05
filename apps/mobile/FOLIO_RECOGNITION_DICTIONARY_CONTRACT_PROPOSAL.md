@@ -8,6 +8,14 @@ Implements the bounded drafting request in Puddlejump
 The CTO's six forks and Folio-owned, hand-editable Dictionary are decided;
 field names, versions, storage details and interface contracts below are proposals.
 
+> **2026-11-05 intake decision:** Puddlejump's approved next-step handoff supersedes
+> the pending choices below: shared definitions go on `shared/`; recognition is
+> `writing.fiction_note_recognition` 0.1.0, separate from composed reading;
+> cross-Entity Dictionary merges are refused; the proposed partial status mapping
+> is accepted. Matching explicitly specifies NFC/case-folding with stored spelling
+> unchanged. Intake drafts are in `contour-proposals/folio-recognition-2026-11-05/`.
+> Blue owns backend/schema/API review; these files authorize no implementation.
+
 ## 1. Scope and delivery
 
 The first return is recognition the writer can shape: **Character and Setting**.

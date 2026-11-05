@@ -1,0 +1,60 @@
+id: writing.fiction_note_recognition
+version: 0.1.0
+status: draft
+domain: writing
+source_shapes: []
+source_note: Exact captured FolioNote sources and append-only corrections in an explicitly selected Fiction Folio; capture is not a Shape.
+primary_target: null
+secondary_targets:
+- writing.character
+- writing.setting
+targets_note: Character and Setting are equal review buckets; raw candidates are not canonical Sightings. Scene passage selection follows separately.
+operator_intent: Return bare recognition evidence and this Folio's confirmed-name suggestions so the writer can select, correct and explicitly confirm them.
+sectioning: whole_document
+extraction_grain: whole_note
+token_posture: bounded_note_and_explicit_context
+steps:
+- {id: source_context_preparation, kind: deterministic}
+- {id: cue_recognition, kind: deterministic}
+- {id: mention_recognition, kind: model, backend: local, model_calls: 1}
+- {id: checked_recognition, kind: deterministic}
+coverage:
+  scope: recognition_only
+  public_status_on_success: partial
+  semantic_interpretation: not_run
+  actual_step_states: recorded_without_fabricated_semantic_step
+post_reading_resolution:
+  owner: folio
+  kind: deterministic_dictionary_matching
+  creates_records: false
+  matching_rule: folio_dictionary.nfc_casefold.v1
+  normalization: NFC(casefold(NFC(value)))
+  stored_spelling: unchanged
+  source_spans: exact_original_unicode_code_points_with_alignment
+  collisions: alternatives_require_explicit_choice
+dependencies:
+  schema_definitions:
+  - {id: shared.sighting_provenance, version: 0.1.0}
+  - {id: shared.dictionary_entry, version: 0.1.0}
+  review_shapes:
+  - {id: writing.character, version: 0.2.0}
+  - {id: writing.setting, version: 0.2.0}
+  source_note: The complete selected dependency bundle is pinned by version and digest; no network schema lookup or silent truncation.
+validation:
+- exact_original_source_spans
+- candidate_and_context_identity
+- provenance_bound_by_core
+- raw_model_scores_not_canonical_confidence
+- no_automatic_sighting_or_entity_from_recognition
+- folio_scoped_dictionary_revisions
+- unknown_fields_are_errors
+failure_modes:
+- stale_source_or_context_applied
+- generic_person_mistaken_for_fictional_character
+- cue_hit_mistaken_for_semantic_judgement
+- normalized_offsets_used_against_original_text
+- another_folios_aliases_imported_implicitly
+- cloud_transcription_or_inference_for_local_only_folio
+- unavailable_local_backend_reported_as_empty_success
+- cross_entity_dictionary_merge
+notes: A distinct Strategy beside writing.fiction_note_reading 0.1.0. Recognition/Dictionary matches remain proposals. Confirm and remember is an atomic human command; same-Entity Dictionary merges only. Contour and Blue review precede consumer changes, local installation or phone builds.

@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:contour:writing.setting:0.2.0",
+  "type": "object",
+  "properties": {
+    "sighting_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "shape_version": {
+      "const": "0.2.0"
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "source_locator": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "source_ref",
+          "source_revision",
+          "start",
+          "end",
+          "quote"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 20
+    },
+    "uncertain": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_locator": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_revision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "quote": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "source_ref",
+                "source_revision",
+                "start",
+                "end",
+                "quote"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "field",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "shape_id": {
+      "const": "writing.setting"
+    },
+    "name_as_said": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cue": {
+      "type": "object",
+      "properties": {
+        "term": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_locator": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "source_ref",
+              "source_revision",
+              "start",
+              "end",
+              "quote"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "term",
+        "source_locator"
+      ],
+      "additionalProperties": false
+    },
+    "attributes": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_locator": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_revision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "quote": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "source_ref",
+                "source_revision",
+                "start",
+                "end",
+                "quote"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "source_locator"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "$ref": "urn:contour:shared.sighting_provenance:0.1.0"
+    }
+  },
+  "required": [
+    "sighting_id",
+    "shape_version",
+    "source_locator",
+    "uncertain",
+    "shape_id",
+    "name_as_said",
+    "provenance"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "provenance": {
+            "properties": {
+              "kind": {
+                "const": "model"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "confidence"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "confidence"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:contour:shared.dictionary_entry:0.1.0",
+  "title": "DictionaryEntry (draft for Contour intake)",
+  "description": "Neutral writer-confirmed value; Folio, Entity, authority, command receipts and lifecycle belong to the storage/API wrapper.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entry_id",
+    "revision",
+    "shape_id",
+    "shape_version",
+    "names",
+    "provenance"
+  ],
+  "properties": {
+    "entry_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "shape_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "shape_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][A-Za-z0-9.-]+)?$"
+    },
+    "names": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "main",
+        "variants"
+      ],
+      "properties": {
+        "main": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 255
+        },
+        "variants": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "maxLength": 255
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "provenance": {
+      "allOf": [
+        {
+          "$ref": "urn:contour:shared.sighting_provenance:0.1.0"
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "person"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

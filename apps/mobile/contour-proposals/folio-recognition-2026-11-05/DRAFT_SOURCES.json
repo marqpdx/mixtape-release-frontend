@@ -1,0 +1,9 @@
+{
+  "status": "proposal_only",
+  "handoff": "zz/handoff-2026-11-05-mobile-folio-contract-decided-next.md",
+  "approved_decisions_commit": "289d1be",
+  "canonical_files_sha256": {
+    "writing/character.schema.json": "08be84f0b2c613e1e91305462092d36e8123cb4518bf7e870ea067ec209ec53a",
+    "writing/setting.schema.json": "52eee588b084bb51aba691ad6112f5e2497832b3dff9b586cc2a37e4c8c56bd4"
+  }
+}

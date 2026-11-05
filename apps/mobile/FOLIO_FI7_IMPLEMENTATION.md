@@ -113,3 +113,24 @@ subsequent work. It does not yet make Folio's phone reading ready.
 Verification: 231 tests, OK, four skipped, using the same isolated Folio/Shuttle
 URL configuration noted above. The new unit adds 18 Strategy tests and nine
 source-adapter tests; no actual model was invoked for these cases.
+
+## November 5 handoff: contracts and ownership
+
+Picked up `zz/handoff-2026-11-05-mobile-folio-contract-decided-next.md`, approved
+by the CTO. Blue owns the local execution seam, command receipts, decision fields,
+migration and shared API schema; BA2 owns host fit; Puddlejump places Contour files.
+Mobile's next delivery is drafting, not schema/API implementation or a phone build.
+
+Drafts under `contour-proposals/folio-recognition-2026-11-05/` include shared
+provenance/Dictionary definitions, Character/Setting 0.2.0 and the separate
+`writing.fiction_note_recognition` 0.1.0 Strategy. Same-Entity Dictionary merges
+only; public status is partial/recognition_only/semantic not_run, with actual step
+states preserved. Matching proposes NFC(casefold(NFC(value))) with original
+spelling/offsets preserved. These are intake drafts; canonical files, runtime
+schemas and consumer bundles remain unchanged until review and placement.
+
+Verification: 52 proposed-schema cases plus original-schema hash and Unicode rule
+checks pass offline. Runtime $ref resolution and actual enforcement of format
+checks remain Blue/Puddlejump integration work. NER M3 cases and the proposed
+small local generative comparator are the next Mobile/NER Eval drafting units;
+new model choice still gets the CTO's go-ahead before download/run.
