@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Flex, Input, Stack, Text, Textarea } from "@chakra-ui/react";
 import { useColorModeValue } from "@components/ui/color-mode";
-import { useUpdateDialogue } from "@mixtape/api/hooks/atrium";
+import { useInitiativeMemory, useUpdateDialogue, useUpdateInitiativeMemory } from "@mixtape/api/hooks/atrium";
 import type { Dialogue } from "@mixtape/core/types/atriumTypes";
 
 interface AtriumMemorySeedEditorProps {
@@ -14,8 +14,16 @@ interface AtriumMemorySeedEditorProps {
 
 export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMemorySeedEditorProps) {
   const [title, setTitle] = useState(session.title);
-  const [context, setContext] = useState(session.session_context);
-  const { mutateAsync: updateSession, isPending } = useUpdateDialogue();
+  // The memory belongs to the Dialogue's Initiative (CTO, 2026-11-04): every Dialogue in it opens with it.
+  const { memory: initiativeMemory } = useInitiativeMemory(session.id);
+  const savedMemory = initiativeMemory?.memory ?? "";
+  const [context, setContext] = useState(savedMemory);
+  const { mutateAsync: updateSession, isPending: savingTitle } = useUpdateDialogue();
+  const { mutateAsync: updateMemory, isPending: savingMemory } = useUpdateInitiativeMemory();
+  const isPending = savingTitle || savingMemory;
+  const initiativeName = initiativeMemory
+    ? initiativeMemory.initiative_is_personal ? "Personal" : initiativeMemory.initiative_title
+    : null;
 
   const bgColor = useColorModeValue("gray.50", "gray.850");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -26,16 +34,21 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
   // so in-progress edits aren't clobbered by re-renders.
   useEffect(() => {
     setTitle(session.title);
-    setContext(session.session_context);
   }, [session.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isDirty = title !== session.title || context !== session.session_context;
+  useEffect(() => {
+    setContext(savedMemory);
+  }, [savedMemory]);
+
+  const isDirty = title !== session.title || (!!initiativeMemory && context !== savedMemory);
 
   async function handleSave() {
-    const updated = await updateSession({
-      sessionId: session.id,
-      data: { title, session_context: context },
-    });
+    if (initiativeMemory && context !== savedMemory) {
+      await updateMemory({ dialogueId: session.id, memory: context });
+    }
+    const updated = title !== session.title
+      ? await updateSession({ sessionId: session.id, data: { title } })
+      : session;
     onSaved(updated);
   }
 
@@ -50,12 +63,12 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
       <Stack gap={4}>
         <Stack gap={1}>
           <Text fontSize="xs" fontWeight="medium" color={labelColor} textTransform="uppercase" letterSpacing="wide">
-            Session title
+            Dialogue title
           </Text>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            aria-label="Session title"
+            aria-label="Dialogue title"
             placeholder="Untitled"
             size="sm"
             disabled={isPending}
@@ -64,20 +77,22 @@ export function AtriumMemorySeedEditor({ session, onSaved, onCancel }: AtriumMem
 
         <Stack gap={1}>
           <Text fontSize="xs" fontWeight="medium" color={labelColor} textTransform="uppercase" letterSpacing="wide">
-            Memory seed
+            {initiativeName ? `Memory — ${initiativeName}` : "Memory"}
           </Text>
           <Textarea
             value={context}
             onChange={(e) => setContext(e.target.value)}
-            aria-label="Memory seed"
-            placeholder="Standing context for this session — your role, the project state, working principles, or anything Claude should know at the start of each exchange."
+            aria-label="Initiative memory"
+            placeholder="What matters for this work: your role, decisions made, where it stands, working principles. Agents read it at the start of every Dialogue here."
             rows={5}
             fontSize="sm"
-            disabled={isPending}
+            disabled={isPending || !initiativeMemory}
             resize="vertical"
           />
           <Text fontSize="xs" color={hintColor}>
-            This seeds every exchange in this session. Equivalent to a CLAUDE.md for the conversation.
+            {initiativeMemory
+              ? `Every Dialogue in ${initiativeName} starts with this.`
+              : "This Dialogue has no Initiative to keep a memory in."}
           </Text>
         </Stack>
 

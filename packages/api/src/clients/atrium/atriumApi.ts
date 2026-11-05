@@ -42,6 +42,24 @@ export async function fetchAtriumStart(): Promise<Dialogue> {
   return response.data;
 }
 
+/** The memory of the Initiative a Dialogue belongs to: every Dialogue in it opens with this. */
+export interface InitiativeMemory {
+  initiative_id: string;
+  initiative_title: string;
+  initiative_is_personal: boolean;
+  memory: string;
+}
+
+export async function fetchInitiativeMemory(dialogueId: string): Promise<InitiativeMemory> {
+  const response = await axiosInstance.get<InitiativeMemory>(`/api/atrium/dialogues/${dialogueId}/memory`);
+  return response.data;
+}
+
+export async function updateInitiativeMemory(dialogueId: string, memory: string): Promise<InitiativeMemory> {
+  const response = await axiosInstance.patch<InitiativeMemory>(`/api/atrium/dialogues/${dialogueId}/memory`, { memory });
+  return response.data;
+}
+
 export interface InitiativeLogEntryRecord {
   id: string;
   kind: string;

@@ -525,11 +525,11 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
             </Popover.Root>
           )}
 
-          {/* Memory seed */}
+          {/* Memory (the Initiative's) */}
           {activeSession && (
             <Popover.Root open={memoryOpen} onOpenChange={(e) => setMemoryOpen(e.open)} positioning={{ placement: "left-start" }}>
               <Popover.Trigger asChild>
-                <IconButton aria-label="Memory seed" title="Memory seed" size="sm"
+                <IconButton aria-label="Memory" title="Memory" size="sm"
                   variant={memoryOpen ? "solid" : "ghost"} colorPalette={memoryOpen ? "blue" : undefined}>
                   <IconPencil size={16} />
                 </IconButton>
@@ -539,7 +539,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
                   <Popover.Content w="280px">
                     <Box p={3}>
                       <Flex align="center" justify="space-between" mb={2}>
-                        <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider">Memory seed</Text>
+                        <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider">Memory</Text>
                         <Button size="2xs" variant="ghost" colorPalette="red" onClick={handleStartFresh} loading={resetting} disabled={streaming}>
                           Start fresh
                         </Button>

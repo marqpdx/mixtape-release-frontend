@@ -58,6 +58,25 @@ export function useCreateDialogue() {
   });
 }
 
+export function useInitiativeMemory(dialogueId: string | null) {
+  const { data, isLoading, error } = useQuery<atriumApi.InitiativeMemory, Error>({
+    queryKey: [...atriumQueryKeys.all, "memory", dialogueId ?? ""],
+    queryFn: () => atriumApi.fetchInitiativeMemory(dialogueId!),
+    enabled: !!dialogueId,
+    retry: false,
+  });
+  return { memory: data ?? null, isLoading, error };
+}
+
+export function useUpdateInitiativeMemory() {
+  const queryClient = useQueryClient();
+  return useMutation<atriumApi.InitiativeMemory, Error, { dialogueId: string; memory: string }>({
+    mutationFn: ({ dialogueId, memory }) => atriumApi.updateInitiativeMemory(dialogueId, memory),
+    // Every Dialogue in the Initiative shares it.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "memory"] }),
+  });
+}
+
 export function useOpenInitiative() {
   const queryClient = useQueryClient();
   return useMutation<Dialogue, Error, string>({
