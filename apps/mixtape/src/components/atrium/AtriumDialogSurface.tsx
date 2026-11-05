@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Box, Button, Flex, IconButton, Popover, Portal, Skeleton, Stack, Text } from "@chakra-ui/react";
-import { IconAdjustmentsHorizontal, IconArrowsMinimize, IconChevronDown, IconEye, IconHistory, IconPencil, IconPlus, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
+import { Box, Button, Flex, IconButton, Input, Popover, Portal, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { IconAdjustmentsHorizontal, IconArrowsMinimize, IconChevronDown, IconEye, IconHistory, IconPencil, IconPlus, IconSearch, IconSparkles, IconTarget, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 import { useColorModeValue } from "@components/ui/color-mode";
 import {
   useDialogues,
@@ -18,7 +18,7 @@ import {
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd, useTrack } from "@mixtape/api/hooks/switchboard";
 import { DIALOGUE_PROVIDERS } from "@mixtape/core/types/atriumTypes";
-import { fetchAtriumStart } from "@mixtape/api/clients/atrium/atriumApi";
+import { fetchAtriumStart, searchDialogues, type DialogueSearchResult } from "@mixtape/api/clients/atrium/atriumApi";
 import type { AtriumDialMode, Dialogue, DialogueProvider } from "@mixtape/core/types/atriumTypes";
 import { DialogueThread } from "./DialogueThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
@@ -55,6 +55,23 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
   const searchParams = useSearchParams();
   const { mutateAsync: openInitiative, isPending: opening } = useOpenInitiative();
   const [provider, setProvider] = useState<DialogueProvider>("anthropic-claude-code");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<DialogueSearchResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  async function handleSearch() {
+    const q = searchText.trim();
+    if (q.length < 2) return;
+    setSearching(true);
+    try {
+      setSearchResults(await searchDialogues(q));
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateDialogue();
   const { mutateAsync: updateSession } = useUpdateDialogue();
@@ -487,6 +504,51 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
                       <Button size="xs" variant="ghost" onClick={() => handleNewSession()} loading={creating} justifyContent="flex-start">
                         <IconPlus size={12} /> New Dialogue
                       </Button>
+                    </Flex>
+                  </Box>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Portal>
+          </Popover.Root>
+
+          {/* Search: find a Dialogue by title or by what was said */}
+          <Popover.Root open={searchOpen} onOpenChange={(e) => setSearchOpen(e.open)} positioning={{ placement: "left-start" }}>
+            <Popover.Trigger asChild>
+              <IconButton aria-label="Search Dialogues" title="Search Dialogues" size="sm" variant="ghost">
+                <IconSearch size={16} />
+              </IconButton>
+            </Popover.Trigger>
+            <Portal>
+              <Popover.Positioner zIndex={200}>
+                <Popover.Content w="320px">
+                  <Box p={3}>
+                    <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Search Dialogues</Text>
+                    <Flex gap={2} mb={2}>
+                      <Input size="sm" value={searchText} placeholder="What was that about…"
+                        onChange={(e) => setSearchText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }} />
+                      <Button size="sm" onClick={handleSearch} loading={searching}>Find</Button>
+                    </Flex>
+                    <Flex direction="column" gap={1} maxH="360px" overflowY="auto">
+                      {searchResults?.length === 0 && (
+                        <Text fontSize="xs" color={subtitleColor}>No Dialogues found.</Text>
+                      )}
+                      {searchResults?.map((r) => (
+                        <Box key={r.id} as="button" textAlign="left" px={2} py={1.5} borderRadius="md" _hover={{ bg: stripBg }}
+                          onClick={() => { handleSelectSession(r); setSearchOpen(false); }}>
+                          <Text fontSize="xs" color={subtitleColor} lineClamp={1}>
+                            {r.initiative_is_personal || !r.initiative_title ? "Personal" : r.initiative_title}
+                          </Text>
+                          <Text fontSize="sm" fontWeight="600" lineClamp={1}>{r.title || "Dialogue"}</Text>
+                          {r.snippet && (
+                            <Text fontSize="xs" color={subtitleColor} lineClamp={2}>
+                              {r.snippet.split(/(«[^»]*»)/).map((part, i) =>
+                                part.startsWith("«") ? <b key={i}>{part.slice(1, -1)}</b> : part
+                              )}
+                            </Text>
+                          )}
+                        </Box>
+                      ))}
                     </Flex>
                   </Box>
                 </Popover.Content>

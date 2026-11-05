@@ -36,6 +36,15 @@ export async function openInitiative(initiativeId: string): Promise<Dialogue> {
   return response.data;
 }
 
+/** A Dialogue found by search, with a snippet (matches between « and »). */
+export type DialogueSearchResult = Dialogue & { snippet: string };
+
+/** Find your Dialogues by title or by what was said in them. */
+export async function searchDialogues(q: string): Promise<DialogueSearchResult[]> {
+  const response = await axiosInstance.get<{ results: DialogueSearchResult[] }>("/api/atrium/search", { params: { q } });
+  return response.data.results;
+}
+
 /** Where personal Atrium opens: the most recently active Dialogue, else Initiative Zero's. */
 export async function fetchAtriumStart(): Promise<Dialogue> {
   const response = await axiosInstance.get<Dialogue>("/api/atrium/me/start");
