@@ -94,6 +94,7 @@ export default function AriadnePage() {
   const [activeRun, setActiveRun] = useState<AriadneInquiryRun | null>(null);
   const [themes, setThemes] = useState<AriadneInquiryTheme[]>([]);
   const [draftUseModel, setDraftUseModel] = useState(false);
+  const [draftCloudApproved, setDraftCloudApproved] = useState(false);
   const [activeReview, setActiveReview] = useState<AriadneInquiryReview | null>(null);
   const [inquiryBusy, setInquiryBusy] = useState(false);
 
@@ -195,13 +196,13 @@ export default function AriadnePage() {
     setInquiryBusy(true);
     setError(null);
     try {
-      setActiveReview(await draftReview(activeRun.id, draftUseModel));
+      setActiveReview(await draftReview(activeRun.id, draftUseModel, draftCloudApproved));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Draft needs use_model checked -- it's the one step that must generate prose.");
     } finally {
       setInquiryBusy(false);
     }
-  }, [activeRun, draftUseModel]);
+  }, [activeRun, draftUseModel, draftCloudApproved]);
 
   const handleCurate = useCallback(
     async (citationId: string, action: "accept" | "amend" | "strike") => {
@@ -677,7 +678,17 @@ export default function AriadnePage() {
                         checked={draftUseModel}
                         onChange={(e) => setDraftUseModel(e.target.checked)}
                       />{" "}
-                      <Text as="span" fontSize="xs">generate with model (Inkwell, §19.5 consent -- required)</Text>
+                      <Text as="span" fontSize="xs">generate with model (§19.5 consent -- required)</Text>
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={draftCloudApproved}
+                        onChange={(e) => setDraftCloudApproved(e.target.checked)}
+                      />{" "}
+                      <Text as="span" fontSize="xs">
+                        on cloud, via your connected account (Heddle CR-01 -- separate consent; local Inkwell otherwise)
+                      </Text>
                     </label>
                     <Button size="xs" onClick={handleDraft} loading={inquiryBusy}>Draft</Button>
                   </HStack>

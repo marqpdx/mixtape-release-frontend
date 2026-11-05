@@ -236,6 +236,17 @@ export interface AriadneCitation {
   rejected_passage_ids?: string[];
 }
 
+export interface AriadneDraftCall {
+  theme_id: string;
+  consent_id: string;
+  account: string;
+  prompt_digest: string;
+  failure: string | null;
+  elapsed_ms: number | null;
+  usage: Record<string, unknown> | null;
+  refinement_note: string | null;
+}
+
 export interface AriadneInquiryReview {
   id: string;
   inquiry_id: string;
@@ -245,6 +256,9 @@ export interface AriadneInquiryReview {
   citations: AriadneCitation[];
   uncited_claim_count: number;
   status: "draft" | "curated";
+  // Heddle CR-01: one entry per per-theme call that ran cloud_approved=true;
+  // empty when Draft ran local (use_model only).
+  draft_calls: AriadneDraftCall[];
   created_at: string;
 }
 
@@ -309,9 +323,14 @@ export async function assembleThemePacket(themeId: string): Promise<AriadneEvide
   return response.data;
 }
 
-export async function draftReview(runId: string, useModel: boolean): Promise<AriadneInquiryReview> {
+export async function draftReview(
+  runId: string,
+  useModel: boolean,
+  cloudApproved: boolean = false
+): Promise<AriadneInquiryReview> {
   const response = await axiosInstance.post<AriadneInquiryReview>(`/api/ariadne/inquiry-runs/${runId}/draft/`, {
     use_model: useModel,
+    cloud_approved: cloudApproved,
   });
   return response.data;
 }
