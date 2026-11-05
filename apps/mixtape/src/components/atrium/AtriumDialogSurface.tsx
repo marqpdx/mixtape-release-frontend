@@ -673,7 +673,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
                     <Box p={3}>
                       <Text fontSize="xs" fontWeight="700" color={subtitleColor} textTransform="uppercase" letterSpacing="wider" mb={2}>Compact</Text>
                       <Text fontSize="xs" color={subtitleColor} mb={2}>
-                        Summarize this Dialogue into a checkpoint you can edit. Replies after it start from the checkpoint.
+                        For a long Dialogue: write a summary of it so far as a checkpoint. Later replies read the summary instead of the whole Dialogue, so they stay quick and focused. You can edit the summary. Distill first if you want to save notes from the Dialogue before summarizing.
                       </Text>
                       <Flex gap={2}>
                         <Button size="2xs" colorPalette="blue" variant="outline" onClick={handleDistillBeforeCompact}>Distill first →</Button>
@@ -710,14 +710,20 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
         pt={3}
       >
         {activeSession && (
-          <Flex gap={1} mb={2} align="center">
-            <Text fontSize="xs" color={subtitleColor} mr={1}>Reply from</Text>
-            {DIALOGUE_PROVIDERS.map((p) => (
-              <Button key={p.value} size="2xs" variant={provider === p.value ? "solid" : "outline"} colorPalette="blue"
-                onClick={() => setProvider(p.value)} disabled={streaming}>
-                {p.label}
-              </Button>
-            ))}
+          <Flex gap={2} mb={2} align="center" wrap="wrap">
+            <Text fontSize="sm" fontWeight="medium">Who replies</Text>
+            <Flex borderWidth="1px" borderColor={borderColor} borderRadius="md" p="2px" gap="2px" role="radiogroup" aria-label="Who replies">
+              {DIALOGUE_PROVIDERS.map((p) => (
+                <Button key={p.value} size="sm" variant={provider === p.value ? "solid" : "ghost"} colorPalette="blue"
+                  role="radio" aria-checked={provider === p.value}
+                  onClick={() => setProvider(p.value)} disabled={streaming}>
+                  {p.label}
+                </Button>
+              ))}
+            </Flex>
+            <Text fontSize="xs" color={subtitleColor}>
+              Choose for each reply; each one sees what the others said.
+            </Text>
           </Flex>
         )}
         <AtriumComposeBar

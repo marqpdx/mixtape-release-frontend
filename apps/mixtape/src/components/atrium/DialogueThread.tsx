@@ -160,6 +160,7 @@ const REPLY_STOP_TEXT: Record<string, string> = {
 function CheckpointCard({ entry, dialogueId }: { entry: ExchangeEntry; dialogueId?: string }) {
   const borderColor = useColorModeValue("blue.200", "blue.700");
   const labelColor = useColorModeValue("blue.600", "blue.300");
+  const cardBg = useColorModeValue("blue.50", "blue.950");
   const stopColor = useColorModeValue("red.500", "red.400");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(entry.content);
@@ -173,11 +174,16 @@ function CheckpointCard({ entry, dialogueId }: { entry: ExchangeEntry; dialogueI
   }
 
   return (
-    <Box borderWidth="1px" borderStyle="dashed" borderColor={borderColor} borderRadius="md" px={4} py={3}>
+    <Box borderWidth="1px" borderStyle="dashed" borderColor={borderColor} bg={cardBg} borderRadius="md" px={4} py={3}>
       <Flex align="center" justify="space-between" mb={1}>
-        <Text fontSize="xs" fontWeight="semibold" color={labelColor} textTransform="uppercase" letterSpacing="wider">
-          Checkpoint — replies after this start from here
-        </Text>
+        <Box>
+          <Text fontSize="xs" fontWeight="semibold" color={labelColor} textTransform="uppercase" letterSpacing="wider">
+            Checkpoint
+          </Text>
+          <Text fontSize="xs" color={labelColor}>
+            A summary of the Dialogue up to here. From now on, replies read this summary instead of everything above it; edit it to change what they remember.
+          </Text>
+        </Box>
         {entry.status === "done" && !editing && entry.id && dialogueId && (
           <Button size="2xs" variant="ghost" onClick={() => { setDraft(entry.content); setEditing(true); }}>Edit</Button>
         )}
