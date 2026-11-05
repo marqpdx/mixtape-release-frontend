@@ -30,9 +30,15 @@ export async function createDialogue(data: {
   return response.data;
 }
 
-/** Open an Initiative in Atrium: its Dialogue Zero (the first Dialogue, created if none). */
-export async function openDialogueZero(initiativeId: string): Promise<Dialogue> {
-  const response = await axiosInstance.post<Dialogue>(`/api/atrium/initiatives/${initiativeId}/dialogue-zero`);
+/** Open an Initiative in Atrium: its most recent Dialogue, or a new one if it has none. */
+export async function openInitiative(initiativeId: string): Promise<Dialogue> {
+  const response = await axiosInstance.post<Dialogue>(`/api/atrium/initiatives/${initiativeId}/open`);
+  return response.data;
+}
+
+/** Where personal Atrium opens: the most recently active Dialogue, else Initiative Zero's. */
+export async function fetchAtriumStart(): Promise<Dialogue> {
+  const response = await axiosInstance.get<Dialogue>("/api/atrium/me/start");
   return response.data;
 }
 

@@ -91,6 +91,8 @@ export interface Dialogue {
   sponsor_slug: string | null;
   initiative_id: string | null;
   initiative_title: string | null;
+  /** True in Initiative Zero, the member's default Initiative; shown as "Personal". */
+  initiative_is_personal: boolean;
   status: DialogueStatus;
   last_activity_at: string | null;
   entry_count: number;

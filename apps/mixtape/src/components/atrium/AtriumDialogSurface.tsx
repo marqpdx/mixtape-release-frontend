@@ -14,10 +14,11 @@ import {
   useWarmDialogue,
   useCompactDialogue,
   useResetDialogue,
-  useOpenDialogueZero,
+  useOpenInitiative,
 } from "@mixtape/api/hooks/atrium";
 import { useFind, useAdd, useTrack } from "@mixtape/api/hooks/switchboard";
 import { DIALOGUE_PROVIDERS } from "@mixtape/core/types/atriumTypes";
+import { fetchAtriumStart } from "@mixtape/api/clients/atrium/atriumApi";
 import type { AtriumDialMode, Dialogue, DialogueProvider } from "@mixtape/core/types/atriumTypes";
 import { DialogueThread } from "./DialogueThread";
 import { AtriumComposeBar } from "./AtriumComposeBar";
@@ -52,7 +53,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { mutateAsync: openDialogueZero, isPending: opening } = useOpenDialogueZero();
+  const { mutateAsync: openInitiative, isPending: opening } = useOpenInitiative();
   const [provider, setProvider] = useState<DialogueProvider>("anthropic-claude-code");
   const { sponsorContext } = useAtriumSponsorContext(groupSlug);
   const { mutateAsync: createSession, isPending: creating } = useCreateDialogue();
@@ -84,10 +85,10 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
-  // Opening an Initiative enters its Dialogue Zero (the first one, made if there is none).
+  // Opening an Initiative lands on its most recent Dialogue (a new one if it has none).
   async function handleSelectInitiative(initiativeId: string) {
     if (activeSession?.initiative_id === initiativeId) return;
-    const session = await openDialogueZero(initiativeId);
+    const session = await openInitiative(initiativeId);
     handleSelectSession(session);
   }
 
@@ -106,6 +107,10 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
     const named = dialogueId ? sessions.find((s) => s.id === dialogueId) : undefined;
     if (named) handleSelectSession(named);
     else if (initiativeId && initiativeId !== activeSession?.initiative_id) handleSelectInitiative(initiativeId);
+    else if (!dialogueId && !initiativeId && !activeSession && !groupSlug) {
+      // Personal Atrium with nothing named: the Initiative last worked in, else Initiative Zero.
+      fetchAtriumStart().then(handleSelectSession).catch(() => undefined);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, searchParams]);
 
@@ -283,11 +288,13 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
     setActiveSession(updated);
   }
 
-  const personalSessions = sessions.filter((s) => !s.initiative_id);
-  const initiativeDialogues = activeSession?.initiative_id
-    ? sessions.filter((s) => s.initiative_id === activeSession.initiative_id)
-    : personalSessions;
-  const initiativeTitle = activeSession?.initiative_title
+  const personalSessions = sessions.filter((s) => !s.initiative_id || s.initiative_is_personal);
+  const inPersonal = !activeSession?.initiative_id || activeSession.initiative_is_personal;
+  const initiativeDialogues = inPersonal
+    ? personalSessions
+    : sessions.filter((s) => s.initiative_id === activeSession?.initiative_id);
+  // Initiative Zero shows as "Personal" (CTO, 2026-11-04).
+  const initiativeTitle = inPersonal ? null : activeSession?.initiative_title
     ?? sponsorContext?.initiatives.find((i) => i.id === activeSession?.initiative_id)?.title
     ?? null;
 
@@ -365,7 +372,7 @@ function AtriumDialogSurfaceInner({ groupSlug, selectedInitiativeId, onInitiativ
                         </Button>
                       ))}
                       <Button size="xs" variant="ghost" justifyContent="flex-start" loading={creating}
-                        onClick={() => handleNewSession(activeSession.initiative_id ?? undefined)}>
+                        onClick={() => handleNewSession(inPersonal ? undefined : activeSession.initiative_id ?? undefined)}>
                         <IconPlus size={12} /> New Dialogue{initiativeTitle ? ` in ${initiativeTitle}` : ""}
                       </Button>
                     </Flex>

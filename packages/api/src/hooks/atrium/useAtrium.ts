@@ -58,10 +58,10 @@ export function useCreateDialogue() {
   });
 }
 
-export function useOpenDialogueZero() {
+export function useOpenInitiative() {
   const queryClient = useQueryClient();
   return useMutation<Dialogue, Error, string>({
-    mutationFn: (initiativeId) => atriumApi.openDialogueZero(initiativeId),
+    mutationFn: (initiativeId) => atriumApi.openInitiative(initiativeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...atriumQueryKeys.all, "sessions"] });
     },
