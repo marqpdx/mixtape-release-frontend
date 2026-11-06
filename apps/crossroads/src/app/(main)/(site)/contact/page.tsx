@@ -258,7 +258,6 @@ function ContactPageContent() {
                   {...register("name", { required: "A name is required." })}
                   placeholder="Your name"
                 />
-                <Field.HelperText>Optional.</Field.HelperText>
                 <Field.ErrorText>{errors.name?.message as string}</Field.ErrorText>
               </Field.Root>
 
