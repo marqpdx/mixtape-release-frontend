@@ -54,7 +54,8 @@ const nextConfig: NextConfig = {
         // Negative lookahead excludes known non-group top-level routes so that
         // Next.js hydration scripts aren't blocked on those pages.
         // catalyst excluded: it is an authenticated app route, not a public group page.
-        source: "/:slug((?!get-started$|about$|pricing$|contact$|catalyst$)[a-z][a-z0-9-]*)",
+        // working-papers excluded: static Working Papers pages, not a group page.
+        source: "/:slug((?!get-started$|about$|pricing$|contact$|catalyst$|working-papers$)[a-z][a-z0-9-]*)",
         headers: [
           {
             key: "Content-Security-Policy",
