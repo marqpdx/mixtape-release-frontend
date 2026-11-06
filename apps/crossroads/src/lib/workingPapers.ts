@@ -6,17 +6,31 @@
 //   content/working-papers/<packet>/index.md         packet overview
 //   content/working-papers/<packet>/<paper>/tldr.md  TL;DR
 //   content/working-papers/<packet>/<paper>/paper.md the artifact itself
+//   content/code-summary/<span>/tldr.md, paper.md    a code summary, on its own
 //
-// Unlisted: reachable only by a URL sent to a reader; every page is noindex.
+// Working Papers are unlisted: reachable only by a URL sent to a reader, and
+// every page is noindex. Code summaries are public pages.
+// Puddlejump writes all of it (tools/publish-working-papers.py); never edit here.
 
 import fs from "fs";
 import path from "path";
 import { loadMarkdownFile, type MarkdownFileResult } from "@mixtape/content";
 
 const ROOT = path.join(process.cwd(), "content", "working-papers");
+const CODE_SUMMARY_ROOT = path.join(process.cwd(), "content", "code-summary");
 const SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 export const WORKING_PAPERS_ROBOTS = { index: false, follow: false };
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "2026-11-06" → "Nov 6, 2026": no day/month ambiguity between UK and US readers. */
+export function formatDate(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return iso;
+  const month = MONTHS[Number(match[2]) - 1];
+  return month ? `${month} ${Number(match[3])}, ${match[1]}` : iso;
+}
 
 export type PacketEntry = {
   slug: string;
@@ -56,8 +70,12 @@ const dirs = (dir: string): string[] =>
     : [];
 
 async function load(...parts: string[]): Promise<MarkdownFileResult | null> {
+  return loadFrom(ROOT, ...parts);
+}
+
+async function loadFrom(root: string, ...parts: string[]): Promise<MarkdownFileResult | null> {
   if (!parts.every((part) => SLUG.test(part) || part.endsWith(".md"))) return null;
-  const filePath = path.join(ROOT, ...parts);
+  const filePath = path.join(root, ...parts);
   return fs.existsSync(filePath) ? loadMarkdownFile(filePath) : null;
 }
 
@@ -119,4 +137,29 @@ export async function listPackets(): Promise<Packet[]> {
     if (packet) packets.push(packet);
   }
   return packets.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// Code summaries: content/code-summary/<span>/{tldr,paper}.md, one public page each.
+
+export function listCodeSummarySlugs(): string[] {
+  return dirs(CODE_SUMMARY_ROOT).filter((slug) => fs.existsSync(path.join(CODE_SUMMARY_ROOT, slug, "paper.md")));
+}
+
+export async function loadCodeSummary(span: string): Promise<{ tldr: PaperPage | null; paper: PaperPage } | null> {
+  if (!SLUG.test(span)) return null;
+  const [tldr, paper] = await Promise.all([
+    loadFrom(CODE_SUMMARY_ROOT, span, "tldr.md"),
+    loadFrom(CODE_SUMMARY_ROOT, span, "paper.md"),
+  ]);
+  if (!paper) return null;
+  const page = (result: MarkdownFileResult): PaperPage => ({
+    packet: "code-summary",
+    slug: span,
+    title: text(result.frontmatter.title, span),
+    version: text(result.frontmatter.version),
+    date: text(result.frontmatter.date),
+    summary: text(result.frontmatter.summary),
+    html: result.html,
+  });
+  return { tldr: tldr ? page(tldr) : null, paper: page(paper) };
 }

@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import { WorkingPaperShell } from "@/components/working-papers/WorkingPaperShell";
-import { listPackets, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
+import { formatDate, listPackets, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
 
 export const dynamic = "force-static";
 
@@ -43,7 +43,7 @@ export default async function WorkingPapersPage() {
                 </Heading>
               </Link>
               <Text fontSize="sm" color="fg.muted" mt={1}>
-                {[packet.date, `${packet.papers.length} ${packet.papers.length === 1 ? "paper" : "papers"}`].filter(Boolean).join(" · ")}
+                {[packet.date && formatDate(packet.date), `${packet.papers.length} ${packet.papers.length === 1 ? "paper" : "papers"}`].filter(Boolean).join(" · ")}
               </Text>
               {packet.summary && <Text mt={2}>{packet.summary}</Text>}
             </Box>

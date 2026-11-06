@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 import { Box, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 import { Prose } from "@/components/ui/prose";
 import { WorkingPaperShell } from "@/components/working-papers/WorkingPaperShell";
-import { listPacketSlugs, loadPacket, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
+import { formatDate, listPacketSlugs, loadPacket, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -40,7 +40,7 @@ export default async function PacketPage({ params }: { params: Promise<Params> }
         </Heading>
         {packet.date && (
           <Text fontSize="sm" color="fg.muted">
-            {packet.date}
+            {formatDate(packet.date)}
           </Text>
         )}
         {packet.html && <Prose maxW="none" dangerouslySetInnerHTML={{ __html: packet.html }} />}

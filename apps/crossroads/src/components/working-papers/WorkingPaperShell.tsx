@@ -7,10 +7,23 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Box, Container, HStack, Text } from "@chakra-ui/react";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
+import { formatDate } from "@/lib/workingPapers";
 
 export type Crumb = { label: string; href?: string };
 
-export function WorkingPaperShell({ crumbs, children }: { crumbs: Crumb[]; children: ReactNode }) {
+// Shown on every Working Papers page (CTO, 2026-11-06); not on public pages.
+const NOT_PUBLIC =
+  "Not yet a public document. Shared with you, the intended reader, for review; please don't pass it on.";
+
+export function WorkingPaperShell({
+  crumbs,
+  children,
+  notPublic = true,
+}: {
+  crumbs: Crumb[];
+  children: ReactNode;
+  notPublic?: boolean;
+}) {
   return (
     <>
       <UnifiedNavbar extraCompact />
@@ -30,6 +43,11 @@ export function WorkingPaperShell({ crumbs, children }: { crumbs: Crumb[]; child
               </HStack>
             ))}
           </HStack>
+          {notPublic && (
+            <Box role="note" mb={8} px={4} py={3} borderWidth="1px" borderRadius="md" bg="bg.muted" fontSize="sm">
+              {NOT_PUBLIC}
+            </Box>
+          )}
           {children}
         </Container>
       </Box>
@@ -38,7 +56,7 @@ export function WorkingPaperShell({ crumbs, children }: { crumbs: Crumb[]; child
 }
 
 export function PaperStamp({ version, date }: { version?: string; date?: string }) {
-  const parts = [version && `Version ${version}`, date].filter(Boolean);
+  const parts = [version && `Version ${version}`, date && formatDate(date)].filter(Boolean);
   if (parts.length === 0) return null;
   return (
     <Text fontSize="sm" color="fg.muted">
