@@ -3,6 +3,8 @@ title: Extend capabilities organically
 version: '0.9'
 date: '2026-11-01'
 summary: 'Capability grows in small, watched pushes: give an agent or a person a little more remit, note what happens, adapt, carry on. No final permission model designed up front, and no holding everything back until there is one.'
+names: '*Zellij* is a terminal workspace that keeps many sessions visible; *Service Trust* is the plan that records every AI call; *Ownership Seams* marks where a person''s decision attaches.'
+status: draft
 ---
 
 ## The principle

@@ -3,6 +3,19 @@ title: Five questions before a new part
 version: '1.0'
 date: '2026-11-01'
 summary: 'Every named part of Mixtape answers five questions before it settles: is it a way in, a place to work, a tool that travels, a layer under everything, or a running process? It keeps the system from sprawling one reasonable step at a time.'
+names: '*Argus* is Mixtape''s audit practice; *Daedalus* is research; *Catalyst*, *Hildegard* and *Folio* are parts that each needed placing after they were named.'
+status: ratified
+types:
+- name: Main Gateway
+  meaning: Where people cross in.
+- name: Surface
+  meaning: Where you do things.
+- name: Toolset
+  meaning: It travels.
+- name: Layer
+  meaning: It runs alongside everything.
+- name: Server
+  meaning: A running process.
 ---
 
 ## The principle

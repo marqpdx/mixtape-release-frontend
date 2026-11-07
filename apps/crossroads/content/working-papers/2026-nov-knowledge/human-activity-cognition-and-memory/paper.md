@@ -3,6 +3,8 @@ title: Human Activity, Cognition, and Memory
 version: '0.9'
 date: '2026-10-31'
 summary: 'Observations from building Mixtape with AI agents: three interwoven realms (doing, thinking, remembering), with coherence as the organizing principle across them. Memory is active work: as production becomes abundant, selecting, pruning and letting go matter as much as keeping.'
+names: '*Mixtape* is the platform these observations come from; *canon* is knowledge a group has deliberately ratified.'
+status: draft
 ---
 
 ### Observations from the Co-Development of Mixtape with AI Agents

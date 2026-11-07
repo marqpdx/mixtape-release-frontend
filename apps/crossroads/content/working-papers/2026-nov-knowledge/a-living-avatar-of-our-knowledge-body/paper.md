@@ -3,6 +3,8 @@ title: 'Mixtape: A Living Avatar of Our Knowledge Body'
 version: '0.9'
 date: '2026-11-03'
 summary: A knowledge body (a person's, a family's, a community's) as an embodied, relational, evolving part of life, and Mixtape as one computational avatar of it. Two strands, the patterns of living systems and the practices of tending, braided into one design ambition.
+names: '*keepers* are small agents that notice and propose, never decide; *Ariadne* asks questions of a whole body of documents.'
+status: draft
 ---
 
 **Position Paper · Proto White Paper · Pre-Canon**  

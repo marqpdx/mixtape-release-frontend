@@ -3,6 +3,8 @@ title: Cadence of Knowledge Building, a Principle
 version: '0.9'
 date: '2026-10-31'
 summary: Knowledge building goes best at each person's own pace. Friction, rightly placed, isn't a cost of using a system; it's where using it becomes knowing something. Some friction is waste; some is the work itself.
+names: '*packet gates* and *verb envelopes* are Mixtape''s confirm-before-acting steps; *Clio* is the guide and living historian.'
+status: proposed
 ---
 
 ---

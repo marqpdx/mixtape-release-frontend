@@ -3,6 +3,8 @@ title: 'Research spike: finding structure and meaning in bodies of writing'
 version: '0.9'
 date: '2026-11-01'
 summary: 'The research brief behind reading for meaning: how named-entity recognition and related techniques could help people discover the people, places and ideas in their own writing, and build navigable, curated knowledge from them, running locally where possible.'
+names: '*Folio* is a curated body of writing; *Daedalus* gathers research; *Contour* holds the shapes readers follow; *Catalyst* holds canon; *GLiNER* and *spaCy* are small models we can run ourselves.'
+status: draft
 ---
 
 **Project:** Mixtape  

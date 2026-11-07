@@ -3,6 +3,8 @@ title: Decompose now, fulfill via cloud, localize through continual refinement
 version: '1.0'
 date: '2026-11-05'
 summary: Split AI work into many small, inspectable steps now; let a cloud model carry the steps a local model can't yet do, on the person's own account and with consent; move steps local one at a time as evidence allows. Local-first, told honestly.
+names: '*Heddle* reads a person''s material; *Ariadne* answers questions across a body of documents; *Inkwell* runs local models; *Tier 0* is model vetting''s first sanity check.'
+status: ratified
 ---
 
 ## 1. The question

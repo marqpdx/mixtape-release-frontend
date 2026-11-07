@@ -3,6 +3,8 @@ title: Where Your Data Goes — Charter
 version: '1.0'
 date: '2026-11-05'
 summary: Mixtape's promise about what happens to a person's material when AI or an outside service touches it. Local first; the cloud only on your own account, with your approval, filtered and recorded. It says plainly where today's system still falls short.
+names: '*Switchboard* is Mixtape''s governed door to its tools; *Argus* is its audit practice; *ST-3* and the like are steps in the Service Trust plan.'
+status: ratified
 ---
 
 ## 1. Our promise

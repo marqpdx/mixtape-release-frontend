@@ -3,6 +3,8 @@ title: Manual first — know a step before you automate it
 version: '1.0'
 date: '2026-11-01'
 summary: A person does a step by hand until they know it well enough to automate it and still own it. Six stages from "write it down" to "prove it from scratch", with a hand-built machine testing the automation and the automation checking the machine.
+names: '*Ansible* sets up servers from code; *runbook* is the written procedure; *Tier 0* is the first sanity check in model vetting.'
+status: ratified
 ---
 
 ## The principle

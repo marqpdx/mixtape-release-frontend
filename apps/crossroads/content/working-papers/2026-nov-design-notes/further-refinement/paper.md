@@ -3,6 +3,8 @@ title: Further Refinement
 version: '1.0'
 date: '2026-11-05'
 summary: 'A name for a glimpse of a possibility, kept so it isn''t lost: observational, not operational. No owner, no deadline, no done state; taken up as work it becomes something else, and an old one quietly fading is a fine outcome.'
+names: a *tickler* is a reminder tied to a date or trigger; a *handoff* is work assigned to an agent.
+status: ratified
 ---
 
 **A Further Refinement is an observational unit, not an operational one.** It records something seen: a direction the work could take, a term that isn't settled, a shape that may later deserve a spike. It has no owner, no deadline and no done state. Some are near term and can be acted on; acting on one turns it into something else (a spike, a change request, a handoff), and the Further Refinement records that it did.

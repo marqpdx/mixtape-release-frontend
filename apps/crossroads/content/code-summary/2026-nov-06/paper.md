@@ -3,6 +3,7 @@ title: 'Code summary: ideas that became code, Oct 16 – Nov 6, 2026'
 version: '0.9'
 date: '2026-11-06'
 summary: About 350 commits of code across six repositories in three weeks, nearly all traceable to a document written first. Twelve threads, each followed from idea to decision to what got built. It ends with what deliberately didn't become code.
+status: draft
 ---
 
 Nov 6, 2026 · Puddlejump · working paper, draft · sources: git history of each repo, `build-log.md`, the status files named below

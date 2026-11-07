@@ -3,6 +3,8 @@ title: 'The Layered Corpus: Knowledge as IP When Code Gets Cheap'
 version: '0.9'
 date: '2026-11-01'
 summary: 'As AI makes code cheaper to produce, the capacity it frees is best spent on knowledge: five layers (code, how it''s built, how it''s checked, what''s intended, what''s being learned), each IP in its own right. Capture is the bottleneck.'
+names: '*Initiative* is a stretch of purposeful work in Mixtape; *Ariadne* is its inquiry engine.'
+status: draft
 ---
 
 Oct 27, 2026 · @ml

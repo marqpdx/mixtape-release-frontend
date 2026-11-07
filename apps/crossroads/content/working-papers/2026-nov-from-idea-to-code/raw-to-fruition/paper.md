@@ -3,6 +3,8 @@ title: Raw to Fruition
 version: '0.9'
 date: '2026-10-30'
 summary: 'How Mixtape helps people carry an idea from raw capture to something that happens: five realms that hold knowledge by purpose, one gathering pattern for collections and outcomes, and an attention mechanism that keeps what matters alive without deadlines or backlogs.'
+names: '*Atrium* is where a person thinks with AI; *Clio* is the living historian; *keepers* are small agents that notice and propose, never decide.'
+status: draft
 ---
 
 Oct 30, 2026 · @ml

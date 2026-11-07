@@ -3,6 +3,8 @@ title: From Phenomena Toward Understanding
 version: '0.9'
 date: '2026-10-31'
 summary: Knowledge doesn't arrive fully formed. It begins in phenomena (a taste, a tear on a bus, a closed factory) and may acquire form over time. Software should support that passage without demanding more structure than a thing has earned.
+names: '*Tapestry* is Mixtape''s substrate for situated, narrative knowledge (story meets place).'
+status: proposed
 ---
 
 ## The Core Idea
