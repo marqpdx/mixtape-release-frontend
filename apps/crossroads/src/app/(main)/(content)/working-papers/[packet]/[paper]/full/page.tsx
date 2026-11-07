@@ -3,11 +3,17 @@
 // The paper itself, with the response form at its foot.
 
 import { notFound } from "next/navigation";
-import { Heading, Stack, Text } from "@chakra-ui/react";
-import { Prose } from "@/components/ui/prose";
-import { PaperStamp, WorkingPaperShell } from "@/components/working-papers/WorkingPaperShell";
+import {
+  Intro,
+  PageHeader,
+  ProseHtml,
+  Respond,
+  StatusBadge,
+  twoDigits,
+  WorkingPapersShell,
+} from "@/components/working-papers/WorkingPapers";
 import { WorkingPaperResponseForm } from "@/components/working-papers/WorkingPaperResponseForm";
-import { listPacketSlugs, listPaperSlugs, loadPacket, loadPaper, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
+import { formatDate, listPacketSlugs, listPaperSlugs, loadPacket, loadPaper, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -32,9 +38,12 @@ export default async function PaperPage({ params }: { params: Promise<Params> })
   const { packet: packetSlug, paper } = await params;
   const [packet, page] = await Promise.all([loadPacket(packetSlug), loadPaper(packetSlug, paper)]);
   if (!packet || !page) notFound();
+  const index = packet.papers.findIndex((p) => p.slug === paper);
+  const position = index >= 0 ? `${packet.title}, paper ${index + 1} of ${packet.papers.length}` : packet.title;
 
   return (
-    <WorkingPaperShell
+    <WorkingPapersShell
+      kind="paper"
       crumbs={[
         { label: "Working Papers", href: "/working-papers" },
         { label: packet.title, href: `/working-papers/${packet.slug}` },
@@ -42,19 +51,25 @@ export default async function PaperPage({ params }: { params: Promise<Params> })
         { label: "Paper" },
       ]}
     >
-      <Stack gap={3}>
-        <Heading as="h1" size="2xl">
-          {page.title}
-        </Heading>
-        <PaperStamp version={page.version} date={page.date} />
-        {page.summary && (
-          <Text fontSize="lg" color="fg.muted">
-            {page.summary}
-          </Text>
-        )}
-        <Prose maxW="none" mt={4} dangerouslySetInnerHTML={{ __html: page.html }} />
-      </Stack>
-      <WorkingPaperResponseForm paperTitle={page.title} paperVersion={page.version} packet={packet.slug} />
-    </WorkingPaperShell>
+      <PageHeader
+        eyebrow={index >= 0 ? `Working paper · ${packet.title} ${twoDigits(index + 1)}` : "Working paper"}
+        title={page.title}
+        meta={[
+          { term: "Status", value: <StatusBadge status={page.status} /> },
+          ...(page.version ? [{ term: "Version", value: page.version, showTerm: true }] : []),
+          ...(page.date ? [{ term: "Dated", value: formatDate(page.date) }] : []),
+          { term: "In this packet", value: position },
+        ]}
+      />
+      {page.summary && (
+        <Intro>
+          <p>{page.summary}</p>
+        </Intro>
+      )}
+      <ProseHtml html={page.html} />
+      <Respond>
+        <WorkingPaperResponseForm paperTitle={page.title} paperVersion={page.version} packet={packet.slug} />
+      </Respond>
+    </WorkingPapersShell>
   );
 }

@@ -14,7 +14,7 @@
 
 import fs from "fs";
 import path from "path";
-import { loadMarkdownFile, type MarkdownFileResult } from "@mixtape/content";
+import { loadMarkdownFile, renderMarkdown, type MarkdownFileResult } from "@mixtape/content";
 
 const ROOT = path.join(process.cwd(), "content", "working-papers");
 const CODE_SUMMARY_ROOT = path.join(process.cwd(), "content", "code-summary");
@@ -32,11 +32,23 @@ export function formatDate(iso: string): string {
   return month ? `${month} ${Number(match[3])}, ${match[1]}` : iso;
 }
 
+/** From each paper's source document (publish script), never from its version. */
+export type PaperStatus = "ratified" | "proposed" | "draft";
+
+export const STATUS_LABEL: Record<PaperStatus, string> = {
+  ratified: "Ratified",
+  proposed: "Proposed",
+  draft: "Draft",
+};
+
+export type PaperType = { name: string; meaning: string };
+
 export type PacketEntry = {
   slug: string;
   title: string;
   summary: string;
   version: string;
+  status: PaperStatus;
 };
 
 export type Packet = {
@@ -55,8 +67,42 @@ export type PaperPage = {
   version: string;
   date: string;
   summary: string;
+  status: PaperStatus;
+  /** The TL;DR's structured list (optional `types` frontmatter). */
+  types: PaperType[];
+  /** The "Names" line as inline HTML (optional `names` frontmatter). */
+  namesHtml: string;
   html: string;
 };
+
+/** "Nov 6, 2026 · 5 papers · 4 ratified, 1 draft" (spec: the packet meta line). */
+export function statusSplit(papers: { status: PaperStatus }[]): string {
+  return (Object.keys(STATUS_LABEL) as PaperStatus[])
+    .map((status) => [status, papers.filter((p) => p.status === status).length] as const)
+    .filter(([, count]) => count > 0)
+    .map(([status, count]) => `${count} ${status}`)
+    .join(", ");
+}
+
+export const paperCount = (n: number) => `${n} ${n === 1 ? "paper" : "papers"}`;
+
+const statusOf = (value: unknown): PaperStatus =>
+  value === "ratified" || value === "proposed" ? value : "draft";
+
+const typesOf = (value: unknown): PaperType[] =>
+  Array.isArray(value)
+    ? value.flatMap((item) =>
+        item && typeof item.name === "string" && typeof item.meaning === "string"
+          ? [{ name: item.name, meaning: item.meaning }]
+          : []
+      )
+    : [];
+
+async function inlineHtml(markdown: unknown): Promise<string> {
+  if (typeof markdown !== "string" || !markdown.trim()) return "";
+  const { html } = await renderMarkdown(markdown);
+  return html.trim().replace(/^<p>([\s\S]*)<\/p>$/, "$1");
+}
 
 const text = (value: unknown, fallback = ""): string =>
   typeof value === "string" ? value : value instanceof Date ? value.toISOString().slice(0, 10) : fallback;
@@ -100,6 +146,9 @@ async function loadPage(packet: string, slug: string, file: "tldr.md" | "paper.m
     version: text(fm.version),
     date: text(fm.date),
     summary: text(fm.summary),
+    status: statusOf(fm.status),
+    types: typesOf(fm.types),
+    namesHtml: await inlineHtml(fm.names),
     html,
   };
 }
@@ -118,7 +167,7 @@ export async function loadPacket(packet: string): Promise<Packet | null> {
   const papers: PacketEntry[] = [];
   for (const slug of order) {
     const tldr = await loadTldr(packet, slug);
-    if (tldr) papers.push({ slug, title: tldr.title, summary: tldr.summary, version: tldr.version });
+    if (tldr) papers.push({ slug, title: tldr.title, summary: tldr.summary, version: tldr.version, status: tldr.status });
   }
   return {
     slug: packet,
@@ -152,14 +201,17 @@ export async function loadCodeSummary(span: string): Promise<{ tldr: PaperPage |
     loadFrom(CODE_SUMMARY_ROOT, span, "paper.md"),
   ]);
   if (!paper) return null;
-  const page = (result: MarkdownFileResult): PaperPage => ({
+  const page = async (result: MarkdownFileResult): Promise<PaperPage> => ({
     packet: "code-summary",
     slug: span,
     title: text(result.frontmatter.title, span),
     version: text(result.frontmatter.version),
     date: text(result.frontmatter.date),
     summary: text(result.frontmatter.summary),
+    status: statusOf(result.frontmatter.status),
+    types: typesOf(result.frontmatter.types),
+    namesHtml: await inlineHtml(result.frontmatter.names),
     html: result.html,
   });
-  return { tldr: tldr ? page(tldr) : null, paper: page(paper) };
+  return { tldr: tldr ? await page(tldr) : null, paper: await page(paper) };
 }

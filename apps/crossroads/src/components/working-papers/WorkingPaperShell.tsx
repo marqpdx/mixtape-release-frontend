@@ -1,6 +1,7 @@
 // apps/crossroads/src/components/working-papers/WorkingPaperShell.tsx
 //
-// Frame for the Working Papers pages: navbar, a narrow reading column, and a
+// Frame for the public code summary page (Working Papers have their own,
+// WorkingPapers.tsx, since 2026-11-07): navbar, a narrow reading column, and a
 // trail back up through the three layers (packet → TL;DR → paper).
 
 import type { ReactNode } from "react";

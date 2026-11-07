@@ -5,6 +5,8 @@ import { Providers } from "@/components/providers";
 import { Analytics } from "@/components/analytics/Analytics";
 import { getThemePreferenceBootstrapScript } from "@mixtape/core/theme/theme-preferences";
 import localFont from "next/font/local";
+import { getReadingViewBootstrapScript } from "@/components/reading-views/readingViews";
+import { WORKING_PAPER_VIEWS } from "@/components/working-papers/views";
 
 const pacifico = localFont({
   src: "../fonts/pacifico/latin-normal.woff2",
@@ -112,6 +114,13 @@ export default function RootLayout({
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: getThemePreferenceBootstrapScript("crossroads"),
+          }}
+        />
+        {/* Working Papers reading view, set before first paint (static pages: no cookie). */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: getReadingViewBootstrapScript(WORKING_PAPER_VIEWS),
           }}
         />
       </head>

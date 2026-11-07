@@ -1,14 +1,26 @@
 // apps/crossroads/src/app/(main)/(content)/working-papers/[packet]/page.tsx
 //
-// A packet's overview: about five papers, each with its 3-line summary and
-// links to its TL;DR and to the paper itself.
+// A packet's overview: about five papers, each with its 3-line summary, its
+// status and links to its TL;DR and to the paper itself.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Box, Heading, HStack, Stack, Text } from "@chakra-ui/react";
-import { Prose } from "@/components/ui/prose";
-import { WorkingPaperShell } from "@/components/working-papers/WorkingPaperShell";
-import { formatDate, listPacketSlugs, loadPacket, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
+import {
+  EntryList,
+  PageHeader,
+  PaperStamp,
+  ProseHtml,
+  WorkingPapersShell,
+} from "@/components/working-papers/WorkingPapers";
+import {
+  formatDate,
+  listPackets,
+  listPacketSlugs,
+  loadPacket,
+  paperCount,
+  statusSplit,
+  WORKING_PAPERS_ROBOTS,
+} from "@/lib/workingPapers";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -31,47 +43,57 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
 export default async function PacketPage({ params }: { params: Promise<Params> }) {
   const packet = await loadPacket((await params).packet);
   if (!packet) notFound();
+  const companions = (await listPackets()).filter((other) => other.slug !== packet.slug);
 
   return (
-    <WorkingPaperShell crumbs={[{ label: "Working Papers", href: "/working-papers" }, { label: packet.title }]}>
-      <Stack gap={3} mb={8}>
-        <Heading as="h1" size="2xl">
-          {packet.title}
-        </Heading>
-        {packet.date && (
-          <Text fontSize="sm" color="fg.muted">
-            {formatDate(packet.date)}
-          </Text>
-        )}
-        {packet.html && <Prose maxW="none" dangerouslySetInnerHTML={{ __html: packet.html }} />}
-      </Stack>
-
-      <Stack as="ol" gap={8} listStyleType="none">
-        {packet.papers.map((paper) => {
+    <WorkingPapersShell
+      kind="packet"
+      crumbs={[{ label: "Working Papers", href: "/working-papers" }, { label: packet.title }]}
+    >
+      <PageHeader
+        eyebrow="Working paper packet"
+        title={packet.title}
+        meta={[
+          ...(packet.date ? [{ term: "Published", value: formatDate(packet.date) }] : []),
+          {
+            term: "Papers",
+            value: [paperCount(packet.papers.length), statusSplit(packet.papers)].filter(Boolean).join(" · "),
+          },
+          ...(companions.length > 0
+            ? [
+                {
+                  term: "Companion packets",
+                  showTerm: true,
+                  value: companions.map((other, i) => (
+                    <span key={other.slug}>
+                      {i > 0 && ", "}
+                      <Link href={`/working-papers/${other.slug}`}>{other.title}</Link>
+                    </span>
+                  )),
+                },
+              ]
+            : []),
+        ]}
+      />
+      <ProseHtml html={packet.html} intro />
+      <EntryList
+        heading="The papers"
+        numberWord="Paper"
+        entries={packet.papers.map((paper) => {
           const base = `/working-papers/${packet.slug}/${paper.slug}`;
-          return (
-            <Box as="li" key={paper.slug} borderTopWidth="1px" pt={6}>
-              <Heading as="h2" size="lg">
-                <Link href={base}>{paper.title}</Link>
-              </Heading>
-              {paper.version && (
-                <Text fontSize="sm" color="fg.muted" mt={1}>
-                  Version {paper.version}
-                </Text>
-              )}
-              {paper.summary && <Text mt={3}>{paper.summary}</Text>}
-              <HStack gap={5} mt={3} fontWeight="medium">
-                <Link href={base} style={{ textDecoration: "underline" }}>
-                  TL;DR
-                </Link>
-                <Link href={`${base}/full`} style={{ textDecoration: "underline" }}>
-                  Read the paper
-                </Link>
-              </HStack>
-            </Box>
-          );
+          return {
+            key: paper.slug,
+            href: base,
+            title: paper.title,
+            stamp: <PaperStamp status={paper.status} version={paper.version} />,
+            summary: paper.summary,
+            links: [
+              { href: base, label: "TL;DR" },
+              { href: `${base}/full`, label: "Read the paper →" },
+            ],
+          };
         })}
-      </Stack>
-    </WorkingPaperShell>
+      />
+    </WorkingPapersShell>
   );
 }

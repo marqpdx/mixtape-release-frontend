@@ -1,0 +1,1430 @@
+/* apps/crossroads/src/components/working-papers/WorkingPapers.module.css
+ *
+ * Working Papers reading views (spec: Puddlejump
+ * zz/spec-working-papers-reading-views.md). One set of markup, styled three
+ * ways by html[data-wp-view]: the <head> bootstrap sets it before first
+ * paint, so a static page never shows the wrong view.
+ *
+ *   base rules      Editorial (the default, and always the print view)
+ *   @media screen   Index and Cards, keyed off the attribute
+ *
+ * Colours are roles mapped onto the site theme (Chakra's userTheme tokens, which theme.* points at, set
+ * by the site theme picker and the dark-mode toggle) and Chakra's palette
+ * (status badges). Views set layout, type and surface tone; site themes set
+ * colours. Gaps in the palette are noted where a role is derived.
+ */
+
+/* ── Colour roles (on <html>, so the page background can use them) ────────── */
+
+:global(html):has(.root) {
+  --wp-bg: var(--chakra-colors-user-theme-bg);
+  --wp-ink: var(--chakra-colors-user-theme-text);
+  /* Gap: the palette has no "one step lighter than ink"; derived from ink. */
+  --wp-ink-2: color-mix(in srgb, var(--chakra-colors-user-theme-text) 88%, var(--chakra-colors-user-theme-bg));
+  /* userTheme.textSecondary, not textMuted: the latter is under 4.5:1. */
+  --wp-muted: var(--chakra-colors-user-theme-text-secondary);
+  --wp-raised: var(--chakra-colors-user-theme-surface);
+  --wp-rule: var(--chakra-colors-user-theme-border);
+  /* Same mix as the theme's bgSubtle, which has no fallback before hydration. */
+  --wp-subtle: color-mix(in srgb, var(--chakra-colors-user-theme-bg) 60%, var(--chakra-colors-user-theme-border) 40%);
+  /* Gap: theme.accent is a fill colour (3:1 as text in Gallery Minimal);
+   * mixing it toward ink keeps the hue and reaches 4.5:1 for link text,
+   * in light and in dark. */
+  --wp-accent: color-mix(in srgb, var(--chakra-colors-user-theme-accent) 60%, var(--chakra-colors-user-theme-text));
+  --wp-on-accent: var(--chakra-colors-user-theme-bg);
+  /* Status badges: Chakra palette tokens (light and dark built in). */
+  --wp-ratified-bg: var(--chakra-colors-green-subtle);
+  --wp-ratified-fg: var(--chakra-colors-green-fg);
+  --wp-proposed-bg: var(--chakra-colors-blue-subtle);
+  --wp-proposed-fg: var(--chakra-colors-blue-fg);
+  --wp-draft-bg: var(--chakra-colors-orange-subtle);
+  --wp-draft-fg: var(--chakra-colors-orange-fg);
+
+  /* Surface tone per view. */
+  --wp-surface: var(--wp-bg);
+}
+
+/* The page background, behind the site header and footer too. The theme
+ * paints <body> inline, so this needs !important while a Working Papers
+ * page is mounted; it lifts on leaving. */
+:global(html):has(.root) :global(body) {
+  background-color: var(--wp-surface) !important;
+}
+
+/* ── Type, measure and spacing (Editorial) ─────────────────────────────────── */
+
+.root {
+  --wp-serif: var(--font-alegreya), Georgia, "Times New Roman", serif;
+  --wp-sans: var(--chakra-fonts-body);
+  --wp-heading-font: var(--wp-serif);
+  --wp-heading-weight: 500;
+  --wp-body-size: 1.1875rem;
+  --wp-body-leading: 1.65;
+  --wp-small: 0.9375rem;
+  --wp-title-size: clamp(2.5rem, 6vw, 3.75rem);
+  --wp-entry-title-size: clamp(1.5rem, 1.1rem + 1.6vw, 1.875rem);
+  --wp-lede-font: var(--wp-serif);
+  --wp-lede-size: clamp(1.3125rem, 1.15rem + 0.7vw, 1.5rem);
+  --wp-measure: 45rem;
+  /* Prose line length. The spec's column widths give about 95 characters
+   * a line in Alegreya Sans, against its 60–75 target; 28em would meet
+   * the target. Open with the CTO (2026-11-07): the column stands for now. */
+  --wp-prose-measure: 100%;
+  --wp-entry-gap: 2.5rem;
+  --wp-radius: 12px;
+  --wp-button-radius: 999px;
+
+  /* For the view switcher. */
+  --rv-ink: var(--wp-ink);
+  --rv-muted: var(--wp-muted);
+  --rv-raised: var(--wp-raised);
+  --rv-rule: var(--wp-rule);
+
+  color: var(--wp-ink-2);
+  font-family: var(--wp-sans);
+  font-size: var(--wp-body-size);
+  line-height: var(--wp-body-leading);
+}
+
+.main {
+  padding-block: 2rem 5rem;
+}
+
+.container {
+  max-width: calc(var(--wp-measure) + 2rem);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding-block: 3rem 6rem;
+  }
+  .container {
+    max-width: calc(var(--wp-measure) + 3rem);
+    padding-inline: 1.5rem;
+  }
+}
+
+/* ── Top row: breadcrumb and switcher ──────────────────────────────────────── */
+
+/* The breadcrumb keeps its line; on a narrow screen the switcher drops
+ * below it, aligned right, rather than squeezing it onto two lines. */
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-block-end: 1.5rem;
+  font-size: var(--wp-small);
+  color: var(--wp-muted);
+}
+
+.topRow > :last-child {
+  margin-inline-start: auto;
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crumbs li + li::before {
+  content: "›";
+  margin-inline-end: 0.5rem;
+  color: var(--wp-muted);
+}
+
+.crumbs a {
+  display: inline-block;
+  padding-block: 0.625rem;
+  color: var(--wp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.crumbs a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ── The page: one grid, placed per view ───────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.header,
+.aside {
+  display: contents;
+}
+
+.notice {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  align-self: flex-start;
+  order: -1;
+  margin: 0 0 2rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 1rem;
+  background: var(--wp-subtle);
+  color: var(--wp-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.notice svg {
+  flex: none;
+  margin-block-start: 0.2em;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--wp-accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--wp-ink);
+  font-family: var(--wp-heading-font);
+  font-weight: var(--wp-heading-weight);
+  font-size: var(--wp-title-size);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+
+/* ── Meta: one line (Editorial), a rail list (Index), chips (Cards) ───────── */
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0;
+  margin: 0.875rem 0 0;
+  color: var(--wp-muted);
+  font-size: var(--wp-small);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+}
+
+.metaItem + .metaItem::before {
+  content: "·";
+  margin-inline: 0.5em;
+}
+
+.metaItem:has(.badge) + .metaItem::before {
+  content: none;
+  margin-inline: 0.25em;
+}
+
+.metaItem dt {
+  margin-inline-end: 0.3em;
+  font-weight: 400;
+}
+
+.metaItem dd {
+  margin: 0;
+}
+
+.metaItem a {
+  color: var(--wp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.termHidden dt,
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Status ────────────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 0.0625rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.badge[data-status="ratified"] {
+  background: var(--wp-ratified-bg);
+  color: var(--wp-ratified-fg);
+}
+
+.badge[data-status="proposed"] {
+  background: var(--wp-proposed-bg);
+  color: var(--wp-proposed-fg);
+}
+
+.badge[data-status="draft"] {
+  background: var(--wp-draft-bg);
+  color: var(--wp-draft-fg);
+}
+
+/* ── Prose: intros, TL;DRs, papers ─────────────────────────────────────────── */
+
+.prose {
+  color: var(--wp-ink-2);
+}
+
+.prose > p,
+.prose > ul,
+.prose > ol,
+.prose > blockquote,
+.tldr > p,
+.names p,
+.summary {
+  max-width: var(--wp-prose-measure);
+}
+
+.prose > :first-child {
+  margin-block-start: 0;
+}
+
+.prose > :last-child {
+  margin-block-end: 0;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre,
+.prose table {
+  margin-block: 0 1em;
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: 1.4em;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li {
+  margin-block: 0.35em;
+  padding-inline-start: 0.2em;
+}
+
+.prose li::marker {
+  color: var(--wp-muted);
+}
+
+.prose li > p {
+  margin-block: 0.35em;
+}
+
+.prose strong {
+  color: var(--wp-ink);
+  font-weight: 700;
+}
+
+.prose a {
+  color: var(--wp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin-block: 2em 0.6em;
+  color: var(--wp-ink);
+  font-family: var(--wp-heading-font);
+  font-weight: var(--wp-heading-weight);
+  line-height: 1.25;
+  scroll-margin-top: 6rem;
+}
+
+.prose h2 {
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+}
+
+.prose h3 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.4375rem);
+}
+
+.prose h4 {
+  font-size: 1.1875rem;
+}
+
+.prose blockquote {
+  padding-inline-start: 1.25em;
+  border-inline-start: 3px solid var(--wp-rule);
+  color: var(--wp-ink-2);
+  font-family: var(--wp-serif);
+  font-size: 1.1em;
+  font-style: italic;
+}
+
+.prose hr {
+  margin-block: 2.5em;
+  border: 0;
+  border-top: 1px solid var(--wp-rule);
+}
+
+.prose code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--wp-subtle);
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
+.prose pre {
+  padding: 0.875em 1em;
+  border-radius: 8px;
+  background: var(--wp-subtle);
+  overflow-x: auto;
+  font-size: 0.875em;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9375em;
+  line-height: 1.5;
+}
+
+.prose th,
+.prose td {
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid var(--wp-rule);
+  text-align: start;
+  vertical-align: top;
+}
+
+.prose th {
+  color: var(--wp-ink);
+  font-weight: 700;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.lede,
+.prose.intro > p:first-child {
+  color: var(--wp-ink);
+  font-family: var(--wp-lede-font);
+  font-size: var(--wp-lede-size);
+  line-height: 1.5;
+}
+
+.intro {
+  margin-block-start: 2.25rem;
+}
+
+/* ── Lists of papers and packets ───────────────────────────────────────────── */
+
+.list {
+  margin-block-start: 3.5rem;
+}
+
+.listHeading {
+  margin: 0;
+  padding-block-end: 0.875rem;
+  border-bottom: 1px solid var(--wp-ink);
+  color: var(--wp-ink);
+  font-family: var(--wp-sans);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  position: relative;
+  padding-block: var(--wp-entry-gap);
+  padding-inline-start: 3.5rem;
+  border-bottom: 1px solid var(--wp-rule);
+}
+
+.num {
+  position: absolute;
+  inset-inline-start: 0;
+  top: calc(var(--wp-entry-gap) - 0.125rem);
+  color: var(--wp-muted);
+  font-family: var(--wp-serif);
+  font-size: 2.25rem;
+  font-variant-numeric: lining-nums;
+  line-height: 1;
+}
+
+.numWord {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.entryTitle {
+  margin: 0;
+  color: var(--wp-ink);
+  font-family: var(--wp-heading-font);
+  font-weight: var(--wp-heading-weight);
+  font-size: var(--wp-entry-title-size);
+  line-height: 1.2;
+}
+
+.entryTitle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.entryTitle a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.stamp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.625rem;
+  margin: 0.625rem 0 0;
+  color: var(--wp-muted);
+  font-size: var(--wp-small);
+}
+
+.summary {
+  margin: 0.875rem 0 0;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--wp-accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.links a:hover {
+  text-decoration-thickness: 2px;
+}
+
+@media (max-width: 420px) {
+  .entry {
+    padding-inline-start: 0;
+  }
+  .num {
+    position: static;
+    display: block;
+    margin-block-end: 0.5rem;
+  }
+}
+
+/* ── TL;DR: five types, names, next ────────────────────────────────────────── */
+
+.body {
+  margin-block-start: 2.5rem;
+}
+
+.tldr > * + * {
+  margin-block-start: 1.75rem;
+}
+
+.types {
+  margin-block: 1.75rem;
+  border-block: 1px solid var(--wp-rule);
+  padding-block: 0.75rem;
+}
+
+.type {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12.75rem) 1fr;
+  gap: 0.25rem 1.5rem;
+  align-items: baseline;
+  padding-block: 0.875rem;
+}
+
+.type dt {
+  color: var(--wp-ink);
+  font-family: var(--wp-serif);
+  font-size: 1.3125rem;
+  font-weight: 500;
+}
+
+.type dd {
+  margin: 0;
+}
+
+.typeNum {
+  display: none;
+}
+
+.names {
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--wp-radius);
+  background: var(--wp-subtle);
+  font-size: 1.125rem;
+}
+
+.names p {
+  margin: 0;
+}
+
+.namesLabel {
+  display: block;
+  margin-block-end: 0.375rem;
+  color: var(--wp-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.namesLabel .colon {
+  display: none;
+}
+
+.names em {
+  color: var(--wp-ink);
+  font-style: normal;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .type {
+    grid-template-columns: 1fr;
+  }
+}
+
+.paperNav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-block-start: 3rem;
+  padding-block-start: 2rem;
+  border-top: 1px solid var(--wp-ink);
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.5rem 1.5rem;
+  border-radius: var(--wp-button-radius);
+  background: var(--wp-accent);
+  color: var(--wp-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.primary:hover {
+  background: color-mix(in srgb, var(--wp-accent) 88%, var(--wp-ink));
+}
+
+.next {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--wp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.next:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ── Full paper: the response form ─────────────────────────────────────────── */
+
+.respond {
+  margin-block-start: 1rem;
+}
+
+/* The form's own Button is under 4.5:1 on these surfaces (3.25:1 light,
+ * 2.43:1 dark); here it takes the primary button's accent. */
+.respond button[type="submit"] {
+  border-radius: var(--wp-button-radius);
+  background: var(--wp-accent);
+  color: var(--wp-on-accent);
+}
+
+.respond button[type="submit"]:hover {
+  background: color-mix(in srgb, var(--wp-accent) 88%, var(--wp-ink));
+}
+
+.respond h2 {
+  color: var(--wp-ink);
+  font-family: var(--wp-heading-font);
+  font-weight: var(--wp-heading-weight);
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+}
+
+/* ══ B · Index ═══════════════════════════════════════════════════════════════ */
+
+@media screen {
+  :global(html[data-wp-view="index"]):has(.root) {
+    --wp-surface: var(--wp-raised);
+  }
+
+  :global(html[data-wp-view="index"]) .root {
+    --wp-heading-font: var(--wp-sans);
+    /* Alegreya Sans is bundled at 400, 500 and 700; the mockup's 800 is 700. */
+    --wp-heading-weight: 700;
+    --wp-body-size: 1.125rem;
+    --wp-body-leading: 1.6;
+    --wp-title-size: clamp(2.25rem, 5vw, 3rem);
+    --wp-entry-title-size: clamp(1.3125rem, 1.15rem + 0.6vw, 1.4375rem);
+    --wp-lede-font: var(--wp-sans);
+    --wp-lede-size: clamp(1.1875rem, 1.1rem + 0.4vw, 1.3125rem);
+    --wp-measure: 47.5rem;
+    --wp-entry-gap: 1.75rem;
+    --wp-radius: 10px;
+    --wp-button-radius: 8px;
+  }
+
+  :global(html[data-wp-view="index"]) .container {
+    max-width: 76rem;
+  }
+
+  :global(html[data-wp-view="index"]) .crumbs li + li::before {
+    content: "/";
+  }
+
+  /* Rail and content. */
+  :global(html[data-wp-view="index"]) .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 4.5rem;
+    align-items: start;
+  }
+
+  :global(html[data-wp-view="index"]) .eyebrow {
+    display: none;
+  }
+
+  :global(html[data-wp-view="index"]) .aside {
+    display: block;
+    align-self: start;
+  }
+
+  :global(html[data-wp-view="index"]) .title {
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+  }
+
+  :global(html[data-wp-view="index"]) .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.875rem 1.5rem;
+    margin: 0 0 1.25rem;
+    color: var(--wp-ink-2);
+  }
+
+  :global(html[data-wp-view="index"]) .metaItem {
+    display: block;
+  }
+
+  :global(html[data-wp-view="index"]) .metaItem + .metaItem::before {
+    content: none;
+  }
+
+  :global(html[data-wp-view="index"]) .metaItem dt {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 0.25rem;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    color: var(--wp-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  :global(html[data-wp-view="index"]) .metaItem dd {
+    color: var(--wp-ink);
+  }
+
+  :global(html[data-wp-view="index"]) .badge {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+    font-weight: 600;
+  }
+
+  :global(html[data-wp-view="index"]) .notice {
+    display: block;
+    margin: 0 0 2rem;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--wp-rule);
+    border-radius: 0;
+    background: none;
+    font-size: 0.8125rem;
+  }
+
+  :global(html[data-wp-view="index"]) .notice svg {
+    display: inline;
+    margin-inline-end: 0.375rem;
+    vertical-align: -0.1em;
+  }
+
+  :global(html[data-wp-view="index"]) .intro {
+    margin-block-start: 1.25rem;
+  }
+
+  :global(html[data-wp-view="index"]) .list {
+    margin-block-start: 2.5rem;
+  }
+
+  :global(html[data-wp-view="index"]) .listHeading {
+    border-bottom-width: 2px;
+    padding: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  :global(html[data-wp-view="index"]) .entry {
+    padding-inline-start: 3.25rem;
+  }
+
+  :global(html[data-wp-view="index"]) .num {
+    top: calc(var(--wp-entry-gap) + 0.4rem);
+    font-family: var(--wp-sans);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :global(html[data-wp-view="index"]) .entryTitle {
+    display: inline;
+    margin-inline-end: 0.75rem;
+  }
+
+  :global(html[data-wp-view="index"]) .stamp {
+    display: inline-flex;
+    margin: 0;
+    gap: 0 0.375rem;
+    font-size: 0.875rem;
+    vertical-align: 0.1em;
+  }
+
+  :global(html[data-wp-view="index"]) .stamp > * + *::before {
+    content: "·";
+    margin-inline-end: 0.375rem;
+    color: var(--wp-muted);
+  }
+
+  :global(html[data-wp-view="index"]) .stamp .badge {
+    order: 2;
+  }
+
+  :global(html[data-wp-view="index"]) .stamp .badge::before {
+    content: "·";
+    margin-inline-end: 0.375rem;
+    color: var(--wp-muted);
+    font-weight: 400;
+  }
+
+  :global(html[data-wp-view="index"]) .stamp .badge + *::before {
+    content: none;
+  }
+
+  :global(html[data-wp-view="index"]) .summary {
+    margin-block-start: 0.625rem;
+  }
+
+  :global(html[data-wp-view="index"]) .links {
+    margin-block-start: 0.25rem;
+  }
+
+  :global(html[data-wp-view="index"]) .types {
+    padding: 0;
+    border: 1px solid var(--wp-rule);
+    border-radius: var(--wp-radius);
+    overflow: hidden;
+  }
+
+  :global(html[data-wp-view="index"]) .type {
+    grid-template-columns: minmax(8rem, 2fr) 3fr;
+    padding: 0.875rem 1.25rem;
+    border-top: 1px solid var(--wp-rule);
+  }
+
+  :global(html[data-wp-view="index"]) .type:first-child {
+    border-top: 0;
+  }
+
+  :global(html[data-wp-view="index"]) .type dt {
+    font-family: var(--wp-sans);
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+
+  :global(html[data-wp-view="index"]) .names {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+  }
+
+  :global(html[data-wp-view="index"]) .namesLabel {
+    display: inline;
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  :global(html[data-wp-view="index"]) .namesLabel .colon {
+    display: inline;
+  }
+
+  :global(html[data-wp-view="index"]) .names em {
+    color: inherit;
+    font-weight: inherit;
+  }
+
+  :global(html[data-wp-view="index"]) .paperNav {
+    border-top-width: 2px;
+  }
+
+  @media (min-width: 900px) {
+    :global(html[data-wp-view="index"]) .page {
+      grid-template-columns: minmax(14rem, 17.5rem) minmax(0, var(--wp-measure));
+    }
+
+    :global(html[data-wp-view="index"]) .page > *,
+    :global(html[data-wp-view="index"]) .header > * {
+      grid-column: 2;
+    }
+
+    /* The rail spans into the long row below, so it never stretches the
+     * rows beside the title and intro. */
+    :global(html[data-wp-view="index"]) .aside {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+    }
+
+    :global(html[data-wp-view="index"]) .meta {
+      grid-template-columns: 1fr;
+      gap: 1.125rem;
+      margin: 0.5rem 0 1.5rem;
+    }
+
+    :global(html[data-wp-view="index"]) .title {
+      grid-row: 1;
+    }
+
+    :global(html[data-wp-view="index"]) .intro,
+    :global(html[data-wp-view="index"]) .body {
+      grid-row: 2;
+    }
+
+    :global(html[data-wp-view="index"]) .list,
+    :global(html[data-wp-view="index"]) .paperNav,
+    :global(html[data-wp-view="index"]) .respond {
+      grid-row: 3;
+    }
+
+    :global(html[data-wp-view="index"]) .respond {
+      grid-row: 4;
+    }
+
+    :global(html[data-wp-view="index"]) [data-kind="paper"] .body {
+      grid-row: 3;
+    }
+  }
+
+  @media (max-width: 899.98px) {
+    :global(html[data-wp-view="index"]) .aside {
+      order: -1;
+    }
+
+    :global(html[data-wp-view="index"]) .page > *,
+    :global(html[data-wp-view="index"]) .header > * {
+      grid-column: 1;
+    }
+  }
+}
+
+/* ══ C · Cards ═══════════════════════════════════════════════════════════════ */
+
+@media screen {
+  :global(html[data-wp-view="cards"]):has(.root) {
+    --wp-surface: var(--wp-subtle);
+  }
+
+  :global(html[data-wp-view="cards"]) .root {
+    --wp-heading-weight: 600;
+    --wp-body-size: clamp(1.125rem, 1.1rem + 0.1vw, 1.1875rem);
+    --wp-title-size: clamp(2.5rem, 6vw, 3.5rem);
+    --wp-entry-title-size: clamp(1.375rem, 1.2rem + 0.6vw, 1.625rem);
+    --wp-lede-font: var(--wp-sans);
+    --wp-lede-size: clamp(1.25rem, 1.15rem + 0.4vw, 1.375rem);
+    --wp-measure: 47.5rem;
+    --wp-radius: 18px;
+    --wp-button-radius: 10px;
+    --wp-pad: clamp(1.5rem, 5vw, 3.5rem);
+    --wp-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 1px 12px rgb(0 0 0 / 0.05);
+  }
+
+  :global(html[data-wp-view="cards"]) .container {
+    max-width: 74rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .crumbs li + li::before {
+    content: "/";
+  }
+
+  :global(html[data-wp-view="cards"]) .eyebrow {
+    display: none;
+  }
+
+  /* The panel: a grid whose ::before draws the white sheet behind the
+   * header rows (packet and index) or the whole page (TL;DR and paper). */
+  :global(html[data-wp-view="cards"]) .page {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+      [full-start] var(--wp-pad) [content-start] auto minmax(0, 1fr) [content-end]
+      var(--wp-pad) [full-end];
+    align-items: start;
+  }
+
+  :global(html[data-wp-view="cards"]) .page::before {
+    content: "";
+    grid-column: full;
+    grid-row: 1 / 4;
+    align-self: stretch;
+    border: 1px solid var(--wp-rule);
+    border-radius: var(--wp-radius);
+    background: var(--wp-raised);
+    box-shadow: var(--wp-shadow);
+  }
+
+  :global(html[data-wp-view="cards"]) .page > *,
+  :global(html[data-wp-view="cards"]) .header > *,
+  :global(html[data-wp-view="cards"]) .aside > * {
+    grid-column: content;
+    z-index: 1;
+  }
+
+  :global(html[data-wp-view="cards"]) .notice {
+    order: 0;
+  }
+
+  :global(html[data-wp-view="cards"]) .meta {
+    grid-column: content-start / span 1;
+    grid-row: 1;
+    gap: 0.5rem;
+    margin: var(--wp-pad) 0 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .notice {
+    grid-column: 3 / content-end;
+    grid-row: 1;
+    align-self: start;
+    justify-self: start;
+    margin: var(--wp-pad) 0 1.25rem 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--wp-draft-bg);
+    color: var(--wp-draft-fg);
+    font-size: 0.875rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .metaItem {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--wp-subtle);
+  }
+
+  :global(html[data-wp-view="cards"]) .metaItem:has(.badge) {
+    padding: 0;
+    background: none;
+  }
+
+  :global(html[data-wp-view="cards"]) .metaItem + .metaItem::before {
+    content: none;
+  }
+
+  :global(html[data-wp-view="cards"]) .metaItem .badge {
+    padding-block: 0.25rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .title {
+    grid-row: 2;
+  }
+
+  :global(html[data-wp-view="cards"]) .intro,
+  :global(html[data-wp-view="cards"]) .body {
+    grid-row: 3;
+    margin-block: 1.75rem var(--wp-pad);
+  }
+
+  :global(html[data-wp-view="cards"]) .list {
+    grid-column: full;
+    grid-row: 4;
+    margin-block-start: 1.5rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .listHeading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  /* Intro: lede on the left, the rest beside it, on wide screens. */
+  @media (min-width: 900px) {
+    :global(html[data-wp-view="cards"]) .prose.intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+      column-gap: 4rem;
+      align-items: start;
+    }
+
+    :global(html[data-wp-view="cards"]) .prose.intro > * {
+      grid-column: 2;
+      font-size: 1.125rem;
+      color: var(--wp-ink-2);
+    }
+
+    :global(html[data-wp-view="cards"]) .prose.intro > p:first-child {
+      grid-column: 1;
+      grid-row: 1 / span 6;
+      font-size: var(--wp-lede-size);
+      color: var(--wp-ink);
+    }
+  }
+
+  /* Cards. */
+  :global(html[data-wp-view="cards"]) .entries {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(21.25rem, 100%), 1fr));
+    gap: 1.5rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .entry {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
+    align-items: start;
+    gap: 0 1rem;
+    padding: 2rem;
+    border: 1px solid var(--wp-rule);
+    border-radius: var(--wp-radius);
+    background: var(--wp-raised);
+    box-shadow: var(--wp-shadow);
+  }
+
+  :global(html[data-wp-view="cards"]) .num {
+    position: static;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    font-family: var(--wp-sans);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  :global(html[data-wp-view="cards"]) .numWord {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  :global(html[data-wp-view="cards"]) .stamp {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .entryTitle {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-block-start: 1rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .summary {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    font-size: 1.125rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .links {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    gap: 0.75rem;
+    margin-block-start: 1.5rem;
+  }
+
+  :global(html[data-wp-view="cards"]) .links a {
+    padding: 0 1.125rem;
+    border: 1px solid var(--wp-rule);
+    border-radius: var(--wp-button-radius);
+    color: var(--wp-ink);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  :global(html[data-wp-view="cards"]) .links a:first-child {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--chakra-colors-user-theme-accent) 14%, var(--wp-raised));
+  }
+
+  :global(html[data-wp-view="cards"]) .links a:hover {
+    border-color: var(--wp-accent);
+  }
+
+  /* TL;DR and paper: the whole page is one sheet, up to 880px. */
+  :global(html[data-wp-view="cards"]) [data-kind="tldr"] .page,
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .page {
+    max-width: 55rem;
+    margin-inline: auto;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="tldr"] .page::before,
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .page::before {
+    /* Every row the page uses (implicit rows, so not 1 / -1). */
+    grid-row: 1 / span 8;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="tldr"] .body,
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .body {
+    margin-block-end: 0;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .intro {
+    margin-block-end: 0;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .body {
+    grid-row: 4;
+    margin-block-start: 2rem;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="tldr"] .paperNav {
+    grid-row: 4;
+    margin-block: 2.5rem var(--wp-pad);
+    padding: 0;
+    border: 0;
+    justify-content: flex-start;
+  }
+
+  :global(html[data-wp-view="cards"]) [data-kind="paper"] .respond {
+    grid-row: 5;
+    margin-block-end: var(--wp-pad);
+  }
+
+  :global(html[data-wp-view="cards"]) .next {
+    padding: 0 1.25rem;
+    min-height: 48px;
+    border: 1px solid var(--wp-rule);
+    border-radius: var(--wp-button-radius);
+    color: var(--wp-ink);
+    text-decoration: none;
+  }
+
+  :global(html[data-wp-view="cards"]) .next:hover {
+    border-color: var(--wp-accent);
+  }
+
+  :global(html[data-wp-view="cards"]) .types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.75rem;
+    padding: 0;
+    border: 0;
+  }
+
+  :global(html[data-wp-view="cards"]) .type {
+    display: block;
+    padding: 1.125rem 1.25rem;
+    border: 1px solid var(--wp-rule);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--wp-subtle) 55%, var(--wp-raised));
+  }
+
+  :global(html[data-wp-view="cards"]) .type dt {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  :global(html[data-wp-view="cards"]) .type dd {
+    margin-block-start: 0.375rem;
+    color: var(--wp-muted);
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  :global(html[data-wp-view="cards"]) .typeNum {
+    display: block;
+    margin-block-end: 0.5rem;
+    color: var(--wp-muted);
+    font-family: var(--wp-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  :global(html[data-wp-view="cards"]) .names {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+  }
+
+  :global(html[data-wp-view="cards"]) .namesLabel {
+    display: inline;
+    margin: 0;
+    font-size: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  :global(html[data-wp-view="cards"]) .namesLabel .colon {
+    display: inline;
+  }
+
+  :global(html[data-wp-view="cards"]) .names em {
+    color: inherit;
+    font-weight: inherit;
+  }
+
+  @media (max-width: 639.98px) {
+    :global(html[data-wp-view="cards"]) .page {
+      grid-template-columns:
+        [full-start] var(--wp-pad) [content-start] minmax(0, 1fr) 0 [content-end]
+        var(--wp-pad) [full-end];
+    }
+
+    :global(html[data-wp-view="cards"]) .meta {
+      grid-column: content;
+      margin-block-end: 0.75rem;
+    }
+
+    :global(html[data-wp-view="cards"]) .notice {
+      grid-column: content;
+      grid-row: 2;
+      margin: 0 0 1.25rem;
+    }
+
+    :global(html[data-wp-view="cards"]) .title {
+      grid-row: 3;
+    }
+
+    :global(html[data-wp-view="cards"]) .intro,
+    :global(html[data-wp-view="cards"]) .body {
+      grid-row: 4;
+    }
+
+    :global(html[data-wp-view="cards"]) .page::before {
+      grid-row: 1 / 5;
+    }
+
+    :global(html[data-wp-view="cards"]) .list {
+      grid-row: 5;
+    }
+
+    :global(html[data-wp-view="cards"]) [data-kind="paper"] .body {
+      grid-row: 5;
+    }
+
+    :global(html[data-wp-view="cards"]) [data-kind="tldr"] .paperNav {
+      grid-row: 5;
+    }
+
+    :global(html[data-wp-view="cards"]) [data-kind="paper"] .respond {
+      grid-row: 6;
+    }
+
+    :global(html[data-wp-view="cards"]) .entry {
+      padding: 1.5rem;
+    }
+  }
+}
+
+/* ── Print: always Editorial, without the chrome ───────────────────────────── */
+
+@media print {
+  :global(html):has(.root) :global(body) {
+    background-color: #fff !important;
+  }
+
+  .topRow,
+  .respond,
+  .paperNav {
+    display: none;
+  }
+}

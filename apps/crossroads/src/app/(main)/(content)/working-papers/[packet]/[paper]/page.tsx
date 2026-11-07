@@ -3,12 +3,16 @@
 // A paper's TL;DR: the middle of the three layers, between the packet's
 // 3-line summary and the paper itself.
 
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Heading, Stack } from "@chakra-ui/react";
-import { Prose } from "@/components/ui/prose";
-import { PaperStamp, WorkingPaperShell } from "@/components/working-papers/WorkingPaperShell";
-import { listPacketSlugs, listPaperSlugs, loadPacket, loadTldr, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
+import {
+  PageHeader,
+  PaperNav,
+  StatusBadge,
+  TldrBody,
+  twoDigits,
+  WorkingPapersShell,
+} from "@/components/working-papers/WorkingPapers";
+import { formatDate, listPacketSlugs, listPaperSlugs, loadPacket, loadTldr, WORKING_PAPERS_ROBOTS } from "@/lib/workingPapers";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -33,31 +37,34 @@ export default async function TldrPage({ params }: { params: Promise<Params> }) 
   const { packet: packetSlug, paper } = await params;
   const [packet, tldr] = await Promise.all([loadPacket(packetSlug), loadTldr(packetSlug, paper)]);
   if (!packet || !tldr) notFound();
+  const index = packet.papers.findIndex((p) => p.slug === paper);
+  const next = index >= 0 ? packet.papers[index + 1] : undefined;
+  const position = index >= 0 ? `${packet.title}, paper ${index + 1} of ${packet.papers.length}` : packet.title;
 
   return (
-    <WorkingPaperShell
+    <WorkingPapersShell
+      kind="tldr"
       crumbs={[
         { label: "Working Papers", href: "/working-papers" },
         { label: packet.title, href: `/working-papers/${packet.slug}` },
         { label: "TL;DR" },
       ]}
     >
-      <Stack gap={3}>
-        <Heading as="h1" size="2xl">
-          {tldr.title}
-        </Heading>
-        <PaperStamp version={tldr.version} date={tldr.date} />
-        <Heading as="h2" size="md" mt={4}>
-          TL;DR
-        </Heading>
-        <Prose maxW="none" dangerouslySetInnerHTML={{ __html: tldr.html }} />
-        <Link
-          href={`/working-papers/${packet.slug}/${paper}/full`}
-          style={{ textDecoration: "underline", fontWeight: 600, marginTop: "1.5rem" }}
-        >
-          Read the full paper →
-        </Link>
-      </Stack>
-    </WorkingPaperShell>
+      <PageHeader
+        eyebrow={index >= 0 ? `TL;DR · ${packet.title} ${twoDigits(index + 1)}` : "TL;DR"}
+        title={tldr.title}
+        meta={[
+          { term: "Status", value: <StatusBadge status={tldr.status} /> },
+          ...(tldr.version ? [{ term: "Version", value: tldr.version, showTerm: true }] : []),
+          ...(tldr.date ? [{ term: "Dated", value: formatDate(tldr.date) }] : []),
+          { term: "In this packet", value: position },
+        ]}
+      />
+      <TldrBody html={tldr.html} types={tldr.types} namesHtml={tldr.namesHtml} />
+      <PaperNav
+        full={`/working-papers/${packet.slug}/${paper}/full`}
+        next={next && { href: `/working-papers/${packet.slug}/${next.slug}`, title: next.title }}
+      />
+    </WorkingPapersShell>
   );
 }
