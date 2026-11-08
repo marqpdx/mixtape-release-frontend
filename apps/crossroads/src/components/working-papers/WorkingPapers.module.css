@@ -66,10 +66,10 @@
   --wp-lede-font: var(--wp-serif);
   --wp-lede-size: clamp(1.3125rem, 1.15rem + 0.7vw, 1.5rem);
   --wp-measure: 45rem;
-  /* Prose line length. The spec's column widths give about 95 characters
-   * a line in Alegreya Sans, against its 60–75 target; 28em would meet
-   * the target. Open with the CTO (2026-11-07): the column stands for now. */
-  --wp-prose-measure: 100%;
+  /* Prose line length: about 68 characters a line (CTO, 2026-11-08).
+   * Alegreya Sans averages 0.381em a character in running prose, so
+   * 68 characters is about 26em. At the full column it ran about 95. */
+  --wp-prose-measure: 26em;
   --wp-entry-gap: 2.5rem;
   --wp-radius: 12px;
   --wp-button-radius: 999px;
