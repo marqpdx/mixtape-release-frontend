@@ -328,8 +328,8 @@ export default function UnifiedNavbar({
 
             {/* Logo */}
             {showLogo && (
-              <Link as={NextLink} href="/" _hover={{ textDecoration: "none" }}>
-                <Box transform={logoOffset}>
+              <Link as={NextLink} href="/" aria-label="Crossroads home" _hover={{ textDecoration: "none" }}>
+                <Box transform={logoOffset} aria-hidden="true">
                   <CrossroadsLogo
                     size={logoSize}
                     color={logoColor}

@@ -44,7 +44,7 @@ export default function Footer() {
             </ChakraLink>
           </HStack>
 
-          <Text fontSize="sm" color="gray.500">
+          <Text fontSize="sm" color="theme.textSecondary">
             © {new Date().getFullYear()} Mindful Brilliance
           </Text>
         </HStack>

@@ -159,6 +159,7 @@ export const ThemeSelector: React.FC = () => {
           <Button
             variant="ghost"
             color="theme.text"
+            aria-label={`Theme and text settings: ${currentTheme?.name || "Gallery Minimal"}`}
             _hover={{ bg: "theme.border" }}
             fontSize="sm"
             gap={2}

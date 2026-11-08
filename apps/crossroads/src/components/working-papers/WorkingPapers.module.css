@@ -301,7 +301,8 @@
 .prose > blockquote,
 .tldr > p,
 .names p,
-.summary {
+.summary,
+.notice {
   max-width: var(--wp-prose-measure);
 }
 

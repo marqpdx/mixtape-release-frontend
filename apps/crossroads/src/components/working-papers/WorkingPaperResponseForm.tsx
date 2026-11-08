@@ -93,7 +93,7 @@ export function WorkingPaperResponseForm({
         <Heading as="h2" id="respond-heading" size="lg">
           Respond to this paper
         </Heading>
-        <Text color="fg.muted">
+        <Text color="fg.muted" maxW="var(--wp-prose-measure, 26em)">
           This is a working paper: corrections, questions and ideas are welcome before it reaches 1.0.
           Your response comes straight to the author.
         </Text>
