@@ -13,9 +13,10 @@ assets and generates the font CSS.
 - `src/app/(main)/(group-landing)/groups/[slug]/fonts.ts`: ten group families.
   Keep the `tenantFontMap` keys because group presentation settings store
   those `font_id` values.
-- `src/components/working-papers/fonts.ts`: Alegreya (serif, 400–600 and
-  italic 400), for Working Papers headings only. Its WOFF2 files are the
-  Latin faces from Google Fonts' CSS response (v41), added 2026-11-07.
+- `src/components/working-papers/fonts.ts`: Source Serif 4 (400–600, normal
+  and italic; the same files as the group fonts), for Working Papers headings
+  and ledes only, from 2026-11-08. Alegreya (`alegreya/`, added 2026-11-07)
+  is no longer loaded; its files stay until someone removes them.
 - Each family directory contains its WOFF2 files and upstream `OFL.txt`.
   `SHA256SUMS` records the exact bundled binaries.
 

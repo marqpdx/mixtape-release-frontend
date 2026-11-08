@@ -1,16 +1,18 @@
 // apps/crossroads/src/components/working-papers/fonts.ts
 //
-// Alegreya, the serif for Working Papers headings (Editorial and Cards views).
-// Loaded here, not site-wide, so only Working Papers pages fetch it.
+// Source Serif 4, the serif for Working Papers headings and ledes (Editorial
+// and Cards views). Chosen over Alegreya for a quieter page (CTO,
+// 2026-11-08). Loaded here, not site-wide, so only Working Papers pages
+// fetch it.
 
 import localFont from "next/font/local";
 
-export const alegreya = localFont({
+export const wpSerif = localFont({
   src: [
-    { path: "../../fonts/alegreya/latin-normal.woff2", weight: "400 600", style: "normal" },
-    { path: "../../fonts/alegreya/latin-italic.woff2", weight: "400", style: "italic" },
+    { path: "../../fonts/sourceserif4/latin-normal.woff2", weight: "400 600", style: "normal" },
+    { path: "../../fonts/sourceserif4/latin-italic.woff2", weight: "400 600", style: "italic" },
   ],
-  variable: "--font-alegreya",
+  variable: "--font-wp-serif",
   display: "swap",
   adjustFontFallback: "Times New Roman",
 });

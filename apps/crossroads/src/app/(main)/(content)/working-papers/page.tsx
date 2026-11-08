@@ -37,7 +37,7 @@ export default async function WorkingPapersPage() {
         <p>No packets yet.</p>
       ) : (
         <EntryList
-          heading="The packets"
+          heading="Packets"
           numberWord="Packet"
           entries={packets.map((packet) => ({
             key: packet.slug,

@@ -14,7 +14,7 @@ import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 import { ViewSwitcher } from "@/components/reading-views/ViewSwitcher";
 import { READING_ANCHOR } from "@/components/reading-views/readingViews";
 import { STATUS_LABEL, type PaperStatus, type PaperType } from "@/lib/workingPapers";
-import { alegreya } from "./fonts";
+import { wpSerif } from "./fonts";
 import { WORKING_PAPER_VIEWS } from "./views";
 import styles from "./WorkingPapers.module.css";
 
@@ -42,7 +42,7 @@ export function WorkingPapersShell({
   return (
     <>
       <UnifiedNavbar extraCompact />
-      <div className={`${styles.root} ${alegreya.variable}`} data-kind={kind}>
+      <div className={`${styles.root} ${wpSerif.variable}`} data-kind={kind}>
         <main className={styles.main}>
           <div className={styles.container}>
             <div className={styles.topRow}>

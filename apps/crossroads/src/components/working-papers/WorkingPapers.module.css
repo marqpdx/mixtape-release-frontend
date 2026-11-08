@@ -54,17 +54,19 @@
 /* ── Type, measure and spacing (Editorial) ─────────────────────────────────── */
 
 .root {
-  --wp-serif: var(--font-alegreya), Georgia, "Times New Roman", serif;
+  --wp-serif: var(--font-wp-serif), Georgia, "Times New Roman", serif;
   --wp-sans: var(--chakra-fonts-body);
   --wp-heading-font: var(--wp-serif);
   --wp-heading-weight: 500;
   --wp-body-size: 1.1875rem;
   --wp-body-leading: 1.65;
   --wp-small: 0.9375rem;
-  --wp-title-size: clamp(2.5rem, 6vw, 3.75rem);
+  /* Titles 16% smaller than first built (CTO, 2026-11-08): was clamp(2.5rem, 6vw, 3.75rem). */
+  --wp-title-size: clamp(2.1rem, 5.04vw, 3.15rem);
   --wp-entry-title-size: clamp(1.5rem, 1.1rem + 1.6vw, 1.875rem);
   --wp-lede-font: var(--wp-serif);
-  --wp-lede-size: clamp(1.3125rem, 1.15rem + 0.7vw, 1.5rem);
+  /* Ledes 11% smaller than first built (CTO, 2026-11-08): was clamp(1.3125rem, 1.15rem + 0.7vw, 1.5rem). */
+  --wp-lede-size: clamp(1.168rem, 1.024rem + 0.623vw, 1.335rem);
   --wp-measure: 45rem;
   /* Prose line length: about 68 characters a line (CTO, 2026-11-08).
    * Alegreya Sans averages 0.381em a character in running prose, so
@@ -1016,7 +1018,9 @@
 
 @media screen {
   :global(html[data-wp-view="cards"]):has(.root) {
-    --wp-surface: var(--wp-subtle);
+    /* A faint wash of the theme's accent, not grey (CTO, 2026-11-08):
+     * follows every theme, light and dark. Was var(--wp-subtle). */
+    --wp-surface: color-mix(in srgb, var(--chakra-colors-user-theme-accent) 10%, var(--wp-bg));
   }
 
   :global(html[data-wp-view="cards"]) .root {
