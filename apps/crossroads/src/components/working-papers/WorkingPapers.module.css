@@ -729,7 +729,8 @@
 
 @media screen {
   :global(html[data-wp-view="index"]):has(.root) {
-    --wp-surface: var(--wp-raised);
+    /* Every view on Editorial's page background (CTO, 2026-11-08). Was var(--wp-raised). */
+    --wp-surface: var(--wp-bg);
   }
 
   :global(html[data-wp-view="index"]) .root {
@@ -1018,9 +1019,9 @@
 
 @media screen {
   :global(html[data-wp-view="cards"]):has(.root) {
-    /* A faint wash of the theme's accent, not grey (CTO, 2026-11-08):
-     * follows every theme, light and dark. Was var(--wp-subtle). */
-    --wp-surface: color-mix(in srgb, var(--chakra-colors-user-theme-accent) 10%, var(--wp-bg));
+    /* Every view on Editorial's page background (CTO, 2026-11-08).
+     * Was var(--wp-subtle), then briefly an accent wash. */
+    --wp-surface: var(--wp-bg);
   }
 
   :global(html[data-wp-view="cards"]) .root {
