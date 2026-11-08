@@ -127,10 +127,11 @@
   margin-inline-start: auto;
 }
 
-/* Editorial's column is narrower than Index's and Cards', so its view
- * switcher would sit further in. Shift it out to where Cards puts it (a
- * 74rem container), leaving the breadcrumb on the column (CTO,
- * 2026-11-08). 100cqw is .main's width, scrollbar excluded. */
+/* One place for the view switcher in every view: the right edge of Index's
+ * 76rem container, the widest (CTO, 2026-11-08; as on the system and
+ * platform maps). Editorial's column and Cards' 74rem container are
+ * narrower, so their switchers shift out by half the difference; the
+ * breadcrumb stays put. 100cqw is .main's width, scrollbar excluded. */
 .main {
   container-type: inline-size;
 }
@@ -138,7 +139,12 @@
 @media screen and (min-width: 768px) {
   :global(html:not([data-wp-view="index"]):not([data-wp-view="cards"])) .topRow > :last-child {
     position: relative;
-    inset-inline-end: calc(-1 * max(0px, (min(100cqw, 74rem) - min(100cqw, var(--wp-measure) + 3rem)) / 2));
+    inset-inline-end: calc(-1 * max(0px, (min(100cqw, 76rem) - min(100cqw, var(--wp-measure) + 3rem)) / 2));
+  }
+
+  :global(html[data-wp-view="cards"]) .topRow > :last-child {
+    position: relative;
+    inset-inline-end: calc(-1 * max(0px, (min(100cqw, 76rem) - min(100cqw, 74rem)) / 2));
   }
 }
 
