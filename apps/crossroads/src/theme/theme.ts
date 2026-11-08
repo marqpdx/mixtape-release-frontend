@@ -239,7 +239,7 @@ export const config = defineConfig({
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
-          accentText: { value: "var(--theme-accent-text)" },
+          accentText: { value: "var(--theme-accent-text, #000000)" },
           accentSoft: { value: "var(--theme-accent-soft)" },
           bgSubtle: { value: "var(--theme-bg-subtle)" },
           text: { value: "var(--theme-text, #111827)" },

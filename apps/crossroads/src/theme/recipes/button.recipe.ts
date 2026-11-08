@@ -21,7 +21,9 @@ export const buttonRecipe = defineRecipe({
       // NEW: Primary buttons using dynamic theme accent
       solid: {
         bg: "theme.accent",
-        color: "white",
+        // Each theme's text-on-accent colour: white failed 4.5:1 on 18 of
+        // 20 theme modes; accentText passes on all 20 (Lighthouse, 2026-11-08).
+        color: "theme.accentText",
         _hover: {
           opacity: 0.9,
           transform: "translateY(-1px)",
@@ -40,7 +42,7 @@ export const buttonRecipe = defineRecipe({
         bg: "transparent",
         _hover: {
           bg: "theme.accent",
-          color: "white",
+          color: "theme.accentText",
           transform: "translateY(-1px)",
           boxShadow: "md",
         },
