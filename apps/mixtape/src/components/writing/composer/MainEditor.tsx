@@ -1,6 +1,7 @@
 // src/components/write/composer/MainEditor.tsx
 
 import React, { forwardRef } from "react";
+import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/react";
 import { Box, Button } from "@chakra-ui/react";
 import { IconMaximize, IconMinimize } from "@tabler/icons-react";
@@ -85,6 +86,8 @@ export interface MainEditorProps {
   imageUpload?: (file: File) => Promise<string>;
   /** Keep the same editor mounted while showing the distraction-free Gist view. */
   enableGist?: boolean;
+  /** Optional location for the Gist entry button outside the writing surface. */
+  gistControlContainer?: HTMLElement | null;
 }
 
 export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
@@ -106,6 +109,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       gristMode,
       imageUpload,
       enableGist = false,
+      gistControlContainer,
       attic,
       onCollabEditorReady,
     },
@@ -260,6 +264,31 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
       currentWordCount,
     ]);
 
+    const gistToggle = enableGist ? (
+      <Button
+        className="main-editor-gist-toggle"
+        aria-label={gistOpen ? "Exit Gist view" : "Enter Gist view"}
+        title={gistOpen ? "Exit Gist (Esc)" : "Gist view"}
+        size={gistOpen ? "sm" : "xs"}
+        variant="subtle"
+        position={gistOpen || !gistControlContainer ? "absolute" : undefined}
+        top={gistOpen ? 3 : undefined}
+        bottom={!gistOpen && !gistControlContainer ? 3 : undefined}
+        right={gistOpen || !gistControlContainer ? 3 : undefined}
+        zIndex={12}
+        aria-pressed={gistOpen}
+        onClick={() => {
+          setGistOpen((open) => !open);
+          requestAnimationFrame(() => {
+            (editorRef.current as Editor | null)?.commands?.focus?.();
+          });
+        }}
+      >
+        {gistOpen ? <IconMinimize size={16} /> : <IconMaximize size={14} />}
+        {gistOpen ? "Exit Gist" : "Gist"}
+      </Button>
+    ) : null;
+
     // ---------- Render ----------
     return (
       <Prose
@@ -277,7 +306,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
         css={gistOpen ? { "& > *": { marginBlock: 0 } } : undefined}
       >
         <Box
-          className="reggie"
+          className="reggie med-editor-frame"
           borderWidth="1px"
           borderColor={editorBorderColor}
           borderRadius="lg"
@@ -306,30 +335,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
             "& .prose": { maxWidth: "none" },
           }}
         >
-          {enableGist && (
-            <Button
-              className="main-editor-gist-toggle"
-              aria-label={gistOpen ? "Exit Gist view" : "Enter Gist view"}
-              title={gistOpen ? "Exit Gist (Esc)" : "Gist view"}
-              size="sm"
-              variant="subtle"
-              position="absolute"
-              top={gistOpen ? 3 : undefined}
-              bottom={gistOpen ? undefined : 3}
-              right={3}
-              zIndex={12}
-              aria-pressed={gistOpen}
-              onClick={() => {
-                setGistOpen((open) => !open);
-                requestAnimationFrame(() => {
-                  (editorRef.current as Editor | null)?.commands?.focus?.();
-                });
-              }}
-            >
-              {gistOpen ? <IconMinimize size={16} /> : <IconMaximize size={16} />}
-              {gistOpen ? "Exit Gist" : "Gist"}
-            </Button>
-          )}
+          {(gistOpen || !gistControlContainer) && gistToggle}
           {isPending ? (
             showLoadingUI ? (
               <Box p="24px" opacity={0.8}>
@@ -422,6 +428,7 @@ export const MainEditor = forwardRef<EditorInstance | null, MainEditorProps>(
               </Box>
             )}
         </Box>
+        {!gistOpen && gistControlContainer && createPortal(gistToggle, gistControlContainer)}
       </Prose>
     );
   }

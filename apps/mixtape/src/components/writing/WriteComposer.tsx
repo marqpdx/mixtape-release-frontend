@@ -116,6 +116,7 @@ export default function WriteComposer({
 }: WriteComposerProps) {
   const editorRef = useRef<Editor | null>(null);
   const editorWrapperRef = useRef<HTMLDivElement>(null);
+  const [gistControlContainer, setGistControlContainer] = useState<HTMLDivElement | null>(null);
 
   // Local state for editing
   const [title, setTitle] = useState<string>(initialPiece?.title || "");
@@ -876,13 +877,14 @@ export default function WriteComposer({
               </Box>
             )}
 
-            <Box ref={editorWrapperRef} position="relative" w="100%" onClick={handleEditorAreaClick}>
+            <Box className="wrc-editor-wrapper" ref={editorWrapperRef} position="relative" w="100%" onClick={handleEditorAreaClick}>
               <MainEditor
                 attic={{ pieceId, title }}
                 key={collabKey}
                 ref={editorRef as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 editorMode={editorMode}
                 enableGist
+                gistControlContainer={gistControlContainer}
                 docJSON={docJSON as any} // eslint-disable-line @typescript-eslint/no-explicit-any
                 onContentChange={soloOnChange}
                 placeholder="Start writing your story..."
@@ -912,7 +914,7 @@ export default function WriteComposer({
               )}
             </Box>
 
-            <HStack align="flex-start" gap={3} w="100%" mt={-8}>
+            <HStack className="wrc-editor-footer" align="flex-start" gap={3} w="100%" mt={-8}>
               <Flex alignItems="flex-start" gap={3} flex="1" mt={2} pl={2} borderLeft={'1px solid lightgray'}>
                 <Box pt={"5px"}>
                   <Text fontSize="sm" fontWeight="medium" minW="4em">
@@ -934,16 +936,18 @@ export default function WriteComposer({
               </Flex>
 
               <Box
-                className="status-message-container"
+                className="status-message-container wrc-editor-status"
                 minH="20px"
                 display="flex"
-                alignItems="center"
+                flexDirection="column"
+                alignItems="flex-end"
+                gap={1}
                 justifyContent="flex-end"
                 minW="17em"
                 maxW="17em"
                 pr={.5}
               >
-                <Box position="relative" w="100%" display="flex" justifyContent="flex-end" pt={1}>
+                <Box className="wrc-save-status" position="relative" w="100%" display="flex" justifyContent="flex-end" pt={1}>
                   <Box position="absolute" right={0}>
                     <StatusMessage
                       status={saveStatus}
@@ -963,6 +967,7 @@ export default function WriteComposer({
                     />
                   </Box>
                 </Box>
+                <Box className="wrc-gist-control" ref={setGistControlContainer} display="flex" justifyContent="flex-end" />
               </Box>
             </HStack>
 
