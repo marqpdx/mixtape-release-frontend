@@ -226,6 +226,7 @@ export const config = defineConfig({
           surface: { value: "var(--theme-surface, #FFFFFF)" },
           border: { value: "var(--theme-border, #E2E8F0)" },
           accent: { value: "var(--theme-accent, #38A169)" },
+          accentText: { value: "var(--theme-accent-text, #000000)" },
           accentSoft: { value: "var(--theme-accent-soft, #F0FFF4)" },
           text: { value: "var(--theme-text, #2D3748)" },
           textSecondary: { value: "var(--theme-text-secondary, #4A5568)" },
@@ -316,6 +317,9 @@ export const config = defineConfig({
         },
         "theme.accent": {
           value: "{colors.userTheme.accent}",
+        },
+        "theme.accentText": {
+          value: "{colors.userTheme.accentText}",
         },
         "theme.accentSoft": {
           value: "{colors.userTheme.accentSoft}",

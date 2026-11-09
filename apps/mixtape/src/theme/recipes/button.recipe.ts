@@ -21,7 +21,7 @@ export const buttonRecipe = defineRecipe({
       // NEW: Primary buttons using dynamic theme accent
       solid: {
         bg: "theme.accent",
-        color: "white",
+        color: "theme.accentText",
         _hover: {
           opacity: 0.9,
           transform: "translateY(-1px)",
@@ -40,7 +40,7 @@ export const buttonRecipe = defineRecipe({
         bg: "transparent",
         _hover: {
           bg: "theme.accent",
-          color: "white",
+          color: "theme.accentText",
           transform: "translateY(-1px)",
           boxShadow: "md",
         },
