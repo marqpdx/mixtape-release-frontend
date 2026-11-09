@@ -1,13 +1,13 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.43)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.45)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   maturity: 0.9.6 (publishing maturity; 1.0 = first full release; set by the CTO 2026-10-28)
   build_state_from: the same document (checked against code and status docs 2026-10-14, 2026-10-26 and 2026-11-07)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (six times); box text enlarged 2026-10-29; first Argus system-map-freshness-01 run 2026-11-07 (Redis removed, Heddle and Hildegard placed); Hildegard's box the same width as the rest, 2026-11-08
-  last_updated: 2026-11-07 (shown in the maturity pill's hover note; Argus system-map-freshness-01 stamps it weekly, or sets last_verified when nothing changed)
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (six times); box text enlarged 2026-10-29; first Argus system-map-freshness-01 run 2026-11-07 (Redis removed, Heddle and Hildegard placed); Hildegard's box the same width as the rest, 2026-11-08; LiveKit named Bridge/LiveKit, 2026-11-09
+  last_updated: 2026-11-09 (shown in the maturity pill's hover note; Argus system-map-freshness-01 stamps it weekly, or sets last_verified when nothing changed)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -32,7 +32,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.43</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 7 Nov 2026; checked weekly.">M: 0.9.6</span>
+    <span class="pill">Topology library · System · v2.0.45</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 9 Nov 2026; checked weekly.">M: 0.9.6</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <span class="soon" tabindex="0" data-tip="Coming soon">Loom</span> · <a href="../platform/platform-topology.html">Platform</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Practice</span></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -43,7 +43,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.43 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.45 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -188,8 +188,8 @@
       desc: 'The message broker for Celery, including Switchboard\'s <code>switchboard</code> queue.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/rabbitmq (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
     { id: 'SF', layer: 'infra', x: 364, y: 752, w: 150, h: 40, small: true, label: 'SeaweedFS', sub: 'object store · Stash',
       desc: 'S3-compatible object store for files and images.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/stash (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
-    { id: 'LK', layer: 'infra', x: 528, y: 752, w: 150, h: 40, small: true, label: 'LiveKit', sub: 'audio and video',
-      desc: 'Live audio and video rooms for Bridge.', status: 'partial', evidence: 'Partial (CTO, 2026-10-17): runs in dev (<code>mixtape-dev-infra/livekit</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
+    { id: 'LK', layer: 'infra', x: 528, y: 752, w: 150, h: 40, small: true, label: 'Bridge/LiveKit', sub: 'audio and video',
+      desc: 'Bridge\'s live gatherings run on LiveKit: the audio and video rooms, breakout rooms included, that a session meets in.', status: 'partial', evidence: 'Partial (CTO, 2026-10-17): runs in dev (<code>mixtape-dev-infra/livekit</code>); Bridge\'s local lab and screencast capture are built, its dedicated host and recording are not (<code>bridge-continuity-status.md</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
     { id: 'LM', layer: 'infra', x: 700, y: 758, w: 92, h: 28, tiny: true, label: 'Listmonk',
       desc: 'The mailing engine behind Lanternmail.', status: 'built', evidence: 'In use (<code>mixtape-dev-infra/lanternmail (dev)</code>); VPS inventory in <code>vps-primary-status.md</code>.' },
     { id: 'UM', layer: 'infra', x: 804, y: 758, w: 92, h: 28, tiny: true, label: 'Umami',
