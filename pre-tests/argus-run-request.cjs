@@ -16,42 +16,32 @@ function load(relative, imports = {}) {
 }
 
 const { buildRunRequest, initialRunDraft, localArgusUrl } = load('apps/mixtape/src/components/argus/runRequest.ts');
-const { argusClient } = load('packages/api/src/clients/argus/index.ts');
-const now = Date.parse('2026-11-09T12:00:00Z');
-const draft = { ...initialRunDraft, blockIds: ['help-fidelity-01'], tokens: '10000', turns: '5', wallSeconds: '120' };
+const draft = { ...initialRunDraft, blockIds: ['help-fidelity-01'], mode: 'bounded', tokens: '10000', turns: '5', wallSeconds: '120' };
 let checks = 0;
 function check(name, run) { run(); checks++; console.log(`PASS ${name}`); }
-function rejects(change, message) { assert.throws(() => buildRunRequest({ ...draft, ...change }, now), message); }
+function rejects(change, message) { assert.throws(() => buildRunRequest({ ...draft, ...change }), message); }
 
-check('single-run consent sends no series settings', () => assert.deepEqual(buildRunRequest(draft, now), {
-  block_ids: ['help-fidelity-01'], mode: 'single', caps: { tokens: 10000, turns: 5, wall_seconds: 120 },
-}));
-check('a single run cannot silently cover several blocks', () => rejects({ blockIds: ['a', 'b'] }, /one block/));
-check('a run needs a block', () => rejects({ blockIds: [] }, /at least one/));
+check('single run uses the documented block path without invented cap fields', () => assert.deepEqual(buildRunRequest({ ...initialRunDraft, blockIds: ['help-fidelity-01'] }), {mode: 'single', block_slug: 'help-fidelity-01'}));
+check('a single run cannot cover several blocks', () => rejects({ mode: 'single', blockIds: ['a', 'b'] }, /one block/));
+check('multi-block series cannot silently fan out consent', () => rejects({ blockIds: ['a', 'b'] }, /Multi-block/));
+check('a run needs a block', () => rejects({ blockIds: [] }, /one block/));
 for (const field of ['tokens', 'turns', 'wallSeconds', 'cadenceMinutes']) {
   for (const invalid of ['', '0', '-1', '1.5', 'Infinity', '1e4', '9007199254740992']) {
-    check(`${field} rejects ${JSON.stringify(invalid)}`, () => rejects({ mode: 'bounded', [field]: invalid }, /positive whole number/));
+    check(`${field} rejects ${JSON.stringify(invalid)}`, () => rejects({ [field]: invalid }, /positive whole number/));
   }
 }
-check('bounded days become an explicit end time', () => assert.equal(buildRunRequest({ ...draft, mode: 'bounded', days: '3' }, now).ends_at, '2026-11-12T12:00:00.000Z'));
-check('seven-day duration allowed', () => assert.equal(buildRunRequest({ ...draft, mode: 'bounded', days: '7' }, now).ends_at, '2026-11-16T12:00:00.000Z'));
-check('more than seven days rejected', () => rejects({ mode: 'bounded', days: '8' }, /one and seven/));
-check('count sends no stale end time', () => assert.deepEqual(buildRunRequest({ ...draft, mode: 'bounded', bound: 'count', count: '3', end: '2027-01-01' }, now), {
-  block_ids: ['help-fidelity-01'], mode: 'bounded', cadence_minutes: 120, run_count: 3,
-  caps: { tokens: 10000, turns: 5, wall_seconds: 120 },
+check('bounded days retain the exact reviewed wire shape', () => assert.deepEqual(buildRunRequest(draft), {
+  mode: 'bounded', request: {block_slug: 'help-fidelity-01', cadence_hours: 2, span: {kind: 'days', value: 3},
+    per_turn_caps: {max_tokens: 10000, max_turns: 5, max_wall_clock_seconds: 120}},
 }));
-check('count cannot schedule a run at or after seven days', () => rejects({ mode: 'bounded', bound: 'count', count: '85', cadenceMinutes: '120' }, /seven days/));
-check('invalid count rejected', () => rejects({ mode: 'bounded', bound: 'count', count: '0' }, /Run count/));
-for (const end of ['', 'garbage', '2026-11-09T11:59:00Z']) {
-  check(`invalid/past end rejected: ${end}`, () => rejects({ mode: 'bounded', bound: 'end', end }, /future/));
-}
-check('end beyond seven days rejected', () => rejects({ mode: 'bounded', bound: 'end', end: '2026-11-17T12:00:00Z' }, /seven days/));
-check('end at seven days accepted', () => assert.equal(buildRunRequest({ ...draft, mode: 'bounded', bound: 'end', end: '2026-11-16T12:00:00Z' }, now).ends_at, '2026-11-16T12:00:00.000Z'));
-check('open-ended consent has no inherited duration or count', () => assert.deepEqual(buildRunRequest({ ...draft, mode: 'open_ended', count: '8', end: '2027-01-01' }, now), {
-  block_ids: ['help-fidelity-01'], mode: 'open_ended', cadence_minutes: 120,
-  caps: { tokens: 10000, turns: 5, wall_seconds: 120 },
-}));
-check('series blocks are deduplicated', () => assert.deepEqual(buildRunRequest({ ...draft, mode: 'bounded', blockIds: ['a', 'a', 'b'] }, now).block_ids, ['a', 'b']));
+check('seven days allowed', () => assert.equal(buildRunRequest({ ...draft, days: '7' }).request.span.value, 7));
+check('more than seven days rejected', () => rejects({ days: '8' }, /one and seven/));
+check('count sends only count span', () => assert.deepEqual(buildRunRequest({ ...draft, bound: 'count', count: '3', end: '2027-01-01' }).request.span, {kind: 'runs', value: 3}));
+check('count cannot schedule a run at or after seven days', () => rejects({ bound: 'count', count: '85' }, /seven days/));
+check('invalid count rejected', () => rejects({ bound: 'count', count: '0' }, /Run count/));
+check('minute cadences are never rounded', () => rejects({ cadenceMinutes: '90' }, /whole number of hours/));
+check('an exact end time is never silently converted', () => rejects({ bound: 'end', end: '2026-11-10T12:00:00Z' }, /not available/));
+check('open-ended series never become bounded consent', () => rejects({ mode: 'open_ended' }, /not available/));
 for (const url of ['https://example.com', '//example.com', 'javascript:alert(1)', '/\\example.com', '/ /example.com', undefined]) {
   check(`unsafe result link rejected: ${url}`, () => assert.equal(localArgusUrl(url), undefined));
 }
@@ -83,14 +73,4 @@ for (const [name, state, expected] of [
   });
 }
 
-(async () => {
-  const snapshot = await argusClient.snapshot();
-  assert.equal(snapshot.available, false);
-  assert.equal(snapshot.manual_ready, false);
-  assert.equal(snapshot.scheduling_ready, false);
-  assert.equal(snapshot.daily_tokens, null);
-  await assert.rejects(argusClient.start(buildRunRequest(draft, now)), /cannot start/);
-  await assert.rejects(argusClient.stop('series'), /cannot start/);
-  await assert.rejects(argusClient.approveNext('series'), /cannot start/);
-  console.log(`PASS ${checks} request/link checks; unavailable adapter rejects every mutation`);
-})().catch((error) => { console.error(error); process.exitCode = 1; });
+console.log(`PASS ${checks} request/link/gate checks`);

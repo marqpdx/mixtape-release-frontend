@@ -1,77 +1,47 @@
-// Frontend view model, pending Blue's core wire contract (ADR-0064).
-// Translate core responses at the adapter boundary; these are not API schemas.
-export interface ArgusCaps {
-  tokens: number;
-  turns: number;
-  wall_seconds: number;
+// Provisional wire contract: Puddlejump zz/api-sketch-argus-surface.md.
+export interface ArgusPerTurnCaps {
+  max_tokens: number;
+  max_turns: number;
+  max_wall_clock_seconds: number;
 }
-
-export interface ArgusStartRequest {
-  block_ids: string[];
-  mode: "single" | "bounded" | "open_ended";
-  cadence_minutes?: number;
-  ends_at?: string;
-  run_count?: number;
-  caps: ArgusCaps;
+export interface ArgusSpan { kind: "days" | "runs"; value: number }
+export interface ArgusSeriesCreate {
+  block_slug: string;
+  cadence_hours: number;
+  span: ArgusSpan;
+  per_turn_caps: ArgusPerTurnCaps;
 }
-
-export interface ArgusBlock {
-  id: string;
-  name: string;
+export interface ArgusBlockRecord {
+  slug: string;
   domain: string;
-  state: string;
-  cadence_minutes: number | null;
+  block_state: "scoped" | "ready" | "closed" | "retired";
   last_run_at: string | null;
-  findings: Record<string, number> | null;
-  block_url?: string;
-  last_run_url?: string;
+  findings_by_type: Record<string, number> | null;
+  active_series_id: string | null;
 }
-
-export interface ArgusRun {
-  id: string;
-  block_id: string;
-  status: string;
-  started_at: string | null;
-  findings: Record<string, number> | null;
-  dialogue_url?: string;
+export interface ArgusFinding { type: string; summary: string; detail_url?: string }
+export interface ArgusBlockDetail {
+  slug: string;
+  domain: string;
+  block_state: ArgusBlockRecord["block_state"];
+  runs: { run_id: string; started_at: string | null; status: string; findings: ArgusFinding[] }[];
 }
-
-export interface ArgusSeries {
-  id: string;
-  block_ids: string[];
-  mode: "bounded" | "open_ended";
-  status: string;
-  started_by: string;
-  starts_at: string;
-  ends_at: string | null;
-  run_count: number | null;
-  completed_runs: number;
-  fruitful_runs: number | null;
-  cadence_minutes: number;
-  caps: ArgusCaps;
-  next_due_at: string | null;
-  awaiting_approval: boolean;
-  can_stop: boolean;
-  can_approve: boolean;
+export interface ArgusSeriesRecord extends ArgusSeriesCreate {
+  series_id: string;
+  status: "active" | "stopped" | "completed";
+  started_by: string | null;
+  runs_done: number;
+  runs_total: number | null;
+  day_of_span: number | null;
+  findings_count?: number;
 }
-
-export interface ArgusSnapshot {
-  available: boolean;
-  unavailable_reason: string | null;
-  manual_ready: boolean;
-  manual_reason: string | null;
-  scheduling_ready: boolean;
-  scheduling_reason: string | null;
-  blocks: ArgusBlock[];
-  runs: ArgusRun[];
-  series: ArgusSeries[];
-  coverage: { covered: number; uncovered: { name: string; reason: string }[] } | null;
-  daily_tokens: { used: number; limit: number } | null;
-}
-
-export interface ArgusClient {
-  snapshot(signal?: AbortSignal): Promise<ArgusSnapshot>;
-  start(request: ArgusStartRequest): Promise<void>;
-  stop(seriesId: string): Promise<void>;
-  approveNext(seriesId: string): Promise<void>;
+export type ArgusRunResult = { status: "not_reachable"; detail: string } | { status: "started"; run_id: string };
+export interface ArgusStopResult { series_id: string; status: "stopped" }
+export interface ArgusApi {
+  listBlocks(signal?: AbortSignal): Promise<{ blocks: ArgusBlockRecord[] }>;
+  getBlock(slug: string, signal?: AbortSignal): Promise<ArgusBlockDetail>;
+  startRun(slug: string): Promise<ArgusRunResult>;
+  createSeries(request: ArgusSeriesCreate): Promise<ArgusSeriesRecord>;
+  getSeries(id: string, signal?: AbortSignal): Promise<ArgusSeriesRecord>;
+  stopSeries(id: string): Promise<ArgusStopResult>;
 }

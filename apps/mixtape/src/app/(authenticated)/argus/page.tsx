@@ -21,8 +21,9 @@ function ArgusPageContent() {
   if (!user) return <Text>Authentication required.</Text>;
   if (!user.is_superuser) return <Text>Superuser access required.</Text>;
 
-  return <DashboardLayout title="Argus" menuItems={menuItems} defaultSection="overview"
-    localStorageKey="argusActiveSection" WorkAreaComponent={ArgusWorkArea} />;
+  return <DashboardLayout key={String(user.id)} title="Argus" menuItems={menuItems} defaultSection="overview"
+    localStorageKey="argusActiveSection" WorkAreaComponent={ArgusWorkArea}
+    workAreaProps={{ identityKey: String(user.id) }} />;
 }
 
 export default function ArgusPage() {
