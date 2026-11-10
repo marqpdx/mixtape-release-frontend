@@ -64,7 +64,7 @@ export default function LivingBookPage() {
       <Container maxW="3xl" py={8}>
         <VStack gap={6} align="stretch">
           <HStack gap={2}>
-            <Link href="/">
+            <Link href="/dashboard">
               <Button size="sm" variant="ghost" gap={1}>
                 <IconArrowLeft size={14} />
                 Back
