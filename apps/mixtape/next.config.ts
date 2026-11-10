@@ -137,6 +137,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    // The basePath root ("/app" with nothing after it) has had no page since
+    // 360d7e9f (2026-01-01) deleted it; redirect it to the real landing
+    // instead of 404ing. Temporary (307), not permanent (308/301): easy to
+    // undo if a real /app page is ever wanted again, since a permanent
+    // redirect gets cached hard by browsers. Unauthenticated visitors land
+    // here then bounce to /app/login via the existing middleware check
+    // (isProtectedPage matches any "/app/..." path).
+    return [
+      {
+        source: "/",
+        destination: "/dashboard",
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     // basePath: "/app" moves public/ to /app/*, but browsers request /favicon.ico at root.
     // Next requires an absolute destination when rewriting outside basePath.
