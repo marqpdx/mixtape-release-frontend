@@ -81,6 +81,7 @@ const NAV_ITEMS: NavItem[] = [
   // Ariadne (decisions/ariadne/ariadne-build-spec.md §2a) -- scaffold only (P3);
   // su-only so it's invisible to non-superusers, not merely blocked on direct nav.
   { key: "ariadne", label: "Ariadne", href: "/ariadne", section: "authenticated", superuserOnly: true, shortLabel: "Ariadne" },
+  { key: "argus", label: "Argus", href: "/argus", section: "authenticated", superuserOnly: true, shortLabel: "Argus" },
   // { key: "workbench", label: "Workbench", href: "/workbench", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "_pdlj", href: "/puddlejump", section: "authenticated", adminOnly: true, shortLabel: "Bench" },
   // { key: "puddlejump", label: "Puddlejump", href: "/puddlejump", section: "authenticated", memberOnly: true, shortLabel: "PDL" },
