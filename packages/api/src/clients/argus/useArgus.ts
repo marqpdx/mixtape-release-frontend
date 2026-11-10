@@ -19,11 +19,11 @@ export function useArgus(identity: string, selectedBlock: string | null, api: Ar
   const blocks = useQuery({
     queryKey: argusKeys.blocks(identity), queryFn: ({ signal }) => api.listBlocks(signal),
     retry: false, refetchOnWindowFocus: false,
-    refetchInterval: (query) => query.state.status === "error" ? false : 15_000,
+    refetchInterval: (query) => query.state.status === "error" || query.state.data?.available === false ? false : 15_000,
   });
   const block = useQuery({
     queryKey: argusKeys.block(identity, selectedBlock ?? ""),
-    queryFn: ({ signal }) => api.getBlock(selectedBlock!, signal), enabled: !!selectedBlock && blocks.isSuccess,
+    queryFn: ({ signal }) => api.getBlock(selectedBlock!, signal), enabled: !!selectedBlock && blocks.isSuccess && blocks.data.available,
     retry: false, refetchOnWindowFocus: false,
     refetchInterval: (query) => query.state.status === "error" ? false : 15_000,
   });

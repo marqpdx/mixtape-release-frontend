@@ -1,13 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import NextLink from "next/link";
 import { Box, Button, Heading, HStack, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import type { ArgusApi } from "@mixtape/api/clients/argus/types";
 import { useArgus } from "@mixtape/api/clients/argus/useArgus";
 import type { WorkAreaProps } from "@components/dashboard/shared/types";
 import ArgusRunForm from "./ArgusRunForm";
-import { localArgusUrl, type ArgusSubmission } from "./runRequest";
+import type { ArgusSubmission } from "./runRequest";
 
 const date = (value: string | null) => {
   if (!value) return "Not recorded";
@@ -37,7 +36,7 @@ export default function ArgusWorkArea({ section, setActiveSection, identityKey =
   const lock = useRef(false);
   const state = useArgus(identityKey, selectedBlock, api);
   const blocks = state.blocks.data?.blocks ?? [];
-  const available = state.blocks.isSuccess;
+  const available = state.blocks.isSuccess && state.blocks.data.available;
   const loading = state.blocks.isFetching;
   const activeSeries = state.series.filter((query) => query.data?.status === "active").length;
   const latest = blocks.map((block) => block.last_run_at).filter((value): value is string => !!value).sort().at(-1) ?? null;
@@ -80,6 +79,10 @@ export default function ArgusWorkArea({ section, setActiveSection, identityKey =
     {state.blocks.isError && <Box className="args-unavailable" role="alert" borderWidth="1px" borderColor="theme.border" p={4} mb={5} borderRadius="md">
       <Text>Argus could not load its blocks: {message(state.blocks.error)}</Text><Text fontSize="sm">Run controls are unavailable. Refresh status to try again.</Text>
     </Box>}
+    {state.blocks.isSuccess && !available && <Box className="args-registry-unavailable" role="status" borderWidth="1px" borderColor="theme.border" p={4} mb={5} borderRadius="md">
+      <Text>Blocks unavailable: {state.blocks.data.reason || "The audit block registry is not available."}</Text>
+      <Text fontSize="sm">Run controls are unavailable. Refresh status when the registry is ready.</Text>
+    </Box>}
     {section === "run" ? available && <ArgusRunForm blocks={blocks} available={available} busy={busy || loading} onStart={start} /> : section === "series" ? <Stack className="args-series" gap={4}>
       <HStack className="args-series-heading" justify="space-between" flexWrap="wrap"><Heading size="lg">Run series</Heading><Button onClick={() => setActiveSection("run")}>New series</Button></HStack>
       <Text color="theme.textSecondary">Bounded series run within their limits. Open-ended series still need approval for each run and are not available here yet.</Text>
@@ -95,7 +98,7 @@ export default function ArgusWorkArea({ section, setActiveSection, identityKey =
             <Text>{series.runs_done}{series.runs_total !== null ? ` of ${series.runs_total}` : ""} runs · {series.findings_count === undefined ? "Finding counts pending" : `${series.findings_count} found something`}</Text>
             <Text>{series.span.kind === "days" ? `For ${series.span.value} days` : `Ends after ${series.span.value} runs`}</Text>
             {series.span.kind === "days" && series.day_of_span !== null && <Text>Day {series.day_of_span} of {series.span.value}</Text>}
-            <Text fontSize="sm">Caps: {series.per_turn_caps.max_tokens} tokens · {series.per_turn_caps.max_turns} turns · {series.per_turn_caps.max_wall_clock_seconds} seconds</Text>
+            <Text fontSize="sm">Caps: {series.per_turn_caps.max_tokens ?? "Not recorded"} tokens · {series.per_turn_caps.max_turns ?? "Not recorded"} turns · {series.per_turn_caps.max_wall_clock_seconds ?? "Not recorded"} seconds</Text>
             {series.status === "active" && <Button variant="outline" alignSelf="start" disabled={busy} onClick={() => stop(series.series_id)}>Stop series</Button>}
           </Stack>}
         </Box>;
@@ -121,8 +124,14 @@ export default function ArgusWorkArea({ section, setActiveSection, identityKey =
         <Stack className="args-run-list" gap={3}>{state.block.data?.runs.map((run) => <Box key={run.run_id} className="args-run" borderWidth="1px" borderColor="theme.border" p={3} borderRadius="md">
           <Text>{run.run_id} · {run.status} · {date(run.started_at)}</Text>
           {!run.findings.length && <Text>No structured findings reported for this run yet.</Text>}
-          {run.findings.map((finding, index) => <Box key={index} className="args-finding" mt={2}><Text>{finding.type}: {finding.summary}</Text>
-            {localArgusUrl(finding.detail_url) && <NextLink href={localArgusUrl(finding.detail_url)!}>View finding</NextLink>}
+          {run.findings.map((finding) => <Box key={finding.finding_id} className="args-finding" mt={2}>
+            <Heading size="sm">{finding.title}</Heading>
+            <Text fontSize="sm">{finding.type} · {finding.severity} · confidence {finding.confidence}</Text>
+            <Text>{finding.issue}</Text>
+            <Text>Recommendation: {finding.recommendation}</Text>
+            {finding.location.map((location, index) => <Text key={index} fontSize="sm" overflowWrap="anywhere">
+              {location.ref}{location.line ? `:${location.line}` : ""}{location.section ? ` · ${location.section}` : ""}
+            </Text>)}
           </Box>)}
         </Box>)}</Stack>
       </Box>}

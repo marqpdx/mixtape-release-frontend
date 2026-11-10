@@ -19,14 +19,30 @@ export interface ArgusBlockRecord {
   findings_by_type: Record<string, number> | null;
   active_series_id: string | null;
 }
-export interface ArgusFinding { type: string; summary: string; detail_url?: string }
+export interface ArgusBlockList {
+  available: boolean;
+  reason?: string;
+  blocks: ArgusBlockRecord[];
+}
+// Contour argus.findings 0.1.0, returned directly by core's run serializer.
+export interface ArgusFinding {
+  finding_id: string;
+  type: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  confidence: "high" | "medium" | "low";
+  title: string;
+  location: { ref: string; revision?: string; line?: number; section?: string }[];
+  issue: string;
+  recommendation: string;
+}
 export interface ArgusBlockDetail {
   slug: string;
   domain: string;
   block_state: ArgusBlockRecord["block_state"];
   runs: { run_id: string; started_at: string | null; status: string; findings: ArgusFinding[] }[];
 }
-export interface ArgusSeriesRecord extends ArgusSeriesCreate {
+export interface ArgusSeriesRecord extends Omit<ArgusSeriesCreate, "per_turn_caps"> {
+  per_turn_caps: Partial<ArgusPerTurnCaps>;
   series_id: string;
   status: "active" | "stopped" | "completed";
   started_by: string | null;
@@ -38,7 +54,7 @@ export interface ArgusSeriesRecord extends ArgusSeriesCreate {
 export type ArgusRunResult = { status: "not_reachable"; detail: string } | { status: "started"; run_id: string };
 export interface ArgusStopResult { series_id: string; status: "stopped" }
 export interface ArgusApi {
-  listBlocks(signal?: AbortSignal): Promise<{ blocks: ArgusBlockRecord[] }>;
+  listBlocks(signal?: AbortSignal): Promise<ArgusBlockList>;
   getBlock(slug: string, signal?: AbortSignal): Promise<ArgusBlockDetail>;
   startRun(slug: string): Promise<ArgusRunResult>;
   createSeries(request: ArgusSeriesCreate): Promise<ArgusSeriesRecord>;

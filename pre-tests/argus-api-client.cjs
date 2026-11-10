@@ -25,10 +25,12 @@ const { argusApi } = load('packages/api/src/clients/argus/argusApi.ts', {
 });
 (async () => {
   const signal = new AbortController().signal;
-  response = {blocks: []};
+  response = {available: true, blocks: []};
   assert.deepEqual(await argusApi.listBlocks(signal), response);
   assert.equal(calls.at(-1)[1], '/api/argus/blocks/');
   assert.equal(calls.at(-1)[2].signal, signal);
+  response = {available: false, reason: "Registry is not configured", blocks: []};
+  assert.deepEqual(await argusApi.listBlocks(), response);
   response = {slug: 'help-fidelity-01', runs: []};
   await argusApi.getBlock('help-fidelity-01', signal);
   assert.equal(calls.at(-1)[1], '/api/argus/blocks/help-fidelity-01/');

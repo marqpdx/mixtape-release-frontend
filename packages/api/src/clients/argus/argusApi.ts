@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from "axios";
 import { axiosInstance } from "../../lib/axiosInstance";
-import type { ArgusApi, ArgusBlockDetail, ArgusBlockRecord, ArgusRunResult, ArgusSeriesRecord, ArgusStopResult } from "./types";
+import type { ArgusApi, ArgusBlockDetail, ArgusBlockList, ArgusRunResult, ArgusSeriesRecord, ArgusStopResult } from "./types";
 
 const base = "/api/argus";
 const segment = (value: string) => {
@@ -22,8 +22,8 @@ function readSeries(value: ArgusSeriesRecord, expectedId?: string) {
 
 export const argusApi: ArgusApi = {
   async listBlocks(signal) {
-    const response = await axiosInstance.get<{ blocks: ArgusBlockRecord[] }>(`${base}/blocks/`, { signal });
-    if (!Array.isArray(response.data?.blocks)) throw new Error("Argus did not return a block registry.");
+    const response = await axiosInstance.get<ArgusBlockList>(`${base}/blocks/`, { signal });
+    if (typeof response.data?.available !== "boolean" || !Array.isArray(response.data.blocks)) throw new Error("Argus did not return a block registry.");
     return response.data;
   },
   async getBlock(slug, signal) {
