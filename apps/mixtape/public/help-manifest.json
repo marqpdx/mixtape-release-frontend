@@ -161,6 +161,55 @@
         "workflow"
       ]
     },
+    "argus-overview": {
+      "key": "argus-overview",
+      "slug": "argus",
+      "feature": "argus",
+      "title": "Argus",
+      "subsystem": "argus",
+      "area": "overview",
+      "summary": "Review audit blocks, inspect runs and findings, and start or stop bounded audit series.",
+      "excerpt": "Review audit blocks, inspect runs and findings, and start or stop bounded audit series.",
+      "plainText": "Argus Argus is a superuser workspace for reviewing quality, consistency, and fidelity audits. You must be signed in with a superuser account to use it. Review audit status Open Audit overview to see the available audit blocks, their readiness, last recorded runs, and reported finding counts. Choose View runs and findings for a block to inspect its run history. Findings can include an issue, recommendation, severity, confidence, and source locations. Choose Refresh status to request current information. Missing findings, unreported coverage, and unavailable counts do not establish that an audit found no issues. Start a single run 1. Choose Start a run. 2. Select Single run and one ready block. 3. Check I approve this run. 4. Choose Run now and read the response. If the runner reports that it is not reachable, the page displays that response. Refresh status before trying again. Create a bounded series 1. In Start a run, select Bounded series and one ready block. 2. Enter the cadence as a positive whole number of hours. 3. Choose an end after a number of days or runs. The series must fit within seven days. 4. Enter positive whole numbers for the token, turn, and wall-clock caps. 5. Review the limits, check the approval box, and choose Create series. Creating a series does not confirm that a run has started. Review its reported status in Run series. Review or stop a series Open Run series to review reported cadence, progress, span, and caps. Choose Stop series on an active series and check for the stop acknowledgement. If a refresh fails, displayed values may be stale. Current limitations - Each request selects one block. Multi-block series, open-ended series, and exact end times are not available here yet. - Run controls are unavailable when the block registry cannot load. Blocks that are not ready cannot be selected. - Daily token ceiling and usage, coverage gaps, and some finding counts may not be reported yet.",
+      "html": "<h1 id=\"argus\">Argus</h1>\n<p>Argus is a superuser workspace for reviewing quality, consistency, and fidelity audits. You must be signed in with a superuser account to use it.</p>\n<h2 id=\"review-audit-status\">Review audit status</h2>\n<p>Open <strong>Audit overview</strong> to see the available audit blocks, their readiness, last recorded runs, and reported finding counts. Choose <strong>View runs and findings</strong> for a block to inspect its run history. Findings can include an issue, recommendation, severity, confidence, and source locations.</p>\n<p>Choose <strong>Refresh status</strong> to request current information. Missing findings, unreported coverage, and unavailable counts do not establish that an audit found no issues.</p>\n<h2 id=\"start-a-single-run\">Start a single run</h2>\n<ol>\n<li>Choose <strong>Start a run</strong>.</li>\n<li>Select <strong>Single run</strong> and one ready block.</li>\n<li>Check <strong>I approve this run.</strong></li>\n<li>Choose <strong>Run now</strong> and read the response.</li>\n</ol>\n<p>If the runner reports that it is not reachable, the page displays that response. Refresh status before trying again.</p>\n<h2 id=\"create-a-bounded-series\">Create a bounded series</h2>\n<ol>\n<li>In <strong>Start a run</strong>, select <strong>Bounded series</strong> and one ready block.</li>\n<li>Enter the cadence as a positive whole number of hours.</li>\n<li>Choose an end after a number of days or runs. The series must fit within seven days.</li>\n<li>Enter positive whole numbers for the token, turn, and wall-clock caps.</li>\n<li>Review the limits, check the approval box, and choose <strong>Create series</strong>.</li>\n</ol>\n<p>Creating a series does not confirm that a run has started. Review its reported status in <strong>Run series</strong>.</p>\n<h2 id=\"review-or-stop-a-series\">Review or stop a series</h2>\n<p>Open <strong>Run series</strong> to review reported cadence, progress, span, and caps. Choose <strong>Stop series</strong> on an active series and check for the stop acknowledgement. If a refresh fails, displayed values may be stale.</p>\n<h2 id=\"current-limitations\">Current limitations</h2>\n<ul>\n<li>Each request selects one block. Multi-block series, open-ended series, and exact end times are not available here yet.</li>\n<li>Run controls are unavailable when the block registry cannot load. Blocks that are not ready cannot be selected.</li>\n<li>Daily token ceiling and usage, coverage gaps, and some finding counts may not be reported yet.</li>\n</ul>",
+      "headings": [
+        {
+          "depth": 2,
+          "text": "Review audit status",
+          "id": "review-audit-status"
+        },
+        {
+          "depth": 2,
+          "text": "Start a single run",
+          "id": "start-a-single-run"
+        },
+        {
+          "depth": 2,
+          "text": "Create a bounded series",
+          "id": "create-a-bounded-series"
+        },
+        {
+          "depth": 2,
+          "text": "Review or stop a series",
+          "id": "review-or-stop-a-series"
+        },
+        {
+          "depth": 2,
+          "text": "Current limitations",
+          "id": "current-limitations"
+        }
+      ],
+      "metadata": {},
+      "routes": [
+        "/argus"
+      ],
+      "workAreas": [],
+      "tags": [
+        "argus",
+        "audits",
+        "findings"
+      ]
+    },
     "ariadne-overview": {
       "key": "ariadne-overview",
       "slug": "ariadne",
@@ -2301,6 +2350,9 @@
     "aperture": [
       "aperture-overview"
     ],
+    "argus": [
+      "argus-overview"
+    ],
     "ariadne": [
       "ariadne-overview"
     ],
@@ -2399,5 +2451,5 @@
       "writing-overview"
     ]
   },
-  "generatedAt": "2026-11-07T22:26:33.830Z"
+  "generatedAt": "2026-11-10T18:58:04.983Z"
 }

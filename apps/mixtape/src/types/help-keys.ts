@@ -3,6 +3,7 @@ export type HelpKey =
   | "admin-overview"
   | "almanac-overview"
   | "aperture-overview"
+  | "argus-overview"
   | "ariadne-overview"
   | "atelier-overview"
   | "bazaar-browse"
