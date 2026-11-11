@@ -4,7 +4,6 @@ subsystem: folio
 area: overview
 excerpt: Start a new Folio from a raw, unstructured thought, and watch what you wrote get preserved verbatim before anything is interpreted.
 routes:
-  - /folio
   - /folio/new
   - /folio/inception/*
 workAreas: []
