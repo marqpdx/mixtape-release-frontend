@@ -5,6 +5,7 @@ export type HelpKey =
   | "argus-overview"
   | "ariadne-overview"
   | "atelier-overview"
+  | "atrium-overview"
   | "bazaar-browse"
   | "bazaar-orders"
   | "bazaar-overview"

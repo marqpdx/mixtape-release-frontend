@@ -113,6 +113,15 @@ Publishing is deliberate. A draft is not distributed automatically just because 
 
 ---
 
+## How to import pieces from files
+
+1. Open the import work area from your writing surface (personal or group-sponsored).
+2. Select one or more `.md` or `.docx` files — batch import is supported, not just single files.
+3. Review the preview for each file before confirming.
+4. Confirm the batch to create editable draft pieces, optionally grouped into a new series.
+
+---
+
 ## How to use stream commands during writing
 
 When you are writing and need to break out a related artifact without leaving the surface:
@@ -148,6 +157,5 @@ Supported types currently include `writingpiece`, `seed`, `event`, and `course`.
 
 ## Roadmap
 
-- **Import improvements** — Batch `.md` and `.docx` import is being built out so externally drafted writing can enter Mixtape cleanly as editable drafts.
 - **Series shaping** — Multi-piece structural editing and working-set flows are expanding.
 - **Synopsis + distribution** — Publishing will eventually feed synopsis-based display and LinkedIn distribution adapters.

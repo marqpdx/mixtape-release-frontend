@@ -70,7 +70,7 @@ If you change your mind, click **Reset** to restore the last saved values, or **
 
 ## This page vs. your public profile
 
-This is an edit surface, not a public profile. Other members see your profile at `/member/[username]`, which shows what you've published here. Changes you save here update that public view.
+This is an edit surface, not a public profile. Other members see your profile at `/members/[username]`, which shows what you've published here. Changes you save here update that public view.
 
 ---
 
