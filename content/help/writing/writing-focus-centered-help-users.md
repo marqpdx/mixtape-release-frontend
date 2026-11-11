@@ -83,7 +83,7 @@ A Focus gathers everything needed to finish one task — right now, publishing a
 - New docs default to your own personal space; there's no way yet to choose a group from the Gate itself.
 - The "Pick up tools" tray currently only links out to Draft Room — Editor's Desk and Series Writing aren't linked yet.
 - The Focus view doesn't yet have its own entry points (starting one, or "Continue this focus" / "Add to issue…") — those are a later phase of this surface.
-- Selecting a piece in a Focus doesn't yet open editing tools in place (Edit, Shape, Sections, Preview) — that's also a later phase.
+- Selecting a piece in a Focus opens **Shape** and **Preview** in place already. **Edit** and **Sections** are still coming — that's a later phase.
 
 ---
 

@@ -2,15 +2,16 @@
 title: Mixtape Mobile
 subsystem: mobile
 area: overview
-excerpt: Mixtape Mobile brings your writing and community to your phone — Pocket Notebook for quick captures, Idea Studio for developing ideas, and a Community Window to stay connected.
+excerpt: Mixtape Mobile brings your writing and community to your phone — Notebook for quick captures, Storyline for developing them, Connect for messages and discussions, Lists, Folio, and Shuttle.
 routes:
   - /mobile
   - /mobile/*
 workAreas: []
 tags:
   - mobile
-  - pocket-notebook
-  - idea-studio
+  - notebook
+  - storyline
+  - connect
 ---
 
 # Mixtape Mobile — User Guide
@@ -19,15 +20,20 @@ tags:
 
 ## What the app is
 
-Mixtape Mobile brings your writing and community to your phone. Three things live on the home screen:
+Mixtape Mobile brings your writing and community to your phone. Six tabs live on the home screen:
 
-- **Pocket Notebook** — capture ideas fast, in text or voice
-- **Idea Studio** — turn your captures into Leaves for your Storyline
-- **Community Window** — follow your community and chat with people
+- **Notebook** — capture ideas fast, in text or voice
+- **Storyline** — develop a capture into a Leaf for your Storyline
+- **Connect** — your private messages and group Discussions
+- **Lists** — quick "don't forget" actionables
+- **Folio** — capture and tend notes toward a Folio (see the separate Folio help)
+- **Shuttle** — tell what you found so it can be shaped for Commons
+
+A seventh, **Build**, exists in the code but isn't shown in the tab bar yet.
 
 ---
 
-## Pocket Notebook
+## Notebook
 
 The notebook is for getting ideas out of your head quickly. No categories, no pressure.
 
@@ -35,49 +41,31 @@ The notebook is for getting ideas out of your head quickly. No categories, no pr
 
 **Voice capture**: Tap the microphone. Grant microphone permission when asked. Speak your idea, then stop recording. The app uploads your audio and transcribes it in the background. The seed will show "processing" until transcription is done — usually less than a minute.
 
-**Recent seeds**: Your last 20 captures appear below the editor. Tap any to revisit it.
+**Recent Seeds**: Your most recent captures appear below the editor. Tap any to revisit it.
 
-**Develop this?**: After saving a seed, a banner appears asking if you'd like to develop it. Tap yes to open it in Idea Studio.
-
----
-
-## Idea Studio
-
-The studio is where you turn raw captures into something you can share.
-
-**Writing**: Type or edit in the studio editor. Tap **Save Draft** to save your work without publishing. Tap **Add to Storyline** to publish your Leaf to your Storyline — it becomes part of your public creative record.
+**Develop**: Each seed has its own **Develop** button — tap it to send that seed to Storyline. There's no separate "develop this?" banner; the action lives on the seed itself.
 
 ---
 
-## Community Window
+## Storyline
 
-Three sub-modes, reachable via the tabs at the top:
+Storyline is where you turn raw captures into something you can share.
 
-**Streams** — a feed of Leaves from people you follow.
-
-**Messages** — your personal and group conversations.
-
-**Chat** — opens a conversation thread inline.
+**Writing**: Type or edit in the Storyline editor. Tap **Save Draft** to save your work without publishing. Tap **Add to Storyline** to publish your Leaf — it becomes part of your public creative record.
 
 ---
 
-## Messaging
+## Connect
 
-### Starting a new personal conversation
+Connect holds two modes, switched with a toggle: **Private Messages** (PM) and **Discussions** (D) — Threadworks' group discussions. Only one mode's pill row shows at a time. Each pill is one conversation (Private mode) or one discussion (Discussions mode); tapping **All** opens the full list for that mode.
 
-From the Messages tab, tap the **+** button. Search for a user by name or username. Select one or more people, then tap **Create**. The conversation opens immediately.
+**Starting a new discussion**: In Discussions mode, tap the **+** button above the pill row.
 
-### Group conversations
+**Starting a new private conversation**: Not available from the app yet — you can reply to and continue conversations started elsewhere (e.g. on the web), but there's no "new conversation" entry point here yet.
 
-From the Groups screen (navigate via your group list), select a group. You'll see existing conversations for that group. Tap **+** to create a new one — only members of that group appear in the picker.
+**Sending messages**: Open a conversation or discussion from its pill (or from **All**), type in the text field at the bottom, and tap send. Messages and replies appear immediately.
 
-### Sending messages
-
-Type in the text field at the bottom and tap send. Messages appear immediately.
-
-### Unread badges
-
-A blue badge on the Messages tab and on individual conversations shows how many unread messages you have. Opening a conversation clears its badge.
+**Unread badges**: A badge on the Connect tab, and on individual pills, shows unread counts for whichever mode you're not currently viewing, plus per-item counts within the mode you are viewing.
 
 ---
 

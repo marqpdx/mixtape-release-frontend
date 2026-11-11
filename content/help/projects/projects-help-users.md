@@ -4,8 +4,7 @@ subsystem: projects
 area: overview
 excerpt: Projects is Mixtape's task management tool for groups. Create Kanban boards, organize tasks into columns, and coordinate work across your group.
 routes:
-  - /projects
-  - /projects/*
+  - /groups/*/kanban
 workAreas:
   - ProjectsWorkArea
 tags:
@@ -39,12 +38,12 @@ Projects is Mixtape's task management tool for groups. Groups can create project
 ### View your group's projects
 
 - You must be a member of the group.
-- Navigate to your group's Projects section.
-- All active, visible projects appear here with their Kanban boards.
+- Navigate to your group's **Projects** section in the group dashboard.
+- All active, visible projects appear here.
 
 ### View a Kanban board
 
-- Open a project to see its columns and tasks.
+- Open a project, or go directly to the group's Kanban board (`/groups/[group]/kanban`), to see its columns and tasks.
 - Tasks are shown in order within each column.
 
 ---

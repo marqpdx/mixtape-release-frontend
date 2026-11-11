@@ -38,7 +38,7 @@ The Workbench is where you look over the notes you've captured for a Folio and g
 
 **Automatic tending is paused for now.** New notes are still saved and voice notes still transcribe, but no automatic reading is requested. A saved transcript does not mean that it has been interpreted. Existing suggestions and linked Entities remain available; the new Fiction orientation and multi-Shape reading are not available yet.
 
-**Mentions and Entities** — Mixtape points out names and things a note mentions, but never links them on its own. When you link a mention to an Entity — an existing one, or a new one you name — that Entity is the same one Storyboard uses for participants, and Mixtape will recognize the same wording in future notes.
+**Mentions and Entities** — Mixtape points out names and things a note mentions, but never links them on its own. When you link a mention to an Entity — an existing one, or a new one you name — Mixtape will recognize the same wording in future notes. This is the Entity system Storyboard will use for Characters and other participants once that's built there; today, Storyboard doesn't yet support participants, so the link doesn't show up on the Storyboard side.
 
 **Related** — Notes that are close in meaning to the one you're reading. It's a way to find things, not a claim that they're connected.
 

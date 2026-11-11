@@ -4,6 +4,7 @@ subsystem: folio
 area: overview
 excerpt: Start a new Folio from a raw, unstructured thought, and watch what you wrote get preserved verbatim before anything is interpreted.
 routes:
+  - /folio
   - /folio/new
   - /folio/inception/*
 workAreas: []
@@ -31,6 +32,11 @@ Folio is where a new body of work begins — before it has a title, a shape, or 
 
 ## How to start a Folio
 
+There are two starting points today:
+
+**From the Folio list page (`/folio`):** give your Folio a title and select **Create**. This takes you straight to its Workbench, where you can start adding notes. The **Folio** nav link to this page is currently shown to superusers only — everyone else can still reach it directly at `/folio` if linked there.
+
+**From Folio → New (`/folio/new`), the inception flow:**
 1. Open **Folio → New** and answer "What are you working on?" in your own words — a sentence or a few paragraphs both work.
 2. Select **Begin**. Mixtape saves your entry and takes you to its inception page.
 3. On the inception page, confirm your text was preserved exactly as written. This is the current build's guarantee — everything downstream (identifying what's material, shaping a Folio around it) builds on this being trustworthy first.

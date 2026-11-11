@@ -5,7 +5,6 @@ area: overview
 excerpt: Gather rooms are live session spaces where invited members can join a real-time conversation.
 routes:
   - /bridge/*
-  - /gather/*
 workAreas: []
 tags:
   - gather

@@ -8,7 +8,6 @@ routes:
   - /workbench/*
   - /groups/*/workbench
   - /groups/*/workbench/*
-  - /member/*/workbench
 workAreas:
   - WorkbenchCurationWorkArea
 tags:
@@ -159,10 +158,6 @@ From the Draft Room you can:
 - Publish when it's ready
 
 The Workbench does not delete the promoted MillDraft — it transitions to `promoted` status and stays in the system as a provenance record, showing where the content came from.
-
-## Personal workbench note
-
-If you arrive via `/member/[username]/workbench`, the current app redirects you to `/console`. Treat that route as legacy entry rather than a separate personal workbench experience.
 
 ---
 

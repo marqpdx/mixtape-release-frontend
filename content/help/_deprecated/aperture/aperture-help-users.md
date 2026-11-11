@@ -2,15 +2,17 @@
 title: Aperture
 subsystem: aperture
 area: overview
-excerpt: Aperture is a focused internal work surface for specialized flows that do not fit the main member dashboard.
-routes:
-  - /aperture
+excerpt: "Deprecated: Aperture's /aperture route was removed by the surfaces pass; ApertureLog was renamed InitiativeLog. Kept for history only."
+routes: []
 workAreas: []
 tags:
   - aperture
   - internal
   - workflow
+  - deprecated
 ---
+
+> **Headnote (2026-11-11):** Retired. The `/aperture` route was removed by the surfaces pass (`f845d46b`, batch 35, 2026-10-23) and `ApertureLog` was renamed `InitiativeLog` (`a0dfcf63`, batch 56, 2026-11-04). This page had been flagged as an orphan across three Help Fidelity runs (batches 35, 40, and the 2026-11-11 catch-up) before being moved here. Kept for history, per this repo's append-only convention — not for active reference.
 
 # Aperture
 

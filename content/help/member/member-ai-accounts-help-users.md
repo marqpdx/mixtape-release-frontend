@@ -53,6 +53,7 @@ The sign-in link is only good for about ten minutes. If it runs out, click **Sig
 | **Connected** | Ready. Tasks you approve can run on your account |
 | **Sign in again** | Your sign-in has expired or you disconnected. Tasks that need it wait until you sign in |
 | **Something went wrong** | The last sign-in didn't complete. The message underneath says why; try **Sign in again** |
+| **Not available yet** | Shown for a provider that isn't connectable yet — Codex, today. Nothing to do until it opens up |
 
 Mixtape checks your sign-in once a day, so an expired one shows here before a task needs it.
 

@@ -4,10 +4,7 @@ subsystem: writing
 area: overview-tech
 excerpt: Technical reference for the Writing system. Covers the Seed model, Draft Room, publication controls, and integration with Inkwell.
 routes:
-  - /writing
   - /writing/*
-  - /drafts
-  - /drafts/*
 workAreas:
   - SponsorWritingWrapper
   - WritingEditorWrapper

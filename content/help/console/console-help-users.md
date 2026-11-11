@@ -81,7 +81,7 @@ The command field understands several `/` shortcuts when you're working in an in
 |-----------|-------------|
 | `//[name]` | Switch context to an initiative (search by name) |
 | `/.` | Return to personal context |
-| `/log [text]` | Post a prose log entry to the initiative's aperture log |
+| `/log [text]` | Post a prose log entry to the initiative's log |
 | `/handoff [text]` | Post a handoff entry to the log |
 | `/emph [text]` | Post an emphasis note to the log |
 | `/n [title]` | Create a new initiative with that title |

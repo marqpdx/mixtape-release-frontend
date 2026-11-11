@@ -2,11 +2,8 @@
 title: Chat
 subsystem: chat
 area: overview
-excerpt: Chat is Mixtape's real-time messaging system — text and voice messages between members, within groups and in direct conversations.
-routes:
-  - /chat
-  - /chat/*
-  - /messages
+excerpt: Chat is Mixtape's real-time messaging system — text and voice direct messages between members.
+routes: []
 workAreas:
   - MessageCenter
 tags:
@@ -18,7 +15,7 @@ tags:
 
 # Chat
 
-Chat is Mixtape's real-time messaging system. You can send text and voice messages to other members directly, or within group conversations. Messages arrive instantly — you don't need to refresh.
+Chat is Mixtape's real-time direct-messaging system — private conversations between you and one other member. You can send text and voice messages. Messages arrive instantly — you don't need to refresh.
 
 ---
 
@@ -28,7 +25,6 @@ Chat is Mixtape's real-time messaging system. You can send text and voice messag
 - Record and send voice messages
 - Play back voice messages from other members
 - Start direct conversations with other members
-- Participate in group chat channels
 
 ---
 
@@ -36,15 +32,13 @@ Chat is Mixtape's real-time messaging system. You can send text and voice messag
 
 **Direct message (DM)** — A private conversation between you and one other member. Only the two of you can see it.
 
-**Group chat** — A shared conversation space within a group. All group members with chat access can see and participate.
-
 **Voice message** — A recorded audio clip sent in place of or alongside text. Voice messages are automatically transcribed so you can read them without listening.
 
 ---
 
 ## How to send a message
 
-1. Open a conversation from your Conversations section or from within a group
+1. Open a conversation from your **Conversations** section in your dashboard
 2. Click or tap the message input at the bottom
 3. Type your message and press **Enter** (desktop) or tap **Send** (mobile)
 
@@ -64,17 +58,15 @@ Voice messages are transcribed automatically. The transcript appears below the a
 ## How to start a direct message
 
 1. Go to **Conversations** in your personal dashboard
-2. Click or tap **New Message**
+2. Click or tap **New Chat**
 3. Search for the member you want to reach and select them
 4. Type your first message
-
-You can also start a DM from a member's profile page.
 
 ---
 
 ## Current limitations
 
-- **Group chat** availability depends on whether the group has it enabled — not all groups have it active
+- **Group and channel chat are not available.** Chat today is direct messages between two members only — there is no group chat space.
 - **Voice message transcription** runs in the background after sending; there may be a brief delay before the transcript appears
 - **Editing or deleting sent messages** is not yet available
 
@@ -82,5 +74,4 @@ You can also start a DM from a member's profile page.
 
 ## Related features
 
-- **Groups** — Chat is available within groups for members who have access
-- **Threadworks** — For longer, structured discussions that you want to keep organized over time — distinct from the real-time flow of chat
+- **Threadworks** — For longer, structured discussions you want to keep organized over time, inside Groups and Circles — the closest thing to group conversation, distinct from this real-time one-to-one chat
