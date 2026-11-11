@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Box, Button, Heading, HStack, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import type { ArgusApi } from "@mixtape/api/clients/argus/types";
 import { useArgus } from "@mixtape/api/clients/argus/useArgus";
+import { argusErrorMessage } from "@mixtape/api/clients/argus/errors";
 import type { WorkAreaProps } from "@components/dashboard/shared/types";
 import ArgusRunForm from "./ArgusRunForm";
 import type { ArgusSubmission } from "./runRequest";
@@ -24,7 +25,7 @@ const elapsed = (value: string | null) => {
   if (minutes < 1440) return `${Math.floor(minutes / 60)} hours ago`;
   return `${Math.floor(minutes / 1440)} days ago`;
 };
-const message = (cause: unknown) => cause instanceof Error ? cause.message : "Request failed. Refresh status before trying again.";
+const message = argusErrorMessage;
 
 interface Props extends WorkAreaProps { identityKey?: string; api?: ArgusApi }
 

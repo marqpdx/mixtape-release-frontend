@@ -36,7 +36,7 @@ export function buildRunRequest(draft: RunDraft): ArgusSubmission {
   };
   if (draft.bound === "count") {
     if (!positiveInteger(draft.count)) throw new Error("Run count must be a positive whole number.");
-    if ((Number(draft.count) - 1) * Number(draft.cadenceMinutes) >= 7 * 24 * 60) {
+    if (Number(draft.count) * Number(draft.cadenceMinutes) > 7 * 24 * 60) {
       throw new Error("Choose fewer runs or a shorter cadence so the series finishes within seven days.");
     }
     request.span = { kind: "runs", value: Number(draft.count) };

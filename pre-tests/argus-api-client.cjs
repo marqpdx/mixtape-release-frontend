@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const ts = require('typescript');
+const { AxiosError } = require('axios');
 
 function load(relative, imports = {}) {
   const filename = path.resolve(relative);
@@ -23,6 +24,13 @@ const { argusApi } = load('packages/api/src/clients/argus/argusApi.ts', {
     post: async (...args) => { calls.push(['POST', ...args]); return {data: response}; },
   } },
 });
+const { argusErrorMessage } = load('packages/api/src/clients/argus/errors.ts');
+const invalid = new AxiosError('Request failed with status code 400', 'ERR_BAD_REQUEST', undefined, undefined, {
+  status: 400, data: {per_turn_caps: {max_tokens: ['Ensure this value is greater than or equal to 0.'], max_turns: ['This field is required.']}, span: ['Series exceeds seven days.']},
+});
+assert.equal(argusErrorMessage(invalid), 'per_turn_caps.max_tokens: Ensure this value is greater than or equal to 0.; per_turn_caps.max_turns: This field is required.; span: Series exceeds seven days.');
+assert.equal(argusErrorMessage(new Error('Network Error')), 'Network Error');
+assert.match(argusErrorMessage(null), /Request failed/);
 (async () => {
   const signal = new AbortController().signal;
   response = {available: true, blocks: []};
