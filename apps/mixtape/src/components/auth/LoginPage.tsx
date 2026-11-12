@@ -161,6 +161,7 @@ const LoginPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <Stack gap={4}>
               <Input
+                aria-label="Username or Email"
                 type="text"
                 name="identifier"
                 value={formData.identifier}
@@ -184,6 +185,7 @@ const LoginPage: React.FC = () => {
                 }
               >
                 <Input
+                  aria-label="Password"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}

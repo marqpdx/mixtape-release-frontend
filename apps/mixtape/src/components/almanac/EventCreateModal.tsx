@@ -235,6 +235,7 @@ export default function EventCreateModal({
                   Event Title *
                 </Text>
                 <Input
+                  aria-label="Event Title"
                   {...register('title', {
                     required: 'Event title is required',
                   })}
@@ -254,6 +255,7 @@ export default function EventCreateModal({
                   Description *
                 </Text>
                 <Input
+                  aria-label="Description"
                   {...register('description', {
                     required: 'Description is required',
                   })}
@@ -273,6 +275,7 @@ export default function EventCreateModal({
                   Location
                 </Text>
                 <Input
+                  aria-label="Location"
                   {...register('location')}
                   placeholder="Community Center, Room 101"
                   size="md"
@@ -396,6 +399,7 @@ export default function EventCreateModal({
                   Max Attendees (Optional)
                 </Text>
                 <Input
+                  aria-label="Max Attendees (Optional)"
                   type="number"
                   {...register('max_attendees', {
                     valueAsNumber: true,

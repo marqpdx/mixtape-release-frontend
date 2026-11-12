@@ -63,7 +63,7 @@ export function IndexingStatus({
       <HStack
         gap={2}
         alignItems="center"
-        animation="fadeOut 1s ease-in"
+        animation="fadeOut calc(var(--transition-duration, 200ms) * 5) ease-in"
         style={{
           animationDelay: `${fadeOutDelay - 1000}ms`,
           animationFillMode: 'forwards',
@@ -100,7 +100,7 @@ function SparkleIcon({ status }: SparkleIconProps) {
         fill="none"
         style={{
           color: status === 'indexing' ? '#60A5FA' : '#34D399', // blue-400 : green-400
-          animation: status === 'indexing' ? 'spin 1s linear infinite' : 'none',
+          animation: status === 'indexing' ? 'spin calc(var(--transition-duration, 200ms) * 5) linear infinite' : 'none',
         }}
       >
         {/* Claude-style asterisk sparkle */}

@@ -91,6 +91,7 @@ const RegisterPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <Stack gap={4}>
               <Input
+                aria-label="Username"
                 type="text"
                 name="username"
                 value={formData.username}
@@ -100,6 +101,7 @@ const RegisterPage: React.FC = () => {
                 required
               />
               <Input
+                aria-label="First Name"
                 type="text"
                 name="first_name"
                 value={formData.first_name}
@@ -109,6 +111,7 @@ const RegisterPage: React.FC = () => {
                 required
               />
               <Input
+                aria-label="Last Name"
                 type="text"
                 name="last_name"
                 value={formData.last_name}
@@ -118,6 +121,7 @@ const RegisterPage: React.FC = () => {
                 required
               />
               <Input
+                aria-label="Email"
                 type="email"
                 name="email"
                 value={formData.email}
@@ -140,6 +144,7 @@ const RegisterPage: React.FC = () => {
                 }
               >
                 <Input
+                  aria-label="Password"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}

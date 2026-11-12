@@ -200,7 +200,7 @@ export default async function PublicPieceReaderPage({
   const footerTitle = piece.sponsor_group?.title ?? piece.author.display_name;
 
   return (
-    <main className="gpr-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", "--piece-measure": typ.measure } as CSSProperties}>
+    <div className="gpr-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", "--piece-measure": typ.measure } as CSSProperties}>
       <style>{`
         .gpr-back { text-underline-offset: 3px; }
         .gpr-body {
@@ -308,6 +308,6 @@ export default async function PublicPieceReaderPage({
       </TopologyReadingSurface>
 
       <GroupPublicFooter groupTitle={footerTitle} />
-    </main>
+    </div>
   );
 }

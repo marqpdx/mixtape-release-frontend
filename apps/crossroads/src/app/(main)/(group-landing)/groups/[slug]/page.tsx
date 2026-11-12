@@ -78,11 +78,11 @@ export default async function GroupPublicPage({
   // T1: synthesized payload — always Masthead
   if (config.tier === "t1") {
     return (
-      <main className="gpl-root">
+      <div className="gpl-root">
         {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
-      </main>
+      </div>
     );
   }
 
@@ -91,22 +91,22 @@ export default async function GroupPublicPage({
 
   if (templateId === "ledger") {
     return (
-      <main className="gpl-root">
+      <div className="gpl-root">
         {adminBar}
         <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
         <GroupPublicLedger config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
-      </main>
+      </div>
     );
   }
 
   if (templateId === "masthead" || templateId === null) {
     return (
-      <main className="gpl-root">
+      <div className="gpl-root">
         {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
-      </main>
+      </div>
     );
   }
 
@@ -114,31 +114,31 @@ export default async function GroupPublicPage({
   if (templateId === "atlas") {
     if (config.group.background_image_url) {
       return (
-        <main className="gpl-root">
+        <div className="gpl-root">
           {adminBar}
           <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
           <GroupPublicAtlas config={config} groupSlug={slug} />
           <GroupPublicFooter groupTitle={config.group.title} />
-        </main>
+        </div>
       );
     }
     return (
-      <main className="gpl-root">
+      <div className="gpl-root">
         {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
-      </main>
+      </div>
     );
   }
 
   // Docket — deferred; fall back to Masthead
   if (templateId === "docket") {
     return (
-      <main className="gpl-root">
+      <div className="gpl-root">
         {adminBar}
         <GroupPublicMasthead config={config} groupSlug={slug} />
         <GroupPublicFooter groupTitle={config.group.title} />
-      </main>
+      </div>
     );
   }
 
@@ -152,7 +152,7 @@ export default async function GroupPublicPage({
   );
 
   return (
-    <main className="gpl-root">
+    <div className="gpl-root">
       {adminBar}
       <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="home" />
       <GroupPublicHero config={config} hasFeatured={hasFeatured} />
@@ -176,6 +176,6 @@ export default async function GroupPublicPage({
       )}
 
       <GroupPublicFooter groupTitle={config.group.title} />
-    </main>
+    </div>
   );
 }

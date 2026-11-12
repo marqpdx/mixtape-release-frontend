@@ -245,6 +245,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
                   size="xs"
                   variant="ghost"
                   onClick={toggleSidePanel}
+                  aria-label="Close panel"
                   title="Close panel"
                 >
                   <IconSparkles size={14} color="green" />
@@ -311,6 +312,7 @@ export default function DraftRoomV2({ sponsor }: DraftRoomV2Props) {
               borderRadius="full"
               shadow="sm"
               onClick={toggleSidePanel}
+              aria-label="Open Copy Desk"
               title="Open Copy Desk"
               _hover={{ shadow: "md" }}
             >

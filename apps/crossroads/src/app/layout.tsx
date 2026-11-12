@@ -127,7 +127,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <Providers>
           <Analytics />
-          {children}
+          <main className="crl-main">{children}</main>
         </Providers>
       </body>
     </html>

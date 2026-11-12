@@ -42,7 +42,7 @@ export function RightNowSection({ status }: RightNowSectionProps) {
                 inset: 0,
                 borderRadius: '50%',
                 border: '1.5px solid var(--accent)',
-                animation: 'p200-pulse 2.1s ease-out infinite',
+                animation: 'p200-pulse calc(var(--transition-duration, 200ms) * 10.5) ease-out infinite',
               }}
             />
           </div>

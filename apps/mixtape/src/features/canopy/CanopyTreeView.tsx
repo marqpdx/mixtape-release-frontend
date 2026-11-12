@@ -705,7 +705,7 @@ export default function CanopyTreeView() {
 
         <Flex align="center" gap={1.5}>
           <Box w={1.5} h={1.5} borderRadius="full" bg={accent}
-            style={{boxShadow:`0 0 5px ${accent}`,animation:'cPulse 2.5s ease-in-out infinite'}}/>
+            style={{boxShadow:`0 0 5px ${accent}`,animation:'cPulse calc(var(--transition-duration, 200ms) * 12.5) ease-in-out infinite'}}/>
           <Text fontSize="9px" color={dim}>{nodes.length} nodes</Text>
         </Flex>
       </Flex>

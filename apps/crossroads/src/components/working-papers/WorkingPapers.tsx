@@ -43,7 +43,7 @@ export function WorkingPapersShell({
     <>
       <UnifiedNavbar extraCompact />
       <div className={`${styles.root} ${wpSerif.variable}`} data-kind={kind}>
-        <main className={styles.main}>
+        <div className={styles.main}>
           <div className={styles.container}>
             <div className={styles.topRow}>
               <nav aria-label="Breadcrumb">
@@ -63,7 +63,7 @@ export function WorkingPapersShell({
             </div>
             <div className={styles.page}>{children}</div>
           </div>
-        </main>
+        </div>
       </div>
     </>
   );

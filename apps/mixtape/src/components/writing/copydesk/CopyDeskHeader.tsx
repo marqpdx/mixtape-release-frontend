@@ -52,6 +52,7 @@ export function CopyDeskHeader({
           borderColor="red.200"
           borderRadius="full"
           onClick={onToggle}
+          aria-label="Close Copy Desk"
           title="Close Copy Desk"
           _hover={{ bg: "red.100" }}
         >

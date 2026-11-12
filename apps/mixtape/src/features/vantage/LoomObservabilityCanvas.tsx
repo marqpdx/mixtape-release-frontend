@@ -570,7 +570,7 @@ export default function LoomObservabilityCanvas() {
         <Flex align="center" gap={1.5}>
           <Box w={1.5} h={1.5} borderRadius="full" bg="#fc8181"
             style={{boxShadow:playing?'0 0 5px #fc8181':'none',
-                    animation:playing?'vPulse 1.5s ease-in-out infinite':'none'}}/>
+                    animation:playing?'vPulse calc(var(--transition-duration, 200ms) * 7.5) ease-in-out infinite':'none'}}/>
           <Text fontSize="9px" color={dim}>{playing?'LIVE':'PAUSED'}</Text>
           <Text fontSize="9px" color={dim}>· {ops.length} ops</Text>
           {smoothed&&<Badge fontSize="7px" bg="rgba(82,183,136,0.14)" color={accent} px={1.5} borderRadius="sm">+1.2s</Badge>}

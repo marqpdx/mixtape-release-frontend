@@ -67,6 +67,7 @@ function CopyRow({ label, text }: { label: string; text: string }) {
           size="xs"
           variant="ghost"
           onClick={handleCopy}
+          aria-label={`Copy ${label}`}
           title={`Copy ${label}`}
         >
           {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
@@ -249,6 +250,7 @@ export function LinkedInCopyAgent({
                   size="xs"
                   variant="ghost"
                   onClick={handleCopy}
+                  aria-label="Copy post introduction"
                   title="Copy post introduction"
                 >
                   {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
@@ -257,6 +259,7 @@ export function LinkedInCopyAgent({
                   size="xs"
                   variant="ghost"
                   onClick={handleGenerate}
+                  aria-label="Regenerate"
                   title="Regenerate"
                   disabled={isGenerating}
                 >

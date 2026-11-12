@@ -76,7 +76,7 @@ export default function ArgusRunForm({ blocks, available, busy, onStart }: Props
         {draft.mode === "single" ? "I approve this run." : "I approve this bounded series running on its own within these limits."}
       </label>
       {!ready && <Text role="status">Runs are not available yet.</Text>}
-      {error && <Text role="alert" color="red.600">{error}</Text>}
+      {error && <Text role="alert" color="fg.error">{error}</Text>}
       <Button type="submit" alignSelf="start" disabled={!ready || busy || !confirmed || !draft.blockIds.length} loading={busy}>{draft.mode === "single" ? "Run now" : "Create series"}</Button>
     </Stack>
   </Box>;

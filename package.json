@@ -29,6 +29,7 @@
     "start:crossroads": "yarn workspace @crossroads/app start",
     "start:markalanlilly": "yarn workspace @markalanlilly/app start",
     "lint": "yarn workspace @mixtape/app lint",
+    "lint:accessibility": "eslint apps/mixtape apps/crossroads packages",
     "test": "yarn workspace @mixtape/app test",
     "test:ui": "yarn workspace @mixtape/app test:ui",
     "test:headed": "yarn workspace @mixtape/app test:headed",
@@ -37,6 +38,7 @@
     "test:local": "chmod +x ./scripts/test-local.sh && ./scripts/test-local.sh"
   },
   "devDependencies": {
+    "eslint-plugin-jsx-a11y": "^6.10.0",
     "typescript": "^5.9.2"
   },
   "resolutions": {

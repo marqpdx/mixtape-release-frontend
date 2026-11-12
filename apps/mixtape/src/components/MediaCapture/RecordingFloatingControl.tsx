@@ -69,7 +69,7 @@ export function RecordingFloatingControl() {
                 bg="red.500"
                 borderRadius="full"
                 flexShrink={0}
-                style={{ animation: "mc-pulse 1s ease-in-out infinite" }}
+                style={{ animation: "mc-pulse calc(var(--transition-duration, 200ms) * 5) ease-in-out infinite" }}
               />
             )}
             {pipelineState === "paused" && (

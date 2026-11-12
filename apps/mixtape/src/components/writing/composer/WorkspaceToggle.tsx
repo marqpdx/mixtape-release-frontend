@@ -50,7 +50,7 @@ export function WorkspaceToggle({
             100% { transform: translateX(-50%) scale(1.0);  box-shadow: 0 0 0 0   rgba(49,151,149,0); opacity: 1; }
           }
           .lb-btn-arrive {
-            animation: lb-arrive 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards;
+            animation: lb-arrive calc(var(--transition-duration, 200ms) * 4.5) cubic-bezier(0.34,1.56,0.64,1) forwards;
           }
         `}</style>
       )}
@@ -80,6 +80,7 @@ export function WorkspaceToggle({
             borderRadius="full"
             shadow="sm"
             onClick={onToggle}
+            aria-label="Open Copy Desk"
             title="Open Copy Desk"
             _hover={{ bg: 'green.100', shadow: 'md' }}
           >
@@ -96,6 +97,7 @@ export function WorkspaceToggle({
               borderRadius="full"
               shadow="sm"
               onClick={onLbToggle}
+              aria-label="Open Living Book Desk"
               title="Open Living Book Desk"
               _hover={{ bg: 'teal.100', shadow: 'md' }}
               className={lbHighlighted ? 'lb-btn-arrive' : undefined}

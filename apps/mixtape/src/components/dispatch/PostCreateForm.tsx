@@ -30,9 +30,9 @@ export default function PostCreateForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <VStack gap={4} align="stretch">
-        <Input placeholder="Title" {...register("title")} />
-        <Textarea placeholder="Summary" {...register("summary")} />
-        <Textarea placeholder="Body" {...register("body")} rows={6} />
+        <Input aria-label="Title" placeholder="Title" {...register("title")} />
+        <Textarea aria-label="Summary" placeholder="Summary" {...register("summary")} />
+        <Textarea aria-label="Body" placeholder="Body" {...register("body")} rows={6} />
         <Button type="submit" >
           Create Post
         </Button>

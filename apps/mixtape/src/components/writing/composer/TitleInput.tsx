@@ -22,6 +22,7 @@ export function TitleInput({
 
   return (
     <Input
+      aria-label="Title"
       className="title-input"
       placeholder={placeholder}
       value={title}

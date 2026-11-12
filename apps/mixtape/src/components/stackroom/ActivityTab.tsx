@@ -137,7 +137,7 @@ export function ActivityTab({ libraryId }: ActivityTabProps) {
           <Box
             as={LuRefreshCw}
             style={{
-              animation: refreshing ? 'spin 1s linear infinite' : 'none',
+              animation: refreshing ? 'spin calc(var(--transition-duration, 200ms) * 5) linear infinite' : 'none',
             }}
           />
         </IconButton>

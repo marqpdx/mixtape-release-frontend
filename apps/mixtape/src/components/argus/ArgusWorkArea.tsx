@@ -74,7 +74,7 @@ export default function ArgusWorkArea({ section, setActiveSection, identityKey =
       <Box className="args-title"><Heading as="h1" size="xl">Argus</Heading><Text color="theme.textSecondary">Quality, consistency and fidelity</Text></Box>
       <Button variant="outline" onClick={() => void state.refresh()} disabled={busy || loading} loading={loading}>Refresh status</Button>
     </HStack>
-    {error && <Text role="alert" color="red.600" mb={4}>{error}</Text>}
+    {error && <Text role="alert" color="fg.error" mb={4}>{error}</Text>}
     {notice && <Text role="status" mb={4}>{notice}</Text>}
     {state.blocks.isPending && <Text role="status">Loading audit status…</Text>}
     {state.blocks.isError && <Box className="args-unavailable" role="alert" borderWidth="1px" borderColor="theme.border" p={4} mb={5} borderRadius="md">

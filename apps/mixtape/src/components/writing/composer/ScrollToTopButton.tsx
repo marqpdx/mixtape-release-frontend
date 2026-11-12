@@ -48,6 +48,7 @@ export function ScrollToTopButton({ workspaceOpen, workspaceWidth }: ScrollToTop
           transform: "translateY(-2px)",
           shadow: "xl"
         }}
+        aria-label="Back to top"
         title="Back to top"
       >
         <IconChevronUp size={20} />

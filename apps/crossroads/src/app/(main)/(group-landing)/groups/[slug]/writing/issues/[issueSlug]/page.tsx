@@ -86,7 +86,7 @@ export default async function PublicGroupIssuePage({
   }` : "";
 
   return (
-    <main className="gwir-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", minHeight: "100vh" }}>
+    <div className="gwir-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", minHeight: "100vh" }}>
       <style>{`
         ${paletteStyle(".gwir-root", palette?.light)}
         ${paletteStyle(".dark .gwir-root", palette?.dark)}
@@ -96,6 +96,6 @@ export default async function PublicGroupIssuePage({
       <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="writing" />
       <IssueReader issue={issue} groupSlug={slug} groupTitle={config.group.title} writing={writing} />
       <GroupPublicFooter groupTitle={config.group.title} />
-    </main>
+    </div>
   );
 }

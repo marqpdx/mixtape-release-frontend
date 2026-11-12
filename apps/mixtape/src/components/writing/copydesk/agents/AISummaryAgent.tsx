@@ -122,6 +122,7 @@ export function AISummaryAgent({
                   size="xs"
                   variant="ghost"
                   onClick={onGenerateNewSummary}
+                  aria-label="Generate new summary"
                   title="Generate new summary"
                   disabled={summaryIsGenerating || summaryIsPending}
                 >

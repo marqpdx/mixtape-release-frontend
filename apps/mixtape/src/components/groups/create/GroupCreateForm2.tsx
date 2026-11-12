@@ -115,6 +115,7 @@ function FormInner({
               Name *
             </Text>
             <Input
+              aria-label="Name"
               {...register("title", { required: "Group name is required" })}
               placeholder="Enter group name"
               size="md"
@@ -126,6 +127,7 @@ function FormInner({
               Description *
             </Text>
             <Input
+              aria-label="Description"
               {...register("description", { required: "Description is required" })}
               placeholder="Describe the purpose"
               size="md"
@@ -175,7 +177,7 @@ function FormInner({
                 <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
                   Tagline (Optional)
                 </Text>
-                <Input {...register("tagline")} placeholder="A short tagline" size="md" />
+                <Input aria-label="Tagline (Optional)" {...register("tagline")} placeholder="A short tagline" size="md" />
               </Box>
               <Stack gap={2}>
                 <DatePickerInput
@@ -205,7 +207,7 @@ function FormInner({
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
                 Tagline (Optional)
               </Text>
-              <Input {...register("tagline")} placeholder="A short tagline" size="md" />
+              <Input aria-label="Tagline (Optional)" {...register("tagline")} placeholder="A short tagline" size="md" />
             </Box>
           )}
         </Stack>

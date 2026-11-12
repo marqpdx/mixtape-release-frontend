@@ -105,6 +105,7 @@ export function QuickAnnouncementCreate({ groupSlug }: Props) {
                 Title
               </Text>
               <Input
+                aria-label="Title"
                 value={title}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 placeholder="What do members need to know?"
@@ -119,6 +120,7 @@ export function QuickAnnouncementCreate({ groupSlug }: Props) {
                 Content
               </Text>
               <Textarea
+                aria-label="Content"
                 value={content}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
                 placeholder="Announcement body…"

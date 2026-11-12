@@ -87,6 +87,7 @@ export function SearchInput({
       <HStack gap={2}>
         <div style={{ position: 'relative', flex: 1 }}>
           <Input
+            aria-label="Search collections"
             value={localValue}
             onChange={handleChange}
             onKeyDown={handleKeyDown}

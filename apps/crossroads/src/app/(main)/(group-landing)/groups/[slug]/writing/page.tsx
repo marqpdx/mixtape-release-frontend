@@ -205,7 +205,7 @@ export default async function GroupWritingIndexPage({
   };
 
   return (
-    <main className="gwi-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}>
+    <div className="gwi-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)" }}>
       <style>{`
         .gwi-piece-link { text-decoration: none; display: block; }
         .gwi-piece-link:hover .gwi-piece-title { color: var(--theme-accent); }
@@ -356,6 +356,6 @@ export default async function GroupWritingIndexPage({
       </section>
 
       <GroupPublicFooter groupTitle={group.title} />
-    </main>
+    </div>
   );
 }

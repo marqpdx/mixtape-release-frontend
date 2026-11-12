@@ -115,6 +115,7 @@ export function LbDesk({
             borderColor="red.200"
             borderRadius="full"
             onClick={onClose}
+            aria-label="Close LB Desk"
             title="Close LB Desk"
             _hover={{ bg: 'red.100' }}
           >

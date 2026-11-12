@@ -303,6 +303,7 @@ export function DraftEditor({
             size="xs"
             variant="ghost"
             onClick={onToggleFocusMode}
+            aria-label={focusMode ? "Exit focus mode (Esc)" : "Focus mode"}
             title={focusMode ? "Exit focus mode (Esc)" : "Focus mode"}
           >
             {focusMode ? <IconMinimize size={14} /> : <IconMaximize size={14} />}

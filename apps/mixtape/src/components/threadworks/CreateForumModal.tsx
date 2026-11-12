@@ -96,6 +96,7 @@ export default function CreateForumModal({
         <VStack align="start" gap={2} w="100%">
           <Text fontWeight="semibold">Title</Text>
           <Input
+            aria-label="Title"
             placeholder="Conversation title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -106,6 +107,7 @@ export default function CreateForumModal({
         <VStack align="start" gap={2} w="100%">
           <Text fontWeight="semibold">Description</Text>
           <Textarea
+            aria-label="Description"
             placeholder="Describe the purpose of this conversation"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -179,6 +181,7 @@ export default function CreateForumModal({
                 Select members ({selectedIds.size} selected)
               </Text>
               <Input
+                aria-label="Search members"
                 placeholder="Search members..."
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}

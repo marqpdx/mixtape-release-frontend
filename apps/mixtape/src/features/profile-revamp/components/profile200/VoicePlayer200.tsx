@@ -144,7 +144,7 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
                 inset: -4,
                 borderRadius: '50%',
                 border: '2px solid var(--accent)',
-                animation: 'p200-ring 1.8s ease-out infinite',
+                animation: 'p200-ring calc(var(--transition-duration, 200ms) * 9) ease-out infinite',
                 pointerEvents: 'none',
               }}
             />
@@ -207,7 +207,7 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
                       : 'color-mix(in srgb, var(--ink) 20%, transparent)',
                     transformOrigin: 'bottom',
                     animation: (played && playing)
-                      ? `p200-eq 1.1s ease-in-out ${(i * 0.02).toFixed(2)}s infinite alternate`
+                      ? `p200-eq calc(var(--transition-duration, 200ms) * 5.5) ease-in-out ${(i * 0.02).toFixed(2)}s infinite alternate`
                       : 'none',
                     transition: 'background 0.1s',
                   }}

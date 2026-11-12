@@ -48,6 +48,7 @@ export function SummarySection({
               size="xs"
               variant="ghost"
               onClick={onUndoSummary}
+              aria-label={`Restore previous summary: "${previousSummary.substring(0, 50)}${previousSummary.length > 50 ? '...' : ''}"`}
               title={`Restore previous summary: "${previousSummary.substring(0, 50)}${previousSummary.length > 50 ? '...' : ''}"`}
               color="gray.500"
               _hover={{ color: "blue.500" }}

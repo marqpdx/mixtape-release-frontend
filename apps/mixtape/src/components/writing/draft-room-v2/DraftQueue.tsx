@@ -62,6 +62,7 @@ export function DraftQueue({
           borderRadius="full"
           shadow="sm"
           onClick={onToggleCollapse}
+          aria-label="Show drafts"
           title="Show drafts"
           _hover={{ shadow: "md" }}
         >
@@ -104,6 +105,7 @@ export function DraftQueue({
           size="xs"
           variant="ghost"
           onClick={onToggleCollapse}
+          aria-label="Hide drafts"
           title="Hide drafts"
         >
           <IconSparkles size={14} />

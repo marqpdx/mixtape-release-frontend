@@ -193,7 +193,7 @@ export function FieldSurface({ groupSlug: _ }: FieldSurfaceProps) {
           60%  { box-shadow: 0 0 0 18px rgba(99,102,241,0); }
           100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
         }
-        .is-find-beat { animation: field-beat 1.75s ease-out; }
+        .is-find-beat { animation: field-beat calc(var(--transition-duration, 200ms) * 8.75) ease-out; }
       `}</style>
 
       <Box display="flex" flexDirection="column" h="100vh" overflow="hidden" bg={bgColor}>
