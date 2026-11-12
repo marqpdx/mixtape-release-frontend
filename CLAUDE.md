@@ -80,6 +80,8 @@ Avoid vague summaries like "fixed some bugs."]
 
 **The CTO runs every server/production step personally (CTO, 2026-11-11).** Write such steps as a small, readable batch the CTO can read before running — stating what it does and how to undo it — never as automation that replaces the CTO at the keyboard. Full wording: `../puddlejump/CLAUDE.md`, *Decision Authority*.
 
+**Prefer the polymorphic sponsor pattern over a direct FK** (CTO, 2026-11-12): when a Django model's relationship to content could plausibly be owned by either a `Group` or a `UserProfile`, use the sponsor GFK, not a direct FK. Full wording: `../mixtape-release-core/AGENTS.md`, beside *Uniqueness Lives in the Sponsor's Info-Sphere*.
+
 ---
 
 ## One Writer for Puddlejump's Shared Records
