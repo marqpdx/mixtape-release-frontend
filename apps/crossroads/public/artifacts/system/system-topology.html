@@ -1,13 +1,13 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.45)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.46)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   maturity: 0.9.6 (publishing maturity; 1.0 = first full release; set by the CTO 2026-10-28)
-  build_state_from: the same document (checked against code and status docs 2026-10-14, 2026-10-26 and 2026-11-07)
+  build_state_from: the same document (checked against code and status docs 2026-10-14, 2026-10-26, 2026-11-07 and 2026-11-11)
   library: puddlejump/reference/topology/topology-library.md
-  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (six times); box text enlarged 2026-10-29; first Argus system-map-freshness-01 run 2026-11-07 (Redis removed, Heddle and Hildegard placed); Hildegard's box the same width as the rest, 2026-11-08; LiveKit named Bridge/LiveKit, 2026-11-09
-  last_updated: 2026-11-09 (shown in the maturity pill's hover note; Argus system-map-freshness-01 stamps it weekly, or sets last_verified when nothing changed)
+  generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (six times); box text enlarged 2026-10-29; first Argus system-map-freshness-01 run 2026-11-07 (Redis removed, Heddle and Hildegard placed); Hildegard's box the same width as the rest, 2026-11-08; LiveKit named Bridge/LiveKit, 2026-11-09; second Argus system-map-freshness-01 run 2026-11-11 (Argus's dashboard note updated from planned to partial, ADR-0064 AC-6)
+  last_updated: 2026-11-11 (shown in the maturity pill's hover note; Argus system-map-freshness-01 stamps it weekly, or sets last_verified when nothing changed)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -32,7 +32,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.45</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 9 Nov 2026; checked weekly.">M: 0.9.6</span>
+    <span class="pill">Topology library · System · v2.0.46</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 11 Nov 2026; checked weekly.">M: 0.9.6</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <span class="soon" tabindex="0" data-tip="Coming soon">Loom</span> · <a href="../platform/platform-topology.html">Platform</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Practice</span></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -43,7 +43,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.45 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.46 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -159,7 +159,7 @@
       status: 'partial', evidence: 'P0 to P5 built in core, first real Run 2026-10-12. Built 2026-11-04: the curation workbench and Concept lookup (P6, P6a), embeddings and hybrid search (P8), Inquiry Runs and the cited Review (P9, P9a). The Cass-to-Crossroads result flow (CC-1) is built, not deployed. Keeper passes (P7) and cross-corpus Lenses (P10) pending.', refs: ['reference/glossary/hand-touch/ariadne.md', 'decisions/ariadne/ariadne-build-spec.md', 'decisions/ariadne/ariadne-status.md'] },
     { id: 'AG', layer: 'gov', x: 1056, y: 224, w: 168, h: 44, label: 'Argus', sub: 'audit practice', kind: 'Practice',
       desc: 'Mixtape\'s audit practice, a vigilant keeper of fidelity: it checks what the system claims against what is built. Code against its security and architecture rules, help text against the product, working memory and documents against the canon. Named, versioned audit blocks run by an agent; every finding passes a person before it is filed. Security comes first.',
-      status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the dashboard is planned.', refs: ['reference/glossary/hand-touch/argus.md', 'decisions/argus/'] },
+      status: 'built', evidence: 'Built and ongoing: audit blocks run regularly; the dashboard is partial (ADR-0064 AC-6, the Argus Surface at app/argus: frontend route and API built, wired and smoke-tested locally, not deployed).', refs: ['reference/glossary/hand-touch/argus.md', 'decisions/argus/', 'decisions/surface-profile-adr/'] },
     { id: 'MR', layer: 'gov', x: 1056, y: 280, w: 168, h: 44, label: 'Meridian', sub: 'code intelligence', kind: 'Practice',
       desc: 'Mixtape\'s code intelligence: a continuously refreshed map of the codebase that agents can query, so finding where something lives, and what governs it, is a lookup rather than a crawl. Meridian/Index maps symbols, calls, routes, models and tests; Meridian/Wiki explains files and modules. Ariadne\'s companion: Meridian maps the code, Ariadne the ideas in the canon.',
       status: 'partial', evidence: 'ADR-0051 ratified and amended (2026-10-20). Phase 1\'s CodeGraph index built on Cassiopeia-A for core and frontend (M-1 to M-3), served to agents as eight <code>meridian.*</code> tools through Switchboard (M-4, 2026-11-04), usage logged (M-5). Pending: the findings doc (M-6), OpenWiki (Phase 1.5) and Phase 2.', refs: ['reference/glossary/hand-touch/meridian.md', 'decisions/meridian-adr/meridian-adr.md', 'decisions/meridian-adr/meridian-status.md'] },
