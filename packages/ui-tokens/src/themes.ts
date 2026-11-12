@@ -48,7 +48,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF', // Pure white background
       surface: '#F5F5F5', // Very light gray for cards
-      accent: '#1A7F37', // Darker green for 7:1 contrast
+      accent: '#15652C', // Darker green for 7:1 contrast
       accentText: '#FFFFFF',
       text: '#000000', // Pure black text (21:1 contrast)
       textSecondary: '#1A1A1A', // Very dark gray (18:1 contrast)
@@ -70,10 +70,10 @@ export const themes: Theme[] = [
     light: {
       bg: '#F1F0E9', // Warm cream background - perfect for light mode
       surface: '#FFFFFF', // Clean white for cards (derived)
-      accent: '#ED9A51', // Warm orange - vibrant accent color
+      accent: '#D16D16', // Warm orange - vibrant accent color
       accentText: '#000000',
       text: '#171E26', // Deep slate - excellent contrast for text
-      textSecondary: '#B95C54', // Muted rust - perfect for secondary text
+      textSecondary: '#AD4F47', // Muted rust - perfect for secondary text
       border: '#95A8B2' // Soft blue-gray - subtle borders
     },
     dark: {
@@ -88,8 +88,8 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F8F8F8',
-      accent: '#C85A1C', // Darker orange for better contrast
-      accentText: '#000000',
+      accent: '#904114', // Darker orange for better contrast
+      accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
       border: '#666666'
@@ -216,7 +216,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F5F5F5',
-      accent: '#A04A1F', // Darker canyon orange
+      accent: '#8E421C', // Darker canyon orange
       accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
@@ -238,7 +238,7 @@ export const themes: Theme[] = [
     light: {
       bg: '#F8F6F1',
       surface: '#F0EBE3',
-      accent: '#7A9B76',
+      accent: '#73956E',
       accentText: '#000000',
       text: '#2A3B47',
       textSecondary: '#4A5568',
@@ -256,7 +256,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F5F5F5',
-      accent: '#4A6F45', // Darker green
+      accent: '#40603C', // Darker green
       accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
@@ -296,7 +296,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F5F5F5',
-      accent: '#7A5545', // Darker mauve
+      accent: '#735041', // Darker mauve
       accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
@@ -318,7 +318,7 @@ export const themes: Theme[] = [
     light: {
       bg: '#FEFCFA',
       surface: '#F6F2ED',
-      accent: '#38B2AC',
+      accent: '#329F9A',
       accentText: '#000000',
       text: '#2A3B47',
       textSecondary: '#4A5568',
@@ -336,7 +336,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F5F5F5',
-      accent: '#1A7F7A', // Darker teal
+      accent: '#14625E', // Darker teal
       accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
@@ -358,10 +358,10 @@ export const themes: Theme[] = [
     light: {
       bg: '#FFF8F0', // orange.50 equivalent - warm off-white
       surface: '#FFFFFF', // clean white for cards
-      accent: '#F56500', // orange.600 - the main orange accent
+      accent: '#EF6200', // orange.600 - the main orange accent
       accentText: '#000000',
       text: '#2D3748', // gray.800 - main text
-      textSecondary: '#C05621', // orange.700 - secondary text with warmth
+      textSecondary: '#B95320', // orange.700 - secondary text with warmth
       border: '#FED7AA' // orange.200 - soft borders
     },
     dark: {
@@ -376,7 +376,7 @@ export const themes: Theme[] = [
     lightHighContrast: {
       bg: '#FFFFFF',
       surface: '#F5F5F5',
-      accent: '#C44F00', // Darker orange
+      accent: '#963C00', // Darker orange
       accentText: '#FFFFFF',
       text: '#000000',
       textSecondary: '#1A1A1A',
