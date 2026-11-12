@@ -129,6 +129,10 @@ Several agents work at once (CTO, 2026-10-23). So none overwrites another:
 - **`packages/api`:** edit only your own client folder (for example `clients/shuttle/`, `clients/folio/`), and say so in your update before touching a shared index or barrel file.
 - **Contour is the source for Shape schemas** (`puddlejump/reference/contour/`). A copy in core or `packages/api` is never edited on its own: change Contour first, then the copy.
 
+## CTO Owns the Server
+
+**The CTO runs every server/production step personally (CTO, 2026-11-11).** Write such steps as a small, readable batch the CTO can read before running — stating what it does and how to undo it — never as automation that replaces the CTO at the keyboard. Full wording: top-level `../AGENTS.md`, *Safety Rules (Global)*.
+
 ## Commits Say Who Made Them, and Finish the Whole Unit
 
 **Every commit names its agent and says what it does (CTO, 2026-11-11).** A one-line commit with no author line can't be traced back to an agent once several agents share a checkout and one git identity. Every commit message has:
