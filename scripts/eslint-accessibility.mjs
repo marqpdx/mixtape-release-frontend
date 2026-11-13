@@ -6,7 +6,6 @@ const accessibility = {
   files: ["**/*.{js,jsx,ts,tsx}"],
   plugins: {
     "jsx-a11y": jsxA11y,
-    "mixtape": { rules: { "no-raw-colors": noRawColors } },
   },
   rules: {
     ...Object.fromEntries(
@@ -17,8 +16,13 @@ const accessibility = {
           : value === "off" || value === 0 ? "off" : "warn",
       ]),
     ),
-    "mixtape/no-raw-colors": "warn",
   },
+};
+
+export const rawColors = {
+  files: accessibility.files,
+  plugins: { "mixtape": { rules: { "no-raw-colors": noRawColors } } },
+  rules: { "mixtape/no-raw-colors": "warn" },
 };
 
 export default accessibility;

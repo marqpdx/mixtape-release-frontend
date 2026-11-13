@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import type { ProfileDTO } from '../api/types';
@@ -14,6 +14,7 @@ interface Props {
 
 export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
   const { displayName, role, bio, status, avatarUrl, backgroundImageUrl, introVoiceUrl, introVoiceTranscript, avatarSticker, avatarShape } = profile;
+  const transcriptId = useId();
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   function commit(field: string, value: string) {
@@ -106,21 +107,22 @@ export default function ProfileHeader({ profile, isEditor, onPatch }: Props) {
               <audio
                 controls
                 src={introVoiceUrl}
+                aria-details={introVoiceTranscript ? transcriptId : undefined}
                 style={{ width: '100%', maxWidth: 340, height: 36, accentColor: 'var(--accent)' }}
               />
               {introVoiceTranscript && (
                 <div style={{ marginTop: 4 }}>
                   <button
+                    aria-expanded={transcriptOpen}
+                    aria-controls={transcriptId}
                     onClick={() => setTranscriptOpen(o => !o)}
                     style={{ fontSize: 12, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
                   >
                     {transcriptOpen ? 'Hide transcript' : 'Show transcript'}
                   </button>
-                  {transcriptOpen && (
-                    <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5, fontStyle: 'italic' }}>
-                      {introVoiceTranscript}
-                    </p>
-                  )}
+                  <p id={transcriptId} hidden={!transcriptOpen} style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                    {introVoiceTranscript}
+                  </p>
                 </div>
               )}
             </div>

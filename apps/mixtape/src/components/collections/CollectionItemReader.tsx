@@ -402,7 +402,7 @@ interface CaptureDetail {
   transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
 }
 
-function VideoBlobPlayer({ videoUrl }: { videoUrl: string }) {
+function VideoBlobPlayer({ videoUrl, transcriptId }: { videoUrl: string; transcriptId?: string }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
 
@@ -429,7 +429,7 @@ function VideoBlobPlayer({ videoUrl }: { videoUrl: string }) {
   );
   return (
     <Box borderRadius="md" overflow="hidden" bg="black">
-      <video controls style={{ width: '100%', maxHeight: '400px', display: 'block' }}>
+      <video controls aria-details={transcriptId} style={{ width: '100%', maxHeight: '400px', display: 'block' }}>
         <source src={blobUrl} type="video/webm" />
         <source src={blobUrl} type="video/mp4" />
       </video>
@@ -495,10 +495,10 @@ function MediaCaptureReader({ captureId, onBack }: { captureId: string; onBack: 
             )}
           </Box>
 
-          {detail.video_url && <VideoBlobPlayer videoUrl={detail.video_url} />}
+          {detail.video_url && <VideoBlobPlayer videoUrl={detail.video_url} transcriptId={detail.transcript?.raw_text ? `reader-transcript-${captureId}` : undefined} />}
 
           {detail.transcript?.raw_text && (
-            <Box>
+            <Box id={`reader-transcript-${captureId}`} className="cir-transcript-text">
               <Text fontSize="xs" color="theme.textSecondary" mb={3} textTransform="uppercase" letterSpacing="0.08em">
                 Transcript
               </Text>

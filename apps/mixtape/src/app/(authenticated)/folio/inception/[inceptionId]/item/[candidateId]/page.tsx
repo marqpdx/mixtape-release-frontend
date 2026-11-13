@@ -67,10 +67,10 @@ export default function FolioMaterialItemPage({
 
         <Textarea
           className="fmi-writing-area"
+          aria-label="Write about this item"
           placeholder=""
           rows={16}
           resize="vertical"
-          autoFocus
         />
       </VStack>
     </Container>

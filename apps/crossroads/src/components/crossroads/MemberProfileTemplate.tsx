@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge, Box, Button, Heading, HStack, Image, Link, Text, VStack } from "@chakra-ui/react";
+import { useId } from "react";
 import NextLink from "next/link";
 import { useColorModeValue } from "@components/ui/color-mode";
 import type { PublicMemberProfile } from "@mixtape/api/clients/public/publicApi";
@@ -25,6 +26,7 @@ export default function MemberProfileTemplate({
   isOwner = false,
   editHref = "/app/dashboard?section=edit-profile",
 }: MemberProfileTemplateProps) {
+  const transcriptId = useId();
   const cardBg = useColorModeValue("gray.50", "gray.800");
   const panelBg = useColorModeValue("white", "gray.900");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
@@ -186,9 +188,9 @@ export default function MemberProfileTemplate({
               <Text color={mutedColor} fontSize="sm" fontWeight="medium" mb={2}>
                 Voice intro
               </Text>
-              <audio controls src={profile.intro_voice_url} style={{ width: "100%", maxWidth: "420px" }} />
+              <audio controls aria-details={profile.intro_voice_transcript ? transcriptId : undefined} src={profile.intro_voice_url} style={{ width: "100%", maxWidth: "420px" }} />
               {profile.intro_voice_transcript && (
-                <Text fontSize="sm" color={mutedColor} mt={2} fontStyle="italic">
+                <Text id={transcriptId} fontSize="sm" color={mutedColor} mt={2} fontStyle="italic">
                   {profile.intro_voice_transcript}
                 </Text>
               )}

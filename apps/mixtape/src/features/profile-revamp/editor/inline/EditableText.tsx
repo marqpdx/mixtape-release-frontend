@@ -3,6 +3,7 @@ import { useRef } from 'react';
 
 interface Props {
   value: string;
+  labelledBy?: string;
   field: string;
   maxLength?: number;
   multiline?: boolean;
@@ -10,7 +11,7 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-export default function EditableText({ value, field, maxLength, multiline, onCommit, style }: Props) {
+export default function EditableText({ value, field, maxLength, multiline, onCommit, style, labelledBy }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
   function handleBlur() {
@@ -39,6 +40,10 @@ export default function EditableText({ value, field, maxLength, multiline, onCom
   return (
     <span
       ref={ref}
+      role="textbox"
+      tabIndex={0}
+      aria-multiline={!!multiline}
+      aria-labelledby={labelledBy}
       contentEditable
       suppressContentEditableWarning
       onBlur={handleBlur}

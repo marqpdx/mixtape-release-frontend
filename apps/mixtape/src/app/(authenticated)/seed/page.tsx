@@ -551,9 +551,16 @@ export default function SeedCapturePage() {
                               <audio
                                 controls
                                 src={seed.audio_url}
+                                aria-details={seed.status === "ready" && seed.body_text ? `seed-transcript-${seed.id}` : undefined}
                                 autoPlay
                                 style={{ width: "150px", height: "22px" }}
                               />
+                              {seed.status === "ready" && seed.body_text && (
+                                <details id={`seed-transcript-${seed.id}`}>
+                                  <summary>Read voice note transcript</summary>
+                                  <p>{seed.body_text}</p>
+                                </details>
+                              )}
                             </Box>
                             <IconButton
                               aria-label="Hide audio"

@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useId } from 'react';
 import { IconPlayerPlayFilled, IconPlayerPauseFilled } from '@tabler/icons-react';
 
 interface VoicePlayer200Props {
   src: string;
   displayName: string;
+  transcript?: string;
 }
 
 const BAR_COUNT = 54;
@@ -27,7 +28,8 @@ function fmt(sec: number) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
+export function VoicePlayer200({ src, displayName, transcript }: VoicePlayer200Props) {
+  const transcriptId = useId();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying]   = useState(false);
   const [progress, setProgress] = useState(0); // 0–1
@@ -51,8 +53,14 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
         setCurrent(a.currentTime);
       }
     };
-    const onMeta  = () => setDuration(a.duration);
-    const onEnded = () => { setPlaying(false); setProgress(0); setCurrent(0); };
+    const onMeta = () => setDuration(Number.isFinite(a.duration) ? a.duration : 0);
+    const onEnded = () => {
+      setPlaying(false);
+      if (Number.isFinite(a.duration) && a.duration > 0) {
+        setProgress(1);
+        setCurrent(a.duration);
+      }
+    };
     a.addEventListener('timeupdate', onTime);
     a.addEventListener('loadedmetadata', onMeta);
     a.addEventListener('ended', onEnded);
@@ -63,13 +71,37 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
     };
   }, []);
 
+  function seekTo(seconds: number) {
+    const a = audioRef.current;
+    if (!a || !Number.isFinite(a.duration) || a.duration <= 0) return;
+    const next = Math.max(0, Math.min(a.duration, seconds));
+    a.currentTime = next;
+    setCurrent(next);
+    setProgress(next / a.duration);
+  }
+
   function seek(e: React.MouseEvent<HTMLDivElement>) {
     const a = audioRef.current;
-    if (!a || !a.duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    a.currentTime = ratio * a.duration;
-    setProgress(ratio);
+    if (!a || rect.width <= 0) return;
+    seekTo(((e.clientX - rect.left) / rect.width) * a.duration);
+  }
+
+  function seekWithKeyboard(e: React.KeyboardEvent<HTMLDivElement>) {
+    const a = audioRef.current;
+    if (!a || !Number.isFinite(a.duration) || a.duration <= 0) return;
+    let next: number;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp': next = a.currentTime + 5; break;
+      case 'ArrowLeft':
+      case 'ArrowDown': next = a.currentTime - 5; break;
+      case 'Home': next = 0; break;
+      case 'End': next = a.duration; break;
+      default: return;
+    }
+    e.preventDefault();
+    seekTo(next);
   }
 
   const playHead = Math.round(progress * BAR_COUNT);
@@ -90,7 +122,7 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
           .p200-vp-bar  { animation: none !important; }
         }
       `}</style>
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="metadata" aria-details={transcript ? transcriptId : undefined} />
       <div
         className="p200-voiceplayer-root"
         style={{
@@ -114,6 +146,7 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
             onMouseEnter={() => setBtnHovered(true)}
             onMouseLeave={() => setBtnHovered(false)}
             aria-label={playing ? 'Pause' : 'Play'}
+            aria-details={transcript ? transcriptId : undefined}
             style={{
               width: 62,
               height: 62,
@@ -181,8 +214,12 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
             role="slider"
             aria-label="Seek"
             aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress * 100)}
+            aria-valuemax={duration}
+            aria-valuenow={current}
+            aria-valuetext={`${fmt(current)} of ${fmt(duration)}`}
+            aria-disabled={duration <= 0}
+            tabIndex={0}
+            onKeyDown={seekWithKeyboard}
             onClick={seek}
             style={{
               display: 'flex',
@@ -217,6 +254,12 @@ export function VoicePlayer200({ src, displayName }: VoicePlayer200Props) {
           </div>
         </div>
       </div>
+      {transcript && (
+        <details id={transcriptId}>
+          <summary>Read voice introduction transcript</summary>
+          <p>{transcript}</p>
+        </details>
+      )}
     </>
   );
 }

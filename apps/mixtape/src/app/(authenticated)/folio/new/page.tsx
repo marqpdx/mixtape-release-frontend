@@ -36,11 +36,11 @@ export default function FolioNewPage() {
         </Text>
         <Textarea
           className="fln-input"
+          aria-label="What are you working on?"
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           placeholder="I want to write a white paper about..."
           rows={8}
-          autoFocus
           resize="vertical"
         />
         <Box className="fln-actions" textAlign="right">

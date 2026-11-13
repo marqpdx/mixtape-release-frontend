@@ -205,7 +205,7 @@ export function ProfileTabShell({ profile, initialTab = 'profile', username }: P
               {profile.quickIntro    && <AboutSection quickIntro={profile.quickIntro} />}
               {profile.status        && <RightNowSection status={profile.status} />}
               {profile.introVoiceUrl && (
-                <VoicePlayer200 src={profile.introVoiceUrl} displayName={profile.displayName} />
+                <VoicePlayer200 src={profile.introVoiceUrl} displayName={profile.displayName} transcript={profile.introVoiceTranscript} />
               )}
               {((profile.skills?.length ?? 0) > 0 || (profile.workAreas?.length ?? 0) > 0) && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 22 }}>

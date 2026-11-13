@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { RuleTester } from "eslint";
 import jsxA11y from "eslint-plugin-jsx-a11y";
-import accessibility from "../scripts/eslint-accessibility.mjs";
+import accessibility, { rawColors } from "../scripts/eslint-accessibility.mjs";
 import noRawColors from "../scripts/eslint-rules/no-raw-colors.mjs";
 
 const tester = new RuleTester({
@@ -39,5 +39,7 @@ test("recommended accessibility and raw-color rules stay advisory", () => {
     const severity = Array.isArray(original) ? original[0] : original;
     assert.equal(Array.isArray(setting) ? setting[0] : setting, severity === "off" || severity === 0 ? "off" : "warn", name);
   }
-  assert.equal(accessibility.rules["mixtape/no-raw-colors"], "warn");
+  assert.equal(accessibility.rules["mixtape/no-raw-colors"], undefined);
+  assert.equal(accessibility.plugins.mixtape, undefined);
+  assert.equal(rawColors.rules["mixtape/no-raw-colors"], "warn");
 });

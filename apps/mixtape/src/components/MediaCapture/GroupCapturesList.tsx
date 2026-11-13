@@ -42,7 +42,7 @@ interface CaptureDetailResponse {
   transcript?: { id: string; raw_text: string; stackroom_ingested_at: string | null };
 }
 
-function VideoPlayer({ videoUrl }: { videoUrl: string }) {
+function VideoPlayer({ videoUrl, transcriptId }: { videoUrl: string; transcriptId?: string }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
 
@@ -69,7 +69,7 @@ function VideoPlayer({ videoUrl }: { videoUrl: string }) {
   );
   return (
     <Box borderRadius="md" overflow="hidden" bg="black">
-      <video controls style={{ width: "100%", maxHeight: "360px", display: "block" }}>
+      <video controls aria-details={transcriptId} style={{ width: "100%", maxHeight: "360px", display: "block" }}>
         <source src={blobUrl} type="video/webm" />
         <source src={blobUrl} type="video/mp4" />
       </video>
@@ -267,7 +267,7 @@ function TranscriptPanel({
         </VStack>
       )}
 
-      {data.video_url && <VideoPlayer videoUrl={data.video_url} />}
+      {data.video_url && <VideoPlayer videoUrl={data.video_url} transcriptId={data.transcript?.raw_text ? `capture-transcript-${captureId}` : undefined} />}
 
       {data.status !== "ready" && (
         <HStack gap={2} color="fg.muted">
@@ -286,7 +286,7 @@ function TranscriptPanel({
       )}
 
       {data.transcript?.raw_text && (
-        <Box>
+        <Box id={`capture-transcript-${captureId}`} className="mc-transcript-text">
           <Text fontSize="xs" color="fg.muted" mb={2} textTransform="uppercase" letterSpacing="wide">
             Transcript
           </Text>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Box, Button, Text, VStack, HStack } from '@chakra-ui/react'
 import { useColorModeValue } from '@components/ui/color-mode'
 import type { LeafCluster } from '@mixtape/api/clients/livingBook/branchApi'
@@ -18,6 +18,7 @@ export function VoiceLeafCluster({
   audioUrl,
   transcript,
 }: VoiceLeafClusterProps) {
+  const transcriptId = useId()
   const [transcriptOpen, setTranscriptOpen] = useState(false)
   const transcriptBg = useColorModeValue('gray.50', 'gray.750')
 
@@ -37,6 +38,7 @@ export function VoiceLeafCluster({
         <audio
           controls
           src={audioUrl}
+          aria-details={transcript ? transcriptId : undefined}
           style={{ width: '100%', height: '36px' }}
         />
       ) : (
@@ -47,19 +49,19 @@ export function VoiceLeafCluster({
       {transcript && (
         <Box>
           <Button
+            aria-expanded={transcriptOpen}
+            aria-controls={transcriptId}
             size="xs"
             variant="ghost"
             onClick={() => setTranscriptOpen((v) => !v)}
           >
             {transcriptOpen ? 'Hide transcript' : 'Show transcript'}
           </Button>
-          {transcriptOpen && (
-            <Box bg={transcriptBg} p={2} borderRadius="md" mt={1}>
-              <Text fontSize="xs" color="gray.600" whiteSpace="pre-wrap">
-                {transcript}
-              </Text>
-            </Box>
-          )}
+          <Box id={transcriptId} className="vlc-transcript" hidden={!transcriptOpen} bg={transcriptBg} p={2} borderRadius="md" mt={1}>
+            <Text fontSize="xs" color="gray.600" whiteSpace="pre-wrap">
+              {transcript}
+            </Text>
+          </Box>
         </Box>
       )}
     </VStack>

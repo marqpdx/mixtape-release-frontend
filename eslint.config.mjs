@@ -2,7 +2,7 @@ import tsParser from "@typescript-eslint/parser";
 import typescript from "@typescript-eslint/eslint-plugin";
 import reactHooks from "eslint-plugin-react-hooks";
 import next from "@next/eslint-plugin-next";
-import accessibility from "./scripts/eslint-accessibility.mjs";
+import accessibility, { rawColors } from "./scripts/eslint-accessibility.mjs";
 
 // Advisory audit across both apps and shared packages. Full app lint continues
 // to use each app's existing Next.js config plus the same accessibility rules.
@@ -20,6 +20,7 @@ const config = [
     },
   },
   accessibility,
+  rawColors,
 ];
 
 export default config;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useId } from 'react';
 import { Box, HStack, Text } from '@chakra-ui/react';
 import { IconPlayerPlayFilled, IconPlayerPauseFilled } from '@tabler/icons-react';
 import { decryptBlob } from '@mixtape/core/crypto/primitives';
@@ -43,6 +43,8 @@ export function VoicePlaybackBubble({
   audioKeyVersion,
   getKeyForVersion,
 }: VoicePlaybackBubbleProps) {
+  const transcriptId = useId();
+  const hasTranscript = transcriptStatus === 'done' && !!transcript;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -145,13 +147,14 @@ export function VoicePlaybackBubble({
       maxW="260px"
       minW="180px"
     >
-      {playableUrl && <audio ref={audioRef} src={playableUrl} preload="metadata" />}
+      {playableUrl && <audio ref={audioRef} src={playableUrl} preload="metadata" aria-details={hasTranscript ? transcriptId : undefined} />}
 
       <HStack gap={2} align="center">
         <button
           onClick={toggle}
           disabled={!playableUrl}
           aria-label={playing ? 'Pause voice message' : 'Play voice message'}
+          aria-details={hasTranscript ? transcriptId : undefined}
           style={{
             width: 34,
             height: 34,
@@ -207,21 +210,18 @@ export function VoicePlaybackBubble({
       )}
       {transcriptStatus === 'done' && transcript && (
         <Box mt={1}>
-          <Text
-            as="span"
-            fontSize="11px"
-            color={dimColor}
-            cursor="pointer"
-            textDecoration="underline"
+          <button
+            type="button"
+            aria-expanded={showTranscript}
+            aria-controls={transcriptId}
+            style={{ fontSize: '11px', color: dimColor, cursor: 'pointer', textDecoration: 'underline', background: 'none', border: 0, padding: 0 }}
             onClick={() => setShowTranscript((v) => !v)}
           >
             {showTranscript ? 'Hide transcript' : 'Show transcript'}
+          </button>
+          <Text id={transcriptId} hidden={!showTranscript} fontSize="13px" color={textColor} fontStyle="italic" mt="4px" lineHeight="1.4">
+            {transcript}
           </Text>
-          {showTranscript && (
-            <Text fontSize="13px" color={textColor} fontStyle="italic" mt="4px" lineHeight="1.4">
-              {transcript}
-            </Text>
-          )}
         </Box>
       )}
     </Box>
