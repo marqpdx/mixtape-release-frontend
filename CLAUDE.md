@@ -82,6 +82,8 @@ Avoid vague summaries like "fixed some bugs."]
 
 **Prefer the polymorphic sponsor pattern over a direct FK** (CTO, 2026-11-12): when a Django model's relationship to content could plausibly be owned by either a `Group` or a `UserProfile`, use the sponsor GFK, not a direct FK. Full wording: `../mixtape-release-core/AGENTS.md`, beside *Uniqueness Lives in the Sponsor's Info-Sphere*.
 
+**Two deployments of the same caller need a kid-keyed secret, not one shared value** (CTO, 2026-11-12): when a verifier's caller runs on two hosts that should hold independently-revocable credentials, give the verifier a `kid`-keyed secrets dict, not a single shared secret. Full wording: `../mixtape-release-core/CLAUDE.md`, *Internal Service Auth Conventions*.
+
 ---
 
 ## One Writer for Puddlejump's Shared Records
