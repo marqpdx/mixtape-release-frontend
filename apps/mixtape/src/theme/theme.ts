@@ -6,6 +6,8 @@ import {
   defaultConfig,
 } from "@chakra-ui/react";
 
+import { semanticColorTokens, semanticShadowTokens } from "@mixtape/ui-tokens/src/semantic-tokens";
+
 import { inputRecipe } from "./recipes/input.recipe";
 import { buttonRecipe } from "./recipes/button.recipe";
 import { selectSlotRecipe } from "./recipes/select.recipe";
@@ -236,7 +238,9 @@ export const config = defineConfig({
       },
     },
     semanticTokens: {
+      shadows: semanticShadowTokens,
       colors: {
+        ...semanticColorTokens,
         // Main backgrounds using 3-color system
         "bg.canvas": {
           value: {

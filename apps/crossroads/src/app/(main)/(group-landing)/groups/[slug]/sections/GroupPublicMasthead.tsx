@@ -51,13 +51,13 @@ export function GroupPublicMasthead({ config, groupSlug }: Props) {
     : null;
   const tenantPaletteCSS = tenantPalette
     ? [
-        paletteCSS(".gplm-root", tenantPalette.light),
-        paletteCSS(".dark .gplm-root", tenantPalette.dark),
+        paletteCSS(".gplm-root", tenantPalette.light, "light", "normal"),
+        paletteCSS(".dark .gplm-root", tenantPalette.dark, "dark", "normal"),
         tenantPalette.lightHighContrast
-          ? paletteCSS(".high-contrast .gplm-root, [data-high-contrast] .gplm-root", tenantPalette.lightHighContrast)
+          ? paletteCSS(".high-contrast .gplm-root, [data-high-contrast] .gplm-root", tenantPalette.lightHighContrast, "light", "high")
           : "",
         tenantPalette.darkHighContrast
-          ? paletteCSS(".dark.high-contrast .gplm-root, .dark [data-high-contrast] .gplm-root", tenantPalette.darkHighContrast)
+          ? paletteCSS(".dark.high-contrast .gplm-root, .dark [data-high-contrast] .gplm-root", tenantPalette.darkHighContrast, "dark", "high")
           : "",
       ]
         .filter(Boolean)

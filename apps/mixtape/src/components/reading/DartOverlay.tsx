@@ -446,7 +446,7 @@ function SelectionButton({
             bg="var(--theme-bg)"
             borderColor="var(--theme-border)"
             color="var(--theme-text)"
-            _placeholder={{ color: "var(--theme-text-muted)" }}
+            _placeholder={{ color: "theme.textPlaceholder" }}
             autoFocus
           />
           <HStack gap={2} justify="flex-end">

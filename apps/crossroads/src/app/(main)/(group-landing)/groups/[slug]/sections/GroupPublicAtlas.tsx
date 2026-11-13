@@ -47,13 +47,13 @@ export function GroupPublicAtlas({ config, groupSlug }: Props) {
     : null;
   const tenantPaletteCSS = tenantPalette
     ? [
-        paletteCSS(".gpla-root", tenantPalette.light),
-        paletteCSS(".dark .gpla-root", tenantPalette.dark),
+        paletteCSS(".gpla-root", tenantPalette.light, "light", "normal"),
+        paletteCSS(".dark .gpla-root", tenantPalette.dark, "dark", "normal"),
         tenantPalette.lightHighContrast
-          ? paletteCSS(".high-contrast .gpla-root, [data-high-contrast] .gpla-root", tenantPalette.lightHighContrast)
+          ? paletteCSS(".high-contrast .gpla-root, [data-high-contrast] .gpla-root", tenantPalette.lightHighContrast, "light", "high")
           : "",
         tenantPalette.darkHighContrast
-          ? paletteCSS(".dark.high-contrast .gpla-root, .dark [data-high-contrast] .gpla-root", tenantPalette.darkHighContrast)
+          ? paletteCSS(".dark.high-contrast .gpla-root, .dark [data-high-contrast] .gpla-root", tenantPalette.darkHighContrast, "dark", "high")
           : "",
       ]
         .filter(Boolean)

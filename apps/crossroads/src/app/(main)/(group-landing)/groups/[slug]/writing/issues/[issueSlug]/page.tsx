@@ -1,3 +1,4 @@
+import { semanticThemeDeclarations } from "@mixtape/ui-tokens/src/semantic-tokens";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { PublicGroupIssue, PublicLibraryPiece } from "@mixtape/api/clients/public/publicApi";
@@ -75,11 +76,11 @@ export default async function PublicGroupIssuePage({
   if (!issue || !config) notFound();
 
   const palette = tenantPalettes.find((item) => item.id === config.presentation?.palette_id);
-  const paletteStyle = (selector: string, c: (typeof tenantPalettes)[number]["light"] | undefined) => c ? `${selector} {
+  const paletteStyle = (selector: string, c: (typeof tenantPalettes)[number]["light"] | undefined, mode: "light" | "dark", contrast: "normal" | "high") => c ? `${selector} {
     --theme-bg: ${c.bg}; --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
     --theme-bg-subtle: color-mix(in srgb, ${c.bg} 60%, ${c.border} 40%);
     --theme-surface: ${c.surface}; --theme-text: ${c.text}; --theme-text-secondary: ${c.textSecondary};
-    --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+    ${semanticThemeDeclarations(c, mode, contrast)}
     --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
     --theme-border: ${c.border}; --theme-accent: ${c.accent};
     --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
@@ -88,10 +89,10 @@ export default async function PublicGroupIssuePage({
   return (
     <div className="gwir-root" style={{ background: "var(--theme-bg)", color: "var(--theme-text)", minHeight: "100vh" }}>
       <style>{`
-        ${paletteStyle(".gwir-root", palette?.light)}
-        ${paletteStyle(".dark .gwir-root", palette?.dark)}
-        ${paletteStyle(".high-contrast .gwir-root, [data-high-contrast] .gwir-root", palette?.lightHighContrast)}
-        ${paletteStyle(".dark.high-contrast .gwir-root, .dark [data-high-contrast] .gwir-root", palette?.darkHighContrast)}
+        ${paletteStyle(".gwir-root", palette?.light, "light", "normal")}
+        ${paletteStyle(".dark .gwir-root", palette?.dark, "dark", "normal")}
+        ${paletteStyle(".high-contrast .gwir-root, [data-high-contrast] .gwir-root", palette?.lightHighContrast, "light", "high")}
+        ${paletteStyle(".dark.high-contrast .gwir-root, .dark [data-high-contrast] .gwir-root", palette?.darkHighContrast, "dark", "high")}
       `}</style>
       <GroupPublicNav groupSlug={slug} groupTitle={config.group.title} active="writing" />
       <IssueReader issue={issue} groupSlug={slug} groupTitle={config.group.title} writing={writing} />

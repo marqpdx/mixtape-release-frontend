@@ -48,13 +48,13 @@ export function GroupPublicLedger({ config, groupSlug }: Props) {
     : null;
   const tenantPaletteCSS = tenantPalette
     ? [
-        paletteCSS(".gplr-root", tenantPalette.light),
-        paletteCSS(".dark .gplr-root", tenantPalette.dark),
+        paletteCSS(".gplr-root", tenantPalette.light, "light", "normal"),
+        paletteCSS(".dark .gplr-root", tenantPalette.dark, "dark", "normal"),
         tenantPalette.lightHighContrast
-          ? paletteCSS(".high-contrast .gplr-root, [data-high-contrast] .gplr-root", tenantPalette.lightHighContrast)
+          ? paletteCSS(".high-contrast .gplr-root, [data-high-contrast] .gplr-root", tenantPalette.lightHighContrast, "light", "high")
           : "",
         tenantPalette.darkHighContrast
-          ? paletteCSS(".dark.high-contrast .gplr-root, .dark [data-high-contrast] .gplr-root", tenantPalette.darkHighContrast)
+          ? paletteCSS(".dark.high-contrast .gplr-root, .dark [data-high-contrast] .gplr-root", tenantPalette.darkHighContrast, "dark", "high")
           : "",
       ]
         .filter(Boolean)

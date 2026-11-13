@@ -3,6 +3,7 @@
 // Public WritingPiece reader. Server component for SSR + metadata.
 // No platform chrome (Decision 11). Back link → sponsoring group when known.
 
+import { semanticThemeDeclarations } from "@mixtape/ui-tokens/src/semantic-tokens";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
@@ -54,7 +55,7 @@ function paletteCSS(selector: string, c: {
   text: string;
   textSecondary: string;
   border: string;
-}): string {
+}, mode: "light" | "dark" = "light", contrast: "normal" | "high" = "normal"): string {
   return `${selector} {
   --theme-bg: ${c.bg};
   --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
@@ -64,7 +65,7 @@ function paletteCSS(selector: string, c: {
   --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
   --theme-text: ${c.text};
   --theme-text-secondary: ${c.textSecondary};
-  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  ${semanticThemeDeclarations(c, mode, contrast)}
   --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
   --theme-border: ${c.border};
 }`;
@@ -156,13 +157,13 @@ function paletteOverrides(config: GroupPublicLandingConfig | null): string {
     : null;
   if (!tenantPalette) return "";
   return [
-    paletteCSS(".gpr-root", tenantPalette.light),
-    paletteCSS(".dark .gpr-root", tenantPalette.dark),
+    paletteCSS(".gpr-root", tenantPalette.light, "light", "normal"),
+    paletteCSS(".dark .gpr-root", tenantPalette.dark, "dark", "normal"),
     tenantPalette.lightHighContrast
-      ? paletteCSS(".high-contrast .gpr-root, [data-high-contrast] .gpr-root", tenantPalette.lightHighContrast)
+      ? paletteCSS(".high-contrast .gpr-root, [data-high-contrast] .gpr-root", tenantPalette.lightHighContrast, "light", "high")
       : "",
     tenantPalette.darkHighContrast
-      ? paletteCSS(".dark.high-contrast .gpr-root, .dark [data-high-contrast] .gpr-root", tenantPalette.darkHighContrast)
+      ? paletteCSS(".dark.high-contrast .gpr-root, .dark [data-high-contrast] .gpr-root", tenantPalette.darkHighContrast, "dark", "high")
       : "",
   ]
     .filter(Boolean)

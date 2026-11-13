@@ -3,6 +3,7 @@
 // Group writing index — all published WritingPieces for this Group.
 // Server component. No platform chrome (Decision 11).
 
+import { semanticThemeDeclarations } from "@mixtape/ui-tokens/src/semantic-tokens";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
@@ -54,7 +55,7 @@ function paletteCSS(selector: string, c: {
   text: string;
   textSecondary: string;
   border: string;
-}): string {
+}, mode: "light" | "dark" = "light", contrast: "normal" | "high" = "normal"): string {
   return `${selector} {
   --theme-bg: ${c.bg};
   --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
@@ -65,7 +66,7 @@ function paletteCSS(selector: string, c: {
   --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
   --theme-text: ${c.text};
   --theme-text-secondary: ${c.textSecondary};
-  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  ${semanticThemeDeclarations(c, mode, contrast)}
   --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
   --theme-border: ${c.border};
 }`;
@@ -168,13 +169,13 @@ function paletteOverrides(config: GroupPublicLandingConfig): string {
     : null;
   if (!tenantPalette) return "";
   return [
-    paletteCSS(".gwi-root", tenantPalette.light),
-    paletteCSS(".dark .gwi-root", tenantPalette.dark),
+    paletteCSS(".gwi-root", tenantPalette.light, "light", "normal"),
+    paletteCSS(".dark .gwi-root", tenantPalette.dark, "dark", "normal"),
     tenantPalette.lightHighContrast
-      ? paletteCSS(".high-contrast .gwi-root, [data-high-contrast] .gwi-root", tenantPalette.lightHighContrast)
+      ? paletteCSS(".high-contrast .gwi-root, [data-high-contrast] .gwi-root", tenantPalette.lightHighContrast, "light", "high")
       : "",
     tenantPalette.darkHighContrast
-      ? paletteCSS(".dark.high-contrast .gwi-root, .dark [data-high-contrast] .gwi-root", tenantPalette.darkHighContrast)
+      ? paletteCSS(".dark.high-contrast .gwi-root, .dark [data-high-contrast] .gwi-root", tenantPalette.darkHighContrast, "dark", "high")
       : "",
   ]
     .filter(Boolean)

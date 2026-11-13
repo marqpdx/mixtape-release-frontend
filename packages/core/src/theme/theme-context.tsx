@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { getSemanticThemeVars } from "@mixtape/ui-tokens/src/semantic-tokens";
 import { useColorMode } from "./color-mode";
 import {
   applyThemePreferences,
@@ -177,7 +178,6 @@ export function ThemeProvider({
       `color-mix(in srgb, ${colors.bg} 70%, ${colors.surface} 30%)`;
 
     const bgSubtle = `color-mix(in srgb, ${colors.bg} 60%, ${colors.border} 40%)`;
-    const textMuted = `color-mix(in srgb, ${colors.text} 45%, ${colors.bg} 55%)`;
     const textFaint = `color-mix(in srgb, ${colors.text} 22%, ${colors.bg} 78%)`;
     const accentSoft = `color-mix(in srgb, ${colors.accent} 12%, ${colors.bg} 88%)`;
 
@@ -190,7 +190,9 @@ export function ThemeProvider({
     root.style.setProperty("--theme-accent-soft", accentSoft);
     root.style.setProperty("--theme-text", colors.text);
     root.style.setProperty("--theme-text-secondary", colors.textSecondary);
-    root.style.setProperty("--theme-text-muted", textMuted);
+    for (const [name, value] of Object.entries(getSemanticThemeVars(colors, colorMode, contrastMode))) {
+      root.style.setProperty(name, value);
+    }
     root.style.setProperty("--theme-text-faint", textFaint);
     root.style.setProperty("--theme-border", colors.border);
 

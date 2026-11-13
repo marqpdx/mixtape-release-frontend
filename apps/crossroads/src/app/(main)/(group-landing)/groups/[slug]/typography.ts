@@ -2,6 +2,7 @@
 // All templates (Masthead, Ledger, Atlas) use the same TYP values for a given
 // typography_setting so the experience is consistent across template switches.
 
+import { semanticThemeDeclarations } from "@mixtape/ui-tokens/src/semantic-tokens";
 import type { ThemeColors } from "@mixtape/core";
 import type { TypographySetting } from "./types";
 import { journalFont, noticeFont, tenantFontMap } from "./fonts";
@@ -53,7 +54,7 @@ export const TYP = {
 
 // Generates scoped CSS custom property overrides for a tenant palette.
 // Mirrors the derived vars in ThemeProvider (color-mix is safe in all evergreen browsers).
-export function paletteCSS(selector: string, c: ThemeColors): string {
+export function paletteCSS(selector: string, c: ThemeColors, mode: "light" | "dark" = "light", contrast: "normal" | "high" = "normal"): string {
   return `${selector} {
   --theme-bg: ${c.bg};
   --theme-bg-secondary: ${c.bgSecondary ?? c.bg};
@@ -63,7 +64,7 @@ export function paletteCSS(selector: string, c: ThemeColors): string {
   --theme-accent-soft: color-mix(in srgb, ${c.accent} 12%, ${c.bg} 88%);
   --theme-text: ${c.text};
   --theme-text-secondary: ${c.textSecondary};
-  --theme-text-muted: color-mix(in srgb, ${c.text} 45%, ${c.bg} 55%);
+  ${semanticThemeDeclarations(c, mode, contrast)}
   --theme-text-faint: color-mix(in srgb, ${c.text} 22%, ${c.bg} 78%);
   --theme-border: ${c.border};
 }`;
