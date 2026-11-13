@@ -17,7 +17,6 @@ import {
   IconH1,
   IconH2,
   IconH3,
-  IconH4,
   IconHelpCircle,
   IconTextSpellcheck,
   IconBlockquote,
@@ -34,6 +33,7 @@ import { AtticControls, type AtticContext } from "./AtticControls";
 import { InsertInteractivePageControl } from "./InsertTopologyControl";
 import { InsertImageControl, type ImagePick } from './InsertImageControl';
 import { ExportMarkdownControl } from './ExportMarkdownControl';
+import { InsertCodeBlockControl } from './InsertCodeBlockControl';
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -230,14 +230,7 @@ export default function TipTapToolbar({
           tabIndex={-1}
           size="xs"
         />
-        <EditorToolbarButton
-          tooltip="Heading 4"
-          icon={<IconH4 size={16} />}
-          onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-          isActive={editor.isActive("heading", { level: 4 })}
-          tabIndex={-1}
-          size="xs"
-        />
+        {/* Heading 4 has no button; ⌘⌥4 (Ctrl+Alt+4) still toggles it. */}
 
         <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
 
@@ -305,6 +298,7 @@ export default function TipTapToolbar({
           tabIndex={-1}
           size="xs"
         />
+        <InsertCodeBlockControl editor={editor} />
         {attic && <AtticControls key={attic.pieceId} editor={editor} {...attic} />}
         <InsertInteractivePageControl editor={editor} />
         <EditorToolbarButton
@@ -428,7 +422,8 @@ export default function TipTapToolbar({
           </Table.Root>
           <Text fontSize="xs" mb={2}>Heading shortcuts toggle the format of the current paragraph or selected blocks. ⌘⌥0 (Ctrl+Alt+0) returns to a paragraph.</Text>
           <Text fontSize="xs" mb={2}>At the beginning of a paragraph, type ## followed by Space for Heading 2 (or #, ###, #### for Heading 1, 3, 4).</Text>
-          <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option.</Text>
+          <Text fontSize="xs" mb={3}>The collaborative editor also supports Heading 5 and 6 with ⌘⌥5/6 or Ctrl+Alt+5/6. On Mac, ⌘ means Command and ⌥ means Option. Heading 4 has no toolbar button; use ⌘⌥4 (Ctrl+Alt+4).</Text>
+          <Text fontSize="xs" mb={3}>Code blocks: use the Code block button, choose JSON, Python, TypeScript or Bash, and paste the code. It is colour-coded by language as you write and once published. Format JSON tidies pasted JSON. Put the cursor in a code block and choose Code block again to edit it or change its language. Typing ``` followed by Space at the start of a line also starts a code block.</Text>
           <Text fontSize="xs" mb={3}>Images: use Insert image to upload a file or enter an image URL, add alt text and an optional HTML caption with linked credits, set the image width as a percentage, and choose the same centered or left/right wrapping placement as interactive pages. Select an image and choose Edit image to change it. Readers click an image to open the full image in a modal; ×, Escape, or browser Back restores their place.</Text>
           <Text fontSize="xs" mb={3}>Interactive pages: use Insert interactive page, choose a preset or enter a published /artifacts/ HTML URL, preview image URL, and title. Choose centered placement, or left/right with text wrapping beside the preview. Select an existing preview image and use Edit interactive page to change it. Small screens show a full-width preview. The matching PNG URL is suggested, not generated. In public articles and Read Issue, clicking the preview opens the page in a modal. ×, Escape, or browser Back restores your place. The standalone link opens the page in a new tab.</Text>
           <Text fontSize="xs" mb={3}>Export to Markdown: use the Markdown icon to copy the whole piece as Markdown or download it as a .md file. Split markers and other editor-only markers are left out. View source shows the piece as Markdown, HTML, and the stored JSON.</Text>

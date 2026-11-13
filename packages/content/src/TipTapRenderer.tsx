@@ -6,7 +6,6 @@ import {
   Box,
   Text,
   Heading,
-  Code,
   Blockquote,
   HStack,
 } from '@chakra-ui/react'
@@ -16,6 +15,7 @@ import { resolveInteractivePage } from './interactivePages'
 import { TopologyPreview } from './TopologyPreview'
 import { ImagePreview } from './ImagePreview'
 import { normaliseMediaAlignment } from './mediaLayout'
+import { codeBlockCss, renderHighlightedCode } from './codeHighlight'
 
 // --- Types (exported for consumers) ---
 
@@ -58,7 +58,6 @@ interface TipTapRendererProps {
 }
 
 export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeWarnings = false, onRenderIssues }: TipTapRendererProps) {
-  const codeBlockBg = useColorModeValue('gray.100', 'gray.900')
   const blockquoteBg = useColorModeValue('gray.50', 'gray.800')
   const blockquoteBorderColor = useColorModeValue('gray.300', 'gray.600')
   const inlineCodeBg = useColorModeValue('gray.200', 'gray.700')
@@ -257,14 +256,19 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
             </Box>
           )
 
-        case 'codeBlock':
+        case 'codeBlock': {
+          const code = (node.content ?? []).map((child) => (child as TipTapTextNode).text ?? '').join('')
+          const language = typeof node.attrs?.language === 'string' ? node.attrs.language : undefined
           return (
-            <Box key={index} bg={codeBlockBg} p={4} borderRadius="md" mb={4} overflow="auto" borderWidth="1px">
-              <Code whiteSpace="pre-wrap" fontFamily="mono" fontSize="sm">
-                {(node.content?.[0] as TipTapTextNode)?.text || ''}
-              </Code>
+            <Box key={index} mb={4} css={{ '& pre': { ...codeBlockCss, margin: 0 } }}>
+              <pre>
+                <code className={language ? `language-${language}` : undefined}>
+                  {renderHighlightedCode(code, language)}
+                </code>
+              </pre>
             </Box>
           )
+        }
 
         case 'blockquote': {
           const role = node.attrs?.role === 'querent' || node.attrs?.role === 'respondent'

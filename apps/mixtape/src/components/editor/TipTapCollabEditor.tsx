@@ -17,6 +17,8 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo } from "reac
 import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { codeBlockCss, codeLowlight } from "@mixtape/content/codeHighlight";
 import Paragraph from "@tiptap/extension-paragraph";
 import * as Y from "yjs";
 import { Box } from "@chakra-ui/react";
@@ -48,6 +50,7 @@ const CollabStarterKit = StarterKit.configure({
   undoRedo: false,
   paragraph: false,
   blockquote: false,
+  codeBlock: false,
   link: { openOnClick: false },
 });
 
@@ -101,6 +104,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
       console.log("🔧 [CollabEditor] Creating extensions w/ Y.Doc:", ydoc.clientID);
       return [
         CollabStarterKit,
+        CodeBlockLowlight.configure({ lowlight: codeLowlight }),
         ConversationBlockquote,
         TopologyImage,
         CustomParagraph,
@@ -371,6 +375,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
                     marginTop: "0.8em",
                     marginBottom: "0.3em",
                   },
+                  "& pre": codeBlockCss,
                 },
               }}
             >

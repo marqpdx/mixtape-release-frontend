@@ -9,6 +9,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 
 import StarterKit from "@tiptap/starter-kit";
 import Heading from "@tiptap/extension-heading";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { codeBlockCss, codeLowlight } from "@mixtape/content/codeHighlight";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import * as Y from "yjs";
@@ -378,11 +380,14 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
       bold: false,
       italic: false,
       blockquote: false,
+      codeBlock: false,
       link: { openOnClick: false },
       // Keep bulletList and listItem - needed for existing document content
       // bulletList: false,
       // listItem: false,
     }),
+    // Code blocks with syntax highlighting (JSON, Python, TypeScript, Bash); same schema as StarterKit's codeBlock
+    CodeBlockLowlight.configure({ lowlight: codeLowlight }),
     ConversationBlockquote,
     BlockId,
     OutlineMarker,
@@ -814,6 +819,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
             marginTop: "0.8em",
             marginBottom: "0.3em",
           },
+          "& pre": codeBlockCss,
           // Reduce margin on first and last children - using :first-of-type for SSR safety
           "& > *:first-of-type": {
             marginTop: "0.65em !important",
