@@ -1,4 +1,7 @@
 // apps/crossroads/src/app/page.tsx
+// Navy/gold stays a fixed brand palette for this migration (CTO, 2026-11-13).
+// Provisional: a broader branding pass across all colours may supersede it
+// in the medium term; these values are not a permanent brand standard.
 
 "use client";
 

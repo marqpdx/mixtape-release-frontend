@@ -238,7 +238,7 @@ function ContactPageContent() {
                 animate={{ opacity: 1, transition: { duration: 0.4 } }}
                 exit={{ opacity: 0, transition: { duration: 0.4 } }}
               >
-                <Text color="green.600">{newsletterStatus}</Text>
+                <Text color="status.success.fg">{newsletterStatus}</Text>
               </MotionBox>
             )}
           </AnimatePresence>
@@ -331,7 +331,7 @@ function ContactPageContent() {
                 animate={{ opacity: 1, transition: { duration: 0.4 } }}
                 exit={{ opacity: 0, transition: { duration: 0.4 } }}
               >
-                <Text color="green.600">{statusMessage}</Text>
+                <Text color="status.success.fg">{statusMessage}</Text>
               </MotionBox>
             )}
           </AnimatePresence>

@@ -132,7 +132,7 @@ export default function GetStartedPage() {
           />
 
           {error && (
-            <Text color="red.500" fontSize="sm">{error}</Text>
+            <Text color="status.danger.fg" fontSize="sm">{error}</Text>
           )}
 
           <Button type="submit" loading={submitting}>

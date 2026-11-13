@@ -17,10 +17,11 @@ export default function Footer() {
   return (
     <Box
       as="footer"
+      className="ftr-root"
       mt={8}
       py={4}
       borderTop="1px solid"
-      borderColor="gray.200"
+      borderColor="ui.borderSubtle"
     >
       <Container maxW="container.lg">
         <HStack justify="space-between" wrap="wrap">
