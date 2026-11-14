@@ -52,6 +52,8 @@ for (const theme of [...themes, ...tenantPalettes]) {
       check('placeholder', v['--theme-text-placeholder'], surface, textBar);
       check('control border', v['--ui-border-control'], surface, uiBar);
     }
+    check('solid button text', c.accentText, c.accent, textBar);
+    for (const surface of [c.bg, c.surface, subtle]) check('button text', c.text, surface, textBar);
     const statusForegrounds = [];
     for (const tone of ['danger', 'success', 'warning', 'info']) {
       const fg = v[`--status-${tone}-fg`], bg = v[`--status-${tone}-bg`];

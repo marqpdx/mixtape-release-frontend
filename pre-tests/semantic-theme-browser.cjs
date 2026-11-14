@@ -20,7 +20,7 @@ webpackModule.init();
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
     const {createRoot} = require('react-dom/client');
-    const {ChakraProvider, Box, Text, Input, Textarea} = require('@chakra-ui/react');
+    const {ChakraProvider, Box, Text, Input, Textarea, Button} = require('@chakra-ui/react');
     const {ColorModeProvider} = require(${JSON.stringify(path.join(root, 'packages/core/src/theme/color-mode.tsx'))});
     const {ThemeProvider, useTheme} = require(${JSON.stringify(path.join(root, 'packages/core/src/theme/theme-context.tsx'))});
     window.getSemanticThemeVars = require(${JSON.stringify(path.join(root, 'packages/ui-tokens/src/semantic-tokens.ts'))}).getSemanticThemeVars;
@@ -40,6 +40,10 @@ webpackModule.init();
               React.createElement(Control,{key:index+variant,'aria-label':'fixture '+index+' '+variant,'data-control':true,variant,placeholder:'Readable placeholder',mt:3}))),
             React.createElement(Input,{'aria-label':'Disabled fixture',disabled:true,placeholder:'Disabled'}),
             React.createElement(Textarea,{'aria-label':'Invalid fixture','aria-invalid':true,placeholder:'Invalid'})),
+          name==='Crossroads' && React.createElement('div',{'data-buttons':true},
+            ...['solid','outline','ghost','subtle'].map(variant=>React.createElement(Button,{key:variant,'data-button':variant,variant,mt:3},variant+' button')),
+            React.createElement(Button,{'data-disabled-button':true,disabled:true,mt:3},'Disabled button'),
+            React.createElement(Button,{'data-loading-button':true,loading:true,loadingText:'Please wait',mt:3},'Loading button')),
           React.createElement(Text, {'data-muted':true, color:'theme.textMuted'}, 'Readable secondary text, dates and metadata'),
           React.createElement(Input, {'aria-label':name+' sample', placeholder:'Optional note', _placeholder:{color:'theme.textPlaceholder'}, borderColor:'ui.borderControl', mt:3}),
           React.createElement(Box, {'data-subtle':true, bg:'ui.surfaceSubtle', border:'1px solid', borderColor:'ui.borderSubtle', p:3, mt:3}, 'Subtle surface'),
@@ -126,7 +130,7 @@ webpackModule.init();
       const controlExpected=await page.evaluate(()=>{
         const probe=document.createElement('span');document.body.appendChild(probe);
         const color=value=>{probe.style.color=value;return getComputedStyle(probe).color;};
-        const result={text:color('var(--theme-text)'),surface:color('var(--theme-surface)'),placeholder:color('var(--theme-text-placeholder)'),danger:color('var(--status-danger-fg)')};
+        const result={accent:color('var(--theme-accent)'),accentText:color('var(--theme-accent-text)'),text:color('var(--theme-text)'),surface:color('var(--theme-surface)'),placeholder:color('var(--theme-text-placeholder)'),danger:color('var(--status-danger-fg)')};
         probe.remove();return result;
       });
       await page.waitForTimeout(300);
@@ -153,12 +157,36 @@ webpackModule.init();
       await invalid.focus();
       assert.equal(await invalid.evaluate(el=>getComputedStyle(el).outlineColor),controlExpected.danger);
       await expect(page.getByRole('textbox',{name:'Disabled fixture'})).toBeDisabled();
+      const buttonStyle=button=>button.evaluate(el=>{const s=getComputedStyle(el);return {text:s.color,bg:s.backgroundColor,border:s.borderTopColor,opacity:s.opacity};});
+      for(const variant of ['solid','outline','ghost','subtle']) {
+        const button=page.locator('[data-button="'+variant+'"]');
+        await page.mouse.move(0,0);
+        const text=variant==='solid'?controlExpected.accentText:controlExpected.text;
+        const rest={text,bg:variant==='solid'?controlExpected.accent:variant==='subtle'?expected.subtle:'rgba(0, 0, 0, 0)',border:variant==='ghost'?'rgba(0, 0, 0, 0)':expected.border,opacity:'1'};
+        await expect.poll(()=>buttonStyle(button),{message:variant+' resting pair'}).toEqual(rest);
+        await button.hover();
+        const hovered={...rest,bg:variant==='solid'?controlExpected.accent:variant==='subtle'?controlExpected.surface:expected.subtle};
+        await expect.poll(()=>buttonStyle(button),{message:variant+' hover pair'}).toEqual(hovered);
+        await page.mouse.move(0,0);
+        await button.evaluate(el=>el.setAttribute('aria-expanded','true'));
+        await expect.poll(()=>buttonStyle(button),{message:variant+' expanded pair'}).toEqual(hovered);
+        await button.evaluate(el=>el.removeAttribute('aria-expanded'));
+        await page.keyboard.press('Tab');
+        await button.focus();
+        await expect.poll(()=>button.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};}),{message:variant+' button keyboard focus'}).toEqual({color:expected.border,width:'3px',offset:'2px'});
+      }
+      await expect(page.locator('[data-disabled-button]')).toBeDisabled();
+      await expect(page.locator('[data-loading-button]')).toBeDisabled();
+      await expect(page.locator('[data-loading-button]')).toHaveText('Please wait');
       if(publicForms) {
         const contact=page.locator('[data-public-form="contact"]');
         await contact.getByRole('textbox',{name:'Name',exact:false}).fill('Example person');
         await contact.getByRole('textbox',{name:'Email',exact:false}).fill('example@example.test');
         await contact.getByRole('textbox',{name:'Message',exact:false}).fill('A synthetic contact request.');
-        await contact.getByRole('button',{name:'Send Message'}).click();
+        const submit=contact.getByRole('button',{name:'Send Message'});
+        await submit.hover();
+        await expect.poll(()=>submit.evaluate(el=>({bg:getComputedStyle(el).backgroundColor,text:getComputedStyle(el).color}))).toEqual({bg:controlExpected.accent,text:controlExpected.accentText});
+        await submit.click();
         const success=contact.getByText('✅ Your message has been sent!',{exact:true});
         await expect(success).toBeVisible();
         const error=page.locator('[data-public-form="get-started"]').getByText('Please try again.',{exact:true});
@@ -182,6 +210,7 @@ webpackModule.init();
     fs.writeFileSync('/private/tmp/abe-semantic-theme-browser-path.txt',temp);
     console.log('PASS: real root provider and both Chakra systems, gallery + earthy-slate × light/dark × normal/high contrast');
     console.log('PASS: Crossroads input/textarea variants, readable placeholders, control boundaries, keyboard focus, invalid hover/focus and native disabled state');
+    console.log('PASS: common Crossroads buttons retain semantic resting/hover/expanded pairs, keyboard focus and disabled/loading behavior');
     if(publicForms) console.log('PASS: actual public contact submission, intake error and footer separator in all eight theme/mode variants; API/routing/toaster are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }

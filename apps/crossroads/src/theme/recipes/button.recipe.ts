@@ -1,4 +1,4 @@
-// src/theme/recipes/button.recipe.ts - Updated to use dynamic theme colors
+// Crossroads common buttons use the approved semantic roles in every mode.
 
 import { chakra, defineRecipe } from "@chakra-ui/react";
 
@@ -11,6 +11,12 @@ export const buttonRecipe = defineRecipe({
     borderRadius: "md",
     transition: "all 0.2s ease-in-out",
     cursor: "pointer",
+    focusVisibleRing: "outside",
+    focusRingWidth: "3px",
+    _focusVisible: {
+      focusRingColor: "ui.borderControl",
+      outlineOffset: "2px",
+    },
     _disabled: {
       opacity: 0.4,
       cursor: "not-allowed",
@@ -18,67 +24,61 @@ export const buttonRecipe = defineRecipe({
   },
   variants: {
     variant: {
-      // NEW: Primary buttons using dynamic theme accent
+      // Keep the checked accent/text pair, without fading it on hover.
       solid: {
         bg: "theme.accent",
-        // Each theme's text-on-accent colour: white failed 4.5:1 on 18 of
-        // 20 theme modes; accentText passes on all 20 (Lighthouse, 2026-11-08).
         color: "theme.accentText",
-        _hover: {
-          opacity: 0.9,
-          transform: "translateY(-1px)",
-          boxShadow: "md",
-        },
-        _active: {
-          transform: "translateY(0)",
-        },
-      },
-
-      // NEW: Outline buttons using dynamic theme accent
-      outline: {
-        borderWidth: "1px",
-        borderColor: "theme.accent",
-        color: "theme.accent",
-        bg: "transparent",
+        borderColor: "ui.borderControl",
         _hover: {
           bg: "theme.accent",
-          color: "theme.accentText",
+          opacity: 1,
           transform: "translateY(-1px)",
-          boxShadow: "md",
+          boxShadow: "ui.shadowRaised",
         },
-        _active: {
-          transform: "translateY(0)",
-        },
+        _expanded: { bg: "theme.accent", color: "theme.accentText" },
+        _active: { transform: "translateY(0)" },
       },
 
-      // NEW: Ghost buttons using dynamic theme accent
+      // Accent colours are not guaranteed to be readable text on the canvas.
+      outline: {
+        borderWidth: "1px",
+        borderColor: "ui.borderControl",
+        color: "theme.text",
+        bg: "transparent",
+        _hover: {
+          bg: "ui.surfaceSubtle",
+          color: "theme.text",
+          transform: "translateY(-1px)",
+          boxShadow: "ui.shadowRaised",
+        },
+        _expanded: { bg: "ui.surfaceSubtle", color: "theme.text" },
+        _active: { transform: "translateY(0)" },
+      },
+
       ghost: {
         bg: "transparent",
-        color: "theme.accent",
+        color: "theme.text",
+        _hover: {
+          bg: "ui.surfaceSubtle",
+          transform: "translateY(-1px)",
+        },
+        _expanded: { bg: "ui.surfaceSubtle", color: "theme.text" },
+        _active: { transform: "translateY(0)" },
+      },
+
+      subtle: {
+        bg: "ui.surfaceSubtle",
+        color: "theme.text",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "ui.borderControl",
         _hover: {
           bg: "theme.surface",
           transform: "translateY(-1px)",
+          boxShadow: "ui.shadowRaised",
         },
-        _active: {
-          transform: "translateY(0)",
-        },
-      },
-
-      // NEW: Subtle buttons using surface colors
-      subtle: {
-        bg: "theme.surface",
-        color: "theme.text",
-        border: "1px solid",
-        borderColor: "theme.border",
-        _hover: {
-          bg: "theme.bg",
-          borderColor: "theme.accent",
-          transform: "translateY(-1px)",
-          boxShadow: "sm",
-        },
-        _active: {
-          transform: "translateY(0)",
-        },
+        _expanded: { bg: "theme.surface", color: "theme.text" },
+        _active: { transform: "translateY(0)" },
       },
 
       // LEGACY: Keep existing variants for backward compatibility
