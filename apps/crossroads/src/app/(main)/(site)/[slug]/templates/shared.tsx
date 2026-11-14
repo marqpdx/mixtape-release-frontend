@@ -81,7 +81,7 @@ export function GroupEmblem({
 
 // Links retain an underline as a non-colour signal; accent hues are not
 // guaranteed readable as text on the selected surface.
-const groupLinkStyles = {
+export const groupLinkStyles = {
   color: "theme.text",
   textDecoration: "underline",
   _hover: { color: "theme.text", textDecorationThickness: "2px" },
@@ -279,11 +279,12 @@ export function MemberPreviewStrip({
       <Text fontSize="xs" fontWeight="600" color={mutedColor} textTransform="uppercase" letterSpacing="0.05em" mb="2">
         Members
       </Text>
-      <HStack gap="0" flexWrap="wrap">
+      <HStack className="cp-member-links" gap="0" flexWrap="wrap">
         {group.member_preview.map((m, i) => (
-          <ChakraLink asChild key={m.username}>
+          <ChakraLink asChild key={m.username} {...groupLinkStyles} aria-label={m.display_name}>
             <NextLink href={`/member/handle/${m.username}`}>
               <Box
+                className="cp-member-avatar"
                 w="36px" h="36px" borderRadius="full" overflow="hidden"
                 border="2px solid" borderColor={accentBg}
                 ml={i > 0 ? "-8px" : "0"}
@@ -293,7 +294,7 @@ export function MemberPreviewStrip({
                 {m.avatar_url ? (
                   <Image src={m.avatar_url} alt={m.display_name} w="full" h="full" objectFit="cover" />
                 ) : (
-                  <Box w="full" h="full" display="flex" alignItems="center" justifyContent="center" fontSize="xs" fontWeight="bold" color="white">
+                  <Box w="full" h="full" display="flex" alignItems="center" justifyContent="center" fontSize="xs" fontWeight="bold" color="theme.text">
                     {m.display_name.charAt(0).toUpperCase()}
                   </Box>
                 )}
@@ -346,16 +347,16 @@ export function PageComponentBlock({ component, mutedColor }: {
       );
     case "link":
       return (
-        <Box mb="3">
+        <Box className="cp-content-link" mb="3" p="2" bg="theme.surface" color="theme.text">
           {has(c.url) && (
-            <ChakraLink asChild color="blue.500" fontWeight="500">
+            <ChakraLink asChild {...groupLinkStyles} fontWeight="500">
               <a href={str(c.url)} target="_blank" rel="noopener noreferrer">
                 {str(has(c.label) ? c.label : c.url)}
               </a>
             </ChakraLink>
           )}
           {has(c.description) && (
-            <Text fontSize="sm" color={mutedColor}>{str(c.description)}</Text>
+            <Text fontSize="sm" color="theme.textMuted">{str(c.description)}</Text>
           )}
         </Box>
       );
@@ -389,9 +390,9 @@ export function ChildGroupsSection({ group, mutedColor }: { group: PublicGroupDe
       <Text fontSize="xs" fontWeight="600" color={mutedColor} textTransform="uppercase" letterSpacing="0.05em" mb="2">
         Groups within {group.title}
       </Text>
-      <VStack align="start" gap="1">
+      <VStack className="cp-child-links" align="start" gap="1">
         {group.child_groups.map((g) => (
-          <ChakraLink asChild key={g.slug} fontSize="sm" color="blue.500">
+          <ChakraLink asChild key={g.slug} fontSize="sm" {...groupLinkStyles}>
             <NextLink href={`/${g.slug}`}>{g.title}</NextLink>
           </ChakraLink>
         ))}
@@ -407,9 +408,9 @@ export function ChildGroupsSection({ group, mutedColor }: { group: PublicGroupDe
 export function DecoratorBadges({ decorators }: { decorators: string[] }) {
   if (!decorators || decorators.length === 0) return null;
   return (
-    <HStack gap="2" flexWrap="wrap" mb="4">
+    <HStack className="cp-decorators" gap="2" flexWrap="wrap" mb="4">
       {decorators.map((d) => (
-        <Badge key={d} variant="subtle" size="sm" borderRadius="full" px="3" py="1">
+        <Badge key={d} bg="ui.surfaceSubtle" color="theme.text" variant="subtle" size="sm" borderRadius="full" px="3" py="1">
           {formatDecorator(d)}
         </Badge>
       ))}

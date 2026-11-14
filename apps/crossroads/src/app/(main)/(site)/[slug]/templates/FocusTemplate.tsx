@@ -6,7 +6,6 @@
 // Ad hoc slots: "about", "links", "cta", "extra".
 
 import { Badge, Box, Heading, HStack, Text, VStack } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import type { TemplateProps } from "./types";
 import {
   GroupEmblem,
@@ -25,17 +24,17 @@ export default function FocusTemplate({
   authLoading,
   onStatusChange,
 }: TemplateProps) {
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const accentBg = useColorModeValue("white", "gray.900");
-  const headerBg = useColorModeValue("gray.50", "gray.900");
+  const mutedColor = "theme.textMuted";
+  const borderColor = "ui.borderSubtle";
+  const avatarFallbackBg = "ui.surfaceSubtle";
+  const accentBg = "theme.surface";
+  const headerBg = "ui.surfaceSubtle";
 
   const emblemBg = group.emblem?.bg || "#5b8a6f";
   const emblemFg = group.emblem?.fg || "#ffffff";
 
   return (
-    <Box className="cpt-focus-root">
+    <Box className="cpt-focus-root" bg="theme.bg" color="theme.text">
       {/* Compact header bar */}
       <Box
         className="cpt-focus-header"
@@ -58,7 +57,7 @@ export default function FocusTemplate({
           <VStack align="start" gap="0">
             <Heading size="lg">{group.title || "Untitled Group"}</Heading>
             <HStack gap="2">
-              <Badge variant="subtle" size="sm" borderRadius="full" px="2" py="0.5" textTransform="capitalize">
+              <Badge bg="ui.surfaceSubtle" color="theme.text" variant="subtle" size="sm" borderRadius="full" px="2" py="0.5" textTransform="capitalize">
                 {group.group_type}
               </Badge>
               {group.member_count > 0 && (

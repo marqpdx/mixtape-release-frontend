@@ -5,7 +5,6 @@
 // Ad hoc slots: "hero" (over banner), "about" (below title), "links", "extra".
 
 import { Box, Heading, Image, Text, VStack } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import type { TemplateProps } from "./types";
 import {
   GroupEmblem,
@@ -24,17 +23,17 @@ export default function HeroTemplate({
   authLoading,
   onStatusChange,
 }: TemplateProps) {
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const accentBg = useColorModeValue("white", "gray.900");
+  const mutedColor = "theme.textMuted";
+  const borderColor = "ui.borderSubtle";
+  const avatarFallbackBg = "ui.surfaceSubtle";
+  const accentBg = "theme.surface";
 
   const emblemBg = group.emblem?.bg || "#5b8a6f";
   const emblemFg = group.emblem?.fg || "#ffffff";
   const hasBanner = !!group.background_image_url;
 
   return (
-    <Box className="cpt-hero-root">
+    <Box className="cpt-hero-root" bg="theme.bg" color="theme.text">
       {/* Hero banner — tall, title overlaid */}
       <Box
         className="cpt-hero-banner"

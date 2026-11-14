@@ -5,7 +5,6 @@
 // "links" (below description), "cta" (above admission strip).
 
 import { Badge, Box, Heading, HStack, Image, Text, VStack, Link as ChakraLink } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import NextLink from "next/link";
 import type { TemplateProps } from "./types";
 import {
@@ -15,6 +14,7 @@ import {
   ChildGroupsSection,
   DecoratorBadges,
   SlotComponents,
+  groupLinkStyles,
 } from "./shared";
 
 export default function StandardTemplate({
@@ -25,16 +25,16 @@ export default function StandardTemplate({
   authLoading,
   onStatusChange,
 }: TemplateProps) {
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const accentBg = useColorModeValue("white", "gray.900");
+  const mutedColor = "theme.textMuted";
+  const borderColor = "ui.borderSubtle";
+  const avatarFallbackBg = "ui.surfaceSubtle";
+  const accentBg = "theme.surface";
 
   const emblemBg = group.emblem?.bg || "#5b8a6f";
   const emblemFg = group.emblem?.fg || "#ffffff";
 
   return (
-    <Box className="cpt-standard-root">
+    <Box className="cpt-standard-root" bg="theme.bg" color="theme.text">
       {group.background_image_url ? (
         <Box className="cpt-banner" w="full" h="220px" overflow="hidden" mb="-40px">
           <Image src={group.background_image_url} alt="" w="full" h="full" objectFit="cover" />
@@ -59,7 +59,7 @@ export default function StandardTemplate({
           <VStack gap="0" align="start">
             <Heading size="2xl">{group.title || "Untitled Group"}</Heading>
             <HStack gap="2">
-              <Badge variant="subtle" size="sm" borderRadius="full" px="3" py="1" textTransform="capitalize">
+              <Badge bg="ui.surfaceSubtle" color="theme.text" variant="subtle" size="sm" borderRadius="full" px="3" py="1" textTransform="capitalize">
                 {group.group_type}
               </Badge>
               <Text color={mutedColor} fontSize="sm">
@@ -74,7 +74,7 @@ export default function StandardTemplate({
         {group.parent_title && (
           <HStack gap="1" mb="2">
             <Text fontSize="sm" color={mutedColor}>Part of</Text>
-            <ChakraLink asChild fontSize="sm" color="blue.500" fontWeight="500">
+            <ChakraLink asChild fontSize="sm" {...groupLinkStyles} fontWeight="500">
               <NextLink href={`/group/${group.parent_title.slug}`}>{group.parent_title.title}</NextLink>
             </ChakraLink>
           </HStack>

@@ -5,7 +5,6 @@
 // Ad hoc slots: "about", "links", "extra".
 
 import { Badge, Box, Heading, HStack, Image, Text, VStack, Link as ChakraLink } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import NextLink from "next/link";
 import type { TemplateProps } from "./types";
 import {
@@ -14,6 +13,7 @@ import {
   ChildGroupsSection,
   DecoratorBadges,
   SlotComponents,
+  groupLinkStyles,
 } from "./shared";
 
 export default function DirectoryTemplate({
@@ -24,17 +24,17 @@ export default function DirectoryTemplate({
   authLoading,
   onStatusChange,
 }: TemplateProps) {
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const ctaBg = useColorModeValue("gray.50", "gray.800");
-  const accentBg = useColorModeValue("white", "gray.900");
+  const mutedColor = "theme.textMuted";
+  const borderColor = "ui.borderSubtle";
+  const avatarFallbackBg = "ui.surfaceSubtle";
+  const ctaBg = "ui.surfaceSubtle";
+  const accentBg = "theme.surface";
 
   const emblemBg = group.emblem?.bg || "#5b8a6f";
   const emblemFg = group.emblem?.fg || "#ffffff";
 
   return (
-    <Box className="cpt-directory-root" maxW="3xl" mx="auto" px="6" py="8">
+    <Box className="cpt-directory-root" bg="theme.bg" color="theme.text" maxW="3xl" mx="auto" px="6" py="8">
       {/* Header row */}
       <HStack className="cpt-directory-header" gap="4" mb="6" align="center">
         <GroupEmblem
@@ -48,7 +48,8 @@ export default function DirectoryTemplate({
           <Heading size="xl">{group.title || "Untitled Group"}</Heading>
           <HStack gap="2">
             <Badge
-              colorScheme="teal"
+              bg="ui.surfaceSubtle"
+              color="theme.text"
               variant="solid"
               size="md"
               borderRadius="full"
@@ -76,23 +77,27 @@ export default function DirectoryTemplate({
             {group.member_count} {group.member_count === 1 ? "Member" : "Members"}
           </Text>
           <Box
+            className="cpt-directory-member-grid"
             display="grid"
             gridTemplateColumns="repeat(auto-fill, minmax(120px, 1fr))"
             gap="3"
           >
             {group.member_preview.map((m) => (
-              <ChakraLink asChild key={m.username}>
+              <ChakraLink asChild key={m.username} {...groupLinkStyles} textDecoration="none" aria-label={m.display_name}>
                 <NextLink href={`/member/handle/${m.username}`}>
                   <VStack
+                    className="cpt-directory-member-card"
+                    bg="theme.surface" color="theme.text"
                     gap="1"
                     p="2"
                     borderRadius="md"
                     border="1px solid"
                     borderColor={borderColor}
-                    _hover={{ borderColor: "blue.300", bg: ctaBg }}
+                    _hover={{ borderColor: "ui.borderControl", bg: ctaBg }}
                     transition="all 0.15s"
                   >
                     <Box
+                      className="cpt-directory-avatar"
                       w="48px" h="48px" borderRadius="full" overflow="hidden"
                       bg={avatarFallbackBg} flexShrink={0}
                     >
@@ -100,7 +105,7 @@ export default function DirectoryTemplate({
                         <Image src={m.avatar_url} alt={m.display_name} w="full" h="full" objectFit="cover" />
                       ) : (
                         <Box w="full" h="full" display="flex" alignItems="center" justifyContent="center"
-                          fontSize="xl" fontWeight="bold" color="white">
+                          fontSize="xl" fontWeight="bold" color="theme.text">
                           {m.display_name.charAt(0).toUpperCase()}
                         </Box>
                       )}

@@ -1,7 +1,7 @@
 // Render the actual ThemeProvider and both app Chakra systems without an app server.
 // Run from frontend root: node pre-tests/semantic-theme-browser.cjs
 // Add --public-forms for actual public forms; --public-nav also checks desktop/mobile navigation.
-// --public-groups adds actual group admission and callout components.
+// --public-groups adds actual group templates, admission and content components.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -40,6 +40,24 @@ webpackModule.init();
     const Footer = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/components/layout/Footer.tsx'))}).default : null;
     const Navbar = ${publicNav} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/components/layout/UnifiedNavbar.tsx'))}).default : null;
     const GroupParts = ${publicGroups} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/shared.tsx'))}) : null;
+    const GroupTemplates = ${publicGroups} ? {
+      standard: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/StandardTemplate.tsx'))}).default,
+      focus: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/FocusTemplate.tsx'))}).default,
+      hero: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/HeroTemplate.tsx'))}).default,
+      directory: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/DirectoryTemplate.tsx'))}).default,
+    } : {};
+    function TemplateFixture() {
+      const group={slug:'fixture-group',title:'Example group',group_type:'circle',quick_intro:'Group introduction',description:'Group description',member_count:2,
+        decorators:['isA__community'],parent_title:{slug:'parent',title:'Parent group'},
+        member_preview:[{username:'alice',display_name:'Alice',avatar_url:null},{username:'bob',display_name:'Bob',avatar_url:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="teal"/></svg>'}],child_groups:[{slug:'child',title:'Child group'}]};
+      const components=[{id:'text',slot:'about',component_type:'text',content_json:{heading:'About the group',body:'Readable group content'}},
+        {id:'link',slot:'links',component_type:'link',content_json:{url:'https://example.test/resource',label:'Group resource',description:'Resource description'}},
+        {id:'image',slot:'extra',component_type:'image',content_json:{caption:'Image caption'}},
+        {id:'hero-link',slot:'hero',component_type:'link',content_json:{url:'https://example.test/hero',label:'Hero resource',description:'Hero resource description'}}];
+      return React.createElement(Box,{'data-template-fixture':true,gridColumn:'1 / -1',color:'theme.accentText'},
+        ...Object.entries(GroupTemplates).map(([name,Template])=>React.createElement('section',{key:name,'data-template':name},
+          React.createElement(Template,{group,components,isAuthenticated:false,authLoading:false,admissionStatus:null,onStatusChange:()=>{}}))));
+    }
     function GroupFixture() {
       const status={is_member:false,is_moderator:false,has_pending_request:false,can_join:false,can_request:false,policy:'open'};
       const cases=[['guest',false,status],['member',true,{...status,is_member:true,is_moderator:true}],
@@ -77,6 +95,7 @@ webpackModule.init();
       return React.createElement(React.Fragment,null,
         ${publicNav} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(Box,{'data-navbar-fixture':true,gridColumn:'1 / -1'},React.createElement(Navbar,{sticky:false}))),
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupFixture)),
+        ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(TemplateFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -262,6 +281,38 @@ webpackModule.init();
         const login=group.locator('[data-admission="guest"]').getByRole('link',{name:'Log in',exact:true});
         await login.hover();await page.keyboard.press('Tab');await login.focus();
         assert.equal(await login.evaluate(el=>getComputedStyle(el).outlineColor),expected.border);
+        const templates=page.locator('[data-template-fixture]');
+        for(const name of ['standard','focus','hero','directory']) {
+          const template=templates.locator('[data-template="'+name+'"]');
+          const root=template.locator('.cpt-'+name+'-root');
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background},name+' owns its canvas and text');
+          assert.equal(await template.getByText('Image caption',{exact:true}).evaluate(el=>getComputedStyle(el).color),expected.muted,name+' caption');
+          assert.equal(await template.getByText('Group description',{exact:true}).evaluate(el=>getComputedStyle(el).color),name==='focus'?controlExpected.text:expected.muted,name+' description');
+          for(const badge of await template.locator('.chakra-badge').all()) {
+            assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle},name+' badge pair');
+          }
+        }
+        assert.equal(await templates.locator('.cpt-focus-header').evaluate(el=>getComputedStyle(el).backgroundColor),expected.subtle);
+        for(const avatar of await templates.locator('.cp-member-avatar, .cpt-directory-avatar').all()) {
+          assert.equal(await avatar.evaluate(el=>getComputedStyle(el).backgroundColor),expected.subtle,'member fallback surface');
+          if(await avatar.locator('img').count()===0) assert.equal(await avatar.locator('div').evaluate(el=>getComputedStyle(el).color),controlExpected.text,'member initial foreground');
+        }
+        for(const block of await templates.locator('.cp-content-link').all()) {
+          assert.deepEqual(await block.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface},'content links own a surface even in the media slot');
+          assert.equal(await block.locator('p').evaluate(el=>getComputedStyle(el).color),expected.muted);
+        }
+        for(const link of await templates.getByRole('link').all()) {
+          await link.hover();
+          await expect.poll(()=>link.evaluate(el=>getComputedStyle(el).color)).toBe(controlExpected.text);
+          if(!(await link.getAttribute('href')).includes('/member/')) assert.ok((await link.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'));
+          await page.keyboard.press('Tab');await link.focus();
+          await expect.poll(()=>link.evaluate(el=>({color:getComputedStyle(el).outlineColor,width:getComputedStyle(el).outlineWidth,offset:getComputedStyle(el).outlineOffset}))).toEqual({color:expected.border,width:'3px',offset:'2px'});
+        }
+        const card=templates.locator('.cpt-directory-member-card').first();
+        await card.hover();
+        await expect.poll(()=>card.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor}))).toEqual({text:controlExpected.text,bg:expected.subtle,border:expected.border});
+        const templateImage=path.join(temp,id+'-'+mode+'-'+contrast+'-group-templates.png');
+        await templates.screenshot({path:templateImage,animations:'disabled'});screenshots.push(templateImage);
       }
       if(publicNav) {
         const setAuth=state=>page.evaluate(state=>window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:state})),state);
@@ -321,6 +372,7 @@ webpackModule.init();
     console.log('PASS: common Crossroads buttons retain semantic resting/hover/expanded pairs, keyboard focus and disabled/loading behavior');
     if(publicForms) console.log('PASS: actual public contact submission, intake error and footer separator in all eight theme/mode variants; API/routing/toaster are inert fixtures');
     if(publicGroups) console.log('PASS: actual group admission guest/member/policy states, join/request success and failure, link focus and paired callouts in all eight theme/mode combinations; API/status refresh are inert fixtures');
+    if(publicGroups) console.log('PASS: all four actual templates own canvas/text, metadata, badge pairs, member initials, content/child/parent links and keyboard focus in eight theme/mode combinations; hero media contrast is outside this check');
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
