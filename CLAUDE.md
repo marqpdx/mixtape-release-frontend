@@ -84,6 +84,8 @@ Avoid vague summaries like "fixed some bugs."]
 
 **Two deployments of the same caller need a kid-keyed secret, not one shared value** (CTO, 2026-11-12): when a verifier's caller runs on two hosts that should hold independently-revocable credentials, give the verifier a `kid`-keyed secrets dict, not a single shared secret. Full wording: `../mixtape-release-core/CLAUDE.md`, *Internal Service Auth Conventions*.
 
+**Frugal by habit: be resourceful with the hardware we have** (CTO, 2026-11-13): treat scarce memory and compute as the place to learn frugality, not a reason to add hardware. Prefer loading on demand and releasing, recycling, sharing and smaller forms over keeping things resident; measure before and after (swap as well as resident); add hardware only as demand and income grow. Reliability still comes first. Full wording: `puddlejump/CLAUDE.md`, *Build Principle: Frugal by Habit*.
+
 ---
 
 ## One Writer for Puddlejump's Shared Records
