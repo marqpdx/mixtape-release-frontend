@@ -47,16 +47,24 @@ webpackModule.init();
       directory: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/DirectoryTemplate.tsx'))}).default,
     } : {};
     function TemplateFixture() {
+      const [heroScenario,setHeroScenario]=React.useState('missing');
+      React.useEffect(()=>{window.setHeroScenario=setHeroScenario;},[]);
+      const banner=heroScenario==='missing'?null:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="'+(heroScenario==='bright'?'white':'black')+'"/></svg>');
       const group={slug:'fixture-group',title:'Example group',group_type:'circle',quick_intro:'Group introduction',description:'Group description',member_count:2,
         decorators:['isA__community'],parent_title:{slug:'parent',title:'Parent group'},
         member_preview:[{username:'alice',display_name:'Alice',avatar_url:null},{username:'bob',display_name:'Bob',avatar_url:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="teal"/></svg>'}],child_groups:[{slug:'child',title:'Child group'}]};
       const components=[{id:'text',slot:'about',component_type:'text',content_json:{heading:'About the group',body:'Readable group content'}},
         {id:'link',slot:'links',component_type:'link',content_json:{url:'https://example.test/resource',label:'Group resource',description:'Resource description'}},
         {id:'image',slot:'extra',component_type:'image',content_json:{caption:'Image caption'}},
-        {id:'hero-link',slot:'hero',component_type:'link',content_json:{url:'https://example.test/hero',label:'Hero resource',description:'Hero resource description'}}];
-      return React.createElement(Box,{'data-template-fixture':true,gridColumn:'1 / -1',color:'theme.accentText'},
+        {id:'hero-link',slot:'hero',component_type:'link',content_json:{url:'https://example.test/hero',label:'Hero resource',description:'Hero resource description'}},
+        {id:'hero-text',slot:'hero',component_type:'text',content_json:{heading:'Hero slot heading',body:'Hero slot body'}},
+        {id:'hero-image',slot:'hero',component_type:'image',content_json:{url:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><rect width="100" height="30" fill="teal"/></svg>'),alt:'Synthetic hero image',caption:'Hero image caption'}},
+        {id:'hero-callout',slot:'hero',component_type:'callout',content_json:{heading:'Hero callout',body:'Hero callout body'}}];
+      return React.createElement(Box,{'data-template-fixture':true,'data-hero-scenario':heroScenario,gridColumn:'1 / -1',color:'theme.accentText'},
         ...Object.entries(GroupTemplates).map(([name,Template])=>React.createElement('section',{key:name,'data-template':name},
-          React.createElement(Template,{group,components,isAuthenticated:false,authLoading:false,admissionStatus:null,onStatusChange:()=>{}}))));
+          React.createElement(Template,{group:name==='hero'?{...group,background_image_url:banner,
+            ...(heroScenario==='long'?{title:'LongGroupTitle'.repeat(10),quick_intro:'A longer introduction that should wrap without hiding any content. '.repeat(12)}:{})}:group,
+            components,isAuthenticated:false,authLoading:false,admissionStatus:null,onStatusChange:()=>{}}))));
     }
     function GroupFixture() {
       const status={is_member:false,is_moderator:false,has_pending_request:false,can_join:false,can_request:false,policy:'open'};
@@ -313,6 +321,41 @@ webpackModule.init();
         await expect.poll(()=>card.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor}))).toEqual({text:controlExpected.text,bg:expected.subtle,border:expected.border});
         const templateImage=path.join(temp,id+'-'+mode+'-'+contrast+'-group-templates.png');
         await templates.screenshot({path:templateImage,animations:'disabled'});screenshots.push(templateImage);
+        const hero=templates.locator('[data-template="hero"]');
+        for(const width of [1200,390]) {
+          await page.setViewportSize({width,height:844});
+          for(const scenario of ['bright','dark','missing','long']) {
+            await page.evaluate(scenario=>window.setHeroScenario(scenario),scenario);
+            await expect(templates).toHaveAttribute('data-hero-scenario',scenario);
+            const artwork=hero.locator('.cpt-hero-artwork');
+            if(scenario==='missing') await expect(hero.locator('.cpt-hero-fallback-artwork')).toHaveCount(1);
+            else {
+              await expect(artwork).toHaveCount(1);
+              await expect.poll(()=>artwork.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+            }
+            const copy=hero.locator('.cpt-hero-copy');
+            assert.deepEqual(await copy.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface},'opaque hero copy pair over '+scenario);
+            assert.equal(await copy.getByRole('heading').first().evaluate(el=>getComputedStyle(el).color),controlExpected.text,'hero title');
+            assert.equal(await copy.getByText('Hero slot body',{exact:true}).evaluate(el=>getComputedStyle(el).color),controlExpected.text,'hero slot body');
+            assert.equal(await copy.getByText('Hero image caption',{exact:true}).evaluate(el=>getComputedStyle(el).color),expected.muted,'hero image caption');
+            assert.equal(await copy.locator(':scope > p').evaluate(el=>getComputedStyle(el).color),expected.muted,'hero introduction');
+            const info=await page.locator('[data-app="Crossroads"] [data-status="info"]').evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}));
+            assert.deepEqual(await copy.locator('.cp-callout').evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),info,'hero callout pair');
+            const geometry=await hero.locator('.cpt-hero-banner').evaluate(el=>{
+              const banner=el.getBoundingClientRect(),copy=el.querySelector('.cpt-hero-copy').getBoundingClientRect();
+              return {contains:copy.left>=banner.left&&copy.right<=banner.right&&copy.top>=banner.top&&copy.bottom<=banner.bottom,
+                noOverflow:el.scrollWidth<=el.clientWidth+1,allTextContained:[...el.querySelectorAll('.cpt-hero-copy p,.cpt-hero-copy h2,.cpt-hero-copy a')].every(child=>{const r=child.getBoundingClientRect();return r.left>=copy.left&&r.right<=copy.right+1&&r.bottom<=copy.bottom;})};
+            });
+            assert.deepEqual(geometry,{contains:true,noOverflow:true,allTextContained:true},'hero content remains in flow at '+width+'px with '+scenario+' media: '+JSON.stringify(geometry));
+            if(scenario==='long') {
+              const heroImage=path.join(temp,id+'-'+mode+'-'+contrast+'-hero-'+width+'.png');
+              await hero.locator('.cpt-hero-banner').screenshot({path:heroImage,animations:'disabled'});screenshots.push(heroImage);
+            }
+          }
+        }
+        await page.evaluate(()=>window.setHeroScenario('missing'));
+        await expect(templates).toHaveAttribute('data-hero-scenario','missing');
+        await page.setViewportSize({width:1200,height:800});
       }
       if(publicNav) {
         const setAuth=state=>page.evaluate(state=>window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:state})),state);
@@ -372,7 +415,8 @@ webpackModule.init();
     console.log('PASS: common Crossroads buttons retain semantic resting/hover/expanded pairs, keyboard focus and disabled/loading behavior');
     if(publicForms) console.log('PASS: actual public contact submission, intake error and footer separator in all eight theme/mode variants; API/routing/toaster are inert fixtures');
     if(publicGroups) console.log('PASS: actual group admission guest/member/policy states, join/request success and failure, link focus and paired callouts in all eight theme/mode combinations; API/status refresh are inert fixtures');
-    if(publicGroups) console.log('PASS: all four actual templates own canvas/text, metadata, badge pairs, member initials, content/child/parent links and keyboard focus in eight theme/mode combinations; hero media contrast is outside this check');
+    if(publicGroups) console.log('PASS: all four actual templates own canvas/text, metadata, badge pairs, member initials, content/child/parent links and keyboard focus in eight theme/mode combinations');
+    if(publicGroups) console.log('PASS: opaque hero title/intro/text/image-caption/link/callout surfaces over bright, dark and absent banner media; long copy stays within a growing banner at desktop and mobile widths in eight theme/mode combinations; emblem and image artwork contrast is not certified');
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }

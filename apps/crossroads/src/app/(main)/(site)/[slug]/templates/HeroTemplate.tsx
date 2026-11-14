@@ -34,35 +34,37 @@ export default function HeroTemplate({
 
   return (
     <Box className="cpt-hero-root" bg="theme.bg" color="theme.text">
-      {/* Hero banner — tall, title overlaid */}
+      {/* Keep the artwork behind an opaque, independently readable copy panel.
+          Content stays in flow so long copy and hero slots can grow the banner. */}
       <Box
         className="cpt-hero-banner"
         position="relative"
         w="full"
-        h={{ base: "260px", md: "360px" }}
-        overflow="hidden"
+        minH={{ base: "260px", md: "360px" }}
         mb="8"
       >
         {hasBanner ? (
-          <Image src={group.background_image_url!} alt="" w="full" h="full" objectFit="cover" />
+          <Image className="cpt-hero-artwork" position="absolute" inset="0" src={group.background_image_url!} alt="" w="full" h="full" objectFit="cover" />
         ) : (
           <Box
+            className="cpt-hero-fallback-artwork"
+            position="absolute" inset="0"
             w="full" h="full"
             background={`linear-gradient(160deg, ${emblemBg} 0%, ${emblemBg}80 60%, ${emblemBg}30 100%)`}
           />
         )}
-        {/* Dark scrim for legibility */}
-        <Box position="absolute" inset="0" bg="blackAlpha.500" />
+        <Box className="cpt-hero-scrim" position="absolute" inset="0" bg="ui.overlayScrim" />
 
         {/* Centered overlay content */}
         <VStack
           className="cpt-hero-overlay"
-          position="absolute"
-          inset="0"
+          position="relative"
+          minH="inherit"
           justify="center"
           align="center"
           gap="3"
           px="6"
+          py="6"
         >
           <GroupEmblem
             group={group}
@@ -72,15 +74,17 @@ export default function HeroTemplate({
             cardBg="transparent"
             size="80px"
           />
-          <Heading size="3xl" color="white" textAlign="center" textShadow="0 1px 4px rgba(0,0,0,0.5)">
-            {group.title || "Untitled Group"}
-          </Heading>
-          {group.quick_intro && (
-            <Text color="whiteAlpha.900" fontSize="lg" textAlign="center" maxW="2xl" textShadow="0 1px 3px rgba(0,0,0,0.4)">
-              {group.quick_intro}
-            </Text>
-          )}
-          <SlotComponents components={components} slot="hero" mutedColor="white" borderColor="whiteAlpha.400" />
+          <VStack className="cpt-hero-copy" bg="theme.surface" color="theme.text" w="full" maxW="2xl" minW="0" align="stretch" p="4" gap="3" overflowWrap="anywhere">
+            <Heading size="3xl" textAlign="center">
+              {group.title || "Untitled Group"}
+            </Heading>
+            {group.quick_intro && (
+              <Text color="theme.textMuted" fontSize="lg" textAlign="center">
+                {group.quick_intro}
+              </Text>
+            )}
+            <SlotComponents components={components} slot="hero" mutedColor={mutedColor} borderColor={borderColor} />
+          </VStack>
         </VStack>
       </Box>
 
