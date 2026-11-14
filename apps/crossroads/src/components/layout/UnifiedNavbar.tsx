@@ -26,13 +26,17 @@ import {
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ThemeSelector } from "@components/common/ThemeSelector";
 import { IconChevronDown, IconMenu2, IconX, IconUser, IconLogout, IconLayoutDashboard } from "@tabler/icons-react";
 import { CrossroadsLogo } from "@components/common/CrossroadsLogo";
 import { Divider } from "@components/common/Divider";
 import { toaster } from "@mixtape/core/lib/toaster";
+
+// Keep navigation link focus readable independently of the theme accent.
+const navLinkFocus = {
+  _focusVisible: { outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" },
+};
 
 // Navigation item types
 type NavSection = "public" | "authenticated" | "admin" | "protected";
@@ -128,8 +132,6 @@ export default function UnifiedNavbar({
   const pathname = usePathname();
   const { user: identity, logout, isLoading } = useAuth();
   const { open, onOpen, onClose } = useDisclosure();
-  const logoColor = useColorModeValue('black', 'white');
-  const navBackground = useColorModeValue("rgba(255, 255, 255, 0.75)", "rgba(17, 24, 39, 0.75)");
 
   const avatarUrl = identity?.profile?.avatar_url?.trim() || undefined;
   const publicSiteBase = process.env.NEXT_PUBLIC_SITE_URL || "https://www.crossroads.place";
@@ -261,29 +263,30 @@ export default function UnifiedNavbar({
   if (isLoading) {
     return (
       <Box
+        className="unav-loading"
         bg="theme.surface"
         borderBottom="1px solid"
-        borderColor="theme.border"
+        borderColor="ui.borderSubtle"
         py={0}
         px={horizontalPadding}
         position={sticky ? "sticky" : "relative"}
         top={sticky ? 0 : "auto"}
         zIndex={1000}
       >
-        <Container maxW="7xl">
-          <Flex justify="space-between" align="center" minHeight={navMinHeight}>
+        <Container className="unav-container" maxW="7xl">
+          <Flex className="unav-bar" justify="space-between" align="center" minHeight={navMinHeight}>
             {/* Logo skeleton */}
             {showLogo && (
-              <Box w="200px" h="30px" bg="gray.200" borderRadius="md" />
+              <Box className="unav-placeholder" w="200px" h="30px" bg="ui.surfaceSubtle" borderRadius="md" />
             )}
             {/* Nav items skeleton */}
             <HStack gap={4} display={{ base: "none", lg: "flex" }}>
-              <Box w="60px" h="20px" bg="gray.200" borderRadius="sm" />
-              <Box w="80px" h="20px" bg="gray.200" borderRadius="sm" />
-              <Box w="70px" h="20px" bg="gray.200" borderRadius="sm" />
+              <Box className="unav-placeholder" w="60px" h="20px" bg="ui.surfaceSubtle" borderRadius="sm" />
+              <Box className="unav-placeholder" w="80px" h="20px" bg="ui.surfaceSubtle" borderRadius="sm" />
+              <Box className="unav-placeholder" w="70px" h="20px" bg="ui.surfaceSubtle" borderRadius="sm" />
             </HStack>
             {/* Auth button skeleton */}
-            <Box w="70px" h="32px" bg="gray.200" borderRadius="md" />
+            <Box className="unav-placeholder" w="70px" h="32px" bg="ui.surfaceSubtle" borderRadius="md" />
           </Flex>
         </Container>
       </Box>
@@ -292,23 +295,24 @@ export default function UnifiedNavbar({
 
   return (
     <Box
+      className="unav-root"
       as="nav"
       id="navigation"
       role="navigation"
       aria-label="Main navigation"
-      bg={navBackground}
+      bg="theme.surface"
+      color="theme.text"
       borderBottom="1px solid"
-      borderColor="theme.border"
+      borderColor="ui.borderSubtle"
       py={0}
       px={horizontalPadding}
       position={sticky ? "sticky" : "relative"}
       top={sticky ? 0 : "auto"}
       zIndex={1000}
-      backdropFilter="blur(5px)"
       transition="all 0.3s ease"
     >
-      <Container maxW="7xl">
-        <Flex justify="space-between" align="center" minHeight={navMinHeight}>
+      <Container className="unav-container" maxW="7xl">
+        <Flex className="unav-bar" justify="space-between" align="center" minHeight={navMinHeight}>
 
           {/* Left: Logo or Menu Button */}
           <Flex align="center" gap={shrink ? 2 : (extraCompact ? 2 : 4)}>
@@ -328,11 +332,11 @@ export default function UnifiedNavbar({
 
             {/* Logo */}
             {showLogo && (
-              <Link as={NextLink} href="/" aria-label="Crossroads home" _hover={{ textDecoration: "none" }}>
+              <Link {...navLinkFocus} as={NextLink} href="/" aria-label="Crossroads home" _hover={{ textDecoration: "none" }}>
                 <Box transform={logoOffset} aria-hidden="true">
                   <CrossroadsLogo
                     size={logoSize}
-                    color={logoColor}
+                    color="var(--theme-text)"
                   />
                 </Box>
               </Link>
@@ -341,6 +345,7 @@ export default function UnifiedNavbar({
 
           {/* Center: Navigation Items (Desktop) */}
           <HStack
+            className="unav-desktop-links"
             gap={navGap}
             display={{ base: "none", lg: "flex" }}
             fontSize={navFontSize}
@@ -374,7 +379,7 @@ export default function UnifiedNavbar({
           </HStack>
 
           {/* Right: Theme Selector + Auth Actions */}
-          <HStack gap={shrink ? 1 : (extraCompact ? 1 : 3)}>
+          <HStack className="unav-actions" gap={shrink ? 1 : (extraCompact ? 1 : 3)}>
             <Box transform={themeScale}>
               <ThemeSelector />
             </Box>
@@ -413,15 +418,15 @@ export default function UnifiedNavbar({
                 </MenuTrigger>
 
                 <MenuPositioner zIndex={1100}>
-                  <MenuContent>
-                    <MenuItem value="profile" asChild>
-                      <Link as={NextLink} href={getMemberProfileHref()} display="flex" gap={2}>
+                  <MenuContent className="unav-menu" bg="theme.surface" color="theme.text" borderColor="ui.borderControl">
+                    <MenuItem value="profile" asChild _highlighted={{ bg: "ui.surfaceSubtle", color: "theme.text" }}>
+                      <Link {...navLinkFocus} as={NextLink} href={getMemberProfileHref()} display="flex" gap={2}>
                         <IconUser size={16} />
                         Profile
                       </Link>
                     </MenuItem>
-                    <MenuItem value="settings" asChild>
-                      <Link as={NextLink} href="/app/dashboard" display="flex" gap={2}>
+                    <MenuItem value="settings" asChild _highlighted={{ bg: "ui.surfaceSubtle", color: "theme.text" }}>
+                      <Link {...navLinkFocus} as={NextLink} href="/app/dashboard" display="flex" gap={2}>
                         <IconLayoutDashboard size={16} />
                         Dashboard
                       </Link>
@@ -430,8 +435,9 @@ export default function UnifiedNavbar({
                     <MenuItem
                       value="logout"
                       onClick={handleLogout}
-                      color="red.500"
-                      _hover={{ bg: "red.50" }}
+                      color="status.danger.fg"
+                      _hover={{ bg: "status.danger.bg", color: "status.danger.fg" }}
+                      _highlighted={{ bg: "status.danger.bg", color: "status.danger.fg" }}
                     >
                       <Flex gap={2} align="center">
                         <IconLogout size={16} />
@@ -445,7 +451,7 @@ export default function UnifiedNavbar({
 
             ) : (
               navSection === "public" && (
-                <Link as={NextLink} href={loginHref}>
+                <Link {...navLinkFocus} as={NextLink} href={loginHref}>
                   <Button
                     size={shrink ? "sm" : "md"}
                     variant="solid"
@@ -462,10 +468,10 @@ export default function UnifiedNavbar({
 
       {/* Mobile Drawer */}
       <Drawer.Root open={open} onOpenChange={({ open }: { open: boolean }) => (open ? onOpen() : onClose())} placement="start">
-        <Drawer.Backdrop />
+        <Drawer.Backdrop className="unav-scrim" bg="ui.overlayScrim" />
         <Drawer.Positioner>
-          <Drawer.Content maxW="xs" bg="theme.surface" borderColor="theme.border">
-            <Drawer.Header borderBottom="1px solid" borderColor="theme.border">
+          <Drawer.Content className="unav-drawer" maxW="xs" bg="theme.surface" color="theme.text" borderColor="ui.borderControl">
+            <Drawer.Header className="unav-drawer-header" borderBottom="1px solid" borderColor="ui.borderSubtle">
               <Flex justify="space-between" align="center" w="full">
                 <Drawer.Title color="theme.text">Navigation</Drawer.Title>
                 <IconButton
@@ -479,21 +485,22 @@ export default function UnifiedNavbar({
               </Flex>
             </Drawer.Header>
 
-            <Drawer.Body>
-              <VStack gap={4} align="stretch" pt={4}>
+            <Drawer.Body className="unav-drawer-body">
+              <VStack className="unav-drawer-links" gap={4} align="stretch" pt={4}>
                 {visibleItems.map((item) => {
                   const isActive = activeItem?.key === item.key;
                   return (
                     <Box key={item.key}>
-                      <Link
+                      <Link {...navLinkFocus}
                         {...(item.href.startsWith('http')
                           ? { href: item.href }
                           : { as: NextLink, href: item.href })}
                         onClick={onClose}
-                        color={isActive ? "theme.accent" : "theme.text"}
+                        aria-current={isActive ? "location" : undefined}
+                        color="theme.text"
                         fontWeight={isActive ? "bold" : "medium"}
                         fontSize="md"
-                        _hover={{ color: "theme.accent" }}
+                        _hover={{ color: "theme.text" }}
                       >
                         {item.shortLabel || item.label}
                       </Link>
@@ -502,16 +509,17 @@ export default function UnifiedNavbar({
                           {item.children.map((child) => {
                             const isChildActive = pathname === child.href;
                             return (
-                            <Link
+                            <Link {...navLinkFocus}
                               key={child.key}
                               {...(child.href.startsWith('http')
                                 ? { href: child.href }
                                 : { as: NextLink, href: child.href })}
                               onClick={onClose}
-                              color={isChildActive ? "theme.accent" : "theme.textSecondary"}
+                              aria-current={isChildActive ? "page" : undefined}
+                              color={isChildActive ? "theme.text" : "theme.textMuted"}
                               fontWeight={isChildActive ? "bold" : "medium"}
                               fontSize="sm"
-                              _hover={{ color: "theme.accent" }}
+                              _hover={{ color: "theme.text" }}
                             >
                               {child.label}
                             </Link>
@@ -525,11 +533,12 @@ export default function UnifiedNavbar({
 
                 {identity && (
                   <>
-                    <Divider borderColor="theme.border" />
+                    <Divider borderColor="ui.borderSubtle" />
                     <Button
                       onClick={handleLogout}
                       variant="ghost"
-                      colorScheme="red"
+                      color="status.danger.fg"
+                      _hover={{ bg: "status.danger.bg", color: "status.danger.fg" }}
                       justifyContent="flex-start"
                       w="full"
                     >
@@ -540,8 +549,8 @@ export default function UnifiedNavbar({
 
                 {!identity && navSection === "public" && (
                   <>
-                    <Divider borderColor="theme.border" />
-                    <Link as={NextLink} href={loginHref} onClick={onClose}>
+                    <Divider borderColor="ui.borderSubtle" />
+                    <Link {...navLinkFocus} as={NextLink} href={loginHref} onClick={onClose}>
                       <Button variant="solid" w="full">
                         Login
                       </Button>
@@ -572,7 +581,7 @@ function NavItem({
   const label = String(children);
 
   return (
-    <Link as={NextLink} href={href} _hover={{ textDecoration: "none" }}>
+    <Link {...navLinkFocus} as={NextLink} href={href} aria-current={isActive ? "page" : undefined} _hover={{ textDecoration: "none" }}>
       <Box as="span" position="relative" display="inline-block">
         {/* Width spacer */}
         <Box
@@ -592,11 +601,11 @@ function NavItem({
           inset={0}
           display="inline-flex"
           alignItems="center"
-          color={isActive ? "theme.text" : "theme.textSecondary"}
+          color={isActive ? "theme.text" : "theme.textMuted"}
           fontWeight={isActive ? "700" : "400"}
           transition="color 0.2s ease, transform 0.2s ease"
           _hover={{
-            color: "theme.accent",
+            color: "theme.text",
             transform: extraCompact ? "translateY(-0.5px)" : "translateY(-1px)",
           }}
           pointerEvents="none"
@@ -654,7 +663,7 @@ function DesktopNavDropdown({
   };
 
   return (
-    <Box onMouseEnter={scheduleOpen} onMouseLeave={scheduleClose}>
+    <Box className="unav-dropdown" onMouseEnter={scheduleOpen} onMouseLeave={scheduleClose}>
       <MenuRoot
         open={open}
         onOpenChange={({ open }) => setOpen(open)}
@@ -668,8 +677,8 @@ function DesktopNavDropdown({
             py={1}
             height="auto"
             fontWeight={isActive ? "700" : "400"}
-            color={isActive ? "theme.text" : "theme.textSecondary"}
-            _hover={{ color: "theme.accent" }}
+            color={isActive ? "theme.text" : "theme.textMuted"}
+            _hover={{ color: "theme.text" }}
             _active={{ bg: "transparent" }}
             _focusVisible={{ boxShadow: "none" }}
           >
@@ -680,10 +689,10 @@ function DesktopNavDropdown({
           </Button>
         </MenuTrigger>
         <MenuPositioner zIndex={1100}>
-          <MenuContent>
+          <MenuContent className="unav-menu" bg="theme.surface" color="theme.text" borderColor="ui.borderControl">
             {item.children?.map((child) => (
-              <MenuItem key={child.key} value={child.key} asChild>
-                <Link as={NextLink} href={child.href} display="flex" gap={2}>
+              <MenuItem key={child.key} value={child.key} asChild _highlighted={{ bg: "ui.surfaceSubtle", color: "theme.text" }}>
+                <Link {...navLinkFocus} as={NextLink} href={child.href} display="flex" gap={2}>
                   {child.label}
                 </Link>
               </MenuItem>
