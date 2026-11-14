@@ -9,6 +9,7 @@ import {
 import { semanticColorTokens, semanticShadowTokens } from "@mixtape/ui-tokens/src/semantic-tokens";
 
 import { inputRecipe } from "./recipes/input.recipe";
+import { textareaRecipe } from "./recipes/textarea.recipe";
 import { buttonRecipe } from "./recipes/button.recipe";
 import { selectSlotRecipe } from "./recipes/select.recipe";
 import { defineTextStyles } from "@chakra-ui/react"
@@ -398,6 +399,7 @@ export const config = defineConfig({
     },
     recipes: {
       input: inputRecipe,
+      textarea: textareaRecipe,
       button: buttonRecipe,
       select: selectSlotRecipe,
       headingFront: headingFrontRecipe,

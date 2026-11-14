@@ -20,7 +20,7 @@ webpackModule.init();
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
     const {createRoot} = require('react-dom/client');
-    const {ChakraProvider, Box, Text, Input} = require('@chakra-ui/react');
+    const {ChakraProvider, Box, Text, Input, Textarea} = require('@chakra-ui/react');
     const {ColorModeProvider} = require(${JSON.stringify(path.join(root, 'packages/core/src/theme/color-mode.tsx'))});
     const {ThemeProvider, useTheme} = require(${JSON.stringify(path.join(root, 'packages/core/src/theme/theme-context.tsx'))});
     window.getSemanticThemeVars = require(${JSON.stringify(path.join(root, 'packages/ui-tokens/src/semantic-tokens.ts'))}).getSemanticThemeVars;
@@ -35,6 +35,11 @@ webpackModule.init();
       return React.createElement(ChakraProvider, {value:system},
         React.createElement(Box, {className:'token-panel', 'data-app':name, bg:'theme.bg', color:'theme.text', p:5, border:'2px solid', borderColor:'ui.borderControl'},
           React.createElement('h2', null, name),
+          name==='Crossroads' && React.createElement('div', {'data-controls':true},
+            ...[Input,Textarea].flatMap((Control,index)=>['outline','filled','subtle','flushed','ghost'].map(variant=>
+              React.createElement(Control,{key:index+variant,'aria-label':'fixture '+index+' '+variant,'data-control':true,variant,placeholder:'Readable placeholder',mt:3}))),
+            React.createElement(Input,{'aria-label':'Disabled fixture',disabled:true,placeholder:'Disabled'}),
+            React.createElement(Textarea,{'aria-label':'Invalid fixture','aria-invalid':true,placeholder:'Invalid'})),
           React.createElement(Text, {'data-muted':true, color:'theme.textMuted'}, 'Readable secondary text, dates and metadata'),
           React.createElement(Input, {'aria-label':name+' sample', placeholder:'Optional note', _placeholder:{color:'theme.textPlaceholder'}, borderColor:'ui.borderControl', mt:3}),
           React.createElement(Box, {'data-subtle':true, bg:'ui.surfaceSubtle', border:'1px solid', borderColor:'ui.borderSubtle', p:3, mt:3}, 'Subtle surface'),
@@ -117,6 +122,37 @@ webpackModule.init();
       assert.deepEqual(colors[0],colors[1],'both Chakra systems resolve the same shared roles');
       assert.ok(colors[0].statuses.every(v=>v.fg!==v.bg));
       assert.equal(new Set(colors[0].statuses.map(v=>v.fg)).size,4,'HC preserves four hues');
+      // No per-element colour overrides: these assertions exercise the recipes.
+      const controlExpected=await page.evaluate(()=>{
+        const probe=document.createElement('span');document.body.appendChild(probe);
+        const color=value=>{probe.style.color=value;return getComputedStyle(probe).color;};
+        const result={text:color('var(--theme-text)'),surface:color('var(--theme-surface)'),placeholder:color('var(--theme-text-placeholder)'),danger:color('var(--status-danger-fg)')};
+        probe.remove();return result;
+      });
+      await page.waitForTimeout(300);
+      const controls=page.locator('[data-controls] [data-control]');
+      for(const control of await controls.all()) {
+        const variant=await control.getAttribute('aria-label');
+        const style=await control.evaluate(el=>({text:getComputedStyle(el).color,placeholder:getComputedStyle(el,'::placeholder').color,border:getComputedStyle(el).borderBottomColor,borderWidth:getComputedStyle(el).borderBottomWidth}));
+        assert.equal(style.text,controlExpected.text,variant+' text');
+        assert.equal(style.placeholder,controlExpected.placeholder,variant+' placeholder');
+        if(!variant.endsWith('ghost')) {
+          assert.equal(style.border,expected.border,variant+' meaningful boundary');
+          assert.notEqual(style.borderWidth,'0px');
+        }
+        await control.focus();
+        // Keyboard focus must retain a visible, offset indicator in every variant.
+        const focus=await control.evaluate(el=>({color:getComputedStyle(el).outlineColor,width:getComputedStyle(el).outlineWidth,offset:getComputedStyle(el).outlineOffset}));
+        assert.deepEqual(focus,{color:expected.border,width:'3px',offset:'2px'},variant+' keyboard focus '+JSON.stringify(focus));
+      }
+      const invalid=page.getByRole('textbox',{name:'Invalid fixture'});
+      assert.equal(await invalid.evaluate(el=>getComputedStyle(el).borderBottomColor),controlExpected.danger);
+      await invalid.hover();
+      assert.equal(await invalid.evaluate(el=>getComputedStyle(el).borderBottomColor),controlExpected.danger,'invalid boundary survives hover');
+      await page.keyboard.press('Tab');
+      await invalid.focus();
+      assert.equal(await invalid.evaluate(el=>getComputedStyle(el).outlineColor),controlExpected.danger);
+      await expect(page.getByRole('textbox',{name:'Disabled fixture'})).toBeDisabled();
       if(publicForms) {
         const contact=page.locator('[data-public-form="contact"]');
         await contact.getByRole('textbox',{name:'Name',exact:false}).fill('Example person');
@@ -130,6 +166,12 @@ webpackModule.init();
         const expectedStatus=await page.locator('[data-app="Crossroads"]').locator('[data-status]').evaluateAll(elements=>Object.fromEntries(elements.map(el=>[el.getAttribute('data-status'),getComputedStyle(el).color])));
         assert.equal(await success.evaluate(el=>getComputedStyle(el).color),expectedStatus.success,'contact success token');
         assert.equal(await error.evaluate(el=>getComputedStyle(el).color),expectedStatus.danger,'intake error token');
+        for(const container of [contact,page.locator('[data-public-form="get-started"]')]) {
+          for(const field of await container.getByRole('textbox').all()) {
+            const style=await field.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderBottomColor,placeholder:getComputedStyle(el,'::placeholder').color}));
+            assert.deepEqual(style,{text:controlExpected.text,bg:controlExpected.surface,border:expected.border,placeholder:controlExpected.placeholder},'live public field uses recipe roles');
+          }
+        }
         const footer=await page.locator('.ftr-root').evaluate(el=>getComputedStyle(el).borderTopColor);
         assert.equal(footer,await page.locator('[data-app="Crossroads"] [data-subtle]').evaluate(el=>getComputedStyle(el).borderTopColor),'footer uses decorative separator');
       }
@@ -139,6 +181,7 @@ webpackModule.init();
     fs.writeFileSync(path.join(temp,'screenshots.json'),JSON.stringify(screenshots,null,2));
     fs.writeFileSync('/private/tmp/abe-semantic-theme-browser-path.txt',temp);
     console.log('PASS: real root provider and both Chakra systems, gallery + earthy-slate × light/dark × normal/high contrast');
+    console.log('PASS: Crossroads input/textarea variants, readable placeholders, control boundaries, keyboard focus, invalid hover/focus and native disabled state');
     if(publicForms) console.log('PASS: actual public contact submission, intake error and footer separator in all eight theme/mode variants; API/routing/toaster are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }

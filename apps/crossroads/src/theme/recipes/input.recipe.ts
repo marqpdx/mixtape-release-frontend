@@ -1,6 +1,30 @@
-// src/theme/recipes/input.recipe.ts - Updated with new semantic tokens
+// Crossroads controls share the approved semantic roles, including high contrast.
 
 import { chakra, defineRecipe } from "@chakra-ui/react";
+
+// Shared with textarea; keep single-line sizing out of the multiline recipe.
+export const controlColors = {
+  bg: "theme.surface",
+  color: "theme.text",
+  borderColor: "ui.borderControl",
+  "--focus-color": "colors.ui.borderControl",
+  "--error-color": "colors.status.danger.fg",
+  focusRingColor: "ui.borderControl",
+  focusRingWidth: "3px",
+  _placeholder: { color: "theme.textPlaceholder", opacity: 1 },
+  _focusVisible: {
+    focusRingColor: "ui.borderControl",
+    outline: "3px solid",
+    outlineColor: "ui.borderControl",
+    outlineOffset: "2px",
+    _invalid: { outlineColor: "status.danger.fg", focusRingColor: "status.danger.fg" },
+  },
+  _invalid: {
+    borderColor: "status.danger.fg",
+    borderBottomColor: "status.danger.fg",
+    focusRingColor: "status.danger.fg",
+  },
+};
 
 export const inputRecipe = defineRecipe({
   base: {
@@ -12,13 +36,7 @@ export const inputRecipe = defineRecipe({
     transitionProperty: "common",
     transitionDuration: "normal",
     paddingInline: "0.5em !important",
-    // Use new semantic tokens
-    bg: "bg.input",
-    borderColor: "border.input",
-    color: "text.primary",
-    _placeholder: {
-      color: "text.secondary",
-    },
+    ...controlColors,
     _disabled: {
       opacity: 0.4,
       cursor: "not-allowed",
@@ -53,54 +71,54 @@ export const inputRecipe = defineRecipe({
     },
     variant: {
       outline: {
-        border: "1px solid",
-        borderColor: "border.default",
-        bg: "bg.surface",
-        _hover: {
-          borderColor: "theme.accent",
-        },
-        _focus: {
-          borderColor: "theme.accent",
-          boxShadow: "0 0 0 1px var(--theme-accent)",
-        },
+        focusVisibleRing: "outside",
+        focusRingColor: "ui.borderControl",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "ui.borderControl",
+        bg: "theme.surface",
       },
       filled: {
-        bg: "bg.subtle",
-        border: "1px solid",
-        borderColor: "transparent",
+        focusVisibleRing: "outside",
+        focusRingColor: "ui.borderControl",
+        bg: "ui.surfaceSubtle",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "ui.borderControl",
         _hover: {
-          bg: "bg.surface",
-          borderColor: "border.emphasis",
-        },
-        _focus: {
-          bg: "bg.surface",
-          borderColor: "theme.accent",
-          boxShadow: "0 0 0 1px var(--theme-accent)",
+          bg: "theme.surface",
         },
       },
+      subtle: {
+        focusVisibleRing: "outside",
+        focusRingColor: "ui.borderControl",
+        bg: "ui.surfaceSubtle",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "ui.borderControl",
+        _hover: { bg: "theme.surface" },
+      },
       flushed: {
+        focusVisibleRing: "outside",
+        focusRingColor: "ui.borderControl",
         bg: "transparent",
         borderRadius: "0",
         px: "0",
-        borderTop: "0",
-        borderLeft: "0",
-        borderRight: "0",
-        borderBottom: "2px solid",
-        borderColor: "border.default",
-        _focus: {
-          borderColor: "theme.accent",
-          boxShadow: "0 1px 0 0 var(--theme-accent)",
-        },
+        borderTopWidth: "0",
+        borderLeftWidth: "0",
+        borderRightWidth: "0",
+        borderBottomWidth: "2px",
+        borderBottomStyle: "solid",
+        borderBottomColor: "ui.borderControl",
+        borderColor: "ui.borderControl",
       },
       ghost: {
+        focusVisibleRing: "outside",
+        focusRingColor: "ui.borderControl",
         bg: "transparent",
         border: "none",
         _hover: {
-          bg: "bg.subtle",
-        },
-        _focus: {
-          bg: "bg.surface",
-          boxShadow: "0 0 0 1px var(--theme-accent)",
+          bg: "ui.surfaceSubtle",
         },
       },
     },
