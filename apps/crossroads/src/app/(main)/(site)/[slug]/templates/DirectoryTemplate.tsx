@@ -130,9 +130,6 @@ export default function DirectoryTemplate({
         admissionStatus={admissionStatus}
         groupSlug={group.slug}
         groupTitle={group.title}
-        mutedColor={mutedColor}
-        ctaBg={ctaBg}
-        ctaBorderColor={borderColor}
         onStatusChange={onStatusChange}
       />
 

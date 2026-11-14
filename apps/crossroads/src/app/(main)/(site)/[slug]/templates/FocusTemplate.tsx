@@ -28,7 +28,6 @@ export default function FocusTemplate({
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const ctaBg = useColorModeValue("gray.50", "gray.800");
   const accentBg = useColorModeValue("white", "gray.900");
   const headerBg = useColorModeValue("gray.50", "gray.900");
 
@@ -98,9 +97,6 @@ export default function FocusTemplate({
           admissionStatus={admissionStatus}
           groupSlug={group.slug}
           groupTitle={group.title}
-          mutedColor={mutedColor}
-          ctaBg={ctaBg}
-          ctaBorderColor={borderColor}
           onStatusChange={onStatusChange}
         />
 

@@ -79,15 +79,21 @@ export function GroupEmblem({
 // AdmissionStrip
 // ---------------------------------------------------------------------------
 
+// Links retain an underline as a non-colour signal; accent hues are not
+// guaranteed readable as text on the selected surface.
+const groupLinkStyles = {
+  color: "theme.text",
+  textDecoration: "underline",
+  _hover: { color: "theme.text", textDecorationThickness: "2px" },
+  _focusVisible: { outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" },
+};
+
 export function AdmissionStrip({
   isAuthenticated,
   authLoading,
   admissionStatus,
   groupSlug,
   groupTitle,
-  mutedColor,
-  ctaBg,
-  ctaBorderColor,
   onStatusChange,
 }: {
   isAuthenticated: boolean;
@@ -95,9 +101,6 @@ export function AdmissionStrip({
   admissionStatus: AdmissionStatus | null;
   groupSlug: string;
   groupTitle: string;
-  mutedColor: string;
-  ctaBg: string;
-  ctaBorderColor: string;
   onStatusChange: (status: AdmissionStatus) => void;
 }) {
   const [actionLoading, setActionLoading] = useState(false);
@@ -107,17 +110,17 @@ export function AdmissionStrip({
 
   if (admissionStatus.is_member) {
     return (
-      <HStack py="2" px="3" mb="6" gap="3">
-        <Text fontSize="sm" color={mutedColor}>
+      <HStack className="cp-admission-member" bg="ui.surfaceSubtle" color="theme.text" py="2" px="3" mb="6" gap="3">
+        <Text fontSize="sm" color="theme.textMuted">
           You are a member of {groupTitle}.
         </Text>
         {admissionStatus.is_moderator && (
           <>
-            <ChakraLink asChild fontSize="xs" color="blue.500">
+            <ChakraLink asChild fontSize="xs" {...groupLinkStyles}>
               <NextLink href={`/group/${groupSlug}/admin/join-requests`}>Join requests</NextLink>
             </ChakraLink>
-            <Text fontSize="xs" color={mutedColor}>{"·"}</Text>
-            <ChakraLink asChild fontSize="xs" color="blue.500">
+            <Text fontSize="xs" color="theme.textMuted">{"·"}</Text>
+            <ChakraLink asChild fontSize="xs" {...groupLinkStyles}>
               <NextLink href={`/group/${groupSlug}/admin/settings`}>Settings</NextLink>
             </ChakraLink>
           </>
@@ -165,18 +168,19 @@ export function AdmissionStrip({
         mb="6"
         borderRadius="md"
         border="1px solid"
-        borderColor={ctaBorderColor}
-        bg={ctaBg}
+        borderColor="ui.borderSubtle"
+        bg="ui.surfaceSubtle"
+        color="theme.text"
       >
-        <Text fontSize="sm" color={mutedColor} mb="2">
+        <Text fontSize="sm" color="theme.textMuted" mb="2">
           You{"'"}re viewing as a guest.
         </Text>
-        <HStack gap="3">
-          <ChakraLink asChild fontSize="sm" color="blue.500">
+        <HStack className="cp-admission-links" gap="3">
+          <ChakraLink asChild fontSize="sm" {...groupLinkStyles}>
             <NextLink href="/app/login">Log in</NextLink>
           </ChakraLink>
-          <Text fontSize="sm" color={mutedColor}>{"·"}</Text>
-          <ChakraLink asChild fontSize="sm" color="blue.500">
+          <Text fontSize="sm" color="theme.textMuted">{"·"}</Text>
+          <ChakraLink asChild fontSize="sm" {...groupLinkStyles}>
             <NextLink href="/welcome/start">Join to participate</NextLink>
           </ChakraLink>
         </HStack>
@@ -194,60 +198,61 @@ export function AdmissionStrip({
       mb="6"
       borderRadius="md"
       border="1px solid"
-      borderColor={ctaBorderColor}
-      bg={ctaBg}
+      borderColor="ui.borderSubtle"
+      bg="ui.surfaceSubtle"
+      color="theme.text"
     >
       {actionMessage && (
         <Text
           fontSize="sm"
           mb="2"
-          color={actionMessage.includes("Could not") ? "red.500" : "green.600"}
+          color={actionMessage.includes("Could not") ? "status.danger.fg" : "status.success.fg"}
         >
           {actionMessage}
         </Text>
       )}
       {s.has_pending_request && (
-        <Text fontSize="sm" color={mutedColor}>Your request to join is pending review.</Text>
+        <Text fontSize="sm" color="theme.textMuted">Your request to join is pending review.</Text>
       )}
       {!s.has_pending_request && s.can_join && (
-        <VStack align="start" gap="2">
+        <VStack className="cp-admission-actions" align="start" gap="2">
           {s.requires_parent_membership && !s.is_parent_member && s.parent_group ? (
-            <Text fontSize="sm" color={mutedColor}>
+            <Text fontSize="sm" color="theme.textMuted">
               Join{" "}
-              <ChakraLink asChild color="blue.500">
+              <ChakraLink asChild {...groupLinkStyles}>
                 <NextLink href={`/group/${s.parent_group.slug}`}>{s.parent_group.title}</NextLink>
               </ChakraLink>
               {" "}first to join this group.
             </Text>
           ) : (
-            <Button size="sm" colorScheme="blue" onClick={handleJoin} disabled={actionLoading}>
+            <Button size="sm" onClick={handleJoin} disabled={actionLoading}>
               {actionLoading ? "Joining..." : "Join this Group"}
             </Button>
           )}
         </VStack>
       )}
       {!s.has_pending_request && s.can_request && (
-        <VStack align="start" gap="2">
+        <VStack className="cp-admission-actions" align="start" gap="2">
           {s.requires_parent_membership && !s.is_parent_member && s.parent_group ? (
-            <Text fontSize="sm" color={mutedColor}>
+            <Text fontSize="sm" color="theme.textMuted">
               Join{" "}
-              <ChakraLink asChild color="blue.500">
+              <ChakraLink asChild {...groupLinkStyles}>
                 <NextLink href={`/group/${s.parent_group.slug}`}>{s.parent_group.title}</NextLink>
               </ChakraLink>
               {" "}first to request to join this group.
             </Text>
           ) : (
-            <Button size="sm" variant="outline" colorScheme="blue" onClick={handleRequestJoin} disabled={actionLoading}>
+            <Button size="sm" variant="outline" onClick={handleRequestJoin} disabled={actionLoading}>
               {actionLoading ? "Sending..." : "Ask to Join"}
             </Button>
           )}
         </VStack>
       )}
       {!s.has_pending_request && !s.can_join && !s.can_request && s.policy === "invite_only" && (
-        <Text fontSize="sm" color={mutedColor}>This group is invite-only.</Text>
+        <Text fontSize="sm" color="theme.textMuted">This group is invite-only.</Text>
       )}
       {!s.has_pending_request && !s.can_join && !s.can_request && s.policy === "closed" && (
-        <Text fontSize="sm" color={mutedColor}>This group is not accepting new members.</Text>
+        <Text fontSize="sm" color="theme.textMuted">This group is not accepting new members.</Text>
       )}
     </Box>
   );
@@ -305,7 +310,7 @@ export function MemberPreviewStrip({
 // PageComponentBlock — renders a single ad hoc PageComponent
 // ---------------------------------------------------------------------------
 
-export function PageComponentBlock({ component, mutedColor, borderColor }: {
+export function PageComponentBlock({ component, mutedColor }: {
   component: PageComponent;
   mutedColor: string;
   borderColor: string;
@@ -357,9 +362,12 @@ export function PageComponentBlock({ component, mutedColor, borderColor }: {
     case "callout":
       return (
         <Box
+          className="cp-callout"
           mb="4" p="4" borderRadius="md"
-          border="1px solid" borderColor={borderColor}
-          bg={c.style === "highlight" ? "yellow.50" : "blue.50"}
+          border="1px solid"
+          borderColor={c.style === "highlight" ? "status.warning.fg" : "status.info.fg"}
+          bg={c.style === "highlight" ? "status.warning.bg" : "status.info.bg"}
+          color={c.style === "highlight" ? "status.warning.fg" : "status.info.fg"}
         >
           {has(c.heading) && <Heading size="sm" mb="1">{str(c.heading)}</Heading>}
           {has(c.body) && <Text fontSize="sm">{str(c.body)}</Text>}

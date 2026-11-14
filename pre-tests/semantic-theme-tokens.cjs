@@ -59,7 +59,7 @@ for (const theme of [...themes, ...tenantPalettes]) {
       const fg = v[`--status-${tone}-fg`], bg = v[`--status-${tone}-bg`];
       statusForegrounds.push(fg);
       check(`status ${tone}`, fg, bg, textBar);
-      for (const surface of [c.bg, c.surface]) check(`status ${tone} exterior`, fg, surface, textBar);
+      for (const surface of [c.bg, c.surface, subtle]) check(`status ${tone} exterior`, fg, surface, textBar);
       if (high) assert.equal(bg, mode === 'light' ? '#FFFFFF' : '#000000');
     }
     assert.equal(new Set(statusForegrounds).size, 4, 'status hues retained');

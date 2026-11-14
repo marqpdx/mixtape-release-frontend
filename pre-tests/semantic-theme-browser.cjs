@@ -1,6 +1,7 @@
 // Render the actual ThemeProvider and both app Chakra systems without an app server.
 // Run from frontend root: node pre-tests/semantic-theme-browser.cjs
 // Add --public-forms for actual public forms; --public-nav also checks desktop/mobile navigation.
+// --public-groups adds actual group admission and callout components.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -11,14 +12,16 @@ const webpackModule = require('next/dist/compiled/webpack/webpack');
 webpackModule.init();
 (async () => {
   const root = process.cwd();
+  const publicGroups = process.argv.includes('--public-groups');
   const publicNav = process.argv.includes('--public-nav');
-  const publicForms = process.argv.includes('--public-forms') || publicNav;
+  const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
   fs.writeFileSync(path.join(temp, 'ts-loader.cjs'), `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=function(source){return ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;};`);
   fs.writeFileSync(path.join(temp, 'api-stub.js'), "exports.axiosInstance={post:async(url)=>{if(url.includes('client-intake'))throw {response:{data:{detail:'Please try again.'}}};return {data:{}};}};");
   fs.writeFileSync(path.join(temp, 'toaster-stub.js'), "exports.toaster={create:()=>{}};");
   fs.writeFileSync(path.join(temp, 'navigation-stub.js'), "exports.usePathname=()=>'/contact';exports.useRouter=()=>({replace:()=>{}});exports.useSearchParams=()=>new URLSearchParams('tab=contact');");
   fs.writeFileSync(path.join(temp, 'link-stub.js'), "const React=require('react');module.exports=React.forwardRef((props,ref)=>React.createElement('a',{...props,ref}));");
+  fs.writeFileSync(path.join(temp,'group-api-stub.js'), "exports.joinGroup=exports.requestToJoinGroup=async(slug)=>{if(slug.includes('failure'))throw new Error('Synthetic refusal');};exports.fetchAdmissionStatus=async(slug)=>({is_member:false,policy:'open',fixture_slug:slug});");
   fs.writeFileSync(path.join(temp,'auth-stub.js'), "const React=require('react');exports.useAuth=()=>{const [state,setState]=React.useState({user:null,isLoading:false});React.useEffect(()=>{const update=e=>setState(e.detail);window.addEventListener('nav-fixture-auth',update);return()=>window.removeEventListener('nav-fixture-auth',update);},[]);return {...state,logout:async()=>{}};};");
   fs.writeFileSync(path.join(temp,'selector-stub.js'), "const React=require('react');exports.ThemeSelector=()=>React.createElement('span',null,'Theme fixture');");
   fs.writeFileSync(path.join(temp, 'entry.js'), `
@@ -36,6 +39,19 @@ webpackModule.init();
     const GetStarted = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/app/(main)/(site)/get-started/page.tsx'))}).default : null;
     const Footer = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/components/layout/Footer.tsx'))}).default : null;
     const Navbar = ${publicNav} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/components/layout/UnifiedNavbar.tsx'))}).default : null;
+    const GroupParts = ${publicGroups} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/shared.tsx'))}) : null;
+    function GroupFixture() {
+      const status={is_member:false,is_moderator:false,has_pending_request:false,can_join:false,can_request:false,policy:'open'};
+      const cases=[['guest',false,status],['member',true,{...status,is_member:true,is_moderator:true}],
+        ['join-success',true,{...status,can_join:true}],['join-failure',true,{...status,can_join:true}],
+        ['request-success',true,{...status,can_request:true}],['request-failure',true,{...status,can_request:true}],
+        ['pending',true,{...status,has_pending_request:true}],['invite',true,{...status,policy:'invite_only'}],
+        ['closed',true,{...status,policy:'closed'}],['parent',true,{...status,can_join:true,requires_parent_membership:true,is_parent_member:false,parent_group:{slug:'parent',title:'Parent group'}}]];
+      return React.createElement(Box,{'data-group-fixture':true,gridColumn:'1 / -1',bg:'theme.surface',color:'theme.text',p:4},
+        ...cases.map(([name,authenticated,admission])=>React.createElement('section',{key:name,'data-admission':name},
+          React.createElement('h3',null,name),React.createElement(GroupParts.AdmissionStrip,{isAuthenticated:authenticated,authLoading:false,admissionStatus:admission,groupSlug:name,groupTitle:'Example group',onStatusChange:s=>{window.groupStatusUpdates=(window.groupStatusUpdates||[]).concat([s]);}}))),
+        ...['highlight','info'].map(style=>React.createElement(Box,{key:style,'data-callout':style,color:'theme.accentText'},React.createElement(GroupParts.PageComponentBlock,{component:{id:style,component_type:'callout',content_json:{style,heading:style+' heading',body:'A readable callout.'}},mutedColor:'theme.textMuted',borderColor:'ui.borderSubtle'}))));
+    }
     function Panel({name,system}) {
       return React.createElement(ChakraProvider, {value:system},
         React.createElement(Box, {className:'token-panel', 'data-app':name, bg:'theme.bg', color:'theme.text', p:5, border:'2px solid', borderColor:'ui.borderControl'},
@@ -60,6 +76,7 @@ webpackModule.init();
       React.useEffect(()=>{ window.themeControls=theme; },[theme]);
       return React.createElement(React.Fragment,null,
         ${publicNav} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(Box,{'data-navbar-fixture':true,gridColumn:'1 / -1'},React.createElement(Navbar,{sticky:false}))),
+        ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -78,6 +95,7 @@ webpackModule.init();
     plugins:[new webpackModule.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_DEFAULT_NEWSLETTER_SLUG':JSON.stringify('fixture-news'),'process.env.NEXT_PUBLIC_SITE_URL':JSON.stringify('http://theme.test')})],
     resolve:{extensions:['.tsx','.ts','.js'],modules:[path.join(root,'node_modules')],alias:{
       '@chakra-ui/react$':require.resolve('@chakra-ui/react'),
+      '@mixtape/api/clients/public/publicApi':path.join(temp,'group-api-stub.js'),
       '@/lib/auth/AuthContext':path.join(temp,'auth-stub.js'),
       '@components/common/ThemeSelector':path.join(temp,'selector-stub.js'),
       '@components':path.join(root,'apps/crossroads/src/components'),
@@ -104,6 +122,16 @@ webpackModule.init();
       await intake.getByRole('textbox',{name:'Email',exact:false}).fill('example@example.test');
       await intake.getByRole('button',{name:'Request access'}).click();
       await expect(intake.getByText('Please try again.',{exact:true})).toBeVisible();
+    }
+    if(publicGroups) {
+      for(const name of ['join-success','join-failure','request-success','request-failure']) {
+        await page.locator('[data-admission="'+name+'"]').getByRole('button').click();
+      }
+      await expect(page.locator('[data-admission="join-success"]')).toContainText('You have joined this group!');
+      await expect(page.locator('[data-admission="join-failure"]')).toContainText('Could not join. Please try again.');
+      await expect(page.locator('[data-admission="request-success"]')).toContainText('Your request has been submitted.');
+      await expect(page.locator('[data-admission="request-failure"]')).toContainText('Could not submit request. Please try again.');
+      assert.equal(await page.evaluate(()=>window.groupStatusUpdates.length),2,'successful admissions report refreshed status');
     }
     const screenshots=[];
     for(const id of ['gallery','earthy-slate']) for(const mode of ['light','dark']) for(const contrast of ['normal','high']) {
@@ -212,6 +240,29 @@ webpackModule.init();
         const footer=await page.locator('.ftr-root').evaluate(el=>getComputedStyle(el).borderTopColor);
         assert.equal(footer,await page.locator('[data-app="Crossroads"] [data-subtle]').evaluate(el=>getComputedStyle(el).borderTopColor),'footer uses decorative separator');
       }
+      if(publicGroups) {
+        const group=page.locator('[data-group-fixture]');
+        for(const strip of await group.locator('.cp-cta, .cp-admission-member').all()) {
+          assert.deepEqual(await strip.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle},'admission owns readable foreground and surface');
+        }
+        for(const link of await group.locator('.cp-cta a, .cp-admission-member a').all()) {
+          assert.equal(await link.evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+          assert.ok((await link.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'),'admission links have a non-colour signal');
+        }
+        for(const [name,text,tone] of [['join-success','You have joined this group!','success'],['join-failure','Could not join. Please try again.','danger'],['request-success','Your request has been submitted.','success'],['request-failure','Could not submit request. Please try again.','danger']]) {
+          const expectedFg=await page.locator('[data-app="Crossroads"] [data-status="'+tone+'"]').evaluate(el=>getComputedStyle(el).color);
+          assert.equal(await group.locator('[data-admission="'+name+'"]').getByText(text,{exact:true}).evaluate(el=>getComputedStyle(el).color),expectedFg);
+        }
+        for(const [style,tone] of [['highlight','warning'],['info','info']]) {
+          const callout=group.locator('[data-callout="'+style+'"] .cp-callout');
+          const pair=await page.locator('[data-app="Crossroads"] [data-status="'+tone+'"]').evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}));
+          assert.deepEqual(await callout.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),pair,'callout owns pair despite contrasting ancestor text');
+          assert.equal(await callout.getByRole('heading').evaluate(el=>getComputedStyle(el).color),pair.text);
+        }
+        const login=group.locator('[data-admission="guest"]').getByRole('link',{name:'Log in',exact:true});
+        await login.hover();await page.keyboard.press('Tab');await login.focus();
+        assert.equal(await login.evaluate(el=>getComputedStyle(el).outlineColor),expected.border);
+      }
       if(publicNav) {
         const setAuth=state=>page.evaluate(state=>window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:state})),state);
         const nav=page.locator('.unav-root');
@@ -269,6 +320,7 @@ webpackModule.init();
     console.log('PASS: Crossroads input/textarea variants, readable placeholders, control boundaries, keyboard focus, invalid hover/focus and native disabled state');
     console.log('PASS: common Crossroads buttons retain semantic resting/hover/expanded pairs, keyboard focus and disabled/loading behavior');
     if(publicForms) console.log('PASS: actual public contact submission, intake error and footer separator in all eight theme/mode variants; API/routing/toaster are inert fixtures');
+    if(publicGroups) console.log('PASS: actual group admission guest/member/policy states, join/request success and failure, link focus and paired callouts in all eight theme/mode combinations; API/status refresh are inert fixtures');
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }

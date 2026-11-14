@@ -27,7 +27,6 @@ export default function HeroTemplate({
   const mutedColor = useColorModeValue("gray.500", "gray.400");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const ctaBg = useColorModeValue("gray.50", "gray.800");
   const accentBg = useColorModeValue("white", "gray.900");
 
   const emblemBg = group.emblem?.bg || "#5b8a6f";
@@ -98,9 +97,6 @@ export default function HeroTemplate({
           admissionStatus={admissionStatus}
           groupSlug={group.slug}
           groupTitle={group.title}
-          mutedColor={mutedColor}
-          ctaBg={ctaBg}
-          ctaBorderColor={borderColor}
           onStatusChange={onStatusChange}
         />
 
