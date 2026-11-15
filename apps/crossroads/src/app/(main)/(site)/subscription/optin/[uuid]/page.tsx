@@ -53,10 +53,10 @@ function ConfirmContent() {
   }, [subscriberUuid, listUuid]);
 
   return (
-    <Box maxW="640px" mx="auto" mt={{ base: 10, md: 16 }} px={6}>
-      <Stack gap={6} align="center" textAlign="center">
+    <Box className="csc-root" bg="theme.bg" color="theme.text" maxW="640px" mx="auto" mt={{ base: 10, md: 16 }} px={6}>
+      <Stack className="csc-content" gap={6} align="center" textAlign="center">
         <Heading size="lg">Confirm Subscription</Heading>
-        <Text color="gray.600">{message}</Text>
+        <Text color={status === "error" ? "status.danger.fg" : status === "success" ? "status.success.fg" : "theme.textMuted"}>{message}</Text>
         {status === "error" && (
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         )}

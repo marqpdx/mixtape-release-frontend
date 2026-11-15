@@ -3,6 +3,7 @@
 // Add --public-forms for actual public forms; --public-nav also checks desktop/mobile navigation.
 // --public-groups adds actual group templates, admission and content components.
 // --public-group-route checks the separate /group/[slug] page with inert services/onboarding.
+// --public-confirmation checks the subscription opt-in route with inert confirmation requests.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -15,13 +16,14 @@ webpackModule.init();
   const root = process.cwd();
   const publicGroups = process.argv.includes('--public-groups');
   const publicGroupRoute = process.argv.includes('--public-group-route');
+  const publicConfirmation = process.argv.includes('--public-confirmation');
   const publicNav = process.argv.includes('--public-nav');
-  const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute;
+  const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
   fs.writeFileSync(path.join(temp, 'ts-loader.cjs'), `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=function(source){return ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;};`);
-  fs.writeFileSync(path.join(temp, 'api-stub.js'), "exports.axiosInstance={post:async(url)=>{if(url.includes('client-intake'))throw {response:{data:{detail:'Please try again.'}}};return {data:{}};}};");
+  fs.writeFileSync(path.join(temp, 'api-stub.js'), "exports.axiosInstance={post:async(url)=>{if(url.includes('client-intake'))throw {response:{data:{detail:'Please try again.'}}};return {data:{}};},get:async(url,options)=>{window.confirmationRequests.push({url,...options});if(options.params.uuid.includes('loading'))return new Promise(()=>{});if(options.params.uuid.includes('failure'))throw new Error('Synthetic confirmation refusal');return {data:{}};}};");
   fs.writeFileSync(path.join(temp, 'toaster-stub.js'), "exports.toaster={create:()=>{}};");
-  fs.writeFileSync(path.join(temp, 'navigation-stub.js'), "const React=require('react');exports.RouteParams=React.createContext({slug:'route-guest'});exports.useParams=()=>React.useContext(exports.RouteParams);exports.usePathname=()=>'/contact';exports.useRouter=()=>({replace:()=>{}});exports.useSearchParams=()=>new URLSearchParams('tab=contact');");
+  fs.writeFileSync(path.join(temp, 'navigation-stub.js'), "const React=require('react');exports.RouteParams=React.createContext({slug:'route-guest'});exports.useParams=()=>React.useContext(exports.RouteParams);exports.usePathname=()=>'/contact';exports.useRouter=()=>({replace:()=>{}});exports.useSearchParams=()=>new URLSearchParams(React.useContext(exports.RouteParams).query||'tab=contact');");
   fs.writeFileSync(path.join(temp, 'link-stub.js'), "const React=require('react');module.exports=React.forwardRef((props,ref)=>React.createElement('a',{...props,ref}));");
   fs.writeFileSync(path.join(temp,'group-api-stub.js'), "exports.joinGroup=exports.requestToJoinGroup=async(slug)=>{if(slug.includes('failure'))throw new Error('Synthetic refusal');};exports.fetchAdmissionStatus=async(slug)=>({is_member:false,policy:'open',fixture_slug:slug});");
   fs.writeFileSync(path.join(temp,'auth-stub.js'), "const React=require('react');exports.useAuth=()=>{const [state,setState]=React.useState(window.fixtureAuth||{user:null,isLoading:false});React.useEffect(()=>{const update=e=>setState(e.detail);window.addEventListener('nav-fixture-auth',update);return()=>window.removeEventListener('nav-fixture-auth',update);},[]);return {...state,isAuthenticated:!!state.user,logout:async()=>{}};};");
@@ -63,6 +65,14 @@ webpackModule.init();
     const Footer = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/components/layout/Footer.tsx'))}).default : null;
     const Navbar = ${publicNav} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/components/layout/UnifiedNavbar.tsx'))}).default : null;
     const GroupRoute = ${publicGroupRoute} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/page.tsx'))}).default : null;
+    const Confirmation = ${publicConfirmation} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/subscription/optin/[uuid]/page.tsx'))}).default : null;
+    function ConfirmationFixture() {
+      const [scenario,setScenario]=React.useState({name:'missing-uuid',revision:0});
+      React.useEffect(()=>{window.setConfirmationScenario=name=>{window.confirmationRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
+      const {RouteParams}=require('next/navigation');
+      return React.createElement(Box,{'data-confirmation':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},
+        React.createElement(RouteParams.Provider,{value:{uuid:scenario.name==='missing-uuid'?'':'fixture-'+scenario.name,query:scenario.name==='missing-list'?'x=1':'l=fixture-list'}},React.createElement(Confirmation,{key:scenario.revision})));
+    }
     function GroupRouteFixture() {
       const [scenario,setScenario]=React.useState({name:'guest',revision:0});
       React.useEffect(()=>{window.setGroupRouteScenario=name=>{
@@ -141,6 +151,7 @@ webpackModule.init();
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupFixture)),
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(TemplateFixture)),
         ${publicGroupRoute} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupRouteFixture)),
+        ${publicConfirmation} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ConfirmationFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -478,6 +489,39 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicConfirmation) {
+        const fixture=page.locator('[data-confirmation]');
+        for(const scenario of ['loading','success','failure','missing-uuid','missing-list']) {
+          await page.evaluate(scenario=>window.setConfirmationScenario(scenario),scenario);
+          await expect(fixture).toHaveAttribute('data-confirmation',scenario);
+          const root=fixture.locator('.csc-root');
+          await expect(root.getByRole('heading',{name:'Confirm Subscription'})).toBeVisible();
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background},'confirmation owns its foreground and canvas');
+          const message=scenario==='loading'?'Confirming your subscription...':scenario==='success'?'You’re confirmed and subscribed.':scenario==='failure'?'We couldn’t confirm your subscription. Please try again.':'Missing confirmation parameters.';
+          const feedback=root.getByText(message,{exact:true});
+          await expect(feedback).toBeVisible();
+          const error=['failure','missing-uuid','missing-list'].includes(scenario);
+          const tone=scenario==='success'?'success':'danger';
+          const color=scenario==='loading'?expected.muted:await page.locator('[data-app="Crossroads"] [data-status="'+tone+'"]').evaluate(el=>getComputedStyle(el).color);
+          assert.equal(await feedback.evaluate(el=>getComputedStyle(el).color),color,'confirmation '+scenario+' feedback');
+          const requests=await page.evaluate(()=>window.confirmationRequests);
+          assert.deepEqual(requests,scenario.startsWith('missing')?[]:[{url:'/api/lanternmail/confirm',params:{uuid:'fixture-'+scenario,list:'fixture-list'}}],'actual confirmation request receives route/search params');
+          const retry=root.getByRole('button',{name:'Try Again'});
+          await expect(retry).toHaveCount(error?1:0);
+          if(error) {
+            await retry.hover();
+            await expect.poll(()=>retry.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:controlExpected.accentText,bg:controlExpected.accent});
+            await page.keyboard.press('Tab');await retry.focus();
+            await expect.poll(()=>retry.evaluate(el=>({color:getComputedStyle(el).outlineColor,width:getComputedStyle(el).outlineWidth,offset:getComputedStyle(el).outlineOffset}))).toEqual({color:expected.border,width:'3px',offset:'2px'});
+          }
+          if(['success','failure'].includes(scenario))for(const width of [1200,390]) {
+            await page.setViewportSize({width,height:844});
+            const confirmationImage=path.join(temp,id+'-'+mode+'-'+contrast+'-confirmation-'+scenario+'-'+width+'.png');
+            await root.screenshot({path:confirmationImage,animations:'disabled'});screenshots.push(confirmationImage);
+          }
+          await page.setViewportSize({width:1200,height:800});
+        }
+      }
       if(publicNav) {
         const setAuth=state=>page.evaluate(state=>window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:state})),state);
         const nav=page.locator('.unav-root');
@@ -540,6 +584,7 @@ webpackModule.init();
     if(publicGroups) console.log('PASS: opaque hero title/intro/text/image-caption/link/callout surfaces over bright, dark and absent banner media; long copy stays within a growing banner at desktop and mobile widths in eight theme/mode combinations; emblem and image artwork contrast is not certified');
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
     if(publicGroupRoute) console.log('PASS: actual /group/[slug] page loading/error, guest/member/moderator/policy states, join/request success/refusal and parent-page refresh, semantic surfaces/initials/badges/link focus; eight theme/mode combinations and desktop/mobile screenshots; APIs/auth/onboarding are inert fixtures');
+    if(publicConfirmation) console.log('PASS: actual subscription confirmation loading/success/refusal/missing-parameter feedback and request params, retry hover/focus, desktop/mobile screenshots in eight theme/mode combinations; requests are inert fixtures, retry reload is not invoked');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});
