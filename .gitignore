@@ -50,3 +50,10 @@ next-env.d.ts
 # Meridian / OpenWiki — generated wiki prose; VPS-only by default
 # Client deployments may override this policy via their own git server configuration
 openwiki/
+
+# Test output and secret-shaped files (public repo; Argus public-release-readiness-01, 2026-11-15)
+playwright-report/
+test-results/
+*.key
+*.p8
+*.p12

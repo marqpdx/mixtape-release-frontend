@@ -1,7 +1,0 @@
-// /admin/sysadmin/page.tsx
-
-// import SysAdminDashboard from "@components/sysadmin/SysAdminDashboard";
-
-export default function SysAdminSysPage() {
-  return <SysAdminDashboard />;
-}
