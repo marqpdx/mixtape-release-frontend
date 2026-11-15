@@ -16,7 +16,6 @@ import {
   Link as ChakraLink,
   Button,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { fetchPublicCourseDetail } from "@mixtape/api/clients/public/publicApi";
 import type { PublicCourseDetail } from "@mixtape/api/clients/public/publicApi";
 import NextLink from "next/link";
@@ -28,11 +27,16 @@ const DELIVERY_LABELS: Record<string, string> = {
   in_person: "In Person",
 };
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "green",
-  intermediate: "yellow",
-  advanced: "red",
-};
+const courseLinkStyles = {
+  color: "theme.text",
+  textDecoration: "underline",
+  _hover: { color: "theme.text" },
+  _focusVisible: {
+    outline: "3px solid",
+    outlineColor: "ui.borderControl",
+    outlineOffset: "2px",
+  },
+} as const;
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -43,11 +47,6 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const cardBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const sectionBg = useColorModeValue("gray.50", "gray.900");
-
   useEffect(() => {
     fetchPublicCourseDetail(slug, courseSlug)
       .then(setCourse)
@@ -57,7 +56,7 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <Box px="6" py="20" textAlign="center">
+      <Box className="gcdt-loading" bg="theme.bg" color="theme.textMuted" role="status" aria-label="Loading courses" px="6" py="20" textAlign="center">
         <Spinner size="lg" />
       </Box>
     );
@@ -65,64 +64,64 @@ export default function CourseDetailPage() {
 
   if (error || !course) {
     return (
-      <Box px="6" py="20" textAlign="center">
-        <Text color={mutedColor}>{error || "Course not found."}</Text>
+      <Box className="gcdt-error" bg="theme.bg" color="theme.text" px="6" py="20" textAlign="center">
+        <Text role="alert" color="status.danger.fg">{error || "Course not found."}</Text>
       </Box>
     );
   }
 
   return (
-    <Box maxW="3xl" mx="auto" px="6" py="8">
+    <Box className="gcdt-root" bg="theme.bg" color="theme.text" maxW="3xl" mx="auto" px="6" py="8">
       {/* Breadcrumbs */}
-      <HStack gap="2" mb="4" fontSize="sm">
-        <ChakraLink asChild color="blue.500">
+      <HStack className="gcdt-breadcrumbs" gap="2" mb="4" fontSize="sm">
+        <ChakraLink asChild {...courseLinkStyles}>
           <NextLink href={`/group/${slug}`}>Group</NextLink>
         </ChakraLink>
-        <Text color={mutedColor}>/</Text>
-        <ChakraLink asChild color="blue.500">
+        <Text color="theme.textMuted">/</Text>
+        <ChakraLink asChild {...courseLinkStyles}>
           <NextLink href={`/group/${slug}/courses`}>Courses</NextLink>
         </ChakraLink>
       </HStack>
 
       {/* Title + badges */}
-      <VStack align="stretch" gap="3" mb="6">
+      <VStack className="gcdt-header" align="stretch" gap="3" mb="6">
         <Heading size="2xl">{course.title}</Heading>
-        <HStack gap="2" flexWrap="wrap">
+        <HStack className="gcdt-badges" gap="2" flexWrap="wrap">
           {course.difficulty_level && (
             <Badge
-              colorScheme={DIFFICULTY_COLORS[course.difficulty_level] || "gray"}
+              bg="ui.surfaceSubtle" color="theme.text"
             >
               {course.difficulty_level}
             </Badge>
           )}
           {course.delivery_type && (
-            <Badge variant="subtle">
+            <Badge bg="ui.surfaceSubtle" color="theme.text" variant="subtle">
               {DELIVERY_LABELS[course.delivery_type] || course.delivery_type}
             </Badge>
           )}
           {course.estimated_duration && (
-            <Badge variant="outline">{course.estimated_duration} min</Badge>
+            <Badge bg="ui.surfaceSubtle" color="theme.text" borderColor="ui.borderSubtle" variant="outline">{course.estimated_duration} min</Badge>
           )}
         </HStack>
       </VStack>
 
       {/* Summary */}
       {course.summary && (
-        <Text fontSize="lg" color={mutedColor} mb="6">
+        <Text fontSize="lg" color="theme.textMuted" mb="6">
           {course.summary}
         </Text>
       )}
 
       {/* Body / description */}
       {course.body && (
-        <Box mb="6">
+        <Box className="gcdt-body" mb="6">
           <Text whiteSpace="pre-wrap">{course.body}</Text>
         </Box>
       )}
 
       {/* Learning Objectives */}
       {course.learning_objectives.length > 0 && (
-        <Box mb="6" p="5" bg={sectionBg} borderRadius="lg">
+        <Box className="gcdt-objectives" mb="6" p="5" bg="ui.surfaceSubtle" color="theme.text" borderRadius="lg">
           <Heading size="md" mb="3">
             Learning Objectives
           </Heading>
@@ -138,24 +137,27 @@ export default function CourseDetailPage() {
 
       {/* Course Outline */}
       {course.items.length > 0 && (
-        <Box mb="6">
+        <Box className="gcdt-outline" mb="6">
           <Heading size="md" mb="3">
             Course Outline
           </Heading>
-          <VStack align="stretch" gap="2">
+          <VStack className="gcdt-items" align="stretch" gap="2">
             {course.items.map((item) => (
               <HStack
+                className="gcdt-item"
+                color="theme.text"
+                wrap="wrap"
                 key={item.id}
                 p="3"
-                bg={cardBg}
+                bg="theme.surface"
                 border="1px solid"
-                borderColor={borderColor}
+                borderColor="ui.borderSubtle"
                 borderRadius="md"
                 gap="3"
               >
                 <Text
                   fontSize="sm"
-                  color={mutedColor}
+                  color="theme.textMuted"
                   fontWeight="bold"
                   w="28px"
                   textAlign="right"
@@ -165,7 +167,7 @@ export default function CourseDetailPage() {
                 </Text>
                 <Badge
                   size="sm"
-                  colorScheme={item.content_type === "library" ? "purple" : "blue"}
+                  bg="ui.surfaceSubtle" color="theme.text"
                 >
                   {item.content_type === "library" ? "Module" : "Lesson"}
                 </Badge>
@@ -173,7 +175,7 @@ export default function CourseDetailPage() {
                   {item.content_title}
                 </Text>
                 {item.estimated_duration && (
-                  <Text fontSize="xs" color={mutedColor}>
+                  <Text fontSize="xs" color="theme.textMuted">
                     {item.estimated_duration} min
                   </Text>
                 )}
@@ -185,12 +187,13 @@ export default function CourseDetailPage() {
 
       {/* Enroll placeholder */}
       <Box
+        className="gcdt-enrollment"
         p="5"
-        bg={sectionBg}
+        bg="ui.surfaceSubtle" color="theme.text"
         borderRadius="lg"
         textAlign="center"
       >
-        <Text fontSize="sm" color={mutedColor} mb="3">
+        <Text fontSize="sm" color="theme.textMuted" mb="3">
           Enrollment opens when a course run is scheduled.
         </Text>
         <Button variant="outline" size="sm" disabled>

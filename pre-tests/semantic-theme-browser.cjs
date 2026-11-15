@@ -6,6 +6,7 @@
 // --public-confirmation checks the subscription opt-in route with inert confirmation requests.
 // --public-commons checks the actual Commons list/cards; Leaflet is an inert boundary.
 // --public-commons-detail checks actual entry states, metadata and all link categories.
+// --public-courses checks actual public course list/detail pages with inert requests.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -21,6 +22,7 @@ webpackModule.init();
   const publicConfirmation = process.argv.includes('--public-confirmation');
   const publicCommons = process.argv.includes('--public-commons');
   const publicCommonsDetail = process.argv.includes('--public-commons-detail');
+  const publicCourses = process.argv.includes('--public-courses');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -81,6 +83,27 @@ webpackModule.init();
     };
   `);
   fs.writeFileSync(path.join(temp,'dynamic-stub.js'), "const React=require('react');module.exports=()=>props=>React.createElement('div',{'data-map-boundary':true},'Map fixture: '+props.items.length);");
+  fs.writeFileSync(path.join(temp,'course-api-stub.js'), `
+    const course=(difficulty,delivery,i)=>({id:String(i),slug:'course-'+i,title:'Fixture course '+i,summary:'Course summary '+i,
+      difficulty_level:difficulty,delivery_type:delivery,estimated_duration:45,learning_objectives:['First objective','Second objective']});
+    exports.fetchPublicGroupCourses=async slug=>{
+      window.courseRequests.push(['list',slug]);
+      if(slug==='loading')return new Promise(()=>{});
+      if(slug==='error')throw new Error('Synthetic refusal');
+      if(slug==='empty')return [];
+      return [['beginner','online'],['intermediate','self_paced'],['advanced','hybrid'],['unknown','in_person'],['','custom']].map(([a,b],i)=>course(a,b,i));
+    };
+    exports.fetchPublicCourseDetail=async(slug,courseSlug)=>{
+      window.courseRequests.push(['detail',slug,courseSlug]);
+      if(slug==='loading')return new Promise(()=>{});
+      if(slug==='error')throw new Error('Synthetic refusal');
+      if(slug==='missing')return null;
+      if(slug==='minimal')return {title:'Minimal course',learning_objectives:[],items:[]};
+      return {...course('advanced','hybrid',0),body:'Course body',items:[
+        {id:'module',position:1,content_type:'library',content_title:'Fixture module',estimated_duration:20},
+        {id:'lesson',position:2,content_type:'lesson',content_title:'Fixture lesson',estimated_duration:25}]};
+    };
+  `);
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
     const {createRoot} = require('react-dom/client');
@@ -100,6 +123,18 @@ webpackModule.init();
     const Confirmation = ${publicConfirmation} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/subscription/optin/[uuid]/page.tsx'))}).default : null;
     const Commons = ${publicCommons} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/page.tsx'))}).default : null;
     const CommonsDetail = ${publicCommonsDetail} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/[slug]/page.tsx'))}).default : null;
+    const CourseList = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/page.tsx'))}).default : null;
+    const CourseDetail = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/[courseSlug]/page.tsx'))}).default : null;
+    function CourseFixture() {
+      const [scenario,setScenario]=React.useState({name:'loading',revision:0});
+      React.useEffect(()=>{window.setCourseScenario=name=>{window.courseRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
+      window.courseRequests=window.courseRequests||[];
+      const {RouteParams}=require('next/navigation');
+      return React.createElement(Box,{'data-courses':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},
+        React.createElement(RouteParams.Provider,{value:{slug:scenario.name,courseSlug:'fixture-course'}},
+          React.createElement('section',{'data-course-list':true},React.createElement(CourseList,{key:scenario.revision})),
+          React.createElement('section',{'data-course-detail':true},React.createElement(CourseDetail,{key:scenario.revision}))));
+    }
     function CommonsDetailFixture() {
       const [scenario,setScenario]=React.useState({name:'loading',revision:0});
       React.useEffect(()=>{window.setCommonsDetailScenario=name=>{window.commonsDetailRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
@@ -206,6 +241,7 @@ webpackModule.init();
         ${publicConfirmation} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ConfirmationFixture)),
         ${publicCommons} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsFixture)),
         ${publicCommonsDetail} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsDetailFixture)),
+        ${publicCourses} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CourseFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -218,7 +254,7 @@ webpackModule.init();
       React.createElement(ColorModeProvider,{defaultTheme:'light',enableSystem:false},
         React.createElement(ThemeProvider,{themes,defaultThemeId:'gallery',storageKeyPrefix:'token-check'},React.createElement(Demo))));
   `);
-  fs.writeFileSync(path.join(temp,'public-api-stub.js'), `Object.assign(exports,require('./${publicGroupRoute?'group-route-api-stub':'group-api-stub'}.js'),require('./commons-api-stub.js'));`);
+  fs.writeFileSync(path.join(temp,'public-api-stub.js'), `Object.assign(exports,require('./${publicGroupRoute?'group-route-api-stub':'group-api-stub'}.js'),require('./commons-api-stub.js'),require('./course-api-stub.js'));`);
   await new Promise((resolve, reject) => webpackModule.webpack({
     mode:'production', entry:path.join(temp,'entry.js'), cache:false,
     output:{path:temp,filename:'bundle.js'},
@@ -546,6 +582,64 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicCourses) {
+        const fixture=page.locator('[data-courses]');
+        for(const scenario of ['loading','error','empty','missing','minimal','full']) {
+          await page.evaluate(name=>window.setCourseScenario(name),scenario);
+          await expect(fixture).toHaveAttribute('data-courses',scenario);
+          const list=fixture.locator('[data-course-list]'),detail=fixture.locator('[data-course-detail]');
+          for(const [section,prefix] of [[list,'gcls'],[detail,'gcdt']]) {
+            const state=scenario==='loading'?'loading':scenario==='error'||(prefix==='gcdt'&&scenario==='missing')?'error':'root';
+            const root=section.locator('.'+prefix+'-'+state);
+            await expect(root).toBeVisible();
+            assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:state==='loading'?expected.muted:controlExpected.text,bg:expected.background});
+            if(state==='error')assert.equal(await root.getByRole('alert').evaluate(el=>getComputedStyle(el).color),controlExpected.danger);
+            for(const badge of await root.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+            for(const link of await root.getByRole('link').all()) {
+              await link.hover();
+              await expect.poll(()=>link.evaluate(el=>getComputedStyle(el).color)).toBe(controlExpected.text);
+              await page.keyboard.press('Tab');await link.focus();
+              assert.deepEqual(await link.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};}),{color:expected.border,width:'3px',offset:'2px'});
+            }
+          }
+          assert.deepEqual(await page.evaluate(()=>window.courseRequests),[['list',scenario],['detail',scenario,'fixture-course']]);
+          if(scenario==='empty') {
+            await expect(list.getByText('No published courses yet.')).toBeVisible();
+            assert.equal(await list.getByText('No published courses yet.').evaluate(el=>getComputedStyle(el).color),expected.muted);
+          }
+          if(scenario==='minimal')await expect(detail.locator('.gcdt-objectives,.gcdt-outline,.gcdt-body,.chakra-badge')).toHaveCount(0);
+          if(scenario==='full') {
+            await expect(list.locator('.gcls-card')).toHaveCount(5);
+            for(const [index,label] of ['Online','Self-Paced','Hybrid','In Person','custom'].entries())await expect(list.locator('.gcls-card').nth(index)).toContainText(label);
+            for(const card of await list.locator('.gcls-card').all()) {
+              assert.deepEqual(await card.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface});
+              assert.equal(await card.locator(':scope > p').evaluate(el=>getComputedStyle(el).color),expected.muted);
+              assert.equal(await card.locator('.gcls-meta').evaluate(el=>getComputedStyle(el).color),expected.muted);
+            }
+            const course=list.getByRole('link').filter({hasText:'Fixture course 0'});
+            await expect(course).toHaveAttribute('href','/group/full/courses/course-0');
+            await course.hover();
+            await expect.poll(()=>list.locator('.gcls-card').first().evaluate(el=>getComputedStyle(el).borderTopColor)).toBe(expected.border);
+            await course.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.courseClicked=el.getAttribute('href');},{once:true}));await course.click();
+            assert.equal(await page.evaluate(()=>window.courseClicked),'/group/full/courses/course-0');
+            assert.deepEqual(await detail.getByRole('link').evaluateAll(links=>links.map(el=>el.getAttribute('href'))),['/group/full','/group/full/courses']);
+            for(const section of await detail.locator('.gcdt-objectives,.gcdt-enrollment').all())assert.deepEqual(await section.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+            for(const row of await detail.locator('.gcdt-item').all())assert.deepEqual(await row.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface});
+            for(const text of ['Course summary 0','Enrollment opens when a course run is scheduled.','1.','2.','20 min','25 min'])assert.equal(await detail.getByText(text,{exact:true}).evaluate(el=>getComputedStyle(el).color),expected.muted);
+            await expect(detail.getByRole('button',{name:'Enroll (Coming Soon)'})).toBeDisabled();
+            await expect(detail.getByText('Module',{exact:true})).toBeVisible();await expect(detail.getByText('Lesson',{exact:true})).toBeVisible();
+            for(const width of [1200,390]) {
+              await page.setViewportSize({width,height:844});
+              for(const [section,label] of [[list,'list'],[detail,'detail']]) {
+                assert.equal(await section.evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'course '+label+' wraps at '+width);
+                const image=path.join(temp,id+'-'+mode+'-'+contrast+'-courses-'+label+'-'+width+'.png');
+                await section.screenshot({path:image,animations:'disabled'});screenshots.push(image);
+              }
+            }
+          }
+          await page.setViewportSize({width:1200,height:800});
+        }
+      }
       if(publicCommonsDetail) {
         const fixture=page.locator('[data-commons-detail]');
         for(const scenario of ['loading','error','missing','minimal','full']) {
@@ -765,6 +859,7 @@ webpackModule.init();
     if(publicConfirmation) console.log('PASS: actual subscription confirmation loading/success/refusal/missing-parameter feedback and request params, retry hover/focus, desktop/mobile screenshots in eight theme/mode combinations; requests are inert fixtures, retry reload is not invoked');
     if(publicCommons) console.log('PASS: actual Commons loading/error/empty/list/search, semantic card metadata/type pairs, separate detail/external link click targets and hover/focus; eight theme/mode combinations, desktop/mobile screenshots; API and map boundary inert');
     if(publicCommonsDetail) console.log('PASS: actual Commons detail loading/error/missing/minimal/full states, metadata/quote/badge pairs, external/back/connection link hover/focus/click targets and route slug; eight combinations and desktop/mobile screenshots; API/navigation inert');
+    if(publicCourses) console.log('PASS: actual public course list/detail states, semantic cards/metadata/badges/objectives/outline, link hover/focus/destinations, disabled enrollment; eight combinations and desktop/mobile screenshots; API/navigation inert');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

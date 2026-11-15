@@ -14,7 +14,6 @@ import {
   VStack,
   Link as ChakraLink,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { fetchPublicGroupCourses } from "@mixtape/api/clients/public/publicApi";
 import type { PublicCourseListItem } from "@mixtape/api/clients/public/publicApi";
 import NextLink from "next/link";
@@ -26,11 +25,16 @@ const DELIVERY_LABELS: Record<string, string> = {
   in_person: "In Person",
 };
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "green",
-  intermediate: "yellow",
-  advanced: "red",
-};
+const courseLinkStyles = {
+  color: "theme.text",
+  textDecoration: "underline",
+  _hover: { color: "theme.text" },
+  _focusVisible: {
+    outline: "3px solid",
+    outlineColor: "ui.borderControl",
+    outlineOffset: "2px",
+  },
+} as const;
 
 export default function GroupCoursesPage() {
   const params = useParams();
@@ -39,10 +43,6 @@ export default function GroupCoursesPage() {
   const [courses, setCourses] = useState<PublicCourseListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const cardBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
 
   useEffect(() => {
     fetchPublicGroupCourses(slug)
@@ -53,7 +53,7 @@ export default function GroupCoursesPage() {
 
   if (loading) {
     return (
-      <Box px="6" py="20" textAlign="center">
+      <Box className="gcls-loading" bg="theme.bg" color="theme.textMuted" role="status" aria-label="Loading courses" px="6" py="20" textAlign="center">
         <Spinner size="lg" />
       </Box>
     );
@@ -61,56 +61,62 @@ export default function GroupCoursesPage() {
 
   if (error) {
     return (
-      <Box px="6" py="20" textAlign="center">
-        <Text color={mutedColor}>{error}</Text>
+      <Box className="gcls-error" bg="theme.bg" color="theme.text" px="6" py="20" textAlign="center">
+        <Text role="alert" color="status.danger.fg">{error}</Text>
       </Box>
     );
   }
 
   return (
-    <Box maxW="3xl" mx="auto" px="6" py="8">
-      <VStack align="stretch" gap="2" mb="6">
-        <ChakraLink asChild fontSize="sm" color="blue.500">
+    <Box className="gcls-root" bg="theme.bg" color="theme.text" maxW="3xl" mx="auto" px="6" py="8">
+      <VStack className="gcls-header" align="stretch" gap="2" mb="6">
+        <ChakraLink asChild fontSize="sm" {...courseLinkStyles}>
           <NextLink href={`/group/${slug}`}>Back to group</NextLink>
         </ChakraLink>
         <Heading size="xl">Courses</Heading>
       </VStack>
 
       {courses.length === 0 ? (
-        <Text color={mutedColor}>No published courses yet.</Text>
+        <Text color="theme.textMuted">No published courses yet.</Text>
       ) : (
-        <VStack align="stretch" gap="4">
+        <VStack className="gcls-list" align="stretch" gap="4">
           {courses.map((course) => (
             <ChakraLink
               asChild
               key={course.id}
-              _hover={{ textDecoration: "none" }}
+              {...courseLinkStyles}
+              display="block"
+              textDecoration="none"
+              _hover={{ color: "theme.text", textDecoration: "none" }}
             >
               <NextLink href={`/group/${slug}/courses/${course.slug}`}>
                 <Box
+                  className="gcls-card"
+                  color="theme.text"
                   p="5"
-                  bg={cardBg}
-                  border="1px solid"
-                  borderColor={borderColor}
+                  bg="theme.surface"
+                  borderWidth="1px"
+                  borderStyle="solid"
+                  borderColor="ui.borderSubtle"
                   borderRadius="lg"
-                  _hover={{ boxShadow: "md", borderColor: "blue.200" }}
+                  _hover={{ boxShadow: "var(--ui-shadow-raised)", borderColor: "ui.borderControl" }}
                   transition="all 0.2s"
                 >
-                  <HStack justify="space-between" mb="2">
-                    <Text fontWeight="bold" fontSize="lg">
+                  <HStack className="gcls-card-heading" justify="space-between" mb="2" wrap="wrap">
+                    <Text fontWeight="bold" fontSize="lg" textDecoration="underline">
                       {course.title}
                     </Text>
-                    <HStack gap="2">
+                    <HStack className="gcls-badges" gap="2" wrap="wrap">
                       {course.difficulty_level && (
                         <Badge
-                          colorScheme={DIFFICULTY_COLORS[course.difficulty_level] || "gray"}
+                          bg="ui.surfaceSubtle" color="theme.text"
                           size="sm"
                         >
                           {course.difficulty_level}
                         </Badge>
                       )}
                       {course.delivery_type && (
-                        <Badge variant="subtle" size="sm">
+                        <Badge bg="ui.surfaceSubtle" color="theme.text" variant="subtle" size="sm">
                           {DELIVERY_LABELS[course.delivery_type] || course.delivery_type}
                         </Badge>
                       )}
@@ -118,12 +124,12 @@ export default function GroupCoursesPage() {
                   </HStack>
 
                   {course.summary && (
-                    <Text fontSize="sm" color={mutedColor} mb="2" lineClamp={2}>
+                    <Text fontSize="sm" color="theme.textMuted" mb="2" lineClamp={2}>
                       {course.summary}
                     </Text>
                   )}
 
-                  <HStack gap="4" fontSize="xs" color={mutedColor}>
+                  <HStack className="gcls-meta" gap="4" wrap="wrap" fontSize="xs" color="theme.textMuted">
                     {course.estimated_duration && (
                       <Text>{course.estimated_duration} min</Text>
                     )}
