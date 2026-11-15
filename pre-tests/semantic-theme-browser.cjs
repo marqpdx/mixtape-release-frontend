@@ -4,6 +4,7 @@
 // --public-groups adds actual group templates, admission and content components.
 // --public-group-route checks the separate /group/[slug] page with inert services/onboarding.
 // --public-confirmation checks the subscription opt-in route with inert confirmation requests.
+// --public-commons checks the actual Commons list/cards; Leaflet is an inert boundary.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -17,6 +18,7 @@ webpackModule.init();
   const publicGroups = process.argv.includes('--public-groups');
   const publicGroupRoute = process.argv.includes('--public-group-route');
   const publicConfirmation = process.argv.includes('--public-confirmation');
+  const publicCommons = process.argv.includes('--public-commons');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -49,6 +51,19 @@ webpackModule.init();
     exports.joinGroup=exports.requestToJoinGroup=async slug=>{if(slug.includes('failure'))throw new Error('Synthetic refusal');if(slug.startsWith('route-'))window.routeActions[slug]=true;};
   `);
   fs.writeFileSync(path.join(temp,'selector-stub.js'), "const React=require('react');exports.ThemeSelector=()=>React.createElement('span',null,'Theme fixture');");
+  fs.writeFileSync(path.join(temp,'commons-api-stub.js'), `
+    exports.fetchPublicCommons=async params=>{
+      window.commonsRequests.push(params);
+      if(window.commonsScenario==='loading')return new Promise(()=>{});
+      if(window.commonsScenario==='error')throw new Error('Synthetic refusal');
+      if(window.commonsScenario==='empty'||params?.search==='absent')return [];
+      return ['person','organization','group','project','place','event','unknown',''].map((type,i)=>({
+        id:String(i),slug:'fixture-'+i,title:'Commons fixture '+i,item_type:type,
+        location_name:'Fixture location',summary:'Fixture summary',why_recommended:'Fixture recommendation',
+        recommended_by_name:'Fixture curator',website:i===0?'https://example.test/commons':'',latitude:null,longitude:null}));
+    };
+  `);
+  fs.writeFileSync(path.join(temp,'dynamic-stub.js'), "const React=require('react');module.exports=()=>props=>React.createElement('div',{'data-map-boundary':true},'Map fixture: '+props.items.length);");
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
     const {createRoot} = require('react-dom/client');
@@ -66,6 +81,17 @@ webpackModule.init();
     const Navbar = ${publicNav} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/components/layout/UnifiedNavbar.tsx'))}).default : null;
     const GroupRoute = ${publicGroupRoute} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/page.tsx'))}).default : null;
     const Confirmation = ${publicConfirmation} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/subscription/optin/[uuid]/page.tsx'))}).default : null;
+    const Commons = ${publicCommons} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/page.tsx'))}).default : null;
+    function CommonsFixture() {
+      const [scenario,setScenario]=React.useState({name:'loading',revision:0});
+      React.useEffect(()=>{window.setCommonsScenario=name=>{
+        window.commonsRequests=[];window.commonsScenario=name;
+        setScenario(old=>({name,revision:old.revision+1}));
+      };},[]);
+      window.commonsRequests=window.commonsRequests||[];
+      window.commonsScenario=scenario.name;
+      return React.createElement(Box,{'data-commons':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},React.createElement(Commons,{key:scenario.revision}));
+    }
     function ConfirmationFixture() {
       const [scenario,setScenario]=React.useState({name:'missing-uuid',revision:0});
       React.useEffect(()=>{window.setConfirmationScenario=name=>{window.confirmationRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
@@ -152,6 +178,7 @@ webpackModule.init();
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(TemplateFixture)),
         ${publicGroupRoute} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupRouteFixture)),
         ${publicConfirmation} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ConfirmationFixture)),
+        ${publicCommons} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -164,21 +191,24 @@ webpackModule.init();
       React.createElement(ColorModeProvider,{defaultTheme:'light',enableSystem:false},
         React.createElement(ThemeProvider,{themes,defaultThemeId:'gallery',storageKeyPrefix:'token-check'},React.createElement(Demo))));
   `);
+  fs.writeFileSync(path.join(temp,'public-api-stub.js'), `Object.assign(exports,require('./${publicGroupRoute?'group-route-api-stub':'group-api-stub'}.js'),require('./commons-api-stub.js'));`);
   await new Promise((resolve, reject) => webpackModule.webpack({
     mode:'production', entry:path.join(temp,'entry.js'), cache:false,
     output:{path:temp,filename:'bundle.js'},
     plugins:[new webpackModule.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_DEFAULT_NEWSLETTER_SLUG':JSON.stringify('fixture-news'),'process.env.NEXT_PUBLIC_SITE_URL':JSON.stringify('http://theme.test')})],
     resolve:{extensions:['.tsx','.ts','.js'],modules:[path.join(root,'node_modules')],alias:{
       '@chakra-ui/react$':require.resolve('@chakra-ui/react'),
-      '@mixtape/api/clients/public/publicApi':path.join(temp,publicGroupRoute?'group-route-api-stub.js':'group-api-stub.js'),
+      '@mixtape/api/clients/public/publicApi':path.join(temp,'public-api-stub.js'),
       '@/features/onboarding/GroupOnboardingTour':path.join(temp,'tour-stub.js'),
       '@/lib/auth/AuthContext':path.join(temp,'auth-stub.js'),
       '@components/common/ThemeSelector':path.join(temp,'selector-stub.js'),
+      ...(publicCommons ? {'@components/commons/CommonsMap$':path.join(temp,'dynamic-stub.js')} : {}),
       '@components':path.join(root,'apps/crossroads/src/components'),
       '@mixtape/api/lib/axiosInstance':path.join(temp,'api-stub.js'),
       '@mixtape/core/lib/toaster':path.join(temp,'toaster-stub.js'),
       'next/navigation$':path.join(temp,'navigation-stub.js'),
       'next/link$':path.join(temp,'link-stub.js'),
+      ...(publicCommons ? {'next/dynamic$':path.join(temp,'dynamic-stub.js')} : {}),
     }},
     module:{rules:[{test:/\.tsx?$/,exclude:/node_modules/,use:path.join(temp,'ts-loader.cjs')}]},
     optimization:{minimize:false},
@@ -489,6 +519,77 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicCommons) {
+        const fixture=page.locator('[data-commons]');
+        const root=fixture.locator('.cmns-root');
+        for(const scenario of ['loading','error','empty','items']) {
+          await page.evaluate(name=>window.setCommonsScenario(name),scenario);
+          await expect(fixture).toHaveAttribute('data-commons',scenario);
+          await expect(root.getByRole('button',{name:'Map',exact:true})).toHaveAttribute('aria-pressed','true');
+          await expect(root.locator('[data-map-boundary]')).toBeVisible();
+          await root.getByRole('button',{name:'List',exact:true}).click();
+          await expect(root.getByRole('button',{name:'List',exact:true})).toHaveAttribute('aria-pressed','true');
+          await expect(root.locator('[data-map-boundary]')).toHaveCount(0);
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background});
+          assert.equal(await root.locator('.cmns-header p').last().evaluate(el=>getComputedStyle(el).color),expected.muted);
+          const search=root.getByRole('textbox',{name:'Search Commons'});
+          assert.deepEqual(await search.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderBottomColor,placeholder:getComputedStyle(el,'::placeholder').color})),{text:controlExpected.text,bg:controlExpected.surface,border:expected.border,placeholder:controlExpected.placeholder});
+          await search.focus();
+          assert.equal(await search.evaluate(el=>getComputedStyle(el).outlineColor),expected.border);
+          if(scenario==='loading') {
+            await expect(root.getByRole('status',{name:'Loading Commons'})).toBeVisible();
+            assert.equal(await root.locator('.cmns-loading').evaluate(el=>getComputedStyle(el).color),expected.muted);
+          } else if(scenario==='error') {
+            await expect(root.getByRole('alert')).toHaveText('Could not load Commons.');
+            assert.equal(await root.getByRole('alert').evaluate(el=>getComputedStyle(el).color),controlExpected.danger);
+          } else if(scenario==='empty') {
+            await expect(root.getByText('No published items yet.')).toBeVisible();
+            assert.equal(await root.locator('.cmns-empty p').evaluate(el=>getComputedStyle(el).color),expected.muted);
+          } else {
+            await expect(root.locator('.cmic-root')).toHaveCount(8);
+            assert.equal(await root.locator('a a').count(),0,'detail and external anchors are separate');
+            for(const card of await root.locator('.cmic-root').all()) {
+              assert.deepEqual(await card.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface});
+              for(const metadata of await card.locator('.cmic-content > p,.cmic-footer p').all())assert.equal(await metadata.evaluate(el=>getComputedStyle(el).color),expected.muted);
+              for(const badge of await card.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+            }
+            const card=root.locator('.cmic-root').first();
+            const detail=card.getByRole('link',{name:'Commons fixture 0',exact:true});
+            const website=card.getByRole('link',{name:'Visit site →',exact:true});
+            await expect(detail).toHaveAttribute('href','/commons/fixture-0');
+            await expect(website).toHaveAttribute('href','https://example.test/commons');
+            await expect(website).toHaveAttribute('rel','noopener noreferrer');
+            await expect(website).toHaveAttribute('target','_blank');
+            for(const link of [detail,website]) {
+              await link.hover();
+              await expect.poll(()=>card.evaluate(el=>getComputedStyle(el).borderTopColor)).toBe(expected.border);
+              assert.equal(await link.evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+              assert.ok((await link.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'));
+              await page.keyboard.press('Tab');await link.focus();
+              const pseudo=link===detail?'::before':null;
+              assert.deepEqual(await link.evaluate((el,pseudo)=>{const s=getComputedStyle(el,pseudo);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};},pseudo),{color:expected.border,width:'3px',offset:'2px'});
+              await link.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.commonsClicked=el.getAttribute('href');},{once:true}));
+              await link.click();
+              assert.equal(await page.evaluate(()=>window.commonsClicked),await link.getAttribute('href'),'actual clicked anchor destination');
+            }
+            await detail.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.commonsClicked='card-padding';},{once:true}));
+            await card.click({position:{x:8,y:8}});
+            assert.equal(await page.evaluate(()=>window.commonsClicked),'card-padding','card padding retains its detail link target');
+            for(const width of [1200,390]) {
+              await page.setViewportSize({width,height:844});
+              const image=path.join(temp,id+'-'+mode+'-'+contrast+'-commons-'+width+'.png');
+              await root.screenshot({path:image,animations:'disabled'});screenshots.push(image);
+            }
+            await page.setViewportSize({width:1200,height:800});
+            await search.fill('absent');
+            await expect(root.getByText('No published items yet.')).toBeVisible();
+            assert.deepEqual(await page.evaluate(()=>window.commonsRequests.at(-1)),{search:'absent'});
+            await search.fill('');
+            await expect(root.locator('.cmic-root')).toHaveCount(8);
+            assert.equal(await page.evaluate(()=>window.commonsRequests.at(-1)),undefined);
+          }
+        }
+      }
       if(publicConfirmation) {
         const fixture=page.locator('[data-confirmation]');
         for(const scenario of ['loading','success','failure','missing-uuid','missing-list']) {
@@ -585,6 +686,7 @@ webpackModule.init();
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
     if(publicGroupRoute) console.log('PASS: actual /group/[slug] page loading/error, guest/member/moderator/policy states, join/request success/refusal and parent-page refresh, semantic surfaces/initials/badges/link focus; eight theme/mode combinations and desktop/mobile screenshots; APIs/auth/onboarding are inert fixtures');
     if(publicConfirmation) console.log('PASS: actual subscription confirmation loading/success/refusal/missing-parameter feedback and request params, retry hover/focus, desktop/mobile screenshots in eight theme/mode combinations; requests are inert fixtures, retry reload is not invoked');
+    if(publicCommons) console.log('PASS: actual Commons loading/error/empty/list/search, semantic card metadata/type pairs, separate detail/external link click targets and hover/focus; eight theme/mode combinations, desktop/mobile screenshots; API and map boundary inert');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

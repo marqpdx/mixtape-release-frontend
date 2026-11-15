@@ -11,55 +11,53 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import type { PublicCommonsItem } from "@mixtape/api/clients/public/publicApi";
-
-const TYPE_COLORS: Record<string, string> = {
-  person: "purple",
-  organization: "blue",
-  group: "teal",
-  project: "orange",
-  place: "green",
-  event: "red",
-};
 
 interface CommonsItemCardProps {
   item: PublicCommonsItem;
 }
 
 export default function CommonsItemCard({ item }: CommonsItemCardProps) {
-  const cardBg = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const quoteColor = useColorModeValue("gray.600", "gray.300");
-  const hoverBorderColor = useColorModeValue("gray.300", "gray.600");
-
-  const typeColor = TYPE_COLORS[item.item_type] ?? "gray";
-
   return (
-    <ChakraLink
-      as={NextLink}
-      href={`/commons/${item.slug}`}
-      display="block"
-      _hover={{ textDecoration: "none" }}
-    >
     <Box
-      bg={cardBg}
-      border="1px solid"
-      borderColor={borderColor}
+      className="cmic-root"
+      position="relative"
+      bg="theme.surface"
+      color="theme.text"
+      borderWidth="1px"
+      borderStyle="solid"
+      borderColor="ui.borderSubtle"
       borderRadius="lg"
       p={5}
-      _hover={{ borderColor: hoverBorderColor }}
+      _hover={{ borderColor: "ui.borderControl" }}
       transition="border-color 0.15s"
     >
-      <VStack align="start" gap={2}>
+      <VStack className="cmic-content" align="start" gap={2}>
         {/* Title + type badge */}
-        <HStack gap={2} wrap="wrap">
+        <HStack className="cmic-heading" gap={2} wrap="wrap">
           <Text fontWeight="semibold" fontSize="md" lineHeight="short">
-            {item.title}
+            <ChakraLink
+              as={NextLink}
+              href={`/commons/${item.slug}`}
+              color="theme.text"
+              textDecoration="underline"
+              // Stretch the detail target over the card; the website stays above it.
+              _before={{ content: '""', position: "absolute", inset: 0, borderRadius: "lg" }}
+              _hover={{ color: "theme.text" }}
+              _focusVisible={{
+                outline: "none",
+                _before: {
+                  outline: "3px solid",
+                  outlineColor: "ui.borderControl",
+                  outlineOffset: "2px",
+                },
+              }}
+            >
+              {item.title}
+            </ChakraLink>
           </Text>
           {item.item_type && (
-            <Badge colorPalette={typeColor} size="sm" borderRadius="full">
+            <Badge bg="ui.surfaceSubtle" color="theme.text" size="sm" borderRadius="full">
               {item.item_type}
             </Badge>
           )}
@@ -67,14 +65,14 @@ export default function CommonsItemCard({ item }: CommonsItemCardProps) {
 
         {/* Location */}
         {item.location_name && (
-          <Text fontSize="xs" color={mutedColor}>
+          <Text fontSize="xs" color="theme.textMuted">
             {item.location_name}
           </Text>
         )}
 
         {/* Summary */}
         {item.summary && (
-          <Text fontSize="sm" color={mutedColor} lineClamp={2}>
+          <Text fontSize="sm" color="theme.textMuted" lineClamp={2}>
             {item.summary}
           </Text>
         )}
@@ -83,11 +81,11 @@ export default function CommonsItemCard({ item }: CommonsItemCardProps) {
         {item.why_recommended && (
           <Text
             fontSize="sm"
-            color={quoteColor}
+            color="theme.textMuted"
             fontStyle="italic"
             lineClamp={3}
             borderLeft="2px solid"
-            borderColor={hoverBorderColor}
+            borderColor="ui.borderSubtle"
             pl={3}
           >
             "{item.why_recommended}"
@@ -95,9 +93,9 @@ export default function CommonsItemCard({ item }: CommonsItemCardProps) {
         )}
 
         {/* Footer row */}
-        <HStack gap={3} mt={1} wrap="wrap">
+        <HStack className="cmic-footer" gap={3} mt={1} wrap="wrap">
           {item.recommended_by_name && (
-            <Text fontSize="xs" color={mutedColor}>
+            <Text fontSize="xs" color="theme.textMuted">
               Recommended by {item.recommended_by_name}
             </Text>
           )}
@@ -107,7 +105,11 @@ export default function CommonsItemCard({ item }: CommonsItemCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               fontSize="xs"
-              color="blue.500"
+              position="relative"
+              color="theme.text"
+              textDecoration="underline"
+              _hover={{ color: "theme.text" }}
+              _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }}
               onClick={(e) => e.stopPropagation()}
             >
               Visit site →
@@ -116,6 +118,5 @@ export default function CommonsItemCard({ item }: CommonsItemCardProps) {
         </HStack>
       </VStack>
     </Box>
-    </ChakraLink>
   );
 }

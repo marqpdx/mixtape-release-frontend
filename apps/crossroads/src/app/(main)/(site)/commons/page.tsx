@@ -13,7 +13,6 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import {
   fetchPublicCommons,
   type PublicCommonsItem,
@@ -34,9 +33,6 @@ export default function CommonsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const subtitleColor = useColorModeValue("gray.600", "gray.400");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-
   useEffect(() => {
     async function load() {
       try {
@@ -53,22 +49,31 @@ export default function CommonsPage() {
   }, [search]);
 
   return (
-    <Box maxW="1200px" mx="auto" px={{ base: 4, md: 6 }} py={8}>
+    <Box
+      className="cmns-root"
+      bg="theme.bg"
+      color="theme.text"
+      maxW="1200px"
+      mx="auto"
+      px={{ base: 4, md: 6 }}
+      py={8}
+    >
       {/* Header */}
-      <VStack align="start" gap={1} mb={6}>
+      <VStack className="cmns-header" align="start" gap={1} mb={6}>
         <Text fontSize="2xl" fontWeight="bold">
           Crossroads Commons
         </Text>
-        <Text fontSize="sm" color={subtitleColor}>
+        <Text fontSize="sm" color="theme.textMuted">
           A curated atlas of meaningful initiatives — people, organizations,
           projects, and places.
         </Text>
       </VStack>
 
       {/* Controls */}
-      <HStack justify="space-between" mb={4} wrap="wrap" gap={3}>
-        <HStack gap={1}>
+      <HStack className="cmns-controls" justify="space-between" mb={4} wrap="wrap" gap={3}>
+        <HStack className="cmns-view-controls" gap={1}>
           <Button
+            aria-pressed={view === "map"}
             size="sm"
             variant={view === "map" ? "solid" : "outline"}
             onClick={() => setView("map")}
@@ -78,6 +83,7 @@ export default function CommonsPage() {
           <Button
             size="sm"
             variant={view === "list" ? "solid" : "outline"}
+            aria-pressed={view === "list"}
             onClick={() => setView("list")}
           >
             List
@@ -87,6 +93,7 @@ export default function CommonsPage() {
         <Input
           size="sm"
           maxW="260px"
+          aria-label="Search Commons"
           placeholder="Search…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -95,14 +102,14 @@ export default function CommonsPage() {
 
       {/* Error */}
       {error && (
-        <Text color="red.500" fontSize="sm" mb={4}>
+        <Text role="alert" color="status.danger.fg" fontSize="sm" mb={4}>
           {error}
         </Text>
       )}
 
       {/* Map view */}
       {view === "map" && (
-        <Box h="calc(100vh - 280px)" minH="420px">
+        <Box className="cmns-map" h="calc(100vh - 280px)" minH="420px">
           <CommonsMap items={items} />
         </Box>
       )}
@@ -111,17 +118,24 @@ export default function CommonsPage() {
       {view === "list" && (
         <>
           {loading ? (
-            <Box textAlign="center" py={16}>
+            <Box
+              className="cmns-loading"
+              role="status"
+              aria-label="Loading Commons"
+              color="theme.textMuted"
+              textAlign="center"
+              py={16}
+            >
               <Spinner size="lg" />
             </Box>
           ) : items.length === 0 ? (
-            <Box textAlign="center" py={16}>
-              <Text fontSize="sm" color={mutedColor}>
+            <Box className="cmns-empty" textAlign="center" py={16}>
+              <Text fontSize="sm" color="theme.textMuted">
                 No published items yet.
               </Text>
             </Box>
           ) : (
-            <VStack align="stretch" gap={3}>
+            <VStack className="cmns-list" align="stretch" gap={3}>
               {items.map((item) => (
                 <CommonsItemCard key={item.id} item={item} />
               ))}
