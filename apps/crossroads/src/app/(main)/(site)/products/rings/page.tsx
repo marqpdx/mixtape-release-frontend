@@ -3,6 +3,7 @@
 "use client";
 
 import NextLink from "next/link";
+import { productArtwork } from "../artwork";
 import {
   Badge,
   Box,
@@ -51,46 +52,46 @@ export default function ProductRingsPage() {
   return (
     <Box
       className="crrings-root"
-      bg="#F4F5F8"
-      color="#1A2138"
+      bg="theme.bg"
+      color="theme.text"
       minH="100vh"
       overflowX="hidden"
       fontFamily='-apple-system, "Helvetica Neue", Arial, sans-serif'
     >
-      <Box className="crrings-masthead" borderBottom="2px solid" borderColor="#B8922A">
-        <Container maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
-          <Flex gap={{ base: 10, lg: 16 }} align="center" direction={{ base: "column", lg: "row" }}>
+      <Box className="crrings-masthead" borderBottom="2px solid" borderColor={productArtwork.gold}>
+        <Container className="crrings-masthead-inner" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
+          <Flex className="crrings-hero-layout" gap={{ base: 10, lg: 16 }} align="center" direction={{ base: "column", lg: "row" }}>
             <VStack className="crrings-hero-copy" align="start" gap={6} flex="1">
-              <Badge bg="#E8ECF6" color="#2B3D6B" borderRadius="3px" px={2} py={1} letterSpacing="0.12em" textTransform="uppercase">
+              <Badge bg="ui.surfaceSubtle" color="theme.text" borderRadius="3px" px={2} py={1} letterSpacing="0.12em" textTransform="uppercase">
                 Product B: Rings
               </Badge>
               <Heading as="h1" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "3xl", md: "5xl" }} lineHeight="1.08" letterSpacing="0">
                 Knowledge expands from a trusted center.
               </Heading>
-              <Text color="#5C6880" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
+              <Text color="theme.textMuted" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
                 Catalyst is a knowledge practice, not a file repository. It begins with what the organization truly stands behind — canon — and expands outward as more material, relationships, and work comes under stewardship.
               </Text>
             </VStack>
 
-            <Box className="crrings-visual" position="relative" w={{ base: "320px", md: "430px" }} h={{ base: "320px", md: "430px" }} flexShrink={0}>
+            <Box className="crrings-visual" position="relative" w={{ base: "100%", md: "430px" }} maxW={{ base: "320px", md: "430px" }} aspectRatio="1" flexShrink={0}>
               {[0, 1, 2, 3].map((ring) => (
-                <Box
+                <Box className="crrings-artwork-ring"
                   key={ring}
                   position="absolute"
                   inset={`${ring * 12}%`}
                   border="1px solid"
-                  borderColor={ring === 0 ? "#1E4BD2" : "#B8922A"}
+                  borderColor={ring === 0 ? productArtwork.blue : productArtwork.gold}
                   borderRadius="999px"
                   opacity={1 - ring * 0.12}
                 />
               ))}
-              <Flex position="absolute" inset="33%" bg="#FFFFFF" border="1px solid" borderColor="#DDE1ED" borderRadius="999px" align="center" justify="center" textAlign="center" p={5}>
-                <VStack gap={1}>
-                  <IconCircleDot size={26} color="#1E4BD2" />
+              <Flex className="crrings-visual-copy" position="absolute" inset="25%" bg="theme.surface" border="1px solid" borderColor="ui.borderSubtle" borderRadius="999px" align="center" justify="center" textAlign="center" p={{ base: 3, md: 5 }}>
+                <VStack className="crrings-visual-label" gap={1}>
+                  <IconCircleDot size={26} />
                   <Text fontFamily='Georgia, "Times New Roman", serif' fontSize={{ base: "xl", md: "2xl" }}>
                     Foundation
                   </Text>
-                  <Text color="#5C6880" fontSize="sm">trusted canon</Text>
+                  <Text color="theme.textMuted" fontSize="sm">trusted canon</Text>
                 </VStack>
               </Flex>
             </Box>
@@ -99,52 +100,52 @@ export default function ProductRingsPage() {
       </Box>
 
       <Container className="crrings-ring-copy" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+        <SimpleGrid className="crrings-ring-grid" columns={{ base: 1, md: 2 }} gap={4}>
           {rings.map((ring, index) => {
             const Icon = index === 0 ? IconCircleDot : index === 1 ? IconCircles : index === 2 ? IconSparkles : IconCompass;
             return (
-              <Box key={ring.name} className="crrings-ring-card" bg="#FFFFFF" border="1px solid" borderColor="#DDE1ED" borderRadius="4px" p={6}>
-                <HStack gap={3} mb={4} color="#1E4BD2">
+              <Box key={ring.name} className="crrings-ring-card" bg="theme.surface" border="1px solid" borderColor="ui.borderSubtle" borderRadius="4px" p={6}>
+                <HStack className="crrings-ring-eyebrow" gap={3} mb={4} color="theme.text">
                   <Icon size={26} />
-                  <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase">
+                  <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase">
                     Ring {index + 1}
                   </Text>
                 </HStack>
                 <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "2xl", md: "3xl" }} letterSpacing="0" mb={3}>
                   {ring.name}
                 </Heading>
-                <Text color="#1A2138" fontWeight="700" mb={3}>{ring.title}</Text>
-                <Text color="#5C6880" lineHeight="1.7">{ring.body}</Text>
+                <Text color="theme.text" fontWeight="700" mb={3}>{ring.title}</Text>
+                <Text color="theme.textMuted" lineHeight="1.7">{ring.body}</Text>
               </Box>
             );
           })}
         </SimpleGrid>
       </Container>
 
-      <Box className="crrings-pricing" bg="#FFFFFF" borderTop="1px solid" borderColor="#DDE1ED" py={{ base: 12, md: 16 }}>
-        <Container maxW="1180px" px={{ base: 5, md: 8 }}>
-          <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={3}>
+      <Box className="crrings-pricing" bg="theme.surface" borderTop="1px solid" borderColor="ui.borderSubtle" py={{ base: 12, md: 16 }}>
+        <Container className="crrings-pricing-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
+          <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={3}>
             Pricing after the story
           </Text>
           <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "2xl", md: "4xl" }} letterSpacing="0" mb={8}>
             Subscriptions widen the practice. The engagement reshapes what the practice can see.
           </Heading>
-          <VStack align="stretch" gap={0} borderTop="1px solid" borderColor="#DDE1ED">
+          <VStack className="crrings-pricing-rows" align="stretch" gap={0} borderTop="1px solid" borderColor="ui.borderSubtle">
             {pricing.map(([name, price, detail]) => (
-              <Flex key={name} className="crrings-price-row" gap={5} align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} py={5} borderBottom="1px solid" borderColor="#DDE1ED">
-                <Box>
+              <Flex key={name} className="crrings-price-row" gap={5} align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }} py={5} borderBottom="1px solid" borderColor="ui.borderSubtle">
+                <Box className="crrings-price-description">
                   <Text fontWeight="700">{name}</Text>
-                  <Text color="#5C6880">{detail}</Text>
+                  <Text color="theme.textMuted">{detail}</Text>
                 </Box>
-                <Text color="#1E4BD2" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="120px" textAlign={{ base: "left", md: "right" }}>
+                <Text color="theme.text" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="120px" textAlign={{ base: "left", md: "right" }}>
                   {price}
                 </Text>
               </Flex>
             ))}
           </VStack>
-          <Button asChild mt={8} bg="#1A2138" color="white" borderRadius="3px" _hover={{ bg: "#2B3D6B" }}>
-            <Link as={NextLink} href="/contact?interest=catalyst-rings">
-              <HStack gap={2}>
+          <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" mt={8} variant="solid" borderRadius="3px">
+            <Link color="theme.accentText" textDecoration="none" _hover={{ color: "theme.accentText" }} _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} as={NextLink} href="/contact?interest=catalyst-rings">
+              <HStack className="crrings-inquiry-label" gap={2}>
                 <Text>Start with your center</Text>
                 <IconArrowRight size={17} />
               </HStack>

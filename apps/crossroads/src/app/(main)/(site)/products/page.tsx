@@ -3,6 +3,7 @@
 "use client";
 
 import NextLink from "next/link";
+import { productArtwork } from "./artwork";
 import {
   Box,
   Button,
@@ -52,15 +53,15 @@ export default function ProductsPage() {
   return (
     <Box
       className="crprod-root"
-      bg="#F4F5F8"
-      color="#1A2138"
+      bg="theme.bg"
+      color="theme.text"
       overflowX="hidden"
       fontFamily='-apple-system, "Helvetica Neue", Arial, sans-serif'
     >
-      <Box className="crprod-masthead" borderBottom="2px solid" borderColor="#B8922A">
+      <Box className="crprod-masthead" borderBottom="2px solid" borderColor={productArtwork.gold}>
         <Container className="crprod-masthead-inner" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
-          <VStack align="start" gap={5} maxW="820px">
-            <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase">
+          <VStack className="crprod-masthead-copy" align="start" gap={5} maxW="820px">
+            <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase">
               Product paths
             </Text>
             <Heading
@@ -73,7 +74,7 @@ export default function ProductsPage() {
             >
               Three ways into Mixtape.
             </Heading>
-            <Text color="#5C6880" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
+            <Text color="theme.textMuted" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="65ch">
               A client can begin with a private knowledge Codex, a group home for working in common, or a shared map of place. Many will eventually need more than one.
             </Text>
           </VStack>
@@ -88,11 +89,15 @@ export default function ProductsPage() {
               className="crprod-image-pane"
               flex={{ base: "0 0 auto", lg: "0 0 40%" }}
               minH={{ base: "320px", md: "420px", lg: "58vh" }}
-              bgImage={`linear-gradient(180deg, rgba(26, 33, 56, 0.08), rgba(26, 33, 56, 0.22)), url(${image})`}
+              bgImage={`${productArtwork.photoOverlay}, url(${image})`}
               bgSize="cover"
               backgroundPosition={product.name === "Crossroads" ? "center right" : "center"}
-              borderRight={{ base: "0", lg: product.imagePosition === "left" ? "1px solid #DDE1ED" : "0" }}
-              borderLeft={{ base: "0", lg: product.imagePosition === "right" ? "1px solid #DDE1ED" : "0" }}
+              borderRightWidth={{ base: "0", lg: product.imagePosition === "left" ? "1px" : "0" }}
+              borderRightStyle="solid"
+              borderRightColor="ui.borderSubtle"
+              borderLeftWidth={{ base: "0", lg: product.imagePosition === "right" ? "1px" : "0" }}
+              borderLeftStyle="solid"
+              borderLeftColor="ui.borderSubtle"
             />
           );
 
@@ -105,15 +110,15 @@ export default function ProductsPage() {
               px={{ base: 5, md: 10, xl: 16 }}
               py={{ base: 10, md: 12 }}
             >
-              <VStack align="start" gap={6} maxW="700px">
-                <HStack gap={3} color="#1E4BD2">
+              <VStack className="crprod-product-copy" align="start" gap={6} maxW="700px">
+                <HStack className="crprod-product-eyebrow" gap={3} color="theme.text">
                   <Icon size={28} />
-                  <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase">
+                  <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase">
                     {product.eyebrow}
                   </Text>
                 </HStack>
 
-                <Box>
+                <Box className="crprod-description">
                   <Heading
                     as="h2"
                     fontFamily='Georgia, "Times New Roman", serif'
@@ -137,18 +142,18 @@ export default function ProductsPage() {
                   >
                     {product.title}
                   </Heading>
-                  <Text color="#5C6880" fontSize={{ base: "md", md: "lg" }} lineHeight="1.7" maxW="65ch">
+                  <Text color="theme.textMuted" fontSize={{ base: "md", md: "lg" }} lineHeight="1.7" maxW="65ch">
                     {product.body}
                   </Text>
                 </Box>
 
-                <Box className="crprod-expects" w="100%" borderTop="1px solid" borderColor="#DDE1ED">
+                <Box className="crprod-expects" w="100%" borderTop="1px solid" borderColor="ui.borderSubtle">
                   {product.expects.map((item) => (
-                    <Flex key={item} py={3} borderBottom="1px solid" borderColor="#DDE1ED" gap={3} align="center">
-                      <Text color="#1E4BD2" fontFamily='Georgia, "Times New Roman", serif' fontSize="lg">
+                    <Flex className="crprod-expect-row" key={item} py={3} borderBottom="1px solid" borderColor="ui.borderSubtle" gap={3} align="center">
+                      <Text color="theme.text" fontFamily='Georgia, "Times New Roman", serif' fontSize="lg">
                         /
                       </Text>
-                      <Text color="#1A2138">{item}</Text>
+                      <Text color="theme.text">{item}</Text>
                     </Flex>
                   ))}
                 </Box>
@@ -161,9 +166,9 @@ export default function ProductsPage() {
               className="crprod-product-row"
               key={product.name}
               direction={{ base: "column", lg: "row" }}
-              bg="#FFFFFF"
+              bg="theme.surface"
               borderBottom="1px solid"
-              borderColor="#DDE1ED"
+              borderColor="ui.borderSubtle"
             >
               {product.imagePosition === "left" ? imagePane : contentPane}
               {product.imagePosition === "left" ? contentPane : imagePane}
@@ -174,27 +179,27 @@ export default function ProductsPage() {
 
       <Box className="crprod-closing" py={{ base: 12, md: 16 }}>
         <Container className="crprod-closing-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
-          <Flex
-            bg="#EEF2FD"
+          <Flex className="crprod-closing-panel"
+            bg="ui.surfaceSubtle"
             borderLeft="3px solid"
-            borderColor="#1E4BD2"
+            borderColor="ui.borderSubtle"
             p={{ base: 6, md: 8 }}
             gap={6}
             align={{ base: "start", md: "center" }}
             justify="space-between"
             direction={{ base: "column", md: "row" }}
           >
-            <Box maxW="760px">
+            <Box className="crprod-closing-copy" maxW="760px">
               <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "xl", md: "2xl" }} letterSpacing="0" mb={3}>
                 The first product conversation is a fit conversation.
               </Heading>
-              <Text color="#5C6880" lineHeight="1.7">
+              <Text color="theme.textMuted" lineHeight="1.7">
                 We can start with one path, pair two together, or add managed stewardship where the hard part is not installation but coherence over time.
               </Text>
             </Box>
-            <Button asChild bg="#1E4BD2" color="white" borderRadius="3px" _hover={{ bg: "#173AA4" }}>
-              <Link as={NextLink} href="/contact?interest=products">
-                <HStack gap={2}>
+            <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" variant="solid" borderRadius="3px">
+              <Link color="theme.accentText" textDecoration="none" _hover={{ color: "theme.accentText" }} _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} as={NextLink} href="/contact?interest=products">
+                <HStack className="crprod-inquiry-label" gap={2}>
                   <Text>Start an inquiry</Text>
                   <IconArrowRight size={17} />
                 </HStack>

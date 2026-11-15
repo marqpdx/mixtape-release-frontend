@@ -3,6 +3,7 @@
 "use client";
 
 import NextLink from "next/link";
+import { productArtwork } from "../artwork";
 import {
   Badge,
   Box,
@@ -62,22 +63,22 @@ export default function ProductPrinciplesPage() {
   return (
     <Box
       className="crprinciples-root"
-      bg="#F4F5F8"
-      color="#1A2138"
+      bg="theme.bg"
+      color="theme.text"
       minH="100vh"
       overflowX="hidden"
       fontFamily='-apple-system, "Helvetica Neue", Arial, sans-serif'
     >
-      <Box className="crprinciples-masthead" borderBottom="2px solid" borderColor="#B8922A">
+      <Box className="crprinciples-masthead" borderBottom="2px solid" borderColor={productArtwork.gold}>
         <Container className="crprinciples-masthead-inner" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
-          <VStack align="start" gap={6} maxW="900px">
-            <Badge bg="#E8ECF6" color="#2B3D6B" borderRadius="3px" px={2} py={1} letterSpacing="0.12em" textTransform="uppercase">
+          <VStack className="crprinciples-masthead-copy" align="start" gap={6} maxW="900px">
+            <Badge bg="ui.surfaceSubtle" color="theme.text" borderRadius="3px" px={2} py={1} letterSpacing="0.12em" textTransform="uppercase">
               Why Catalyst Works
             </Badge>
             <Heading as="h1" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "3xl", md: "5xl" }} lineHeight="1.08" letterSpacing="0">
               When information crowds out awareness, clarity becomes the practice.
             </Heading>
-            <Text color="#5C6880" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="68ch">
+            <Text color="theme.textMuted" fontSize={{ base: "lg", md: "xl" }} lineHeight="1.7" maxW="68ch">
               Catalyst is built for organizations that want to reclaim the room to think — freeing attention from the overwhelming information layer so people can do the work that matters: deciding what is true, current, and worth standing behind.
             </Text>
           </VStack>
@@ -85,30 +86,30 @@ export default function ProductPrinciplesPage() {
       </Box>
 
       <Container className="crprinciples-intro" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
-        <Flex gap={{ base: 8, lg: 14 }} align={{ base: "start", lg: "center" }} direction={{ base: "column", lg: "row" }}>
+        <Flex className="crprinciples-intro-layout" gap={{ base: 8, lg: 14 }} align={{ base: "start", lg: "center" }} direction={{ base: "column", lg: "row" }}>
           <Box className="crprinciples-intro-copy" flex="1" maxW="680px">
-            <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={3}>
+            <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={3}>
               The operating promise
             </Text>
             <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "2xl", md: "4xl" }} letterSpacing="0" mb={5}>
               Catalyst helps you build knowledge while keeping responsibility where it belongs.
             </Heading>
-            <Text color="#5C6880" fontSize={{ base: "md", md: "lg" }} lineHeight="1.75">
+            <Text color="theme.textMuted" fontSize={{ base: "md", md: "lg" }} lineHeight="1.75">
               A small business, board, firm, studio, or creative practice does not need magic. It needs attention freed from drudgery, useful prompts at the right moment, and a trustworthy way to decide what deserves to last.
             </Text>
           </Box>
 
-          <Box className="crprinciples-proof-panel" bg="#FFFFFF" border="1px solid" borderColor="#DDE1ED" borderRadius="4px" p={{ base: 5, md: 6 }} flex="0 1 390px" w="100%">
-            <Text color="#B8922A" fontSize="xs" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={4}>
+          <Box className="crprinciples-proof-panel" bg="theme.surface" border="1px solid" borderColor="ui.borderSubtle" borderRadius="4px" p={{ base: 5, md: 6 }} flex="0 1 390px" w="100%">
+            <Text color="theme.textMuted" fontSize="xs" fontWeight="700" letterSpacing="0.1em" textTransform="uppercase" mb={4}>
               What this means in practice
             </Text>
-            <VStack align="stretch" gap={3}>
+            <VStack className="crprinciples-proof-list" align="stretch" gap={3}>
               {proofPoints.map((point) => (
-                <HStack key={point} gap={3} align="start">
-                  <Box color="#1E4BD2" flexShrink={0} pt="2px">
+                <HStack className="crprinciples-proof-row" key={point} gap={3} align="start">
+                  <Box className="crprinciples-proof-icon" color="theme.text" flexShrink={0} pt="2px">
                     <IconChecks size={17} />
                   </Box>
-                  <Text color="#5C6880" fontSize="sm" lineHeight="1.6">
+                  <Text color="theme.textMuted" fontSize="sm" lineHeight="1.6">
                     {point}
                   </Text>
                 </HStack>
@@ -118,25 +119,25 @@ export default function ProductPrinciplesPage() {
         </Flex>
       </Container>
 
-      <Box className="crprinciples-band" bg="#FFFFFF" borderTop="1px solid" borderBottom="1px solid" borderColor="#DDE1ED" py={{ base: 12, md: 16 }}>
+      <Box className="crprinciples-band" bg="theme.surface" borderTop="1px solid" borderBottom="1px solid" borderColor="ui.borderSubtle" py={{ base: 12, md: 16 }}>
         <Container className="crprinciples-band-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
           <SimpleGrid className="crprinciples-grid" columns={{ base: 1, md: 2 }} gap={4}>
             {principles.map((principle) => {
               const Icon = principle.icon;
               return (
-                <Box key={principle.name} className="crprinciples-card" border="1px solid" borderColor="#DDE1ED" borderRadius="4px" p={{ base: 6, md: 7 }} minH="330px">
-                  <VStack align="start" gap={5}>
-                    <Box color="#1E4BD2">
+                <Box key={principle.name} className="crprinciples-card" border="1px solid" borderColor="ui.borderSubtle" borderRadius="4px" p={{ base: 6, md: 7 }} minH="330px">
+                  <VStack className="crprinciples-principle-content" align="start" gap={5}>
+                    <Box className="crprinciples-principle-icon" color="theme.text">
                       <Icon size={30} />
                     </Box>
-                    <Box>
-                      <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
+                    <Box className="crprinciples-principle-copy">
+                      <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
                         {principle.name}
                       </Text>
                       <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "xl", md: "2xl" }} letterSpacing="0" lineHeight="1.2" mb={4}>
                         {principle.claim}
                       </Heading>
-                      <Text color="#5C6880" lineHeight="1.7">
+                      <Text color="theme.textMuted" lineHeight="1.7">
                         {principle.body}
                       </Text>
                     </Box>
@@ -151,26 +152,26 @@ export default function ProductPrinciplesPage() {
       <Container className="crprinciples-closing" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 16 }}>
         <Flex
           className="crprinciples-closing-panel"
-          bg="#EEF2FD"
+          bg="ui.surfaceSubtle"
           borderLeft="3px solid"
-          borderColor="#1E4BD2"
+          borderColor="ui.borderSubtle"
           p={{ base: 6, md: 8 }}
           gap={6}
           align={{ base: "start", md: "center" }}
           justify="space-between"
           direction={{ base: "column", md: "row" }}
         >
-          <Box maxW="760px">
+          <Box className="crprinciples-closing-copy" maxW="760px">
             <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize={{ base: "xl", md: "2xl" }} letterSpacing="0" mb={3}>
               We build this way ourselves.
             </Heading>
-            <Text color="#5C6880" lineHeight="1.7">
+            <Text color="theme.textMuted" lineHeight="1.7">
               The knowledge practice Catalyst makes possible is the same one Mindful Brilliance uses: gathering the work, making the structure visible, letting people confirm what matters, and improving the knowledge as the work continues.
             </Text>
           </Box>
-          <Button asChild bg="#1E4BD2" color="white" borderRadius="3px" _hover={{ bg: "#173AA4" }}>
-            <Link as={NextLink} href="/contact?interest=catalyst-principles">
-              <HStack gap={2}>
+          <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" variant="solid" borderRadius="3px">
+            <Link color="theme.accentText" textDecoration="none" _hover={{ color: "theme.accentText" }} _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} as={NextLink} href="/contact?interest=catalyst-principles">
+              <HStack className="crprinciples-inquiry-label" gap={2}>
                 <Text>Talk through the principles</Text>
                 <IconArrowRight size={17} />
               </HStack>

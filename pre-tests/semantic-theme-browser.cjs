@@ -8,6 +8,7 @@
 // --public-commons-detail checks actual entry states, metadata and all link categories.
 // --public-courses checks actual public course list/detail pages with inert requests.
 // --public-gallery checks actual gallery copy over fixture artwork and fallback initials.
+// --public-products checks four live product pages, actual text contrast and CTA states.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -25,6 +26,7 @@ webpackModule.init();
   const publicCommonsDetail = process.argv.includes('--public-commons-detail');
   const publicCourses = process.argv.includes('--public-courses');
   const publicGallery = process.argv.includes('--public-gallery');
+  const publicProducts = process.argv.includes('--public-products');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -145,6 +147,16 @@ webpackModule.init();
     const CourseList = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/page.tsx'))}).default : null;
     const CourseDetail = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/[courseSlug]/page.tsx'))}).default : null;
     const Gallery = ${publicGallery} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/gallery/page.tsx'))}).default : null;
+    const ProductPages = ${publicProducts} ? {
+      overview:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/page.tsx'))}).default,
+      flow:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/flow/page.tsx'))}).default,
+      principles:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/principles/page.tsx'))}).default,
+      rings:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/rings/page.tsx'))}).default,
+    } : {};
+    function ProductsFixture() {
+      return React.createElement(Box,{'data-products':true,gridColumn:'1 / -1',color:'theme.accentText'},
+        ...Object.entries(ProductPages).map(([name,Page])=>React.createElement('section',{key:name,'data-product':name},React.createElement(Page))));
+    }
     function GalleryFixture() {
       const [scenario,setScenario]=React.useState({name:'loading',revision:0});
       React.useEffect(()=>{window.setGalleryScenario=name=>{window.galleryScenario=name;setScenario(old=>({name,revision:old.revision+1}));};},[]);
@@ -269,6 +281,7 @@ webpackModule.init();
         ${publicCommonsDetail} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsDetailFixture)),
         ${publicCourses} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CourseFixture)),
         ${publicGallery} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GalleryFixture)),
+        ${publicProducts} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ProductsFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -609,6 +622,55 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicProducts) {
+        const fixtures=page.locator('[data-products]');
+        for(const [name,prefix,interest] of [['overview','crprod','products'],['flow','crflow','catalyst-flow'],['principles','crprinciples','catalyst-principles'],['rings','crrings','catalyst-rings']]) {
+          const section=fixtures.locator('[data-product="'+name+'"]');
+          const root=section.locator('.'+prefix+'-root');
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background});
+          assert.equal(await root.locator('.'+prefix+'-masthead').evaluate(el=>getComputedStyle(el).borderBottomColor),'rgb(184, 146, 42)','fixed decorative gold divider retained');
+          const cta=root.getByRole('link');
+          await expect(cta).toHaveCount(1);await expect(cta).toHaveAttribute('href','/contact?interest='+interest);
+          await page.mouse.move(0,0);
+          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:controlExpected.accentText,bg:controlExpected.accent});
+          await cta.hover();
+          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:controlExpected.accentText,bg:controlExpected.accent});
+          await page.keyboard.press('Tab');await cta.focus();
+          await expect.poll(()=>cta.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};})).toEqual({color:expected.border,width:'3px',offset:'2px'});
+          await cta.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.productClicked=el.getAttribute('href');},{once:true}));await cta.click();
+          assert.equal(await page.evaluate(()=>window.productClicked),'/contact?interest='+interest);
+          for(const badge of await root.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+          for(const width of [1200,390]) {
+            await page.setViewportSize({width,height:844});
+            const audit=await root.evaluate((root,high)=>{
+              const canvas=document.createElement('canvas');canvas.width=canvas.height=1;
+              const ctx=canvas.getContext('2d'),cache=new Map();
+              const rgba=value=>{if(!cache.has(value)){ctx.clearRect(0,0,1,1);ctx.fillStyle=value;ctx.fillRect(0,0,1,1);cache.set(value,Array.from(ctx.getImageData(0,0,1,1).data).map((v,i)=>v/(i===3?255:1)));}return cache.get(value);};
+              const background=el=>{const layers=[];for(let node=el;node;node=node.parentElement){const c=rgba(getComputedStyle(node).backgroundColor);layers.push(c);if(c[3]===1)break;}return layers.reverse().reduce((base,c)=>c.slice(0,3).map((v,i)=>v*c[3]+base[i]*(1-c[3])),[255,255,255]);};
+              const luminance=rgb=>rgb.map(v=>{v/=255;return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4);}).reduce((sum,v,i)=>sum+v*[0.2126,0.7152,0.0722][i],0);
+              const bounds=root.getBoundingClientRect(),failures=[];let texts=0,icons=0;
+              for(const el of root.querySelectorAll('p,h1,h2,h3,h4,span,a,svg')) {
+                const icon=el.tagName.toLowerCase()==='svg';
+                if(!icon&&![...el.childNodes].some(n=>n.nodeType===Node.TEXT_NODE&&n.textContent.trim()))continue;
+                const r=el.getBoundingClientRect();if(!r.width||!r.height)continue;
+                const fg=rgba(getComputedStyle(el).color).slice(0,3),bg=background(el),a=luminance(fg),b=luminance(bg),ratio=(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);
+                const minimum=icon?(high?4.5:3):(high?7:4.5);
+                if(ratio+0.01<minimum||r.left<bounds.left-1||r.right>bounds.right+1||el.scrollWidth>el.clientWidth+1)failures.push({text:el.textContent.slice(0,75),icon,ratio,minimum,x:r.x,width:r.width,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth});
+                if(icon)icons++;else texts++;
+              }
+              return {texts,icons,failures};
+            },contrast==='high');
+            assert.ok(audit.texts>10&&audit.icons>0,'actual product copy/icons inspected');
+            assert.deepEqual(audit.failures,[],name+' actual text/icon contrast and containment at '+width+': '+JSON.stringify(audit.failures));
+            const image=path.join(temp,id+'-'+mode+'-'+contrast+'-product-'+name+'-'+width+'.png');
+            await root.screenshot({path:image,animations:'disabled'});screenshots.push(image);
+          }
+          await page.setViewportSize({width:1200,height:800});
+        }
+        assert.ok((await fixtures.locator('.crprod-image-pane').first().evaluate(el=>getComputedStyle(el).backgroundImage)).includes('/homepage/noaa-'),'product photo retained');
+        assert.equal(await fixtures.locator('.crflow-s-curve').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(184, 146, 42)');
+        assert.equal(await fixtures.locator('.crrings-artwork-ring').count(),4);
+      }
       if(publicGallery) {
         const fixture=page.locator('[data-gallery]');
         for(const scenario of ['loading','error','empty','full']) {
@@ -931,6 +993,7 @@ webpackModule.init();
     if(publicCommonsDetail) console.log('PASS: actual Commons detail loading/error/missing/minimal/full states, metadata/quote/badge pairs, external/back/connection link hover/focus/click targets and route slug; eight combinations and desktop/mobile screenshots; API/navigation inert');
     if(publicCourses) console.log('PASS: actual public course list/detail states, semantic cards/metadata/badges/objectives/outline, link hover/focus/destinations, disabled enrollment; eight combinations and desktop/mobile screenshots; API/navigation inert');
     if(publicGallery) console.log('PASS: actual gallery states, opaque copy pairs over bright/dark/absent/gradient artwork, semantic metadata/badges/fallback initials, supplied artwork retained, long copy contained at desktop/mobile widths in eight combinations; API inert');
+    if(publicProducts) console.log('PASS: four actual product pages, semantic panels/badges and CTA resting/hover/focus/click targets; rendered text/icon contrast and desktop/mobile containment across eight combinations; decorative gold/curve/rings/photos preserved, requests blocked');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});
