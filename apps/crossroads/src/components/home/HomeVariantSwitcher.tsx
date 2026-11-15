@@ -29,11 +29,12 @@ export default function HomeVariantSwitcher({ activeHref }: HomeVariantSwitcherP
       <HStack
         className="hmvs-stack"
         gap="1"
-        bg="rgba(255, 255, 255, 0.94)"
+        bg="theme.surface"
+        color="theme.text"
         border="1px solid"
-        borderColor="rgba(26, 33, 56, 0.12)"
+        borderColor="ui.borderSubtle"
         borderRadius="full"
-        boxShadow="lg"
+        boxShadow="var(--ui-shadow-raised)"
         px="1.5"
         py="1.5"
         backdropFilter="blur(10px)"
@@ -50,13 +51,14 @@ export default function HomeVariantSwitcher({ activeHref }: HomeVariantSwitcherP
               px="0"
               borderRadius="full"
               variant={isActive ? "solid" : "ghost"}
-              bg={isActive ? "#1A2138" : "transparent"}
-              color={isActive ? "#FFFFFF" : "#1A2138"}
-              _hover={{
-                bg: isActive ? "#1A2138" : "rgba(26, 33, 56, 0.08)",
-              }}
             >
-              <Link as={NextLink} href={variant.href} aria-label={`Open homepage variant ${variant.label}`}>
+              <Link
+                color={isActive ? "theme.accentText" : "theme.text"}
+                textDecoration="none"
+                _hover={{ color: isActive ? "theme.accentText" : "theme.text" }}
+                _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }}
+                aria-current={isActive ? "page" : undefined}
+                as={NextLink} href={variant.href} aria-label={`Open homepage variant ${variant.label}`}>
                 {variant.label}
               </Link>
             </Button>

@@ -30,6 +30,11 @@ import {
 import HomeVariantSwitcher from "@components/home/HomeVariantSwitcher";
 import UnifiedNavbar from "@components/layout/UnifiedNavbar";
 
+const homepageArtwork = {
+  gold: "#B8922A",
+  photoOverlay: "linear-gradient(180deg, rgba(26, 33, 56, 0.08), rgba(26, 33, 56, 0.16))",
+} as const;
+
 const needs = [
   {
     label: "For work that lives in too many places",
@@ -70,14 +75,14 @@ export default function CrossroadsHomepage() {
     <Box
       className="crhp-root crhp-art-deco"
       minH="100vh"
-      bg="#F4F5F8"
-      color="#1A2138"
+      bg="theme.bg"
+      color="theme.text"
       overflowX="hidden"
       fontFamily='-apple-system, "Helvetica Neue", Arial, sans-serif'
     >
       <UnifiedNavbar />
 
-      <Box className="crhp-masthead" borderBottom="2px solid" borderColor="#B8922A">
+      <Box className="crhp-masthead" borderBottom="2px solid" borderColor={homepageArtwork.gold}>
         <Container className="crhp-hero-inner" maxW="1180px" px={{ base: 5, md: 8 }} py={{ base: 12, md: 18 }}>
           <Flex
             className="crhp-hero-grid"
@@ -92,8 +97,8 @@ export default function CrossroadsHomepage() {
                 {["Crossroads", "Catalyst", "Mixtape", "Tapestry"].map((tag) => (
                   <Badge
                     key={tag}
-                    bg="#E8ECF6"
-                    color="#2B3D6B"
+                    bg="ui.surfaceSubtle"
+                    color="theme.text"
                     borderRadius="3px"
                     px={2}
                     py={1}
@@ -106,7 +111,7 @@ export default function CrossroadsHomepage() {
                 ))}
               </HStack>
 
-              <Box>
+              <Box className="crhp-hero-title">
                 <Heading
                   as="h1"
                   fontFamily='Georgia, "Times New Roman", serif'
@@ -125,7 +130,7 @@ export default function CrossroadsHomepage() {
                   fontWeight="400"
                   lineHeight="1.1"
                   letterSpacing="0"
-                  color="#5C6880"
+                  color="theme.textMuted"
                   maxW="760px"
                   mt={2}
                 >
@@ -135,7 +140,7 @@ export default function CrossroadsHomepage() {
                   mt={6}
                   fontSize={{ base: "md", md: "lg" }}
                   lineHeight="1.7"
-                  color="#5C6880"
+                  color="theme.textMuted"
                   maxW="65ch"
                 >
                   We found ourselves hemmed in by too much — too much information, too much apparent choice, too much to wade through before thinking clearly. So we built a way through: toward abundance, spaciousness, and work that helps us feel fulfilled.
@@ -144,7 +149,7 @@ export default function CrossroadsHomepage() {
                   mt={4}
                   fontSize={{ base: "md", md: "lg" }}
                   lineHeight="1.7"
-                  color="#5C6880"
+                  color="theme.textMuted"
                   maxW="65ch"
                 >
                   What's scarce — the thing that lets us do the work well — is knowledge we can trust. That is what Crossroads is built to cultivate.
@@ -152,16 +157,16 @@ export default function CrossroadsHomepage() {
               </Box>
 
               <HStack className="crhp-hero-actions" gap={3} flexWrap="wrap">
-                <Button asChild size="md" bg="#1E4BD2" color="white" borderRadius="3px" _hover={{ bg: "#173AA4" }}>
-                  <Link as={NextLink} href="/products">
-                    <HStack gap={2}>
+                <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" size="md" variant="solid" borderRadius="3px">
+                  <Link textDecoration="none" _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} color="theme.accentText" _hover={{ color: "theme.accentText" }} as={NextLink} href="/products">
+                    <HStack className="crhp-cta-label" gap={2}>
                       <Text>See the product paths</Text>
                       <IconArrowRight size={18} />
                     </HStack>
                   </Link>
                 </Button>
-                <Button asChild size="md" variant="outline" borderColor="#B8922A" color="#1A2138" borderRadius="3px">
-                  <Link as={NextLink} href="/contact?interest=inquiry">
+                <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" size="md" variant="outline" borderColor="ui.borderControl" color="theme.text" borderRadius="3px">
+                  <Link textDecoration="none" _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} color="theme.text" _hover={{ color: "theme.text" }} as={NextLink} href="/contact?interest=inquiry">
                     <Text>Start an inquiry</Text>
                   </Link>
                 </Button>
@@ -172,18 +177,18 @@ export default function CrossroadsHomepage() {
               <Box
                 className="crhp-image-frame"
                 h={{ base: "360px", md: "520px" }}
-                bgImage={`linear-gradient(180deg, rgba(26, 33, 56, 0.08), rgba(26, 33, 56, 0.16)), url(${backgroundImage})`}
+                bgImage={`${homepageArtwork.photoOverlay}, url(${backgroundImage})`}
                 bgSize="cover"
                 backgroundPosition="center"
                 border="1px solid"
-                borderColor="#DDE1ED"
+                borderColor="ui.borderSubtle"
                 borderRadius="4px"
               />
-              <Box className="crhp-thesis" mt={5} bg="#EEF2FD" borderLeft="3px solid" borderColor="#1E4BD2" p={5}>
-                <Text fontFamily='Georgia, "Times New Roman", serif' lineHeight="1.65" color="#1A2138">
+              <Box className="crhp-thesis" mt={5} bg="ui.surfaceSubtle" borderLeft="3px solid" borderColor="ui.borderSubtle" p={5}>
+                <Text fontFamily='Georgia, "Times New Roman", serif' lineHeight="1.65" color="theme.text">
                   Information has never been more available.
                 </Text>
-                <Text fontFamily='Georgia, "Times New Roman", serif' lineHeight="1.65" color="#1A2138">
+                <Text fontFamily='Georgia, "Times New Roman", serif' lineHeight="1.65" color="theme.text">
                   Working together has never been more vital.
                 </Text>
               </Box>
@@ -194,9 +199,9 @@ export default function CrossroadsHomepage() {
 
       <Box className="crhp-needs-section" py={{ base: 12, md: 16 }}>
         <Container className="crhp-needs-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
-          <VStack align="stretch" gap={8}>
+          <VStack className="crhp-needs-content" align="stretch" gap={8}>
             <Box className="crhp-section-heading" maxW="760px">
-              <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
+              <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
                 The product story starts with what we are trying to protect.
               </Text>
               <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize="var(--chakra-font-sizes-2xl)" letterSpacing="0">
@@ -211,22 +216,22 @@ export default function CrossroadsHomepage() {
                   <Box
                     className="crhp-need-card"
                     key={need.label}
-                    bg="#FFFFFF"
+                    bg="theme.surface"
                     border="1px solid"
-                    borderColor="#DDE1ED"
+                    borderColor="ui.borderSubtle"
                     borderRadius="4px"
                     p={6}
                     minH="260px"
                   >
-                    <VStack align="start" gap={5}>
-                      <Box color="#1E4BD2">
+                    <VStack className="crhp-need-content" align="start" gap={5}>
+                      <Box className="crhp-need-icon" color="theme.text">
                         <Icon size={28} />
                       </Box>
-                      <Box>
-                        <Heading as="h3" fontSize="sm" color="#B8922A" letterSpacing="0.06em" textTransform="uppercase" mb={3}>
+                      <Box className="crhp-need-copy">
+                        <Heading as="h3" fontSize="sm" color="theme.textMuted" letterSpacing="0.06em" textTransform="uppercase" mb={3}>
                           {need.label}
                         </Heading>
-                        <Text color="#5C6880" lineHeight="1.7">
+                        <Text color="theme.textMuted" lineHeight="1.7">
                           {need.body}
                         </Text>
                       </Box>
@@ -239,36 +244,37 @@ export default function CrossroadsHomepage() {
         </Container>
       </Box>
 
-      <Box className="crhp-product-section" bg="#FFFFFF" borderTop="1px solid" borderBottom="1px solid" borderColor="#DDE1ED" py={{ base: 12, md: 16 }}>
+      <Box className="crhp-product-section" bg="theme.surface" borderTop="1px solid" borderBottom="1px solid" borderColor="ui.borderSubtle" py={{ base: 12, md: 16 }}>
         <Container className="crhp-product-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
-          <Flex gap={{ base: 8, lg: 14 }} align={{ base: "start", lg: "center" }} direction={{ base: "column", lg: "row" }}>
+          <Flex className="crhp-product-layout" gap={{ base: 8, lg: 14 }} align={{ base: "start", lg: "center" }} direction={{ base: "column", lg: "row" }}>
             <Box className="crhp-product-copy" flex="1" maxW="620px">
-              <Text color="#B8922A" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
+              <Text color="theme.textMuted" fontSize="sm" fontWeight="700" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
                 Three ways to begin
               </Text>
               <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize="var(--chakra-font-sizes-2xl)" letterSpacing="0" mb={5}>
                 Begin with what you know.
               </Heading>
-              <Text color="#5C6880" lineHeight="1.7" maxW="65ch">
+              <Text color="theme.textMuted" lineHeight="1.7" maxW="65ch">
                 Catalyst, Crossroads, and Tapestry are not competing doors. They are different ways into Mixtape as the work and the people doing it become clearer.
               </Text>
             </Box>
 
-            <VStack className="crhp-product-list" align="stretch" gap={0} flex="1" w="100%" borderTop="1px solid" borderColor="#DDE1ED">
+            <VStack className="crhp-product-list" align="stretch" gap={0} flex="1" w="100%" borderTop="1px solid" borderColor="ui.borderSubtle">
               {productSignals.map((signal) => (
                 <Flex
                   className="crhp-product-row"
                   key={signal.name}
                   gap={5}
+                  direction={{ base: "column", md: "row" }}
                   align="start"
                   py={5}
                   borderBottom="1px solid"
-                  borderColor="#DDE1ED"
+                  borderColor="ui.borderSubtle"
                 >
-                  <Text color="#1E4BD2" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="112px" flexShrink={0} whiteSpace="nowrap">
+                  <Text color="theme.text" fontFamily='Georgia, "Times New Roman", serif' fontSize="2xl" minW="112px" flexShrink={0} whiteSpace="nowrap">
                     {signal.name}
                   </Text>
-                  <Text color="#5C6880" lineHeight="1.65">
+                  <Text color="theme.textMuted" lineHeight="1.65">
                     {signal.text}
                   </Text>
                 </Flex>
@@ -280,24 +286,24 @@ export default function CrossroadsHomepage() {
 
       <Box className="crhp-closing-section" py={{ base: 12, md: 16 }}>
         <Container className="crhp-closing-inner" maxW="1180px" px={{ base: 5, md: 8 }}>
-          <Box className="crhp-closing-callout" bg="#FDF8EE" border="1px solid" borderColor="#DDE1ED" borderRadius="4px" p={{ base: 6, md: 8 }}>
-            <Flex gap={5} align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }}>
-              <HStack align="start" gap={4}>
-                <Box color="#B8922A" pt={1}>
+          <Box className="crhp-closing-callout" bg="ui.surfaceSubtle" border="1px solid" borderColor="ui.borderSubtle" borderRadius="4px" p={{ base: 6, md: 8 }}>
+            <Flex className="crhp-closing-layout" gap={5} align={{ base: "start", md: "center" }} justify="space-between" direction={{ base: "column", md: "row" }}>
+              <HStack className="crhp-closing-summary" align="start" gap={4}>
+                <Box className="crhp-closing-icon" color="theme.text" pt={1}>
                   <IconHeartHandshake size={28} />
                 </Box>
-                <Box>
+                <Box className="crhp-closing-copy">
                   <Heading as="h2" fontFamily='Georgia, "Times New Roman", serif' fontWeight="400" fontSize="var(--chakra-font-sizes-2xl)" letterSpacing="0" mb={2}>
                     Coherence can be built with software, service, or both.
                   </Heading>
-                  <Text color="#5C6880" maxW="720px" lineHeight="1.7">
+                  <Text color="theme.textMuted" maxW="720px" lineHeight="1.7">
                     Some clients need a clean place to begin. Others need a partner who helps carry the knowledge-building practice until the organization owns it fully. We offer both.
                   </Text>
                 </Box>
               </HStack>
-              <Button asChild bg="#1A2138" color="white" borderRadius="3px" _hover={{ bg: "#2B3D6B" }}>
-                <Link as={NextLink} href="/contact?interest=stewardship">
-                  <HStack gap={2}>
+              <Button asChild maxW="full" h="auto" py={3} whiteSpace="normal" variant="solid" borderRadius="3px">
+                <Link textDecoration="none" _focusVisible={{ outline: "3px solid", outlineColor: "ui.borderControl", outlineOffset: "2px" }} color="theme.accentText" _hover={{ color: "theme.accentText" }} as={NextLink} href="/contact?interest=stewardship">
+                  <HStack className="crhp-cta-label" gap={2}>
                     <Text>Talk through fit</Text>
                     <IconCompass size={17} />
                   </HStack>

@@ -9,6 +9,7 @@
 // --public-courses checks actual public course list/detail pages with inert requests.
 // --public-gallery checks actual gallery copy over fixture artwork and fallback initials.
 // --public-products checks four live product pages, actual text contrast and CTA states.
+// --public-home adds the live homepage/nav/variant switcher to the product checks.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -27,6 +28,7 @@ webpackModule.init();
   const publicCourses = process.argv.includes('--public-courses');
   const publicGallery = process.argv.includes('--public-gallery');
   const publicProducts = process.argv.includes('--public-products');
+  const publicHome = process.argv.includes('--public-home');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -147,11 +149,12 @@ webpackModule.init();
     const CourseList = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/page.tsx'))}).default : null;
     const CourseDetail = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/[courseSlug]/page.tsx'))}).default : null;
     const Gallery = ${publicGallery} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/gallery/page.tsx'))}).default : null;
-    const ProductPages = ${publicProducts} ? {
+    const ProductPages = ${publicProducts || publicHome} ? {
       overview:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/page.tsx'))}).default,
       flow:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/flow/page.tsx'))}).default,
       principles:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/principles/page.tsx'))}).default,
       rings:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/products/rings/page.tsx'))}).default,
+      ...(${publicHome} ? {homepage:require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/page.tsx'))}).default} : {}),
     } : {};
     function ProductsFixture() {
       return React.createElement(Box,{'data-products':true,gridColumn:'1 / -1',color:'theme.accentText'},
@@ -281,7 +284,7 @@ webpackModule.init();
         ${publicCommonsDetail} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsDetailFixture)),
         ${publicCourses} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CourseFixture)),
         ${publicGallery} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GalleryFixture)),
-        ${publicProducts} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ProductsFixture)),
+        ${publicProducts || publicHome} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ProductsFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -622,23 +625,28 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
-      if(publicProducts) {
+      if(publicProducts || publicHome) {
         const fixtures=page.locator('[data-products]');
-        for(const [name,prefix,interest] of [['overview','crprod','products'],['flow','crflow','catalyst-flow'],['principles','crprinciples','catalyst-principles'],['rings','crrings','catalyst-rings']]) {
+        for(const [name,prefix,interest] of [['overview','crprod','products'],['flow','crflow','catalyst-flow'],['principles','crprinciples','catalyst-principles'],['rings','crrings','catalyst-rings'],...(publicHome?[['homepage','crhp',null]]:[])]) {
           const section=fixtures.locator('[data-product="'+name+'"]');
           const root=section.locator('.'+prefix+'-root');
           assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background});
           assert.equal(await root.locator('.'+prefix+'-masthead').evaluate(el=>getComputedStyle(el).borderBottomColor),'rgb(184, 146, 42)','fixed decorative gold divider retained');
-          const cta=root.getByRole('link');
-          await expect(cta).toHaveCount(1);await expect(cta).toHaveAttribute('href','/contact?interest='+interest);
+          const ctas=name==='homepage'?root.locator('.crhp-hero-actions a,.crhp-closing-callout a'):root.getByRole('link');
+          const destinations=name==='homepage'?['/products','/contact?interest=inquiry','/contact?interest=stewardship']:['/contact?interest='+interest];
+          await expect(ctas).toHaveCount(destinations.length);
+          for(const [index,href] of destinations.entries()) {
+          const cta=ctas.nth(index),outline=href.endsWith('=inquiry');
+          await expect(cta).toHaveAttribute('href',href);
           await page.mouse.move(0,0);
-          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:controlExpected.accentText,bg:controlExpected.accent});
+          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:outline?controlExpected.text:controlExpected.accentText,bg:outline?'rgba(0, 0, 0, 0)':controlExpected.accent});
           await cta.hover();
-          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:controlExpected.accentText,bg:controlExpected.accent});
+          await expect.poll(()=>cta.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:outline?controlExpected.text:controlExpected.accentText,bg:outline?expected.subtle:controlExpected.accent});
           await page.keyboard.press('Tab');await cta.focus();
           await expect.poll(()=>cta.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};})).toEqual({color:expected.border,width:'3px',offset:'2px'});
           await cta.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.productClicked=el.getAttribute('href');},{once:true}));await cta.click();
-          assert.equal(await page.evaluate(()=>window.productClicked),'/contact?interest='+interest);
+          assert.equal(await page.evaluate(()=>window.productClicked),href);
+          }
           for(const badge of await root.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
           for(const width of [1200,390]) {
             await page.setViewportSize({width,height:844});
@@ -670,6 +678,26 @@ webpackModule.init();
         assert.ok((await fixtures.locator('.crprod-image-pane').first().evaluate(el=>getComputedStyle(el).backgroundImage)).includes('/homepage/noaa-'),'product photo retained');
         assert.equal(await fixtures.locator('.crflow-s-curve').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(184, 146, 42)');
         assert.equal(await fixtures.locator('.crrings-artwork-ring').count(),4);
+        if(publicHome) {
+          const home=fixtures.locator('.crhp-root'),switcher=home.locator('.hmvs-stack');
+          assert.deepEqual(await switcher.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface});
+          await expect(switcher.getByRole('link')).toHaveCount(7);
+          for(let i=0;i<7;i++) {
+            const link=switcher.getByRole('link',{name:'Open homepage variant '+i,exact:true});
+            await expect(link).toHaveAttribute('href',i===0?'/':'/page'+i);
+            if(i===0)await expect(link).toHaveAttribute('aria-current','page');
+            else await expect(link).not.toHaveAttribute('aria-current');
+            await page.mouse.move(0,0);
+            await expect.poll(()=>link.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:i===0?controlExpected.accentText:controlExpected.text,bg:i===0?controlExpected.accent:'rgba(0, 0, 0, 0)'});
+            await link.hover();
+            await expect.poll(()=>link.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}))).toEqual({text:i===0?controlExpected.accentText:controlExpected.text,bg:i===0?controlExpected.accent:expected.subtle});
+            await page.keyboard.press('Tab');await link.focus();
+            await expect.poll(()=>link.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};})).toEqual({color:expected.border,width:'3px',offset:'2px'});
+            await link.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.variantClicked=el.getAttribute('href');},{once:true}));await link.click();
+            assert.equal(await page.evaluate(()=>window.variantClicked),i===0?'/':'/page'+i);
+          }
+          assert.ok((await home.locator('.crhp-image-frame').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('/homepage/noaa-'));
+        }
       }
       if(publicGallery) {
         const fixture=page.locator('[data-gallery]');
@@ -993,7 +1021,8 @@ webpackModule.init();
     if(publicCommonsDetail) console.log('PASS: actual Commons detail loading/error/missing/minimal/full states, metadata/quote/badge pairs, external/back/connection link hover/focus/click targets and route slug; eight combinations and desktop/mobile screenshots; API/navigation inert');
     if(publicCourses) console.log('PASS: actual public course list/detail states, semantic cards/metadata/badges/objectives/outline, link hover/focus/destinations, disabled enrollment; eight combinations and desktop/mobile screenshots; API/navigation inert');
     if(publicGallery) console.log('PASS: actual gallery states, opaque copy pairs over bright/dark/absent/gradient artwork, semantic metadata/badges/fallback initials, supplied artwork retained, long copy contained at desktop/mobile widths in eight combinations; API inert');
-    if(publicProducts) console.log('PASS: four actual product pages, semantic panels/badges and CTA resting/hover/focus/click targets; rendered text/icon contrast and desktop/mobile containment across eight combinations; decorative gold/curve/rings/photos preserved, requests blocked');
+    if(publicProducts || publicHome) console.log('PASS: four actual product pages, semantic panels/badges and CTA resting/hover/focus/click targets; rendered text/icon contrast and desktop/mobile containment across eight combinations; decorative gold/curve/rings/photos preserved, requests blocked');
+    if(publicHome) console.log('PASS: actual live homepage with navbar and variant switcher, copy/icon contrast, three CTA hover/focus/click targets and all seven variant links/current state; desktop/mobile containment in eight combinations; auth/navigation/remote media inert');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});
