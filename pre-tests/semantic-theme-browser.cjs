@@ -2,6 +2,7 @@
 // Run from frontend root: node pre-tests/semantic-theme-browser.cjs
 // Add --public-forms for actual public forms; --public-nav also checks desktop/mobile navigation.
 // --public-groups adds actual group templates, admission and content components.
+// --public-group-route checks the separate /group/[slug] page with inert services/onboarding.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -13,16 +14,38 @@ webpackModule.init();
 (async () => {
   const root = process.cwd();
   const publicGroups = process.argv.includes('--public-groups');
+  const publicGroupRoute = process.argv.includes('--public-group-route');
   const publicNav = process.argv.includes('--public-nav');
-  const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups;
+  const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
   fs.writeFileSync(path.join(temp, 'ts-loader.cjs'), `const ts=require(${JSON.stringify(require.resolve('typescript'))});module.exports=function(source){return ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;};`);
   fs.writeFileSync(path.join(temp, 'api-stub.js'), "exports.axiosInstance={post:async(url)=>{if(url.includes('client-intake'))throw {response:{data:{detail:'Please try again.'}}};return {data:{}};}};");
   fs.writeFileSync(path.join(temp, 'toaster-stub.js'), "exports.toaster={create:()=>{}};");
-  fs.writeFileSync(path.join(temp, 'navigation-stub.js'), "exports.usePathname=()=>'/contact';exports.useRouter=()=>({replace:()=>{}});exports.useSearchParams=()=>new URLSearchParams('tab=contact');");
+  fs.writeFileSync(path.join(temp, 'navigation-stub.js'), "const React=require('react');exports.RouteParams=React.createContext({slug:'route-guest'});exports.useParams=()=>React.useContext(exports.RouteParams);exports.usePathname=()=>'/contact';exports.useRouter=()=>({replace:()=>{}});exports.useSearchParams=()=>new URLSearchParams('tab=contact');");
   fs.writeFileSync(path.join(temp, 'link-stub.js'), "const React=require('react');module.exports=React.forwardRef((props,ref)=>React.createElement('a',{...props,ref}));");
   fs.writeFileSync(path.join(temp,'group-api-stub.js'), "exports.joinGroup=exports.requestToJoinGroup=async(slug)=>{if(slug.includes('failure'))throw new Error('Synthetic refusal');};exports.fetchAdmissionStatus=async(slug)=>({is_member:false,policy:'open',fixture_slug:slug});");
-  fs.writeFileSync(path.join(temp,'auth-stub.js'), "const React=require('react');exports.useAuth=()=>{const [state,setState]=React.useState({user:null,isLoading:false});React.useEffect(()=>{const update=e=>setState(e.detail);window.addEventListener('nav-fixture-auth',update);return()=>window.removeEventListener('nav-fixture-auth',update);},[]);return {...state,logout:async()=>{}};};");
+  fs.writeFileSync(path.join(temp,'auth-stub.js'), "const React=require('react');exports.useAuth=()=>{const [state,setState]=React.useState(window.fixtureAuth||{user:null,isLoading:false});React.useEffect(()=>{const update=e=>setState(e.detail);window.addEventListener('nav-fixture-auth',update);return()=>window.removeEventListener('nav-fixture-auth',update);},[]);return {...state,isAuthenticated:!!state.user,logout:async()=>{}};};");
+  fs.writeFileSync(path.join(temp,'tour-stub.js'), 'exports.GroupOnboardingTour=()=>null;');
+  fs.writeFileSync(path.join(temp,'group-route-api-stub.js'), `
+    exports.fetchPublicGroup=async slug=>{
+      if(slug==='route-loading')return new Promise(()=>{});
+      if(slug==='route-error')throw new Error('Synthetic missing group');
+      return {slug,title:'Fixture public group',group_type:'circle',quick_intro:'Public group introduction',description:'Public group description',member_count:4,
+        background_image_url:slug.includes('banner-')?'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="220"><rect width="1200" height="220" fill="'+(slug.endsWith('bright')?'white':'black')+'"/></svg>'):null,
+        decorators:['isA__community'],parent_title:{slug:'parent',title:'Parent group'},
+        member_preview:[{username:'alice',display_name:'Alice',avatar_url:null},{username:'bob',display_name:'Bob',avatar_url:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" fill="teal"/></svg>')}],
+        child_groups:[{slug:'child',title:'Child group',group_type:'circle'}]};
+    };
+    exports.fetchAdmissionStatus=async slug=>{
+      if(!slug.startsWith('route-'))return {is_member:false,policy:'open',fixture_slug:slug};
+      const status={is_member:['route-member','route-moderator'].includes(slug),is_moderator:slug==='route-moderator',has_pending_request:slug==='route-pending',
+        can_join:slug.includes('join-')||slug==='route-parent',can_request:slug.includes('request-'),policy:slug==='route-invite'?'invite_only':slug==='route-closed'?'closed':'open',
+        requires_parent_membership:slug==='route-parent',is_parent_member:false,parent_group:{slug:'parent',title:'Parent group'}};
+      if(window.routeActions?.[slug])return new Promise(resolve=>{window.releaseRouteRefresh=()=>resolve({...status,can_join:false,can_request:false,is_member:slug.includes('join-'),has_pending_request:slug.includes('request-')});});
+      return status;
+    };
+    exports.joinGroup=exports.requestToJoinGroup=async slug=>{if(slug.includes('failure'))throw new Error('Synthetic refusal');if(slug.startsWith('route-'))window.routeActions[slug]=true;};
+  `);
   fs.writeFileSync(path.join(temp,'selector-stub.js'), "const React=require('react');exports.ThemeSelector=()=>React.createElement('span',null,'Theme fixture');");
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
@@ -39,6 +62,19 @@ webpackModule.init();
     const GetStarted = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/app/(main)/(site)/get-started/page.tsx'))}).default : null;
     const Footer = publicForms ? require(${JSON.stringify(path.join(root, 'apps/crossroads/src/components/layout/Footer.tsx'))}).default : null;
     const Navbar = ${publicNav} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/components/layout/UnifiedNavbar.tsx'))}).default : null;
+    const GroupRoute = ${publicGroupRoute} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/page.tsx'))}).default : null;
+    function GroupRouteFixture() {
+      const [scenario,setScenario]=React.useState({name:'guest',revision:0});
+      React.useEffect(()=>{window.setGroupRouteScenario=name=>{
+        window.routeActions={};window.releaseRouteRefresh=null;
+        window.fixtureAuth={user:name==='guest'?null:{username:'fixture-member'},isLoading:name==='auth-loading'};
+        window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:window.fixtureAuth}));
+        setScenario(old=>({name,revision:old.revision+1}));
+      };},[]);
+      const {RouteParams}=require('next/navigation');
+      return React.createElement(Box,{'data-group-route':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},
+        React.createElement(RouteParams.Provider,{value:{slug:'route-'+scenario.name}},React.createElement(GroupRoute,{key:scenario.revision})));
+    }
     const GroupParts = ${publicGroups} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/shared.tsx'))}) : null;
     const GroupTemplates = ${publicGroups} ? {
       standard: require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/templates/StandardTemplate.tsx'))}).default,
@@ -104,6 +140,7 @@ webpackModule.init();
         ${publicNav} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(Box,{'data-navbar-fixture':true,gridColumn:'1 / -1'},React.createElement(Navbar,{sticky:false}))),
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupFixture)),
         ${publicGroups} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(TemplateFixture)),
+        ${publicGroupRoute} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupRouteFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -122,7 +159,8 @@ webpackModule.init();
     plugins:[new webpackModule.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_DEFAULT_NEWSLETTER_SLUG':JSON.stringify('fixture-news'),'process.env.NEXT_PUBLIC_SITE_URL':JSON.stringify('http://theme.test')})],
     resolve:{extensions:['.tsx','.ts','.js'],modules:[path.join(root,'node_modules')],alias:{
       '@chakra-ui/react$':require.resolve('@chakra-ui/react'),
-      '@mixtape/api/clients/public/publicApi':path.join(temp,'group-api-stub.js'),
+      '@mixtape/api/clients/public/publicApi':path.join(temp,publicGroupRoute?'group-route-api-stub.js':'group-api-stub.js'),
+      '@/features/onboarding/GroupOnboardingTour':path.join(temp,'tour-stub.js'),
       '@/lib/auth/AuthContext':path.join(temp,'auth-stub.js'),
       '@components/common/ThemeSelector':path.join(temp,'selector-stub.js'),
       '@components':path.join(root,'apps/crossroads/src/components'),
@@ -357,6 +395,89 @@ webpackModule.init();
         await expect(templates).toHaveAttribute('data-hero-scenario','missing');
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicGroupRoute) {
+        const fixture=page.locator('[data-group-route]');
+        const setScenario=async name=>{
+          await page.evaluate(name=>window.setGroupRouteScenario(name),name);
+          await expect(fixture).toHaveAttribute('data-group-route',name);
+          if(!['loading','error'].includes(name))await expect(fixture.locator('.gpp-root')).toBeVisible();
+        };
+        for(const name of ['loading','error']) {
+          await setScenario(name);
+          const state=fixture.locator('.gpp-'+name);
+          await expect(state).toBeVisible();
+          assert.deepEqual(await state.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background},name+' owns canvas pair');
+          if(name==='error')assert.equal(await state.getByText('Group not found.').evaluate(el=>getComputedStyle(el).color),expected.muted);
+        }
+        for(const name of ['guest','banner-bright','banner-dark','member','moderator','pending','invite','closed','parent','auth-loading','join-success','join-failure','request-success','request-failure']) {
+          await setScenario(name);
+          const root=fixture.locator('.gpp-root');
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background},'public group route canvas');
+          assert.deepEqual(await root.locator('.gpp-heading').evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.background},'header copy owns an opaque surface where it overlaps the banner');
+          if(name.startsWith('banner-'))await expect.poll(()=>root.locator('.gpp-banner img').evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+          assert.equal(await root.getByText('Public group description',{exact:true}).evaluate(el=>getComputedStyle(el).color),expected.muted);
+          const viewer=root.locator('.gpp-viewer-guest, .gpp-viewer-member, .gpp-viewer-actions');
+          if(name==='auth-loading'){await expect(viewer).toHaveCount(0);continue;}
+          await expect(viewer).toHaveCount(1);
+          assert.deepEqual(await viewer.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle},name+' viewer pair');
+          const states={guest:'viewing as a guest',member:'You are a member',moderator:'You are a member',pending:'Your request to join is pending review.',invite:'This group is invite-only.',closed:'This group is not accepting new members.',parent:'first to join this group.'};
+          if(states[name])await expect(viewer).toContainText(states[name]);
+          if(name==='moderator') {
+            await expect(viewer.getByRole('link',{name:'Join requests'})).toHaveAttribute('href','/group/route-moderator/admin/join-requests');
+            await expect(viewer.getByRole('link',{name:'Settings'})).toHaveAttribute('href','/group/route-moderator/admin/settings');
+          }
+          if(name==='parent')await expect(viewer.getByRole('button')).toHaveCount(0);
+          for(const link of await viewer.getByRole('link').all()) {
+            assert.equal(await link.evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+            assert.ok((await link.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'));
+            await page.keyboard.press('Tab');await link.focus();
+            assert.equal(await link.evaluate(el=>getComputedStyle(el).outlineColor),expected.border);
+          }
+          if(name.includes('success')||name.includes('failure')) {
+            const button=viewer.getByRole('button');
+            const request=name.startsWith('request');
+            const success=name.endsWith('success');
+            await page.mouse.move(0,0);
+            await expect.poll(()=>button.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{message:name+' page CTA resting pair'}).toEqual({text:request?controlExpected.text:controlExpected.accentText,bg:request?'rgba(0, 0, 0, 0)':controlExpected.accent});
+            await button.click();
+            const message=success?(request?'Your request has been submitted.':'You have joined this group!'):(request?'Could not submit request. Please try again.':'Could not join. Please try again.');
+            const feedback=viewer.getByText(message,{exact:true});
+            await expect(feedback).toBeVisible();
+            const tone=success?'success':'danger';
+            const fg=await page.locator('[data-app="Crossroads"] [data-status="'+tone+'"]').evaluate(el=>getComputedStyle(el).color);
+            assert.equal(await feedback.evaluate(el=>getComputedStyle(el).color),fg,'page action feedback foreground');
+            if(success) {
+              await expect(button).toBeDisabled();
+              await page.waitForFunction(()=>typeof window.releaseRouteRefresh==='function');
+              await page.evaluate(()=>window.releaseRouteRefresh());
+              await expect(root).toContainText(request?'Your request to join is pending review.':'You are a member of Fixture public group.');
+              await expect(root.getByRole('button')).toHaveCount(0);
+            } else await expect(button).toBeEnabled();
+          }
+        }
+        await setScenario('guest');
+        const root=fixture.locator('.gpp-root');
+        for(const badge of await root.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+        assert.equal(await root.locator('.gpp-member-avatar').first().evaluate(el=>getComputedStyle(el).backgroundColor),expected.subtle);
+        assert.equal(await root.locator('.gpp-member-avatar').first().locator('div').evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+        assert.equal(await root.locator('.gpp-member-overflow').evaluate(el=>getComputedStyle(el).backgroundColor),expected.subtle);
+        assert.equal(await root.locator('.gpp-member-overflow p').evaluate(el=>getComputedStyle(el).color),expected.muted);
+        for(const link of await root.getByRole('link').all()) {
+          await link.hover();
+          await expect.poll(()=>link.evaluate(el=>getComputedStyle(el).color)).toBe(controlExpected.text);
+          await page.keyboard.press('Tab');await link.focus();
+          await expect.poll(()=>link.evaluate(el=>({color:getComputedStyle(el).outlineColor,width:getComputedStyle(el).outlineWidth,offset:getComputedStyle(el).outlineOffset}))).toEqual({color:expected.border,width:'3px',offset:'2px'});
+        }
+        const child=root.locator('.gpp-child-card');
+        await child.hover();
+        await expect.poll(()=>child.evaluate(el=>getComputedStyle(el).borderTopColor)).toBe(expected.border);
+        for(const width of [1200,390]) {
+          await page.setViewportSize({width,height:844});
+          const routeImage=path.join(temp,id+'-'+mode+'-'+contrast+'-group-route-'+width+'.png');
+          await root.screenshot({path:routeImage,animations:'disabled'});screenshots.push(routeImage);
+        }
+        await page.setViewportSize({width:1200,height:800});
+      }
       if(publicNav) {
         const setAuth=state=>page.evaluate(state=>window.dispatchEvent(new CustomEvent('nav-fixture-auth',{detail:state})),state);
         const nav=page.locator('.unav-root');
@@ -418,6 +539,7 @@ webpackModule.init();
     if(publicGroups) console.log('PASS: all four actual templates own canvas/text, metadata, badge pairs, member initials, content/child/parent links and keyboard focus in eight theme/mode combinations');
     if(publicGroups) console.log('PASS: opaque hero title/intro/text/image-caption/link/callout surfaces over bright, dark and absent banner media; long copy stays within a growing banner at desktop and mobile widths in eight theme/mode combinations; emblem and image artwork contrast is not certified');
     if(publicNav) console.log('PASS: actual public navbar loading, desktop dropdown, mobile drawer/current-link focus and authenticated logout colours in eight theme/mode combinations; auth/theme-selector are inert fixtures');
+    if(publicGroupRoute) console.log('PASS: actual /group/[slug] page loading/error, guest/member/moderator/policy states, join/request success/refusal and parent-page refresh, semantic surfaces/initials/badges/link focus; eight theme/mode combinations and desktop/mobile screenshots; APIs/auth/onboarding are inert fixtures');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

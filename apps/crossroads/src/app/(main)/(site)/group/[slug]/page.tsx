@@ -14,7 +14,7 @@ import {
   VStack,
   Link as ChakraLink,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
+import { groupLinkStyles } from "../../[slug]/templates/shared";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   fetchPublicGroup,
@@ -39,13 +39,13 @@ export default function GroupPublicPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const cardBg = useColorModeValue("gray.50", "gray.800");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const avatarFallbackBg = useColorModeValue("gray.300", "gray.600");
-  const ctaBg = useColorModeValue("gray.50", "gray.800");
-  const ctaBorderColor = useColorModeValue("gray.200", "gray.700");
-  const accentBg = useColorModeValue("white", "gray.900");
+  const cardBg = "ui.surfaceSubtle";
+  const mutedColor = "theme.textMuted";
+  const borderColor = "ui.borderSubtle";
+  const avatarFallbackBg = "ui.surfaceSubtle";
+  const ctaBg = "ui.surfaceSubtle";
+  const ctaBorderColor = "ui.borderSubtle";
+  const accentBg = "theme.surface";
 
   useEffect(() => {
     async function load() {
@@ -80,7 +80,7 @@ export default function GroupPublicPage() {
 
   if (loading) {
     return (
-      <Box px="6" py="20" textAlign="center">
+      <Box className="gpp-loading" bg="theme.bg" color="theme.text" px="6" py="20" textAlign="center">
         <Spinner size="lg" />
       </Box>
     );
@@ -88,7 +88,7 @@ export default function GroupPublicPage() {
 
   if (error || !group) {
     return (
-      <Box px="6" py="20" textAlign="center">
+      <Box className="gpp-error" bg="theme.bg" color="theme.text" px="6" py="20" textAlign="center">
         <Text color={mutedColor}>{error || "Group not found."}</Text>
       </Box>
     );
@@ -102,7 +102,7 @@ export default function GroupPublicPage() {
     group.emblem?.image_url || group.profile_image_url || undefined;
 
   return (
-    <Box>
+    <Box className="gpp-root" bg="theme.bg" color="theme.text">
       <GroupOnboardingTour
         groupSlug={slug}
         groupTitle={group.title}
@@ -111,7 +111,7 @@ export default function GroupPublicPage() {
       />
       {/* Background image banner */}
       {group.background_image_url ? (
-        <Box w="full" h="220px" overflow="hidden" mb="-40px">
+        <Box className="gpp-banner" w="full" h="220px" overflow="hidden" mb="-40px">
           <Image
             src={group.background_image_url}
             alt=""
@@ -123,6 +123,7 @@ export default function GroupPublicPage() {
       ) : (
         // Color accent banner from emblem
         <Box
+          className="gpp-banner-accent"
           w="full"
           h="120px"
           mb="-40px"
@@ -131,6 +132,7 @@ export default function GroupPublicPage() {
       )}
 
       <Box
+        className="gpp-content"
         maxW="3xl"
         mx="auto"
         px="6"
@@ -138,7 +140,7 @@ export default function GroupPublicPage() {
         pb="10"
       >
         {/* Header Block */}
-        <HStack gap="4" align="end" mb="4">
+        <HStack className="gpp-header" gap="4" align="end" mb="4">
           {/* Emblem */}
           <EmblemAvatar
             group={group}
@@ -148,10 +150,11 @@ export default function GroupPublicPage() {
             cardBg={accentBg}
           />
 
-          <VStack gap="0" align="start">
+          <VStack className="gpp-heading" bg="theme.bg" color="theme.text" minW="0" px="2" py="1" gap="0" align="start" overflowWrap="anywhere">
             <Heading size="2xl">{group.title}</Heading>
             <HStack gap="2">
               <Badge
+                bg="ui.surfaceSubtle" color="theme.text"
                 variant="subtle"
                 size="sm"
                 borderRadius="full"
@@ -181,7 +184,7 @@ export default function GroupPublicPage() {
             <ChakraLink
               asChild
               fontSize="sm"
-              color="blue.500"
+              {...groupLinkStyles}
               fontWeight="500"
             >
               <NextLink href={`/group/${group.parent_title.slug}`}>
@@ -193,9 +196,10 @@ export default function GroupPublicPage() {
 
         {/* Decorator badges */}
         {group.decorators && group.decorators.length > 0 && (
-          <HStack gap="2" flexWrap="wrap" mb="4">
+          <HStack className="gpp-decorators" gap="2" flexWrap="wrap" mb="4">
             {group.decorators.map((d) => (
               <Badge
+                bg="ui.surfaceSubtle" color="theme.text"
                 key={d}
                 variant="subtle"
                 size="sm"
@@ -220,7 +224,7 @@ export default function GroupPublicPage() {
 
         {/* Member preview strip */}
         {group.member_preview && group.member_preview.length > 0 && (
-          <Box mb="6" data-tour="group-members">
+          <Box className="gpp-members" mb="6" data-tour="group-members">
             <Text
               fontSize="xs"
               fontWeight="600"
@@ -231,11 +235,12 @@ export default function GroupPublicPage() {
             >
               Members
             </Text>
-            <HStack gap="0" flexWrap="wrap">
+            <HStack className="gpp-member-links" gap="0" flexWrap="wrap">
               {group.member_preview.map((m, i) => (
-                <ChakraLink asChild key={m.username}>
+                <ChakraLink asChild key={m.username} {...groupLinkStyles} aria-label={m.display_name}>
                   <NextLink href={`/member/handle/${m.username}`}>
                     <Box
+                      className="gpp-member-avatar"
                       w="36px"
                       h="36px"
                       borderRadius="full"
@@ -265,7 +270,7 @@ export default function GroupPublicPage() {
                           justifyContent="center"
                           fontSize="xs"
                           fontWeight="bold"
-                          color="white"
+                          color="theme.text"
                         >
                           {m.display_name.charAt(0).toUpperCase()}
                         </Box>
@@ -276,6 +281,7 @@ export default function GroupPublicPage() {
               ))}
               {group.member_count > group.member_preview.length && (
                 <Box
+                  className="gpp-member-overflow"
                   w="36px"
                   h="36px"
                   borderRadius="full"
@@ -300,7 +306,7 @@ export default function GroupPublicPage() {
 
         {/* Child groups */}
         {group.child_groups && group.child_groups.length > 0 && (
-          <Box mb="6" data-tour="group-feed">
+          <Box className="gpp-children" mb="6" data-tour="group-feed">
             <Text
               fontSize="xs"
               fontWeight="600"
@@ -311,25 +317,28 @@ export default function GroupPublicPage() {
             >
               Groups within {group.title}
             </Text>
-            <VStack gap="2" align="stretch">
+            <VStack className="gpp-child-links" gap="2" align="stretch">
               {group.child_groups.map((child) => (
                 <ChakraLink
                   asChild
                   key={child.slug}
-                  _hover={{ textDecoration: "none" }}
+                  {...groupLinkStyles}
                 >
                   <NextLink href={`/group/${child.slug}`}>
                     <HStack
+                      className="gpp-child-card"
+                      color="theme.text"
                       p="3"
                       bg={cardBg}
                       borderRadius="md"
                       border="1px solid"
                       borderColor={borderColor}
-                      _hover={{ boxShadow: "sm" }}
+                      _hover={{ boxShadow: "ui.shadowRaised", borderColor: "ui.borderControl" }}
                       transition="box-shadow 0.2s"
                     >
                       <Text fontWeight="500">{child.title}</Text>
                       <Badge
+                        bg="ui.surfaceSubtle" color="theme.text"
                         variant="subtle"
                         size="sm"
                         borderRadius="full"
@@ -455,19 +464,19 @@ function ViewerStrip({
 
   if (admissionStatus?.is_member) {
     return (
-      <HStack py="2" px="3" mb="6" gap="3">
+      <HStack className="gpp-viewer-member" bg="ui.surfaceSubtle" color="theme.text" py="2" px="3" mb="6" gap="3" flexWrap="wrap">
         <Text fontSize="sm" color={mutedColor}>
           You are a member of {groupTitle}.
         </Text>
         {admissionStatus.is_moderator && (
           <>
-            <ChakraLink asChild fontSize="xs" color="blue.500">
+            <ChakraLink asChild fontSize="xs" {...groupLinkStyles}>
               <NextLink href={`/group/${groupSlug}/admin/join-requests`}>
                 Join requests
               </NextLink>
             </ChakraLink>
             <Text fontSize="xs" color={mutedColor}>{"\u00B7"}</Text>
-            <ChakraLink asChild fontSize="xs" color="blue.500">
+            <ChakraLink asChild fontSize="xs" {...groupLinkStyles}>
               <NextLink href={`/group/${groupSlug}/admin/settings`}>
                 Settings
               </NextLink>
@@ -481,6 +490,8 @@ function ViewerStrip({
   if (!isAuthenticated) {
     return (
       <Box
+        className="gpp-viewer-guest"
+        color="theme.text"
         py="3"
         px="4"
         mb="6"
@@ -492,14 +503,14 @@ function ViewerStrip({
         <Text fontSize="sm" color={mutedColor} mb="2">
           You{"\u2019"}re viewing as a guest.
         </Text>
-        <HStack gap="3">
-          <ChakraLink asChild fontSize="sm" color="blue.500">
+        <HStack className="gpp-viewer-links" gap="3">
+          <ChakraLink asChild fontSize="sm" {...groupLinkStyles}>
             <NextLink href="/app/login">Log in</NextLink>
           </ChakraLink>
           <Text fontSize="sm" color={mutedColor}>
             {"\u00B7"}
           </Text>
-          <ChakraLink asChild fontSize="sm" color="blue.500">
+          <ChakraLink asChild fontSize="sm" {...groupLinkStyles}>
             <NextLink href="/welcome/start">Join to participate</NextLink>
           </ChakraLink>
         </HStack>
@@ -542,6 +553,8 @@ function ViewerStrip({
 
   return (
     <Box
+      className="gpp-viewer-actions"
+      color="theme.text"
       py="3"
       px="4"
       mb="6"
@@ -551,7 +564,7 @@ function ViewerStrip({
       bg={ctaBg}
     >
       {actionMessage && (
-        <Text fontSize="sm" mb="2" color={actionMessage.includes("Could not") ? "red.500" : "green.600"}>
+        <Text fontSize="sm" mb="2" color={actionMessage.includes("Could not") ? "status.danger.fg" : "status.success.fg"}>
           {actionMessage}
         </Text>
       )}
@@ -563,11 +576,11 @@ function ViewerStrip({
       )}
 
       {!status?.has_pending_request && status?.can_join && (
-        <VStack align="start" gap="2">
+        <VStack className="gpp-viewer-action" align="start" gap="2">
           {status.requires_parent_membership && !status.is_parent_member && status.parent_group ? (
             <Text fontSize="sm" color={mutedColor}>
               Join{" "}
-              <ChakraLink asChild color="blue.500">
+              <ChakraLink asChild {...groupLinkStyles}>
                 <NextLink href={`/group/${status.parent_group.slug}`}>
                   {status.parent_group.title}
                 </NextLink>
@@ -577,7 +590,6 @@ function ViewerStrip({
           ) : (
             <Button
               size="sm"
-              colorScheme="blue"
               onClick={handleJoin}
               disabled={actionLoading}
             >
@@ -588,11 +600,11 @@ function ViewerStrip({
       )}
 
       {!status?.has_pending_request && status?.can_request && (
-        <VStack align="start" gap="2">
+        <VStack className="gpp-viewer-action" align="start" gap="2">
           {status.requires_parent_membership && !status.is_parent_member && status.parent_group ? (
             <Text fontSize="sm" color={mutedColor}>
               Join{" "}
-              <ChakraLink asChild color="blue.500">
+              <ChakraLink asChild {...groupLinkStyles}>
                 <NextLink href={`/group/${status.parent_group.slug}`}>
                   {status.parent_group.title}
                 </NextLink>
@@ -603,7 +615,6 @@ function ViewerStrip({
             <Button
               size="sm"
               variant="outline"
-              colorScheme="blue"
               onClick={handleRequestJoin}
               disabled={actionLoading}
             >
