@@ -7,6 +7,7 @@
 // --public-commons checks the actual Commons list/cards; Leaflet is an inert boundary.
 // --public-commons-detail checks actual entry states, metadata and all link categories.
 // --public-courses checks actual public course list/detail pages with inert requests.
+// --public-gallery checks actual gallery copy over fixture artwork and fallback initials.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -23,6 +24,7 @@ webpackModule.init();
   const publicCommons = process.argv.includes('--public-commons');
   const publicCommonsDetail = process.argv.includes('--public-commons-detail');
   const publicCourses = process.argv.includes('--public-courses');
+  const publicGallery = process.argv.includes('--public-gallery');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -104,6 +106,23 @@ webpackModule.init();
         {id:'lesson',position:2,content_type:'lesson',content_title:'Fixture lesson',estimated_duration:25}]};
     };
   `);
+  fs.writeFileSync(path.join(temp,'gallery-api-stub.js'), `
+    exports.fetchPublicGroups=async()=>{
+      if(window.galleryScenario==='loading')return new Promise(()=>{});
+      if(window.galleryScenario==='error')throw new Error('Synthetic refusal');
+      if(window.galleryScenario==='empty')return [];
+      const svg=fill=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="'+fill+'"/></svg>');
+      return [
+        {title:'Bright artwork group',background_image_url:svg('white'),group_type:'community'},
+        {title:'Dark artwork group',background_image_url:svg('black')},
+        {title:'Fallback group'},
+        {title:'Palette artwork group',emblem:{bg:'#FDE68A',fg:'#713F12',palette:['#FDE68A','#FECACA']}},
+        {title:'Single colour artwork group',emblem:{bg:'#1E3A8A',fg:'#BFDBFE'}},
+        {title:'Image emblem group',emblem:{image_url:svg('teal')}},
+        {title:'LongGroupTitle'.repeat(12),quick_intro:'Long introduction that must wrap safely within the copy panel. '.repeat(12)}
+      ].map((g,i)=>({id:String(i),slug:'fixture-'+i,group_type:'circle',member_count:i===0?1:3,quick_intro:'Fixture group introduction',decorators:['isA__community','can__teach','has__garden'],...g}));
+    };
+  `);
   fs.writeFileSync(path.join(temp, 'entry.js'), `
     const React = require('react');
     const {createRoot} = require('react-dom/client');
@@ -125,6 +144,13 @@ webpackModule.init();
     const CommonsDetail = ${publicCommonsDetail} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/[slug]/page.tsx'))}).default : null;
     const CourseList = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/page.tsx'))}).default : null;
     const CourseDetail = ${publicCourses} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/courses/[courseSlug]/page.tsx'))}).default : null;
+    const Gallery = ${publicGallery} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/[slug]/gallery/page.tsx'))}).default : null;
+    function GalleryFixture() {
+      const [scenario,setScenario]=React.useState({name:'loading',revision:0});
+      React.useEffect(()=>{window.setGalleryScenario=name=>{window.galleryScenario=name;setScenario(old=>({name,revision:old.revision+1}));};},[]);
+      window.galleryScenario=scenario.name;
+      return React.createElement(Box,{'data-gallery':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},React.createElement(Gallery,{key:scenario.revision}));
+    }
     function CourseFixture() {
       const [scenario,setScenario]=React.useState({name:'loading',revision:0});
       React.useEffect(()=>{window.setCourseScenario=name=>{window.courseRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
@@ -242,6 +268,7 @@ webpackModule.init();
         ${publicCommons} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsFixture)),
         ${publicCommonsDetail} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsDetailFixture)),
         ${publicCourses} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CourseFixture)),
+        ${publicGallery} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GalleryFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -254,7 +281,7 @@ webpackModule.init();
       React.createElement(ColorModeProvider,{defaultTheme:'light',enableSystem:false},
         React.createElement(ThemeProvider,{themes,defaultThemeId:'gallery',storageKeyPrefix:'token-check'},React.createElement(Demo))));
   `);
-  fs.writeFileSync(path.join(temp,'public-api-stub.js'), `Object.assign(exports,require('./${publicGroupRoute?'group-route-api-stub':'group-api-stub'}.js'),require('./commons-api-stub.js'),require('./course-api-stub.js'));`);
+  fs.writeFileSync(path.join(temp,'public-api-stub.js'), `Object.assign(exports,require('./${publicGroupRoute?'group-route-api-stub':'group-api-stub'}.js'),require('./commons-api-stub.js'),require('./course-api-stub.js'),require('./gallery-api-stub.js'));`);
   await new Promise((resolve, reject) => webpackModule.webpack({
     mode:'production', entry:path.join(temp,'entry.js'), cache:false,
     output:{path:temp,filename:'bundle.js'},
@@ -582,6 +609,49 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicGallery) {
+        const fixture=page.locator('[data-gallery]');
+        for(const scenario of ['loading','error','empty','full']) {
+          await page.evaluate(name=>window.setGalleryScenario(name),scenario);
+          await expect(fixture).toHaveAttribute('data-gallery',scenario);
+          const root=fixture.locator(scenario==='loading'?'.cgal-loading':scenario==='error'?'.cgal-error':'.cgal-root');
+          await expect(root).toBeVisible();
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:scenario==='loading'?expected.muted:controlExpected.text,bg:expected.background});
+          if(scenario==='error')assert.equal(await root.getByRole('alert').evaluate(el=>getComputedStyle(el).color),controlExpected.danger);
+          if(scenario==='empty')await expect(root.getByText('No public groups yet.')).toBeVisible();
+          if(scenario==='full') {
+            const cards=root.locator('.cgal-card');
+            await expect(cards).toHaveCount(7);
+            await expect(root.getByText('7 groups in the gallery',{exact:true})).toBeVisible();
+            for(const card of await cards.all()) {
+              const copy=card.locator('.cgal-copy');
+              assert.deepEqual(await copy.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:controlExpected.surface},'opaque gallery copy pair over all artwork');
+              assert.equal(await copy.getByRole('heading').evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+              for(const metadata of await copy.locator('.cgal-meta p,:scope > p').all())assert.equal(await metadata.evaluate(el=>getComputedStyle(el).color),expected.muted);
+              for(const badge of await copy.locator('.chakra-badge').all())assert.deepEqual(await badge.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+              await expect(copy.getByText('Community',{exact:true})).toBeVisible();
+            }
+            for(const card of [cards.nth(0),cards.nth(1)])assert.ok((await card.locator('.cgal-artwork').evaluate(el=>getComputedStyle(el).backgroundImage)).startsWith('url('),'supplied background retained');
+            assert.ok((await cards.nth(3).locator('.cgal-artwork').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('linear-gradient'),'supplied palette gradient retained');
+            const fallback=cards.nth(2).locator('.cgal-emblem-initial');
+            assert.equal(await fallback.evaluate(el=>getComputedStyle(el).backgroundColor),expected.subtle);
+            assert.equal(await fallback.locator('p').evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+            assert.deepEqual(await cards.nth(4).locator('.cgal-emblem-initial').evaluate(el=>({bg:getComputedStyle(el).backgroundColor,text:getComputedStyle(el.querySelector('p')).color})),{bg:'rgb(30, 58, 138)',text:'rgb(191, 219, 254)'},'supplied emblem colours preserved as artwork');
+            await expect.poll(()=>cards.nth(5).locator('img').evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+            for(const width of [1200,390]) {
+              await page.setViewportSize({width,height:844});
+              assert.equal(await root.evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'gallery has no horizontal overflow');
+              for(const card of await cards.all()) {
+                const geometry=await card.evaluate(el=>{const panel=el.querySelector('.cgal-copy'),copy=panel.getBoundingClientRect(),card=el.getBoundingClientRect();return {noOverflow:panel.scrollWidth<=panel.clientWidth+1,contained:copy.left>=card.left-1&&copy.right<=card.right+1&&copy.bottom<=card.bottom+1,panelWidth:panel.clientWidth,scrollWidth:panel.scrollWidth,copy:copy.toJSON(),card:card.toJSON()};});
+                assert.ok(geometry.noOverflow&&geometry.contained,'gallery copy contained at '+width+': '+JSON.stringify(geometry));
+              }
+              const image=path.join(temp,id+'-'+mode+'-'+contrast+'-gallery-'+width+'.png');
+              await root.screenshot({path:image,animations:'disabled'});screenshots.push(image);
+            }
+          }
+          await page.setViewportSize({width:1200,height:800});
+        }
+      }
       if(publicCourses) {
         const fixture=page.locator('[data-courses]');
         for(const scenario of ['loading','error','empty','missing','minimal','full']) {
@@ -860,6 +930,7 @@ webpackModule.init();
     if(publicCommons) console.log('PASS: actual Commons loading/error/empty/list/search, semantic card metadata/type pairs, separate detail/external link click targets and hover/focus; eight theme/mode combinations, desktop/mobile screenshots; API and map boundary inert');
     if(publicCommonsDetail) console.log('PASS: actual Commons detail loading/error/missing/minimal/full states, metadata/quote/badge pairs, external/back/connection link hover/focus/click targets and route slug; eight combinations and desktop/mobile screenshots; API/navigation inert');
     if(publicCourses) console.log('PASS: actual public course list/detail states, semantic cards/metadata/badges/objectives/outline, link hover/focus/destinations, disabled enrollment; eight combinations and desktop/mobile screenshots; API/navigation inert');
+    if(publicGallery) console.log('PASS: actual gallery states, opaque copy pairs over bright/dark/absent/gradient artwork, semantic metadata/badges/fallback initials, supplied artwork retained, long copy contained at desktop/mobile widths in eight combinations; API inert');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

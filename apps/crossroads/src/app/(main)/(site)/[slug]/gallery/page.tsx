@@ -13,7 +13,6 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import { fetchPublicGroups } from "@mixtape/api/clients/public/publicApi";
 import type {
   PublicGroup,
@@ -24,8 +23,6 @@ export default function CrossroadsGalleryPage() {
   const [groups, setGroups] = useState<PublicGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
 
   useEffect(() => {
     async function load() {
@@ -43,7 +40,7 @@ export default function CrossroadsGalleryPage() {
 
   if (loading) {
     return (
-      <Box px="6" py="20" textAlign="center">
+      <Box className="cgal-loading" bg="theme.bg" color="theme.textMuted" role="status" aria-label="Loading groups" px="6" py="20" textAlign="center">
         <Spinner size="lg" />
       </Box>
     );
@@ -51,35 +48,36 @@ export default function CrossroadsGalleryPage() {
 
   if (error) {
     return (
-      <Box px="6" py="20" textAlign="center">
-        <Text color={mutedColor}>{error}</Text>
+      <Box className="cgal-error" bg="theme.bg" color="theme.text" px="6" py="20" textAlign="center">
+        <Text role="alert" color="status.danger.fg">{error}</Text>
       </Box>
     );
   }
 
   return (
-    <Box maxW="5xl" mx="auto" px="6" py="10">
+    <Box className="cgal-root" bg="theme.bg" color="theme.text" maxW="5xl" mx="auto" px="6" py="10">
       <Heading size="3xl" mb="2">
         Crossroads Gallery
       </Heading>
-      <Text color={mutedColor} mb="3" maxW="2xl">
+      <Text color="theme.textMuted" mb="3" maxW="2xl">
         The living directory of groups that make up this ecosystem. Communities
         hold space for circles and their members. Coalitions bridge across
         boundaries. Each group carries its own identity, culture, and creative
         output — explore them here.
       </Text>
-      <Text fontSize="sm" color={mutedColor} mb="8">
+      <Text fontSize="sm" color="theme.textMuted" mb="8">
         {groups.length} {groups.length === 1 ? "group" : "groups"} in the gallery
       </Text>
 
       {groups.length === 0 ? (
-        <Text color={mutedColor}>No public groups yet.</Text>
+        <Text color="theme.textMuted">No public groups yet.</Text>
       ) : (
-        <Grid templateColumns="repeat(2, 1fr)" gap="5">
+        <Grid className="cgal-grid" templateColumns={{ base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }} gap="5">
           {groups.map((group) => (
             <GridItem
+              className="cgal-grid-item"
               key={group.id}
-              colSpan={group.group_type === "community" ? 2 : 1}
+              colSpan={{ base: 1, md: group.group_type === "community" ? 2 : 1 }}
             >
               <GroupCard group={group} />
             </GridItem>
@@ -93,55 +91,51 @@ export default function CrossroadsGalleryPage() {
 // --- Sub-components ---
 
 function GroupCard({ group }: { group: PublicGroup }) {
-  const cardBg = useColorModeValue("gray.50", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
   const isCommunity = group.group_type === "community";
 
-  const bgStyle = getCardBackground(group, cardBg);
+  const bgStyle = getCardBackground(group, "theme.surface");
 
   return (
     <Box
+      className="cgal-card"
+      bg="theme.surface"
+      color="theme.text"
       position="relative"
       borderRadius="lg"
       border="1px solid"
-      borderColor={borderColor}
+      borderColor="ui.borderSubtle"
       overflow="hidden"
       minH={isCommunity ? "200px" : "160px"}
       transition="box-shadow 0.2s"
-      _hover={{ boxShadow: "md" }}
+      _hover={{ boxShadow: "var(--ui-shadow-raised)" }}
     >
       {/* Background layer */}
       <Box
+        className="cgal-artwork"
         position="absolute"
         inset="0"
         {...bgStyle}
       />
 
-      {/* Dark overlay for text readability when using images */}
-      {group.background_image_url && (
-        <Box
-          position="absolute"
-          inset="0"
-          bg="blackAlpha.500"
-        />
-      )}
-
       {/* Content */}
-      <Box position="relative" p="5" h="full">
-        <HStack gap="3" align="start" mb="3">
+      <Box className="cgal-copy" position="relative" bg="theme.surface" color="theme.text" borderRadius="md" m="3" p="5" overflowWrap="anywhere">
+        <HStack className="cgal-card-heading" gap="3" align="start" mb="3">
           {/* Emblem */}
           <EmblemBadge emblem={group.emblem} title={group.title} />
 
-          <VStack gap="0" align="start" flex="1">
+          <VStack className="cgal-card-title" gap="0" align="start" flex="1" minW="0">
             <Heading
+              maxW="full"
+              overflowWrap="anywhere"
               size={isCommunity ? "lg" : "md"}
-              color={group.background_image_url ? "white" : undefined}
+              color="theme.text"
             >
               {group.title}
             </Heading>
-            <HStack gap="2">
+            <HStack className="cgal-meta" gap="2" wrap="wrap">
               <Badge
+                bg="ui.surfaceSubtle"
+                color="theme.text"
                 variant="subtle"
                 size="sm"
                 borderRadius="full"
@@ -152,7 +146,7 @@ function GroupCard({ group }: { group: PublicGroup }) {
               </Badge>
               <Text
                 fontSize="xs"
-                color={group.background_image_url ? "whiteAlpha.800" : mutedColor}
+                color="theme.textMuted"
               >
                 {group.member_count} {group.member_count === 1 ? "member" : "members"}
               </Text>
@@ -163,7 +157,7 @@ function GroupCard({ group }: { group: PublicGroup }) {
         {group.quick_intro && (
           <Text
             fontSize="sm"
-            color={group.background_image_url ? "whiteAlpha.900" : mutedColor}
+            color="theme.textMuted"
             lineClamp={isCommunity ? 3 : 2}
           >
             {group.quick_intro}
@@ -172,7 +166,7 @@ function GroupCard({ group }: { group: PublicGroup }) {
 
         {/* Decorator badges */}
         {group.decorators && group.decorators.length > 0 && (
-          <HStack gap="1" flexWrap="wrap" mt="3">
+          <HStack className="cgal-decorators" gap="1" flexWrap="wrap" mt="3">
             {group.decorators.slice(0, 4).map((d) => (
               <Badge
                 key={d}
@@ -181,8 +175,9 @@ function GroupCard({ group }: { group: PublicGroup }) {
                 borderRadius="full"
                 px="2"
                 fontSize="2xs"
-                color={group.background_image_url ? "whiteAlpha.800" : undefined}
-                borderColor={group.background_image_url ? "whiteAlpha.400" : undefined}
+                bg="ui.surfaceSubtle"
+                color="theme.text"
+                borderColor="ui.borderSubtle"
               >
                 {formatDecorator(d)}
               </Badge>
@@ -201,18 +196,17 @@ function EmblemBadge({
   emblem: PublicGroupEmblem | null;
   title: string;
 }) {
-  const fallbackBg = useColorModeValue("gray.300", "gray.600");
-
   if (emblem?.image_url) {
     return (
       <Box
+        className="cgal-emblem-image"
         w="40px"
         h="40px"
         borderRadius="full"
         overflow="hidden"
         flexShrink={0}
         border="2px solid"
-        borderColor="whiteAlpha.600"
+        borderColor="ui.borderSubtle"
       >
         <Image
           src={emblem.image_url}
@@ -225,22 +219,23 @@ function EmblemBadge({
     );
   }
 
-  // Color-based fallback
+  // Supplied emblem colours are artwork; absent colours use a semantic initials pair.
   const bg = emblem?.bg || undefined;
-  const fg = emblem?.fg || "white";
+  const fg = emblem?.fg || (bg ? "white" : "theme.text");
 
   return (
     <Box
+      className="cgal-emblem-initial"
       w="40px"
       h="40px"
       borderRadius="full"
-      bg={bg || fallbackBg}
+      bg={bg || "ui.surfaceSubtle"}
       display="flex"
       alignItems="center"
       justifyContent="center"
       flexShrink={0}
       border="2px solid"
-      borderColor="whiteAlpha.600"
+      borderColor="ui.borderSubtle"
     >
       <Text fontSize="md" fontWeight="bold" color={fg}>
         {title.charAt(0).toUpperCase()}
