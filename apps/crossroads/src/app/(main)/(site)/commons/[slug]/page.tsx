@@ -15,21 +15,22 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { useColorModeValue } from "@components/ui/color-mode";
 import {
   fetchPublicCommonsDetail,
   type PublicCommonsDetail,
   type PublicCommonsFilament,
 } from "@mixtape/api/clients/public/publicApi";
 
-const TYPE_COLORS: Record<string, string> = {
-  person: "purple",
-  organization: "blue",
-  group: "teal",
-  project: "orange",
-  place: "green",
-  event: "red",
-};
+const commonsLinkStyles = {
+  color: "theme.text",
+  textDecoration: "underline",
+  _hover: { color: "theme.text" },
+  _focusVisible: {
+    outline: "3px solid",
+    outlineColor: "ui.borderControl",
+    outlineOffset: "2px",
+  },
+} as const;
 
 // Human-readable filament relation labels
 function relationLabel(relationType: string, direction: "in" | "out"): string {
@@ -47,17 +48,16 @@ function relationLabel(relationType: string, direction: "in" | "out"): string {
 }
 
 function FilamentRow({ filament }: { filament: PublicCommonsFilament }) {
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
   return (
-    <HStack gap={2} fontSize="sm">
-      <Text color={mutedColor} minW="140px">
+    <HStack className="cmdt-filament" gap={2} fontSize="sm" wrap="wrap">
+      <Text color="theme.textMuted" minW="140px">
         {relationLabel(filament.relation_type, filament.direction)}
       </Text>
-      <ChakraLink as={NextLink} href={`/commons/${filament.related_slug}`} color="blue.500">
+      <ChakraLink as={NextLink} href={`/commons/${filament.related_slug}`} {...commonsLinkStyles}>
         {filament.related_title}
       </ChakraLink>
       {filament.note && (
-        <Text color={mutedColor} fontStyle="italic">
+        <Text color="theme.textMuted" fontStyle="italic">
           — {filament.note}
         </Text>
       )}
@@ -72,11 +72,6 @@ export default function CommonsDetailPage() {
   const [item, setItem] = useState<PublicCommonsDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const mutedColor = useColorModeValue("gray.500", "gray.400");
-  const quoteColor = useColorModeValue("gray.700", "gray.200");
-  const quoteBorderColor = useColorModeValue("gray.300", "gray.600");
-  const sectionLabelColor = useColorModeValue("gray.400", "gray.500");
 
   useEffect(() => {
     async function load() {
@@ -94,7 +89,15 @@ export default function CommonsDetailPage() {
 
   if (loading) {
     return (
-      <Box textAlign="center" py={20}>
+      <Box
+        className="cmdt-loading"
+        bg="theme.bg"
+        color="theme.textMuted"
+        role="status"
+        aria-label="Loading entry"
+        textAlign="center"
+        py={20}
+      >
         <Spinner size="lg" />
       </Box>
     );
@@ -102,16 +105,22 @@ export default function CommonsDetailPage() {
 
   if (error || !item) {
     return (
-      <Box maxW="720px" mx="auto" px={{ base: 4, md: 6 }} py={12}>
-        <Text color="red.500">{error ?? "Entry not found."}</Text>
-        <ChakraLink as={NextLink} href="/commons" color="blue.500" fontSize="sm" mt={4} display="block">
+      <Box
+        className="cmdt-error"
+        bg="theme.bg"
+        color="theme.text"
+        maxW="720px"
+        mx="auto"
+        px={{ base: 4, md: 6 }}
+        py={12}
+      >
+        <Text role="alert" color="status.danger.fg">{error ?? "Entry not found."}</Text>
+        <ChakraLink as={NextLink} href="/commons" {...commonsLinkStyles} fontSize="sm" mt={4} display="block">
           ← Back to Commons
         </ChakraLink>
       </Box>
     );
   }
-
-  const typeColor = TYPE_COLORS[item.item_type] ?? "gray";
 
   // Collect external links
   const externalLinks = [
@@ -132,13 +141,21 @@ export default function CommonsDetailPage() {
   ].filter(Boolean) as { label: string; href: string }[];
 
   return (
-    <Box maxW="720px" mx="auto" px={{ base: 4, md: 6 }} py={10}>
+    <Box
+      className="cmdt-root"
+      bg="theme.bg"
+      color="theme.text"
+      maxW="720px"
+      mx="auto"
+      px={{ base: 4, md: 6 }}
+      py={10}
+    >
       {/* Back */}
       <ChakraLink
         as={NextLink}
         href="/commons"
         fontSize="sm"
-        color={mutedColor}
+        {...commonsLinkStyles}
         display="block"
         mb={6}
       >
@@ -146,26 +163,26 @@ export default function CommonsDetailPage() {
       </ChakraLink>
 
       {/* Title + meta */}
-      <VStack align="start" gap={2} mb={6}>
-        <HStack gap={2} wrap="wrap">
+      <VStack className="cmdt-header" align="start" gap={2} mb={6}>
+        <HStack className="cmdt-heading" gap={2} wrap="wrap">
           <Text fontSize="3xl" fontWeight="bold" lineHeight="tight">
             {item.title}
           </Text>
           {item.item_type && (
-            <Badge colorPalette={typeColor} borderRadius="full">
+            <Badge bg="ui.surfaceSubtle" color="theme.text" borderRadius="full">
               {item.item_type}
             </Badge>
           )}
         </HStack>
 
-        <HStack gap={3} wrap="wrap">
+        <HStack className="cmdt-meta" gap={3} wrap="wrap">
           {item.location_name && (
-            <Text fontSize="sm" color={mutedColor}>
+            <Text fontSize="sm" color="theme.textMuted">
               {item.location_name}
             </Text>
           )}
           {item.founder && (
-            <Text fontSize="sm" color={mutedColor}>
+            <Text fontSize="sm" color="theme.textMuted">
               Founded by {item.founder}
             </Text>
           )}
@@ -175,8 +192,9 @@ export default function CommonsDetailPage() {
       {/* Recommendation — primary, shown first */}
       {item.why_recommended && (
         <Box
+          className="cmdt-recommendation"
           borderLeft="3px solid"
-          borderColor={quoteBorderColor}
+          borderColor="ui.borderSubtle"
           pl={4}
           py={1}
           mb={8}
@@ -184,13 +202,13 @@ export default function CommonsDetailPage() {
           <Text
             fontSize="md"
             fontStyle="italic"
-            color={quoteColor}
+            color="theme.text"
             lineHeight="tall"
           >
             "{item.why_recommended}"
           </Text>
           {item.recommended_by_name && (
-            <Text fontSize="xs" color={mutedColor} mt={2}>
+            <Text fontSize="xs" color="theme.textMuted" mt={2}>
               — {item.recommended_by_name}
             </Text>
           )}
@@ -199,7 +217,7 @@ export default function CommonsDetailPage() {
 
       {/* Summary */}
       {item.summary && (
-        <Text fontSize="md" color={mutedColor} mb={6} lineHeight="tall">
+        <Text fontSize="md" color="theme.textMuted" mb={6} lineHeight="tall">
           {item.summary}
         </Text>
       )}
@@ -213,18 +231,18 @@ export default function CommonsDetailPage() {
 
       {/* External links */}
       {externalLinks.length > 0 && (
-        <Box mb={8}>
+        <Box className="cmdt-links" mb={8}>
           <Text
             fontSize="xs"
             fontWeight="semibold"
-            color={sectionLabelColor}
+            color="theme.textMuted"
             textTransform="uppercase"
             letterSpacing="wide"
             mb={3}
           >
             Links
           </Text>
-          <HStack gap={4} wrap="wrap">
+          <HStack className="cmdt-external-links" gap={4} wrap="wrap">
             {externalLinks.map((link) => (
               <ChakraLink
                 key={link.href}
@@ -232,7 +250,7 @@ export default function CommonsDetailPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 fontSize="sm"
-                color="blue.500"
+                {...commonsLinkStyles}
               >
                 {link.label} →
               </ChakraLink>
@@ -243,19 +261,19 @@ export default function CommonsDetailPage() {
 
       {/* Filaments */}
       {item.filaments.length > 0 && (
-        <Box>
-          <Separator mb={6} />
+        <Box className="cmdt-connections">
+          <Separator borderColor="ui.borderSubtle" mb={6} />
           <Text
             fontSize="xs"
             fontWeight="semibold"
-            color={sectionLabelColor}
+            color="theme.textMuted"
             textTransform="uppercase"
             letterSpacing="wide"
             mb={4}
           >
             Connections
           </Text>
-          <VStack align="start" gap={3}>
+          <VStack className="cmdt-filaments" align="start" gap={3}>
             {item.filaments.map((f, i) => (
               <FilamentRow key={i} filament={f} />
             ))}

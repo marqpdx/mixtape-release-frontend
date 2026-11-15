@@ -5,6 +5,7 @@
 // --public-group-route checks the separate /group/[slug] page with inert services/onboarding.
 // --public-confirmation checks the subscription opt-in route with inert confirmation requests.
 // --public-commons checks the actual Commons list/cards; Leaflet is an inert boundary.
+// --public-commons-detail checks actual entry states, metadata and all link categories.
 // Services, auth and the navbar theme-selector are inert fixtures; external requests are blocked.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -19,6 +20,7 @@ webpackModule.init();
   const publicGroupRoute = process.argv.includes('--public-group-route');
   const publicConfirmation = process.argv.includes('--public-confirmation');
   const publicCommons = process.argv.includes('--public-commons');
+  const publicCommonsDetail = process.argv.includes('--public-commons-detail');
   const publicNav = process.argv.includes('--public-nav');
   const publicForms = process.argv.includes('--public-forms') || publicNav || publicGroups || publicGroupRoute || publicConfirmation;
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'abe-semantic-theme-'));
@@ -52,6 +54,21 @@ webpackModule.init();
   `);
   fs.writeFileSync(path.join(temp,'selector-stub.js'), "const React=require('react');exports.ThemeSelector=()=>React.createElement('span',null,'Theme fixture');");
   fs.writeFileSync(path.join(temp,'commons-api-stub.js'), `
+    exports.fetchPublicCommonsDetail=async slug=>{
+      window.commonsDetailRequests.push(slug);
+      if(slug==='loading')return new Promise(()=>{});
+      if(slug==='error')throw new Error('Synthetic refusal');
+      if(slug==='missing')return null;
+      return {slug,title:'Fixture Commons entry',item_type:slug==='minimal'?'':'project',
+        ...(slug==='minimal'?{}:{location_name:'Fixture location',founder:'Fixture founder',summary:'Fixture summary',body:'Fixture body',
+          why_recommended:'Fixture recommendation',recommended_by_name:'Fixture curator',
+          website:'https://example.test/website',instagram:'https://example.test/instagram',youtube:'https://example.test/youtube',rss:'https://example.test/rss',
+          contact_email:'fixture@example.test',contact_links:{Resource:'https://example.test/resource'}}),
+        filaments:slug==='minimal'?[]:[
+          {relation_type:'founded_by',direction:'out',related_slug:'founder',related_title:'Founder entry',note:'Fixture connection note'},
+          {relation_type:'founded_by',direction:'in',related_slug:'initiative',related_title:'Initiative entry'},
+          {relation_type:'custom_relation',direction:'out',related_slug:'related',related_title:'Related entry'}]};
+    };
     exports.fetchPublicCommons=async params=>{
       window.commonsRequests.push(params);
       if(window.commonsScenario==='loading')return new Promise(()=>{});
@@ -82,6 +99,15 @@ webpackModule.init();
     const GroupRoute = ${publicGroupRoute} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/group/[slug]/page.tsx'))}).default : null;
     const Confirmation = ${publicConfirmation} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/subscription/optin/[uuid]/page.tsx'))}).default : null;
     const Commons = ${publicCommons} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/page.tsx'))}).default : null;
+    const CommonsDetail = ${publicCommonsDetail} ? require(${JSON.stringify(path.join(root,'apps/crossroads/src/app/(main)/(site)/commons/[slug]/page.tsx'))}).default : null;
+    function CommonsDetailFixture() {
+      const [scenario,setScenario]=React.useState({name:'loading',revision:0});
+      React.useEffect(()=>{window.setCommonsDetailScenario=name=>{window.commonsDetailRequests=[];setScenario(old=>({name,revision:old.revision+1}));};},[]);
+      window.commonsDetailRequests=window.commonsDetailRequests||[];
+      const {RouteParams}=require('next/navigation');
+      return React.createElement(Box,{'data-commons-detail':scenario.name,gridColumn:'1 / -1',color:'theme.accentText'},
+        React.createElement(RouteParams.Provider,{value:{slug:scenario.name}},React.createElement(CommonsDetail,{key:scenario.revision})));
+    }
     function CommonsFixture() {
       const [scenario,setScenario]=React.useState({name:'loading',revision:0});
       React.useEffect(()=>{window.setCommonsScenario=name=>{
@@ -179,6 +205,7 @@ webpackModule.init();
         ${publicGroupRoute} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(GroupRouteFixture)),
         ${publicConfirmation} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(ConfirmationFixture)),
         ${publicCommons} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsFixture)),
+        ${publicCommonsDetail} && React.createElement(ChakraProvider,{value:crossroads},React.createElement(CommonsDetailFixture)),
         React.createElement(Panel,{name:'Mixtape',system:mixtape}),
         React.createElement(Panel,{name:'Crossroads',system:crossroads}),
         publicForms && React.createElement(ChakraProvider,{value:crossroads},
@@ -519,6 +546,56 @@ webpackModule.init();
         }
         await page.setViewportSize({width:1200,height:800});
       }
+      if(publicCommonsDetail) {
+        const fixture=page.locator('[data-commons-detail]');
+        for(const scenario of ['loading','error','missing','minimal','full']) {
+          await page.evaluate(name=>window.setCommonsDetailScenario(name),scenario);
+          await expect(fixture).toHaveAttribute('data-commons-detail',scenario);
+          const root=fixture.locator(scenario==='loading'?'.cmdt-loading':['error','missing'].includes(scenario)?'.cmdt-error':'.cmdt-root');
+          await expect(root).toBeVisible();
+          assert.deepEqual(await root.evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:scenario==='loading'?expected.muted:controlExpected.text,bg:expected.background});
+          assert.deepEqual(await page.evaluate(()=>window.commonsDetailRequests),[scenario],'detail request uses route slug');
+          if(scenario==='loading')await expect(root.getByRole('status',{name:'Loading entry'}).or(root)).toBeVisible();
+          if(['error','missing'].includes(scenario)) {
+            await expect(root.getByRole('alert')).toHaveText('Entry not found.');
+            assert.equal(await root.getByRole('alert').evaluate(el=>getComputedStyle(el).color),controlExpected.danger);
+          }
+          if(scenario==='minimal') {
+            await expect(root.locator('.chakra-badge,.cmdt-recommendation,.cmdt-links,.cmdt-connections')).toHaveCount(0);
+          }
+          if(scenario==='full') {
+            for(const text of ['Fixture location','Founded by Fixture founder','— Fixture curator','Fixture summary','Links','Connections','Founded by','Founder of','custom relation','— Fixture connection note']) {
+              const metadata=root.getByText(text,{exact:true});
+              await expect(metadata).toBeVisible();
+              assert.equal(await metadata.evaluate(el=>getComputedStyle(el).color),expected.muted,text+' semantic metadata');
+            }
+            for(const text of ['Fixture Commons entry','Fixture body','"Fixture recommendation"'])assert.equal(await root.getByText(text,{exact:true}).evaluate(el=>getComputedStyle(el).color),controlExpected.text);
+            assert.deepEqual(await root.locator('.chakra-badge').evaluate(el=>({text:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor})),{text:controlExpected.text,bg:expected.subtle});
+            assert.equal(await root.locator('.cmdt-connections .chakra-separator').evaluate(el=>getComputedStyle(el).borderTopColor),await page.locator('[data-app="Crossroads"] [data-subtle]').evaluate(el=>getComputedStyle(el).borderTopColor));
+            assert.deepEqual(await root.getByRole('link').evaluateAll(links=>links.map(el=>el.getAttribute('href'))),['/commons','https://example.test/website','https://example.test/instagram','https://example.test/youtube','https://example.test/rss','mailto:fixture@example.test','https://example.test/resource','/commons/founder','/commons/initiative','/commons/related']);
+          }
+          for(const link of await root.getByRole('link').all()) {
+            await link.hover();
+            await expect.poll(()=>link.evaluate(el=>getComputedStyle(el).color)).toBe(controlExpected.text);
+            assert.ok((await link.evaluate(el=>getComputedStyle(el).textDecorationLine)).includes('underline'));
+            await page.keyboard.press('Tab');await link.focus();
+            assert.deepEqual(await link.evaluate(el=>{const s=getComputedStyle(el);return {color:s.outlineColor,width:s.outlineWidth,offset:s.outlineOffset};}),{color:expected.border,width:'3px',offset:'2px'});
+            if(!(await link.getAttribute('href')).startsWith('/')) {
+              await expect(link).toHaveAttribute('target','_blank');await expect(link).toHaveAttribute('rel','noopener noreferrer');
+            }
+            await link.evaluate(el=>el.addEventListener('click',e=>{e.preventDefault();window.commonsDetailClicked=el.getAttribute('href');},{once:true}));
+            await link.click();
+            assert.equal(await page.evaluate(()=>window.commonsDetailClicked),await link.getAttribute('href'));
+          }
+          if(scenario==='full')for(const width of [1200,390]) {
+            await page.setViewportSize({width,height:844});
+            assert.equal(await root.evaluate(el=>el.scrollWidth<=el.clientWidth+1),true,'entry content wraps at '+width);
+            const image=path.join(temp,id+'-'+mode+'-'+contrast+'-commons-detail-'+width+'.png');
+            await root.screenshot({path:image,animations:'disabled'});screenshots.push(image);
+          }
+          await page.setViewportSize({width:1200,height:800});
+        }
+      }
       if(publicCommons) {
         const fixture=page.locator('[data-commons]');
         const root=fixture.locator('.cmns-root');
@@ -687,6 +764,7 @@ webpackModule.init();
     if(publicGroupRoute) console.log('PASS: actual /group/[slug] page loading/error, guest/member/moderator/policy states, join/request success/refusal and parent-page refresh, semantic surfaces/initials/badges/link focus; eight theme/mode combinations and desktop/mobile screenshots; APIs/auth/onboarding are inert fixtures');
     if(publicConfirmation) console.log('PASS: actual subscription confirmation loading/success/refusal/missing-parameter feedback and request params, retry hover/focus, desktop/mobile screenshots in eight theme/mode combinations; requests are inert fixtures, retry reload is not invoked');
     if(publicCommons) console.log('PASS: actual Commons loading/error/empty/list/search, semantic card metadata/type pairs, separate detail/external link click targets and hover/focus; eight theme/mode combinations, desktop/mobile screenshots; API and map boundary inert');
+    if(publicCommonsDetail) console.log('PASS: actual Commons detail loading/error/missing/minimal/full states, metadata/quote/badge pairs, external/back/connection link hover/focus/click targets and route slug; eight combinations and desktop/mobile screenshots; API/navigation inert');
     console.log('Screenshots:',temp);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});
