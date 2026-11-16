@@ -1,10 +1,10 @@
 <!--
   topology-kit map
   kit: ../kit/topology.css, ../kit/topology.js
-  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.47)
+  carried_from: puddlejump/reference/knowledge-architecture/system-topology.md (v2.0.48)
   carried_from_uuid: 4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a
   maturity: 0.9.6 (publishing maturity; 1.0 = first full release; set by the CTO 2026-10-28)
-  build_state_from: the same document (checked against code and status docs 2026-10-14, 2026-10-26, 2026-11-07, 2026-11-11 and 2026-11-16)
+  build_state_from: the same document (checked against code and status docs 2026-10-14, 2026-10-26, 2026-11-07, 2026-11-11, 2026-11-16 and 2026-11-16 again)
   library: puddlejump/reference/topology/topology-library.md
   generated: 2026-10-14; amended 2026-10-15, 2026-10-17, 2026-10-19, 2026-10-26 (six times); box text enlarged 2026-10-29; first Argus system-map-freshness-01 run 2026-11-07 (Redis removed, Heddle and Hildegard placed); Hildegard's box the same width as the rest, 2026-11-08; LiveKit named Bridge/LiveKit, 2026-11-09; second Argus system-map-freshness-01 run 2026-11-11 (Argus's dashboard note updated from planned to partial, ADR-0064 AC-6)
   last_updated: 2026-11-16 (shown in the maturity pill's hover note; Argus system-map-freshness-01 stamps it weekly, or sets last_verified when nothing changed)
@@ -32,7 +32,7 @@
   <div>
     <h1>Mixtape — System Topology</h1>
     <p class="subtitle">The whole ecology: three Main Gateways lead into the platform core. Supporting this are services, a stewarded governance canon, and a diverse, cogent infrastructure.</p>
-    <span class="pill">Topology library · System · v2.0.47</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 16 Nov 2026; checked weekly.">M: 0.9.6</span>
+    <span class="pill">Topology library · System · v2.0.48</span><span class="pill pill-m" tabindex="0" aria-label="Maturity 0.9.6" data-tip="Maturity: how ready this map is to publish. 1.0 is its first full release; the number is set by a person, not by edits. Last updated 16 Nov 2026; checked weekly.">M: 0.9.6</span>
     <nav class="tk-maps" aria-label="Related maps">Maps: <span class="here" aria-current="page">System</span> · <span class="soon" tabindex="0" data-tip="Coming soon">Loom</span> · <a href="../platform/platform-topology.html">Platform</a> · <span class="soon" tabindex="0" data-tip="Coming soon">Practice</span></nav>
   </div>
   <button class="theme-toggle" data-theme-toggle aria-label="Toggle light or dark theme">◐</button>
@@ -43,7 +43,7 @@
 <section class="notes">
   <h3>About this map</h3>
   <ul>
-    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.47 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
+    <li><strong>Source:</strong> <code>puddlejump/reference/knowledge-architecture/system-topology.md</code> v2.0.48 (canon), uuid <code>4b0fcdaa-ff9c-46e0-9175-76d3c5c4551a</code>. Change that document first, then this map.</li>
     <li><strong>Names</strong> follow the hand-touch glossary: <strong>Mixtape</strong> is the whole ecology; <strong>Catalyst</strong>, <strong>Crossroads</strong> and <strong>Tapestry</strong> are the Main Gateways, the ways in; <strong>Crossroads Place</strong> is the reference deployment.</li>
     <li><strong>Groupings.</strong> The map follows three of Mixtape's five groupings: the <strong>Main Gateways</strong> along the top; <strong>Servers</strong> beneath them (frontend, core, the services and, along the bottom, supporting infrastructure); and the <strong>Layers</strong> down the right, Canon and Guidance, Loom and Warp, which run alongside everything. Surfaces and Toolsets, where people do their work, are on the <a href="../platform/platform-topology.html">platform concept map</a>.</li>
     <li><strong>Arrows</strong> mean "calls" or "is served through". Dashed lines and borders are planned, not built. The one exception is the dotted line down the right-hand gutter: every row reaches Puddlejump, because every part is decided, built and recorded through the canon. It is not a call.</li>
@@ -72,7 +72,7 @@
     core:     { name: 'Core',       full: 'Platform core — mixtape-release-core', hue: 'violet', desc: 'The system of record. Django and Postgres: permission and truth, approvals, audit, and the ActionRun record of every governed action.' },
     async:    { name: 'Async',      full: 'Async',                               hue: 'grey',   desc: 'Celery workers, with RabbitMQ (drawn in the supporting row) as the broker. Core hands slow work to Switchboard as tasks on the switchboard queue; its own workers run background jobs.' },
     dispatch: { name: 'Routing',    full: 'Routing — Switchboard',              hue: 'orange', desc: 'Routing and async execution: tool registry, configuration, tenant checks, ActionRun recording. Routes; never decides.' },
-    exec:     { name: 'Execution',  full: 'Execution — Inkwell',                 hue: 'blue',   desc: 'Where the work runs: language models run locally over llama.cpp, plus embeddings, reading text from images and small deterministic text work. Receives a well-formed task, returns results. Keeps no records of its own.' },
+    exec:     { name: 'Execution',  full: 'Execution — Inkwell and Selene',            hue: 'blue',   desc: 'Where the work runs: language models run locally over llama.cpp, plus embeddings, reading text from images and small deterministic text work. Receives a well-formed task, returns results. Keeps no records of its own.' },
     realtime: { name: 'Realtime',   full: 'Realtime server',                     hue: 'rose',   desc: 'The Socket.IO server behind Livewire Conversations and live Dispatch editing (repo mixtape-release-livewire). Core owns the data, keys and authorization.' },
     memory:   { name: 'Memory',     full: 'Memory — Stackroom',                  hue: 'gold',   desc: 'What the platform can find again, every result traced with provenance to its exact source. A map of the library (the intermediate representation, IR), not the library itself; vectors in Qdrant. Not configurable per client.' },
     research: { name: 'Research',   full: 'Research — Daedalus',                 hue: 'brick',  desc: 'Daedalus, the research engine that goes out and gathers sources, and, planned, the Daedalus Library, the Surface where people work with what it gathered (formerly called Hildegard; that name now belongs to the Maker Engine, drawn on the Practice map). Daedalus is both the engine and its library, as Ariadne is both an app and a Surface.' },
@@ -86,8 +86,8 @@
     { layer: 'pillars',  x: 20,  y: 20,  w: 1000, h: 104 },
     { layer: 'frontend', x: 20,  y: 150, w: 1000, h: 104, label: 'Frontend' },
     { layer: 'core',     x: 20,  y: 280, w: 1000, h: 104, label: 'Platform core' },
-    { layer: 'dispatch', x: 20,  y: 410, w: 300,  h: 104, label: 'Routing' },
-    { layer: 'exec',     x: 460, y: 410, w: 280,  h: 104 },
+    { layer: 'dispatch', x: 20,  y: 410, w: 280,  h: 104, label: 'Routing' },
+    { layer: 'exec',     x: 310, y: 410, w: 430,  h: 104 },
     { layer: 'realtime', x: 760, y: 410, w: 260,  h: 104, label: 'Realtime' },
     { layer: 'memory',   x: 20,  y: 540, w: 480,  h: 104 },
     { layer: 'research', x: 520, y: 540, w: 500,  h: 104 },
@@ -123,13 +123,16 @@
     { id: 'CO', layer: 'core', x: 440, y: 320, w: 400, label: 'mixtape-release-core', sub: 'Django · permission and truth · ActionRun',
       desc: 'The system of record: authentication, authorization, workflow state, approvals, audit, and the ActionRun record of every governed action. Calls Inkwell and Stackroom directly over REST for some work; hands slower work to Switchboard.', status: 'built', evidence: 'Live. About 70 Django apps.' },
 
-    { id: 'SW', layer: 'dispatch', x: 40, y: 450, w: 240, label: 'Switchboard', sub: 'mixtape-release-switchboard',
+    { id: 'SW', layer: 'dispatch', x: 36, y: 450, w: 228, label: 'Switchboard', sub: 'mixtape-release-switchboard',
       desc: 'FastAPI service with a Celery worker. Checks tenant and permission with core, consults its tool registry and configuration, calls Inkwell and Stackroom, and records an ActionRun in core for every call. Mixtape\'s MCP orchestration layer: core reaches it through Celery, and agents through its MCP endpoint, which is built and not yet deployed. In Loom it is the Routing part.',
       status: 'built', evidence: 'SW-1 to SW-9 complete (SW-9 on the enforcement side only); SW-10 closed 2026-11-03. The MCP endpoint (<code>/mcp</code>, SW-11) is built: read-only tools from Stackroom, Inkwell and Meridian, per-runtime tokens minted by core, acceptance outcomes on ActionRuns; localhost-only until a deploy sets its hostname. The Loom privacy filter is not built.', refs: ['decisions/switchboard-mcp-adr/switchboard-status.md'] ,
       governance: { text: 'Switchboard routes; core decides (the Decision Boundary Rule). Every call through Switchboard records an ActionRun in core, with no unrecorded calls. Any cloud call needs explicit, recorded approval first, and per-tenant configuration can turn cloud off entirely.', docs: ['decisions/switchboard-mcp-adr/', 'switchboard-status.md', 'system-topology.md'] } },
-    { id: 'IW', layer: 'exec', x: 480, y: 450, w: 240, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
+    { id: 'IW', layer: 'exec', x: 322, y: 450, w: 228, label: 'Inkwell', sub: 'mixtape-release-inkwell · llama.cpp',
       desc: 'Mixtape\'s execution service: where the work actually runs. It runs language models locally (llama.cpp), makes embeddings, reads text from images, and does small deterministic text work, then returns the result. It keeps no records of its own; Switchboard and core do. Local first: work leaves the machine only through a route approved for the cloud, with that approval recorded. Known exceptions, under review: one route calls Claude directly, and tag suggestions read Qdrant directly. Loom\'s Execution part.',
       status: 'built', evidence: 'Live at <code>inkwell.crossroads.place</code>. Per-Group dispatch policy exists but is not wired in (local-llm LL-4 to LL-6).', refs: ['reference/glossary/hand-touch/inkwell.md', 'decisions/spikes/spike-direct-calls.md'] },
+    { id: 'SE', layer: 'exec', x: 562, y: 450, w: 166, label: 'Selene', sub: 'mixtape-release-selene',
+      desc: 'Mixtape\'s local-only recognition service (ADR-0063), parallel to Inkwell: both run models for Switchboard, but Selene runs only models that stay on Mixtape\'s own machines, with no outbound internet. It starts with recognition of people, places and things in Folio notes (GLiNER), then takes over transcription from the cloud. Switchboard routes to it and core decides; it keeps no records of its own. Heddle\'s steps use it through Switchboard.',
+      status: 'partial', evidence: 'SE-0 (hard gates on core\'s cloud paths) and SE-1 (service skeleton) done; SE-2 in progress: local recognition routed through Switchboard is built and disabled by default, the Folio <code>local_only</code> migration and guards exist, and the Folio Dictionary it needs is being built. Not deployed anywhere; the Whisper migration (SE-3) is pending.', refs: ['decisions/selene-adr/selene-adr.md', 'decisions/selene-adr/selene-status.md'] },
     { id: 'LW', layer: 'realtime', x: 780, y: 450, w: 220, label: 'Realtime server', sub: 'mixtape-release-livewire',
       desc: 'The realtime server, with two halves: chat/ for Livewire Conversations (personal, private, outside the knowledge layer) and dispatch/ for live collaborative Dispatch editing. A Socket.IO service at chat.crossroads.place; authorizes sockets against core with signed tokens, and core notifies it of events. The repo keeps its historical name.',
       status: 'built', evidence: 'Livewire ADR phases A to D complete, including end-to-end encryption and key rotation.' ,
@@ -206,7 +209,7 @@
     ['FM','LW'],
     ['CO','RQ','h'], ['RQ','SW'], ['SW','CO'],
     ['CO','SR','sv'], ['CO','IW'], ['CO','LW'], ['LW','CO'],
-    ['SW','IW','h'], ['SW','SR'],
+    ['SW','IW','h'], ['SW','SE','under', { dashed: true }], ['SW','SR'],
     ['SR','QD','h'], ['DA','SR','h'], ['HG','SR','under', { dashed: true }],
     // Puddlejump → Ariadne was dropped 2026-11-07: with Hildegard placed between them it read as Hildegard → Ariadne; the rail already says every member works on the canon.
     ['CO','CT','h'],
