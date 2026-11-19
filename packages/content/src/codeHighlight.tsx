@@ -68,6 +68,10 @@ export function renderHighlightedCode(code: string, language: unknown): ReactNod
 // A named syntax palette (a deliberate palette, outside the theme tokens). Every
 // colour clears 7:1 against its own block background, light and dark, so it also
 // meets the high-contrast bar. Checked 2026-11-13.
+// Never name a variable here "...label": Emotion reads any "label:<value>;" in the
+// serialized styles as a class-name label, so "--code-label:#454C55;" turned the
+// editor's class into "css-…-#454C55-…", an invalid selector, and every style on
+// that element (the editor's flex layout included) was dropped.
 const SYNTAX_LIGHT = {
   '--code-bg': '#F6F8FA',
   '--code-border': '#D1D9E0',
@@ -79,7 +83,7 @@ const SYNTAX_LIGHT = {
   '--code-keyword': '#A40E26',
   '--code-comment': '#454C55',
   '--code-builtin': '#7A2E00',
-  '--code-label': '#454C55',
+  '--code-badge': '#454C55',
 }
 
 const SYNTAX_DARK = {
@@ -93,7 +97,7 @@ const SYNTAX_DARK = {
   '--code-keyword': '#FF7B72',
   '--code-comment': '#A2A9B3',
   '--code-builtin': '#FFA657',
-  '--code-label': '#A2A9B3',
+  '--code-badge': '#A2A9B3',
 }
 
 const languageBadges = Object.fromEntries(
@@ -136,7 +140,7 @@ export const codeBlockCss = {
     fontSize: '10px',
     letterSpacing: '0.06em',
     textTransform: 'uppercase',
-    color: 'var(--code-label)',
+    color: 'var(--code-badge)',
     pointerEvents: 'none',
     userSelect: 'none',
   },
