@@ -16,9 +16,10 @@ export function DialogueAsideView({ node, updateAttributes, editor, selected }: 
       style={selected ? { outline: '2px solid var(--chakra-colors-teal-400)', outlineOffset: 2, borderRadius: 3 } : undefined}>
       <DialogueAside
         attrs={node.attrs}
-        footer={editor.isEditable && (
-          <Button size="xs" variant="outline" alignSelf="flex-end" onClick={() => setEditing(true)}>Edit aside</Button>
-        )}
+        footer={editor.isEditable ? (close) => (
+          <Button size="xs" variant="outline" alignSelf="flex-end"
+            onClick={() => { close(); setEditing(true) }}>Edit aside</Button>
+        ) : undefined}
       />
       {editing && (
         <DialogueAsideDialog

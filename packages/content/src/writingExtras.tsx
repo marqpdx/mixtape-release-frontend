@@ -9,7 +9,7 @@
 'use client'
 
 import { Box, Popover, Portal, Text } from '@chakra-ui/react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { dialogueBlockCss } from './dialogueBlockCss'
 
 // ---------- Color Circle ----------
@@ -95,12 +95,17 @@ const asideTurnsCss = {
 
 /**
  * The visible phrase plus its popover. `footer` lets the editor add an Edit
- * button; readers get none.
+ * button (it gets `close`, to shut the popover first); readers get none.
  */
-export function DialogueAside({ attrs, footer }: { attrs: Record<string, unknown> | undefined; footer?: ReactNode }) {
+export function DialogueAside({ attrs, footer }: {
+  attrs: Record<string, unknown> | undefined
+  footer?: (close: () => void) => ReactNode
+}) {
   const { label, request, response } = readDialogueAside(attrs)
+  const [open, setOpen] = useState(false)
   return (
-    <Popover.Root positioning={{ placement: 'bottom-start' }} lazyMount unmountOnExit>
+    <Popover.Root open={open} onOpenChange={(e) => setOpen(e.open)}
+      positioning={{ placement: 'bottom-start' }} lazyMount unmountOnExit>
       <Popover.Trigger asChild>
         <Box
           as="span"
@@ -131,7 +136,7 @@ export function DialogueAside({ attrs, footer }: { attrs: Record<string, unknown
                 {response && <Turn side="respondent" text={response} />}
               </Box>
               {!request && !response && <Text fontSize="sm" color="fg.muted">This aside has no exchange yet.</Text>}
-              {footer}
+              {footer?.(() => setOpen(false))}
             </Popover.Body>
           </Popover.Content>
         </Popover.Positioner>

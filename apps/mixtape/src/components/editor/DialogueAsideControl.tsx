@@ -6,7 +6,7 @@
 
 import { useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Button, Dialog, Field, Input, Text, Textarea } from "@chakra-ui/react";
+import { Button, Dialog, Field, Input, Portal, Text, Textarea } from "@chakra-ui/react";
 import { IconMessages } from "@tabler/icons-react";
 import { dialogueAsidePreview, type DialogueAsideAttrs } from "@mixtape/content/writingExtras";
 import EditorToolbarButton from "./EditorToolbarButton";
@@ -33,6 +33,9 @@ export function DialogueAsideDialog({ open, initial, onClose, onSave }: {
   return (
     <Dialog.Root open={open} onOpenChange={({ open: next }) => { if (!next) onClose(); }}
       initialFocusEl={() => labelRef.current} size="lg">
+      {/* Portalled: when editing, this renders from a node view inside the
+          editor's contenteditable, where ProseMirror would take its clicks and keys. */}
+      <Portal>
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content className="dac-dialog" maxW="720px"
@@ -68,6 +71,7 @@ export function DialogueAsideDialog({ open, initial, onClose, onSave }: {
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Positioner>
+      </Portal>
     </Dialog.Root>
   );
 }
