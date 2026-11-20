@@ -29,6 +29,8 @@ import type { AtticContext } from "./AtticControls";
 import { LbAnchor } from "./extensions/LbAnchor";
 import { CommentMark } from "./extensions/CommentMark";
 import { ConversationBlockquote } from "./extensions/ConversationBlockquote";
+import { ColorCircle, DialogueAside } from "./extensions/WritingExtras";
+import { dialogueBlockCss } from "@mixtape/content/dialogueBlockCss";
 import { TopologyImage, interactivePageEditorCss } from "./extensions/TopologyImage";
 
 const CustomParagraph = Paragraph.extend({
@@ -106,6 +108,8 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
         CollabStarterKit,
         CodeBlockLowlight.configure({ lowlight: codeLowlight }),
         ConversationBlockquote,
+        ColorCircle,
+        DialogueAside,
         TopologyImage,
         CustomParagraph,
         LbAnchor,
@@ -306,38 +310,7 @@ const TipTapCollabEditor = forwardRef<ReturnType<typeof useEditor>, TipTapCollab
                   "& em, & i": {
                     fontStyle: "italic !important",
                   },
-                  "& blockquote[data-chat-role]": {
-                    position: "relative",
-                    borderLeftWidth: "3px",
-                    borderRadius: "4px",
-                    padding: "1.6em 1em 0.5em",
-                    marginBlock: "1em",
-                    background: "var(--chakra-colors-bg-subtle)",
-                    fontStyle: "normal",
-                  },
-                  "& blockquote[data-chat-role]::before": {
-                    position: "absolute",
-                    top: "0.4em",
-                    left: "1em",
-                    fontSize: "0.7em",
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                  },
-                  "& blockquote[data-chat-role='querent']": {
-                    borderLeftColor: "var(--chakra-colors-teal-500)",
-                  },
-                  "& blockquote[data-chat-role='querent']::before": {
-                    content: '"Me"',
-                    color: "var(--chakra-colors-teal-600)",
-                  },
-                  "& blockquote[data-chat-role='respondent']": {
-                    borderLeftColor: "var(--chakra-colors-blue-500)",
-                  },
-                  "& blockquote[data-chat-role='respondent']::before": {
-                    content: '"Agent"',
-                    color: "var(--chakra-colors-blue-600)",
-                  },
+                  ...dialogueBlockCss,
                   "& h1": {
                     fontSize: "2rem",
                     lineHeight: 1.2,

@@ -22,18 +22,22 @@ import {
   IconBlockquote,
   IconMessageQuestion,
   IconMessageReply,
+  IconChevronDown,
+  IconChevronUp,
 } from "@tabler/icons-react";
 
 import { Tooltip } from "@components/ui/tooltip";
 import EditorToolbarButton from "./EditorToolbarButton";
 import { getSelectedBlockIds } from "@utils/getSelectedBlocks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConversationRole } from "./extensions/ConversationBlockquote";
 import { AtticControls, type AtticContext } from "./AtticControls";
 import { InsertInteractivePageControl } from "./InsertTopologyControl";
 import { InsertImageControl, type ImagePick } from './InsertImageControl';
 import { ExportMarkdownControl } from './ExportMarkdownControl';
 import { InsertCodeBlockControl } from './InsertCodeBlockControl';
+import { ColorCircleControl } from './ColorCircleControl';
+import { DialogueAsideControl } from './DialogueAsideControl';
 
 function normalizeLinkHref(value: string): string | null {
   const href = value.trim();
@@ -73,6 +77,32 @@ export default function TipTapToolbar({
   const [editingLink, setEditingLink] = useState(false);
   const [linkSelection, setLinkSelection] = useState<{ from: number; to: number } | null>(null);
   const [, setEditorTick] = useState(0);
+  // Ext. (extras): occasional tools on a second row, so the main row stays short.
+  const extrasKey = "writing_toolbar_extras_open";
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  useEffect(() => {
+    try { setExtrasOpen(window.localStorage.getItem(extrasKey) === "1"); } catch { /* storage unavailable */ }
+  }, []);
+  const setExtras = useCallback((next: boolean) => {
+    setExtrasOpen(next);
+    try { window.localStorage.setItem(extrasKey, next ? "1" : "0"); } catch { /* storage unavailable */ }
+  }, []);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  // Esc closes the Ext. row while focus is in this editor (toolbar or text).
+  // A native listener with a DOM-containment check, so Esc inside a portalled
+  // dialog (Attic, Color circle, Dialogue aside) closes only that dialog.
+  useEffect(() => {
+    if (!extrasOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      // Let an open popover or dialog take this Esc on its own.
+      if (document.querySelector('[data-scope="popover"][data-part="content"][data-state="open"], [data-scope="dialog"][data-part="content"][data-state="open"]')) return;
+      const frame = toolbarRef.current?.parentElement;
+      if (frame && event.target instanceof Node && frame.contains(event.target)) setExtras(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [extrasOpen, setExtras]);
   const fontModeKey = "writing_font_mode";
   const SerifIcon = (
     <Box w="16px" h="16px" display="flex" alignItems="center" justifyContent="center">
@@ -204,7 +234,7 @@ export default function TipTapToolbar({
 
   return (
     <>
-    <HStack className="ttb-toolbar" px={1} py={1} flexShrink={0} gap={1} justify="space-between" align="center" wrap="wrap">
+    <HStack ref={toolbarRef} className="ttb-toolbar" px={1} py={1} flexShrink={0} gap={1} justify="space-between" align="center" wrap="wrap">
       <HStack className="ttb-format-tools" gap={0.5} flexWrap="wrap">
         <EditorToolbarButton
           tooltip="Heading 1"
@@ -299,7 +329,6 @@ export default function TipTapToolbar({
           size="xs"
         />
         <InsertCodeBlockControl editor={editor} />
-        {attic && <AtticControls key={attic.pieceId} editor={editor} {...attic} />}
         <InsertInteractivePageControl editor={editor} />
         <EditorToolbarButton
           tooltip="Bullet list"
@@ -329,6 +358,20 @@ export default function TipTapToolbar({
         <InsertImageControl editor={editor} onImagePick={onImagePick} />
         <Box w="1px" h="16px" bg="gray.300" mx={0.5} />
         <ExportMarkdownControl editor={editor} />
+        <Button
+          className="ttb-extras-toggle"
+          size="xs"
+          variant={extrasOpen ? "subtle" : "ghost"}
+          onClick={() => setExtras(!extrasOpen)}
+          title={extrasOpen ? "Hide extras (Esc)" : "Show extras"}
+          aria-expanded={extrasOpen}
+          aria-controls="ttb-extras-row"
+          tabIndex={-1}
+          px={1.5}
+          fontWeight="medium"
+        >
+          Ext. {extrasOpen ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+        </Button>
       </HStack>
       <HStack gap={0.5}>
         <EditorToolbarButton
@@ -451,6 +494,14 @@ Sessions are created automatically on your first /new command. Autosave keeps th
           </Link>
         </Box>
       ) : null}
+    </HStack>
+    {/* Kept mounted while closed so a control's open dialog (Attic) survives toggling. */}
+    <HStack id="ttb-extras-row" className="ttb-extras" px={1} pb={1} flexShrink={0} gap={0.5} flexWrap="wrap"
+      display={extrasOpen ? "flex" : "none"} borderTopWidth="1px" borderColor="border.muted" pt={1}>
+      <Text fontSize="xs" color="fg.muted" px={1}>Ext.</Text>
+      {attic && <AtticControls key={attic.pieceId} editor={editor} {...attic} />}
+      <ColorCircleControl editor={editor} />
+      <DialogueAsideControl editor={editor} />
     </HStack>
     <Dialog.Root open={linkDialogOpen} onOpenChange={({ open }) => setLinkDialogOpen(open)}>
       <Dialog.Backdrop />

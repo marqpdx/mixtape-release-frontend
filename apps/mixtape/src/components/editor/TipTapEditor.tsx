@@ -50,6 +50,8 @@ import { gristCommandsRender } from "./extensions/gristCommandsRender";
 import { CompositionBarPanel } from "./CompositionBarPanel";
 import { MergeConfirmationDialog } from "./MergeConfirmationDialog";
 import { ConversationBlockquote } from "./extensions/ConversationBlockquote";
+import { ColorCircle, DialogueAside } from "./extensions/WritingExtras";
+import { dialogueBlockCss } from "@mixtape/content/dialogueBlockCss";
 
 import { useColorModeValue } from "@components/ui/color-mode";
 
@@ -389,6 +391,8 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
     // Code blocks with syntax highlighting (JSON, Python, TypeScript, Bash); same schema as StarterKit's codeBlock
     CodeBlockLowlight.configure({ lowlight: codeLowlight }),
     ConversationBlockquote,
+    ColorCircle,
+    DialogueAside,
     BlockId,
     OutlineMarker,
     LbAnchor,
@@ -759,38 +763,7 @@ const TipTapEditor = forwardRef<Editor | null, TipTapEditorProps>(({
           "& .italic-text": {
             fontStyle: "italic",
           },
-          "& blockquote[data-chat-role]": {
-            position: "relative",
-            borderLeftWidth: "3px",
-            borderRadius: "4px",
-            padding: "1.6em 1em 0.5em",
-            marginBlock: "1em",
-            background: "var(--chakra-colors-bg-subtle)",
-            fontStyle: "normal",
-          },
-          "& blockquote[data-chat-role]::before": {
-            position: "absolute",
-            top: "0.4em",
-            left: "1em",
-            fontSize: "0.7em",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-          },
-          "& blockquote[data-chat-role='querent']": {
-            borderLeftColor: "var(--chakra-colors-teal-500)",
-          },
-          "& blockquote[data-chat-role='querent']::before": {
-            content: '"Me"',
-            color: "var(--chakra-colors-teal-600)",
-          },
-          "& blockquote[data-chat-role='respondent']": {
-            borderLeftColor: "var(--chakra-colors-blue-500)",
-          },
-          "& blockquote[data-chat-role='respondent']::before": {
-            content: '"Agent"',
-            color: "var(--chakra-colors-blue-600)",
-          },
+          ...dialogueBlockCss,
           "& h1": {
             fontSize: "2rem",
             lineHeight: 1.2,

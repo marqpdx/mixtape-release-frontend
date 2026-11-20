@@ -148,6 +148,8 @@ function renderInline(nodes: Node[]): string {
     if (node.type === 'text') out += renderText(node.text ?? '', node.marks ?? [])
     else if (node.type === 'hardBreak') out += '\\\n'
     else if (node.type === 'image') out += renderImage(node)
+    else if (node.type === 'dialogueAside') out += renderText(String(node.attrs?.label ?? ''), node.marks ?? [])
+    else if (node.type === 'colorCircle') out += '●'
     else if (OMITTED_NODES.has(node.type)) continue
     else if (node.content) out += renderInline(node.content as Node[])
   }

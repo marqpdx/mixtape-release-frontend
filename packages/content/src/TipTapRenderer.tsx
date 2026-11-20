@@ -16,6 +16,7 @@ import { TopologyPreview } from './TopologyPreview'
 import { ImagePreview } from './ImagePreview'
 import { normaliseMediaAlignment } from './mediaLayout'
 import { codeBlockCss, renderHighlightedCode } from './codeHighlight'
+import { ColorCircle, DialogueAside } from './writingExtras'
 
 // --- Types (exported for consumers) ---
 
@@ -301,6 +302,12 @@ export function TipTapRenderer({ content, paragraphLineHeight = '1.8', showNodeW
           if (artifact) return <TopologyPreview key={index} artifact={artifact} />
           return <ImagePreview key={index} attrs={node.attrs} />
         }
+
+        case 'colorCircle':
+          return <ColorCircle key={index} hex={node.attrs?.hex} />
+
+        case 'dialogueAside':
+          return <DialogueAside key={index} attrs={node.attrs} />
 
         case 'horizontalRule':
           return <Box key={index} as="hr" my={6} borderColor={tableBorderColor} />
